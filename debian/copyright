@@ -1,0 +1,80 @@
+This package was debianized by Mark Purcell <msp@debian.org> on
+Sun, 29 May 2005 09:40:22 +0100.
+
+It was downloaded from http://www.twinklephone.com/
+
+Copyright Holder: 
+ 
+Author of Twinkle.
+
+Michel de Boer <michel@twinklephone.com> designed and implemented Twinkle.
+
+Twinkle contains the following 3rd party software packages:
+- GSM codec from Jutta Degener and Carsten Bormann
+Copyright 1992, 1993, 1994 by Jutta Degener and Carsten Bormann,
+Technische Universitaet Berlin
+
+Any use of this software is permitted provided that this notice is not
+removed and that neither the authors nor the Technische Universitaet Berlin
+are deemed to have made any representations as to the suitability of this
+software for any purpose nor are held responsible for any defects of
+this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+
+As a matter of courtesy, the authors request to be informed about uses
+this software has found, about bugs in this software, and about any
+improvements that may be of general interest.
+
+Berlin, 28.11.1994
+Jutta Degener
+Carsten Bormann
+
+- G.711 codec from Sun Microsystems
+The files in this directory comprise ANSI-C language reference implementations
+of the CCITT (International Telegraph and Telephone Consultative Committee)
+G.711, G.721 and G.723 voice compressions.  They have been tested on Sun
+SPARCstations and passed 82 out of 84 test vectors published by CCITT
+(Dec. 20, 1988) for G.721 and G.723.  [The two remaining test vectors,
+which the G.721 decoder implementation for u-law samples did not pass,
+may be in error because they are identical to two other vectors for G.723_40.]
+
+This source code is released by Sun Microsystems, Inc. to the public domain.
+Please give your acknowledgement in product literature if this code is used
+in your product implementation.
+
+License:
+
+   This package is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
+
+   This package is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this package; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+
+Copyright 1992, 1993, 1994 by Jutta Degener and Carsten Bormann,
+Technische Universitaet Berlin
+
+Any use of this software is permitted provided that this notice is not
+removed and that neither the authors nor the Technische Universitaet Berlin
+are deemed to have made any representations as to the suitability of this
+software for any purpose nor are held responsible for any defects of
+this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
+
+As a matter of courtesy, the authors request to be informed about uses
+this software has found, about bugs in this software, and about any
+improvements that may be of general interest.
+
+Berlin, 28.11.1994
+Jutta Degener
+Carsten Bormann

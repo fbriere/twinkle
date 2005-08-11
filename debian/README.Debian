@@ -1,0 +1,6 @@
+twinkle for Debian
+------------------
+
+Need to use Debian supplied libgsm, not included Twinkle libgsm.
+
+ -- Mark Purcell <msp@debian.org>, Sun, 29 May 2005 09:40:22 +0100

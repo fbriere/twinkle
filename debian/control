@@ -1,0 +1,32 @@
+Source: twinkle
+Section: comm
+Priority: optional
+Maintainer: Mark Purcell <msp@debian.org>
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>=1.3.10-4), libccrtp-dev (>=1.3.1-4), libqt3-mt-dev, help2man
+Standards-Version: 3.6.1
+
+Package: twinkle
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Voice over Internet Protocol (VoIP) SIP Phone
+ Softphone for making telephone calls using SIP over an IP network.
+ .
+ Twinkle supports direct IP phone to IP phone communication or a network using a SIP proxy to route your calls.
+ .
+ In addition to making basic voice calls Twinkle provides you the following features regardless of the services that your VoIP service provider might offer. 
+ .
+  2 call appearances (lines)
+  Call Waiting
+  Call Hold
+  3-way conference calling
+  Mute
+  Call redirection on demand
+  Call redirection unconditional
+  Call redirection when busy
+  Call redirection no answer
+  Call reject
+  Do not disturb
+  Send DTMF digits to navigate IVR systems
+  NAT traversal through static provisioning
+ .
+ Upstream: http://www.twinklephone.com

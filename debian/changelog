@@ -1,0 +1,7 @@
+twinkle (0.1-1) experimental; urgency=low
+
+  * Upload to experimental while c++ transition
+  * Initial release Closes: #311150
+
+ -- Mark Purcell <msp@debian.org>  Thu, 11 Aug 2005 22:16:20 +0100
+

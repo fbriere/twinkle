@@ -1,0 +1,5 @@
+?package(twinkle):needs="X11" section="Apps/Net"\
+  title="twinkle" command="/usr/bin/twinkle" \
+  icon16x16="/usr/share/twinkle/twinkle16.png" \
+  icon32x32="/usr/share/twinkle/twinkle32.png" \
+  icon="/usr/share/twinkle/twinkle48.png"
