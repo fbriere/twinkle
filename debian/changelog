@@ -1,3 +1,10 @@
+twinkle (0.1-2) unstable; urgency=low
+
+  * C++ migration
+  * Build-Depends:  libqt3-mt-dev (>= 3:3.3.4-4)
+
+ -- Mark Purcell <msp@debian.org>  Thu, 18 Aug 2005 21:02:31 +0100
+
 twinkle (0.1-1) experimental; urgency=low
 
   * Upload to experimental while c++ transition
