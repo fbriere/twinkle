@@ -48,6 +48,9 @@ private:
 	// Do not disturb
 	// Note: CF_ALWAYS takes precedence over DND
 	bool		dnd_active;
+	
+	// Auto answer
+	bool		auto_answer_active;
 
 	void lock();
 	void unlock();
@@ -70,6 +73,10 @@ public:
 	void enable_dnd(void);
 	void disable_dnd(void);
 	bool is_dnd_active(void) const;
+	
+	// Auto answer
+	void enable_auto_answer(bool on);
+	bool is_auto_answer_active(void) const;
 };
 
 #endif

@@ -35,6 +35,9 @@ t_service::t_service() {
 
 	// Do not disturb
 	dnd_active = false;
+	
+	// Auto answer
+	auto_answer_active = false;
 }
 
 void t_service::enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest) {
@@ -156,4 +159,14 @@ void t_service::disable_dnd(void) {
 
 bool t_service::is_dnd_active(void) const {
 	return dnd_active;
+}
+
+void t_service::enable_auto_answer(bool on) {
+	lock();
+	auto_answer_active = on;
+	unlock();
+}
+
+bool t_service::is_auto_answer_active(void) const {
+	return auto_answer_active;
 }

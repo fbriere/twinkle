@@ -95,6 +95,7 @@ void yyerror(const char *s);
 %token			T_HDR_ACCEPT_LANGUAGE
 %token			T_HDR_ALERT_INFO
 %token			T_HDR_ALLOW
+%token			T_HDR_ALLOW_EVENTS
 %token			T_HDR_AUTHENTICATION_INFO
 %token			T_HDR_AUTHORIZATION
 %token			T_HDR_CALL_ID
@@ -108,6 +109,7 @@ void yyerror(const char *s);
 %token			T_HDR_CSEQ
 %token			T_HDR_DATE
 %token			T_HDR_ERROR_INFO
+%token			T_HDR_EVENT
 %token			T_HDR_EXPIRES
 %token			T_HDR_FROM
 %token			T_HDR_IN_REPLY_TO
@@ -121,6 +123,8 @@ void yyerror(const char *s);
 %token			T_HDR_PROXY_REQUIRE
 %token			T_HDR_RACK
 %token			T_HDR_RECORD_ROUTE
+%token			T_HDR_REFER_TO
+%token			T_HDR_REFERRED_BY
 %token			T_HDR_REPLY_TO
 %token			T_HDR_REQUIRE
 %token			T_HDR_RETRY_AFTER
@@ -128,6 +132,7 @@ void yyerror(const char *s);
 %token			T_HDR_RSEQ
 %token			T_HDR_SERVER
 %token			T_HDR_SUBJECT
+%token			T_HDR_SUBSCRIPTION_STATE
 %token			T_HDR_SUPPORTED
 %token			T_HDR_TIMESTAMP
 %token			T_HDR_TO
@@ -281,6 +286,7 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_accept_language hdr_accept_language T_CRLF
 		| hd_alert_info hdr_alert_info T_CRLF
 		| hd_allow hdr_allow T_CRLF
+		| hd_allow_events hdr_allow_events T_CRLF
 		| hd_authentication_info hdr_authentication_info T_CRLF
 		| hd_authorization hdr_authorization T_CRLF
 		| hd_call_id hdr_call_id T_CRLF
@@ -293,6 +299,7 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_content_type hdr_content_type T_CRLF
 		| hd_cseq hdr_cseq T_CRLF
 		| hd_date hdr_date T_CRLF
+		| hd_event hdr_event T_CRLF
 		| hd_error_info hdr_error_info T_CRLF
 		| hd_expires hdr_expires T_CRLF
 		| hd_from hdr_from T_CRLF
@@ -307,6 +314,8 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_proxy_require hdr_proxy_require T_CRLF
 		| hd_rack hdr_rack T_CRLF
 		| hd_record_route hdr_record_route T_CRLF
+		| hd_refer_to hdr_refer_to T_CRLF
+		| hd_referred_by hdr_referred_by T_CRLF
 		| hd_reply_to hdr_reply_to T_CRLF
 		| hd_require hdr_require T_CRLF
 		| hd_retry_after hdr_retry_after T_CRLF
@@ -314,6 +323,7 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_rseq hdr_rseq T_CRLF
 		| hd_server hdr_server T_CRLF
 		| hd_subject hdr_subject T_CRLF
+		| hd_subscription_state hdr_subscription_state T_CRLF
 		| hd_supported hdr_supported T_CRLF
 		| hd_timestamp hdr_timestamp T_CRLF
 		| hd_to hdr_to T_CRLF
@@ -336,6 +346,8 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("Alert-Info"); }
 		| hd_allow error T_CRLF
 			{ PARSE_ERROR("Allow"); }
+		| hd_allow_events error T_CRLF
+			{ PARSE_ERROR("Allow-Events"); }
 		| hd_authentication_info error T_CRLF
 			{ PARSE_ERROR("Authentication-Info"); }
 		| hd_authorization error T_CRLF
@@ -362,6 +374,8 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("Date"); }
 		| hd_error_info error T_CRLF
 			{ PARSE_ERROR("Error-Info"); }
+		| hd_event error T_CRLF
+			{ PARSE_ERROR("Event"); }
 		| hd_expires error T_CRLF
 			{ PARSE_ERROR("Expires"); }
 		| hd_from error T_CRLF
@@ -388,6 +402,10 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("RAck"); }
 		| hd_record_route error T_CRLF
 			{ PARSE_ERROR("Record-Route"); }
+		| hd_refer_to error T_CRLF
+			{ PARSE_ERROR("Refer-To"); }
+		| hd_referred_by error T_CRLF
+			{ PARSE_ERROR("Referred-By"); }
 		| hd_reply_to error T_CRLF
 			{ PARSE_ERROR("Reply-To"); }
 		| hd_require error T_CRLF
@@ -402,6 +420,8 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("Server"); }
 		| hd_subject error T_CRLF
 			{ PARSE_ERROR("Subject"); }
+		| hd_subscription_state error T_CRLF
+			{ PARSE_ERROR("Subscription-State"); }
 		| hd_supported error T_CRLF
 			{ PARSE_ERROR("Supported"); }
 		| hd_timestamp error T_CRLF
@@ -439,6 +459,8 @@ hd_alert_info:		T_HDR_ALERT_INFO ':'
 ;
 hd_allow:		T_HDR_ALLOW ':'
 ;
+hd_allow_events:	T_HDR_ALLOW_EVENTS ':'
+;
 hd_authentication_info:	T_HDR_AUTHENTICATION_INFO ':'
 ;
 hd_authorization:	T_HDR_AUTHORIZATION ':' { CTXT_AUTH_SCHEME; }
@@ -447,7 +469,7 @@ hd_call_id:		T_HDR_CALL_ID ':' { CTXT_WORD; }
 ;
 hd_call_info:		T_HDR_CALL_INFO ':'
 ;
-hd_contact:		T_HDR_CONTACT ':' { CTXT_URI; }
+hd_contact:		T_HDR_CONTACT ':' { CTXT_URI_SPECIAL; }
 ;
 hd_content_disp:	T_HDR_CONTENT_DISP ':'
 ;
@@ -465,9 +487,11 @@ hd_date:		T_HDR_DATE ':' { CTXT_DATE;}
 ;
 hd_error_info:		T_HDR_ERROR_INFO ':'
 ;
+hd_event:		T_HDR_EVENT ':'
+;
 hd_expires:		T_HDR_EXPIRES ':' { CTXT_NUM; }
 ;
-hd_from:		T_HDR_FROM ':' { CTXT_URI; }
+hd_from:		T_HDR_FROM ':' { CTXT_URI_SPECIAL; }
 ;
 hd_in_reply_to:		T_HDR_IN_REPLY_TO ':' { CTXT_WORD; }
 ;
@@ -491,7 +515,11 @@ hd_rack:		T_HDR_RACK ':' { CTXT_NUM; }
 ;
 hd_record_route:	T_HDR_RECORD_ROUTE ':' { CTXT_URI; }
 ;
-hd_reply_to:		T_HDR_REPLY_TO ':'
+hd_refer_to:		T_HDR_REFER_TO ':' { CTXT_URI_SPECIAL; }
+;
+hd_referred_by:		T_HDR_REFERRED_BY ':' { CTXT_URI_SPECIAL; }
+;
+hd_reply_to:		T_HDR_REPLY_TO ':' { CTXT_URI_SPECIAL; }
 ;
 hd_require:		T_HDR_REQUIRE ':'
 ;
@@ -504,6 +532,8 @@ hd_rseq:		T_HDR_RSEQ ':' { CTXT_NUM; }
 hd_server:		T_HDR_SERVER ':'
 ;
 hd_subject:		T_HDR_SUBJECT ':' { CTXT_LINE; }
+;
+hd_subscription_state:	T_HDR_SUBSCRIPTION_STATE ':'
 ;
 hd_supported:		T_HDR_SUPPORTED ':'
 ;
@@ -675,7 +705,7 @@ info_param:	  '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' parameters {
 			} }
 ;
 
-hdr_contact:	  { CTXT_URI; } T_URI_WILDCARD { CTXT_INITIAL; } {
+hdr_contact:	  { CTXT_URI_SPECIAL; } T_URI_WILDCARD { CTXT_INITIAL; } {
 			MSG->hdr_contact.set_any(); }
 		| contacts {
 			MSG->hdr_contact.add_contacts(*$1);
@@ -709,7 +739,7 @@ contact_param:	  contact_addr parameters {
 			MEMMAN_DELETE($2); delete $2; }
 ;
 
-contact_addr:	  { CTXT_URI; } T_URI { CTXT_INITIAL; } {
+contact_addr:	  { CTXT_URI_SPECIAL; } T_URI { CTXT_INITIAL; } {
 			$$ = new t_contact_param();
 			MEMMAN_NEW($$);
 			$$->uri.set_url(*$2);
@@ -719,13 +749,13 @@ contact_addr:	  { CTXT_URI; } T_URI { CTXT_INITIAL; } {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
 			} }
-		| { CTXT_URI; } display_name '<' T_URI { CTXT_INITIAL; } '>' {
+		| { CTXT_URI_SPECIAL; } display_name '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' {
 			$$ = new t_contact_param();
 			MEMMAN_NEW($$);
 			$$->display = *$2;
-			$$->uri.set_url(*$4);
+			$$->uri.set_url(*$5);
 			MEMMAN_DELETE($2); delete $2;
-			MEMMAN_DELETE($4); delete $4;
+			MEMMAN_DELETE($5); delete $5;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
@@ -821,7 +851,7 @@ hdr_expires:	{ CTXT_NUM; } T_NUM { CTXT_INITIAL; } {
 			MSG->hdr_expires.set_time($2); }
 ;
 
-hdr_from:	  { CTXT_URI; } from_addr parameters {
+hdr_from:	  { CTXT_URI_SPECIAL; } from_addr parameters {
 			MSG->hdr_from.set_display($2->display);
 			MSG->hdr_from.set_uri($2->uri);
 			list<t_parameter>::const_iterator i;
@@ -846,13 +876,13 @@ from_addr:	  T_URI { CTXT_INITIAL; } {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
 			} }
-		| display_name '<' T_URI { CTXT_INITIAL; } '>' {
+		| display_name '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' {
 			$$ = new t_hdr_from();
 			MEMMAN_NEW($$);
 			$$->set_display(*$1);
-			$$->set_uri(*$3);
+			$$->set_uri(*$4);
 			MEMMAN_DELETE($1); delete $1;
-			MEMMAN_DELETE($3); delete $3;
+			MEMMAN_DELETE($4); delete $4;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
@@ -924,7 +954,7 @@ rec_route:	{ CTXT_URI; } display_name '<' T_URI { CTXT_INITIAL; } '>'
 			} }
 ;
 
-hdr_reply_to:  { CTXT_URI; } from_addr parameters {
+hdr_reply_to:  { CTXT_URI_SPECIAL; } from_addr parameters {
 			MSG->hdr_reply_to.set_display($2->display);
 			MSG->hdr_reply_to.set_uri($2->uri);
 			MSG->hdr_reply_to.set_params(*$3);
@@ -1032,7 +1062,7 @@ delay:	  	  T_NUM { $$ = $1; }
 			$$ = atof(s.c_str()); }
 ;
 
-hdr_to:		  { CTXT_URI; } from_addr parameters {
+hdr_to:		  { CTXT_URI_SPECIAL; } from_addr parameters {
 			MSG->hdr_to.set_display($2->display);
 			MSG->hdr_to.set_uri($2->uri);
 			list<t_parameter>::const_iterator i;
@@ -1272,6 +1302,77 @@ hdr_rack: 	{ CTXT_NUM; } T_NUM T_NUM { CTXT_INITIAL; } T_TOKEN {
 			MSG->hdr_rack.set_cseq_nr($3);
 			MSG->hdr_rack.set_method(*$5);
 			MEMMAN_DELETE($5); delete $5; }
+;
+
+hdr_event:	T_TOKEN parameters {
+			MSG->hdr_event.set_event_type(tolower(*$1));
+			list<t_parameter>::const_iterator i;
+			for (i = $2->begin(); i != $2->end(); i++) {
+				if (i->name == "id") {
+					MSG->hdr_event.set_id(i->value);
+				} else {
+					MSG->hdr_event.add_event_param(*i);
+				}
+			}
+			MEMMAN_DELETE($1); delete $1;
+			MEMMAN_DELETE($2); delete $2; }
+;
+
+hdr_allow_events:	T_TOKEN {
+				MSG->hdr_allow_events.add_event_type(tolower(*$1));
+				MEMMAN_DELETE($1); delete $1; }
+		      | hdr_allow_events ',' T_TOKEN {
+		      		MSG->hdr_allow_events.add_event_type(tolower(*$3));
+				MEMMAN_DELETE($3); delete $3; }
+;
+
+hdr_subscription_state:	T_TOKEN parameters {
+				MSG->hdr_subscription_state.set_substate(tolower(*$1));
+				list<t_parameter>::const_iterator i;
+				for (i = $2->begin(); i != $2->end(); i++) {
+					if (i->name == "reason") {
+						MSG->hdr_subscription_state.
+							set_reason(tolower(i->value));
+					} else if (i->name == "expires") {
+						MSG->hdr_subscription_state.
+							set_expires(strtoul(
+							  i->value.c_str(),
+							  NULL, 10));
+					} else if (i->name == "retry_after") {
+						MSG->hdr_subscription_state.
+							set_retry_after(strtoul(
+							  i->value.c_str(),
+							  NULL, 10));
+					} else {
+						MSG->hdr_subscription_state.
+							add_extension(*i);
+					}
+				}
+				MEMMAN_DELETE($1); delete $1;
+				MEMMAN_DELETE($2); delete $2; }
+;
+
+hdr_refer_to:	  { CTXT_URI_SPECIAL; } from_addr parameters {
+			MSG->hdr_refer_to.set_display($2->display);
+			MSG->hdr_refer_to.set_uri($2->uri);
+			MSG->hdr_refer_to.set_params(*$3);
+			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($3); delete $3; }
+;
+
+hdr_referred_by:  { CTXT_URI_SPECIAL; } from_addr parameters {
+			MSG->hdr_referred_by.set_display($2->display);
+			MSG->hdr_referred_by.set_uri($2->uri);
+			list<t_parameter>::const_iterator i;
+			for (i = $3->begin(); i != $3->end(); i++) {
+				if (i->name == "cid") {
+					MSG->hdr_referred_by.set_cid(i->value);
+				} else {
+					MSG->hdr_referred_by.add_param(*i);
+				}
+			}
+			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($3); delete $3; }
 ;
 
 %%

@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>SelectProfileForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>397</width>
-            <height>272</height>
+            <height>284</height>
         </rect>
     </property>
     <property name="caption">
@@ -66,12 +66,16 @@
                             <verstretch>0</verstretch>
                         </sizepolicy>
                     </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select a profile and click one of the buttons.&lt;br&gt;&lt;br&gt;
+Double clicking a profile is the same as selecting a profile an pressing the &lt;b&gt;run&lt;/b&gt; button.</string>
+                    </property>
                 </widget>
             </vbox>
         </widget>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout21</cstring>
+                <cstring>layout18</cstring>
             </property>
             <vbox>
                 <property name="name">
@@ -90,7 +94,7 @@
                     <property name="sizeHint">
                         <size>
                             <width>20</width>
-                            <height>35</height>
+                            <height>16</height>
                         </size>
                     </property>
                 </spacer>
@@ -101,6 +105,26 @@
                     <property name="text">
                         <string>&amp;New</string>
                     </property>
+                    <property name="accel">
+                        <string>Alt+N</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Create a new profile with the profile editor.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>wizardPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Wizard</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+W</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Create a new profile with the wizard.</string>
+                    </property>
                 </widget>
                 <widget class="QPushButton">
                     <property name="name">
@@ -108,6 +132,12 @@
                     </property>
                     <property name="text">
                         <string>&amp;Edit</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+E</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Edit the selected profile.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton">
@@ -117,6 +147,12 @@
                     <property name="text">
                         <string>&amp;Delete</string>
                     </property>
+                    <property name="accel">
+                        <string>Alt+D</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Delete the selected profile.</string>
+                    </property>
                 </widget>
                 <widget class="QPushButton">
                     <property name="name">
@@ -124,6 +160,12 @@
                     </property>
                     <property name="text">
                         <string>Ren&amp;ame</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+A</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Rename the selected profile.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton">
@@ -133,8 +175,14 @@
                     <property name="text">
                         <string>&amp;Run</string>
                     </property>
+                    <property name="accel">
+                        <string>Alt+R</string>
+                    </property>
                     <property name="default">
                         <bool>false</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Run Twinkle with the selected profile.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton">
@@ -143,6 +191,12 @@
                     </property>
                     <property name="text">
                         <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Quit Twinkle.</string>
                     </property>
                 </widget>
             </vbox>
@@ -192,13 +246,22 @@
         <receiver>SelectProfileForm</receiver>
         <slot>renameProfile()</slot>
     </connection>
+    <connection>
+        <sender>wizardPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>wizardProfile()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>profileListBox</tabstop>
     <tabstop>newPushButton</tabstop>
+    <tabstop>wizardPushButton</tabstop>
     <tabstop>editPushButton</tabstop>
     <tabstop>deletePushButton</tabstop>
     <tabstop>runPushButton</tabstop>
+    <tabstop>renamePushButton</tabstop>
+    <tabstop>cancelPushButton</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in implementation">qdir.h</include>
@@ -211,6 +274,7 @@
     <include location="local" impldecl="in implementation">userprofileform.h</include>
     <include location="local" impldecl="in implementation">getprofilenameform.h</include>
     <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in implementation">wizardform.h</include>
     <include location="local" impldecl="in implementation">selectprofileform.ui.h</include>
 </includes>
 <variables>
@@ -223,6 +287,7 @@
     <slot>newProfile()</slot>
     <slot>deleteProfile()</slot>
     <slot>renameProfile()</slot>
+    <slot>wizardProfile()</slot>
 </slots>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

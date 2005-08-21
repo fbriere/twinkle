@@ -23,6 +23,7 @@
 #include "transaction.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "stun/stun.h"
 #include "threads/mutex.h"
 
 typedef unsigned short	t_tuid;
@@ -63,15 +64,22 @@ protected:
 	virtual void recvd_options(t_request *r, t_tid tid) = 0;
 	virtual void recvd_register(t_request *r, t_tid tid) = 0;
 	virtual void recvd_prack(t_request *r, t_tid tid) = 0;
+	virtual void recvd_subscribe(t_request *r, t_tid tid) = 0;
+	virtual void recvd_notify(t_request *r, t_tid tid) = 0;
+	virtual void recvd_refer(t_request *r, t_tid tid) = 0;
 
 	// The transaction failed and is aborted
 	virtual void failure(t_failure failure, t_tid tid) = 0;
+	
+	// STUN event handler
+	virtual void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) = 0;
 
 public:
 	virtual ~t_transaction_layer() {};
 
 	// Client primitives
 	void send_request(t_request *r, t_tuid tuid);
+	void send_request(StunMessage *r, t_tuid tuid);
 
 	// Server primitives
 	void send_response(t_response *r, t_tuid tuid, t_tid tid);

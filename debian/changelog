@@ -1,3 +1,14 @@
+twinkle (0.2.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Build-Depends:  libccrtp-dev (>=1.3.4)
+  * Add Build-Depends: qt3-apps-dev
+  * Add Build-Depends: automake1.9
+  * Export QTDIR for build target as well :-(
+  * Update extended description
+
+ -- Mark Purcell <msp@debian.org>  Sun, 21 Aug 2005 14:05:30 +0100
+
 twinkle (0.1-2) unstable; urgency=low
 
   * C++ migration

@@ -2,7 +2,7 @@
 ** ui.h extension file, included from the uic-generated form implementation.
 **
 ** If you wish to add, delete or rename functions or slots use
-** Qt Designer which will update this file, preserving your code. Create an
+** Qt Designer which will update this file, pres:erving your code. Create an
 ** init() function in place of a constructor, and a destroy() function in
 ** place of a destructor.
 *****************************************************************************/
@@ -30,9 +30,12 @@ void MphoneForm::init()
 	dtmfForm = 0;
 	inviteForm = 0;
 	redirectForm = 0;
+	transferForm = 0;
 	termCapForm = 0;
 	srvRedirectForm = 0;
 	userProfileForm = 0;
+	sysSettingsForm = 0;
+	logViewForm = 0;
 	
 	// Set toolbar icons for disabled options.
 	QIconSet i;
@@ -61,6 +64,11 @@ void MphoneForm::init()
 		    QIconSet::Automatic, QIconSet::Disabled);
 	callRedirect->setIconSet(i);
 	
+	i = callTransfer->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("transfer-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	callTransfer->setIconSet(i);
+	
 	i = callHold->iconSet();
 	i.setPixmap(QPixmap::fromMimeSource("hold-disabled.png"), 
 		    QIconSet::Automatic, QIconSet::Disabled);
@@ -85,6 +93,19 @@ void MphoneForm::init()
 	i.setPixmap(QPixmap::fromMimeSource("redial-disabled.png"), 
 		    QIconSet::Automatic, QIconSet::Disabled);
 	callRedial->setIconSet(i);
+	
+	// Some text labels on the main window are implemented as QLineEdit
+	// objects as these do not automatically resize when a text set with setText
+	// does not fit. The background of a QLineEdit is static however, it does not
+	// automatically take a background color passed by the -bg parameter.
+	// Set the background color of these QLineEdit objects here.
+	userTextLabel->setPaletteBackgroundColor(paletteBackgroundColor());
+	from1Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	to1Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	subject1Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	from2Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	to2Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	subject2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 }
 
 void MphoneForm::destroy()
@@ -113,10 +134,25 @@ void MphoneForm::destroy()
 		MEMMAN_DELETE(userProfileForm);
 		delete userProfileForm;
 	}
+	if (transferForm) {
+		MEMMAN_DELETE(transferForm);
+		delete transferForm;
+	}
+	if (sysSettingsForm) {
+		MEMMAN_DELETE(sysSettingsForm);
+		delete sysSettingsForm;
+	}
+	if (logViewForm) {
+		if (logViewForm->isShown()) logViewForm->close();
+		MEMMAN_DELETE(logViewForm);
+		delete logViewForm;
+	}
 }
 
 QString MphoneForm::lineSubstate2str( int line) {
 	QString reason;
+	
+	t_call_info call_info = phone->get_call_info(line);
 	
 	switch(phone->get_line_substate(line)) {
 	case LSSUB_IDLE:	
@@ -124,7 +160,7 @@ QString MphoneForm::lineSubstate2str( int line) {
 	case LSSUB_SEIZED:
 		return "dialing";
 	case LSSUB_OUTGOING_PROGRESS:
-		reason = ((t_gui *)ui)->get_last_provisional_reason(line);
+		reason = call_info.last_provisional_reason.c_str();
 		if (reason == "") {
 			return "attempting call, please wait";
 		}
@@ -180,7 +216,8 @@ void MphoneForm::updateState()
 	int line, other_line;
 	bool on_hold; // indicates if a line is put on-hold
 	bool in_conference; // indicates if a line is in a conference
-	bool is_muted; // indicated is a line is muted
+	bool is_muted; // indicates is a line is muted
+	t_refer_state refer_state; // indicates if a call transfer is in progress
 	
 	// Update status of line 1
 	state = lineSubstate2str(0);
@@ -190,6 +227,8 @@ void MphoneForm::updateState()
 	if (in_conference) state.append(", conference");
 	is_muted = phone->is_line_muted(0);
 	if (is_muted) state.append(", mute");
+	refer_state = phone->get_line_refer_state(0);
+	if (refer_state != REFST_NULL) state.append(", transferring");
 	status1TextLabel->setText(state);
 	
 	// Update status of line 2
@@ -200,6 +239,8 @@ void MphoneForm::updateState()
 	if (in_conference) state.append(", conference");
 	is_muted = phone->is_line_muted(1);
 	if (is_muted) state.append(", mute");
+	refer_state = phone->get_line_refer_state(1);
+	if (refer_state != REFST_NULL) state.append(", transferring");
 	status2TextLabel->setText(state);
 	
 	// Disable/enable controls depending on the line state
@@ -209,7 +250,9 @@ void MphoneForm::updateState()
 	on_hold = phone->is_line_on_hold(line);
 	in_conference = phone->part_of_3way(line);
 	is_muted = phone->is_line_muted(line);
+	refer_state = phone->get_line_refer_state(line);
 	other_line = (line == 0 ? 1 : 0);
+	t_call_info call_info = phone->get_call_info(line);
 	
 	// The active line may change when one of the parties in a conference
 	// releases the call. If this happens, then update the state of the
@@ -229,12 +272,12 @@ void MphoneForm::updateState()
 		callBye->setEnabled(false);
 		callReject->setEnabled(false);
 		callRedirect->setEnabled(false);
+		callTransfer->setEnabled(false);
 		callHold->setEnabled(false);
 		callConference->setEnabled(false);
 		callMute->setEnabled(false);
 		callDTMF->setEnabled(false);
 		callRedial->setEnabled(ui->can_redial());
-		((t_gui *)ui)->dtmf_supported[line] = false;
 		break;
 	case LSSUB_OUTGOING_PROGRESS:
 		callInvite->setEnabled(false);
@@ -242,10 +285,11 @@ void MphoneForm::updateState()
 		callBye->setEnabled(true);
 		callReject->setEnabled(false);
 		callRedirect->setEnabled(false);
+		callTransfer->setEnabled(false);
 		callHold->setEnabled(false);
 		callConference->setEnabled(false);
 		callMute->setEnabled(false);
-		callDTMF->setEnabled(((t_gui *)ui)->dtmf_supported[line]);
+		callDTMF->setEnabled(call_info.dtmf_supported);
 		callRedial->setEnabled(false);
 		break;
 	case LSSUB_INCOMING_PROGRESS:
@@ -254,10 +298,11 @@ void MphoneForm::updateState()
 		callBye->setEnabled(false);
 		callReject->setEnabled(true);
 		callRedirect->setEnabled(true);
+		callTransfer->setEnabled(false);
 		callHold->setEnabled(false);
 		callConference->setEnabled(false);
 		callMute->setEnabled(false);
-		callDTMF->setEnabled(((t_gui *)ui)->dtmf_supported[line]);
+		callDTMF->setEnabled(call_info.dtmf_supported);
 		callRedial->setEnabled(false);
 		break;
 	case LSSUB_ESTABLISHED:
@@ -268,17 +313,28 @@ void MphoneForm::updateState()
 		callRedirect->setEnabled(false);
 		
 		if (in_conference) {
+			callTransfer->setEnabled(false);
 			callHold->setEnabled(false);
 			callConference->setEnabled(false);
 			callDTMF->setEnabled(false);
 		} else {
+			callTransfer->setEnabled(call_info.refer_supported &&
+						 refer_state == REFST_NULL);
 			callHold->setEnabled(true);
-			callDTMF->setEnabled(((t_gui *)ui)->dtmf_supported[line]);
+			callDTMF->setEnabled(call_info.dtmf_supported);
 			
 			if (phone->get_line_substate(other_line) == 
 			    LSSUB_ESTABLISHED)
 			{
-				callConference->setEnabled(true);
+				// If one of the lines is transferring a call, then a
+				// conference cannot be setup.
+				if (refer_state != REFST_NULL ||
+				    phone->get_line_refer_state(other_line) != REFST_NULL)
+				{
+					callConference->setEnabled(false);
+				} else {
+					callConference->setEnabled(true);
+				}
 			} else {
 				callConference->setEnabled(false);
 			}
@@ -297,6 +353,7 @@ void MphoneForm::updateState()
 		callBye->setEnabled(false);
 		callReject->setEnabled(false);
 		callRedirect->setEnabled(false);
+		callTransfer->setEnabled(false);
 		callHold->setEnabled(false);
 		callConference->setEnabled(false);
 		callMute->setEnabled(false);
@@ -309,6 +366,7 @@ void MphoneForm::updateState()
 		callBye->setEnabled(true);
 		callReject->setEnabled(true);
 		callRedirect->setEnabled(true);
+		callTransfer->setEnabled(true);
 		callHold->setEnabled(true);
 		callConference->setEnabled(false);
 		callMute->setEnabled(true);
@@ -327,6 +385,13 @@ void MphoneForm::updateState()
 	    redirectForm->isVisible()) 
 	{
 		redirectForm->hide();
+	}
+	
+	// Hide transfer form if it is still visible, but not applicable anymore
+	if (!callTransfer->isEnabled() && transferForm && 
+	    transferForm->isVisible()) 
+	{
+		transferForm->hide();
 	}
 	
 	// Hide DTMF form if it is still visible, but not applicable anymore
@@ -368,6 +433,7 @@ void MphoneForm::updateServicesStatus()
 {	
 	dndTextLabel->setEnabled(phone->service.is_dnd_active());
 	redirectionTextLabel->setEnabled(phone->service.is_cf_active());
+	autoAnswerTextLabel->setEnabled(phone->service.is_auto_answer_active());
 }
 
 void MphoneForm::phoneRegister()
@@ -377,6 +443,7 @@ void MphoneForm::phoneRegister()
 
 void MphoneForm::phoneDeregister()
 {
+	/*
 	DeregisterForm *df = new DeregisterForm(this, "deregister", true);
 	MEMMAN_NEW(df);
 	
@@ -386,6 +453,14 @@ void MphoneForm::phoneDeregister()
 	
 	MEMMAN_DELETE(df);
 	delete df;
+	*/
+	
+	((t_gui *)ui)->action_deregister(false);
+}
+
+void MphoneForm::phoneDeregisterAll()
+{
+	((t_gui *)ui)->action_deregister(true);
 }
 
 void MphoneForm::phoneShowRegistrations()
@@ -474,6 +549,36 @@ void MphoneForm::phoneRedirect()
 void MphoneForm::do_phoneRedirect(const list<t_url> &destinations)
 {
 	((t_gui *)ui)->action_redirect(destinations);
+	updateState();
+}
+
+// Show the semi-modal call transfer window
+void MphoneForm::phoneTransfer()
+{
+	// Hold the call if setting in user profile indicates call hold
+	if (user_config->referrer_hold) {
+		phoneHold(true);
+	}
+	
+	if (transferForm) {
+		MEMMAN_DELETE(transferForm);
+		delete transferForm;
+	}
+	
+	transferForm = new TransferForm(this, "transfer", true);
+	MEMMAN_NEW(transferForm);
+	connect(transferForm, SIGNAL(destination(const t_url &)),
+		this, SLOT(do_phoneTransfer(const t_url &)));
+	
+	transferForm->show();
+	updateState();
+}
+
+// Execute the transfer action. This slot is connected to the destination
+// signal of the transfer window.
+void MphoneForm::do_phoneTransfer(const t_url &destination)
+{
+	((t_gui *)ui)->action_refer(destination, "");
 	updateState();
 }
 
@@ -570,6 +675,11 @@ void MphoneForm::srvDnd( bool on )
 	updateServicesStatus();
 }
 
+void MphoneForm::srvAutoAnswer( bool on )
+{
+	((t_gui *)ui)->srv_auto_answer(on);
+	updateServicesStatus();
+}
 
 void MphoneForm::srvRedirect()
 {
@@ -619,12 +729,7 @@ void MphoneForm::do_srvRedirect(const list<t_url> &always, const list<t_url> &bu
 
 void MphoneForm::about()
 {
-	QString s;
-	
-	s.append(PRODUCT_NAME).append(' ').append(PRODUCT_VERSION);
-	s.append(" - ").append(PRODUCT_DATE);
-	s.append("<BR>\n");
-	s.append("Written by ").append(PRODUCT_AUTHOR);
+	QString s = sys_config->about(true).c_str();
 	
 	QMessageBox mbAbout(PRODUCT_NAME, s.replace(' ', "&nbsp;"), 
 		    QMessageBox::Information, 
@@ -649,9 +754,29 @@ void MphoneForm::editUserProfile()
 			SIGNAL(sipUserChanged()),
 			this, 
 			SLOT(displayUser()));
+		
+		connect(userProfileForm, 
+			SIGNAL(rtpPortChanged()),
+			this, 
+			SLOT(updateRtpPorts()));
+		
+		connect(userProfileForm,
+			SIGNAL(stunServerChanged()),
+			this,
+			SLOT(updateStunSettings()));
 	}
 	
 	userProfileForm->show(true);
+}
+
+void MphoneForm::editSysSettings()
+{
+	if (!sysSettingsForm) {
+		sysSettingsForm = new SysSettingsForm(this, "system settings", true);
+		MEMMAN_NEW(sysSettingsForm);
+	}
+	
+	sysSettingsForm->show();
 }
 
 void MphoneForm::displayUser()
@@ -663,4 +788,40 @@ void MphoneForm::displayUser()
 	s.append("<sip:").append(user_config->name.c_str());
 	s.append('@').append(user_config->domain.c_str()).append(">");
 	userTextLabel->setText(s);
+	userTextLabel->setCursorPosition(0);
 }
+
+void MphoneForm::updateRtpPorts()
+{
+	phone->init_rtp_ports();
+}
+
+void MphoneForm::updateStunSettings()
+{
+	if (user_config->use_stun) {
+		string s;
+		if (!stun_discover_nat(s)) {
+			// Warn user that the STUN settings will not work.
+			((t_gui *)ui)->cb_show_msg(this, s, MSG_WARNING);
+		}
+	} else {
+		// Disable STUN
+		phone->use_stun = false;
+	}
+}
+
+void MphoneForm::viewLog()
+{
+	if (!logViewForm) {
+		logViewForm = new LogViewForm(NULL);
+		MEMMAN_NEW(logViewForm);
+	}
+	
+	logViewForm->show();
+}
+
+void MphoneForm::updateLog(bool log_zapped)
+{
+	if (logViewForm) logViewForm->update(log_zapped);
+}
+

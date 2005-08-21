@@ -27,6 +27,7 @@
 
 #define CTXT_INITIAL	(t_parser::context = t_parser::X_INITIAL)
 #define CTXT_URI	(t_parser::context = t_parser::X_URI)
+#define CTXT_URI_SPECIAL (t_parser::context = t_parser::X_URI_SPECIAL)
 #define CTXT_LANG	(t_parser::context = t_parser::X_LANG)
 #define CTXT_WORD	(t_parser::context = t_parser::X_WORD)
 #define CTXT_NUM	(t_parser::context = t_parser::X_NUM)
@@ -54,7 +55,9 @@ private:
 public:
 enum t_context {
 	X_INITIAL,	// Initial context
-	X_URI,		// URI context
+	X_URI,		// URI context where parameters belong to URI
+	X_URI_SPECIAL,	// URI context where parameters belong to SIP header
+			// if URI is not enclosed by < and >
 	X_LANG,		// Language tag context
 	X_WORD,		// Word context
 	X_NUM,		// Number context

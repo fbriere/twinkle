@@ -24,20 +24,24 @@
 #include "transaction.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "stun/stun_transaction.h"
 
 using namespace std;
 
 class t_transaction_mgr {
 private:
 	// Mapping from transaction id to transaction
-	map<t_tid, t_trans_client *>	map_trans_client;
-	map<t_tid, t_trans_server *>	map_trans_server;
+	map<t_tid, t_trans_client *>		map_trans_client;
+	map<t_tid, t_trans_server *>		map_trans_server;
+	map<t_tid, t_stun_transaction *>	map_stun_trans;
 
 	// Find existing transactions. Return NULL if not found
 	t_trans_client *find_trans_client(t_response *r) const;
 	t_trans_client *find_trans_client(t_tid tid) const;
 	t_trans_server *find_trans_server(t_request *r) const;
 	t_trans_server *find_trans_server(t_tid tid) const;
+	t_stun_transaction *find_stun_trans(StunMessage *r) const;
+	t_stun_transaction *find_stun_trans(t_tid tid) const;
 
 	// Create new transactions.
 	// Return NULL if creation failed.
@@ -46,16 +50,23 @@ private:
 		unsigned short tuid);
 	t_ts_invite *create_ts_invite(t_request *r);
 	t_ts_non_invite *create_ts_non_invite(t_request *r);
+	t_sip_stun_trans *create_sip_stun_trans(StunMessage *r, 
+		unsigned short tuid);
+	t_media_stun_trans *create_media_stun_trans(StunMessage *r, 
+		unsigned short tuid, unsigned short src_port);
 
 	// Delete transactions
 	void delete_trans_client(t_trans_client *tc);
 	void delete_trans_server(t_trans_server *ts);
+	void delete_stun_trans(t_stun_transaction *st);
 
 	// Handle events
 	void handle_event_network(t_event_network *e);
 	void handle_event_user(t_event_user *e);
 	void handle_event_timeout(t_event_timeout *e);
 	void handle_event_abort(t_event_abort_trans *e);
+	void handle_event_stun_request(t_event_stun_request *e);
+	void handle_event_stun_response(t_event_stun_response *e);
 
 public:
 	~t_transaction_mgr();
@@ -66,6 +77,8 @@ public:
 
 	// Start transaction timer. Return timer id (needed for stopping)
 	unsigned short start_timer(long dur, t_sip_timer tmr,
+						unsigned short tid);
+	unsigned short start_stun_timer(long dur, t_stun_timer tmr,
 						unsigned short tid);
 
 	// Stop timer. Pass id that is returned by start_timer

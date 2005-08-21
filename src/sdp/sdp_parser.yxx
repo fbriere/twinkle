@@ -87,7 +87,6 @@ void yysdperror(const char *s);
 %type <yysdpt_media>		media
 %type <yysdpt_transport>	transport
 %type <yysdpt_num_list>		formats
-%type <yysdpt_num_list>		formats2
 
 %destructor { MEMMAN_DELETE($$); delete $$; }	connection
 %destructor { MEMMAN_DELETE($$); delete $$; }	attributes
@@ -95,7 +94,6 @@ void yysdperror(const char *s);
 %destructor { MEMMAN_DELETE($$); delete $$; }	attribute2
 %destructor { MEMMAN_DELETE($$); delete $$; }	media
 %destructor { MEMMAN_DELETE($$); delete $$; }	formats
-%destructor { MEMMAN_DELETE($$); delete $$; }	formats2
 
 %%
 
@@ -251,13 +249,14 @@ transport:	  T_TOKEN { try {
 			    } }
 ;
 
-formats:	  { CTX_NUM; } formats2 { CTX_INITIAL; } {
-			$$ = $2; }
-;
-
-formats2:	  /* empty */	{ $$ = new list<unsigned short>; MEMMAN_NEW($$); }
-		| formats2 T_NUM {
-			$$->push_back($2); }
+// For RTP/AVP a format is a number. For other transport protocols,
+// non-numerical formats are possible. non-numerical formats are
+// now simply discarded as only RTP/AVP is supported.
+formats:	  /* empty */	{ $$ = new list<unsigned short>; MEMMAN_NEW($$); }
+		| formats T_TOKEN {
+			if (is_number(*$2)) $$->push_back(atoi($2->c_str()));
+			MEMMAN_DELETE($2);
+			delete $2; }
 ;
 
 /* Skip unknown lines */

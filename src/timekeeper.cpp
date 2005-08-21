@@ -24,6 +24,7 @@
 #include "line.h"
 #include "log.h"
 #include "phone.h"
+#include "subscription.h"
 #include "timekeeper.h"
 #include "transaction_mgr.h"
 #include "threads/thread.h"
@@ -39,6 +40,7 @@ string timer_type2str(t_timer_type t) {
 	case TMR_TRANSACTION:	return "TMR_TRANSACTION";
 	case TMR_PHONE:		return "TMR_PHONE";
 	case TMR_LINE:		return "TMR_LINE";
+	case TMR_SUBSCRIBE:	return "TMR_SUBSCRIBE";
 	}
 
 	return "UNKNOWN";
@@ -221,6 +223,93 @@ string t_tmr_line::get_name(void) const {
 }
 
 ///////////////////////////////////////////////////////////
+// class t_tmr_subscribe
+///////////////////////////////////////////////////////////
+t_tmr_subscribe::t_tmr_subscribe(long dur, t_subscribe_timer stmr,
+		t_line *l, t_dialog_id d, const string &event_type,
+		const string &event_id) : t_timer(dur)
+{
+	subscribe_timer = stmr;
+	line = l;
+	dialog_id = d;
+	sub_event_type = event_type;
+	sub_event_id = event_id;
+}
+
+void t_tmr_subscribe::expired(void) {
+	// Call timeout method on the subscription for a timer expiry
+	line->timeout_sub(subscribe_timer, dialog_id, sub_event_type, sub_event_id);
+}
+
+t_timer *t_tmr_subscribe::copy(void) const {
+	t_tmr_subscribe *t = new t_tmr_subscribe(*this);
+	MEMMAN_NEW(t);
+	return t;
+}
+
+t_timer_type t_tmr_subscribe::get_type(void) const {
+	return TMR_SUBSCRIBE;
+}
+
+t_subscribe_timer t_tmr_subscribe::get_subscribe_timer(void) const {
+	return subscribe_timer;
+}
+
+t_line *t_tmr_subscribe::get_line(void) const {
+	return line;
+}
+
+string t_tmr_subscribe::get_name(void) const {
+	switch(subscribe_timer) {
+	case STMR_SUBSCRIPTION:	return "STMR_SUBSCRIPTION";
+	}
+
+	return "UNKNOWN";
+}
+
+///////////////////////////////////////////////////////////
+// class t_tmr_stun_trans
+///////////////////////////////////////////////////////////
+
+t_tmr_stun_trans::t_tmr_stun_trans(long dur, t_stun_timer tmr,
+	unsigned short tid) : t_timer(dur)
+{
+	stun_timer = tmr;
+	transaction_id = tid;
+}
+
+void t_tmr_stun_trans::expired(void) {
+	// Create a timeout event for the transaction manager
+	evq_trans_mgr->push_timeout(this);
+}
+
+t_timer *t_tmr_stun_trans::copy(void) const {
+	t_tmr_stun_trans *t = new t_tmr_stun_trans(*this);
+	MEMMAN_NEW(t);
+	return t;
+}
+
+t_timer_type t_tmr_stun_trans::get_type(void) const {
+	return TMR_STUN_TRANSACTION;
+}
+
+unsigned short t_tmr_stun_trans::get_tid(void) const {
+	return transaction_id;
+}
+
+t_stun_timer t_tmr_stun_trans::get_stun_timer(void) const {
+	return stun_timer;
+}
+
+string t_tmr_stun_trans::get_name(void) const {
+	switch(stun_timer) {
+	case STUN_TMR_REQ_TIMEOUT:	return "STUN_TMR_REQ_TIMEOUT";
+	}
+
+	return "UNKNOWN";
+}
+
+///////////////////////////////////////////////////////////
 // class t_timekeeper
 ///////////////////////////////////////////////////////////
 
@@ -239,7 +328,7 @@ t_timekeeper::~t_timekeeper() {
 	mutex.lock();
 
 	log_file->write_header("t_timekeeper::~t_timekeeper",
-		LOG_DEBUG, LOG_INFO);
+		LOG_NORMAL, LOG_INFO);
 	log_file->write_raw("Clean up timekeeper.\n");
 
 	// Stop timers
@@ -473,7 +562,54 @@ void t_timekeeper::stop_timer(unsigned short id) {
 	unlock();
 }
 
+void t_timekeeper::get_timer_dur(unsigned short id, t_semaphore *sema,
+		unsigned long *duration)
+{
+	struct itimerval	itimer;
+	unsigned long		remain_msec;
+
+	lock();
+
+	// The next interval option is not used
+	itimer.it_interval.tv_sec = 0;
+	itimer.it_interval.tv_usec = 0;
+
+	// Get remaining duration of current running timer
+	getitimer(ITIMER_REAL, &itimer);
+	remain_msec = itimer.it_value.tv_sec * 1000 +
+		      itimer.it_value.tv_usec / 1000;
+
+	// Find the timer
+	list<t_timer *>::iterator i = timer_list.begin();
+	while (i != timer_list.end()) {
+		if (i != timer_list.begin()) {
+			remain_msec += (*i)->get_relative_duration();
+		}
+
+		if ((*i)->get_id() == id) break;
+
+		i++;
+	}
+
+	// Return duration to originator of get event
+	if (i == timer_list.end()) {
+		*duration = 0;
+	} else {
+		*duration = remain_msec;
+	}
+	sema->up();
+	unlock();
+	return;
+}
+
 void t_timekeeper::report_expiry(void) {
+	lock();
+	
+	if (timer_list.empty()) {
+		unlock();
+		return;
+	}
+	
 	t_timer *t = timer_list.front();
 
 	// Trigger action if timer was not stopped
@@ -488,6 +624,7 @@ void t_timekeeper::report_expiry(void) {
 	timer_list.pop_front();
 
 	if (timer_list.empty()) {
+		unlock();
 		return;
 	}
 
@@ -515,6 +652,19 @@ void t_timekeeper::report_expiry(void) {
 		itimer.it_value.tv_usec = (dur % 1000) * 1000;
 		setitimer(ITIMER_REAL, &itimer, NULL);
 	}
+
+	unlock();
+}
+
+unsigned long t_timekeeper::get_remaining_time(unsigned short timer_id) {
+	t_semaphore sema(0);
+	unsigned long duration;
+
+	evq_timekeeper->push_get_timer_dur(timer_id, &sema, &duration);
+
+	// Wait for result
+	sema.down();
+	return duration;
 }
 
 // SIGALRM handler
@@ -531,6 +681,7 @@ void t_timekeeper::run(void) {
 	t_event			*event;
 	t_event_start_timer	*ev_start;
 	t_event_stop_timer	*ev_stop;
+	t_event_get_timer_dur	*ev_get_dur;
 	bool			timeout;
 
 	if (threading_is_LinuxThreads) {
@@ -557,6 +708,12 @@ void t_timekeeper::run(void) {
 		case EV_STOP_TIMER:
 			ev_stop = (t_event_stop_timer *)event;
 			stop_timer(ev_stop->get_timer_id());
+			break;
+		case EV_GET_TIMER_DUR:
+			ev_get_dur = (t_event_get_timer_dur *)event;
+			get_timer_dur(ev_get_dur->get_timer_id(),
+				ev_get_dur->get_sema(),
+				ev_get_dur->get_duration());
 			break;
 		default:
 			assert(false);

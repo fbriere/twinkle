@@ -1,0 +1,10 @@
+Release 0.2.1
+=============
+- Fixed following built error that occurred on some environments:
+  .ui/../wizardform.ui.h: In member function `virtual void WizardForm::initProviders()':
+  .ui/../wizardform.ui.h:64: error: conversion from `std::string' to non-scalar type `QString' requested
+
+Release 0.2
+===========
+- Bug fix: timekeeper::report_expiry did not lock the timekeeper.
+- Bug fix: fixed missing deallocation in t_gui::select_network_intf()

@@ -143,6 +143,12 @@ main(int argc, char *argv[]) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
 	}
+	
+	// Read system configuration
+	if (!sys_config->read_config(error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		exit(1);
+	}
 
 	// Create a lock file to guarantee that the application
 	// runs only once.
@@ -177,6 +183,9 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 
+	// Initialize RTP port settings.
+	phone->init_rtp_ports();
+
 	// Open socket for SIP signaling
 	try {
 		sip_socket = new t_socket_udp(user_config->sip_udp_port);
@@ -192,12 +201,20 @@ main(int argc, char *argv[]) {
 		sys_config->delete_lock_file();
 		exit(1);
 	}
-
+	
 	// Pick network interface
 	user_host = ui->select_network_intf();
 	if (user_host == "") {
 		sys_config->delete_lock_file();
 		exit(1);
+	}
+	
+	// Discover NAT type if STUN is enabled
+	if (user_config->use_stun) {
+		string msg;
+		if (!stun_discover_nat(msg)) {
+			ui->cb_show_msg(msg, MSG_WARNING);
+		}
 	}
 
 	// A dedicated thread will catch the SIGALRM signal, therefore
@@ -207,6 +224,7 @@ main(int argc, char *argv[]) {
 	// in LinuxThreads a signal handler is used instead.
 	if (!threading_is_LinuxThreads) {
 		sigset_t sigset;
+		sigemptyset(&sigset);
 		sigaddset(&sigset, SIGALRM);
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
 	}
@@ -309,6 +327,7 @@ main(int argc, char *argv[]) {
 
 	MEMMAN_DELETE(ui);
 	delete ui;
+	ui = NULL;
 
 	MEMMAN_DELETE(sip_socket);
 	delete sip_socket;

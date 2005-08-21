@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <linux/soundcard.h>
+#include <sys/soundcard.h>
 #include "audio_tx.h"
 #include "log.h"
 #include "userintf.h"
@@ -295,7 +295,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 		memcpy(jitter_buf, playbuf, len);
 		jitter_buf_len = len;
 		load_jitter_buf = true;
-		log_file->write_header("t_audio_tx::play_pcm");
+		log_file->write_header("t_audio_tx::play_pcm", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("Audio tx line ");
 		log_file->write_raw(get_line()->get_line_number()+1);
 		log_file->write_raw(": jitter buffer empy.\n");
@@ -310,7 +310,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// processing time for a while and RTP packets start to
 	// pile up.
 	if (soundcard_buf_size - dsp_info.bytes > JITTER_BUF_SIZE + len) {
-		log_file->write_header("t_audio_tx::play_pcm");
+		log_file->write_header("t_audio_tx::play_pcm", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("Audio tx line ");
 		log_file->write_raw(get_line()->get_line_number()+1);
 		log_file->write_raw(": jitter buffer overflow: ");
@@ -406,10 +406,11 @@ void t_audio_tx::run(void) {
 		case sptPCMU:
 			if (codec != CODEC_G711_ULAW) {
 				codec = CODEC_G711_ULAW;
+				get_line()->ci_set_recv_codec(codec);
 				ui->cb_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
-				log_file->write_header("t_audio_tx::run");
+				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": codec change to g711u.\n");
@@ -419,10 +420,11 @@ void t_audio_tx::run(void) {
 		case sptPCMA:
 			if (codec != CODEC_G711_ALAW) {
 				codec = CODEC_G711_ALAW;
+				get_line()->ci_set_recv_codec(codec);
 				ui->cb_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
-				log_file->write_header("t_audio_tx::run");
+				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": codec change to g711a.\n");
@@ -432,10 +434,11 @@ void t_audio_tx::run(void) {
 		case sptGSM:
 			if (codec != CODEC_GSM) {
 				codec = CODEC_GSM;
+				get_line()->ci_set_recv_codec(codec);
 				ui->cb_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
-				log_file->write_header("t_audio_tx::run");
+				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": codec change to gsm.\n");
@@ -451,10 +454,11 @@ void t_audio_tx::run(void) {
 
 			if (codec != CODEC_UNSUPPORTED) {
 				codec = CODEC_UNSUPPORTED;
+				get_line()->ci_set_recv_codec(codec);
 				ui->cb_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
-				log_file->write_header("t_audio_tx::run");
+				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": payload type ");
@@ -505,7 +509,7 @@ void t_audio_tx::run(void) {
 
 		// Skip packet if the payload size is too big
 		if (adu->getSize() > SAMPLE_BUF_SIZE / 2) {
-			log_file->write_header("t_audio_tx::run");
+			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": RTP payload size (");
@@ -529,7 +533,7 @@ void t_audio_tx::run(void) {
 
 		// Log a change of ptime
 		if (ptime != recvd_ptime) {
-			log_file->write_header("t_audio_tx::run");
+			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": ptime changed from ");
@@ -543,7 +547,7 @@ void t_audio_tx::run(void) {
 
 		// Discard invalid GSM payload sizes
 		if (codec == CODEC_GSM && adu->getSize() != 33) {
-			log_file->write_header("t_audio_tx::run");
+			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": invalid GSM payload size: ");
@@ -578,7 +582,7 @@ void t_audio_tx::run(void) {
 			// Packets have been lost
 			int num_lost = adu->getSeqNum() - last_seqnum - 1;
 
-			log_file->write_header("t_audio_tx::run");
+			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": ");

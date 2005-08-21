@@ -22,11 +22,14 @@
 
 #include <string>
 
+class t_sip_message;
+
 using namespace std;
 
 enum t_body_type {
 	BODY_OPAQUE,
-	BODY_SDP
+	BODY_SDP,
+	BODY_SIPFRAG
 };
 
 // Base class for SIP bodies
@@ -56,6 +59,19 @@ public:
 	string	opaque;
 
 	t_sip_body_opaque(string s);
+	string encode(void) const;
+	t_sip_body *copy(void) const;
+	t_body_type get_type(void) const;
+};
+
+// RFC 3420
+// sipfrag body
+class t_sip_body_sipfrag : public t_sip_body {
+public:
+	t_sip_message	*sipfrag;
+
+	t_sip_body_sipfrag(t_sip_message *m);
+	~t_sip_body_sipfrag();
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;

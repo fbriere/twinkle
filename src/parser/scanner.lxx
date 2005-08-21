@@ -40,6 +40,7 @@ TOKEN_SYM	[[:alnum:]\-\.!%\*_\+\'~]
 WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 
 %x C_URI
+%x C_URI_SPECIAL
 %x C_QSTRING
 %x C_LANG
 %x C_WORD
@@ -54,6 +55,7 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 %%
 	switch (t_parser::context) {
 	case t_parser::X_URI:		BEGIN(C_URI); break;
+	case t_parser::X_URI_SPECIAL:	BEGIN(C_URI_SPECIAL); break;
 	case t_parser::X_LANG:		BEGIN(C_LANG); break;
 	case t_parser::X_WORD:		BEGIN(C_WORD); break;
 	case t_parser::X_NUM:		BEGIN(C_NUM); break;
@@ -71,6 +73,7 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^Accept-Language/:	{ return T_HDR_ACCEPT_LANGUAGE; }
 ^Alert-Info/:		{ return T_HDR_ALERT_INFO; }
 ^Allow/:		{ return T_HDR_ALLOW; }
+^(Allow-Events)|u/:	{ return T_HDR_ALLOW_EVENTS; }
 ^Authentication-Info/:	{ return T_HDR_AUTHENTICATION_INFO; }
 ^Authorization/:	{ return T_HDR_AUTHORIZATION; }
 ^(Call-ID)|i/:		{ return T_HDR_CALL_ID; }
@@ -84,6 +87,7 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^CSeq/:			{ return T_HDR_CSEQ; }
 ^Date/:			{ return T_HDR_DATE; }
 ^Error-Info/:		{ return T_HDR_ERROR_INFO; }
+^(Event)|o/:		{ return T_HDR_EVENT; }
 ^Expires/:		{ return T_HDR_EXPIRES; }
 ^(From|f)/:		{ return T_HDR_FROM; }
 ^In-Reply-To/:		{ return T_HDR_IN_REPLY_TO; }
@@ -97,6 +101,8 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^Proxy-Require/:	{ return T_HDR_PROXY_REQUIRE; }
 ^RAck/:			{ return T_HDR_RACK; }
 ^Record-Route/:		{ return T_HDR_RECORD_ROUTE; }
+^(Refer-To)|r/:		{ return T_HDR_REFER_TO; }
+^(Referred-By)|b/:	{ return T_HDR_REFERRED_BY; }
 ^Reply-To/:		{ return T_HDR_REPLY_TO; }
 ^Require/:		{ return T_HDR_REQUIRE; }
 ^Retry-After/:		{ return T_HDR_RETRY_AFTER; }
@@ -104,12 +110,13 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^RSeq/:			{ return T_HDR_RSEQ; }
 ^Server/:		{ return T_HDR_SERVER; }
 ^(Subject)|s/:		{ return T_HDR_SUBJECT; }
+^Subscription-State/:	{ return T_HDR_SUBSCRIPTION_STATE; }
 ^(Supported)|k/:	{ return T_HDR_SUPPORTED; }
 ^Timestamp/:		{ return T_HDR_TIMESTAMP; }
-^(To)|t/:			{ return T_HDR_TO; }
+^(To)|t/:		{ return T_HDR_TO; }
 ^unsupported/:		{ return T_HDR_UNSUPPORTED; }
 ^User-Agent/:		{ return T_HDR_USER_AGENT; }
-^(Via)|v/:			{ return T_HDR_VIA; }
+^(Via)|v/:		{ return T_HDR_VIA; }
 ^Warning/:		{ return T_HDR_WARNING; }
 ^WWW-Authenticate/:	{ return T_HDR_WWW_AUTHENTICATE; }
 ^{TOKEN_SYM}+/:		{ yylval.yyt_str = new string(yytext);
@@ -133,7 +140,10 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 	/* Single character token */
 .		{ return yytext[0]; }
 
-	/* URI. The syntax of a URI will be checked outside the scanner */
+	/* URI. 
+	   This context scans a URI including parameters.
+	   The syntax of a URI will be checked outside the scanner 
+	 */
 <C_URI>\"		{ yy_push_state(C_QSTRING); }
 <C_URI>{TOKEN_SYM}({TOKEN_SYM}|[[:blank:]])*/< {
 			yylval.yyt_str = new string(yytext);
@@ -143,10 +153,6 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 			yylval.yyt_str = new string(yytext);
 			MEMMAN_NEW(yylval.yyt_str);
 			return T_URI; }
-
-	/* TODO: 09/12/04 - removed the semi-colon. is this ok? */
-	/* <C_URI>[^[:blank:]<>;\"\r\n]+ { */
-
 <C_URI>\*		{ return T_URI_WILDCARD; }
 <C_URI>[^[:blank:]<>\"\r\n]+ {
 			yylval.yyt_str = new string(yytext);
@@ -155,6 +161,31 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 <C_URI>[[:blank:]]	 /* Skip white space */
 <C_URI>.		 { return yytext[0]; }
 <C_URI>\n		 { return T_ERROR; }
+
+	/* URI special case.
+	   In several headers (eg. From, To, Contact, Reply-To) the URI
+	   can be enclosed by < and >
+	   If it is enclosed then parameters belong to the URI, if it
+	   is not enclosed then parameters belong to the header.
+	   Parameters are seperated by a semi-colon. 
+	   For the URI special case, parameters belong to the header.
+	   If the parser receives a < from the scanner, then the parser
+	   will switch to the normal URI case.
+	   The syntax of a URI will be checked outside the scanner 
+	 */
+<C_URI_SPECIAL>\"	{ yy_push_state(C_QSTRING); }
+<C_URI_SPECIAL>{TOKEN_SYM}({TOKEN_SYM}|[[:blank:]])*/< {
+			yylval.yyt_str = new string(yytext);
+			MEMMAN_NEW(yylval.yyt_str);
+			return T_DISPLAY; }
+<C_URI_SPECIAL>\*		{ return T_URI_WILDCARD; }
+<C_URI_SPECIAL>[^[:blank:]<>;\"\r\n]+ {
+			yylval.yyt_str = new string(yytext);
+			MEMMAN_NEW(yylval.yyt_str);
+			return T_URI; }
+<C_URI_SPECIAL>[[:blank:]]	 /* Skip white space */
+<C_URI_SPECIAL>.		 { return yytext[0]; }
+<C_URI_SPECIAL>\n		 { return T_ERROR; }
 
 	/* Quoted string (starting after open quote, closing quote
 	   will be consumed but not returned. */

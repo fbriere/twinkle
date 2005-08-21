@@ -42,6 +42,10 @@ void t_hdr_allow::add_method(const string &s) {
 	}
 }
 
+bool t_hdr_allow::contains_method(const t_method &m) const {
+	return (find(method_list.begin(), method_list.end(), m) != method_list.end());
+}
+
 string t_hdr_allow::encode(void) const {
 	string s;
 

@@ -647,6 +647,9 @@ void t_trans_server::process_retransmission(void) {
 }
 
 // RFC 3261 17.2.3
+// NOTE: retransmission of an incoming INVITE for which a 2XX response
+//       has been sent already is checked by the TU.
+//       see dialog::is_invite_retrans
 bool t_trans_server::match(t_request *r, bool cancel) const {
 	t_via &orig_top_via = request->hdr_via.via_list.front();
 	t_via &recv_top_via = r->hdr_via.via_list.front();

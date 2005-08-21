@@ -23,14 +23,18 @@
 #include "exceptions.h"
 #include "line.h"
 #include "log.h"
+#include "sub_refer.h"
 #include "user.h"
 #include "util.h"
 #include "userintf.h"
 #include "audits/memman.h"
+#include "sockets/socket.h"
+#include "stun/stun_transaction.h"
 
 extern t_event_queue	*evq_sender_udp;
 extern t_event_queue	*evq_trans_mgr;
 extern string		user_host;
+extern t_phone		*phone;
 
 ////////////////////////////////////////////////////////////
 // class t_client_request
@@ -43,6 +47,22 @@ t_client_request::t_client_request(t_request *r, const t_tid _tid) :
 		redirector(r->uri)
 {
 	request = (t_request *)r->copy();
+	stun_request = NULL;
+	tid = _tid;
+	ref_count = 1;
+
+	mtx_next_tuid.lock();
+	tuid = next_tuid++;
+	if (next_tuid == 65535) next_tuid = 1;
+	mtx_next_tuid.unlock();
+}
+
+t_client_request::t_client_request(StunMessage *r, const t_tid _tid) :
+		redirector(t_url())
+{
+	request = NULL;
+	stun_request = new StunMessage(*r);
+	MEMMAN_NEW(stun_request);
 	tid = _tid;
 	ref_count = 1;
 
@@ -53,20 +73,40 @@ t_client_request::t_client_request(t_request *r, const t_tid _tid) :
 }
 
 t_client_request::~t_client_request() {
-	MEMMAN_DELETE(request);
-	delete request;
+	if (request) {
+		MEMMAN_DELETE(request);
+		delete request;
+	}
+	
+	if (stun_request) {
+		MEMMAN_DELETE(stun_request);
+		delete stun_request;
+	}
 }
 
 t_client_request *t_client_request::copy(void) {
 	t_client_request *cr = new t_client_request(*this);
 	MEMMAN_NEW(cr);
-	cr->request = (t_request *)request->copy();
+	
+	if (request) {
+		cr->request = (t_request *)request->copy();
+	}
+	
+	if (stun_request) {
+		cr->stun_request = new StunMessage(*stun_request);
+		MEMMAN_NEW(cr->stun_request);
+	}
+	
 	cr->ref_count = 1;
 	return cr;
 }
 
 t_request *t_client_request::get_request(void) const {
 	return request;
+}
+
+StunMessage *t_client_request::get_stun_request(void) const {
+	return stun_request;
 }
 
 t_tuid t_client_request::get_tuid(void) const {
@@ -183,6 +223,20 @@ t_request *t_dialog::create_request(t_method m) {
 		break;
 	}
 
+	// Contact header
+	t_contact_param contact;
+	switch (m) {
+	case REFER:
+	case SUBSCRIBE:
+	case NOTIFY:
+		// RFC 3265 7.1, RFC 3515 2.2
+		// Contact header is mandatory
+		contact.uri.set_url(line->create_user_contact());
+		r->hdr_contact.add_contact(contact);
+		break;
+	default:
+		break;
+	}
 
 	// Via header
 	t_via via(USER_HOST, user_config->sip_udp_port);
@@ -237,15 +291,39 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 		state = DS_TERMINATED;
 		return;
 	}
-
-	call_id = r->hdr_call_id.call_id;
-
+	
 	// Set local tag
 	if (r->hdr_to.tag.size() == 0) {
 		local_tag = NEW_TAG;
 	} else {
 		local_tag = r->hdr_to.tag;
 	}
+	
+	// If STUN is enabled, then first send a STUN binding request to
+	// discover the IP adderss and port for media.
+	if (phone->use_stun) {
+		// The STUN transaction may take a while.
+		// Send 100 Trying
+		resp = r->create_response(R_100_TRYING);
+		resp->hdr_to.set_tag("");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		if (!stun_bind_media()) {
+				// STUN request failed. Send a 500 on the INVITE.
+				resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+				resp->hdr_to.set_tag(local_tag);
+				line->send_response(resp, tuid, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				
+				state = DS_TERMINATED;
+				return;
+		}
+	}
+	
+	call_id = r->hdr_call_id.call_id;
 
 	// Initialize local seqnr
 	local_seqnr = NEW_SEQNR;
@@ -309,74 +387,58 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	}
 
 	ui->cb_incoming_call(line->get_line_number(), r);
+	
+	resp = r->create_response(R_180_RINGING);
+	resp->hdr_to.set_tag(local_tag);
 
-	switch (line->get_state()) {
-	case LS_IDLE:
-		resp = r->create_response(R_180_RINGING);
-		resp->hdr_to.set_tag(local_tag);
+	// RFC 3262 3
+	// Send 180 response reliable if needed
+	if (r->hdr_require.contains(EXT_100REL) ||
+	    (r->hdr_supported.contains(EXT_100REL) &&
+	     (user_config->ext_100rel == EXT_PREFERRED ||
+	      user_config->ext_100rel == EXT_REQUIRED)))
+	{
+		resp->hdr_require.add_feature(EXT_100REL);
+		resp->hdr_rseq.set_resp_nr(++local_resp_nr);
 
-		// RFC 3262 3
-		// Send 180 response reliable if needed
-		if (r->hdr_require.contains(EXT_100REL) ||
-		    (r->hdr_supported.contains(EXT_100REL) &&
-		     (user_config->ext_100rel == EXT_PREFERRED ||
-		      user_config->ext_100rel == EXT_REQUIRED)))
-		{
-			resp->hdr_require.add_feature(EXT_100REL);
-			resp->hdr_rseq.set_resp_nr(++local_resp_nr);
+		// According to RFC 3262 4, a reliable provisional response
+		// must establish a dialog. RFC 3261 12.1.1 tells that
+		// a response that establishes a dialog must contain
+		// a contact header and copy record-route headers from
+		// the request.
 
-			// According to RFC 3261 4, a reliable provisional response
-			// must establish a dialog. RFC 3261 12.1.1 tells that
-			// a response that establishes a dialog must contain
-			// a contact header and copy record-route headers from
-			// the request.
-
-			// Copy the Record-Route header from request to response
-			if (r->hdr_record_route.is_populated()) {
-				resp->hdr_record_route = r->hdr_record_route;
-			}
-
-			// Set Contact header
-			t_contact_param contact;
-			contact.uri.set_url(line->create_user_contact());
-			resp->hdr_contact.add_contact(contact);
-
-			// RFC 3262 5
-			// Create SDP offer in first reliable response if no offer
-			// was received in INVITE.
-			// This implentation does not create an answer in an
-			// reliable 1xx response if an offer was received.
-			if (!session->recvd_offer) {
-				session->create_sdp_offer(resp,
-					local_uri.get_user());
-			}
-
-			// Keep a copy of the response for retransmission
-			resp_1xx_invite = (t_response *)resp->copy();
-
-			// Start 100rel timeout and guard timers
-			line->start_timer(LTMR_100REL_GUARD, get_id());
-			line->start_timer(LTMR_100REL_TIMEOUT, get_id());
+		// Copy the Record-Route header from request to response
+		if (r->hdr_record_route.is_populated()) {
+			resp->hdr_record_route = r->hdr_record_route;
 		}
 
-		line->send_response(resp, req_in_invite->get_tuid(),
-				req_in_invite->get_tid());
-		MEMMAN_DELETE(resp);
-		delete resp;
-		state = DS_W4ANSWER;
-		break;
-	case LS_BUSY:
-		resp = r->create_response(R_486_BUSY_HERE);
-		resp->hdr_to.set_tag(local_tag);
-		line->send_response(resp, req_in_invite->get_tuid(),
-				req_in_invite->get_tid());
-		MEMMAN_DELETE(resp);
-		delete resp;
-		state = DS_TERMINATED;
-		break;
-	default:
-		assert(false);
+		// Set Contact header
+		t_contact_param contact;
+		contact.uri.set_url(line->create_user_contact());
+		resp->hdr_contact.add_contact(contact);
+
+		// RFC 3262 5
+		// Create SDP offer in first reliable response if no offer
+		// was received in INVITE.
+		// This implentation does not create an answer in an
+		// reliable 1xx response if an offer was received.
+		if (!session->recvd_offer) {
+			session->create_sdp_offer(resp, local_uri.get_user());
+		}
+
+		// Keep a copy of the response for retransmission
+		resp_1xx_invite = (t_response *)resp->copy();
+
+		// Start 100rel timeout and guard timers
+		line->start_timer(LTMR_100REL_GUARD, get_id());
+		line->start_timer(LTMR_100REL_TIMEOUT, get_id());
 	}
+
+	line->send_response(resp, req_in_invite->get_tuid(),
+			req_in_invite->get_tid());
+	MEMMAN_DELETE(resp);
+	delete resp;
+	state = DS_W4ANSWER;
 }
 
 // A provisional answer has been sent. Waiting for user to answer.
@@ -608,7 +670,6 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 		respond_prack(r, tuid, tid);
 		break;
 	default:
-		// ACK has not been received. Deny other requests.
 		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
 			"Waiting for ACK");
 		line->send_response(resp, tuid, tid);
@@ -710,6 +771,7 @@ void t_dialog::state_w4ack(t_line_timer timer) {
 		// Send the response directly to the UDP sender thread
 		// as the INVITE transaction completed already.
 		// (see RFC 3261 17.2.1)
+		if (!resp_invite) break; // there is no response to send
 		resp_invite->hdr_via.get_response_dst(ipaddr, port);
 		if (ipaddr == 0) {
 			// This should not happen. The response has been
@@ -749,6 +811,56 @@ void t_dialog::state_w4ack_re_invite(t_line_timer timer) {
 	state_w4ack(timer);
 }
 
+void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	switch(r->method) {
+	case BYE:
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		ui->cb_far_end_hung_up(line->get_line_number());
+
+		if (!sub_refer) {
+			state = DS_TERMINATED;
+		} else {
+			state = DS_CONFIRMED_SUB;
+			if (sub_refer->get_role() == SR_SUBSCRIBER) {
+				// End subscription
+				sub_refer->unsubscribe();
+			}
+		}
+		break;
+	case ACK:
+		// Ignore ACK
+		break;
+	case OPTIONS:
+		resp = line->create_options_response(r, true);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+	case PRACK:
+		// RFC 3262 3
+		// This is a late PRACK. Respond in a normal way.
+		respond_prack(r, tuid, tid);
+		break;
+	case SUBSCRIBE:
+		process_subscribe(r, tuid, tid);
+		break;
+	case NOTIFY:
+		process_notify(r, tuid, tid);
+		break;
+	default:
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
+			"Waiting for re-INVITE response");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+}
+
 // In the confirmed state, requests will be responded.
 void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
@@ -764,7 +876,16 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
-		state = DS_TERMINATED;
+
+		if (!sub_refer) {
+			state = DS_TERMINATED;
+		} else {
+			state = DS_CONFIRMED_SUB;
+			if (sub_refer->get_role() == SR_SUBSCRIBER) {
+				// End subscription
+				sub_refer->unsubscribe();
+			}
+		}
 		break;
 	case ACK:
 		// Ignore ACK
@@ -779,12 +900,95 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		// This is a late PRACK. Respond in a normal way.
 		respond_prack(r, tuid, tid);
 		break;
+	case REFER:
+		process_refer(r, tuid, tid);
+		break;
+	case SUBSCRIBE:
+		process_subscribe(r, tuid, tid);
+		break;
+	case NOTIFY:
+		process_notify(r, tuid, tid);
+		break;
 	default:
-		resp = r->create_response(R_400_BAD_REQUEST);
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		break;
+	}
+}
+
+void t_dialog::state_confirmed(t_line_timer timer) {
+	switch(timer) {
+	case LTMR_GLARE_RETRY:
+		switch(reinvite_purpose) {
+		case REINVITE_HOLD:
+			hold();
+			break;
+		case REINVITE_RETRIEVE:
+			retrieve();
+			line->retry_retrieve_succeeded();
+			// Note that the re-INVITE is not completed here yet.
+			// If re-INVITE fails then line->failed_retrieve will
+			// be called later.
+			break;
+		default:
+			assert(false);
+		}
+
+		break;
+	default:
+		// Other timeouts are not exepcted. Ignore.
+		break;
+	}
+}
+
+void t_dialog::state_confirmed_sub(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	switch(r->method) {
+	case OPTIONS:
+		resp = line->create_options_response(r, true);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+	case SUBSCRIBE:
+		process_subscribe(r, tuid, tid);
+		break;
+	case NOTIFY:
+		process_notify(r, tuid, tid);
+		break;
+	default:
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+
+	if (!sub_refer) {
+		// The subscription has been terminated already.
+		state = DS_TERMINATED;
+	} else if (sub_refer->get_state() == SS_TERMINATED) {
+		MEMMAN_DELETE(sub_refer);
+		delete sub_refer;
+		sub_refer = NULL;
+		state = DS_TERMINATED;
+	}
+}
+
+void t_dialog::state_conf_retr_stun(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	
+	if (r->method == INVITE) {
+		resp = r->create_response(R_491_REQUEST_PENDING);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+	} else {
+		// All other requests should be handled as in the confirmed
+		// state.
+		state_confirmed(r, tuid, tid);
 	}
 }
 
@@ -815,6 +1019,10 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
 			delete resp;
+			
+			MEMMAN_DELETE(session_re_invite);
+			delete session_re_invite;
+			session_re_invite = NULL;
 
 			// Stay in the confirmed state. The sender of the
 			// request has to determine if the dialog needs to
@@ -831,8 +1039,37 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
 			delete resp;
+			
+			MEMMAN_DELETE(session_re_invite);
+			delete session_re_invite;
+			session_re_invite = NULL;
 
 			// Stay in the confirmed state.
+			return;
+		}
+	}
+	
+	// If STUN is enabled, then first send a STUN binding request to
+	// discover the IP adderss and port for media if no RTP stream
+	// is currently active.
+	if (phone->use_stun && !session->is_rtp_active()) {
+		// The STUN transaction may take a while.
+		// Send 100 Trying
+		resp = r->create_response(R_100_TRYING);
+		resp->hdr_to.set_tag("");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		if (!stun_bind_media()) {
+			// STUN request failed. Send a 500 on the INVITE.
+			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+			resp->hdr_to.set_tag(local_tag);
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+				
+			state = DS_TERMINATED;
 			return;
 		}
 	}
@@ -878,6 +1115,174 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	state = DS_W4ACK_RE_INVITE;
 }
 
+void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	t_contact_param contact;
+
+	// RFC 3515
+	if (sub_refer || !user_config->allow_refer) {
+		// A reference is already in progress or REFER is not
+		// allowed.
+		resp = r->create_response(R_603_DECLINE);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		refer_accepted = false;
+		return;
+	}
+
+	// Check if the URI scheme is supported
+	if (r->hdr_refer_to.uri.get_scheme() != "sip") {
+		resp = r->create_response(R_416_UNSUPPORTED_URI_SCHEME);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		refer_accepted = false;
+		return;
+	}
+
+	resp = r->create_response(R_202_ACCEPTED);
+
+	// RFC 3515 2.2
+	// Contact header is mandatory
+	contact.uri.set_url(line->create_user_contact());
+	resp->hdr_contact.add_contact(contact);
+	line->send_response(resp, tuid, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+
+	// RFC 3515
+	// The event header of a NOTIFY to a first REFER MAY
+	// include the id paramter. NOTIFY's to subsequent
+	// REFERs MUST include the id parameter (CSeq from REFER).
+	sub_refer = new t_sub_refer(this, SR_NOTIFIER,
+		ulong2str(r->hdr_cseq.seqnr));
+	MEMMAN_NEW(sub_refer);
+
+	// Send immediate NOTIFY
+	resp = new t_response(R_100_TRYING);
+	MEMMAN_NEW(resp);
+	if (user_config->ask_user_to_refer) {
+		// If the user has to grant permission, then the
+		// subscription is pending.
+		sub_refer->send_notify(resp, SUBSTATE_PENDING);
+	} else {
+		sub_refer->send_notify(resp, SUBSTATE_ACTIVE);
+	}
+	MEMMAN_DELETE(resp);
+	delete resp;
+
+	if (user_config->ask_user_to_refer) {
+		if (r->hdr_referred_by.is_populated()) {
+			refer_accepted = ui->cb_ask_user_to_refer(
+				r->hdr_refer_to.uri,
+				r->hdr_refer_to.display,
+				r->hdr_referred_by.uri,
+				r->hdr_referred_by.display);
+		} else {
+			refer_accepted = ui->cb_ask_user_to_refer(
+				r->hdr_refer_to.uri,
+				r->hdr_refer_to.display,
+				t_url(), "");
+		}
+	} else {
+		refer_accepted = true;
+	}
+
+	if (!refer_accepted)
+	{
+		// User denied REFER
+		// RFC 3515 2.4.5
+		resp = new t_response(R_603_DECLINE);
+		MEMMAN_NEW(resp);
+		sub_refer->send_notify(resp, SUBSTATE_TERMINATED,
+				EV_REASON_REJECTED);
+		MEMMAN_DELETE(resp);
+		delete resp;
+	}
+}
+
+void t_dialog::process_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	if (sub_refer && sub_refer->match(r)) {
+		sub_refer->recv_subscribe(r, tuid, tid);
+		if (sub_refer->get_state() == SS_TERMINATED) {
+			MEMMAN_DELETE(sub_refer);
+			delete sub_refer;
+			sub_refer = NULL;
+		}
+
+		return;
+	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST,
+			REASON_481_SUBSCRIPTION_NOT_EXIST);
+	line->send_response(resp, tuid, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
+void t_dialog::process_notify(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	if (!sub_refer &&
+	    (refer_state == REFST_W4RESP || refer_state == REFST_W4NOTIFY))
+	{
+		// First NOTIFY after sending a REFER
+		sub_refer = new t_sub_refer(this, SR_SUBSCRIBER, r->hdr_event.id);
+		MEMMAN_NEW(sub_refer);
+		refer_state = REFST_PENDING;
+	}
+
+	if (sub_refer && sub_refer->match(r)) {
+		sub_refer->recv_notify(r, tuid, tid);
+		if (sub_refer->get_state() == SS_TERMINATED) {
+			// Set the refer state to NULL before calling the UI
+			// call back functions as the user interface might use
+			// the refer state to render the correct status to the
+			// user.
+			refer_state = REFST_NULL;
+		
+			// Determine outcome of the reference
+			switch(sub_refer->get_sr_result()) {
+			case SRR_INPROG:
+				// The outcome of the reference is unknown.
+				// Treat it as a success as no new info will
+				// come to the referrer.
+				refer_succeeded = true;
+				ui->cb_refer_result_inprog(line->get_line_number());
+				break;
+			case SRR_FAILED:
+				refer_succeeded = false;
+				ui->cb_refer_result_failed(line->get_line_number());
+				break;
+			case SRR_SUCCEEDED:
+				refer_succeeded = true;
+				ui->cb_refer_result_success(line->get_line_number());
+				break;
+			default:
+				assert(false);
+			}
+
+			MEMMAN_DELETE(sub_refer);
+			delete sub_refer;
+			sub_refer = NULL;
+		} else if (!sub_refer->is_pending()) {
+			refer_state = REFST_ACTIVE;
+		}
+
+		return;
+	}
+
+	// RFC 3265 3.2.4
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST,
+			REASON_481_SUBSCRIPTION_NOT_EXIST);
+	line->send_response(resp, tuid, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
 // INVITE sent. Waiting for a first non-100 response.
 void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	if (r->hdr_cseq.method != INVITE) return;
@@ -913,6 +1318,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	switch (r->get_class()) {
 	case R_1XX:
 		// Provisional response received.
+		line->ci_set_last_provisional_reason(r->reason);
 		ui->cb_provisional_resp_invite(line->get_line_number(), r);
 		if (r->code > R_100_TRYING && r->hdr_to.tag.size() > 0) {
 			state = DS_EARLY;
@@ -931,6 +1337,16 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	case R_2XX:
 		// Success received.
 		ack_2xx_invite(r);
+
+		// Check for REFER support
+		// If the Allow header is not present then assume REFER
+		// is supported.
+		if (!r->hdr_allow.is_populated() ||
+		    r->hdr_allow.contains_method(REFER))
+		{
+			line->ci_set_refer_supported(true);
+		}
+
 		ui->cb_call_answered(line->get_line_number(), r);
 		state = DS_CONFIRMED;
 
@@ -955,6 +1371,11 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		remove_client_request(&req_out_invite);
 		state = DS_TERMINATED;
 		break;
+	}
+
+	// Notify progress to the referror if this is a referred call
+	if (is_referred_call) {
+		get_phone()->notify_refer_progress(r, line->get_line_number());
 	}
 }
 
@@ -987,6 +1408,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	switch (r->get_class()) {
 	case R_1XX:
 		// Provisional response received.
+		line->ci_set_last_provisional_reason(r->reason);
 		ui->cb_provisional_resp_invite(line->get_line_number(), r);
 
 		if (request_cancelled) {
@@ -997,6 +1419,16 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	case R_2XX:
 		// Success received.
 		ack_2xx_invite(r);
+
+		// Check for REFER support
+		// If the Allow header is not present then assume REFER
+		// is supported.
+		if (!r->hdr_allow.is_populated() ||
+		    r->hdr_allow.contains_method(REFER))
+		{
+			line->ci_set_refer_supported(true);
+		}
+
 		ui->cb_call_answered(line->get_line_number(), r);
 		state = DS_CONFIRMED;
 
@@ -1022,6 +1454,11 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		state = DS_TERMINATED;
 		break;
 	}
+
+	// Notify progress to the referror if this is a referred call
+	if (is_referred_call) {
+		get_phone()->notify_refer_progress(r, line->get_line_number());
+	}
 }
 
 // BYE sent. Waiting for response.
@@ -1036,7 +1473,37 @@ void t_dialog::state_w4bye_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		// All final responses terminate the dialog.
 		ui->cb_call_ended(line->get_line_number(), r);
 		remove_client_request(&req_out);
-		state = DS_TERMINATED;
+		if (!sub_refer) {
+			state = DS_TERMINATED;
+		} else {
+			state = DS_CONFIRMED_SUB;
+			if (sub_refer->get_role() == SR_SUBSCRIBER) {
+				// End subscription
+				sub_refer->unsubscribe();
+			}
+		}
+		break;
+	}
+}
+
+void t_dialog::state_w4bye_resp(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	switch(r->method) {
+	case BYE:
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		// A BYE glare situation. Keep waiting for the BYE
+		// response.
+		break;
+	default:
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
 		break;
 	}
 }
@@ -1051,6 +1518,27 @@ void t_dialog::state_confirmed_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	case OPTIONS:
 		ui->cb_options_response(r);
 		remove_client_request(&req_out);
+		break;
+	case REFER:
+		remove_client_request(&req_refer);
+
+		if (refer_state != REFST_W4RESP) {
+			// NOTIFY has already been received. No need to
+			// process the REFER response anymore. Interesting
+			// issue might be: what if NOTIFY has been received and
+			// now a failure response comes in?
+			break;
+		}
+
+		if (!r->is_success()) {
+			// REFER failed
+			refer_state = REFST_NULL;
+			refer_succeeded = false;
+			ui->cb_refer_failed(line->get_line_number(), r);
+			break;
+		}
+
+		refer_state = REFST_W4NOTIFY;
 		break;
 	default:
 		// The received response should match the pending request.
@@ -1183,8 +1671,6 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	default:
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
-		// TODO: automatic retransmit when 491 is received
-		//       RFC 3261 14.1
 		line->stop_timer(LTMR_RE_INVITE_GUARD, get_id());
 		ui->cb_reinvite_failed(line->get_line_number(), r);
 		remove_client_request(&req_out_invite);
@@ -1197,6 +1683,33 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		session_re_invite = NULL;
 
 		state = DS_CONFIRMED;
+
+		switch(reinvite_purpose) {
+		case REINVITE_HOLD:
+			// A call hold may not fail for the user as
+			// this cause problems with soundcard access and
+			// showing line status in the GUI. Even though re-INVITE
+			// failed, the RTP still stopped. So simply indicated
+			// the the hold failed, such that a subsequent retrieve
+			// can simply restart the RTP.
+			hold_failed = true;
+			break;
+		case REINVITE_RETRIEVE:
+			line->failed_retrieve();
+			if (r->code != R_491_REQUEST_PENDING) {
+				ui->cb_retrieve_failed(line->get_line_number(), r);
+			}
+			break;
+		default:
+			assert(false);
+		}
+
+		// RFC 3261 14.1
+		// Start wait timer before retrying a re-INVITE after a
+		// glare.
+		if (r->code == R_491_REQUEST_PENDING) {
+			line->start_timer(LTMR_GLARE_RETRY, get_id());
+		}
 
 		// RFC 3261 14.1
 		if (r->code == R_408_REQUEST_TIMEOUT ||
@@ -1467,7 +1980,7 @@ void t_dialog::resend_request(t_client_request *cr) {
 // Public
 ////////////
 
-t_dialog::t_dialog(t_line *_line) {
+t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 	mtx_next_id.lock();
 	id = next_id++;
 	if (next_id == 65535) next_id = 1;
@@ -1479,6 +1992,10 @@ t_dialog::t_dialog(t_line *_line) {
 	req_in_invite = NULL;
 	req_cancel = NULL;
 	req_prack = NULL;
+	req_refer = NULL;
+	req_stun = NULL;
+
+	call_id_owner = false;
 
 	request_cancelled = false;
 	end_after_ack = false;
@@ -1494,13 +2011,24 @@ t_dialog::t_dialog(t_line *_line) {
 	local_resp_nr = 0;
 	remote_resp_nr = 0;
 
-	state = DS_NULL;
+	dialog_type = _dialog_type;
+	switch(dialog_type) {
+	case DT_INVITE:
+		state = DS_NULL;
+		break;
+	case DT_SUBSCRIPTION:
+		state = DS_NULL_SUB;
+		break;
+	default:
+		assert(false);
+	}
 
 	// Timers
 	dur_ack_timeout = 0;
 	id_ack_timeout = 0;
 	id_ack_guard = 0;
 	id_re_invite_guard = 0;
+	id_glare_retry = 0;
 
 	// RFC 3262
 	// Timers
@@ -1509,11 +2037,16 @@ t_dialog::t_dialog(t_line *_line) {
 	id_100rel_guard = 0;
 
 	// Create session
-	unsigned short rtp_port = user_config->rtp_port +
-					_line->get_line_number() * 2;
-	session = new t_session(this, USER_HOST, rtp_port);
+	session = new t_session(this, USER_HOST, _line->get_rtp_port());
 	MEMMAN_NEW(session);
 	session_re_invite = NULL;
+
+	// Subscription
+	sub_refer = NULL;
+	is_referred_call = false;
+	refer_state = REFST_NULL;
+	refer_accepted = false;
+	refer_succeeded = false;
 }
 
 t_dialog::~t_dialog() {
@@ -1522,6 +2055,8 @@ t_dialog::~t_dialog() {
 	if (req_in_invite) remove_client_request(&req_in_invite);
 	if (req_cancel) remove_client_request(&req_cancel);
 	if (req_prack) remove_client_request(&req_prack);
+	if (req_refer) remove_client_request(&req_refer);
+	if (req_stun) remove_client_request(&req_stun);
 	if (resp_invite) { MEMMAN_DELETE(resp_invite); delete resp_invite; }
 	if (resp_1xx_invite) {
 		MEMMAN_DELETE(resp_1xx_invite);
@@ -1533,6 +2068,7 @@ t_dialog::~t_dialog() {
 		MEMMAN_DELETE(session_re_invite);
 		delete session_re_invite;
 	}
+	if (sub_refer) { MEMMAN_DELETE(sub_refer); delete sub_refer; }
 }
 
 t_dialog_id t_dialog::get_id(void) const {
@@ -1554,6 +2090,8 @@ t_dialog *t_dialog::copy(void) {
 	if (req_out_invite) d->req_out_invite->inc_ref_count();
 	if (req_in_invite) d->req_in_invite->inc_ref_count();
 	if (req_prack) d->req_prack->inc_ref_count();
+	if (req_refer) d->req_refer->inc_ref_count();
+	if (req_stun) d->req_stun->inc_ref_count();
 
 	// The open dialog will handle the CANCEL, so delete it
 	// from the copy.
@@ -1587,12 +2125,21 @@ t_dialog *t_dialog::copy(void) {
 }
 
 void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
-		const string &subject)
+		const string &subject, const t_hdr_referred_by &hdr_referred_by)
 {
 	if (state != DS_NULL) {
 		throw X_DIALOG_ALREADY_ESTABLISHED;
 	}
-
+	
+	// If STUN is enabled, then first send a STUN binding request to
+	// discover the IP adderss and port for media.
+	if (phone->use_stun) {
+		if (!stun_bind_media()) {
+				state = DS_TERMINATED;
+				return;
+		}
+	}
+	
 	t_request invite(INVITE);
 	invite.uri = to_uri;
 
@@ -1659,6 +2206,12 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 
 	// Organization
 	SET_HDR_ORGANIZATION(invite.hdr_organization);
+
+	// RFC 3892 Referred-By header if a call is initated because
+	// of an incoming REFER.
+	if (hdr_referred_by.is_populated()) {
+		invite.hdr_referred_by = hdr_referred_by;
+	}
 
 	// Create SDP offer
 	session->create_sdp_offer(&invite, local_uri.get_user());
@@ -1993,9 +2546,28 @@ bool t_dialog::redirect_request(t_response *resp) {
 }
 
 
-void t_dialog::hold(void) {
+void t_dialog::hold(bool rtponly) {
 	assert(!session_re_invite);
 
+	// Stop glare retry timer
+	if (id_glare_retry) {
+		line->stop_timer(LTMR_GLARE_RETRY, get_id());
+	}
+
+	reinvite_purpose = REINVITE_HOLD;
+
+	if (rtponly) {
+		session->stop_rtp();
+		session->hold();
+
+		// Stopping the RTP only is like a full call hold where
+		// the re-INVITE failed. By setting the hold_failed flag,
+		// a subsequent retrieve will only start RTP.
+		hold_failed = true;
+		return;
+	}
+
+	hold_failed = false;
 	session_re_invite = session->create_call_hold();
 	send_re_invite();
 
@@ -2011,7 +2583,7 @@ void t_dialog::hold(void) {
 	//    the 200 OK on the first re-INVITE, then the audio streams
 	//    for the second line will be started already while the first
 	//    line still has the audio device open. On some systems this
-	//    causes a dead lock is the audio device may only be opened
+	//    causes a dead lock as the audio device may only be opened
 	//    once.
 	//
 	// Also if the re-INVITE to put the line on-hold fails, the
@@ -2019,18 +2591,133 @@ void t_dialog::hold(void) {
 	// as the user has switched to the other line. So stopping the
 	// audio now will make sure the audio device is idle when the
 	// second call is retrieved.
-	if (session) session->stop_rtp();
+	session->stop_rtp();
+
+	// Prevent RTP stream from getting started even after the
+	// hold fails.
+	session->hold();
 }
 
 void t_dialog::retrieve(void) {
 	assert(!session_re_invite);
 
+	// Stop glare retry timer
+	if (id_glare_retry) {
+		line->stop_timer(LTMR_GLARE_RETRY, get_id());
+	}
+	
+	// Allow RTP stream to be started again.
+	session->unhold();
+
+	// If the previous call-hold failed, then only RTP needs to
+	// be restarted. The session description did never change
+	// because of the failure.
+	if (hold_failed) {
+		session->start_rtp();
+		return;
+	}
+	
+	// If STUN is enabled, then first send a STUN binding request to
+	// discover the IP adderss and port for media.
+	if (phone->use_stun) {
+		if (!stun_bind_media()) {	
+			// No re-INVITE can be sent. Simply return.
+			// User will decide if the call should be
+			// torn down.
+			return;
+		}
+	}
+
+	reinvite_purpose = REINVITE_RETRIEVE;
 	session_re_invite = session->create_call_retrieve();
 	send_re_invite();
 }
 
+void t_dialog::send_refer(const t_url &uri, const string &display) {
+	if (state != DS_CONFIRMED) return;
+
+	if (refer_state != REFST_NULL) return;
+
+	// If a previous refer is still in progress, then do nothing
+	if (req_refer) {
+		log_file->write_report("A REFER request is already in progress.",
+			"t_dialog::send_refer");
+		return;
+	}
+
+	// If a refer subscription already exists, then do nothing
+	if (sub_refer) {
+		log_file->write_report("Refer subscription exists already.",
+			"t_dialog::send_refer");
+		return;
+	}
+
+	t_request *refer = create_request(REFER);
+
+	// Refer-To header
+	refer->hdr_refer_to.set_uri(uri);
+	refer->hdr_refer_to.set_display(display);
+
+	// Referred-By header
+	refer->hdr_referred_by.set_uri(line->create_user_uri());
+	refer->hdr_referred_by.set_display(user_config->display);
+
+	req_refer = new t_client_request(refer, 0);
+	MEMMAN_NEW(req_refer);
+	line->send_request(refer, req_refer->get_tuid());
+	MEMMAN_DELETE(refer);
+	delete refer;
+
+	refer_succeeded = false;
+	refer_state = REFST_W4RESP;
+}
+
 void t_dialog::send_dtmf(char digit) {
 	if (session) session->send_dtmf(digit);
+}
+
+bool t_dialog::stun_bind_media(void) {
+	try {
+		unsigned long mapped_ip;
+		unsigned short mapped_port;
+		int stun_err_code;
+		string stun_err_reason;
+		bool ret = get_stun_binding(line->get_rtp_port(),
+			mapped_ip, mapped_port,
+			stun_err_code, stun_err_reason);
+			
+		if (!ret) {
+			// STUN request failed
+			ui->cb_stun_failed(stun_err_code, stun_err_reason);
+			
+			log_file->write_header("t_dialog::stun_bind_media", 
+				LOG_NORMAL, LOG_CRITICAL);
+			log_file->write_raw("STUN bind request for media failed.\n");
+			log_file->write_raw(stun_err_code);
+			log_file->write_raw(" ");
+			log_file->write_raw(stun_err_reason);
+			log_file->write_endl();
+			log_file->write_footer();
+			return false;
+		}
+		
+		// STUN binding request succeeded.
+		session->receive_host = h_ip2str(mapped_ip);
+		session->receive_port = mapped_port;
+	} catch (int err) {
+		// STUN request failed
+		ui->cb_stun_failed();
+		
+		log_file->write_header("t_dialog::stun_bind_media", 
+			LOG_NORMAL, LOG_CRITICAL);
+		log_file->write_raw("STUN bind request for media failed.\n");
+		log_file->write_raw(strerror(err));
+		log_file->write_endl();
+		log_file->write_footer();
+		return false;
+	}
+	
+	return true;
 }
 
 void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
@@ -2123,9 +2810,22 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 
 	// Determine if this is an INVITE or non-INVITE response
 	t_client_request *req;
-	if (r->hdr_cseq.method == INVITE) {
+	bool send_to_sub_refer = false;
+
+	switch(r->hdr_cseq.method) {
+	case INVITE:
 		req = req_out_invite;
-	} else {
+		break;
+	case SUBSCRIBE:
+	case NOTIFY:
+		if (!sub_refer) return;
+		req = sub_refer->req_out;
+		send_to_sub_refer = true;
+		break;
+	case REFER:
+		req = req_refer;
+		break;
+	default:
 		req = req_out;
 	}
 
@@ -2143,6 +2843,19 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 	// Set the transaction identifier. This identifier is needed if the
 	// transaction must be aborted at a later time.
 	req->set_tid(tid);
+
+	if (send_to_sub_refer) {
+		sub_refer->recv_response(r, tuid, tid);
+		if (sub_refer->get_state() == SS_TERMINATED) {
+			MEMMAN_DELETE(sub_refer);
+			delete sub_refer;
+			sub_refer = NULL;
+			if (state == DS_CONFIRMED_SUB) {
+				state = DS_TERMINATED;
+			}
+		}
+		return;
+	}
 
 	switch (state) {
 	case DS_W4INVITE_RESP:
@@ -2191,6 +2904,7 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		}
 
 		if (req_in_invite) {
+			// RFC 3261 14.2
 			// Another INVITE is received while the previous
 			// one is not finished.
 			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
@@ -2200,6 +2914,8 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 			delete resp;
 			return;
 		} else if (req_out_invite) {
+			// RFC 3261 14.2
+			// re-INVITE glare
 			resp = r->create_response(R_491_REQUEST_PENDING);
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
@@ -2210,6 +2926,10 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 			MEMMAN_NEW(req_in_invite);
 		}
 		break;
+	case REFER:
+		// Reset refer_accepted indication.
+		refer_accepted = false;
+		// fall thru
 	default:
 		// Check cseq
 		if (r->hdr_cseq.seqnr <= remote_seqnr) {
@@ -2231,11 +2951,25 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 	case DS_W4ANSWER:
 		state_w4answer(r, tuid, tid);
 		break;
+	case DS_W4RE_INVITE_RESP:
+	case DS_W4RE_INVITE_RESP2:
+		state_w4re_invite_resp(r, tuid, tid);
+		break;
+	case DS_W4BYE_RESP:
+		state_w4bye_resp(r, tuid, tid);
+		break;
 	case DS_CONFIRMED:
 		state_confirmed(r, tuid, tid);
 		break;
+	case DS_CONFIRMED_SUB:
+		state_confirmed_sub(r, tuid, tid);
+		break;
 	default:
 		// No request expected in other states. Discard.
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
 		break;
 	}
 }
@@ -2250,6 +2984,10 @@ void t_dialog::recvd_cancel(t_request *r, t_tid cancel_tid,
 
 	// Send 200 as response to CANCEL
 	resp = r->create_response(R_200_OK);
+	// RFC 3261 9.2
+	// The To-tag in the response to the CANCEL should be the same
+	// as the To-tag in the original request.
+	resp->hdr_to.set_tag(local_tag);
 	line->send_response(resp, 0, cancel_tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
@@ -2262,6 +3000,11 @@ void t_dialog::recvd_cancel(t_request *r, t_tid cancel_tid,
 		// Ignore CANCEL in other states.
 		break;
 	}
+}
+
+void t_dialog::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
+	// Not used anymore.
+	// STUN requests are performed in a synchronous way.
 }
 
 // RFC 3261 13.3.1.4
@@ -2281,7 +3024,7 @@ void t_dialog::answer(void) {
 	if (state != DS_W4ANSWER) {
 		throw X_WRONG_STATE;
 	}
-
+	
 	resp_invite = invite_req->create_response(R_200_OK);
 	resp_invite->hdr_to.set_tag(local_tag);
 
@@ -2411,6 +3154,13 @@ bool t_dialog::match_response(t_response *r, t_tuid tuid) {
 		(remote_tag.size() == 0 || remote_tag == r->hdr_to.tag));
 }
 
+bool t_dialog::match_response(StunMessage *r, t_tuid tuid) {
+	if (tuid == 0) return false;
+	if (!req_stun) return false;
+
+	return (req_stun->get_tuid() == tuid);
+}
+
 bool t_dialog::match_request(t_request *r) {
 	return (call_id == r->hdr_call_id.call_id &&
 		local_tag == r->hdr_to.tag &&
@@ -2419,6 +3169,57 @@ bool t_dialog::match_request(t_request *r) {
 
 bool t_dialog::match_cancel(t_request *r, t_tid target_tid) {
 	return (req_in_invite && req_in_invite->get_tid() == target_tid);
+}
+
+bool t_dialog::is_invite_retrans(t_request *r) {
+	assert(r->method == INVITE);
+
+	// An INVITE can only be a retransmission if an incoming INVITE is
+	// still in progress.
+	if (!req_in_invite) return false;
+	t_request *request = req_in_invite->get_request();
+
+	// RFC 3261 17.2.3
+	t_via &orig_top_via = request->hdr_via.via_list.front();
+	t_via &recv_top_via = r->hdr_via.via_list.front();
+
+	if (recv_top_via.rfc3261_compliant()) {
+		if (orig_top_via.branch != recv_top_via.branch) return false;
+		if (orig_top_via.host != recv_top_via.host) return false;
+		if (orig_top_via.port != recv_top_via.port) return false;
+		return (request->hdr_cseq.method == r->hdr_cseq.method);
+	}
+
+	// Matching rules for backward compatibiliy with RFC 2543
+	// TODO: verify rules for matching via headers
+	return (request->uri.sip_match(r->uri) &&
+		request->hdr_to.tag == r->hdr_to.tag &&
+		request->hdr_from.tag == r->hdr_from.tag &&
+		request->hdr_call_id.call_id == r->hdr_call_id.call_id &&
+		request->hdr_cseq.seqnr == r->hdr_cseq.seqnr &&
+		orig_top_via.host == recv_top_via.host &&
+		orig_top_via.port == recv_top_via.port);
+}
+
+void t_dialog::process_invite_retrans(void) {
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	// Retransmit 2xx response.
+	// Send the response directly to the UDP sender thread
+	// as the INVITE transaction completed already.
+	// (see RFC 3261 17.2.1)
+	if (!resp_invite) return; // there is no response to send
+	resp_invite->hdr_via.get_response_dst(ipaddr, port);
+	if (ipaddr == 0) {
+		// This should not happen. The response has been
+		// sent before so it should be possible to sent
+		// it again. Ignore the timeout. When the ACK
+		// guard timer expires, the dialog will be
+		// cleaned up.
+		return;
+	}
+	evq_sender_udp->push_network(resp_invite, ipaddr, port);
 }
 
 t_dialog_state t_dialog::get_state(void) const {
@@ -2439,9 +3240,34 @@ void t_dialog::timeout(t_line_timer timer) {
 	case DS_W4ANSWER:
 		state_w4answer(timer);
 		break;
+	case DS_CONFIRMED:
+		state_confirmed(timer);
+		break;
 	default:
 		// Timeout not expected in other states. Ignore.
 		break;
+	}
+}
+
+void t_dialog::timeout_sub(t_subscribe_timer timer, const string &event_type,
+		const string &event_id)
+{
+	if (sub_refer &&
+	    sub_refer->get_event_type() == event_type &&
+	    sub_refer->get_event_id() == event_id)
+	{
+		sub_refer->timeout(timer);
+	} else {
+		// Timeout does not match with the current subscription.
+		// Ignore.
+		return;
+	}
+
+	if (sub_refer->get_state() == SS_TERMINATED && state == DS_CONFIRMED_SUB) {
+		MEMMAN_DELETE(sub_refer);
+		delete sub_refer;
+		sub_refer = NULL;
+		state = DS_TERMINATED;
 	}
 }
 
@@ -2457,5 +3283,21 @@ t_audio_session *t_dialog::get_audio_session(void) const {
 	if (!session) return NULL;
 
 	return session->get_audio_session();
+}
+
+// RFC 3515
+// Send a NOTIFY with reference progress to the referror
+void t_dialog::notify_refer_progress(t_response *r) {
+	if (!sub_refer) return;
+
+	if (r->is_final()) {
+		sub_refer->send_notify(r, SUBSTATE_TERMINATED, EV_REASON_NORESOURCE);
+	} else {
+		sub_refer->send_notify(r, SUBSTATE_ACTIVE);
+	}
+}
+
+bool t_dialog::is_call_id_owner(void) const {
+	return call_id_owner;
 }
 

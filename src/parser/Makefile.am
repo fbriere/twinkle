@@ -9,6 +9,16 @@ AM_LFLAGS = -is
 
 CXXFLAGS = @PARSER_CXXFLAGS@
 
+# This target is only for testing the parser in isolation
+# noinst_PROGRAMS = sipparse
+
+# sipparse_SOURCES = main.cpp
+
+# sipparse_LDADD = $(top_builddir)/src/util.o\
+#	$(top_builddir)/src/parser/libsipparser.a\
+#	$(top_builddir)/src/sdp/libsdpparser.a\
+#	$(top_builddir)/src/sockets/libsocket.a
+
 noinst_LIBRARIES = libsipparser.a
 
 libsipparser_a_SOURCES =\
@@ -21,6 +31,7 @@ libsipparser_a_SOURCES =\
         hdr_accept_language.cpp\
         hdr_alert_info.cpp\
         hdr_allow.cpp\
+	hdr_allow_events.cpp\
         hdr_auth_info.cpp\
         hdr_authorization.cpp\
         hdr_call_id.cpp\
@@ -34,6 +45,7 @@ libsipparser_a_SOURCES =\
         hdr_cseq.cpp\
         hdr_date.cpp\
         hdr_error_info.cpp\
+	hdr_event.cpp\
         hdr_expires.cpp\
         hdr_from.cpp\
         hdr_in_reply_to.cpp\
@@ -47,6 +59,8 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
+	hdr_refer_to.cpp\
+	hdr_referred_by.cpp\
         hdr_reply_to.cpp\
         hdr_require.cpp\
         hdr_retry_after.cpp\
@@ -54,6 +68,7 @@ libsipparser_a_SOURCES =\
         hdr_rseq.cpp\
         hdr_server.cpp\
         hdr_subject.cpp\
+	hdr_subscription_state.cpp\
         hdr_supported.cpp\
         hdr_timestamp.cpp\
         hdr_to.cpp\
@@ -81,6 +96,7 @@ libsipparser_a_SOURCES =\
         hdr_accept_language.h\
         hdr_alert_info.h\
         hdr_allow.h\
+	hdr_allow_events.h\
         hdr_auth_info.h\
         hdr_authorization.h\
         hdr_call_id.h\
@@ -94,6 +110,7 @@ libsipparser_a_SOURCES =\
         hdr_cseq.h\
         hdr_date.h\
         hdr_error_info.h\
+	hdr_event.h\
         hdr_expires.h\
         hdr_from.h\
         hdr_in_reply_to.h\
@@ -107,6 +124,8 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
+	hdr_refer_to.h\
+	hdr_referred_by.h\
         hdr_reply_to.h\
         hdr_require.h\
         hdr_retry_after.h\
@@ -114,6 +133,7 @@ libsipparser_a_SOURCES =\
         hdr_rseq.h\
         hdr_server.h\
         hdr_subject.h\
+	hdr_subscription_state.h\
         hdr_supported.h\
         hdr_timestamp.h\
         hdr_to.h\

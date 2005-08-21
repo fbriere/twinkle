@@ -1,8 +1,8 @@
 AC_INIT(src/phone.h)
 AM_CONFIG_HEADER(src/twinkle_config.h)
 
-AM_INIT_AUTOMAKE(twinkle,0.1)
-AC_DEFINE(VERSION_DATE,["April 27 2005"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,0.2.1)
+AC_DEFINE(VERSION_DATE,["July 30 2005"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -32,8 +32,8 @@ fi
 
 export PKG_CONFIG_PATH
 
-PKG_CHECK_MODULES(CCRTP, libccrtp1 >= 1.3.0)
-PKG_CHECK_MODULES(QT, qt-mt >= 3.1.1)
+PKG_CHECK_MODULES(CCRTP, libccrtp1 >= 1.3.4)
+PKG_CHECK_MODULES(QT, qt-mt >= 3.3.0)
 
 # Restore the original value of PKG_CONFIG_PATH
 PKG_CONFIG_PATH=$OLD_PKG_CONFIG_PATH
@@ -67,4 +67,5 @@ AC_SUBST(PARSER_CXXFLAGS)
 
 AC_OUTPUT(Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile \
 	src/audits/Makefile src/sdp/Makefile src/parser/Makefile \
-	src/sockets/Makefile src/threads/Makefile twinkle.spec)
+	src/sockets/Makefile src/stun/Makefile src/threads/Makefile \
+	twinkle.spec)

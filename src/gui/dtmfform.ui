@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>DtmfForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>466</width>
-            <height>233</height>
+            <width>529</width>
+            <height>302</height>
         </rect>
     </property>
     <property name="sizePolicy">
@@ -42,24 +42,68 @@
                     <property name="name">
                         <cstring>twoPushButton</cstring>
                     </property>
+                    <property name="font">
+                        <font>
+                            <pointsize>10</pointsize>
+                        </font>
+                    </property>
                     <property name="text">
-                        <string>&amp;2</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-2.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>2</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>2</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="0" column="2">
                     <property name="name">
                         <cstring>threePushButton</cstring>
                     </property>
+                    <property name="font">
+                        <font>
+                            <pointsize>10</pointsize>
+                        </font>
+                    </property>
                     <property name="text">
-                        <string>&amp;3</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-3.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>3</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>3</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="0" column="3">
                     <property name="name">
                         <cstring>aPushButton</cstring>
                     </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>194</red>
+                            <green>202</green>
+                            <blue>210</blue>
+                        </color>
+                    </property>
                     <property name="text">
-                        <string>&amp;A</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-a.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>A</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Over decadic A. Normally not needed.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="1" column="0">
@@ -67,7 +111,16 @@
                         <cstring>fourPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;4</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-4.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>4</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>4</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="1" column="1">
@@ -75,7 +128,16 @@
                         <cstring>fivePushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;5</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-5.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>5</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>5</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="1" column="2">
@@ -83,15 +145,40 @@
                         <cstring>sixPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;6</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-6.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>6</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>6</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="1" column="3">
                     <property name="name">
                         <cstring>bPushButton</cstring>
                     </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>194</red>
+                            <green>202</green>
+                            <blue>210</blue>
+                        </color>
+                    </property>
                     <property name="text">
-                        <string>&amp;B</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-b.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>B</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Over decadic B. Normally not needed.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="2" column="0">
@@ -99,7 +186,16 @@
                         <cstring>sevenPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;7</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-7.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>7</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>7</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="2" column="1">
@@ -107,7 +203,16 @@
                         <cstring>eightPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;8</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-8.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>8</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>8</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="2" column="2">
@@ -115,15 +220,40 @@
                         <cstring>ninePushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;9</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-9.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>9</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>9</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="2" column="3">
                     <property name="name">
                         <cstring>cPushButton</cstring>
                     </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>194</red>
+                            <green>202</green>
+                            <blue>210</blue>
+                        </color>
+                    </property>
                     <property name="text">
-                        <string>&amp;C</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-c.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Over decadic C. Normally not needed.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="3" column="0">
@@ -131,7 +261,16 @@
                         <cstring>starPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;*</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-star.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>Shift+*</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Star (*)</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="3" column="1">
@@ -139,7 +278,16 @@
                         <cstring>zeroPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;0</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-0.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>0</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>0</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="3" column="2">
@@ -147,23 +295,62 @@
                         <cstring>poundPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;#</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-pound.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>Shift+#</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Pound (#)</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="3" column="3">
                     <property name="name">
                         <cstring>dPushButton</cstring>
                     </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>194</red>
+                            <green>202</green>
+                            <blue>210</blue>
+                        </color>
+                    </property>
                     <property name="text">
-                        <string>&amp;D</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-d.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>D</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Over decadic D. Normally not needed.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton" row="0" column="0">
                     <property name="name">
                         <cstring>onePushButton</cstring>
                     </property>
+                    <property name="font">
+                        <font>
+                            <pointsize>10</pointsize>
+                        </font>
+                    </property>
                     <property name="text">
-                        <string>&amp;1</string>
+                        <string></string>
+                    </property>
+                    <property name="pixmap">
+                        <pixmap>dtmf-1.png</pixmap>
+                    </property>
+                    <property name="accel">
+                        <string>1</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>1</string>
                     </property>
                 </widget>
             </grid>
@@ -182,6 +369,9 @@
                 <widget class="QLineEdit">
                     <property name="name">
                         <cstring>digitStringLineEdit</cstring>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>You can type a string of digits here and then press the send button. Twinkle will send a sequence of DTMF tones for these digits.</string>
                     </property>
                 </widget>
                 <widget class="QLayoutWidget">
@@ -216,8 +406,14 @@
                             <property name="text">
                                 <string>&amp;Send</string>
                             </property>
+                            <property name="accel">
+                                <string>Alt+S</string>
+                            </property>
                             <property name="default">
                                 <bool>true</bool>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Send a sequence of DTMF tones for the digits typed above.</string>
                             </property>
                         </widget>
                     </hbox>

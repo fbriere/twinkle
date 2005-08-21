@@ -30,8 +30,6 @@
 using namespace std;
 using namespace ost;
 
-#define	AUDIO_DEVICE	"/dev/dsp"
-
 // Forward declarations
 class t_session;
 class t_line;
@@ -47,7 +45,8 @@ private:
 	bool		valid;
 
 	// file descriptor audio device
-	int		fd;
+	int		fd_speaker;
+	int		fd_mic;
 	SymmetricRTPSession *rtp_session;
 
 	t_audio_codec	codec;
@@ -65,6 +64,9 @@ private:
 
 	// Open the sound card
 	bool open_dsp(void);
+	bool open_dsp_full_duplex(void);
+	bool open_dsp_speaker(void);
+	bool open_dsp_mic(void);
 
 public:
 	t_audio_rx	*audio_rx;
@@ -99,7 +101,8 @@ public:
 	bool is_valid(void) const;
 
 	// Get filedescriptor for soundcard
-	int get_fd_dsp(void) const;
+	int get_fd_dsp_speaker(void) const;
+	int get_fd_dsp_mic(void) const;
 };
 
 // Main functions for rx and tx threads

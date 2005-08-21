@@ -29,6 +29,35 @@
 
 extern t_event_queue	*evq_timekeeper;
 
+///////////////
+// t_call_info
+///////////////
+
+t_call_info::t_call_info() {
+	clear();
+}
+
+void t_call_info::clear(void) {
+	from_uri.set_url("");
+	from_display.clear();
+	from_organization.clear();
+	to_uri.set_url("");
+	to_display.clear();
+	to_organization.clear();
+	subject.clear();
+	dtmf_supported = false;
+	hdr_referred_by = t_hdr_referred_by();
+	last_provisional_reason.clear();
+	send_codec = CODEC_NULL;
+	recv_codec = CODEC_NULL;
+	refer_supported = false;
+}
+
+
+///////////
+// t_line
+///////////
+
 ///////////
 // Private
 ///////////
@@ -38,6 +67,17 @@ t_dialog *t_line::match_response(t_response *r,
 	list<t_dialog *>::const_iterator i;
 	for (i = l.begin(); i != l.end(); i++) {
 		if ((*i)->match_response(r, 0)) return *i;
+	}
+
+	return NULL;
+}
+
+t_dialog *t_line::match_response(StunMessage *r, t_tuid tuid,
+		const list<t_dialog *> &l) const
+{
+	list<t_dialog *>::const_iterator i;
+	for (i = l.begin(); i != l.end(); i++) {
+		if ((*i)->match_response(r, tuid)) return *i;
 	}
 
 	return NULL;
@@ -118,6 +158,13 @@ void t_line::cleanup(void) {
 		open_dialog = NULL;
 	}
 
+	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED_SUB) {
+		// The calls has been released but a subscription is
+		// still active.
+		// TODO: a line with this state should go to the background?
+		substate = LSSUB_RELEASING;
+	}
+
 	for (i = pending_dialogs.begin(); i != pending_dialogs.end(); i++) {
 		if ((*i)->get_state() == DS_TERMINATED) {
 			MEMMAN_DELETE(*i);
@@ -141,6 +188,7 @@ void t_line::cleanup(void) {
 		substate = LSSUB_IDLE;
 		is_on_hold = false;
 		is_muted = false;
+		call_info.clear();
 		phone->line_cleared(line_number);
 		ui->cb_line_state_changed();
 	}
@@ -165,6 +213,7 @@ void t_line::cleanup_open_pending(void) {
 		is_muted = false;
 		state = LS_IDLE;
 		substate = LSSUB_IDLE;
+		call_info.clear();
 		phone->line_cleared(line_number);
 		ui->cb_line_state_changed();
 	}
@@ -176,6 +225,9 @@ void t_line::cleanup_open_pending(void) {
 
 t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	assert(_line_number < NUM_LINES);
+
+	// NOTE: The rtp_port attribute can only be initialized when
+	//       a user profile has been selected.
 
 	phone = _phone;
 	state = LS_IDLE;
@@ -226,9 +278,15 @@ t_line_substate t_line::get_substate(void) const {
 	return substate;
 }
 
+t_refer_state t_line::get_refer_state(void) const {
+	if (active_dialog) return active_dialog->refer_state;
+	return REFST_NULL;
+}
+
 void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 	t_tmr_line	*t;
 	t_dialog	*dialog = get_dialog(did);
+	unsigned long	dur;
 
 	switch(timer) {
 	case LTMR_ACK_TIMEOUT:
@@ -270,6 +328,17 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 		t = new t_tmr_line(DUR_RE_INVITE_GUARD, timer, this, did);
 		MEMMAN_NEW(t);
 		dialog->id_re_invite_guard = t->get_id();
+		break;
+	case LTMR_GLARE_RETRY:
+		assert(dialog);
+		if (dialog->is_call_id_owner()) {
+			dur = DUR_GLARE_RETRY_OWN;
+		} else {
+			dur = DUR_GLARE_RETRY_NOT_OWN;
+		}
+		t = new t_tmr_line(dur, timer, this, did);
+		MEMMAN_NEW(t);
+		dialog->id_glare_retry = t->get_id();
 		break;
 	case LTMR_100REL_TIMEOUT:
 		assert(dialog);
@@ -324,6 +393,10 @@ void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
 		assert(dialog);
 		id = &dialog->id_re_invite_guard;
 		break;
+	case LTMR_GLARE_RETRY:
+		assert(dialog);
+		id = &dialog->id_glare_retry;
+		break;
 	case LTMR_100REL_TIMEOUT:
 		assert(dialog);
 		dialog->dur_100rel_timeout = 0;
@@ -344,6 +417,12 @@ void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
 void t_line::invite(const t_url &to_uri, const string &to_display,
 		const string &subject)
 {
+	invite(to_uri, to_display, subject, t_hdr_referred_by());
+}
+
+void t_line::invite(const t_url &to_uri, const string &to_display,
+		const string &subject, const t_hdr_referred_by &hdr_referred_by)
+{
 	// Ignore if line is not idle
 	if (state != LS_IDLE) {
 		return;
@@ -351,13 +430,22 @@ void t_line::invite(const t_url &to_uri, const string &to_display,
 
 	assert(!open_dialog);
 
+	call_info.from_uri = create_user_uri();
+	call_info.from_display = user_config->display;
+	call_info.from_organization = user_config->organization;
+	call_info.to_uri = to_uri;
+	call_info.to_display = to_display;
+	call_info.to_organization.clear();
+	call_info.subject = subject;
+	call_info.hdr_referred_by = hdr_referred_by;
+
 	state = LS_BUSY;
 	substate = LSSUB_OUTGOING_PROGRESS;
 	ui->cb_line_state_changed();
 
 	open_dialog = new t_dialog(this);
 	MEMMAN_NEW(open_dialog);
-	open_dialog->send_invite(to_uri, to_display, subject);
+	open_dialog->send_invite(to_uri, to_display, subject, hdr_referred_by);
 
 	cleanup();
 }
@@ -466,11 +554,11 @@ void t_line::options(void) {
 	}
 }
 
-bool t_line::hold(void) {
+bool t_line::hold(bool rtponly) {
 	if (is_on_hold) return true;
 
 	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
-		active_dialog->hold();
+		active_dialog->hold(rtponly);
 		is_on_hold = true;
 		ui->cb_line_state_changed();
 		cleanup();
@@ -486,6 +574,15 @@ void t_line::retrieve(void) {
 	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
 		active_dialog->retrieve();
 		is_on_hold = false;
+		ui->cb_line_state_changed();
+		cleanup();
+		return;
+	}
+}
+
+void t_line::refer(const t_url &uri, const string &display) {
+	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
+		active_dialog->send_refer(uri, display);
 		ui->cb_line_state_changed();
 		cleanup();
 		return;
@@ -928,6 +1025,27 @@ void t_line::recvd_invite(t_request *r, t_tid tid) {
 			return;
 		}
 
+		call_info.from_uri = r->hdr_from.uri;
+		call_info.from_display = r->hdr_from.display;
+		if (r->hdr_organization.is_populated()) {
+			call_info.from_organization = r->hdr_organization.name;
+		} else {
+			call_info.from_organization.clear();
+		}
+		call_info.to_uri = r->hdr_to.uri;
+		call_info.to_display = r->hdr_to.display;
+		call_info.to_organization.clear();
+		call_info.subject = r->hdr_subject.subject;
+
+		// Check for REFER support
+		// If the Allow header is not present then assume REFER
+		// is supported.
+		if (!r->hdr_allow.is_populated() ||
+		    r->hdr_allow.contains_method(REFER))
+		{
+			call_info.refer_supported = true;
+		}
+
 		active_dialog = new t_dialog(this);
 		MEMMAN_NEW(active_dialog);
 		active_dialog->recvd_request(r, 0, tid);
@@ -1037,8 +1155,6 @@ void t_line::recvd_bye(t_request *r, t_tid tid) {
 }
 
 void t_line::recvd_options(t_request *r, t_tid tid) {
-	t_response *resp;
-
 	if (active_dialog && active_dialog->match_request(r)) {
 		active_dialog->recvd_request(r, 0, tid);
 	} else {
@@ -1058,6 +1174,73 @@ void t_line::recvd_prack(t_request *r, t_tid tid) {
 		assert(false);
 	}
 	cleanup();
+}
+
+void t_line::recvd_subscribe(t_request *r, t_tid tid) {
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_request(r, 0, tid);
+	} else {
+		// Should not get here as phone already checked that
+		// the request matched with this line
+		assert(false);
+	}
+	cleanup();
+}
+
+void t_line::recvd_notify(t_request *r, t_tid tid) {
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_request(r, 0, tid);
+	} else {
+		// Should not get here as phone already checked that
+		// the request matched with this line
+		assert(false);
+	}
+	cleanup();
+}
+
+bool t_line::recvd_refer(t_request *r, t_tid tid) {
+	bool retval = false;
+
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_request(r, 0, tid);
+		retval = active_dialog->refer_accepted;
+	} else {
+		// Should not get here as phone already checked that
+		// the request matched with this line
+		assert(false);
+	}
+	cleanup();
+	return retval;
+}
+
+void t_line::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
+	t_dialog *d;
+
+	if (active_dialog && active_dialog->match_response(r, tuid)) {
+		active_dialog->recvd_stun_resp(r, tuid, tid);
+		cleanup();
+		return;
+	}
+	
+	if (open_dialog && open_dialog->match_response(r, tuid)) {
+		open_dialog->recvd_stun_resp(r, tuid, tid);
+		cleanup();
+		return;
+	}
+	
+	d = match_response(r, tuid, pending_dialogs);
+	if (d) {
+		d->recvd_stun_resp(r, tuid, tid);
+		cleanup();
+		return;
+	}
+	
+	d = match_response(r, tuid, dying_dialogs);
+	if (d) {
+		d->recvd_stun_resp(r, tuid, tid);
+		cleanup();
+		return;
+	}
 }
 
 void t_line::failure(t_failure failure, t_tid tid) {
@@ -1122,6 +1305,13 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 			dialog->timeout(timer);
 		}
 		break;
+	case LTMR_GLARE_RETRY:
+		// If there is no dialog then ignore the timeout
+		if (dialog) {
+			dialog->id_glare_retry = 0;
+			dialog->timeout(timer);
+		}
+		break;
 	case LTMR_100REL_TIMEOUT:
 		// If there is no dialog then ignore the timeout
 		if (dialog) {
@@ -1141,6 +1331,21 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 		assert(false);
 	}
 
+	cleanup();
+
+	phone->unlock();
+}
+
+void t_line::timeout_sub(t_subscribe_timer timer, t_dialog_id did,
+		const string &event_type, const string &event_id)
+{
+	// This method is called by the timekeeper thread, so lock
+	// the phone (transaction layer) to prevent race conditions.
+
+	phone->lock();
+
+	t_dialog *dialog = get_dialog(did);
+	if (dialog) dialog->timeout_sub(timer, event_type, event_id);
 	cleanup();
 
 	phone->unlock();
@@ -1177,6 +1382,35 @@ bool t_line::match_cancel(t_request *r, t_tid target_tid) {
 	// A CANCEL matches a dialog if the target tid equals the tid
 	// of the INVITE request.
 	return (active_dialog && active_dialog->match_cancel(r, target_tid));
+}
+
+bool t_line::match(StunMessage *r, t_tuid tuid) {
+	if (open_dialog && open_dialog->match_response(r, tuid)) {
+		return true;
+	}
+
+	if (active_dialog && active_dialog->match_response(r, tuid)) {
+		return true;
+	}
+
+	if (match_response(r, tuid, pending_dialogs)) {
+		return true;
+	}
+
+	if (match_response(r, tuid, dying_dialogs)) {
+		return true;
+	}
+
+	return false;
+}
+
+bool t_line::is_invite_retrans(t_request *r) {
+	assert(r->method == INVITE);
+	return (active_dialog && active_dialog->is_invite_retrans(r));
+}
+
+void t_line::process_invite_retrans(void) {
+	if (active_dialog) active_dialog->process_invite_retrans();
 }
 
 string t_line::create_user_contact(void) const {
@@ -1216,6 +1450,11 @@ bool t_line::get_is_muted(void) const {
 	return is_muted;
 }
 
+bool t_line::is_refer_succeeded(void) const {
+	if (active_dialog) return active_dialog->refer_succeeded;
+	return false;
+}
+
 void t_line::seize(void) {
 	// Only an idle line can be seized.
 	if (substate != LSSUB_IDLE) return;
@@ -1237,3 +1476,58 @@ t_audio_session *t_line::get_audio_session(void) const {
 
 	return active_dialog->get_audio_session();
 }
+
+void t_line::notify_refer_progress(t_response *r) {
+	if (active_dialog) active_dialog->notify_refer_progress(r);
+}
+
+void t_line::failed_retrieve(void) {
+	// Call retrieve failed, so line is still on-hold
+	is_on_hold = true;
+	ui->cb_line_state_changed();
+}
+
+void t_line::failed_hold(void) {
+	// Call hold failed, so line is not on-hold
+	is_on_hold = false;
+	ui->cb_line_state_changed();
+}
+
+void t_line::retry_retrieve_succeeded(void) {
+	// Retry of retrieve succeeded, so line is not on-hold anymore
+	is_on_hold = false;
+	ui->cb_line_state_changed();
+}
+
+t_call_info t_line::get_call_info(void) const {
+	return call_info;
+}
+
+void t_line::ci_set_dtmf_supported(bool supported) {
+	call_info.dtmf_supported = supported;
+}
+
+void t_line::ci_set_last_provisional_reason(const string &reason) {
+	call_info.last_provisional_reason = reason;
+}
+
+void t_line::ci_set_send_codec(t_audio_codec codec) {
+	call_info.send_codec = codec;
+}
+
+void t_line::ci_set_recv_codec(t_audio_codec codec) {
+	call_info.recv_codec = codec;
+}
+
+void t_line::ci_set_refer_supported(bool supported) {
+	call_info.refer_supported = supported;
+}
+
+void t_line::init_rtp_port(void) {
+	rtp_port = user_config->rtp_port + line_number * 2;
+}
+
+unsigned short t_line::get_rtp_port(void) const {
+	return rtp_port;
+}
+

@@ -40,6 +40,7 @@ t_response::t_response(int _code, string _reason) : t_sip_message() {
 		case 182: reason = REASON_182; break;
 		case 183: reason = REASON_183; break;
 		case 200: reason = REASON_200; break;
+		case 202: reason = REASON_202; break;
 		case 300: reason = REASON_300; break;
 		case 301: reason = REASON_301; break;
 		case 302: reason = REASON_302; break;
@@ -71,6 +72,7 @@ t_response::t_response(int _code, string _reason) : t_sip_message() {
 		case 486: reason = REASON_486; break;
 		case 487: reason = REASON_487; break;
 		case 488: reason = REASON_488; break;
+		case 489: reason = REASON_489; break;
 		case 491: reason = REASON_491; break;
 		case 493: reason = REASON_493; break;
 		case 500: reason = REASON_500; break;
@@ -107,12 +109,12 @@ bool t_response::is_success(void) const {
 	return (get_class() == R_2XX);
 }
 
-string t_response::encode(void) {
+string t_response::encode(bool add_content_length) {
 	string s;
 
 	s = "SIP/" + version + ' ' + int2str(code, "%3d") + ' ' + reason;
 	s += CRLF;
-	s += t_sip_message::encode();
+	s += t_sip_message::encode(add_content_length);
 
 	return s;
 }
@@ -131,9 +133,38 @@ bool t_response::is_valid(bool &fatal, string &reason) const {
 	switch(hdr_cseq.method) {
 	case INVITE:
 		if (get_class() == R_2XX && !hdr_contact.is_populated()) {
-			reason = "Contact header is missing";
+			reason = "Contact header missing";
 			return false;
 		}
+		break;
+	case SUBSCRIBE:
+		// RFC 3265 7.1, 7.2
+		if (get_class()== R_2XX && !hdr_expires.is_populated()) {
+			reason = "Expires header missing";
+			return false;
+		}
+
+		switch (code) {
+		case R_489_BAD_EVENT:
+			if (!hdr_allow_events.is_populated()) {
+				reason = "Allow-Events header missing";
+				return false;
+			}
+			break;
+		}
+
+		break;
+	case NOTIFY:
+		// RFC 3265 7.1, 7.2
+		switch (code) {
+		case R_489_BAD_EVENT:
+			if (!hdr_allow_events.is_populated()) {
+				reason = "Allow-Events header is missing";
+				return false;
+			}
+			break;
+		}
+
 		break;
 	}
 

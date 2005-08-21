@@ -87,6 +87,16 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 		return;
 	}
 
+	// Check if URI scheme is supported
+	if (r->uri.get_scheme() != "sip") {
+		resp = r->create_response(R_416_UNSUPPORTED_URI_SCHEME);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		unlock();
+		return;
+	}
+
 	switch(r->method) {
 	case INVITE:
 		recvd_invite(r, tid);
@@ -109,6 +119,15 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	case PRACK:
 		recvd_prack(r, tid);
 		break;
+	case SUBSCRIBE:
+		recvd_subscribe(r, tid);
+		break;
+	case NOTIFY:
+		recvd_notify(r, tid);
+		break;
+	case REFER:
+		recvd_refer(r, tid);
+		break;
 	default:
 		resp = r->create_response(R_501_NOT_IMPLEMENTED);
 		send_response(resp, 0, tid);
@@ -124,6 +143,12 @@ void t_transaction_layer::send_request(t_request *r, t_tuid tuid) {
 	evq_trans_mgr->push_user((t_sip_message *)r, tuid, 0);
 }
 
+void t_transaction_layer::send_request(StunMessage *r, t_tuid tuid) {
+	// The transaction manager will determine the destination IP and port,
+	// so they can be left to zero in the event.
+	evq_trans_mgr->push_stun_request(r, TYPE_STUN_SIP, tuid, 0, 0, 0);
+}
+
 void t_transaction_layer::send_response(t_response *r, t_tuid tuid,
 		t_tid tid)
 {
@@ -131,13 +156,15 @@ void t_transaction_layer::send_response(t_response *r, t_tuid tuid,
 }
 
 void t_transaction_layer::run(void) {
-	t_event		*event;
-	t_event_user	*ev_user;
-	t_event_failure	*ev_failure;
-	t_sip_message	*msg;
-	t_tid		tid;
-	t_tid		tid_cancel;
-	t_tuid		tuid;
+	t_event			*event;
+	t_event_user		*ev_user;
+	t_event_failure		*ev_failure;
+	t_event_stun_response	*ev_stun_resp;
+	t_sip_message		*msg;
+	StunMessage		*stun_msg;
+	t_tid			tid;
+	t_tid			tid_cancel;
+	t_tuid			tuid;
 
 	while (true) {
 		event = evq_trans_layer->pop();
@@ -170,6 +197,13 @@ void t_transaction_layer::run(void) {
 			lock();
 			failure(ev_failure->get_failure(), tid);
 			unlock();
+			break;
+		case EV_STUN_RESPONSE:
+			ev_stun_resp = (t_event_stun_response *)event;
+			tid = ev_stun_resp->get_tid();
+			tuid = ev_stun_resp->get_tuid();
+			stun_msg = ev_stun_resp->get_msg();
+			recvd_stun_resp(stun_msg, tuid, tid);
 			break;
 		default:
 			// other types of event are not expected

@@ -36,6 +36,7 @@ using namespace std;
 
 // Success
 #define	R_200_OK 200
+#define R_202_ACCEPTED 202
 
 // Redirection
 #define	R_300_MULTIPLE_CHOICES 300
@@ -71,6 +72,7 @@ using namespace std;
 #define	R_486_BUSY_HERE 486
 #define	R_487_REQUEST_TERMINATED 487
 #define	R_488_NOT_ACCEPTABLE_HERE 488
+#define R_489_BAD_EVENT 489
 #define	R_491_REQUEST_PENDING 491
 #define	R_493_UNDECIPHERABLE 493
 
@@ -105,6 +107,7 @@ using namespace std;
 #define REASON_183 "Session Progress"
 
 #define REASON_200 "OK"
+#define REASON_202 "Accepted"
 
 #define REASON_300 "Multiple Choices"
 #define REASON_301 "Moved Permanently"
@@ -138,6 +141,7 @@ using namespace std;
 #define REASON_486 "Busy Here"
 #define REASON_487 "Request Terminated"
 #define REASON_488 "Not Acceptable Here"
+#define REASON_489 "Bad Event"
 #define REASON_491 "Request Pending"
 #define REASON_493 "Undecipherable"
 
@@ -159,7 +163,10 @@ using namespace std;
 
 // RFC 3261 21.4.18
 // Code 480 should have a specific reason phrase
-#define REASON_480_NO_ANSWER	"User not responding"
+#define REASON_480_NO_ANSWER			"User not responding"
+
+// RFC 3265 3.2.4
+#define REASON_481_SUBSCRIPTION_NOT_EXIST	"Subscription does not exist"
 
 
 class t_response : public t_sip_message {
@@ -180,7 +187,7 @@ public:
 	bool is_final(void) const;
 	bool is_success(void) const;
 
-	string encode(void);
+	string encode(bool add_content_length = true);
 	t_sip_message *copy(void) const;
 
 	bool is_valid(bool &fatal, string &reason) const;

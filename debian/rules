@@ -36,7 +36,7 @@ build-stamp:  config.status
 	dh_testdir
 
 	# Add here commands to compile the package.
-	$(MAKE)
+	QTDIR=/usr/lib/qt3 $(MAKE)
 	#docbook-to-man debian/twinkle.sgml > twinkle.1
 	/usr/bin/help2man -N -S 'Debian GNU/Linux' src/twinkle -o twinkle.1
 
@@ -51,7 +51,7 @@ clean:
 	-$(MAKE) distclean
 	
 	# Cleanup what make distclean doesn't
-	rm -f twinkle.1 qtccxxincl.pro src/gui/Makefile
+	rm -f twinkle.1 qtccxxincl.pro 
 	
 #ifneq "$(wildcard /usr/share/misc/config.sub)" ""
 #	cp -f /usr/share/misc/config.sub config.sub

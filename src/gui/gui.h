@@ -22,6 +22,8 @@
 #include "userintf.h"
 #include "mphoneform.h"
 #include "qlabel.h"
+#include "qlineedit.h"
+#include "qwidget.h"
 
 using namespace std;
 
@@ -31,17 +33,10 @@ private:
 	QApplication	*qApplication;
 	
 	// Pointers to line information fields to display information
-	QLabel		*fromLabel;
-	QLabel		*toLabel;
-	QLabel		*subjectLabel;
+	QLineEdit	*fromLabel;
+	QLineEdit	*toLabel;
+	QLineEdit	*subjectLabel;
 	QLabel		*codecLabel;
-	
-	// Codecs currently used
-	t_audio_codec	send_codec[NUM_LINES];
-	t_audio_codec	recv_codec[NUM_LINES];
-	
-	// Last received provisional response reason on a line
-	QString		last_provisional_reason[NUM_LINES];
 	
 	// Set the line information field pointers to the fields for 'line'
 	void setLineFields(int line);
@@ -50,13 +45,15 @@ private:
 	// the field pointers point to the fields for 'line'
 	void clearLineFields(int line);
 	
+	// Set text inf from, to and subject fields
+	void displayTo(const QString &s);
+	void displayFrom(const QString &s);
+	void displaySubject(const QString &s);
+	
 	// Display the codecs in use for the line
 	void displayCodecInfo(int line);
 	
 public:
-	// DTMF events supported by far end. Set by call back function
-	bool		dtmf_supported[NUM_LINES];
-	
 	t_gui(t_phone *_phone);
 	virtual ~t_gui();
 	
@@ -93,10 +90,12 @@ public:
 	void cb_options_response(const t_response *r);
 	void cb_reinvite_success(int line, const t_response *r);
 	void cb_reinvite_failed(int line, const t_response *r);
+	void cb_retrieve_failed(int line, const t_response *r);
 	void cb_invalid_reg_resp(const t_response *r, const string &reason);
 	void cb_register_success(const t_response *r, unsigned long expires,
 				 bool first_success);
 	void cb_register_failed(const t_response *r, bool first_failure);
+	void cb_register_stun_failed(bool first_failure);
 	void cb_deregister_success(const t_response *r);
 	void cb_deregister_failed(const t_response *r);
 	void cb_fetch_reg_failed(const t_response *r);
@@ -110,6 +109,21 @@ public:
 	void cb_line_state_changed(void);
 	void cb_send_codec_changed(int line, t_audio_codec codec);
 	void cb_recv_codec_changed(int line, t_audio_codec codec);
+	void cb_notify_recvd(int line, const t_request *r);
+	void cb_refer_failed(int line, const t_response *r);
+	void cb_refer_result_success(int line);
+	void cb_refer_result_failed(int line);
+	void cb_refer_result_inprog(int line);
+	
+	// A call is being referred by the far end. r must be the REFER request.
+	void cb_call_referred(int line, t_request *r);
+
+	// The reference failed. Call to referrer is retrieved.
+	void cb_retrieve_referrer(int line);
+	
+	// STUN errors
+	void cb_stun_failed(int err_code, const string &err_reason);
+	void cb_stun_failed(void);
 	
 	// Interactive call back functions
 	bool cb_ask_user_to_redirect_invite(const t_url &destination,
@@ -118,13 +132,21 @@ public:
 			const string &display, t_method method);
 	bool cb_ask_credentials(const string &realm, string &username,
 			string &password);
+	bool cb_ask_user_to_refer(const t_url &refer_to_uri,
+			const string &refer_to_display,
+			const t_url &referred_by_uri,
+			const string &referred_by_display);
 	
 	// Show an error message to the user. Depending on the interface mode
 	// the user has to acknowledge the error before processing continues.
 	void cb_show_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	void cb_show_msg(QWidget *parent, const string &msg, t_msg_priority prio = MSG_INFO);
 	
 	// Display an error message.
 	void cb_display_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	
+	// Log file has been updated
+	void cb_log_updated(bool log_zapped = false);
 	
 	// Actions
 	void action_register(void);
@@ -136,6 +158,7 @@ public:
 	void action_bye(void);
 	void action_reject(void);
 	void action_redirect(const list<t_url> &contacts);
+	void action_refer(const t_url &destination, const string &display);
 	void action_hold(void);
 	void action_retrieve(void);
 	void action_conference(void);
@@ -147,13 +170,11 @@ public:
 	void action_seize(void);
 	void action_unseize(void);
 	
-	// Operations on last provisional response reasons
-	QString get_last_provisional_reason(unsigned short line) const;
-	
 	// Service (de)activation
 	void srv_dnd(bool on);
 	void srv_enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest);
 	void srv_disable_cf(t_cf_type cf_type);
+	void srv_auto_answer(bool on);
 };
 
 #endif

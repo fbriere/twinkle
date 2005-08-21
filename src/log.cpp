@@ -26,14 +26,20 @@
 #include "user.h"
 #include "util.h"
 
-// Maximum size of log file in byte
-#define LOG_MAX_SIZE	5000000
-
 // Pointer allocations/de-allocations are not checked by MEMMAN as the
 // log file will be deleted after the MEMMAN reports are logged and hence
 // would show false memory leaks.
 
 extern t_userintf cli;
+
+// Main function for log viewer
+void *main_logview(void *arg) {
+	while (true) {
+		log_file->wait_for_log();
+		// TODO: handle situation where log file was zapped.
+		if (ui) ui->cb_log_updated(false);
+	}
+}
 
 bool t_log::move_current_to_old(void) {
         string old_log = log_filename + ".old";
@@ -46,6 +52,10 @@ bool t_log::move_current_to_old(void) {
 
 t_log::t_log() {
 	log_disabled = false;
+	log_report_disabled = false;
+	inform_user = false;
+	sema_logview = NULL;
+	thr_logview = NULL;
 
         log_filename = DIR_HOME;
         log_filename += "/";
@@ -63,7 +73,7 @@ t_log::t_log() {
 		string err = "Failed to create log file ";
 		err += log_filename;
 		err += "\nLogging is now disabled.";
-		ui->cb_show_msg(err, MSG_WARNING);
+		if (ui) ui->cb_show_msg(err, MSG_WARNING);
 		return;
 	}
 
@@ -76,6 +86,8 @@ t_log::t_log() {
 }
 
 t_log::~t_log() {
+	if (thr_logview) delete thr_logview;
+	if (sema_logview) delete sema_logview;
 	delete log_stream;
 }
 
@@ -102,12 +114,40 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 	                  t_log_severity severity)
 {
 	if (log_disabled) return;
+	
+	mtx_log.lock();
+	
+	if (severity == LOG_DEBUG) {
+		 if (!sys_config->log_show_debug) {
+		 	log_report_disabled = true;
+		 	return;
+		 }
+	}
+	
+	switch (log_class) {
+	case LOG_SIP:
+		if (!sys_config->log_show_sip) {
+			log_report_disabled = true;
+			return;
+		}
+		break;
+	case LOG_STUN:
+		if (!sys_config->log_show_stun) {
+			log_report_disabled = true;
+			return;
+		}
+		break;
+	case LOG_MEMORY:
+		if (!sys_config->log_show_memory) {
+			log_report_disabled = true;
+			return;
+		}
+		break;
+	}
 
 	struct timeval t;
 	struct tm tm;
 	time_t	date;
-
-	mtx_log.lock();
 
 	gettimeofday(&t, NULL);
 	date = t.tv_sec;
@@ -136,7 +176,10 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 		*log_stream << "WARNING";
 		break;
 	case LOG_CRITICAL:
-		*log_stream << "CIRITICAL";
+		*log_stream << "CRITICAL";
+		break;
+	case LOG_DEBUG:
+		*log_stream << "DEBUG";
 		break;
 	default:
 		*log_stream << "UNNKOWN";
@@ -152,11 +195,11 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 	case LOG_SIP:
 		*log_stream << "SIP";
 		break;
-	case LOG_DEBUG:
-		*log_stream << "DEBUG";
+	case LOG_STUN:
+		*log_stream << "STUN";
 		break;
-	case LOG_DEBUG_MEM:
-		*log_stream << "DEBUG_MEMORY";
+	case LOG_MEMORY:
+		*log_stream << "MEMORY";
 		break;
 	default:
 		*log_stream << "UNNKOWN";
@@ -170,6 +213,12 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 
 void t_log::write_footer(void) {
 	if (log_disabled) return;
+	
+	if (log_report_disabled) {
+		log_report_disabled = false;
+		mtx_log.unlock();
+		return;
+	}
 
 	*log_stream << "---\n\n";
 	log_stream->flush();
@@ -178,18 +227,19 @@ void t_log::write_footer(void) {
 	if (!log_stream->good()) {
 		// Log file is bad, disable logging
 		log_disabled = true;
-		ui->cb_display_msg("Writing to log file failed. Logging disabled.",
+		if (ui) ui->cb_display_msg("Writing to log file failed. Logging disabled.",
 			MSG_WARNING);
 		mtx_log.unlock();
 		return;
 	}
 
-	if (log_stream->tellp() >= LOG_MAX_SIZE) {
+	bool log_zapped = false;
+	if (log_stream->tellp() >= sys_config->log_max_size * 1000000) {
 		log_stream->close();
 
 		if (!move_current_to_old()) {
 			// Failed to move log file. Disable logging
-			ui->cb_display_msg("Renaming log file failed. Logging disbaled.",
+			if (ui) ui->cb_display_msg("Renaming log file failed. Logging disabled.",
 				MSG_WARNING);
 			log_disabled = true;
 			mtx_log.unlock();
@@ -201,49 +251,90 @@ void t_log::write_footer(void) {
 		log_stream = new ofstream(log_filename.c_str());
 		if (!*log_stream) {
 			// Failed to create a new log file. Disable logging
-			ui->cb_display_msg("Creating log file failed. Logging disbaled.",
+			if (ui) ui->cb_display_msg("Creating log file failed. Logging disabled.",
 				MSG_WARNING);
 			log_disabled = true;
 			mtx_log.unlock();
 			return;
 		}
+		
+		log_zapped = true;
 	}
 
 	mtx_log.unlock();
+	
+	// Inform user about log update.
+	// This code must be outside the locked region, otherwise it causes
+	// a deadlock between the GUI and log mutexes.
+	if (inform_user && sema_logview) sema_logview->up();
 }
 
 void t_log::write_raw(const string &raw) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;
 }
 
 void t_log::write_raw(int raw) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;
 }
 
 void t_log::write_raw(unsigned short raw) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;
 }
 
 void t_log::write_raw(unsigned long raw) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;
 }
 
 void t_log::write_raw(long raw) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;
 }
 
 void t_log::write_endl(void) {
-	if (log_disabled) return;
+	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << endl;
+}
+
+string t_log::get_filename(void) const {
+	return log_filename;
+}
+
+void t_log::enable_inform_user(bool on) {
+	if (on) {
+		if (!sema_logview) {
+			sema_logview = new t_semaphore(0);
+		}
+		
+		if (!thr_logview) {
+			thr_logview = new t_thread(main_logview, NULL);
+			thr_logview->detach();
+		}
+	} else {
+		if (thr_logview) {
+			thr_logview->cancel();
+			delete thr_logview;
+			thr_logview = NULL;
+		}
+		
+		if (sema_logview) {
+			delete sema_logview;
+			sema_logview = NULL;
+		}
+	}
+
+	inform_user = on;
+}
+
+void t_log::wait_for_log(void) {
+	if (sema_logview) sema_logview->down();
 }

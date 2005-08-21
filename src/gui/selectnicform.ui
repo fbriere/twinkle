@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>SelectNicForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>415</width>
-            <height>140</height>
+            <height>144</height>
         </rect>
     </property>
     <property name="caption">
@@ -69,6 +69,9 @@
                 <widget class="QListBox">
                     <property name="name">
                         <cstring>nicListBox</cstring>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>You have multiple IP addresses. Here you must select which IP address should be used. This IP address will be used inside the SIP messages.</string>
                     </property>
                 </widget>
             </hbox>

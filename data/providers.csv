@@ -1,0 +1,3 @@
+# provider;domain;sip proxy;stun server
+SIPphone!;proxy01.sipphone.com;;stun01.sipphone.com
+FreeWorld Dialup;fwd.pulver.com;;stun.fwdnet.net

@@ -77,9 +77,11 @@ private:
         bool exec_reject(const list<string> command_list);
 	bool exec_redirect(const list<string> command_list);
 	bool exec_dnd(const list<string> command_list);
+	bool exec_auto_answer(const list<string> command_list);
         bool exec_bye(const list<string> command_list);
         bool exec_hold(const list<string> command_list);
         bool exec_retrieve(const list<string> command_list);
+	bool exec_refer(const list<string> command_list);
 	bool exec_conference(const list<string> command_list);
 	bool exec_mute(const list<string> command_list);
 	bool exec_dtmf(const list<string> command_list);
@@ -153,10 +155,12 @@ public:
         virtual void cb_options_response(const t_response *r);
         virtual void cb_reinvite_success(int line, const t_response *r);
         virtual void cb_reinvite_failed(int line, const t_response *r);
+	virtual void cb_retrieve_failed(int line, const t_response *r);
         virtual void cb_invalid_reg_resp(const t_response *r, const string &reason);
         virtual void cb_register_success(const t_response *r, unsigned long expires,
 					 bool first_success);
         virtual void cb_register_failed(const t_response *r, bool first_failure);
+        virtual void cb_register_stun_failed(bool first_failure);
         virtual void cb_deregister_success(const t_response *r);
         virtual void cb_deregister_failed(const t_response *r);
         virtual void cb_fetch_reg_failed(const t_response *r);
@@ -173,6 +177,21 @@ public:
 	virtual void cb_line_state_changed(void);
 	virtual void cb_send_codec_changed(int line, t_audio_codec codec);
 	virtual void cb_recv_codec_changed(int line, t_audio_codec codec);
+	virtual void cb_notify_recvd(int line, const t_request *r);
+	virtual void cb_refer_failed(int line, const t_response *r);
+	virtual void cb_refer_result_success(int line);
+	virtual void cb_refer_result_failed(int line);
+	virtual void cb_refer_result_inprog(int line);
+
+	// A call is being referred by the far end. r must be the REFER request.
+	virtual void cb_call_referred(int line, t_request *r);
+
+	// The reference failed. Call to referrer is retrieved.
+	virtual void cb_retrieve_referrer(int line);
+	
+	// STUN errors
+	virtual void cb_stun_failed(int err_code, const string &err_reason);
+	virtual void cb_stun_failed(void);
 
 	// Interactive call back functions
 	virtual bool cb_ask_user_to_redirect_invite(const t_url &destination,
@@ -181,6 +200,10 @@ public:
 			const string &display, t_method method);
 	virtual bool cb_ask_credentials(const string &realm, string &username,
 			string &password);
+	virtual bool cb_ask_user_to_refer(const t_url &refer_to_uri,
+			const string &refer_to_display,
+			const t_url &referred_by_uri,
+			const string &referred_by_display);
 
 	// Show an error message to the user. Depending on the interface mode
 	// the user has to acknowledge the error before processing continues.
@@ -189,6 +212,9 @@ public:
 	// Display an error message.
 	virtual void cb_display_msg(const string &msg,
 			t_msg_priority prio = MSG_INFO);
+			
+	// Log file has been updated
+	virtual void cb_log_updated(bool log_zapped = false);
 
 	// Get last call information
 	// Returns true if last call information is valid

@@ -49,6 +49,7 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	direction = SDP_SENDRECV;
 
 	audio_rtp_session = NULL;
+	is_on_hold = false;
 }
 
 t_session::~t_session() {
@@ -331,6 +332,9 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 void t_session::start_rtp(void) {
 	t_audio_codec codec;
 
+	// If a session is on-hold then do not start RTP.
+	if (is_on_hold) return;
+
 	if (receive_host.empty()) return;
 	if (dst_rtp_host.empty()) return;
 
@@ -357,6 +361,8 @@ void t_session::start_rtp(void) {
 	}
 
 	// Inform user about the codecs
+	get_line()->ci_set_send_codec(codec);
+	get_line()->ci_set_recv_codec(codec);
 	ui->cb_send_codec_changed(get_line()->get_line_number(), codec);
 	ui->cb_recv_codec_changed(get_line()->get_line_number(), codec);
 
@@ -366,7 +372,7 @@ void t_session::start_rtp(void) {
 	{
 		// Local hold -> do not send RTP
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, receive_port, "", 0, codec, ptime);
+				LOCAL_IP, get_line()->get_rtp_port(), "", 0, codec, ptime);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 	else if (receive_host == "0.0.0.0" || receive_port == 0 ||
@@ -383,7 +389,7 @@ void t_session::start_rtp(void) {
 	} else {
 		// Bi-directional audio
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, receive_port,
+				LOCAL_IP, get_line()->get_rtp_port(),
 				dst_rtp_host, dst_rtp_port, codec, ptime);
 		MEMMAN_NEW(audio_rtp_session);
 	}
@@ -403,7 +409,11 @@ void t_session::start_rtp(void) {
 
 	if (send_dtmf_pt > 0) {
 		audio_rtp_session->set_pt_out_dtmf(send_dtmf_pt);
+		get_line()->ci_set_dtmf_supported(true);
 		ui->cb_dtmf_supported(get_line()->get_line_number());
+	} else {
+		get_line()->ci_set_dtmf_supported(false);
+		ui->cb_line_state_changed();
 	}
 
 	audio_rtp_session->run();
@@ -426,11 +436,15 @@ void t_session::set_audio_session(t_audio_session *as) {
 }
 
 bool t_session::equal_audio(const t_session &s) const {
+	// According to RFC 2327, the SDP version in the o= line
+	// must be updated when the SDP is changed.
 	return (receive_host == s.receive_host &&
 		receive_port == s.receive_port &&
 		dst_rtp_host == s.dst_rtp_host &&
 		dst_rtp_port == s.dst_rtp_port &&
-		direction == s.direction);
+		direction == s.direction &&
+		src_sdp_version == s.src_sdp_version &&
+		dst_sdp_version == s.dst_sdp_version);
 }
 
 void t_session::send_dtmf(char digit) {
@@ -443,4 +457,16 @@ t_line *t_session::get_line(void) const {
 
 void t_session::set_owner(t_dialog *d) {
 	dialog = d;
+}
+
+void t_session::hold(void) {
+	is_on_hold = true;
+}
+
+void t_session::unhold(void) {
+	is_on_hold = false;
+}
+
+bool t_session::is_rtp_active(void) const {
+	return (audio_rtp_session != NULL);
 }

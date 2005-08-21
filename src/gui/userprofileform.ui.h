@@ -8,17 +8,17 @@
 *****************************************************************************/
 /*
     Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
-
+    
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
-
+    
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -26,11 +26,11 @@
 
 
 // Indices of categories in the category list box
-#define idxCatUser	0
+#define idxCatUser		0
 #define idxCatSipServer	1
 #define idxCatRtpAudio	2
 #define idxCatSipProtocol	3
-#define idxCatNat	4
+#define idxCatNat		4
 #define idxCatAddrFmt	5
 #define idxCatTimers	6
 
@@ -207,7 +207,7 @@ void UserProfileForm::populate( bool isRunning )
 	// Set codec combo boxes to values from user config
 	int codecChoice = 0;
 	for (list<unsigned short>::iterator i = user_config->codecs.begin();
-	      i != user_config->codecs.end(); i++)
+	i != user_config->codecs.end(); i++)
 	{
 		codecChoice++;
 		if (codecChoice == 1) {
@@ -223,6 +223,7 @@ void UserProfileForm::populate( bool isRunning )
 	dtmfPayloadTypeSpinBox->setValue(user_config->dtmf_payload_type);
 	dtmfDurationSpinBox->setValue(user_config->dtmf_duration);
 	dtmfPauseSpinBox->setValue(user_config->dtmf_pause);
+	dtmfVolumeSpinBox->setValue(user_config->dtmf_volume);
 	
 	// SIP PROTOCOL
 	sipUdpPortSpinBox->setValue(user_config->sip_udp_port);
@@ -246,23 +247,42 @@ void UserProfileForm::populate( bool isRunning )
 	maxRedirectSpinBox->setEnabled(user_config->allow_redirection);
 	maxRedirectSpinBox->setValue(user_config->max_redirections);
 	ext100relComboBox->setCurrentItem(
-		ext_support2indexComboItem(user_config->ext_100rel));
+			ext_support2indexComboItem(user_config->ext_100rel));
+	allowReferCheckBox->setChecked(user_config->allow_refer);
+	askUserReferCheckBox->setEnabled(user_config->allow_refer);
+	askUserReferCheckBox->setChecked(user_config->ask_user_to_refer);
+	refereeHoldCheckBox->setEnabled(user_config->allow_refer);
+	refereeHoldCheckBox->setChecked(user_config->referee_hold);
+	referrerHoldCheckBox->setChecked(user_config->referrer_hold);
+	refreshReferSubCheckBox->setChecked(user_config->auto_refresh_refer_sub);
 	
 	// NAT
-	usePublicIPCheckBox->setChecked(user_config->use_nat_public_ip);
+	if (user_config->use_nat_public_ip) {
+		natStaticRadioButton->setChecked(true);
+	} else if (user_config->use_stun) {
+		natStunRadioButton->setChecked(true);
+	} else {
+		natNoneRadioButton->setChecked(true);
+	}
+	
 	publicIPTextLabel->setEnabled(user_config->use_nat_public_ip);
 	publicIPLineEdit->setEnabled(user_config->use_nat_public_ip);
 	publicIPLineEdit->setText(user_config->nat_public_ip.c_str());
+	stunServerTextLabel->setEnabled(user_config->use_stun);
+	stunServerLineEdit->setEnabled(user_config->use_stun);
+	stunServerLineEdit->setText(user_config->stun_server.
+				    encode_noscheme().c_str());
 	
 	// ADDRESS FORMAT
 	displayTelUserCheckBox->setChecked(user_config->display_useronly_phone);
 	numericalUserIsTelCheckBox->setChecked(
-		user_config->numerical_user_is_phone);
+			user_config->numerical_user_is_phone);
 	
 	// TIMERS
 	tmrNoanswerSpinBox->setValue(user_config->timer_noanswer);
+	tmrNatKeepaliveSpinBox->setValue(user_config->timer_nat_keepalive);
 }
-	
+
 // Show the form
 // isRunning indicates if Twinkle is currently running
 void UserProfileForm::show(bool isRunning)
@@ -289,6 +309,8 @@ void UserProfileForm::validate()
 	if (usernameLineEdit->text().isEmpty()) {
 		categoryListBox->setSelected(idxCatUser, true);
 		settingsWidgetStack->raiseWidget(pageUser);
+		((t_gui *)ui)->cb_show_msg(this, "You must fill in a user name for your SIP account.",
+				MSG_CRITICAL);
 		usernameLineEdit->setFocus();
 		return;
 	}
@@ -297,6 +319,11 @@ void UserProfileForm::validate()
 	if (domainLineEdit->text().isEmpty()) {
 		categoryListBox->setSelected(idxCatUser, true);
 		settingsWidgetStack->raiseWidget(pageUser);
+		((t_gui *)ui)->cb_show_msg(this, 
+				"You must fill in a domain name for your SIP account.\n"
+				"This could be the hostname or IP address of your PC "
+				"if you want direct PC to PC dialing.",
+				MSG_CRITICAL);
 		domainLineEdit->setFocus();
 		return;
 	}
@@ -309,6 +336,8 @@ void UserProfileForm::validate()
 		if (!u.is_valid() || u.get_user() != "") {
 			categoryListBox->setSelected(idxCatSipServer, true);
 			settingsWidgetStack->raiseWidget(pageSipServer);
+			((t_gui *)ui)->cb_show_msg(this, "Invalid value for registrar.", 
+						   MSG_CRITICAL);
 			registrarLineEdit->setFocus();
 			registrarLineEdit->selectAll();
 			return;
@@ -323,6 +352,8 @@ void UserProfileForm::validate()
 		if (!u.is_valid() || u.get_user() != "") {
 			categoryListBox->setSelected(idxCatSipServer, true);
 			settingsWidgetStack->raiseWidget(pageSipServer);
+			((t_gui *)ui)->cb_show_msg(this, "Invalid value for outbound proxy.", 
+					MSG_CRITICAL);
 			proxyLineEdit->setFocus();
 			proxyLineEdit->selectAll();
 			return;
@@ -330,11 +361,29 @@ void UserProfileForm::validate()
 	}
 	
 	// NAT public IP
-	if (usePublicIPCheckBox->isChecked()) {
+	if (natStaticRadioButton->isChecked()) {
 		if (publicIPLineEdit->text().isEmpty()){
 			categoryListBox->setSelected(idxCatNat, true);
 			settingsWidgetStack->raiseWidget(pageNat);
+			((t_gui *)ui)->cb_show_msg(this, "Value for public IP address missing.",
+					MSG_CRITICAL);
 			publicIPLineEdit->setFocus();
+			return;
+		}
+	}
+	
+	// STUN server
+	if (natStunRadioButton->isChecked()) {
+		s = "stun:";
+		s.append(stunServerLineEdit->text());
+		t_url u(s.ascii());
+		if (!u.is_valid() || u.get_user() != "") {
+			categoryListBox->setSelected(idxCatNat, true);
+			settingsWidgetStack->raiseWidget(pageNat);
+			((t_gui *)ui)->cb_show_msg(this, "Invalid value for STUN server.", 
+					MSG_CRITICAL);
+			stunServerLineEdit->setFocus();
+			stunServerLineEdit->selectAll();
 			return;
 		}
 	}
@@ -345,8 +394,13 @@ void UserProfileForm::validate()
 	}
 	
 	// Clear NAT public IP if not used
-	if (!usePublicIPCheckBox->isChecked()) {
+	if (!natStaticRadioButton->isChecked()) {
 		publicIPLineEdit->clear();
+	}
+	
+	// Clear STUN server if not used
+	if (!natStunRadioButton->isChecked()) {
+		stunServerLineEdit->clear();
 	}
 	
 	// Set all values in the user_config object
@@ -360,7 +414,7 @@ void UserProfileForm::validate()
 		user_config->domain = domainLineEdit->text().ascii();
 		emit sipUserChanged();
 	}
-
+	
 	user_config->organization = organizationLineEdit->text().ascii();
 	user_config->auth_realm = authRealmLineEdit->text().ascii();
 	user_config->auth_name = authNameLineEdit->text().ascii();
@@ -380,10 +434,13 @@ void UserProfileForm::validate()
 	user_config->outbound_proxy.set_url(s.ascii());
 	user_config->all_requests_to_proxy = allRequestsCheckBox->isChecked();
 	user_config->non_resolvable_to_proxy = 
-		proxyNonResolvableCheckBox->isChecked();
+			proxyNonResolvableCheckBox->isChecked();
 	
 	// RTP AUDIO
-	user_config->rtp_port = rtpPortSpinBox->value();
+	if (user_config->rtp_port != rtpPortSpinBox->value()) {
+		user_config->rtp_port = rtpPortSpinBox->value();
+		emit rtpPortChanged();
+	}
 	
 	user_config->codecs.clear();
 	short codec;
@@ -408,6 +465,7 @@ void UserProfileForm::validate()
 	user_config->dtmf_payload_type = dtmfPayloadTypeSpinBox->value();
 	user_config->dtmf_duration = dtmfDurationSpinBox->value();
 	user_config->dtmf_pause = dtmfPauseSpinBox->value();
+	user_config->dtmf_volume = dtmfVolumeSpinBox->value();
 	
 	// SIP PROTOCOL
 	user_config->sip_udp_port = sipUdpPortSpinBox->value();
@@ -428,28 +486,46 @@ void UserProfileForm::validate()
 	user_config->ask_user_to_redirect = askUserRedirectCheckBox->isChecked();
 	user_config->max_redirections = maxRedirectSpinBox->value();
 	user_config->ext_100rel = indexComboItem2ext_support(
-		ext100relComboBox->currentItem());
+			ext100relComboBox->currentItem());
+	user_config->allow_refer = allowReferCheckBox->isChecked();
+	user_config->ask_user_to_refer = askUserReferCheckBox->isChecked();
+	user_config->referee_hold = refereeHoldCheckBox->isChecked();
+	user_config->referrer_hold = referrerHoldCheckBox->isChecked();
+	user_config->auto_refresh_refer_sub = refreshReferSubCheckBox->isChecked();
 	
 	// NAT
-	user_config->use_nat_public_ip = usePublicIPCheckBox->isChecked();
+	user_config->use_nat_public_ip = natStaticRadioButton->isChecked();
 	user_config->nat_public_ip = publicIPLineEdit->text().ascii();
+	user_config->use_stun = natStunRadioButton->isChecked();
+	
+	if (user_config->stun_server.encode_noscheme() != 
+	    stunServerLineEdit->text().ascii()) 
+	{
+		s = "stun:";
+		s.append(stunServerLineEdit->text());
+		user_config->stun_server.set_url(s.ascii());
+		emit stunServerChanged();
+	}
 	
 	// ADDRESS FORMAT
 	user_config->display_useronly_phone = 
-		displayTelUserCheckBox->isChecked();
+			displayTelUserCheckBox->isChecked();
 	user_config->numerical_user_is_phone = 
-		numericalUserIsTelCheckBox->isChecked();
+			numericalUserIsTelCheckBox->isChecked();
 	
 	// TIMERS
 	user_config->timer_noanswer = tmrNoanswerSpinBox->value();
+	user_config->timer_nat_keepalive = tmrNatKeepaliveSpinBox->value();
 	
 	// Save user config
 	string error_msg;
 	if (!user_config->write_config(user_config->get_filename(), error_msg)) {
 		// Failed to write config file
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_CRITICAL);
 		return;
 	}
 	
 	accept();
 }
+
+

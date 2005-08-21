@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>GetProfileNameForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -118,6 +118,15 @@
                     </property>
                     <property name="maxLength">
                         <number>20</number>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>&lt;b&gt;The name of your profile&lt;/b&gt;
+&lt;br&gt;&lt;br&gt;
+A profile contains your user settings, e.g. your user name and password. You have to give each profile a name.
+&lt;br&gt;&lt;br&gt;
+If you have multiple SIP accounts, you can create multiple profiles. When you startup Twinkle it will show you the list of profile names from which you can select the profile you want to run.
+&lt;br&gt;&lt;br&gt;
+To remember your profiles easily you could use your SIP user name as a profile name, e.g. &lt;b&gt;example@example.com&lt;/b&gt;</string>
                     </property>
                 </widget>
             </vbox>

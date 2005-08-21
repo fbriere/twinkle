@@ -5,11 +5,12 @@
 bin_SCRIPTS = src/gui/twinkle
 
 pkgdata_DATA = data/ringback.wav data/ringtone.wav \
+	data/providers.csv \
 	src/gui/images/twinkle16.png src/gui/images/twinkle32.png \
 	src/gui/images/twinkle48.png
 
 EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
 	src/gui/twinkle.pro src/gui/images/* \
-	data/ringback.wav data/ringtone.wav
+	data/ringback.wav data/ringtone.wav data/providers.csv
 
 SUBDIRS = src

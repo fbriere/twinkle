@@ -18,6 +18,7 @@ twinkle_LDADD = $(top_builddir)/src/libtwinkle.a\
         $(top_builddir)/src/audio/libaudio.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
+        $(top_builddir)/src/stun/libstun.a\
 	$(CCRTP_LIBS)
 
 libtwinkle_a_SOURCES =\
@@ -32,6 +33,8 @@ libtwinkle_a_SOURCES =\
         sender.cpp\
         service.cpp\
         session.cpp\
+	sub_refer.cpp\
+	subscription.cpp\
         sys_settings.cpp\
         timekeeper.cpp\
         transaction.cpp\
@@ -53,6 +56,8 @@ libtwinkle_a_SOURCES =\
         sender.h\
         service.h\
         session.h\
+	sub_refer.h\
+	subscription.h\
         sys_settings.h\
         timekeeper.h\
         transaction.h\
@@ -62,4 +67,4 @@ libtwinkle_a_SOURCES =\
         userintf.h\
         util.h
 
-SUBDIRS = audio audits parser sdp sockets threads . gui
+SUBDIRS = audio audits parser sdp sockets stun threads . gui

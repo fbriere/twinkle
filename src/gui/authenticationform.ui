@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>AuthenticationForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>391</width>
-            <height>170</height>
+            <width>392</width>
+            <height>174</height>
         </rect>
     </property>
     <property name="caption">
@@ -120,6 +120,9 @@
                                             <height>0</height>
                                         </size>
                                     </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Your SIP authentication name. Quite often this is the same as your SIP user name. It can be a different name though.</string>
+                                    </property>
                                 </widget>
                                 <widget class="QLabel" row="0" column="0">
                                     <property name="name">
@@ -144,6 +147,9 @@
                                     </property>
                                     <property name="echoMode">
                                         <enum>Password</enum>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Your password for authentication.</string>
                                     </property>
                                 </widget>
                                 <widget class="QLabel" row="1" column="0">

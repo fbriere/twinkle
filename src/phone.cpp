@@ -28,9 +28,11 @@
 #include "user.h"
 #include "userintf.h"
 #include "audits/memman.h"
+#include "sockets/socket.h"
 
 extern t_phone 		*phone;
 extern t_event_queue	*evq_timekeeper;
+extern t_event_queue	*evq_sender_udp;
 extern string		user_host;
 
 ///////////
@@ -89,6 +91,24 @@ void t_phone::end_call(void) {
 
 void t_phone::registration(t_register_type register_type, unsigned long expires)
 {
+	// If STUN is enabled, then do a STUN query before registering if not
+	// done so already.
+	if (register_type == REG_REGISTER && phone->use_stun &&
+	    stun_public_ip_sip == 0)
+	{
+		if (r_stun) return;
+	
+		StunMessage req;
+		StunAtrString username;
+		username.sizeValue = 0;
+		stunBuildReqSimple(&req, username, false, false);
+		r_stun = new t_client_request(&req, 0);
+		MEMMAN_NEW(r_stun);
+		send_request(&req, r_stun->get_tuid());
+		registration_time = expires;
+		return;
+	}
+
 	// Stop registration timer for non-query request
 	if (register_type != REG_QUERY) {
 		stop_timer(PTMR_REGISTRATION);
@@ -242,7 +262,7 @@ void t_phone::options(void) {
 	lines[active_line]->options();
 }
 
-bool t_phone::hold(void) {
+bool t_phone::hold(bool rtponly) {
 	// A line in a 3-way call cannot be held
 	if (is_3way && (
 	    active_line == line1_3way->get_line_number() ||
@@ -251,11 +271,15 @@ bool t_phone::hold(void) {
 		return false;
 	}
 
-	return lines[active_line]->hold();
+	return lines[active_line]->hold(rtponly);
 }
 
 void t_phone::retrieve(void) {
 	lines[active_line]->retrieve();
+}
+
+void t_phone::refer(const t_url &uri, const string &display) {
+	lines[active_line]->refer(uri, display);
 }
 
 void t_phone::activate_line(unsigned short l) {
@@ -307,9 +331,17 @@ void t_phone::activate_line(unsigned short l) {
 	}
 
 	set_active_line(l);
-	retrieve();
 
-	// Play ring tone, if the new acitve line has an incoming call
+	// Retrieve the call on the new active line unless that line
+	// is transferring a call and the user profile indicates that
+	// the referrer holds the call during call transfer.
+	if (get_line_refer_state(l) == REFST_NULL ||
+	    !user_config->referrer_hold)
+	{
+		retrieve();
+	}
+
+	// Play ring tone, if the new active line has an incoming call
 	// in progress.
 	if (get_line(l)->get_substate() == LSSUB_INCOMING_PROGRESS) {
 		ui->cb_play_ringtone();
@@ -347,6 +379,11 @@ void t_phone::start_timer(t_phone_timer timer) {
 	t_tmr_phone	*t;
 
 	switch(timer) {
+	case PTMR_NAT_KEEPALIVE:
+		t = new t_tmr_phone(user_config->timer_nat_keepalive * 1000, timer, this);
+		MEMMAN_NEW(t);
+		id_nat_keepalive = t->get_id();
+		break;
 	default:
 		assert(false);
 	}
@@ -362,6 +399,9 @@ void t_phone::stop_timer(t_phone_timer timer) {
 	switch(timer) {
 	case PTMR_REGISTRATION:
 		id = &id_registration;
+		break;
+	case PTMR_NAT_KEEPALIVE:
+		id = &id_nat_keepalive;
 		break;
 	default:
 		assert(false);
@@ -537,6 +577,45 @@ void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 	// Response does not match any pending request. Do nothing.
 }
 
+void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
+
+	if (!r_stun || r_stun->get_tuid() != tuid) {
+		// Response does not match pending STUN request
+		return;
+	}
+	
+	if (r->msgHdr.msgType == BindResponseMsg && r->hasMappedAddress) {
+		// The STUN response contains the public IP.
+		stun_public_ip_sip = r->mappedAddress.ipv4.addr;
+		stun_public_port_sip = r->mappedAddress.ipv4.port;
+                MEMMAN_DELETE(r_stun);
+                delete r_stun;
+                r_stun = NULL;
+                registration(REG_REGISTER, registration_time);
+                return;
+	}
+	
+	if (r->msgHdr.msgType == BindErrorResponseMsg && r->hasErrorCode) {
+		// STUN request failed.
+                ui->cb_stun_failed(r->errorCode.errorClass * 100 +
+                	r->errorCode.number, r->errorCode.reason);
+	} else {	
+		// No satisfying STUN response was received.
+ 	       ui->cb_stun_failed();
+	}
+	
+        MEMMAN_DELETE(r_stun);
+        delete r_stun;
+        r_stun = NULL;
+	
+        // Try registration later.
+	bool first_failure = !last_reg_failed;
+        last_reg_failed = true;
+        is_registered = false;
+	ui->cb_register_stun_failed(first_failure);
+        start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000);
+}
+
 void t_phone::handle_response_register(t_response *r, bool &re_register) {
 	t_contact_param *c;
 	unsigned long expires;
@@ -549,7 +628,7 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
         case R_2XX:
                 last_reg_failed = false;
 
-                // Stop registration timer is one was running
+                // Stop registration timer if one was running
                 stop_timer(PTMR_REGISTRATION);
 
                 c = r->hdr_contact.find_contact(create_user_contact());
@@ -581,6 +660,14 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 		first_success = !is_registered;
                 is_registered = true;
 		ui->cb_register_success(r, expires, first_success);
+		
+		// Start sending NAT keepalive packets when STUN is used
+		if (use_stun && id_nat_keepalive == 0) {
+			// Just start the NAT keepalive timer. The REGISTER
+			// message itself created the NAT binding. So there is
+			// no need to send a NAT keep alive packet now.
+			start_timer(PTMR_NAT_KEEPALIVE);
+		}
 
                 break;
         case R_4XX:
@@ -615,7 +702,7 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 
 		// If authorization failed, the do not start the continuous
 		// re-attempts. When authorization fails the user is asked
-		// for credentials (in GUI). So the user cancelled this
+		// for credentials (in GUI). So the user cancelled these
 		// questions and should not be bothered with the same question
 		// again every 30 seconds. The user does not have the
 		// credentials.
@@ -623,7 +710,8 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 		    r->code == R_407_PROXY_AUTH_REQUIRED)
 		{
 			last_reg_failed = true;
-			ui->cb_register_failed(r, true);
+			ui->cb_register_failed(r, true);			
+	
 			return;
 		}
 
@@ -634,6 +722,13 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
                 is_registered = false;
 		ui->cb_register_failed(r, first_failure);
                 start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000);
+                
+		// Clear STUN information
+		if (use_stun) {
+			stun_public_ip_sip = 0L;
+			stun_public_port_sip = 0;
+			stop_timer(PTMR_NAT_KEEPALIVE);
+		}
         }
 }
 
@@ -645,6 +740,13 @@ void t_phone::handle_response_deregister(t_response *r) {
 		ui->cb_deregister_success(r);
 	} else {
 		ui->cb_deregister_failed(r);
+	}
+	
+	// Clear STUN information
+	if (use_stun) {
+		stun_public_ip_sip = 0L;
+		stun_public_port_sip = 0;
+		stop_timer(PTMR_NAT_KEEPALIVE);
 	}
 }
 
@@ -658,6 +760,32 @@ void t_phone::handle_response_query_register(t_response *r) {
 
 void t_phone::handle_response_options(t_response *r) {
 	ui->cb_options_response(r);
+}
+
+void t_phone::send_nat_keepalive(void) {
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	if (user_config->use_registrar) {
+		ipaddr = user_config->registrar.get_h_ip();
+		port = user_config->registrar.get_hport();
+	} else if (user_config->use_outbound_proxy) {
+		ipaddr = user_config->outbound_proxy.get_h_ip();
+		port = user_config->outbound_proxy.get_hport();
+	} else {
+		t_url u(string(USER_SCHEME) + ":" + user_config->domain);	
+		ipaddr = u.get_h_ip();
+		port = u.get_hport();
+	}
+	
+	if (ipaddr == 0 || port == 0) {
+		log_file->write_report(
+			"Cannot resolve destination for NAT keepalive packet.",
+			"t_phone::send_nat_keepalive", LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
+		
+	evq_sender_udp->push_nat_keepalive(ipaddr, port);
 }
 
 //////////////
@@ -742,6 +870,16 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 
+	// Check if this INVITE is a retransmission.
+	// Once the TU sent a 2XX repsonse on an INVITE it has to deal
+	// with retransmissions.
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->is_invite_retrans(r)) {
+			lines[i]->process_invite_retrans();
+			return;
+		}
+	}
+
 	// Check if the far end requires any unsupported extensions
 	if (!check_required_ext(r, unsupported))
 	{
@@ -783,11 +921,17 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Send the INVITE to the active line if it is idle
 		if (lines[active_line]->get_substate() == LSSUB_IDLE) {
 			lines[active_line]->recvd_invite(r, tid);
+			
+			// Auto answer
+			if (service.is_auto_answer_active()) {
+				lines[active_line]->answer();
+			}
+			
 			return;
 		}
 
 		// Send the INVITE to the first idle unseized line
-		for (unsigned short i = 0; i < NUM_LINES; i++) {
+		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 			if (lines[i]->get_substate() == LSSUB_IDLE) {
 				lines[i]->recvd_invite(r, tid);
 				return;
@@ -1032,8 +1176,217 @@ void t_phone::recvd_prack(t_request *r, t_tid tid) {
 	delete resp;
 }
 
+void t_phone::recvd_subscribe(t_request *r, t_tid tid) {
+	t_response *resp;
+
+	if (r->hdr_event.event_type != SIP_EVENT_REFER) {
+		// Non-supported event type
+		resp = r->create_response(R_489_BAD_EVENT);
+		resp->hdr_allow_events.add_event_type(SIP_EVENT_REFER);
+		send_response(resp, 0 ,tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->match(r)) {
+			lines[i]->recvd_subscribe(r, tid);
+			return;
+		}
+	}
+
+	if (r->hdr_to.tag == "") {
+		// A REFER outside a dialog is not allowed by Twinkle
+		if (r->hdr_event.event_type == SIP_EVENT_REFER) {
+			// RFC 3515 2.4.4
+			resp = r->create_response(R_403_FORBIDDEN);
+		}
+
+		send_response(resp, 0 ,tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
+void t_phone::recvd_notify(t_request *r, t_tid tid) {
+	t_response *resp;
+
+	if (r->hdr_event.event_type != SIP_EVENT_REFER) {
+		// Non-supported event type
+		resp = r->create_response(R_489_BAD_EVENT);
+		resp->hdr_allow_events.add_event_type(SIP_EVENT_REFER);
+		send_response(resp, 0 ,tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->match(r)) {
+			lines[i]->recvd_notify(r, tid);
+			if (lines[i]->get_refer_state() == REFST_NULL) {
+				// Refer subscription has finished.
+				log_file->write_report("Refer subscription terminated.",
+					"t_phone::recvd_notify");
+
+				if (lines[i]->is_refer_succeeded()) {
+					log_file->write_report(
+						"Refer succeeded. End call with referee,",
+						"t_phone::recvd_notify");
+					lines[i]->end_call();
+				} else {
+					log_file->write_report("Refer failed.",
+						"t_phone::recvd_notify");
+						
+					if (user_config->referrer_hold &&
+					    lines[i]->get_is_on_hold())
+					{
+						// Retrieve the call if the line is active.
+						if (i == active_line) {
+							log_file->write_report(
+								"Retrieve call with referee.",
+								"t_phone::recvd_notify");
+							lines[i]->retrieve();
+						}
+					}
+				}
+			}
+			return;
+		}
+	}
+
+	if (r->hdr_to.tag == "") {
+		// NOTIFY outside a dialog is not allowed.
+		resp = r->create_response(R_403_FORBIDDEN);
+		send_response(resp, 0 ,tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
+void t_phone::recvd_refer(t_request *r, t_tid tid) {
+	t_response *resp;
+
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->match(r)) {
+			// Reject if a 3-way call is established.
+			if (is_3way) {
+				log_file->write_report("3-way call active. Reject REFER.",
+					"t_phone::recvd_refer");
+				resp = r->create_response(R_603_DECLINE);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}
+			
+			// Reject if the line is on-hold.
+			if (is_3way || lines[i]->get_is_on_hold()) {
+				log_file->write_report("Line is on-hold. Reject REFER.",
+					"t_phone::recvd_refer");
+				resp = r->create_response(R_603_DECLINE);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}
+
+			// Check if a refer is alread in progress
+			if (i == LINENO_REFERRER ||
+			    lines[LINENO_REFERRER]->get_state() != LS_IDLE)
+			{
+				log_file->write_report(
+					"A REFER is still in progress. Reject REFER.",
+					"t_phone::recvd_refer");
+				resp = r->create_response(R_603_DECLINE);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}
+
+			if (!lines[i]->recvd_refer(r, tid)) {
+				// Refer has been rejected.
+				return;
+			}
+
+			ui->cb_call_referred(i, r);
+
+			// Put line on-hold and place it in the referrer line
+			log_file->write_report(
+				"Hold call before calling the refer-target.",
+				"t_phone::recvd_refer");
+
+			if (user_config->referee_hold) {
+				lines[i]->hold();
+			} else {
+				// The user profile indicates that the line should
+				// not be put on-hold, i.e. do not send re-INVITE.
+				// So only stop RTP.
+				lines[i]->hold(true);
+			}
+
+			t_line *l = lines[i];
+			lines[i] = lines[LINENO_REFERRER];
+			lines[i]->line_number = i;
+			lines[LINENO_REFERRER] = l;
+			lines[LINENO_REFERRER]->line_number = LINENO_REFERRER;
+
+			ui->cb_line_state_changed();
+
+			// Setup call to the Refer-To destination
+			log_file->write_report("Call refer-target.",
+				"t_phone::recvd_refer");
+			lines[i]->invite(r->hdr_refer_to.uri,
+				r->hdr_refer_to.display, "", r->hdr_referred_by);
+			lines[i]->open_dialog->is_referred_call = true;
+
+			return;
+		}
+	}
+
+	if (r->hdr_to.tag == "") {
+		// Twinkle does not allow a REFER outside a dialog.
+		resp = r->create_response(R_403_FORBIDDEN);
+		send_response(resp, 0 ,tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
 void t_phone::failure(t_failure failure, t_tid tid) {
 	// TODO
+}
+
+void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->match(r, tuid)) {
+			lines[i]->recvd_stun_resp(r, tuid, tid);
+			return;
+		}
+	}
+
+	// out-of-dialog STUN responses
+	handle_response_out_of_dialog(r, tuid);
 }
 
 
@@ -1048,6 +1401,7 @@ t_phone::t_phone() : t_transaction_layer() {
 	r_register = NULL;
 	r_deregister = NULL;
 	r_query_register = NULL;
+	r_stun = NULL;
 
 	// Initialize registration data
 	// Call-ID cannot be set here as user_host is not determined yet.
@@ -1064,11 +1418,21 @@ t_phone::t_phone() : t_transaction_layer() {
 	is_3way = false;
 	line1_3way = NULL;
 	line2_3way = NULL;
+	
+	// Initialize STUN data
+	stun_public_ip_sip = 0L;
+	stun_public_port_sip = 0;
+	use_stun = false;
+	
+	// Timers
+	id_registration = 0;
+	id_nat_keepalive = 0;
 }
 
 t_phone::~t_phone() {
 	// Stop timers
 	if (id_registration) stop_timer(PTMR_REGISTRATION);
+	if (id_nat_keepalive) stop_timer(PTMR_NAT_KEEPALIVE);
 
 	// Delete pointers
 	if (r_options) {
@@ -1086,6 +1450,10 @@ t_phone::~t_phone() {
 	if (r_query_register) {
 		MEMMAN_DELETE(r_query_register);
 		delete r_query_register;
+	}
+	if (r_stun) {
+		MEMMAN_DELETE(r_stun);
+		delete r_stun;
 	}
 
 	// Delete phone lines
@@ -1161,6 +1529,12 @@ void t_phone::pub_retrieve(void) {
 	unlock();
 }
 
+void t_phone::pub_refer(const t_url &uri, const string &display) {
+	lock();
+	refer(uri, display);
+	unlock();
+}
+
 void t_phone::mute(bool enable) {
 	lock();
 
@@ -1213,7 +1587,7 @@ t_phone_state t_phone::get_state(void) const {
 	t_phone *self = const_cast<t_phone *>(this);
 
 	self->lock();
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 		if (lines[i]->get_state() == LS_IDLE) {
 			self->unlock();
 			return PS_IDLE;
@@ -1238,6 +1612,13 @@ void t_phone::timeout(t_phone_timer timer) {
 			}
 		}
 		break;
+	case PTMR_NAT_KEEPALIVE:
+		// Send a new NAT keepalive packet
+		if (use_stun) {
+			send_nat_keepalive();
+			start_timer(PTMR_NAT_KEEPALIVE);
+		}
+		break;
 	default:
 		assert(false);
 	}
@@ -1254,9 +1635,9 @@ string t_phone::create_user_contact(void) const {
 	s += '@';
 	s += USER_HOST;
 
-	if (user_config->sip_udp_port != get_default_port(USER_SCHEME)) {
+	if (PUBLIC_SIP_UDP_PORT != get_default_port(USER_SCHEME)) {
 		s += ':';
-		s += int2str(user_config->sip_udp_port);
+		s += int2str(PUBLIC_SIP_UDP_PORT);
 	}
 
 	if (user_config->numerical_user_is_phone &&
@@ -1356,7 +1737,7 @@ t_response *t_phone::create_options_response(t_request *r,
 
 void t_phone::set_active_line(unsigned short l) {
 	lock();
-	assert (l < NUM_LINES);
+	assert (l < NUM_USER_LINES);
 	active_line = l;
 	unlock();
 }
@@ -1437,6 +1818,15 @@ bool t_phone::is_line_muted(unsigned short lineno) const {
 	self->unlock();
 	return b;
 }
+t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	t_refer_state s = get_line(lineno)->get_refer_state();
+	self->unlock();
+	return s;
+}
 
 bool t_phone::part_of_3way(unsigned short lineno) {
 	lock();
@@ -1478,8 +1868,8 @@ t_line *t_phone::get_3way_peer_line(unsigned short lineno) {
 }
 
 bool t_phone::join_3way(unsigned short lineno1, unsigned short lineno2) {
-	assert(lineno1 < NUM_LINES);
-	assert(lineno2 < NUM_LINES);
+	assert(lineno1 < NUM_USER_LINES);
+	assert(lineno2 < NUM_USER_LINES);
 
 	lock();
 
@@ -1568,4 +1958,89 @@ void t_phone::line_cleared(unsigned short lineno) {
 	}
 
 	unlock();
+}
+
+void t_phone::notify_refer_progress(t_response *r, unsigned short referee_lineno) {
+	if (lines[LINENO_REFERRER]->get_state() != LS_IDLE) {
+		lines[LINENO_REFERRER]->notify_refer_progress(r);
+
+		if (!lines[LINENO_REFERRER]->active_dialog ||
+		    lines[LINENO_REFERRER]->active_dialog->get_state() != DS_CONFIRMED)
+		{
+			// The call to the referrer has already been
+			// terminated.
+			return;
+		}
+
+		if (r->is_final()) {
+			if (r->is_success()) {
+				// Reference was successful, end the call with
+				// with the referrer.
+				log_file->write_header(
+					"t_phone::notify_refer_progress");
+				log_file->write_raw(
+					"Call to refer-target succeeded.\n");
+				log_file->write_raw(
+					"End call with referrer.\n");
+				log_file->write_footer();
+				
+				lines[LINENO_REFERRER]->end_call();
+			} else {
+				// Reference failed, retrieve the call with the
+				// referrer.
+				log_file->write_header(
+					"t_phone::notify_refer_progress");
+				log_file->write_raw(
+					"Call to refer-target failed.\n");
+				log_file->write_raw(
+					"Restore call with referrer.\n");
+				log_file->write_footer();
+
+				// Retrieve the parked line
+				t_line *l = lines[referee_lineno];
+				lines[referee_lineno] = lines[LINENO_REFERRER];
+				lines[referee_lineno]->line_number = referee_lineno;
+				lines[LINENO_REFERRER] = l;
+				lines[LINENO_REFERRER]->line_number = LINENO_REFERRER;
+				
+				// Retrieve the call if the line is active
+				if (referee_lineno == active_line) {
+					log_file->write_report(
+						"Retrieve call with referrer.",
+						"t_phone::notify_refer_progress");
+					lines[referee_lineno]->retrieve();
+
+				}
+				
+				ui->cb_retrieve_referrer(referee_lineno);
+			}
+		}
+	}
+}
+
+t_call_info t_phone::get_call_info(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	t_call_info call_info = get_line(lineno)->get_call_info();
+	self->unlock();
+	return call_info;
+}
+
+void t_phone::init_rtp_ports(void) {
+	for (int i = 0; i < NUM_LINES; i++) {
+		lines[i]->init_rtp_port();
+	}
+}
+
+string t_phone::get_ip_sip(void) const {
+	if (stun_public_ip_sip) return h_ip2str(stun_public_ip_sip);
+	if (user_config->use_nat_public_ip) return user_config->nat_public_ip;
+	return LOCAL_IP;
+}
+
+unsigned short t_phone::get_public_port_sip(void) const {
+	if (stun_public_port_sip) return stun_public_port_sip;
+	return user_config->sip_udp_port;
 }

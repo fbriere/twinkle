@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>RedirectForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -50,6 +50,9 @@
                             <property name="name">
                                 <cstring>contact3LineEdit</cstring>
                             </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                            </property>
                         </widget>
                         <widget class="QLabel" row="2" column="0">
                             <property name="name">
@@ -77,10 +80,16 @@
                             <property name="name">
                                 <cstring>contact2LineEdit</cstring>
                             </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                            </property>
                         </widget>
                         <widget class="QLineEdit" row="0" column="1">
                             <property name="name">
                                 <cstring>contact1LineEdit</cstring>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                             </property>
                         </widget>
                         <widget class="QLabel" row="0" column="0">

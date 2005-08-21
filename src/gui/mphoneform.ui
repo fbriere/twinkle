@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>MphoneForm</class>
 <widget class="QMainWindow">
     <property name="name">
@@ -11,8 +11,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>635</width>
-            <height>558</height>
+            <width>636</width>
+            <height>586</height>
         </rect>
     </property>
     <property name="sizePolicy">
@@ -25,8 +25,8 @@
     </property>
     <property name="minimumSize">
         <size>
-            <width>613</width>
-            <height>553</height>
+            <width>636</width>
+            <height>586</height>
         </size>
     </property>
     <property name="caption">
@@ -50,25 +50,305 @@
         </property>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout10</cstring>
+                <cstring>layout11</cstring>
             </property>
             <hbox>
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <widget class="QLabel">
+                <widget class="QLineEdit">
                     <property name="name">
                         <cstring>userTextLabel</cstring>
                     </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>3</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                        <size>
+                            <width>470</width>
+                            <height>0</height>
+                        </size>
+                    </property>
                     <property name="paletteForegroundColor">
                         <color>
-                            <red>0</red>
-                            <green>85</green>
+                            <red>85</red>
+                            <green>0</green>
                             <blue>255</blue>
                         </color>
                     </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="palette">
+                        <palette>
+                            <active>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>230</red>
+                                    <green>240</green>
+                                    <blue>249</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>242</red>
+                                    <green>247</green>
+                                    <blue>252</blue>
+                                </color>
+                                <color>
+                                    <red>115</red>
+                                    <green>120</green>
+                                    <blue>124</blue>
+                                </color>
+                                <color>
+                                    <red>154</red>
+                                    <green>160</green>
+                                    <blue>166</blue>
+                                </color>
+                                <color>
+                                    <red>85</red>
+                                    <green>0</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>128</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                            </active>
+                            <disabled>
+                                <color>
+                                    <red>128</red>
+                                    <green>128</green>
+                                    <blue>128</blue>
+                                </color>
+                                <color>
+                                    <red>230</red>
+                                    <green>240</green>
+                                    <blue>249</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>115</red>
+                                    <green>120</green>
+                                    <blue>124</blue>
+                                </color>
+                                <color>
+                                    <red>154</red>
+                                    <green>160</green>
+                                    <blue>166</blue>
+                                </color>
+                                <color>
+                                    <red>85</red>
+                                    <green>0</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>128</red>
+                                    <green>128</green>
+                                    <blue>128</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>128</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>83</red>
+                                    <green>83</green>
+                                    <blue>120</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>64</green>
+                                    <blue>0</blue>
+                                </color>
+                            </disabled>
+                            <inactive>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>230</red>
+                                    <green>240</green>
+                                    <blue>249</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>115</red>
+                                    <green>120</green>
+                                    <blue>124</blue>
+                                </color>
+                                <color>
+                                    <red>154</red>
+                                    <green>160</green>
+                                    <blue>166</blue>
+                                </color>
+                                <color>
+                                    <red>85</red>
+                                    <green>0</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>238</red>
+                                    <green>234</green>
+                                    <blue>238</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>0</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>0</green>
+                                    <blue>128</blue>
+                                </color>
+                                <color>
+                                    <red>255</red>
+                                    <green>255</green>
+                                    <blue>255</blue>
+                                </color>
+                                <color>
+                                    <red>83</red>
+                                    <green>83</green>
+                                    <blue>120</blue>
+                                </color>
+                                <color>
+                                    <red>0</red>
+                                    <green>64</green>
+                                    <blue>0</blue>
+                                </color>
+                            </inactive>
+                        </palette>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
+                    </property>
                     <property name="text">
-                        <string>user.............................................................................................................</string>
+                        <string>User............................................................................................................</string>
+                    </property>
+                    <property name="frame">
+                        <bool>false</bool>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
                     </property>
                 </widget>
                 <spacer>
@@ -79,11 +359,11 @@
                         <enum>Horizontal</enum>
                     </property>
                     <property name="sizeType">
-                        <enum>Expanding</enum>
+                        <enum>Fixed</enum>
                     </property>
                     <property name="sizeHint">
                         <size>
-                            <width>20</width>
+                            <width>23</width>
                             <height>20</height>
                         </size>
                     </property>
@@ -91,6 +371,14 @@
                 <widget class="QLabel">
                     <property name="name">
                         <cstring>ipAddrTextLabel</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
                     </property>
                     <property name="paletteForegroundColor">
                         <color>
@@ -110,7 +398,7 @@
         </widget>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout13</cstring>
+                <cstring>layout12</cstring>
             </property>
             <hbox>
                 <property name="name">
@@ -267,6 +555,21 @@
                                         <string>Call redirection</string>
                                     </property>
                                 </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>autoAnswerTextLabel</cstring>
+                                    </property>
+                                    <property name="paletteForegroundColor">
+                                        <color>
+                                            <red>0</red>
+                                            <green>85</green>
+                                            <blue>255</blue>
+                                        </color>
+                                    </property>
+                                    <property name="text">
+                                        <string>Auto answer</string>
+                                    </property>
+                                </widget>
                                 <spacer>
                                     <property name="name">
                                         <cstring>spacer3</cstring>
@@ -280,7 +583,7 @@
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>41</height>
+                                            <height>20</height>
                                         </size>
                                     </property>
                                 </spacer>
@@ -312,184 +615,6 @@
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <widget class="QLayoutWidget" row="0" column="1">
-                    <property name="name">
-                        <cstring>layout4</cstring>
-                    </property>
-                    <hbox>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>status1TextLabel</cstring>
-                            </property>
-                            <property name="minimumSize">
-                                <size>
-                                    <width>200</width>
-                                    <height>0</height>
-                                </size>
-                            </property>
-                            <property name="paletteForegroundColor">
-                                <color>
-                                    <red>0</red>
-                                    <green>85</green>
-                                    <blue>255</blue>
-                                </color>
-                            </property>
-                            <property name="text">
-                                <string>idle</string>
-                            </property>
-                            <property name="textFormat">
-                                <enum>RichText</enum>
-                            </property>
-                        </widget>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>codec1TextLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>5</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="paletteForegroundColor">
-                                <color>
-                                    <red>0</red>
-                                    <green>170</green>
-                                    <blue>127</blue>
-                                </color>
-                            </property>
-                            <property name="text">
-                                <string>g711a/g711a</string>
-                            </property>
-                            <property name="alignment">
-                                <set>AlignVCenter|AlignRight</set>
-                            </property>
-                        </widget>
-                    </hbox>
-                </widget>
-                <widget class="QLayoutWidget" row="4" column="1">
-                    <property name="name">
-                        <cstring>layout5</cstring>
-                    </property>
-                    <hbox>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>status2TextLabel</cstring>
-                            </property>
-                            <property name="paletteForegroundColor">
-                                <color>
-                                    <red>0</red>
-                                    <green>85</green>
-                                    <blue>255</blue>
-                                </color>
-                            </property>
-                            <property name="text">
-                                <string>idle</string>
-                            </property>
-                            <property name="textFormat">
-                                <enum>RichText</enum>
-                            </property>
-                        </widget>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>codec2TextLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>5</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="paletteForegroundColor">
-                                <color>
-                                    <red>0</red>
-                                    <green>170</green>
-                                    <blue>127</blue>
-                                </color>
-                            </property>
-                            <property name="text">
-                                <string>g711a/g711a</string>
-                            </property>
-                            <property name="alignment">
-                                <set>AlignVCenter|AlignRight</set>
-                            </property>
-                        </widget>
-                    </hbox>
-                </widget>
-                <widget class="QLabel" row="5" column="1">
-                    <property name="name">
-                        <cstring>from2Label</cstring>
-                    </property>
-                    <property name="paletteForegroundColor">
-                        <color>
-                            <red>0</red>
-                            <green>85</green>
-                            <blue>255</blue>
-                        </color>
-                    </property>
-                    <property name="text">
-                        <string>sip:from</string>
-                    </property>
-                </widget>
-                <widget class="QLabel" row="6" column="1">
-                    <property name="name">
-                        <cstring>to2Label</cstring>
-                    </property>
-                    <property name="paletteForegroundColor">
-                        <color>
-                            <red>0</red>
-                            <green>85</green>
-                            <blue>255</blue>
-                        </color>
-                    </property>
-                    <property name="text">
-                        <string>sip:to</string>
-                    </property>
-                </widget>
-                <widget class="QLabel" row="7" column="1">
-                    <property name="name">
-                        <cstring>subject2Label</cstring>
-                    </property>
-                    <property name="paletteForegroundColor">
-                        <color>
-                            <red>0</red>
-                            <green>85</green>
-                            <blue>255</blue>
-                        </color>
-                    </property>
-                    <property name="text">
-                        <string>subject</string>
-                    </property>
-                </widget>
-                <widget class="QLabel" row="5" column="0">
-                    <property name="name">
-                        <cstring>fromhead2Label</cstring>
-                    </property>
-                    <property name="sizePolicy">
-                        <sizepolicy>
-                            <hsizetype>0</hsizetype>
-                            <vsizetype>5</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                        </sizepolicy>
-                    </property>
-                    <property name="text">
-                        <string>From:</string>
-                    </property>
-                    <property name="indent">
-                        <number>21</number>
-                    </property>
-                </widget>
                 <widget class="QLabel" row="6" column="0">
                     <property name="name">
                         <cstring>tohead2Label</cstring>
@@ -539,38 +664,12 @@
                         <bool>true</bool>
                     </property>
                 </widget>
-                <widget class="QLabel" row="1" column="0">
+                <widget class="QRadioButton" row="4" column="0">
                     <property name="name">
-                        <cstring>fromhead1Label</cstring>
-                    </property>
-                    <property name="sizePolicy">
-                        <sizepolicy>
-                            <hsizetype>0</hsizetype>
-                            <vsizetype>5</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                        </sizepolicy>
+                        <cstring>line2RadioButton</cstring>
                     </property>
                     <property name="text">
-                        <string>From:</string>
-                    </property>
-                    <property name="indent">
-                        <number>21</number>
-                    </property>
-                </widget>
-                <widget class="QLabel" row="1" column="1">
-                    <property name="name">
-                        <cstring>from1Label</cstring>
-                    </property>
-                    <property name="paletteForegroundColor">
-                        <color>
-                            <red>0</red>
-                            <green>85</green>
-                            <blue>255</blue>
-                        </color>
-                    </property>
-                    <property name="text">
-                        <string>sip:from</string>
+                        <string>Line &amp;2:</string>
                     </property>
                 </widget>
                 <widget class="QLabel" row="2" column="0">
@@ -592,19 +691,23 @@
                         <number>21</number>
                     </property>
                 </widget>
-                <widget class="QLabel" row="2" column="1">
+                <widget class="QLabel" row="1" column="0">
                     <property name="name">
-                        <cstring>to1Label</cstring>
+                        <cstring>fromhead1Label</cstring>
                     </property>
-                    <property name="paletteForegroundColor">
-                        <color>
-                            <red>0</red>
-                            <green>85</green>
-                            <blue>255</blue>
-                        </color>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
                     </property>
                     <property name="text">
-                        <string>sip:to</string>
+                        <string>From:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
                     </property>
                 </widget>
                 <widget class="QLabel" row="3" column="0">
@@ -626,27 +729,302 @@
                         <number>21</number>
                     </property>
                 </widget>
-                <widget class="QLabel" row="3" column="1">
+                <widget class="QLineEdit" row="1" column="1">
+                    <property name="name">
+                        <cstring>from1Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>85</red>
+                            <green>0</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
+                    </property>
+                    <property name="text">
+                        <string>sip:from</string>
+                    </property>
+                    <property name="alignment">
+                        <set>AlignAuto</set>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="3" column="1">
                     <property name="name">
                         <cstring>subject1Label</cstring>
                     </property>
                     <property name="paletteForegroundColor">
                         <color>
-                            <red>0</red>
-                            <green>85</green>
+                            <red>85</red>
+                            <green>0</green>
                             <blue>255</blue>
                         </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
                     </property>
                     <property name="text">
                         <string>subject</string>
                     </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
                 </widget>
-                <widget class="QRadioButton" row="4" column="0">
+                <widget class="QLineEdit" row="2" column="1">
                     <property name="name">
-                        <cstring>line2RadioButton</cstring>
+                        <cstring>to1Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>85</red>
+                            <green>0</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
                     </property>
                     <property name="text">
-                        <string>Line &amp;2:</string>
+                        <string>sip:to</string>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="5" column="0">
+                    <property name="name">
+                        <cstring>fromhead2Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>From:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="7" column="1">
+                    <property name="name">
+                        <cstring>subject2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>85</red>
+                            <green>0</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
+                    </property>
+                    <property name="text">
+                        <string>subject</string>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="5" column="1">
+                    <property name="name">
+                        <cstring>from2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>85</red>
+                            <green>0</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
+                    </property>
+                    <property name="text">
+                        <string>sip:from</string>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QLayoutWidget" row="0" column="1">
+                    <property name="name">
+                        <cstring>layout49</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>status1TextLabel</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>85</red>
+                                    <green>0</green>
+                                    <blue>255</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>idle</string>
+                            </property>
+                            <property name="textFormat">
+                                <enum>RichText</enum>
+                            </property>
+                        </widget>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>codec1TextLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>0</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>170</green>
+                                    <blue>127</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>g711a/g711a</string>
+                            </property>
+                            <property name="alignment">
+                                <set>AlignVCenter|AlignRight</set>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <widget class="QLayoutWidget" row="4" column="1">
+                    <property name="name">
+                        <cstring>layout50</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>status2TextLabel</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>85</red>
+                                    <green>0</green>
+                                    <blue>255</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>idle</string>
+                            </property>
+                            <property name="textFormat">
+                                <enum>RichText</enum>
+                            </property>
+                        </widget>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>codec2TextLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>0</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>170</green>
+                                    <blue>127</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>g711a/g711a</string>
+                            </property>
+                            <property name="alignment">
+                                <set>AlignVCenter|AlignRight</set>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <widget class="QLineEdit" row="6" column="1">
+                    <property name="name">
+                        <cstring>to2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>85</red>
+                            <green>0</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="paletteBackgroundColor">
+                        <color>
+                            <red>238</red>
+                            <green>234</green>
+                            <blue>238</blue>
+                        </color>
+                    </property>
+                    <property name="frameShape">
+                        <enum>NoFrame</enum>
+                    </property>
+                    <property name="text">
+                        <string>sip:to</string>
+                    </property>
+                    <property name="readOnly">
+                        <bool>true</bool>
                     </property>
                 </widget>
             </grid>
@@ -662,6 +1040,7 @@
     </item>
     <item text="&amp;Edit" name="PopupMenu_4">
         <action name="editUserProfileAction"/>
+        <action name="editSysSettingsAction"/>
     </item>
     <item text="&amp;Call" name="PopupMenu">
         <action name="callInvite"/>
@@ -669,6 +1048,7 @@
         <action name="callBye"/>
         <action name="callReject"/>
         <action name="callRedirect"/>
+        <action name="callTransfer"/>
         <action name="callHold"/>
         <action name="callConference"/>
         <action name="callMute"/>
@@ -680,11 +1060,16 @@
     <item text="&amp;Registration" name="PopupMenu_2">
         <action name="regRegister"/>
         <action name="regDeregister"/>
+        <action name="regDeregisterAll"/>
         <action name="regShow"/>
     </item>
     <item text="&amp;Services" name="PopupMenu_3">
         <action name="serviceDnd"/>
         <action name="serviceRedirection"/>
+        <action name="serviceAutoAnswer"/>
+    </item>
+    <item text="&amp;View" name="View">
+        <action name="viewLogAction"/>
     </item>
     <item text="&amp;Help" name="helpMenu">
         <action name="helpAboutAction"/>
@@ -707,6 +1092,7 @@
         <action name="callBye"/>
         <action name="callReject"/>
         <action name="callRedirect"/>
+        <action name="callTransfer"/>
         <action name="callHold"/>
         <action name="callConference"/>
         <action name="callMute"/>
@@ -896,7 +1282,10 @@
             <string>Deregister</string>
         </property>
         <property name="menuText">
-            <string>&amp;Deregister...</string>
+            <string>&amp;Deregister</string>
+        </property>
+        <property name="toolTip">
+            <string>Deregister this device</string>
         </property>
     </action>
     <action>
@@ -957,6 +1346,9 @@
             <iconset>redial.png</iconset>
         </property>
         <property name="text">
+            <string>Redial</string>
+        </property>
+        <property name="menuText">
             <string>Redial</string>
         </property>
         <property name="toolTip">
@@ -1020,6 +1412,84 @@
         </property>
         <property name="toolTip">
             <string>Mute a call</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callTransfer</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>transfer.png</iconset>
+        </property>
+        <property name="text">
+            <string>Xfer</string>
+        </property>
+        <property name="menuText">
+            <string>Trans&amp;fer...</string>
+        </property>
+        <property name="toolTip">
+            <string>Transfer call</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>editSysSettingsAction</cstring>
+        </property>
+        <property name="text">
+            <string>System Settings...</string>
+        </property>
+        <property name="menuText">
+            <string>System Settings...</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>registrationAction</cstring>
+        </property>
+        <property name="text">
+            <string></string>
+        </property>
+        <property name="menuText">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>regDeregisterAll</cstring>
+        </property>
+        <property name="text">
+            <string>Deregister all</string>
+        </property>
+        <property name="menuText">
+            <string>Deregister &amp;all</string>
+        </property>
+        <property name="toolTip">
+            <string>Deregister all your registered devices</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>serviceAutoAnswer</cstring>
+        </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
+        <property name="text">
+            <string>Auto answer</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Auto answer</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>viewLogAction</cstring>
+        </property>
+        <property name="text">
+            <string>Log</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Log...</string>
         </property>
     </action>
 </actions>
@@ -1156,15 +1626,38 @@
         <receiver>MphoneForm</receiver>
         <slot>phoneMute(bool)</slot>
     </connection>
+    <connection>
+        <sender>callTransfer</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneTransfer()</slot>
+    </connection>
+    <connection>
+        <sender>editSysSettingsAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>editSysSettings()</slot>
+    </connection>
+    <connection>
+        <sender>regDeregisterAll</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDeregisterAll()</slot>
+    </connection>
+    <connection>
+        <sender>serviceAutoAnswer</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>srvAutoAnswer(bool)</slot>
+    </connection>
+    <connection>
+        <sender>viewLogAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>viewLog()</slot>
+    </connection>
 </connections>
 <includes>
-    <include location="local" impldecl="in declaration">phone.h</include>
-    <include location="local" impldecl="in declaration">dtmfform.h</include>
-    <include location="local" impldecl="in declaration">inviteform.h</include>
-    <include location="local" impldecl="in declaration">redirectform.h</include>
-    <include location="local" impldecl="in declaration">termcapform.h</include>
-    <include location="local" impldecl="in declaration">srvredirectform.h</include>
-    <include location="local" impldecl="in declaration">userprofileform.h</include>
     <include location="local" impldecl="in implementation">user.h</include>
     <include location="local" impldecl="in implementation">qtextedit.h</include>
     <include location="local" impldecl="in implementation">deregisterform.h</include>
@@ -1175,19 +1668,34 @@
     <include location="local" impldecl="in implementation">qiconset.h</include>
     <include location="local" impldecl="in implementation">qmessagebox.h</include>
     <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in implementation">line.h</include>
+    <include location="local" impldecl="in implementation">stun/stun_transaction.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
+    <include location="local" impldecl="in declaration">dtmfform.h</include>
+    <include location="local" impldecl="in declaration">inviteform.h</include>
+    <include location="local" impldecl="in declaration">redirectform.h</include>
+    <include location="local" impldecl="in declaration">termcapform.h</include>
+    <include location="local" impldecl="in declaration">srvredirectform.h</include>
+    <include location="local" impldecl="in declaration">userprofileform.h</include>
+    <include location="local" impldecl="in declaration">transferform.h</include>
+    <include location="local" impldecl="in declaration">syssettingsform.h</include>
+    <include location="local" impldecl="in declaration">logviewform.h</include>
     <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
 </includes>
 <forwards>
     <forward>extern t_phone *phone;</forward>
 </forwards>
 <variables>
-    <variable access="private">QStringList displayContents;</variable>
-    <variable access="private">DtmfForm *dtmfForm;</variable>
-    <variable access="private">InviteForm *inviteForm;</variable>
-    <variable access="private">RedirectForm *redirectForm;</variable>
-    <variable access="private">TermCapForm *termCapForm;</variable>
-    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">TransferForm *transferForm;</variable>
     <variable access="private">UserProfileForm *userProfileForm;</variable>
+    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">TermCapForm *termCapForm;</variable>
+    <variable access="private">RedirectForm *redirectForm;</variable>
+    <variable access="private">InviteForm *inviteForm;</variable>
+    <variable access="private">DtmfForm *dtmfForm;</variable>
+    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
+    <variable access="private">QStringList displayContents;</variable>
+    <variable access="private">LogViewForm *logViewForm;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * )</slot>
@@ -1198,6 +1706,7 @@
     <slot>updateServicesStatus()</slot>
     <slot>phoneRegister()</slot>
     <slot>phoneDeregister()</slot>
+    <slot>phoneDeregisterAll()</slot>
     <slot>phoneShowRegistrations()</slot>
     <slot>phoneInvite()</slot>
     <slot>do_phoneInvite( const t_url &amp; destination, const QString &amp; subject )</slot>
@@ -1207,6 +1716,8 @@
     <slot>phoneReject()</slot>
     <slot>phoneRedirect()</slot>
     <slot>do_phoneRedirect( const list&lt;t_url&gt; &amp; destinations )</slot>
+    <slot>phoneTransfer()</slot>
+    <slot>do_phoneTransfer( const t_url &amp; destination )</slot>
     <slot>phoneHold( bool on )</slot>
     <slot>phoneConference()</slot>
     <slot>phoneMute( bool on )</slot>
@@ -1217,12 +1728,18 @@
     <slot>line1rbChangedState( bool on )</slot>
     <slot>line2rbChangedState( bool on )</slot>
     <slot>srvDnd( bool on )</slot>
+    <slot>srvAutoAnswer( bool on )</slot>
     <slot>srvRedirect()</slot>
     <slot>do_srvRedirect( const list&lt;t_url&gt; &amp; always, const list&lt;t_url&gt; &amp; busy, const list&lt;t_url&gt; &amp; noanswer )</slot>
     <slot>about()</slot>
     <slot>aboutQt()</slot>
     <slot>editUserProfile()</slot>
+    <slot>editSysSettings()</slot>
     <slot>displayUser()</slot>
+    <slot>updateRtpPorts()</slot>
+    <slot>updateStunSettings()</slot>
+    <slot>viewLog()</slot>
+    <slot>updateLog( bool log_zapped )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

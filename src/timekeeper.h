@@ -30,11 +30,14 @@ using namespace std;
 // Forward declarations
 class t_phone;
 class t_line;
+class t_subscription;
 
 enum t_timer_type {
 	TMR_TRANSACTION,
 	TMR_PHONE,
-	TMR_LINE
+	TMR_LINE,
+	TMR_SUBSCRIBE,
+	TMR_STUN_TRANSACTION
 };
 ////////////////////////////////////////////////////////////////
 // General timer.
@@ -130,6 +133,49 @@ public:
 	string get_name(void) const;
 };
 
+////////////////////////////////////////////////////////////////
+// Subscribe timer
+////////////////////////////////////////////////////////////////
+class t_tmr_subscribe : public t_timer {
+private:
+	t_subscribe_timer	subscribe_timer;
+	t_line			*line;
+	t_dialog_id		dialog_id;
+	string			sub_event_type;
+	string			sub_event_id;
+
+
+public:
+	t_tmr_subscribe(long dur, t_subscribe_timer stmr, t_line *l, t_dialog_id d,
+		const string &event_type, const string &event_id);
+
+	void expired(void);
+	t_timer *copy(void) const;
+	t_timer_type get_type(void) const;
+	t_subscribe_timer get_subscribe_timer(void) const;
+	t_line *get_line(void) const;
+	string get_name(void) const;
+};
+
+////////////////////////////////////////////////////////////////
+// STUN transaction timer
+////////////////////////////////////////////////////////////////
+class t_tmr_stun_trans : public t_timer {
+private:
+	unsigned short	transaction_id;
+	t_stun_timer	stun_timer;
+
+public:
+	t_tmr_stun_trans(long dur, t_stun_timer tmr, unsigned short tid);
+
+	void expired(void);
+	t_timer *copy(void) const;
+	t_timer_type get_type(void) const;
+	unsigned short get_tid(void) const;
+	t_stun_timer get_stun_timer(void) const;
+	string get_name(void) const;
+};
+
 
 ////////////////////////////////////////////////////////////////
 // Timekeeper
@@ -178,6 +224,11 @@ private:
 
 	void stop_timer(unsigned short id);
 
+	// Return the remaining time (milliseconds) for a timer
+	// Returns 0 if the timer is not running anymore
+	void get_timer_dur(unsigned short id, t_semaphore *sema,
+		unsigned long *duration);
+
 public:
 	// The timeout_handler must be a signal handler for SIGALRM
 	t_timekeeper();
@@ -185,6 +236,10 @@ public:
 
 	// Report that the current timer has expired.
 	void report_expiry(void);
+
+	// Get remaining time of a running timer.
+	// Returns 0 if the timer is not running anymore.
+	unsigned long get_remaining_time(unsigned short timer_id);
 
 	// Main loop to be run in a separate thread
 	void run(void);

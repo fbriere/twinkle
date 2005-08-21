@@ -29,6 +29,9 @@ string method2str(const t_method &m, const string &unknown) {
 	case CANCEL:		return "CANCEL";
 	case REGISTER:		return "REGISTER";
 	case PRACK:		return "PRACK";
+	case SUBSCRIBE:		return "SUBSCRIBE";
+	case NOTIFY:		return "NOTIFY";
+	case REFER:		return "REFER";
 	case METHOD_UNKNOWN:	return unknown;
 	default:		assert(false);
 	}
@@ -42,6 +45,9 @@ t_method str2method(const string &s) {
 	if (s == "CANCEL") return CANCEL;
 	if (s == "REGISTER") return REGISTER;
 	if (s == "PRACK") return PRACK;
+	if (s == "SUBSCRIBE") return SUBSCRIBE;
+	if (s == "NOTIFY") return NOTIFY;
+	if (s == "REFER") return REFER;
 
 	return METHOD_UNKNOWN;
 }

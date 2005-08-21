@@ -1,4 +1,4 @@
-/* A Bison parser, made from sdp_parser.yxx, by GNU bison 1.75.  */
+/* A Bison parser, made by GNU Bison 1.875.  */
 
 /* Skeleton parser for Yacc-like parsing with Bison,
    Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
@@ -22,9 +22,6 @@
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
-
-#ifndef BISON_SDP_PARSER_H
-# define BISON_SDP_PARSER_H
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -62,9 +59,9 @@
 
 
 
-#ifndef YYSTYPE
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
 #line 49 "sdp_parser.yxx"
-typedef union {
+typedef union YYSTYPE {
 	int			yysdpt_int;
 	string			*yysdpt_str;
 	t_sdp_ntwk_type		yysdpt_ntwk_type;
@@ -75,14 +72,15 @@ typedef union {
 	t_sdp_attr		*yysdpt_attribute;
 	t_sdp_media		*yysdpt_media;
 	list<unsigned short>	*yysdpt_num_list;
-} yystype;
-/* Line 1281 of /usr/share/bison/yacc.c.  */
-#line 81 "y.tab.h"
-# define YYSTYPE yystype
+} YYSTYPE;
+/* Line 1249 of yacc.c.  */
+#line 77 "sdp_parser.h"
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
+# define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE yysdplval;
 
 
-#endif /* not BISON_SDP_PARSER_H */
 
