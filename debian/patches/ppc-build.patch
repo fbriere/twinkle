@@ -1,0 +1,115 @@
+From agx@sigxcpu.org Thu Aug 25 20:51:21 2005
+Return-path: <debbugs@bugs.debian.org>
+Envelope-to: debian@purcell.id.au
+Delivery-date: Thu, 25 Aug 2005 21:39:04 +0100
+Received: from spohr.debian.org ([140.211.166.43] ident=mail)
+	by bristol.purcell.id.au with esmtp (Exim 4.52)
+	id 1E8OUV-0003nS-49
+	for debian@purcell.id.au; Thu, 25 Aug 2005 21:39:01 +0100
+Received: from debbugs by spohr.debian.org with local (Exim 3.36 1 (Debian))
+	id 1E8OPH-00058X-00; Thu, 25 Aug 2005 13:33:03 -0700
+X-Loop: owner@bugs.debian.org
+Reply-To: Guido Guenther <agx@sigxcpu.org>,
+ 325057@bugs.debian.org
+Resent-From: Guido Guenther <agx@sigxcpu.org>
+Resent-To: debian-bugs-dist@lists.debian.org
+Resent-CC: Mark Purcell <msp@debian.org>
+Resent-Date: Thu, 25 Aug 2005 20:33:02 UTC
+Resent-Message-ID: <handler.325057.B.1125000999855@bugs.debian.org>
+X-Debian-PR-Message: report 325057
+X-Debian-PR-Package: twinkle
+X-Debian-PR-Keywords: patch
+Received: via spool by submit@bugs.debian.org id=B.1125000999855
+          (code B ref -1); Thu, 25 Aug 2005 20:33:02 UTC
+Received: (at submit) by bugs.debian.org; 25 Aug 2005 20:16:39 +0000
+Received: from honk1.physik.uni-konstanz.de [134.34.140.224] 
+	by spohr.debian.org with esmtp (Exim 3.36 1 (Debian))
+	id 1E8O9P-0000De-00; Thu, 25 Aug 2005 13:16:39 -0700
+Received: from localhost (localhost.localnet [127.0.0.1])
+	by honk1.physik.uni-konstanz.de (Postfix) with ESMTP id F005C2BBE3;
+	Thu, 25 Aug 2005 22:16:36 +0200 (CEST)
+Received: from honk1.physik.uni-konstanz.de ([127.0.0.1])
+	by localhost (honk [127.0.0.1]) (amavisd-new, port 10024) with ESMTP
+	id 24613-13; Thu, 25 Aug 2005 22:16:32 +0200 (CEST)
+Received: from bogon.sigxcpu.org (xdsl-213-168-120-51.netcologne.de [213.168.120.51])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by honk1.physik.uni-konstanz.de (Postfix) with ESMTP id DB9C42BBE2;
+	Thu, 25 Aug 2005 22:16:31 +0200 (CEST)
+Received: by bogon.sigxcpu.org (Postfix, from userid 1000)
+	id D08C811E5F8; Thu, 25 Aug 2005 21:51:22 +0200 (CEST)
+Date: Thu, 25 Aug 2005 21:51:21 +0200
+From: Guido Guenther <agx@sigxcpu.org>
+To: Debian Bug Tracking System <submit@bugs.debian.org>
+Message-ID: <20050825195121.GA27379@bogon.ms20.nix>
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset=us-ascii
+Content-Disposition: inline
+X-Reportbug-Version: 3.16
+User-Agent: Mutt/1.5.10i
+X-Virus-Scanned: by amavisd-new-20030616-p10 (Debian) at honk.physik.uni-konstanz.de
+Delivered-To: submit@bugs.debian.org
+Resent-Sender: Debian BTS <debbugs@bugs.debian.org>
+X-SA-Exim-Connect-IP: 140.211.166.43
+X-SA-Exim-Rcpt-To: debian@purcell.id.au
+X-SA-Exim-Mail-From: debbugs@bugs.debian.org
+Subject: Bug#325057: twinkle: fix ppc build
+X-Spam-Checker-Version: SpamAssassin 3.0.4 (2005-06-05) on debian
+X-Spam-Level: 
+X-Spam-Status: No, score=-2.6 required=0.0 tests=BAYES_00 autolearn=ham 
+	version=3.0.4
+X-SA-Exim-Version: 4.2 (built Thu, 03 Mar 2005 10:44:12 +0100)
+X-SA-Exim-Scanned: Yes (on bristol.purcell.id.au)
+X-Length: 4477
+X-KMail-EncryptionState:  
+X-KMail-SignatureState:  
+X-KMail-MDN-Sent:  
+Status: RO
+Content-Length: 1185
+X-UID: 72
+X-Keywords:                                                                                                    
+X-Status: OC
+
+Package: twinkle
+Version: fix build on 32 bit arches
+Severity: wishlist
+Tags: patch
+
+Hi,
+this patch fixes the ppc build...
+
+--- tmp/twinkle-0.2.1/src/stun/stun.cxx	2005-07-28 22:46:57.000000000 +0200
++++ twinkle-0.2.1/src/stun/stun.cxx	2005-08-25 21:42:52.000000000 +0200
+@@ -676,10 +676,14 @@
+       asm("rdtsc" : "=A" (tick));
+ #elif defined (__SUNPRO_CC) || defined( __sparc__ )	
+       tick = gethrtime();
+-#elif defined(__MACH__) 
++#elif defined(__MACH__)
+       int fd=open("/dev/random",O_RDONLY);
+       read(fd,&tick,sizeof(tick));
+       closesocket(fd);
++#elif defined (__linux__)
++      int fd=open("/dev/urandom",O_RDONLY);
++      read(fd,&tick,sizeof(tick));
++      close(fd);
+ #else
+ #     error Need some way to seed the random number generator 
+ #endif 
+
+...it should also fix the build for other 32bit linux architectures.
+Please enable these for future builds.
+Cheers,
+ -- Guido
+
+-- System Information:
+Debian Release: testing/unstable
+  APT prefers unstable
+  APT policy: (500, 'unstable'), (500, 'stable')
+Architecture: powerpc (ppc)
+Shell:  /bin/sh linked to /bin/bash
+Kernel: Linux 2.6.13-rc3-agx0
+Locale: LANG=de_DE.UTF-8, LC_CTYPE=de_DE.UTF-8 (charmap=UTF-8)
+
+

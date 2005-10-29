@@ -653,13 +653,14 @@ alert_param:	  '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' parameters {
 			MEMMAN_NEW($$);
 			$$->uri.set_url(*$3);
 			$$->parameter_list = *$6;
-			MEMMAN_DELETE($3); delete $3;
-			MEMMAN_DELETE($6); delete $6;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE($3); delete $3;
+			MEMMAN_DELETE($6); delete $6; }
 ;
 
 hdr_allow:	  T_TOKEN {
@@ -696,13 +697,14 @@ info_param:	  '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' parameters {
 			MEMMAN_NEW($$);
 			$$->uri.set_url(*$3);
 			$$->parameter_list = *$6;
-			MEMMAN_DELETE($3); delete $3;
-			MEMMAN_DELETE($6); delete $6;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE($3); delete $3;
+			MEMMAN_DELETE($6); delete $6; }
 ;
 
 hdr_contact:	  { CTXT_URI_SPECIAL; } T_URI_WILDCARD { CTXT_INITIAL; } {
@@ -743,24 +745,26 @@ contact_addr:	  { CTXT_URI_SPECIAL; } T_URI { CTXT_INITIAL; } {
 			$$ = new t_contact_param();
 			MEMMAN_NEW($$);
 			$$->uri.set_url(*$2);
-			MEMMAN_DELETE($2); delete $2;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE($2); delete $2; }
 		| { CTXT_URI_SPECIAL; } display_name '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' {
 			$$ = new t_contact_param();
 			MEMMAN_NEW($$);
 			$$->display = *$2;
 			$$->uri.set_url(*$5);
-			MEMMAN_DELETE($2); delete $2;
-			MEMMAN_DELETE($5); delete $5;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($5); delete $5; }
 ;
 
 display_name:	  /* empty */ { $$ = new string(); MEMMAN_NEW($$); }
@@ -838,13 +842,14 @@ error_param:	  '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' parameters {
 			MEMMAN_NEW($$);
 			$$->uri.set_url(*$3);
 			$$->parameter_list = *$6;
-			MEMMAN_DELETE($3); delete $3;
-			MEMMAN_DELETE($6); delete $6;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE($3); delete $3;
+			MEMMAN_DELETE($6); delete $6; }
 ;
 
 hdr_expires:	{ CTXT_NUM; } T_NUM { CTXT_INITIAL; } {
@@ -870,24 +875,26 @@ from_addr:	  T_URI { CTXT_INITIAL; } {
 			$$ = new t_hdr_from();
 			MEMMAN_NEW($$);
 			$$->set_uri(*$1);
-			MEMMAN_DELETE($1); delete $1;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE($1); delete $1; }
 		| display_name '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' {
 			$$ = new t_hdr_from();
 			MEMMAN_NEW($$);
 			$$->set_display(*$1);
 			$$->set_uri(*$4);
-			MEMMAN_DELETE($1); delete $1;
-			MEMMAN_DELETE($4); delete $4;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE($1); delete $1;
+			MEMMAN_DELETE($4); delete $4; }
 ;
 
 hdr_in_reply_to:  { CTXT_WORD; } call_id { CTXT_INITIAL; } {
@@ -944,14 +951,15 @@ rec_route:	{ CTXT_URI; } display_name '<' T_URI { CTXT_INITIAL; } '>'
 			$$->display = *$2;
 			$$->uri.set_url(*$4);
 			$$->set_params(*$7);
-			MEMMAN_DELETE($2); delete $2;
-			MEMMAN_DELETE($4); delete $4;
-			MEMMAN_DELETE($7); delete $7;
 
 			if (!$$->uri.is_valid()) {
 				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($4); delete $4;
+			MEMMAN_DELETE($7); delete $7; }
 ;
 
 hdr_reply_to:  { CTXT_URI_SPECIAL; } from_addr parameters {
@@ -1143,12 +1151,14 @@ sent_protocol:	  T_TOKEN '/' T_TOKEN '/' T_TOKEN {
 host:		  T_TOKEN {
 			$$ = new t_via();
 			MEMMAN_NEW($$);
-			$$->host = tolower(*$1);
+			$$->host = *$1;
 			MEMMAN_DELETE($1); delete $1; }
 		| T_TOKEN ':' { CTXT_NUM; } T_NUM { CTXT_INITIAL; } {
+			if ($4 > 65535) YYERROR;
+			
 			$$ = new t_via();
 			MEMMAN_NEW($$);
-			$$->host = tolower(*$1);
+			$$->host = *$1;
 			$$->port = $4;
 			MEMMAN_DELETE($1); delete $1; }
 ;
@@ -1189,7 +1199,6 @@ ainfo:		  parameter {
 							hex2int($1->value));
 			}
 			else {
-				MEMMAN_DELETE($1); delete $1;
 				YYERROR;
 			}
 
@@ -1204,13 +1213,11 @@ digest_response:  parameter {
 			$$ = new t_digest_response();
 			MEMMAN_NEW($$);
 			if (!$$->set_attr(*$1)) {
-				MEMMAN_DELETE($1); delete $1;
 				YYERROR;
 			}
 			MEMMAN_DELETE($1); delete $1; }
 		| digest_response ',' parameter {
 			if (!$$->set_attr(*$3)) {
-				MEMMAN_DELETE($3); delete $3;
 				YYERROR;
 			}
 			MEMMAN_DELETE($3); delete $3; }
@@ -1250,13 +1257,11 @@ digest_challenge: parameter {
 			$$ = new t_digest_challenge();
 			MEMMAN_NEW($$);
 			if (!$$->set_attr(*$1)) {
-				MEMMAN_DELETE($1); delete $1;
 				YYERROR;
 			}
 			MEMMAN_DELETE($1); delete $1; }
 		| digest_challenge ',' parameter {
 			if (!$$->set_attr(*$3)) {
-				MEMMAN_DELETE($3); delete $3;
 				YYERROR;
 			}
 			MEMMAN_DELETE($3); delete $3; }

@@ -1,7 +1,8 @@
 Source: twinkle
 Section: comm
 Priority: optional
-Maintainer: Mark Purcell <msp@debian.org>
+Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>
 Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>=1.3.10-4), libccrtp-dev (>=1.3.4), help2man, libqt3-mt-dev (>= 3:3.3.4-4), qt3-apps-dev, automake1.9, libxml2-dev
 Standards-Version: 3.6.1
 
@@ -28,14 +29,14 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Call redirection when busy
   Call redirection no answer
   Reject call redirection request
-  Blind call transfer (new)
-  Reject call transfer request (new)
+  Blind call transfer
+  Reject call transfer request
   Call reject
   Do not disturb
-  Auto answer (new)
+  Auto answer 
   Send DTMF digits (RFC 2833) to navigate IVR systems
-  STUN support for NAT traversal (new)
-  Send NAT keep alive packets when using STUN (new)
+  STUN support for NAT traversal
+  Send NAT keep alive packets when using STUN
   NAT traversal through static provisioning
  .
  Website: http://www.twinklephone.com

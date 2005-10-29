@@ -21,9 +21,17 @@
 
 #include <string>
 #include <fstream>
+#include <cc++/config.h>
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "threads/sema.h"
+
+#ifndef _SYS_SETTINGS_H
+class t_audio_device;
+#endif
+#ifndef _AUDIO_DEVICE_H
+class t_audio_io;
+#endif
 
 using namespace std;
 
@@ -32,7 +40,7 @@ using namespace std;
 
 struct t_iff_header {
 	char		id[4];
-	unsigned long	size;
+	uint32		size;
 	char		type[4];
 };
 
@@ -41,7 +49,7 @@ struct t_iff_header {
 
 struct t_chunk_header {
 	char		id[4];
-	unsigned long	size;
+	uint32		size;
 };
 
 #define FMT_UNCOMPRESSED	1
@@ -49,8 +57,8 @@ struct t_chunk_header {
 struct t_chunk_fmt {
 	short		format_tag;
 	unsigned short	channels;
-	unsigned long	samples_per_sec;
-	unsigned long	avg_bytes_per_sec;
+	uint32		samples_per_sec;
+	uint32		avg_bytes_per_sec;
 	unsigned short	block_align;
 	unsigned short	bits_per_sample;
 };
@@ -59,8 +67,8 @@ class t_tone_gen {
 private:
 	string		wav_filename;	// name of wav file
 	ifstream	*wav_file;	// input file stream for wav file
-	string		dev_tone;	// device to play tone
-	int		fd_dsp;		// soundcard
+	const t_audio_device*		dev_tone;	// device to play tone
+	t_audio_io*		aio;		// soundcard
 	t_chunk_fmt	wav_format;	// format chunk from wav file
 	bool		valid;		// wav file is in a valid format
 	bool		stop_playing;	// indicates if playing should stop
@@ -71,7 +79,7 @@ private:
 	t_semaphore	sema_finished;	// indicates if playing finished
 
 public:
-	t_tone_gen(const string &filename, const string &_dev_tone);
+	t_tone_gen(const string &filename, const t_audio_device &_dev_tone);
 	~t_tone_gen();
 
 	bool is_valid(void) const;

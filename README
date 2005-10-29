@@ -8,10 +8,10 @@ libccext2 (version >= 1.3.0) [GNU Common C++]
 libccgnu2 (version >= 1.3.0) [GNU Common C++]
 	http://www.gnu.org/software/commoncpp/
 
-libccrtp1 (version >= 1.3.0) [GNU RTP Stack]
+libccrtp1 (version >= 1.3.4) [GNU RTP Stack]
 	http://www.gnu.org/software/ccrtp/
 
-libqt-mt (version >= 3.1.1) [Qt library with threading support]
+libqt-mt (version >= 3.3.0) [Qt library with threading support]
 	http://www.trolltech.com/
 	For the Qt environment the $QTDIR variable must be set
 	correctly
@@ -23,7 +23,7 @@ on your system:
 
 	$(pkgdatadir)/twinkle
 
-Typical value for pkgdatadir is: /usr/local/share
+Typical value for pkgdatadir is: /usr/local/share or /opt/kde3/share
 
 Application icon
 ----------------
@@ -41,6 +41,7 @@ directory. In this directory all user data will be put:
 
 	user profiles (.cfg)
 	log files (.log)
+	system settings (twinkle.sys)
 
 Starting Twinkle
 ----------------

@@ -28,25 +28,36 @@
 */
 
 // Indices of categories in the category list box
-#define idxCatAudio	0
-#define idxCatLog		1
+#define idxCatGeneral	0
+#define idxCatAudio	1
+#define idxCatLog		2
+
+void SysSettingsForm::init()
+{
+#ifndef HAVE_KDE
+	guiUseSystrayCheckBox->setEnabled(false);
+	guiHideCheckBox->setEnabled(false);
+#endif
+}
 
 void SysSettingsForm::showCategory( QListBoxItem *item )
 {
-	if (item->text() == "Audio") {
+	if (item->text() == "General") {
+		settingsWidgetStack->raiseWidget(pageGeneral);
+	} else if (item->text() == "Audio") {
 		settingsWidgetStack->raiseWidget(pageAudio);
 	} else if (item->text() == "Log") {
 		settingsWidgetStack->raiseWidget(pageLog);
 	}
 }
 
-string SysSettingsForm::comboItem2oss_dev(QString item)
+string SysSettingsForm::comboItem2audio_dev(QString item)
 {
-	for (list<t_oss_device>::iterator i = list_oss_dev.begin(); 
-	i != list_oss_dev.end(); i++)
+	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
+	i != list_audio_dev.end(); i++)
 	{
 		if (i->get_description() == item.ascii()) {
-			return i->device;
+			return i->get_settings_value();
 		}
 	}
 	
@@ -56,32 +67,32 @@ string SysSettingsForm::comboItem2oss_dev(QString item)
 void SysSettingsForm::populate()
 {
 	// Select the Audio category
-	categoryListBox->setSelected(idxCatAudio, true);
-	settingsWidgetStack->raiseWidget(pageAudio);
+	categoryListBox->setSelected(idxCatGeneral, true);
+	settingsWidgetStack->raiseWidget(pageGeneral);
 	
 	// Set focus on first field
 	ringtoneComboBox->setFocus();
 	
 	// Audio settings
-	list_oss_dev = sys_config->get_oss_devices();
+	list_audio_dev = sys_config->get_audio_devices();
 	ringtoneComboBox->clear();
 	speakerComboBox->clear();
 	micComboBox->clear();
 	int idx = 0;
-	for (list<t_oss_device>::iterator i = list_oss_dev.begin(); 
-	i != list_oss_dev.end(); i++, idx++) {
+	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
+	i != list_audio_dev.end(); i++, idx++) {
 		string item = i->get_description();
 		ringtoneComboBox->insertItem(QString(item.c_str()));
 		speakerComboBox->insertItem(QString(item.c_str()));
 		micComboBox->insertItem(QString(item.c_str()));
 		
-		if (sys_config->dev_ringtone == i->device) {
+		if (sys_config->dev_ringtone.device == i->device) {
 			ringtoneComboBox->setCurrentItem(idx);
 		}
-		if (sys_config->dev_speaker == i->device) {
+		if (sys_config->dev_speaker.device == i->device) {
 			speakerComboBox->setCurrentItem(idx);
 		}
-		if (sys_config->dev_mic == i->device) {
+		if (sys_config->dev_mic.device == i->device) {
 			micComboBox->setCurrentItem(idx);
 		}
 	}
@@ -92,18 +103,25 @@ void SysSettingsForm::populate()
 	logSipCheckBox->setChecked(sys_config->log_show_sip);
 	logStunCheckBox->setChecked(sys_config->log_show_stun);
 	logMemoryCheckBox->setChecked(sys_config->log_show_memory);
+	
+	// General settings
+#ifdef HAVE_KDE
+	guiUseSystrayCheckBox->setChecked(sys_config->gui_use_systray);
+	guiHideCheckBox->setChecked(sys_config->gui_hide_on_close);
+	guiHideCheckBox->setEnabled(sys_config->gui_use_systray);
+#endif
 }
 
 void SysSettingsForm::validate()
 {
 	// Audio
 	string dev;
-	dev = comboItem2oss_dev(ringtoneComboBox->currentText());
-	if (dev != "") sys_config->dev_ringtone = dev;
-	dev = comboItem2oss_dev(speakerComboBox->currentText());
-	if (dev != "") sys_config->dev_speaker = dev;
-	dev = comboItem2oss_dev(micComboBox->currentText());
-	if (dev != "") sys_config->dev_mic = dev;
+	dev = comboItem2audio_dev(ringtoneComboBox->currentText());
+	if (dev != "") sys_config->dev_ringtone = sys_config->audio_device(dev);
+	dev = comboItem2audio_dev(speakerComboBox->currentText());
+	if (dev != "") sys_config->dev_speaker = sys_config->audio_device(dev);
+	dev = comboItem2audio_dev(micComboBox->currentText());
+	if (dev != "") sys_config->dev_mic = sys_config->audio_device(dev);
 	
 	// Log
 	sys_config->log_max_size = logMaxSizeSpinBox->value();
@@ -111,6 +129,12 @@ void SysSettingsForm::validate()
 	sys_config->log_show_sip = logSipCheckBox->isChecked();
 	sys_config->log_show_stun = logStunCheckBox->isChecked();
 	sys_config->log_show_memory = logMemoryCheckBox->isChecked();
+	
+	// General
+#ifdef HAVE_KDE
+	sys_config->gui_use_systray = guiUseSystrayCheckBox->isChecked();
+	sys_config->gui_hide_on_close = guiHideCheckBox->isChecked();
+#endif
 	
 	// Save user config
 	string error_msg;
@@ -129,4 +153,8 @@ void SysSettingsForm::show()
 	QDialog::show();
 }
 
-
+int SysSettingsForm::exec()
+{
+	populate();
+	return QDialog::exec();
+}

@@ -661,20 +661,24 @@ bool t_trans_server::match(t_request *r, bool cancel) const {
 
 		switch(r->method) {
 		case ACK:
-			return (request->hdr_cseq.method == INVITE);
+			// return (request->hdr_cseq.method == INVITE);
+			return (request->method == INVITE);
 			break;
 		case CANCEL:
 			if (!cancel) {
-				return (request->hdr_cseq.method ==
-					 		r->hdr_cseq.method);
+				// return (request->hdr_cseq.method ==
+				//	 		r->hdr_cseq.method);
+				return (request->method == r->method);
 			}
 
 			// The target of CANCEL cannot be a CANCEL request
-			return (request->hdr_cseq.method != CANCEL);
+			// return (request->hdr_cseq.method != CANCEL);
+			return (request->method != CANCEL);
 			break;
 		default:
-			return (request->hdr_cseq.method ==
-				 		r->hdr_cseq.method);
+			// return (request->hdr_cseq.method ==
+			//	 		r->hdr_cseq.method);
+			return (request->method == r->method);
 			break;
 		}
 	}

@@ -1105,14 +1105,17 @@
         <property name="name">
             <cstring>fileExitAction</cstring>
         </property>
+        <property name="iconSet">
+            <iconset>exit.png</iconset>
+        </property>
         <property name="text">
-            <string>Exit</string>
+            <string>Quit</string>
         </property>
         <property name="menuText">
-            <string>E&amp;xit</string>
+            <string>&amp;Quit</string>
         </property>
         <property name="accel">
-            <string></string>
+            <string>Ctrl+Q</string>
         </property>
     </action>
     <action>
@@ -1696,9 +1699,10 @@
     <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
     <variable access="private">QStringList displayContents;</variable>
     <variable access="private">LogViewForm *logViewForm;</variable>
+    <variable access="private">QLabel *sysTray;</variable>
 </variables>
 <slots>
-    <slot>closeEvent( QCloseEvent * )</slot>
+    <slot>closeEvent( QCloseEvent * e )</slot>
     <slot>fileExit()</slot>
     <slot>display( const QString &amp; s )</slot>
     <slot>updateState()</slot>
@@ -1745,6 +1749,7 @@
     <function access="private" specifier="non virtual">init()</function>
     <function access="private" specifier="non virtual">destroy()</function>
     <function access="private" returnType="QString">lineSubstate2str( int line )</function>
+    <function returnType="QLabel *">getSysTray()</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

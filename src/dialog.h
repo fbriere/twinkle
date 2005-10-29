@@ -143,6 +143,12 @@ private:
 	string		remote_tag;
 	unsigned long	local_seqnr;	// last local seqnr issued
 	unsigned long	remote_seqnr;	// last remote seqnr received
+
+	// RFC 3261 allows the CSeq sequence to be 0. So there is no
+	// invalid sequence number. The remote_seqnr_set indicates if
+	// the remote_seqnr is set by the far-end.
+	bool		remote_seqnr_set;
+	
 	t_url		local_uri;
 	string		local_display;
 	t_url		remote_uri;
@@ -274,8 +280,10 @@ private:
 
 	// Returns true if a reliable provisional response must be
 	// discarded because it is a retransmission or received out
-	// of order
-	bool must_discard_100rel(t_response *r) const;
+	// of order.
+	// Initializes the remote response nr if the response is the
+	// first response.
+	bool must_discard_100rel(t_response *r);
 
 	// Respond to an incoming PRACK.
 	// Returns true if a success response was given.

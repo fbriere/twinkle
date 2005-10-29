@@ -160,6 +160,16 @@ public:
 	// Indicate if the mandatory Max-Forwards header should be present.
 	// If true and the header is missing, then the request will fail.
 	bool			check_max_forwards;
+	
+	// RFC 3261 10.3 states that a registrar must include a contact
+	// header in a 200 OK on a REGISTER. This contact should match the
+	// contact that a UA puts in the REGISTER. Unfortunately many
+	// registrars do not include the contact header or put a wrong
+	// IP address in the host-part due to NAT.
+	// This settings allows for a missing/non-matching contact header.
+	// In that case Twinkle assumes that it is registered for the
+	// requested interval.
+	bool			allow_missing_contact_reg;
 
 	// Indicate the place of the requested registration time in a REGISTER.
 	// true - expires parameter in contact header

@@ -616,25 +616,25 @@ static const unsigned short yyrline[] =
      528,   530,   532,   534,   536,   538,   540,   542,   544,   546,
      548,   550,   552,   555,   556,   561,   568,   574,   575,   581,
      585,   590,   597,   600,   605,   609,   616,   623,   623,   626,
-     626,   631,   636,   636,   643,   646,   651,   651,   651,   665,
-     668,   673,   673,   673,   678,   679,   686,   689,   694,   694,
-     694,   708,   708,   708,   710,   715,   720,   726,   742,   742,
-     742,   752,   752,   752,   752,   766,   767,   771,   774,   781,
-     784,   789,   789,   792,   792,   797,   797,   797,   801,   808,
-     808,   808,   814,   817,   814,   828,   831,   836,   836,   836,
-     850,   850,   850,   854,   854,   869,   869,   879,   879,   879,
-     893,   893,   893,   896,   896,   896,   901,   901,   901,   905,
-     905,   905,   909,   914,   914,   914,   919,   924,   927,   932,
-     935,   940,   940,   940,   957,   957,   965,   968,   973,   973,
-     973,   989,   990,   990,   990,   994,   997,  1002,  1005,  1010,
-    1017,  1028,  1028,  1028,  1033,  1035,  1038,  1043,  1043,  1046,
-    1048,  1053,  1054,  1059,  1060,  1065,  1065,  1080,  1083,  1088,
-    1091,  1096,  1099,  1104,  1132,  1143,  1148,  1148,  1148,  1156,
-    1159,  1164,  1164,  1164,  1175,  1175,  1175,  1178,  1199,  1200,
-    1203,  1211,  1219,  1224,  1229,  1229,  1235,  1235,  1244,  1244,
-    1249,  1257,  1265,  1265,  1271,  1271,  1280,  1280,  1285,  1285,
-    1291,  1291,  1296,  1296,  1296,  1300,  1300,  1300,  1307,  1321,
-    1324,  1329,  1355,  1355,  1363,  1363
+     626,   631,   636,   636,   643,   646,   651,   651,   651,   666,
+     669,   674,   674,   674,   679,   680,   687,   690,   695,   695,
+     695,   710,   710,   710,   712,   717,   722,   728,   744,   744,
+     744,   755,   755,   755,   755,   770,   771,   775,   778,   785,
+     788,   793,   793,   796,   796,   801,   801,   801,   805,   812,
+     812,   812,   818,   821,   818,   832,   835,   840,   840,   840,
+     855,   855,   855,   859,   859,   874,   874,   885,   885,   885,
+     900,   900,   900,   903,   903,   903,   908,   908,   908,   912,
+     912,   912,   916,   921,   921,   921,   926,   931,   934,   939,
+     942,   947,   947,   947,   965,   965,   973,   976,   981,   981,
+     981,   997,   998,   998,   998,  1002,  1005,  1010,  1013,  1018,
+    1025,  1036,  1036,  1036,  1041,  1043,  1046,  1051,  1051,  1054,
+    1056,  1061,  1062,  1067,  1068,  1073,  1073,  1088,  1091,  1096,
+    1099,  1104,  1107,  1112,  1140,  1151,  1156,  1156,  1156,  1166,
+    1169,  1174,  1174,  1174,  1185,  1185,  1185,  1188,  1208,  1209,
+    1212,  1219,  1226,  1231,  1236,  1236,  1242,  1242,  1251,  1251,
+    1256,  1263,  1270,  1270,  1276,  1276,  1285,  1285,  1290,  1290,
+    1296,  1296,  1301,  1301,  1301,  1305,  1305,  1305,  1312,  1326,
+    1329,  1334,  1360,  1360,  1368,  1368
 };
 #endif
 
@@ -2722,53 +2722,54 @@ yyreduce:
 			MEMMAN_NEW(yyval.yyt_alert_param);
 			yyval.yyt_alert_param->uri.set_url(*yyvsp[-3].yyt_str);
 			yyval.yyt_alert_param->parameter_list = *yyvsp[0].yyt_params;
-			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
-			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params;
 
 			if (!yyval.yyt_alert_param->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_alert_param); delete yyval.yyt_alert_param;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
+			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params; }
     break;
 
   case 199:
-#line 665 "parser.yxx"
+#line 666 "parser.yxx"
     {
 			MSG->hdr_allow.add_method(*yyvsp[0].yyt_str);
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 200:
-#line 668 "parser.yxx"
+#line 669 "parser.yxx"
     {
 			MSG->hdr_allow.add_method(*yyvsp[0].yyt_str);
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 201:
-#line 673 "parser.yxx"
+#line 674 "parser.yxx"
     { CTXT_WORD; }
     break;
 
   case 202:
-#line 673 "parser.yxx"
+#line 674 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 203:
-#line 673 "parser.yxx"
+#line 674 "parser.yxx"
     {
 			MSG->hdr_call_id.set_call_id(*yyvsp[-1].yyt_str);
 			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 204:
-#line 678 "parser.yxx"
+#line 679 "parser.yxx"
     { yyval.yyt_str = yyvsp[0].yyt_str; }
     break;
 
   case 205:
-#line 679 "parser.yxx"
+#line 680 "parser.yxx"
     {
 			yyval.yyt_str = new string(*yyvsp[-2].yyt_str + '@' + *yyvsp[0].yyt_str);
 			MEMMAN_NEW(yyval.yyt_str);
@@ -2777,70 +2778,71 @@ yyreduce:
     break;
 
   case 206:
-#line 686 "parser.yxx"
+#line 687 "parser.yxx"
     {
 			MSG->hdr_call_info.add_param(*yyvsp[0].yyt_info_param);
 			MEMMAN_DELETE(yyvsp[0].yyt_info_param); delete yyvsp[0].yyt_info_param; }
     break;
 
   case 207:
-#line 689 "parser.yxx"
+#line 690 "parser.yxx"
     {
 			MSG->hdr_call_info.add_param(*yyvsp[0].yyt_info_param);
 			MEMMAN_DELETE(yyvsp[0].yyt_info_param); delete yyvsp[0].yyt_info_param; }
     break;
 
   case 208:
-#line 694 "parser.yxx"
+#line 695 "parser.yxx"
     { CTXT_URI; }
     break;
 
   case 209:
-#line 694 "parser.yxx"
+#line 695 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 210:
-#line 694 "parser.yxx"
+#line 695 "parser.yxx"
     {
 		  	yyval.yyt_info_param = new t_info_param();
 			MEMMAN_NEW(yyval.yyt_info_param);
 			yyval.yyt_info_param->uri.set_url(*yyvsp[-3].yyt_str);
 			yyval.yyt_info_param->parameter_list = *yyvsp[0].yyt_params;
-			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
-			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params;
 
 			if (!yyval.yyt_info_param->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_info_param); delete yyval.yyt_info_param;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
+			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params; }
     break;
 
   case 211:
-#line 708 "parser.yxx"
+#line 710 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 212:
-#line 708 "parser.yxx"
+#line 710 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 213:
-#line 708 "parser.yxx"
+#line 710 "parser.yxx"
     {
 			MSG->hdr_contact.set_any(); }
     break;
 
   case 214:
-#line 710 "parser.yxx"
+#line 712 "parser.yxx"
     {
 			MSG->hdr_contact.add_contacts(*yyvsp[0].yyt_contacts);
 			MEMMAN_DELETE(yyvsp[0].yyt_contacts); delete yyvsp[0].yyt_contacts; }
     break;
 
   case 215:
-#line 715 "parser.yxx"
+#line 717 "parser.yxx"
     {
 			yyval.yyt_contacts = new list<t_contact_param>;
 			MEMMAN_NEW(yyval.yyt_contacts);
@@ -2849,7 +2851,7 @@ yyreduce:
     break;
 
   case 216:
-#line 720 "parser.yxx"
+#line 722 "parser.yxx"
     {
 			yyvsp[-2].yyt_contacts->push_back(*yyvsp[0].yyt_contact);
 			yyval.yyt_contacts = yyvsp[-2].yyt_contacts;
@@ -2857,7 +2859,7 @@ yyreduce:
     break;
 
   case 217:
-#line 726 "parser.yxx"
+#line 728 "parser.yxx"
     {
 			yyval.yyt_contact = yyvsp[-1].yyt_contact;
 			list<t_parameter>::const_iterator i;
@@ -2875,67 +2877,69 @@ yyreduce:
     break;
 
   case 218:
-#line 742 "parser.yxx"
+#line 744 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 219:
-#line 742 "parser.yxx"
+#line 744 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 220:
-#line 742 "parser.yxx"
+#line 744 "parser.yxx"
     {
 			yyval.yyt_contact = new t_contact_param();
 			MEMMAN_NEW(yyval.yyt_contact);
 			yyval.yyt_contact->uri.set_url(*yyvsp[-1].yyt_str);
-			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str;
 
 			if (!yyval.yyt_contact->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_contact); delete yyval.yyt_contact;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 221:
-#line 752 "parser.yxx"
+#line 755 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 222:
-#line 752 "parser.yxx"
+#line 755 "parser.yxx"
     { CTXT_URI; }
     break;
 
   case 223:
-#line 752 "parser.yxx"
+#line 755 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 224:
-#line 752 "parser.yxx"
+#line 755 "parser.yxx"
     {
 			yyval.yyt_contact = new t_contact_param();
 			MEMMAN_NEW(yyval.yyt_contact);
 			yyval.yyt_contact->display = *yyvsp[-5].yyt_str;
 			yyval.yyt_contact->uri.set_url(*yyvsp[-2].yyt_str);
-			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
-			MEMMAN_DELETE(yyvsp[-2].yyt_str); delete yyvsp[-2].yyt_str;
 
 			if (!yyval.yyt_contact->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_contact); delete yyval.yyt_contact;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
+			MEMMAN_DELETE(yyvsp[-2].yyt_str); delete yyvsp[-2].yyt_str; }
     break;
 
   case 225:
-#line 766 "parser.yxx"
+#line 770 "parser.yxx"
     { yyval.yyt_str = new string(); MEMMAN_NEW(yyval.yyt_str); }
     break;
 
   case 226:
-#line 767 "parser.yxx"
+#line 771 "parser.yxx"
     {
 			yyval.yyt_str = new string(rtrim(*yyvsp[0].yyt_str));
 			MEMMAN_NEW(yyval.yyt_str);
@@ -2943,12 +2947,12 @@ yyreduce:
     break;
 
   case 227:
-#line 771 "parser.yxx"
+#line 775 "parser.yxx"
     { yyval.yyt_str = yyvsp[0].yyt_str; }
     break;
 
   case 228:
-#line 774 "parser.yxx"
+#line 778 "parser.yxx"
     {
 			MSG->hdr_content_disp.set_type(tolower(*yyvsp[-1].yyt_str));
 			MSG->hdr_content_disp.set_params(*yyvsp[0].yyt_params);
@@ -2957,61 +2961,61 @@ yyreduce:
     break;
 
   case 229:
-#line 781 "parser.yxx"
+#line 785 "parser.yxx"
     {
 			MSG->hdr_content_encoding.add_coding(*yyvsp[0].yyt_coding);
 			MEMMAN_DELETE(yyvsp[0].yyt_coding); delete yyvsp[0].yyt_coding; }
     break;
 
   case 230:
-#line 784 "parser.yxx"
+#line 788 "parser.yxx"
     {
 			MSG->hdr_content_encoding.add_coding(*yyvsp[0].yyt_coding);
 			MEMMAN_DELETE(yyvsp[0].yyt_coding); delete yyvsp[0].yyt_coding; }
     break;
 
   case 231:
-#line 789 "parser.yxx"
+#line 793 "parser.yxx"
     { CTXT_LANG; }
     break;
 
   case 232:
-#line 789 "parser.yxx"
+#line 793 "parser.yxx"
     {
 			MSG->hdr_content_language.add_language(*yyvsp[0].yyt_language);
 			MEMMAN_DELETE(yyvsp[0].yyt_language); delete yyvsp[0].yyt_language; }
     break;
 
   case 233:
-#line 792 "parser.yxx"
+#line 796 "parser.yxx"
     { CTXT_LANG; }
     break;
 
   case 234:
-#line 792 "parser.yxx"
+#line 796 "parser.yxx"
     {
 			MSG->hdr_content_language.add_language(*yyvsp[0].yyt_language);
 			MEMMAN_DELETE(yyvsp[0].yyt_language); delete yyvsp[0].yyt_language; }
     break;
 
   case 235:
-#line 797 "parser.yxx"
+#line 801 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 236:
-#line 797 "parser.yxx"
+#line 801 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 237:
-#line 797 "parser.yxx"
+#line 801 "parser.yxx"
     {
 			MSG->hdr_content_length.set_length(yyvsp[-1].yyt_ulong); }
     break;
 
   case 238:
-#line 801 "parser.yxx"
+#line 805 "parser.yxx"
     {
 			yyvsp[-1].yyt_media->add_params(*yyvsp[0].yyt_params);
 			MSG->hdr_content_type.set_media(*yyvsp[-1].yyt_media);
@@ -3020,17 +3024,17 @@ yyreduce:
     break;
 
   case 239:
-#line 808 "parser.yxx"
+#line 812 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 240:
-#line 808 "parser.yxx"
+#line 812 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 241:
-#line 808 "parser.yxx"
+#line 812 "parser.yxx"
     {
 			MSG->hdr_cseq.set_seqnr(yyvsp[-2].yyt_ulong);
 			MSG->hdr_cseq.set_method(*yyvsp[0].yyt_str);
@@ -3038,17 +3042,17 @@ yyreduce:
     break;
 
   case 242:
-#line 814 "parser.yxx"
+#line 818 "parser.yxx"
     { CTXT_DATE;}
     break;
 
   case 243:
-#line 817 "parser.yxx"
+#line 821 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 244:
-#line 817 "parser.yxx"
+#line 821 "parser.yxx"
     {
 			struct tm t;
 			t.tm_mday = yyvsp[-9].yyt_ulong;
@@ -3061,68 +3065,69 @@ yyreduce:
     break;
 
   case 245:
-#line 828 "parser.yxx"
+#line 832 "parser.yxx"
     {
 			MSG->hdr_error_info.add_param(*yyvsp[0].yyt_error_param);
 			MEMMAN_DELETE(yyvsp[0].yyt_error_param); delete yyvsp[0].yyt_error_param; }
     break;
 
   case 246:
-#line 831 "parser.yxx"
+#line 835 "parser.yxx"
     {
 			MSG->hdr_error_info.add_param(*yyvsp[0].yyt_error_param);
 			MEMMAN_DELETE(yyvsp[0].yyt_error_param); delete yyvsp[0].yyt_error_param; }
     break;
 
   case 247:
-#line 836 "parser.yxx"
+#line 840 "parser.yxx"
     { CTXT_URI; }
     break;
 
   case 248:
-#line 836 "parser.yxx"
+#line 840 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 249:
-#line 836 "parser.yxx"
+#line 840 "parser.yxx"
     {
 		  	yyval.yyt_error_param = new t_error_param();
 			MEMMAN_NEW(yyval.yyt_error_param);
 			yyval.yyt_error_param->uri.set_url(*yyvsp[-3].yyt_str);
 			yyval.yyt_error_param->parameter_list = *yyvsp[0].yyt_params;
-			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
-			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params;
 
 			if (!yyval.yyt_error_param->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_error_param); delete yyval.yyt_error_param;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
+			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params; }
     break;
 
   case 250:
-#line 850 "parser.yxx"
+#line 855 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 251:
-#line 850 "parser.yxx"
+#line 855 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 252:
-#line 850 "parser.yxx"
+#line 855 "parser.yxx"
     {
 			MSG->hdr_expires.set_time(yyvsp[-1].yyt_ulong); }
     break;
 
   case 253:
-#line 854 "parser.yxx"
+#line 859 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 254:
-#line 854 "parser.yxx"
+#line 859 "parser.yxx"
     {
 			MSG->hdr_from.set_display(yyvsp[-1].yyt_from_addr->display);
 			MSG->hdr_from.set_uri(yyvsp[-1].yyt_from_addr->uri);
@@ -3139,210 +3144,213 @@ yyreduce:
     break;
 
   case 255:
-#line 869 "parser.yxx"
+#line 874 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 256:
-#line 869 "parser.yxx"
+#line 874 "parser.yxx"
     {
 			yyval.yyt_from_addr = new t_hdr_from();
 			MEMMAN_NEW(yyval.yyt_from_addr);
 			yyval.yyt_from_addr->set_uri(*yyvsp[-1].yyt_str);
-			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str;
 
 			if (!yyval.yyt_from_addr->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_from_addr); delete yyval.yyt_from_addr;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 257:
-#line 879 "parser.yxx"
+#line 885 "parser.yxx"
     { CTXT_URI; }
     break;
 
   case 258:
-#line 879 "parser.yxx"
+#line 885 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 259:
-#line 879 "parser.yxx"
+#line 885 "parser.yxx"
     {
 			yyval.yyt_from_addr = new t_hdr_from();
 			MEMMAN_NEW(yyval.yyt_from_addr);
 			yyval.yyt_from_addr->set_display(*yyvsp[-5].yyt_str);
 			yyval.yyt_from_addr->set_uri(*yyvsp[-2].yyt_str);
-			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
-			MEMMAN_DELETE(yyvsp[-2].yyt_str); delete yyvsp[-2].yyt_str;
 
 			if (!yyval.yyt_from_addr->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_from_addr); delete yyval.yyt_from_addr;
 				YYERROR;
-			} }
+			}
+			
+			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
+			MEMMAN_DELETE(yyvsp[-2].yyt_str); delete yyvsp[-2].yyt_str; }
     break;
 
   case 260:
-#line 893 "parser.yxx"
+#line 900 "parser.yxx"
     { CTXT_WORD; }
     break;
 
   case 261:
-#line 893 "parser.yxx"
+#line 900 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 262:
-#line 893 "parser.yxx"
+#line 900 "parser.yxx"
     {
 			MSG->hdr_in_reply_to.add_call_id(*yyvsp[-1].yyt_str);
 			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 263:
-#line 896 "parser.yxx"
+#line 903 "parser.yxx"
     { CTXT_WORD; }
     break;
 
   case 264:
-#line 896 "parser.yxx"
+#line 903 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 265:
-#line 896 "parser.yxx"
+#line 903 "parser.yxx"
     {
 			MSG->hdr_in_reply_to.add_call_id(*yyvsp[-1].yyt_str);
 			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 266:
-#line 901 "parser.yxx"
+#line 908 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 267:
-#line 901 "parser.yxx"
+#line 908 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 268:
-#line 901 "parser.yxx"
+#line 908 "parser.yxx"
     {
 			MSG->hdr_max_forwards.set_max_forwards(yyvsp[-1].yyt_ulong); }
     break;
 
   case 269:
-#line 905 "parser.yxx"
+#line 912 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 270:
-#line 905 "parser.yxx"
+#line 912 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 271:
-#line 905 "parser.yxx"
+#line 912 "parser.yxx"
     {
 			MSG->hdr_min_expires.set_time(yyvsp[-1].yyt_ulong); }
     break;
 
   case 272:
-#line 909 "parser.yxx"
+#line 916 "parser.yxx"
     {
 			MSG->hdr_mime_version.set_version(*yyvsp[0].yyt_str);
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 273:
-#line 914 "parser.yxx"
+#line 921 "parser.yxx"
     { CTXT_LINE; }
     break;
 
   case 274:
-#line 914 "parser.yxx"
+#line 921 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 275:
-#line 914 "parser.yxx"
+#line 921 "parser.yxx"
     {
 			MSG->hdr_organization.set_name(trim(*yyvsp[-1].yyt_str));
 			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 276:
-#line 919 "parser.yxx"
+#line 926 "parser.yxx"
     {
 			MSG->hdr_priority.set_priority(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 277:
-#line 924 "parser.yxx"
+#line 931 "parser.yxx"
     {
 			MSG->hdr_proxy_require.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 278:
-#line 927 "parser.yxx"
+#line 934 "parser.yxx"
     {
 			MSG->hdr_proxy_require.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 279:
-#line 932 "parser.yxx"
+#line 939 "parser.yxx"
     {
 			MSG->hdr_record_route.add_route(*yyvsp[0].yyt_route);
 			MEMMAN_DELETE(yyvsp[0].yyt_route); delete yyvsp[0].yyt_route; }
     break;
 
   case 280:
-#line 935 "parser.yxx"
+#line 942 "parser.yxx"
     {
 		  	MSG->hdr_record_route.add_route(*yyvsp[0].yyt_route);
 			MEMMAN_DELETE(yyvsp[0].yyt_route); delete yyvsp[0].yyt_route; }
     break;
 
   case 281:
-#line 940 "parser.yxx"
+#line 947 "parser.yxx"
     { CTXT_URI; }
     break;
 
   case 282:
-#line 940 "parser.yxx"
+#line 947 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 283:
-#line 941 "parser.yxx"
+#line 948 "parser.yxx"
     {
 			yyval.yyt_route = new t_route;
 			MEMMAN_NEW(yyval.yyt_route);
 			yyval.yyt_route->display = *yyvsp[-5].yyt_str;
 			yyval.yyt_route->uri.set_url(*yyvsp[-3].yyt_str);
 			yyval.yyt_route->set_params(*yyvsp[0].yyt_params);
-			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
-			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
-			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params;
 
 			if (!yyval.yyt_route->uri.is_valid()) {
 				MEMMAN_DELETE(yyval.yyt_route); delete yyval.yyt_route;
 				YYERROR;
-			} }
+			}
+			 
+			MEMMAN_DELETE(yyvsp[-5].yyt_str); delete yyvsp[-5].yyt_str;
+			MEMMAN_DELETE(yyvsp[-3].yyt_str); delete yyvsp[-3].yyt_str;
+			MEMMAN_DELETE(yyvsp[0].yyt_params); delete yyvsp[0].yyt_params; }
     break;
 
   case 284:
-#line 957 "parser.yxx"
+#line 965 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 285:
-#line 957 "parser.yxx"
+#line 965 "parser.yxx"
     {
 			MSG->hdr_reply_to.set_display(yyvsp[-1].yyt_from_addr->display);
 			MSG->hdr_reply_to.set_uri(yyvsp[-1].yyt_from_addr->uri);
@@ -3352,31 +3360,31 @@ yyreduce:
     break;
 
   case 286:
-#line 965 "parser.yxx"
+#line 973 "parser.yxx"
     {
 			MSG->hdr_require.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 287:
-#line 968 "parser.yxx"
+#line 976 "parser.yxx"
     {
 			MSG->hdr_require.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 288:
-#line 973 "parser.yxx"
+#line 981 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 289:
-#line 973 "parser.yxx"
+#line 981 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 290:
-#line 973 "parser.yxx"
+#line 981 "parser.yxx"
     {
 			MSG->hdr_retry_after.set_time(yyvsp[-3].yyt_ulong);
 			MSG->hdr_retry_after.set_comment(*yyvsp[-1].yyt_str);
@@ -3394,56 +3402,56 @@ yyreduce:
     break;
 
   case 291:
-#line 989 "parser.yxx"
+#line 997 "parser.yxx"
     { yyval.yyt_str = new string(); MEMMAN_NEW(yyval.yyt_str); }
     break;
 
   case 292:
-#line 990 "parser.yxx"
+#line 998 "parser.yxx"
     { CTXT_COMMENT; }
     break;
 
   case 293:
-#line 990 "parser.yxx"
+#line 998 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 294:
-#line 990 "parser.yxx"
+#line 998 "parser.yxx"
     {
 			yyval.yyt_str = yyvsp[-2].yyt_str; }
     break;
 
   case 295:
-#line 994 "parser.yxx"
+#line 1002 "parser.yxx"
     {
 			MSG->hdr_route.add_route(*yyvsp[0].yyt_route);
 			MEMMAN_DELETE(yyvsp[0].yyt_route); delete yyvsp[0].yyt_route; }
     break;
 
   case 296:
-#line 997 "parser.yxx"
+#line 1005 "parser.yxx"
     {
 		  	MSG->hdr_route.add_route(*yyvsp[0].yyt_route);
 			MEMMAN_DELETE(yyvsp[0].yyt_route); delete yyvsp[0].yyt_route; }
     break;
 
   case 297:
-#line 1002 "parser.yxx"
+#line 1010 "parser.yxx"
     {
 			MSG->hdr_server.add_server(*yyvsp[0].yyt_server);
 			MEMMAN_DELETE(yyvsp[0].yyt_server); delete yyvsp[0].yyt_server; }
     break;
 
   case 298:
-#line 1005 "parser.yxx"
+#line 1013 "parser.yxx"
     {
 			MSG->hdr_server.add_server(*yyvsp[0].yyt_server);
 			MEMMAN_DELETE(yyvsp[0].yyt_server); delete yyvsp[0].yyt_server; }
     break;
 
   case 299:
-#line 1010 "parser.yxx"
+#line 1018 "parser.yxx"
     {
 			yyval.yyt_server = new t_server();
 			MEMMAN_NEW(yyval.yyt_server);
@@ -3454,7 +3462,7 @@ yyreduce:
     break;
 
   case 300:
-#line 1017 "parser.yxx"
+#line 1025 "parser.yxx"
     {
 			yyval.yyt_server = new t_server();
 			MEMMAN_NEW(yyval.yyt_server);
@@ -3467,96 +3475,96 @@ yyreduce:
     break;
 
   case 301:
-#line 1028 "parser.yxx"
+#line 1036 "parser.yxx"
     { CTXT_LINE; }
     break;
 
   case 302:
-#line 1028 "parser.yxx"
+#line 1036 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 303:
-#line 1028 "parser.yxx"
+#line 1036 "parser.yxx"
     {
 			MSG->hdr_subject.set_subject(trim(*yyvsp[-1].yyt_str));
 			MEMMAN_DELETE(yyvsp[-1].yyt_str); delete yyvsp[-1].yyt_str; }
     break;
 
   case 304:
-#line 1033 "parser.yxx"
+#line 1041 "parser.yxx"
     {
 			MSG->hdr_supported.set_empty(); }
     break;
 
   case 305:
-#line 1035 "parser.yxx"
+#line 1043 "parser.yxx"
     {
 			MSG->hdr_supported.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 306:
-#line 1038 "parser.yxx"
+#line 1046 "parser.yxx"
     {
 			MSG->hdr_supported.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 307:
-#line 1043 "parser.yxx"
+#line 1051 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 308:
-#line 1043 "parser.yxx"
+#line 1051 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 309:
-#line 1046 "parser.yxx"
+#line 1054 "parser.yxx"
     {
 			MSG->hdr_timestamp.set_timestamp(yyvsp[0].yyt_float); }
     break;
 
   case 310:
-#line 1048 "parser.yxx"
+#line 1056 "parser.yxx"
     {
 			MSG->hdr_timestamp.set_timestamp(yyvsp[-1].yyt_float);
 			MSG->hdr_timestamp.set_delay(yyvsp[0].yyt_float); }
     break;
 
   case 311:
-#line 1053 "parser.yxx"
+#line 1061 "parser.yxx"
     { yyval.yyt_float = yyvsp[0].yyt_ulong; }
     break;
 
   case 312:
-#line 1054 "parser.yxx"
+#line 1062 "parser.yxx"
     {
 			string s = int2str(yyvsp[-2].yyt_ulong) + '.' + int2str(yyvsp[0].yyt_ulong);
 			yyval.yyt_float = atof(s.c_str()); }
     break;
 
   case 313:
-#line 1059 "parser.yxx"
+#line 1067 "parser.yxx"
     { yyval.yyt_float = yyvsp[0].yyt_ulong; }
     break;
 
   case 314:
-#line 1060 "parser.yxx"
+#line 1068 "parser.yxx"
     {
 			string s = int2str(yyvsp[-2].yyt_ulong) + '.' + int2str(yyvsp[0].yyt_ulong);
 			yyval.yyt_float = atof(s.c_str()); }
     break;
 
   case 315:
-#line 1065 "parser.yxx"
+#line 1073 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 316:
-#line 1065 "parser.yxx"
+#line 1073 "parser.yxx"
     {
 			MSG->hdr_to.set_display(yyvsp[-1].yyt_from_addr->display);
 			MSG->hdr_to.set_uri(yyvsp[-1].yyt_from_addr->uri);
@@ -3573,49 +3581,49 @@ yyreduce:
     break;
 
   case 317:
-#line 1080 "parser.yxx"
+#line 1088 "parser.yxx"
     {
 			MSG->hdr_unsupported.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 318:
-#line 1083 "parser.yxx"
+#line 1091 "parser.yxx"
     {
 			MSG->hdr_unsupported.add_feature(tolower(*yyvsp[0].yyt_str));
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 319:
-#line 1088 "parser.yxx"
+#line 1096 "parser.yxx"
     {
 			MSG->hdr_user_agent.add_server(*yyvsp[0].yyt_server);
 			MEMMAN_DELETE(yyvsp[0].yyt_server); delete yyvsp[0].yyt_server; }
     break;
 
   case 320:
-#line 1091 "parser.yxx"
+#line 1099 "parser.yxx"
     {
 			MSG->hdr_user_agent.add_server(*yyvsp[0].yyt_server);
 			MEMMAN_DELETE(yyvsp[0].yyt_server); delete yyvsp[0].yyt_server; }
     break;
 
   case 321:
-#line 1096 "parser.yxx"
+#line 1104 "parser.yxx"
     {
 			MSG->hdr_via.add_via(*yyvsp[0].yyt_via);
 			MEMMAN_DELETE(yyvsp[0].yyt_via); delete yyvsp[0].yyt_via; }
     break;
 
   case 322:
-#line 1099 "parser.yxx"
+#line 1107 "parser.yxx"
     {
 			MSG->hdr_via.add_via(*yyvsp[0].yyt_via);
 			MEMMAN_DELETE(yyvsp[0].yyt_via); delete yyvsp[0].yyt_via; }
     break;
 
   case 323:
-#line 1104 "parser.yxx"
+#line 1112 "parser.yxx"
     {
 			yyval.yyt_via = yyvsp[-2].yyt_via;
 			yyval.yyt_via->host = yyvsp[-1].yyt_via->host;
@@ -3645,7 +3653,7 @@ yyreduce:
     break;
 
   case 324:
-#line 1132 "parser.yxx"
+#line 1140 "parser.yxx"
     {
 			yyval.yyt_via = new t_via();
 			MEMMAN_NEW(yyval.yyt_via);
@@ -3658,60 +3666,62 @@ yyreduce:
     break;
 
   case 325:
-#line 1143 "parser.yxx"
+#line 1151 "parser.yxx"
     {
 			yyval.yyt_via = new t_via();
 			MEMMAN_NEW(yyval.yyt_via);
-			yyval.yyt_via->host = tolower(*yyvsp[0].yyt_str);
+			yyval.yyt_via->host = *yyvsp[0].yyt_str;
 			MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 326:
-#line 1148 "parser.yxx"
+#line 1156 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 327:
-#line 1148 "parser.yxx"
+#line 1156 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 328:
-#line 1148 "parser.yxx"
+#line 1156 "parser.yxx"
     {
+			if (yyvsp[-1].yyt_ulong > 65535) YYERROR;
+			
 			yyval.yyt_via = new t_via();
 			MEMMAN_NEW(yyval.yyt_via);
-			yyval.yyt_via->host = tolower(*yyvsp[-4].yyt_str);
+			yyval.yyt_via->host = *yyvsp[-4].yyt_str;
 			yyval.yyt_via->port = yyvsp[-1].yyt_ulong;
 			MEMMAN_DELETE(yyvsp[-4].yyt_str); delete yyvsp[-4].yyt_str; }
     break;
 
   case 329:
-#line 1156 "parser.yxx"
+#line 1166 "parser.yxx"
     {
 			MSG->hdr_warning.add_warning(*yyvsp[0].yyt_warning);
 			MEMMAN_DELETE(yyvsp[0].yyt_warning); delete yyvsp[0].yyt_warning; }
     break;
 
   case 330:
-#line 1159 "parser.yxx"
+#line 1169 "parser.yxx"
     {
 			MSG->hdr_warning.add_warning(*yyvsp[0].yyt_warning);
 			MEMMAN_DELETE(yyvsp[0].yyt_warning); delete yyvsp[0].yyt_warning; }
     break;
 
   case 331:
-#line 1164 "parser.yxx"
+#line 1174 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 332:
-#line 1164 "parser.yxx"
+#line 1174 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 333:
-#line 1164 "parser.yxx"
+#line 1174 "parser.yxx"
     {
 			yyval.yyt_warning = new t_warning();
 			MEMMAN_NEW(yyval.yyt_warning);
@@ -3724,22 +3734,22 @@ yyreduce:
     break;
 
   case 334:
-#line 1175 "parser.yxx"
+#line 1185 "parser.yxx"
     { CTXT_LINE; }
     break;
 
   case 335:
-#line 1175 "parser.yxx"
+#line 1185 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 336:
-#line 1175 "parser.yxx"
+#line 1185 "parser.yxx"
     { yyval.yyt_str = yyvsp[-1].yyt_str; }
     break;
 
   case 337:
-#line 1178 "parser.yxx"
+#line 1188 "parser.yxx"
     {
 			if (yyvsp[0].yyt_param->name == "nextnonce")
 				MSG->hdr_auth_info.set_next_nonce(yyvsp[0].yyt_param->value);
@@ -3754,7 +3764,6 @@ yyreduce:
 							hex2int(yyvsp[0].yyt_param->value));
 			}
 			else {
-				MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param;
 				YYERROR;
 			}
 
@@ -3762,29 +3771,27 @@ yyreduce:
     break;
 
   case 340:
-#line 1203 "parser.yxx"
+#line 1212 "parser.yxx"
     {
 			yyval.yyt_dig_resp = new t_digest_response();
 			MEMMAN_NEW(yyval.yyt_dig_resp);
 			if (!yyval.yyt_dig_resp->set_attr(*yyvsp[0].yyt_param)) {
-				MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param;
 				YYERROR;
 			}
 			MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param; }
     break;
 
   case 341:
-#line 1211 "parser.yxx"
+#line 1219 "parser.yxx"
     {
 			if (!yyval.yyt_dig_resp->set_attr(*yyvsp[0].yyt_param)) {
-				MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param;
 				YYERROR;
 			}
 			MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param; }
     break;
 
   case 342:
-#line 1219 "parser.yxx"
+#line 1226 "parser.yxx"
     {
 			yyval.yyt_params = new list<t_parameter>;
 			MEMMAN_NEW(yyval.yyt_params);
@@ -3793,19 +3800,19 @@ yyreduce:
     break;
 
   case 343:
-#line 1224 "parser.yxx"
+#line 1231 "parser.yxx"
     {
 			yyval.yyt_params->push_back(*yyvsp[0].yyt_param);
 			MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param; }
     break;
 
   case 344:
-#line 1229 "parser.yxx"
+#line 1236 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 345:
-#line 1229 "parser.yxx"
+#line 1236 "parser.yxx"
     {
 			yyval.yyt_credentials = new t_credentials;
 			MEMMAN_NEW(yyval.yyt_credentials);
@@ -3815,12 +3822,12 @@ yyreduce:
     break;
 
   case 346:
-#line 1235 "parser.yxx"
+#line 1242 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 347:
-#line 1235 "parser.yxx"
+#line 1242 "parser.yxx"
     {
 			yyval.yyt_credentials = new t_credentials;
 			MEMMAN_NEW(yyval.yyt_credentials);
@@ -3831,46 +3838,44 @@ yyreduce:
     break;
 
   case 348:
-#line 1244 "parser.yxx"
+#line 1251 "parser.yxx"
     { CTXT_AUTH_SCHEME; }
     break;
 
   case 349:
-#line 1244 "parser.yxx"
+#line 1251 "parser.yxx"
     {
 			MSG->hdr_authorization.add_credentials(*yyvsp[0].yyt_credentials);
 			MEMMAN_DELETE(yyvsp[0].yyt_credentials); delete yyvsp[0].yyt_credentials; }
     break;
 
   case 350:
-#line 1249 "parser.yxx"
+#line 1256 "parser.yxx"
     {
 			yyval.yyt_dig_chlg = new t_digest_challenge();
 			MEMMAN_NEW(yyval.yyt_dig_chlg);
 			if (!yyval.yyt_dig_chlg->set_attr(*yyvsp[0].yyt_param)) {
-				MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param;
 				YYERROR;
 			}
 			MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param; }
     break;
 
   case 351:
-#line 1257 "parser.yxx"
+#line 1263 "parser.yxx"
     {
 			if (!yyval.yyt_dig_chlg->set_attr(*yyvsp[0].yyt_param)) {
-				MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param;
 				YYERROR;
 			}
 			MEMMAN_DELETE(yyvsp[0].yyt_param); delete yyvsp[0].yyt_param; }
     break;
 
   case 352:
-#line 1265 "parser.yxx"
+#line 1270 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 353:
-#line 1265 "parser.yxx"
+#line 1270 "parser.yxx"
     {
 			yyval.yyt_challenge = new t_challenge;
 			MEMMAN_NEW(yyval.yyt_challenge);
@@ -3880,12 +3885,12 @@ yyreduce:
     break;
 
   case 354:
-#line 1271 "parser.yxx"
+#line 1276 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 355:
-#line 1271 "parser.yxx"
+#line 1276 "parser.yxx"
     {
 			yyval.yyt_challenge = new t_challenge;
 			MEMMAN_NEW(yyval.yyt_challenge);
@@ -3896,24 +3901,24 @@ yyreduce:
     break;
 
   case 356:
-#line 1280 "parser.yxx"
+#line 1285 "parser.yxx"
     { CTXT_AUTH_SCHEME; }
     break;
 
   case 357:
-#line 1280 "parser.yxx"
+#line 1285 "parser.yxx"
     {
 				MSG->hdr_proxy_authenticate.set_challenge(*yyvsp[0].yyt_challenge);
 				MEMMAN_DELETE(yyvsp[0].yyt_challenge); delete yyvsp[0].yyt_challenge; }
     break;
 
   case 358:
-#line 1285 "parser.yxx"
+#line 1290 "parser.yxx"
     { CTXT_AUTH_SCHEME; }
     break;
 
   case 359:
-#line 1285 "parser.yxx"
+#line 1290 "parser.yxx"
     {
 				MSG->hdr_proxy_authorization.
 							add_credentials(*yyvsp[0].yyt_credentials);
@@ -3921,45 +3926,45 @@ yyreduce:
     break;
 
   case 360:
-#line 1291 "parser.yxx"
+#line 1296 "parser.yxx"
     { CTXT_AUTH_SCHEME; }
     break;
 
   case 361:
-#line 1291 "parser.yxx"
+#line 1296 "parser.yxx"
     {
 				MSG->hdr_www_authenticate.set_challenge(*yyvsp[0].yyt_challenge);
 				MEMMAN_DELETE(yyvsp[0].yyt_challenge); delete yyvsp[0].yyt_challenge; }
     break;
 
   case 362:
-#line 1296 "parser.yxx"
+#line 1301 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 363:
-#line 1296 "parser.yxx"
+#line 1301 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 364:
-#line 1296 "parser.yxx"
+#line 1301 "parser.yxx"
     {
 			MSG->hdr_rseq.set_resp_nr(yyvsp[-1].yyt_ulong); }
     break;
 
   case 365:
-#line 1300 "parser.yxx"
+#line 1305 "parser.yxx"
     { CTXT_NUM; }
     break;
 
   case 366:
-#line 1300 "parser.yxx"
+#line 1305 "parser.yxx"
     { CTXT_INITIAL; }
     break;
 
   case 367:
-#line 1300 "parser.yxx"
+#line 1305 "parser.yxx"
     {
 			MSG->hdr_rack.set_resp_nr(yyvsp[-3].yyt_ulong);
 			MSG->hdr_rack.set_cseq_nr(yyvsp[-2].yyt_ulong);
@@ -3968,7 +3973,7 @@ yyreduce:
     break;
 
   case 368:
-#line 1307 "parser.yxx"
+#line 1312 "parser.yxx"
     {
 			MSG->hdr_event.set_event_type(tolower(*yyvsp[-1].yyt_str));
 			list<t_parameter>::const_iterator i;
@@ -3984,21 +3989,21 @@ yyreduce:
     break;
 
   case 369:
-#line 1321 "parser.yxx"
+#line 1326 "parser.yxx"
     {
 				MSG->hdr_allow_events.add_event_type(tolower(*yyvsp[0].yyt_str));
 				MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 370:
-#line 1324 "parser.yxx"
+#line 1329 "parser.yxx"
     {
 		      		MSG->hdr_allow_events.add_event_type(tolower(*yyvsp[0].yyt_str));
 				MEMMAN_DELETE(yyvsp[0].yyt_str); delete yyvsp[0].yyt_str; }
     break;
 
   case 371:
-#line 1329 "parser.yxx"
+#line 1334 "parser.yxx"
     {
 				MSG->hdr_subscription_state.set_substate(tolower(*yyvsp[-1].yyt_str));
 				list<t_parameter>::const_iterator i;
@@ -4026,12 +4031,12 @@ yyreduce:
     break;
 
   case 372:
-#line 1355 "parser.yxx"
+#line 1360 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 373:
-#line 1355 "parser.yxx"
+#line 1360 "parser.yxx"
     {
 			MSG->hdr_refer_to.set_display(yyvsp[-1].yyt_from_addr->display);
 			MSG->hdr_refer_to.set_uri(yyvsp[-1].yyt_from_addr->uri);
@@ -4041,12 +4046,12 @@ yyreduce:
     break;
 
   case 374:
-#line 1363 "parser.yxx"
+#line 1368 "parser.yxx"
     { CTXT_URI_SPECIAL; }
     break;
 
   case 375:
-#line 1363 "parser.yxx"
+#line 1368 "parser.yxx"
     {
 			MSG->hdr_referred_by.set_display(yyvsp[-1].yyt_from_addr->display);
 			MSG->hdr_referred_by.set_uri(yyvsp[-1].yyt_from_addr->uri);
@@ -4066,7 +4071,7 @@ yyreduce:
     }
 
 /* Line 991 of yacc.c.  */
-#line 4069 "parser.cxx"
+#line 4074 "parser.cxx"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -4276,7 +4281,7 @@ yyreturn:
 }
 
 
-#line 1378 "parser.yxx"
+#line 1383 "parser.yxx"
 
 
 void

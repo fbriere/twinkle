@@ -2,6 +2,9 @@ Author of Twinkle:
 
 Michel de Boer <michel@twinklephone.com> designed and implemented Twinkle.
 
+Contributions:
+- Initial code for ALSA support was written by Rickard Petzall
+
 Twinkle contains the following 3rd party software packages:
 - GSM codec from Jutta Degener and Carsten Bormann
 	see directory src/audio/gsm for more info

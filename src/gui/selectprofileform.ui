@@ -275,6 +275,7 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
     <include location="local" impldecl="in implementation">getprofilenameform.h</include>
     <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in implementation">wizardform.h</include>
+    <include location="local" impldecl="in implementation">syssettingsform.h</include>
     <include location="local" impldecl="in implementation">selectprofileform.ui.h</include>
 </includes>
 <variables>

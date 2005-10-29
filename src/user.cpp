@@ -62,6 +62,7 @@
 #define FLD_SIP_UDP_PORT		"sip_udp_port"
 #define FLD_HOLD_VARIANT		"hold_variant"
 #define FLD_CHECK_MAX_FORWARDS		"check_max_forwards"
+#define FLD_ALLOW_MISSING_CONTACT_REG	"allow_missing_contact_reg"	
 #define FLD_REGISTRATION_TIME_IN_CONTACT	"registration_time_in_contact"
 #define FLD_COMPACT_HEADERS		"compact_headers"
 #define FLD_ALLOW_REDIRECTION		"allow_redirection"
@@ -151,6 +152,7 @@ t_user::t_user() {
 	use_stun = false;
 	register_at_startup = true;
 	check_max_forwards = false;
+	allow_missing_contact_reg = true;
 	allow_redirection = true;
 	ask_user_to_redirect = true;
 	max_redirections = 5;
@@ -344,6 +346,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			}
 		} else if (parameter == FLD_CHECK_MAX_FORWARDS) {
 			check_max_forwards = yesno2bool(value);
+		} else if (parameter == FLD_ALLOW_MISSING_CONTACT_REG) {
+			allow_missing_contact_reg = yesno2bool(value);
 		} else if (parameter == FLD_ALLOW_REDIRECTION) {
 			allow_redirection = yesno2bool(value);
 		} else if (parameter == FLD_ASK_USER_TO_REDIRECT) {
@@ -558,6 +562,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << endl;
 	config << FLD_CHECK_MAX_FORWARDS << '=';
 	config << bool2yesno(check_max_forwards) << endl;
+	config << FLD_ALLOW_MISSING_CONTACT_REG << '=';
+	config << bool2yesno(allow_missing_contact_reg) << endl;
 	config << FLD_REGISTRATION_TIME_IN_CONTACT << '=';
 	config << bool2yesno(registration_time_in_contact) << endl;
 	config << FLD_COMPACT_HEADERS << '=' << bool2yesno(compact_headers) << endl;

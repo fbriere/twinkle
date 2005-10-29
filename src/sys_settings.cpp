@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include "sys_settings.h"
 #include "userintf.h"
 #include "util.h"
@@ -48,18 +49,51 @@
 #define FLD_LOG_SHOW_MEMORY	"log_show_memory"
 #define FLD_LOG_SHOW_DEBUG	"log_show_debug"
 
-string t_oss_device::get_description(void) const {
+// GUI settings
+#define FLD_GUI_USE_SYSTRAY	"gui_use_systray"
+#define FLD_GUI_HIDE_ON_CLOSE	"gui_hide_on_close"
+
+string t_audio_device::get_description(void) const {
 	string s = device;
-	if (sym_link.size() > 0) {
-		s += " -> ";
-		s += sym_link;
+	if (type == OSS) {
+		s = "OSS: " + s;
+		if (sym_link.size() > 0) {
+			s += " -> ";
+			s += sym_link;
+		}
+		
+		if (name.size() > 0) {
+			s += ": ";
+			s += name;
+		}
+	} else if (type == ALSA) {
+		s = "ALSA: " + s;
+		if (!name.empty()) {
+			s += ": ";
+			s += name;
+		}
+	} else {
+		s = "Unknown: " + s;
 	}
 	
-	if (name.size() > 0) {
-		s += ": ";
-		s += name;
+	return s;
+}
+
+string t_audio_device::get_settings_value(void) const {
+	string s;
+	
+	switch (type) {
+	case OSS:
+		s = PFX_OSS;
+		break;
+	case ALSA:
+		s = PFX_ALSA;
+		break;
+	default:
+		assert(false);
 	}
 	
+	s += device;
 	return s;
 }
 
@@ -71,16 +105,19 @@ t_sys_settings::t_sys_settings() {
 	filename += "/";
 	filename += SYS_CONFIG_FILE;
 	
-	// Default settings
-	dev_ringtone = DEV_DSP;
-	dev_speaker = DEV_DSP;
-	dev_mic = DEV_DSP;
+	// OSS Default settings
+	dev_ringtone = audio_device();
+	dev_speaker = audio_device();
+	dev_mic = audio_device();
 	
 	log_max_size = 5;
 	log_show_sip = true;
 	log_show_stun = true;
 	log_show_memory = true;
 	log_show_debug = false;
+	
+	gui_use_systray = true;
+	gui_hide_on_close = true;
 }
 
 string t_sys_settings::about(bool html) const {
@@ -99,6 +136,18 @@ string t_sys_settings::about(bool html) const {
 
 	s += "http://www.twinklephone.com";
 	if (html) s += "<BR><BR>";
+	s += "\n\n";
+	
+	s += "Contributions:";
+	if (html) s += "<BR>";
+	s += "\n";
+	
+	if (html) {
+		s += "* Initial code for ALSA support was written by Rickard Petz&auml;ll";
+		s += "<BR><BR>";
+	} else {
+		s += "* Initial code for ALSA support was written by Rickard Petzall";
+	}
 	s += "\n\n";
 
 	s += "This software contains the following software from 3rd parties:";		
@@ -346,11 +395,11 @@ bool t_sys_settings::read_config(string &error_msg) {
 		string value = trim(l.back());
 
 		if (parameter == FLD_DEV_RINGTONE) {
-			dev_ringtone = value;
+			dev_ringtone = audio_device(value);
 		} else if (parameter == FLD_DEV_SPEAKER) {
-			dev_speaker = value;
+			dev_speaker = audio_device(value);
 		} else if (parameter == FLD_DEV_MIC) {
-			dev_mic = value;
+			dev_mic = audio_device(value);
 		} else if (parameter == FLD_LOG_MAX_SIZE) {
 			log_max_size = atoi(value.c_str());
 		} else if (parameter == FLD_LOG_SHOW_SIP) {
@@ -361,6 +410,10 @@ bool t_sys_settings::read_config(string &error_msg) {
 			log_show_memory = yesno2bool(value);
 		} else if (parameter == FLD_LOG_SHOW_DEBUG) {
 			log_show_debug = yesno2bool(value);
+		} else if (parameter == FLD_GUI_USE_SYSTRAY) {
+			gui_use_systray = yesno2bool(value);
+		} else if (parameter == FLD_GUI_HIDE_ON_CLOSE) {
+			gui_hide_on_close = yesno2bool(value);
 		}	
 		// Unknown field names are skipped.
 	}
@@ -397,9 +450,9 @@ bool t_sys_settings::write_config(string &error_msg) {
 	
 	// Write AUDIO settings
 	config << "# AUDIO\n";
-	config << FLD_DEV_RINGTONE << '=' << dev_ringtone << endl;
-	config << FLD_DEV_SPEAKER << '=' << dev_speaker << endl;
-	config << FLD_DEV_MIC << '=' << dev_mic << endl;
+	config << FLD_DEV_RINGTONE << '=' << dev_ringtone.get_settings_value() << endl;
+	config << FLD_DEV_SPEAKER << '=' << dev_speaker.get_settings_value() << endl;
+	config << FLD_DEV_MIC << '=' << dev_mic.get_settings_value() << endl;
 	config << endl;
 	
 	// Write LOG settings
@@ -409,6 +462,12 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_LOG_SHOW_STUN << '=' << bool2yesno(log_show_stun) << endl;
 	config << FLD_LOG_SHOW_MEMORY << '=' << bool2yesno(log_show_memory) << endl;
 	config << FLD_LOG_SHOW_DEBUG << '=' << bool2yesno(log_show_debug) << endl;
+	config << endl;
+	
+	// Write GUI settings
+	config << "# GUI\n";
+	config << FLD_GUI_USE_SYSTRAY << '=' << bool2yesno(gui_use_systray) << endl;
+	config << FLD_GUI_HIDE_ON_CLOSE << '=' << bool2yesno(gui_hide_on_close) << endl;
 	config << endl;
 	
 	// Check if writing succeeded
@@ -425,14 +484,14 @@ bool t_sys_settings::write_config(string &error_msg) {
 	return true;
 }
 
-list<t_oss_device> t_sys_settings::get_oss_devices(void) const {
+list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 	struct stat stat_buf;
-	list<t_oss_device> l;
+	list<t_audio_device> l;
 	
 	for (int i = -1; i <= 15; i ++) {
 		string dev = "/dev/dsp";
 		if (i >= 0) dev += int2str(i);
-		t_oss_device oss_dev;
+		t_audio_device oss_dev;
 		
 		// Check if device exists
 		if (stat(dev.c_str(), &stat_buf) != 0) continue;
@@ -444,7 +503,8 @@ list<t_oss_device> t_sys_settings::get_oss_devices(void) const {
 		if (fd >= 0) {
 			struct mixer_info soundcard_info;
 			if (ioctl(fd, SOUND_MIXER_INFO, &soundcard_info) != -1) {
-				oss_dev.name = soundcard_info.name;
+				oss_dev.name = "";
+				oss_dev.name += soundcard_info.name;
 				oss_dev.name += " (";
 				oss_dev.name += soundcard_info.id;
 				oss_dev.name += ")";
@@ -464,14 +524,14 @@ list<t_oss_device> t_sys_settings::get_oss_devices(void) const {
 			buf[len_link] = 0;
 			oss_dev.sym_link = buf;
 		}
-		
+		oss_dev.type = t_audio_device::OSS;
 		l.push_back(oss_dev);
 	}
 	
 	// If no OSS devices can be found (this should not happen), then
 	// just add /dev/dsp as the default device.
 	if (l.empty()) {
-		t_oss_device oss_dev;
+		t_audio_device oss_dev;
 		oss_dev.device = "/dev/dsp";
 		l.push_back(oss_dev);
 	}
@@ -479,35 +539,111 @@ list<t_oss_device> t_sys_settings::get_oss_devices(void) const {
 	return l;
 }
 
-bool t_sys_settings::equal_oss_dev(const string &dev1, const string &dev2) const {
-	if (dev1 == dev2) return true;
-	
-	char symlink1[32], symlink2[32];
-	int len_link1, len_link2;
-	
-	len_link1 = readlink(dev1.c_str(), symlink1, 31);
-	len_link2 = readlink(dev2.c_str(), symlink2, 31);
+#ifdef HAVE_LIBASOUND
+// Defined in audio_device.cpp
+void alsa_fill_soundcards(list<t_audio_device>& l);
 
-	if (len_link1 > 0) {
-		symlink1[len_link1] = 0;
-		string symdev1 = "/dev/";
-		symdev1 += symlink1;
-		if (len_link2 > 0) {
-			symlink2[len_link2] = 0;
-			string symdev2 = "/dev/";
-			symdev2 += symlink2;
-			return symdev1 == symdev2;
+list<t_audio_device> t_sys_settings::get_alsa_devices(void) const {
+	t_audio_device defaultDevice;
+	defaultDevice.device = "default";
+	defaultDevice.name = "Default device";
+	defaultDevice.type = t_audio_device::ALSA;
+	list<t_audio_device> l;
+	l.push_back(defaultDevice);
+	
+	alsa_fill_soundcards(l);
+	
+	return l;
+}
+#endif
+
+list<t_audio_device> t_sys_settings::get_audio_devices(void) const {
+	list<t_audio_device> d, d0;
+	
+#ifdef HAVE_LIBASOUND
+	d = get_alsa_devices();
+#endif
+	d0 = get_oss_devices();
+	for (list<t_audio_device>::iterator i = d0.begin(); i != d0.end(); i++) {
+		d.push_back(*i);
+	}
+	return d;
+}
+
+bool t_sys_settings::equal_audio_dev(const t_audio_device &dev1, const t_audio_device &dev2) const {
+	if (dev1.type == t_audio_device::OSS) {
+		if (dev2.type != t_audio_device::OSS) return false;
+		if (dev1.device == dev2.device) return true;
+		
+		char symlink1[32], symlink2[32];
+		int len_link1, len_link2;
+		
+		len_link1 = readlink(dev1.device.c_str(), symlink1, 31);
+		len_link2 = readlink(dev2.device.c_str(), symlink2, 31);
+	
+		if (len_link1 > 0) {
+			symlink1[len_link1] = 0;
+			string symdev1 = "/dev/";
+			symdev1 += symlink1;
+			if (len_link2 > 0) {
+				symlink2[len_link2] = 0;
+				string symdev2 = "/dev/";
+				symdev2 += symlink2;
+				return symdev1 == symdev2;
+			} else {
+				return dev2.device == symdev1;
+			}
 		} else {
-			return dev2 == symdev1;
+			if (len_link2 > 0) {
+				symlink2[len_link2] = 0;
+				string symdev2 = "/dev/";
+				symdev2 += symlink2;
+				return dev1.device == symdev2;
+			}
 		}
-	} else {
-		if (len_link2 > 0) {
-			symlink2[len_link2] = 0;
-			string symdev2 = "/dev/";
-			symdev2 += symlink2;
-			return dev1 == symdev2;
-		}
+	} else if (dev1.type == t_audio_device::ALSA) {
+		if (dev2.type != t_audio_device::ALSA) return false;
+		return dev1.device == dev2.device;
 	}
 		
 	return false;
+}
+
+
+t_audio_device t_sys_settings::audio_device(string device) {
+	t_audio_device d;
+
+	if (device.empty()) device = DEV_DSP; //This is the default device
+	
+	if (device.substr(0, strlen(PFX_OSS)) == PFX_OSS) {
+		// OSS device
+		d.device = device.substr(strlen(PFX_OSS));
+		d.type = t_audio_device::OSS;
+		d.name = "";
+		char symlink[32];
+		int len_link = readlink(device.c_str(), symlink, 31);
+		if(len_link > 0) {
+			d.sym_link = symlink;
+		}
+	} else if (device.substr(0, strlen(PFX_ALSA)) == PFX_ALSA) {
+		// ALSA device
+		d.device = device.substr(strlen(PFX_ALSA));
+		d.type = t_audio_device::ALSA;
+		d.name = "";
+		d.sym_link = "";
+	} else {
+		// Assume it is an OSS device. Version 0.2.1 and lower
+		// only supported OSS and the value only consisted of
+		// the device name without "oss:"
+		d.device = device;
+		d.type = t_audio_device::OSS;
+		d.name = "";
+		char symlink[32];
+		int len_link = readlink(device.c_str(), symlink, 31);
+		if(len_link > 0) {
+			d.sym_link = symlink;
+		}
+	}
+	
+	return d;	
 }

@@ -633,12 +633,19 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 
                 c = r->hdr_contact.find_contact(create_user_contact());
                 if (!c) {
-			is_registered = false;
-                        ui->cb_invalid_reg_resp(r, "Contact header missing.");
-                        return;
+               		log_file->write_report(
+               			"Contact header is missing.",
+               			"t_phone::handle_response_register",
+               			LOG_NORMAL, LOG_WARNING);
+	               	
+	               	if (!user_config->allow_missing_contact_reg) {
+				is_registered = false;
+				ui->cb_invalid_reg_resp(r, "Contact header missing.");
+				return;
+                        }
                 }
 
-                if (c->is_expires_present() && c->get_expires() != 0) {
+                if (c && c->is_expires_present() && c->get_expires() != 0) {
                         expires = c->get_expires();
                 }
                 else if (r->hdr_expires.is_populated() &&
@@ -647,9 +654,22 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
                         expires = r->hdr_expires.time;
                 }
                 else {
-			is_registered = false;
-                        ui->cb_invalid_reg_resp(r, "Expires parameter/header mising.");
-                        return;
+               		log_file->write_report(
+               			"Expires parameter/header mising.",
+               			"t_phone::handle_response_register",
+               			LOG_NORMAL, LOG_WARNING);
+               			
+               		if (!user_config->allow_missing_contact_reg) {
+				is_registered = false;
+				ui->cb_invalid_reg_resp(r, "Expires parameter/header mising.");
+				return;
+                        }
+                        
+                        expires = user_config->registration_time;
+                        
+                        // Assume a default expiration of 3600 sec if no expiry
+                        // time was returned.
+                        if (expires == 0) expires = 3600;
                 }
 
                 // Start new registration timer
@@ -662,7 +682,8 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 		ui->cb_register_success(r, expires, first_success);
 		
 		// Start sending NAT keepalive packets when STUN is used
-		if (use_stun && id_nat_keepalive == 0) {
+		// (or in case of symmetric firewall)
+		if (use_nat_keepalive && id_nat_keepalive == 0) {
 			// Just start the NAT keepalive timer. The REGISTER
 			// message itself created the NAT binding. So there is
 			// no need to send a NAT keep alive packet now.
@@ -727,6 +748,9 @@ void t_phone::handle_response_register(t_response *r, bool &re_register) {
 		if (use_stun) {
 			stun_public_ip_sip = 0L;
 			stun_public_port_sip = 0;
+		}
+		
+		if (use_nat_keepalive) {
 			stop_timer(PTMR_NAT_KEEPALIVE);
 		}
         }
@@ -746,6 +770,9 @@ void t_phone::handle_response_deregister(t_response *r) {
 	if (use_stun) {
 		stun_public_ip_sip = 0L;
 		stun_public_port_sip = 0;
+	}
+	
+	if (use_nat_keepalive) {
 		stop_timer(PTMR_NAT_KEEPALIVE);
 	}
 }
@@ -1423,6 +1450,7 @@ t_phone::t_phone() : t_transaction_layer() {
 	stun_public_ip_sip = 0L;
 	stun_public_port_sip = 0;
 	use_stun = false;
+	use_nat_keepalive = false;
 	
 	// Timers
 	id_registration = 0;
@@ -1614,7 +1642,7 @@ void t_phone::timeout(t_phone_timer timer) {
 		break;
 	case PTMR_NAT_KEEPALIVE:
 		// Send a new NAT keepalive packet
-		if (use_stun) {
+		if (use_nat_keepalive) {
 			send_nat_keepalive();
 			start_timer(PTMR_NAT_KEEPALIVE);
 		}

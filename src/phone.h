@@ -204,6 +204,7 @@ public:
 	
 	// STUN
 	bool		use_stun; // Indicates if STUN must be used
+	bool		use_nat_keepalive; // Send NAT keepalive ?
 
 	t_phone();
 	virtual ~t_phone();

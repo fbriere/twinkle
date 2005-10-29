@@ -76,6 +76,13 @@ string ulong2str(unsigned long i) {
 	return ulong2str(i, "%u");
 }
 
+string ptr2str(void *p) {
+	char buf[32];
+	
+	snprintf(buf, 32, "%p", p);
+	return string(buf);
+}
+
 string bool2str(bool b) {
 	return (b ? "true" : "false");
 }

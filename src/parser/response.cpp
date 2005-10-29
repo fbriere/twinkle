@@ -167,6 +167,15 @@ bool t_response::is_valid(bool &fatal, string &reason) const {
 
 		break;
 	}
+	
+	if (hdr_rseq.is_populated()) {
+		// RFC 3262 7.1
+		// The value ranges from 1 to 2**32 - 1
+		if (hdr_rseq.resp_nr == 0) {
+			reason = "RSeq is zero";
+			return false;
+		}
+	}
 
 	return true;
 }

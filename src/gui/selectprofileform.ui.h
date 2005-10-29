@@ -61,10 +61,6 @@ int SelectProfileForm::exec()
 			"Choose what method you wish to use.",
 			"&Wizard", "&Profile editor", QString::null);
 		
-		cout << "DEBUG: " << QMessageBox::Yes << endl;
-		cout << "DEBUG: " << QMessageBox::No << endl;
-		cout << "DEBUG: " << useWizard << endl;
-		
 		if (useWizard == 0) {
 			wizardProfile();
 		} else if (useWizard == 1) {
@@ -79,6 +75,15 @@ int SelectProfileForm::exec()
 		}
 		selectedProfile = profileListBox->currentText();
 		selectedProfile.append(".cfg");
+		
+		QMessageBox::information(this, PRODUCT_NAME,
+			"Next you may adjust the system settings. "\
+			"You can change these settings always at a later time.\n"\
+			"Click OK to view and adjust the system settings.");
+		
+		SysSettingsForm f(this, "system settings", true);
+		f.exec();
+		
 		return QDialog::Accepted;
 	}
 	

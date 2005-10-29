@@ -16,6 +16,13 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "twinkle_config.h"
+
+#ifdef HAVE_KDE
+#include <ksystemtray.h>
+#include <kpassivepopup.h>
+#endif
+
 #include <iostream>
 #include <cstdlib>
 #include <qapplication.h>
@@ -342,8 +349,8 @@ void t_gui::cb_incoming_call(int line, const t_request *r) {
 	}
 	
 	// From
-	s = "";
-	s.append(format_sip_address(r->hdr_from.display, r->hdr_from.uri).c_str());
+	QString fromParty = format_sip_address(r->hdr_from.display, r->hdr_from.uri).c_str();
+	s = fromParty;
 	if (r->hdr_organization.is_populated()) {
 		s.append(", ").append(r->hdr_organization.name.c_str());
 	}
@@ -365,7 +372,17 @@ void t_gui::cb_incoming_call(int line, const t_request *r) {
 	if (line == phone->get_active_line() &&
 	    !phone->service.is_auto_answer_active()) 
 	{
-		cb_play_ringtone();
+		cb_play_ringtone();	
+	}
+	
+	// Pop up sys tray balloon if main window is hidden
+	if (mainWindow->isHidden()) {
+#ifdef HAVE_KDE
+		KSystemTray *tray = (KSystemTray *)mainWindow->getSysTray();
+		if (tray) {
+			KPassivePopup::message(fromParty, tray);
+		}
+#endif
 	}
 	
 	unlock();

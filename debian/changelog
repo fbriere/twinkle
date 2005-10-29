@@ -1,3 +1,28 @@
+twinkle (0.3.2-1) unstable; urgency=low
+
+  * New upstream release
+    - New upstream version available (Closes: #334615)
+  * FTBFS on 64 bit arches: cast from 'void*' to 'int' loses precision
+    (Closes: #324395)
+  * Patch from Guido Guenther
+    - fix ppc build (Closes: #325057)
+  * Patch from Mikael Magnusson
+    - Thread creation timing bug causes crashes (Closes: #329433)
+  * Fix: old-fsf-address-in-copyright-file
+
+ -- Mark Purcell <msp@debian.org>  Sat, 29 Oct 2005 16:46:40 +0100
+
+twinkle (0.3-1) unstable; urgency=low
+
+  [ Kilian Krause ]
+  * Debian VoIP upload
+
+  [ Mark Purcell ]
+  * New upstream release
+  * Switch to cdbs!
+
+ -- Mark Purcell <msp@debian.org>  Thu, 13 Oct 2005 18:12:02 +0100
+
 twinkle (0.2.1-2) unstable; urgency=low
 
   * Build-Depends: libxml2-dev

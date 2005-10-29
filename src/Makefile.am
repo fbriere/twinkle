@@ -10,7 +10,7 @@ noinst_LIBRARIES = libtwinkle.a
 
 twinkle_SOURCES = main.cpp
 
-twinkle_LDADD = $(top_builddir)/src/libtwinkle.a\
+twinkle_LDADD = libtwinkle.a\
 	$(top_builddir)/src/parser/libsipparser.a\
         $(top_builddir)/src/sdp/libsdpparser.a\
         $(top_builddir)/src/sockets/libsocket.a\

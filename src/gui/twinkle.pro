@@ -91,7 +91,9 @@ IMAGES	= images/filenew \
 	images/dtmf-a.png \
 	images/dtmf-b.png \
 	images/dtmf-c.png \
-	images/dtmf-d.png
+	images/dtmf-d.png \
+	images/twinkle24.png \
+	images/exit.png
 
 unix {
   UI_DIR = .ui

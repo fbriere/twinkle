@@ -21,9 +21,7 @@
 #include <cstdio>
 #include <ctime>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/soundcard.h>
 #include "audio_tx.h"
 #include "log.h"
 #include "userintf.h"
@@ -60,11 +58,11 @@ short t_audio_tx::decode(unsigned char sample) {
 //////////
 
 t_audio_tx::t_audio_tx(t_audio_session *_audio_session,
-		   int _fd, SymmetricRTPSession *_rtp_session,
+		   t_audio_io *_playback_device, t_twinkle_rtp_session *_rtp_session,
 	           t_audio_codec _codec, unsigned short _ptime)
 {
 	audio_session = _audio_session;
-	fd = _fd;
+	playback_device = _playback_device;
 	rtp_session = _rtp_session;
 	codec = _codec;
 	is_running = false;
@@ -107,11 +105,8 @@ t_audio_tx::t_audio_tx(t_audio_session *_audio_session,
 	MEMMAN_NEW_ARRAY(jitter_buf);
 	jitter_buf_len = 0;
 	load_jitter_buf = true;
-
-	audio_buf_info dsp_info;
-	ioctl(fd, SNDCTL_DSP_GETOSPACE, &dsp_info);
-	soundcard_buf_size = dsp_info.bytes;
-
+	soundcard_buf_size = playback_device->get_buffer_size(false);
+	
 	// Create GSM decoder
 	gsm_decoder = gsm_create();
 
@@ -207,7 +202,7 @@ void t_audio_tx::clear_conceal_buf(void) {
 
 void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_party) {
 	int status;
-	audio_buf_info dsp_info;
+	struct timeval debug_timer;
 
 	unsigned char *playbuf = buf;
 
@@ -215,8 +210,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// if there is still enough sound in the buffer of the DSP to be
 	// played. If not, then play out the sound from the 3rd party only.
 	if (only_3rd_party) {
-		ioctl(fd, SNDCTL_DSP_GETOSPACE, &dsp_info);
-		if (dsp_info.bytes < soundcard_buf_size - len) {
+		if (playback_device->get_buffer_space(false) < soundcard_buf_size - len) {
 			// There is still sound in the DSP buffers to be
 			// played, so let's wait. Maybe in the next cycle
 			// an RTP packet from the far-end will be received.
@@ -264,7 +258,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 			// Write the contents of the jitter buffer to the DSP.
 			// The buffers in the DSP will now function as jitter
 			// buffer.
-			status = write(fd, jitter_buf, jitter_buf_len);
+			status = playback_device->write(jitter_buf, jitter_buf_len);
 			if (status != jitter_buf_len) {
 				string msg("Writing to dsp failed: ");
 				msg += strerror(errno);
@@ -273,7 +267,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 			}
 
 			// Write passed sound samples to DSP.
-			status = write(fd, playbuf, len);
+			status = playback_device->write(playbuf, len);
 			if (status != len) {
 				string msg("Writing to dsp failed: ");
 				msg += strerror(errno);
@@ -290,8 +284,8 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// If buffer on soundcard is empty, then the jitter buffer needs
 	// to be refilled. This should only occur when no RTP packets
 	// have been received for a while (silence suppression or packet loss)
-	ioctl(fd, SNDCTL_DSP_GETOSPACE, &dsp_info);
-	if (dsp_info.bytes == soundcard_buf_size && len <= JITTER_BUF_SIZE) {
+	int bufferspace = playback_device->get_buffer_space(false);
+	if (bufferspace == soundcard_buf_size && len <= JITTER_BUF_SIZE) {
 		memcpy(jitter_buf, playbuf, len);
 		jitter_buf_len = len;
 		load_jitter_buf = true;
@@ -309,19 +303,19 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// This can only happen if the thread did not get
 	// processing time for a while and RTP packets start to
 	// pile up.
-	if (soundcard_buf_size - dsp_info.bytes > JITTER_BUF_SIZE + len) {
+	if (soundcard_buf_size - bufferspace > JITTER_BUF_SIZE + len) {
 		log_file->write_header("t_audio_tx::play_pcm", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("Audio tx line ");
 		log_file->write_raw(get_line()->get_line_number()+1);
 		log_file->write_raw(": jitter buffer overflow: ");
-		log_file->write_raw(dsp_info.bytes);
+		log_file->write_raw(bufferspace);
 		log_file->write_raw(" bytes.\n");
 		log_file->write_footer();
 		return;
 	}
 
 	// Write passed sound samples to DSP.
-	status = write(fd, playbuf, len);
+	status = playback_device->write(playbuf, len);
 	if (status != len) {
 		string msg("Writing to dsp failed: ");
 		msg += strerror(errno);
@@ -340,6 +334,7 @@ void t_audio_tx::run(void) {
 	is_running = true;
 
 	unsigned long rtp_timestamp;
+	
 	while (true) {
 		do {
 			adu = NULL;
@@ -389,7 +384,7 @@ void t_audio_tx::run(void) {
 				nanosleep(&sleeptimer, NULL);
 			}
 		} while (adu == NULL || (adu->getSize() <= 0));
-
+		
 		if (stop_running) {
 			if (adu) delete adu;
 			break;
@@ -578,9 +573,10 @@ void t_audio_tx::run(void) {
 			assert(false);
 		}
 
-		if (adu->getSeqNum() != last_seqnum + 1 && last_seqnum != -1) {
+		if (adu->getSeqNum() != (last_seqnum + 1) % 65536 && last_seqnum != -1) {
 			// Packets have been lost
 			int num_lost = adu->getSeqNum() - last_seqnum - 1;
+			if (num_lost < 0) num_lost += 65536; // seqnum wrapped around
 
 			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
@@ -607,6 +603,39 @@ void t_audio_tx::run(void) {
 		case CODEC_GSM:
 			sample_size = 320; // 160 2-byte samples
 			break;
+		}
+		
+		// Discard packet if we are lacking behind. This happens if the
+		// soundcard plays at a rate less than the requested sample rate.
+		if (rtp_session->isWaiting()) {
+			uint32 last_ts = rtp_session->getLastTimestamp();
+			uint32 diff;
+			
+			if (last_ts >= rtp_timestamp) {
+				diff = last_ts - rtp_timestamp;
+			} else {
+				// Timestamp wrapped around
+				diff = last_ts - rtp_timestamp + 2^64;
+			}
+			
+			if (diff > (JITTER_BUF_SIZE / AUDIO_SAMPLE_SIZE) * 8)
+			{
+				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
+				log_file->write_raw("Audio tx line ");
+				log_file->write_raw(get_line()->get_line_number()+1);
+				log_file->write_raw(": discard delayed packet.\n");
+				log_file->write_raw("Timestamp: ");
+				log_file->write_raw(rtp_timestamp);
+				log_file->write_raw(", Last timestamp: ");
+				log_file->write_raw((long unsigned int)last_ts);
+				log_file->write_endl();
+				log_file->write_footer();
+					
+				last_seqnum = adu->getSeqNum();
+				MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
+				delete adu;
+				continue;
+			}
 		}
 
 		play_pcm(sample_buf, sample_size);

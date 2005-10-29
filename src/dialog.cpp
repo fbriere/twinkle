@@ -330,7 +330,6 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	local_resp_nr = NEW_SEQNR;
 
 	remote_tag = r->hdr_from.tag;
-	remote_seqnr = r->hdr_cseq.seqnr;
 	local_uri = r->hdr_to.uri;
 	local_display = r->hdr_to.display;
 	remote_uri = r->hdr_from.uri;
@@ -1293,6 +1292,12 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	switch (r->get_class()) {
 	case R_1XX:
 		if (r->code == R_100_TRYING) break;
+		
+		// RFC 3262 4
+		// Discard retransmissiona and out-of-sequence reliable
+		// provisional responses.
+		if (must_discard_100rel(r)) return;
+
 		// fall thru
 	case R_2XX:
 		// Set remote tag
@@ -1327,7 +1332,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		}
 
 		// User indicated that the request should be cancelled.
-		// Now that the first provional response has been received,
+		// Now that the first provisional response has been received,
 		// a CANCEL can be sent.
 		if (request_cancelled) {
 			send_cancel(true);
@@ -1565,6 +1570,11 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	case R_1XX:
 		if (r->code == R_100_TRYING) break;
 
+		// RFC 3262 4
+		// Discard retransmissiona and out-of-sequence reliable
+		// provisional responses.
+		if (must_discard_100rel(r)) return;
+
 		if (state == DS_W4RE_INVITE_RESP2) {
 			// RFC 3262
 			// Discard retransmissions and out-of-order
@@ -1756,10 +1766,16 @@ void t_dialog::activate_new_session(void) {
 }
 
 void t_dialog::create_route_set(t_response *r) {
-	if (route_set.empty() && r->hdr_record_route.is_populated())
+	// Originally the check was this:
+	// if (route_set.empty() && r->hdr_record_route.is_populated())
+	// This prevented the route set from being altered between a 18X response
+	// and a 2XX response. This is allowed per RFC 3261 13.2.2.4
+	if (r->hdr_record_route.is_populated())
 	{
 		route_set = r->hdr_record_route.route_list;
 		route_set.reverse();
+	} else {
+		route_set.clear();
 	}
 }
 
@@ -1892,7 +1908,7 @@ void t_dialog::send_prack_if_required(t_response *r) {
 	}
 }
 
-bool t_dialog::must_discard_100rel(t_response *r) const {
+bool t_dialog::must_discard_100rel(t_response *r) {
 	// RFC 3262 4
 	// Discard retransmissiona and out-of-sequence reliable
 	// provisional responses.
@@ -1901,6 +1917,13 @@ bool t_dialog::must_discard_100rel(t_response *r) const {
 	    r->hdr_rseq.is_populated() &&
 	    user_config->ext_100rel != EXT_DISABLED)
 	{
+		if (remote_resp_nr == 0) {
+			// This is the first response with a repsonse nr.
+			// Initialize the remote response nr
+			remote_resp_nr = r->hdr_rseq.resp_nr;
+			return false;
+		}
+	
 		if (r->hdr_rseq.resp_nr <= remote_resp_nr) {
 			// This is a retransmission.
 			// PRACK has already been sent. The transaction
@@ -1921,6 +1944,7 @@ bool t_dialog::must_discard_100rel(t_response *r) const {
 		}
 	}
 
+	remote_resp_nr = r->hdr_rseq.resp_nr;
 	return false;
 }
 
@@ -2008,6 +2032,8 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 
 	local_seqnr = 0;
 	remote_seqnr = 0;
+	remote_seqnr_set = false;
+	
 	local_resp_nr = 0;
 	remote_resp_nr = 0;
 
@@ -2898,10 +2924,13 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		}
 		break;
 	case INVITE:
-		if (r->hdr_cseq.seqnr <= remote_seqnr) {
+		if (remote_seqnr_set && r->hdr_cseq.seqnr <= remote_seqnr) {
 			// Request received out of sequence. Discard.
 			return;
 		}
+		
+		remote_seqnr = r->hdr_cseq.seqnr;
+		remote_seqnr_set = true;
 
 		if (req_in_invite) {
 			// RFC 3261 14.2
@@ -2932,10 +2961,13 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		// fall thru
 	default:
 		// Check cseq
-		if (r->hdr_cseq.seqnr <= remote_seqnr) {
+		if (remote_seqnr_set && r->hdr_cseq.seqnr <= remote_seqnr) {
 			// Request received out of sequence. Discard.
 			return;
 		}
+		
+		remote_seqnr = r->hdr_cseq.seqnr;
+		remote_seqnr_set = true;
 	}
 
 	switch (state) {
