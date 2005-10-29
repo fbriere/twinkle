@@ -1,3 +1,10 @@
+twinkle (0.3.2-3) unstable; urgency=low
+
+  * Use DEB_AUTO_UPDATE_AUTOCONF to rebuild configure from patched
+    configure.in. Ugly..
+
+ -- Mark Purcell <msp@debian.org>  Sat, 29 Oct 2005 22:54:12 +0100
+
 twinkle (0.3.2-2) unstable; urgency=low
 
   * Add Build-Depends: cdbs
