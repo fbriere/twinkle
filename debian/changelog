@@ -1,3 +1,9 @@
+twinkle (0.3.2-2) unstable; urgency=low
+
+  * Add Build-Depends: cdbs
+
+ -- Mark Purcell <msp@debian.org>  Sat, 29 Oct 2005 17:45:43 +0100
+
 twinkle (0.3.2-1) unstable; urgency=low
 
   * New upstream release
