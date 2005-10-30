@@ -1,3 +1,11 @@
+twinkle (0.3.2-4) unstable; urgency=low
+
+  * Add Build-Depends: kdelibs4-dev kdelibs-bin, libasounds2-dev, libxml2-dev
+    - fix ppc build (Closes: #325057)
+  * Remove ppc-build patch, obsolete by upstream v 0.3
+
+ -- Mark Purcell <msp@debian.org>  Sun, 30 Oct 2005 07:56:45 +0000
+
 twinkle (0.3.2-3) unstable; urgency=low
 
   * Use DEB_AUTO_UPDATE_AUTOCONF to rebuild configure from patched
