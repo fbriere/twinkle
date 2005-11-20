@@ -148,6 +148,9 @@ public:
 	           t_audio_codec _codec, unsigned short _ptime = 0);
 
 	~t_audio_tx();
+	
+	// Set the is running flag
+	void set_running(bool running);
 
 	void run(void);
 	

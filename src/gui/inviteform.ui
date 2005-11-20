@@ -8,20 +8,20 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>424</width>
-            <height>122</height>
+            <width>531</width>
+            <height>130</height>
         </rect>
     </property>
     <property name="sizePolicy">
         <sizepolicy>
             <hsizetype>5</hsizetype>
-            <vsizetype>0</vsizetype>
+            <vsizetype>5</vsizetype>
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
         </sizepolicy>
     </property>
     <property name="caption">
-        <string>Twinkle - Invite</string>
+        <string>Twinkle - Call</string>
     </property>
     <vbox>
         <property name="name">
@@ -29,37 +29,30 @@
         </property>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout19</cstring>
+                <cstring>layout11</cstring>
             </property>
             <grid>
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <widget class="QLabel" row="0" column="0">
+                <widget class="QComboBox" row="0" column="1">
                     <property name="name">
-                        <cstring>inviteTextLabel</cstring>
+                        <cstring>inviteComboBox</cstring>
                     </property>
-                    <property name="text">
-                        <string>&amp;To:</string>
+                    <property name="editable">
+                        <bool>true</bool>
                     </property>
-                    <property name="buddy" stdset="0">
-                        <cstring>inviteLineEdit</cstring>
+                    <property name="maxCount">
+                        <number>10</number>
                     </property>
-                </widget>
-                <widget class="QLineEdit" row="1" column="1">
-                    <property name="name">
-                        <cstring>subjectLineEdit</cstring>
+                    <property name="insertionPolicy">
+                        <enum>NoInsertion</enum>
+                    </property>
+                    <property name="autoCompletion">
+                        <bool>true</bool>
                     </property>
                     <property name="whatsThis" stdset="0">
-                        <string>Optionally you can provide a subject here. This might be shown to the callee.</string>
-                    </property>
-                </widget>
-                <widget class="QLineEdit" row="0" column="1">
-                    <property name="name">
-                        <cstring>inviteLineEdit</cstring>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>The address of the person you want to call. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</string>
+                        <string>The address that you want to call. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</string>
                     </property>
                 </widget>
                 <widget class="QLabel" row="1" column="0">
@@ -71,6 +64,59 @@
                     </property>
                     <property name="buddy" stdset="0">
                         <cstring>subjectLineEdit</cstring>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="1" column="1">
+                    <property name="name">
+                        <cstring>subjectLineEdit</cstring>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Optionally you can provide a subject here. This might be shown to the callee.</string>
+                    </property>
+                </widget>
+                <spacer row="1" column="2">
+                    <property name="name">
+                        <cstring>spacer3</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Vertical</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>20</width>
+                            <height>23</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QLabel" row="0" column="0">
+                    <property name="name">
+                        <cstring>inviteTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;To:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>inviteComboBox</cstring>
+                    </property>
+                </widget>
+                <widget class="QToolButton" row="0" column="2">
+                    <property name="name">
+                        <cstring>addressToolButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string></string>
+                    </property>
+                    <property name="iconSet">
+                        <iconset>kontact_contacts.png</iconset>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Address book</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select an address from the address book.</string>
                     </property>
                 </widget>
             </grid>
@@ -88,7 +134,7 @@
             <property name="sizeHint">
                 <size>
                     <width>20</width>
-                    <height>21</height>
+                    <height>16</height>
                 </size>
             </property>
         </spacer>
@@ -153,27 +199,47 @@
         <receiver>InviteForm</receiver>
         <slot>validate()</slot>
     </connection>
+    <connection>
+        <sender>addressToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>InviteForm</receiver>
+        <slot>showAddressBook()</slot>
+    </connection>
 </connections>
 <tabstops>
-    <tabstop>inviteLineEdit</tabstop>
+    <tabstop>inviteComboBox</tabstop>
     <tabstop>subjectLineEdit</tabstop>
     <tabstop>okPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">util.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in declaration">qstring.h</include>
     <include location="local" impldecl="in declaration">sockets/url.h</include>
+    <include location="local" impldecl="in declaration">getaddressform.h</include>
     <include location="local" impldecl="in implementation">inviteform.ui.h</include>
 </includes>
+<variables>
+    <variable access="private">GetAddressForm *getAddressForm;</variable>
+</variables>
 <signals>
-    <signal>destination(const t_url &amp;, const QString &amp;)</signal>
+    <signal>destination(const QString &amp;, const t_url &amp;, const QString &amp;)</signal>
 </signals>
 <slots>
+    <slot>clear()</slot>
+    <slot>show( const QString &amp; dest )</slot>
     <slot>validate()</slot>
     <slot>cancel()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>
+    <slot>showAddressBook()</slot>
+    <slot>selectedAddress( const QString &amp; address )</slot>
 </slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
+</functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

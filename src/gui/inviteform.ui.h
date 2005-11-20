@@ -25,16 +25,62 @@
 */
 
 
+#define SIZE_REDIAL_LIST 10
+
+void InviteForm::init()
+{
+	getAddressForm = 0;
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = addressToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	addressToolButton->setIconSet(i);
+	
+#ifndef HAVE_KDE
+	addressToolButton->setEnabled(false);
+#endif
+}
+
+void InviteForm::destroy()
+{
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
+}
+
+void InviteForm::clear()
+{
+	inviteComboBox->clearEdit();
+	subjectLineEdit->clear();
+	inviteComboBox->setFocus();
+}
+
+void InviteForm::show(const QString &dest)
+{
+	inviteComboBox->setEditText(dest);
+	QDialog::show();
+}
+
 void InviteForm::validate()
 {
-	t_url dest;
-	dest.set_url(ui->expand_destination(inviteLineEdit->text().ascii()));
+	string display, dest_str;
+	ui->expand_destination(inviteComboBox->currentText().stripWhiteSpace().ascii(), 
+			       display, dest_str);
+	t_url dest(dest_str);
 	
 	if (dest.is_valid()) {
-		emit destination(dest, subjectLineEdit->text());
+		inviteComboBox->insertItem(inviteComboBox->currentText(), 0);
+		if (inviteComboBox->count() > SIZE_REDIAL_LIST) {
+			inviteComboBox->removeItem(inviteComboBox->count() - 1);
+		}
+		emit destination(display.c_str(), dest, subjectLineEdit->text());
 		accept();
 	} else {
-		inviteLineEdit->selectAll();
+		inviteComboBox->setFocus();
+		inviteComboBox->lineEdit()->selectAll();
 	}
 }
 
@@ -49,4 +95,24 @@ void InviteForm::cancel()
 void InviteForm::closeEvent(QCloseEvent *)
 {
 	cancel();
+}
+
+void InviteForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void InviteForm::selectedAddress(const QString &address)
+{
+	inviteComboBox->setEditText(address);
 }

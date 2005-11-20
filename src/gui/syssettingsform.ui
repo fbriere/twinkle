@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>727</width>
-            <height>331</height>
+            <height>386</height>
         </rect>
     </property>
     <property name="caption">
@@ -19,64 +19,6 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout38</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer98</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>321</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
-                    </property>
-                </widget>
-            </hbox>
-        </widget>
         <widget class="QListBox" row="0" column="0">
             <item>
                 <property name="text">
@@ -520,7 +462,7 @@
                             <cstring>systrayGroupBox</cstring>
                         </property>
                         <property name="title">
-                            <string>System Tray</string>
+                            <string>System tray</string>
                         </property>
                         <vbox>
                             <property name="name">
@@ -556,6 +498,139 @@
                             </widget>
                         </vbox>
                     </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>startupGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Startup</string>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>startHiddenCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>S&amp;tartup hidden in system tray</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+T</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Next time you start Twinkle it will immediately hide in the system tray. This works best when you also select a default user profile.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>startProfileTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Default &amp;user profile:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>profileComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="2" column="0">
+                                <property name="name">
+                                    <cstring>userHostLextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Default &amp;IP address:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>userHostComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QComboBox" row="1" column="1">
+                                <property name="name">
+                                    <cstring>profileComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Next time you start Twinkle, this user profile will be automatically selected.</string>
+                                </property>
+                            </widget>
+                            <widget class="QComboBox" row="2" column="1">
+                                <property name="name">
+                                    <cstring>userHostComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple IP addresses.</string>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout23</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>histSizeTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Maximum calls in call history:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>histSizeSpinBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox">
+                                <property name="name">
+                                    <cstring>histSizeSpinBox</cstring>
+                                </property>
+                                <property name="maxValue">
+                                    <number>1000</number>
+                                </property>
+                                <property name="lineStep">
+                                    <number>10</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The maximum number of calls that will be kept in the call history.</string>
+                                </property>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer73</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>191</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
                     <spacer>
                         <property name="name">
                             <cstring>spacer8</cstring>
@@ -569,12 +644,70 @@
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>111</height>
+                                <height>20</height>
                             </size>
                         </property>
                     </spacer>
                 </vbox>
             </widget>
+        </widget>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout38</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer98</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>321</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
         </widget>
     </grid>
 </widget>
@@ -609,11 +742,21 @@
         <receiver>guiHideCheckBox</receiver>
         <slot>setChecked(bool)</slot>
     </connection>
+    <connection>
+        <sender>guiUseSystrayCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>startHiddenCheckBox</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
     <tabstop>guiUseSystrayCheckBox</tabstop>
     <tabstop>guiHideCheckBox</tabstop>
+    <tabstop>startHiddenCheckBox</tabstop>
+    <tabstop>profileComboBox</tabstop>
+    <tabstop>userHostComboBox</tabstop>
+    <tabstop>histSizeSpinBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
     <tabstop>micComboBox</tabstop>
@@ -630,6 +773,10 @@
     <include location="local" impldecl="in implementation">qlistbox.h</include>
     <include location="local" impldecl="in implementation">qcombobox.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">sockets/interfaces.h</include>
+    <include location="local" impldecl="in implementation">selectprofileform.h</include>
+    <include location="local" impldecl="in implementation">qstringlist.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>

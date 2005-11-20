@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <iostream>
 #include <signal.h>
+#include "call_history.h"
 #include "exceptions.h"
 #include "phone.h"
 #include "line.h"
@@ -64,7 +65,7 @@ void t_phone::reject(void) {
 	lines[active_line]->reject();
 }
 
-void t_phone::redirect(const list<t_url> &destinations, int code, string reason)
+void t_phone::redirect(const list<t_display_url> &destinations, int code, string reason)
 {
 	// Ignore if active line is idle
 	if (lines[active_line]->get_state() == LS_IDLE) return;
@@ -896,6 +897,7 @@ void t_phone::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
+	t_call_record call_record;
 
 	// Check if this INVITE is a retransmission.
 	// Once the TU sent a 2XX repsonse on an INVITE it has to deal
@@ -914,6 +916,12 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		resp = r->create_response(R_420_BAD_EXTENSION);
 		resp->hdr_unsupported.set_features(unsupported);
 		send_response(resp, 0, tid);
+		
+		// Do not create a call history record here. The far-end
+		// should retry the call without the extension, so this
+		// is not a missed call from the user point of view.
+		// Not that this INVITE can also be a re-INVITE.
+				
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -923,13 +931,20 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	// An INVITE with a To-header without a tag is an inital
 	// INVITE
 	if (r->hdr_to.tag == "") {
-		list<t_url> cf_dest; // call forwarding destinations
+		list<t_display_url> cf_dest; // call forwarding destinations
 
 		// Call forwarding always
 		if (service.get_cf_active(CF_ALWAYS, cf_dest)) {
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+		
 			MEMMAN_DELETE(resp);
 			delete resp;
 			return;
@@ -940,6 +955,13 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		if (service.is_dnd_active()) {
 			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
 			send_response(resp, 0, tid);
+
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
 			MEMMAN_DELETE(resp);
 			delete resp;
 			return;
@@ -971,6 +993,13 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
 			MEMMAN_DELETE(resp);
 			delete resp;
 		}
@@ -978,6 +1007,13 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Send busy response
 		resp = r->create_response(R_486_BUSY_HERE);
 		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+			
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -1511,7 +1547,7 @@ void t_phone::pub_reject(void) {
 	unlock();
 }
 
-void t_phone::pub_redirect(const list<t_url> &destinations, int code, string reason)
+void t_phone::pub_redirect(const list<t_display_url> &destinations, int code, string reason)
 {
 	lock();
 	redirect(destinations, code, reason);
@@ -1594,10 +1630,14 @@ void t_phone::pub_send_dtmf(char digit) {
 	unlock();
 }
 
-void t_phone::pub_seize(void) {
+bool t_phone::pub_seize(void) {
+	bool retval;
+	
 	lock();
-	lines[active_line]->seize();
+	retval = lines[active_line]->seize();
 	unlock();
+	
+	return retval;
 }
 
 void t_phone::pub_unseize(void) {

@@ -23,6 +23,7 @@ twinkle_LDADD = libtwinkle.a\
 
 libtwinkle_a_SOURCES =\
         auth.cpp\
+        call_history.cpp\
         dialog.cpp\
         events.cpp\
         line.cpp\
@@ -44,6 +45,7 @@ libtwinkle_a_SOURCES =\
         userintf.cpp\
         util.cpp\
         auth.h\
+        call_history.h\
         dialog.h\
         events.h\
 	exceptions.h\

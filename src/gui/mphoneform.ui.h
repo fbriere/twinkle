@@ -29,6 +29,9 @@
 #ifdef HAVE_KDE
 #include <ksystemtray.h>
 #include <kpopupmenu.h>
+
+#define KSYSTRAY ((KSystemTray *)sysTray)
+
 #endif
 
 void MphoneForm::init()
@@ -42,6 +45,7 @@ void MphoneForm::init()
 	userProfileForm = 0;
 	sysSettingsForm = 0;
 	logViewForm = 0;
+	historyForm = 0;
 	sysTray = 0;
 	
 	// Set toolbar icons for disabled options.
@@ -119,16 +123,47 @@ void MphoneForm::init()
 		// Create system tray icon
 		sysTray = new KSystemTray(this, "twinkle_sys_tray");
 		MEMMAN_NEW(sysTray);
-		((KSystemTray *)sysTray)->setPixmap(
+		KSYSTRAY->setPixmap(
 				QPixmap::fromMimeSource("twinkle24.png"));
-		((KSystemTray *)sysTray)->setCaption(PRODUCT_NAME);
+		KSYSTRAY->setCaption(PRODUCT_NAME);
 		QToolTip::add(sysTray, PRODUCT_NAME);
 		
+		// Add items to the system tray menu
+		// Call menu
+		KPopupMenu *menu = KSYSTRAY->contextMenu();
+		idTrayCall = menu->insertItem(callInvite->iconSet(),
+			"&Call",  this, SLOT(phoneInvite()));
+		idTrayAnswer = menu->insertItem(callAnswer->iconSet(),
+			"&Answer",  this, SLOT(phoneAnswer()));
+		idTrayBye = menu->insertItem(callBye->iconSet(),
+			"&Bye",  this, SLOT(phoneBye()));
+		idTrayReject = menu->insertItem(callReject->iconSet(),
+			"Re&ject",  this, SLOT(phoneReject()));
+		idTrayRedirect = menu->insertItem(callRedirect->iconSet(),
+			"R&edirect call",  this, SLOT(phoneRedirect()));
+		idTrayTransfer = menu->insertItem(callTransfer->iconSet(),
+			"&Xfer",  this, SLOT(phoneTransfer()));
+		idTrayHold = menu->insertItem(callHold->iconSet(),
+			"&Hold",  callHold, SLOT(toggle()));
+		idTrayMute = menu->insertItem(callMute->iconSet(),
+			"M&ute",  callMute, SLOT(toggle()));
+		idTrayDtmf = menu->insertItem(callDTMF->iconSet(),
+			"D&tmf",  this, SLOT(phoneDTMF()));
+		idTrayRedial = menu->insertItem(callRedial->iconSet(),
+			"Redia&l",  this, SLOT(phoneRedial()));
+		menu->insertSeparator();
+		idTrayDnd = menu->insertItem(
+			"&Do not disturb", serviceDnd, SLOT(toggle()));
+		idTraySrvRedirect = menu->insertItem(
+			"Red&irect service", this, SLOT(srvRedirect()));
+		idTrayAutoAnswer = menu->insertItem(
+			"Auto ans&wer", serviceAutoAnswer, SLOT(toggle()));
+		
 		// Exit application when user selects Quit from the tray menu
-		connect((KSystemTray *)sysTray, SIGNAL(quitSelected()),
+		connect(KSYSTRAY, SIGNAL(quitSelected()),
 			this, SLOT(fileExit()));
 		
-		((KSystemTray *)sysTray)->show();
+		KSYSTRAY->show();
 #endif
 	}
 }
@@ -171,6 +206,11 @@ void MphoneForm::destroy()
 		if (logViewForm->isShown()) logViewForm->close();
 		MEMMAN_DELETE(logViewForm);
 		delete logViewForm;
+	}
+	if (historyForm) {
+		if (historyForm->isShown()) historyForm->close();
+		MEMMAN_DELETE(historyForm);
+		delete historyForm;
 	}
 	if (sysTray) {
 		MEMMAN_DELETE(sysTray);
@@ -441,12 +481,29 @@ void MphoneForm::updateState()
 	if (callRedial->isEnabled() && 
 	    ui->get_last_call_info(last_url, last_display, last_subject))
 	{
-		QString s = "Invite ";
+		QString s = "Call ";
 		s.append(ui->format_sip_address(last_display, last_url).c_str());
 		callRedial->setToolTip(s);
 	} else {
 		callRedial->setToolTip("Repeat last call invitation");
 	}
+	
+	// Enable/disable system tray menu items
+#ifdef HAVE_KDE
+	KPopupMenu *menu = KSYSTRAY->contextMenu();
+	menu->setItemEnabled(idTrayCall, callInvite->isEnabled());
+	menu->setItemEnabled(idTrayAnswer, callAnswer->isEnabled());
+	menu->setItemEnabled(idTrayBye, callBye->isEnabled());
+	menu->setItemEnabled(idTrayReject, callReject->isEnabled());
+	menu->setItemEnabled(idTrayRedirect, callRedirect->isEnabled());
+	menu->setItemEnabled(idTrayTransfer, callTransfer->isEnabled());
+	menu->setItemEnabled(idTrayHold, callHold->isEnabled());
+	menu->setItemChecked(idTrayHold, callHold->isOn());
+	menu->setItemEnabled(idTrayMute, callMute->isEnabled());
+	menu->setItemChecked(idTrayMute, callMute->isOn());
+	menu->setItemEnabled(idTrayDtmf, callDTMF->isEnabled());
+	menu->setItemEnabled(idTrayRedial, callRedial->isEnabled());
+#endif
 }
 
 // Update registration status
@@ -467,6 +524,13 @@ void MphoneForm::updateServicesStatus()
 	dndTextLabel->setEnabled(phone->service.is_dnd_active());
 	redirectionTextLabel->setEnabled(phone->service.is_cf_active());
 	autoAnswerTextLabel->setEnabled(phone->service.is_auto_answer_active());
+	
+#ifdef HAVE_KDE
+	KPopupMenu *menu = KSYSTRAY->contextMenu();
+	menu->setItemChecked(idTrayDnd, phone->service.is_dnd_active());
+	menu->setItemChecked(idTraySrvRedirect, phone->service.is_cf_active());
+	menu->setItemChecked(idTrayAutoAnswer, phone->service.is_auto_answer_active());
+#endif
 }
 
 void MphoneForm::phoneRegister()
@@ -503,30 +567,38 @@ void MphoneForm::phoneShowRegistrations()
 
 
 // Show the semi-modal invite window
-void MphoneForm::phoneInvite()
+void MphoneForm::phoneInvite(const QString &dest)
 {
 	// Seize the line, so no incoming call can take the line
-	((t_gui *)ui)->action_seize();
+	if (!((t_gui *)ui)->action_seize()) return;
 	
 	if (inviteForm) {
-		MEMMAN_DELETE(inviteForm);
-		delete inviteForm;
+		inviteForm->clear();
+	} else {
+		inviteForm = new InviteForm(this, "invite", true);
+		MEMMAN_NEW(inviteForm);
 	}
 	
-	inviteForm = new InviteForm(this, "invite", true);
-	MEMMAN_NEW(inviteForm);
-	connect(inviteForm, SIGNAL(destination(const t_url &, const QString &)),
-		this, SLOT(do_phoneInvite(const t_url &, const QString &)));
+	connect(inviteForm, 
+		SIGNAL(destination(const QString &, const t_url &, const QString &)),
+		this, 
+		SLOT(do_phoneInvite(const QString &, const t_url &, const QString &)));
 	
-	inviteForm->show();
+	inviteForm->show(dest);
 	updateState();
+}
+
+void MphoneForm::phoneInvite()
+{
+	phoneInvite("");
 }
 
 // Execute the invite action. This slot is connected to the destination
 // signal of the invite window.
-void MphoneForm::do_phoneInvite(const t_url &destination, const QString &subject)
+void MphoneForm::do_phoneInvite(const QString &display, 
+			const t_url &destination, const QString &subject)
 {
-	((t_gui *)ui)->action_invite(destination, "", subject.ascii());
+	((t_gui *)ui)->action_invite(destination, display.ascii(), subject.ascii());
 	updateState();
 }
 
@@ -572,14 +644,14 @@ void MphoneForm::phoneRedirect()
 	
 	redirectForm = new RedirectForm(this, "redirect", true);
 	MEMMAN_NEW(redirectForm);
-	connect(redirectForm, SIGNAL(destinations(const list<t_url> &)),
-		this, SLOT(do_phoneRedirect(const list<t_url> &)));
+	connect(redirectForm, SIGNAL(destinations(const list<t_display_url> &)),
+		this, SLOT(do_phoneRedirect(const list<t_display_url> &)));
 	
 	redirectForm->show();
 }
 
 // Execute the redirect action.
-void MphoneForm::do_phoneRedirect(const list<t_url> &destinations)
+void MphoneForm::do_phoneRedirect(const list<t_display_url> &destinations)
 {
 	((t_gui *)ui)->action_redirect(destinations);
 	updateState();
@@ -600,8 +672,8 @@ void MphoneForm::phoneTransfer()
 	
 	transferForm = new TransferForm(this, "transfer", true);
 	MEMMAN_NEW(transferForm);
-	connect(transferForm, SIGNAL(destination(const t_url &)),
-		this, SLOT(do_phoneTransfer(const t_url &)));
+	connect(transferForm, SIGNAL(destination(const t_display_url &)),
+		this, SLOT(do_phoneTransfer(const t_display_url &)));
 	
 	transferForm->show();
 	updateState();
@@ -609,9 +681,9 @@ void MphoneForm::phoneTransfer()
 
 // Execute the transfer action. This slot is connected to the destination
 // signal of the transfer window.
-void MphoneForm::do_phoneTransfer(const t_url &destination)
+void MphoneForm::do_phoneTransfer(const t_display_url &destination)
 {
-	((t_gui *)ui)->action_refer(destination, "");
+	((t_gui *)ui)->action_refer(destination.url, destination.display);
 	updateState();
 }
 
@@ -720,20 +792,21 @@ void MphoneForm::srvRedirect()
 		srvRedirectForm = new SrvRedirectForm(this, "call redirection", true);
 		MEMMAN_NEW(srvRedirectForm);
 		connect(srvRedirectForm, 
-			SIGNAL(destinations(const list<t_url> &,
-					    const list<t_url> &,
-					    const list<t_url> &)),
+			SIGNAL(destinations(const list<t_display_url> &,
+					    const list<t_display_url> &,
+					    const list<t_display_url> &)),
 			this, 
-			SLOT(do_srvRedirect(const list<t_url> &,
-					    const list<t_url> &,
-					    const list<t_url> &)));
+			SLOT(do_srvRedirect(const list<t_display_url> &,
+					    const list<t_display_url> &,
+					    const list<t_display_url> &)));
 	}
 	
 	srvRedirectForm->show();
 }
 
-void MphoneForm::do_srvRedirect(const list<t_url> &always, const list<t_url> &busy,
-				const list<t_url> &noanswer)
+void MphoneForm::do_srvRedirect(const list<t_display_url> &always, 
+				const list<t_display_url> &busy,
+				const list<t_display_url> &noanswer)
 {
 	// Redirection always
 	if (always.empty()) {
@@ -856,6 +929,25 @@ void MphoneForm::viewLog()
 void MphoneForm::updateLog(bool log_zapped)
 {
 	if (logViewForm) logViewForm->update(log_zapped);
+}
+
+void MphoneForm::viewHistory()
+{
+	if (!historyForm) {
+		historyForm = new HistoryForm(NULL);
+		MEMMAN_NEW(historyForm);
+	}
+	
+	connect(historyForm, 
+		SIGNAL(call(const QString &)), this,  
+		SLOT(phoneInvite(const QString &)));
+	
+	historyForm->show();
+}
+
+void MphoneForm::updateCallHistory()
+{
+	if (historyForm) historyForm->update();
 }
 
 QLabel *MphoneForm::getSysTray()

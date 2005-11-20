@@ -62,7 +62,7 @@ bool t_audio_session::open_dsp(void) {
 bool t_audio_session::open_dsp_full_duplex(void) {
 
 	// Open audio device
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, true, true, 1, SAMPLEFORMAT_S16_LE, AUDIO_SAMPLE_RATE, true);
+	speaker = t_audio_io::open(sys_config->dev_speaker, true, true, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -88,7 +88,7 @@ bool t_audio_session::open_dsp_full_duplex(void) {
 
 bool t_audio_session::open_dsp_speaker(void) {
 	
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, false, true, 1, SAMPLEFORMAT_S16_LE, AUDIO_SAMPLE_RATE, true);
+	speaker = t_audio_io::open(sys_config->dev_speaker, true, false, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -108,7 +108,7 @@ bool t_audio_session::open_dsp_mic(void) {
 	// first try to open the device in non-blocking mode.
 	// If the device is still open by another twinkle thread then that
 	// is a bug, but this way at least non deadlock is caused.
-	mic = t_audio_io::open(sys_config->dev_mic, false, true, true, 1, SAMPLEFORMAT_S16_LE, AUDIO_SAMPLE_RATE, true);
+	mic = t_audio_io::open(sys_config->dev_mic, false, true, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
 	if (!mic) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -147,6 +147,8 @@ t_audio_session::t_audio_session(t_session *_session,
 	audio_tx = NULL;
 	thr_audio_rx = NULL;
 	thr_audio_tx = NULL;
+	speaker = NULL;
+	mic = NULL;
 
 	codec = _codec;
 	ptime = _ptime;
@@ -211,8 +213,6 @@ t_audio_session::t_audio_session(t_session *_session,
 	}
 
 	// Open and initialize sound card
-	speaker = 0L;
-	mic = 0L;
 	t_audio_session *as_peer;
 	if (is_3way() && (as_peer = get_peer_3way())) {
 		speaker = as_peer->get_dsp_speaker();
@@ -382,11 +382,18 @@ void t_audio_session::run(void) {
 
 	if (audio_rx) {
 		try {
+			// Set the running flag now instead of at the start of
+			// t_audio_tx::run as due to race conditions the thread might
+			// get destroyed before the run method starts running. The
+			// destructor still has to wait on the thread to finish.
+			audio_rx->set_running(true);
+			
 			thr_audio_rx = new t_thread(main_audio_rx, NULL);
 			MEMMAN_NEW(thr_audio_rx);
 			// thr_audio_rx->set_sched_fifo(90);
 			thr_audio_rx->detach();
 		} catch (int) {
+			audio_rx->set_running(false);
 			string msg("Failed to create audio_rx thread.");
 			log_file->write_report(msg, "t_audio_session::run",
 				LOG_NORMAL, LOG_CRITICAL);
@@ -398,11 +405,15 @@ void t_audio_session::run(void) {
 
 	if (audio_tx) {
 		try {
+			// See comment above for audio_rx
+			audio_tx->set_running(true);
+			
 			thr_audio_tx = new t_thread(main_audio_tx, NULL);
 			MEMMAN_NEW(thr_audio_tx);
 			// thr_audio_tx->set_sched_fifo(90);
 			thr_audio_tx->detach();
 		} catch (int) {
+			audio_tx->set_running(false);
 			string msg("Failed to create audio_tx thread.");
 			log_file->write_report(msg, "t_audio_session::run",
 				LOG_NORMAL, LOG_CRITICAL);

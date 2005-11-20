@@ -92,6 +92,19 @@ void t_hdr_contact::set_contacts(const list<t_url> &l) {
 	}
 }
 
+void t_hdr_contact::set_contacts(const list<t_display_url> &l) {
+	t_contact_param c;
+
+	populated = true;
+
+	contact_list.clear();
+	for (list<t_display_url>::const_iterator i = l.begin(); i != l.end(); i++) {
+		c.uri = i->url;
+		c.display = i->display;
+		contact_list.push_back(c);
+	}
+}
+
 void t_hdr_contact::set_any(void) {
 	populated = true;
 	any_flag = true;

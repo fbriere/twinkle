@@ -25,11 +25,36 @@
 */
 
 
+void TermCapForm::init()
+{
+	getAddressForm = 0;
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = addressToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	addressToolButton->setIconSet(i);
+	
+#ifndef HAVE_KDE
+	addressToolButton->setEnabled(false);
+#endif
+}
+
+void TermCapForm::destroy()
+{
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
+}
 
 void TermCapForm::validate()
 {
-	t_url dest;
-	dest.set_url(ui->expand_destination(partyLineEdit->text().ascii()));
+	string display, dest_str;
+	ui->expand_destination(partyLineEdit->text().stripWhiteSpace().ascii(), 
+			       display, dest_str);
+	t_url dest(dest_str);
 	
 	if (dest.is_valid()) {
 		emit destination(dest);
@@ -37,4 +62,24 @@ void TermCapForm::validate()
 	} else {
 		partyLineEdit->selectAll();
 	}
+}
+
+void TermCapForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void TermCapForm::selectedAddress(const QString &address)
+{
+	partyLineEdit->setText(address);
 }

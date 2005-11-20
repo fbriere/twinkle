@@ -1,3 +1,41 @@
+19 nov 2005 - Release 0.4.1
+===========================
+- Fixed build problems with gcc-4.0.2 and qt3-3.4.4
+
+18 nov 2005 - Release 0.4
+=========================
+- Interface to KAddressbook
+- History of incoming and outgoing calls (successful and missed calls)
+- History of 10 last calls on call dialog window for redialling
+- Call and service menu options added to KDE sys tray icon
+- Allow a missing mandatory Expires header in a 2XX response on SUBSCRIBE
+- Big Endian support for sound playing (eg. PPC platforms)
+- System setting to start Twinkle hidden in system tray
+- System setting to start with a default profile
+- System setting to start on a default IP address
+- Command line option (-i) for IP address
+
+Bug fixes
+---------
+- send a 500 failure response on a request that is received out of order
+  instead of discarding the request.
+- 64bit fix in events.cpp
+- race condition on starting/stopping audio threads could cause a crash
+- segmentation fault when RTP port could not be opened.
+- CLI looped forever on reaching EOF
+- 64bit fix in events.cpp
+- ALSA lib pcm_hw.c:590:(snd_pcm_hw_pause) SNDRV_PCM_IOCTL_PAUSE failed
+- sometimes when quitting Twinkle a segmentation fault occurred
+
+Build improvements
+------------------
+- Removed platform dependent code from stunRand() in stun.cxx
+- It should be possible to build Twinkle without the KDE addons on a
+  non-KDE system
+- new option --without-kde added to configure to build a non-KDE version
+  of Twinkle
+
+
 22 oct 2005 - Release 0.3.2
 ===========================
 - Fixed several build problams with KDE include files and

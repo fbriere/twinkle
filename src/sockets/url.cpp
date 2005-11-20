@@ -62,9 +62,12 @@ void t_url::construct_user_url(const string &s) {
 		if (i != string::npos) {
 			if (i == 0 || i == userpass.size()-1) return;
 			user = userpass.substr(0, i);
+			if (user.find(' ') != string::npos) return;
 			password = userpass.substr(i+1);
+			if (password.find(' ') != string::npos) return;
 		} else {
 			user = userpass;
+			if (user.find(' ') != string::npos) return;
 		}
 	} else {
 		r = s;
@@ -381,5 +384,31 @@ string t_url::encode_noscheme(void) const {
 		s = s.substr(i + 1);
 	}
 
+	return s;
+}
+
+t_display_url::t_display_url() {}
+
+t_display_url::t_display_url(const t_url &_url, const string &_display) :
+	url(_url), display(_display) {}
+	
+bool t_display_url::is_valid() {
+	return url.is_valid();
+}
+	
+string t_display_url::encode(void) const {
+	string s;
+	
+	if (!display.empty()) {
+		if (must_quote(display)) s += '"';
+		s += display;
+		if (must_quote(display)) s += '"';
+		s += " <";
+	}
+	
+	s += url.encode();
+	
+	if (!display.empty()) s += '>';
+	
 	return s;
 }

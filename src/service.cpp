@@ -40,7 +40,7 @@ t_service::t_service() {
 	auto_answer_active = false;
 }
 
-void t_service::enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest) {
+void t_service::enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest) {
 	lock();
 
 	switch (cf_type) {
@@ -86,7 +86,7 @@ void t_service::disable_cf(t_cf_type cf_type) {
 	unlock();
 }
 
-bool t_service::get_cf_active(t_cf_type cf_type, list<t_url> &dest) {
+bool t_service::get_cf_active(t_cf_type cf_type, list<t_display_url> &dest) {
 	bool active = false;
 
 	lock();
@@ -122,8 +122,8 @@ bool t_service::is_cf_active(void) {
 	return active;
 }
 
-list<t_url> t_service::get_cf_dest(t_cf_type cf_type) {
-	list<t_url> dest;
+list<t_display_url> t_service::get_cf_dest(t_cf_type cf_type) {
+	list<t_display_url> dest;
 
 	lock();
 

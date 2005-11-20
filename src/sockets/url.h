@@ -126,4 +126,18 @@ public:
 	string encode_noscheme(void) const;
 };
 
+// Display name and url combined
+
+class t_display_url {
+public:
+	t_url		url;
+	string		display;
+	
+	t_display_url();
+	t_display_url(const t_url &_url, const string &_display);
+	
+	bool is_valid();
+	string encode(void) const;
+};
+
 #endif

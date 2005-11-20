@@ -8,14 +8,14 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>552</width>
-            <height>188</height>
+            <width>588</width>
+            <height>189</height>
         </rect>
     </property>
     <property name="sizePolicy">
         <sizepolicy>
             <hsizetype>5</hsizetype>
-            <vsizetype>0</vsizetype>
+            <vsizetype>5</vsizetype>
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
         </sizepolicy>
@@ -34,78 +34,119 @@
             <property name="title">
                 <string>Redirect incoming call to</string>
             </property>
-            <hbox>
+            <grid>
                 <property name="name">
                     <cstring>unnamed</cstring>
                 </property>
-                <widget class="QLayoutWidget">
+                <widget class="QLineEdit" row="2" column="1">
                     <property name="name">
-                        <cstring>layout7</cstring>
+                        <cstring>contact3LineEdit</cstring>
                     </property>
-                    <grid>
-                        <property name="name">
-                            <cstring>unnamed</cstring>
-                        </property>
-                        <widget class="QLineEdit" row="2" column="1">
-                            <property name="name">
-                                <cstring>contact3LineEdit</cstring>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLabel" row="2" column="0">
-                            <property name="name">
-                                <cstring>contact3TextLabel</cstring>
-                            </property>
-                            <property name="text">
-                                <string>&amp;3rd choice destination:</string>
-                            </property>
-                            <property name="buddy" stdset="0">
-                                <cstring>contact3LineEdit</cstring>
-                            </property>
-                        </widget>
-                        <widget class="QLabel" row="1" column="0">
-                            <property name="name">
-                                <cstring>contact2TextLabel</cstring>
-                            </property>
-                            <property name="text">
-                                <string>&amp;2nd choice destination:</string>
-                            </property>
-                            <property name="buddy" stdset="0">
-                                <cstring>contact2LineEdit</cstring>
-                            </property>
-                        </widget>
-                        <widget class="QLineEdit" row="1" column="1">
-                            <property name="name">
-                                <cstring>contact2LineEdit</cstring>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLineEdit" row="0" column="1">
-                            <property name="name">
-                                <cstring>contact1LineEdit</cstring>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLabel" row="0" column="0">
-                            <property name="name">
-                                <cstring>contact1TextLabel</cstring>
-                            </property>
-                            <property name="text">
-                                <string>&amp;1st choice destination:</string>
-                            </property>
-                            <property name="buddy" stdset="0">
-                                <cstring>contact1LineEdit</cstring>
-                            </property>
-                        </widget>
-                    </grid>
+                    <property name="whatsThis" stdset="0">
+                        <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                    </property>
                 </widget>
-            </hbox>
+                <widget class="QLabel" row="2" column="0">
+                    <property name="name">
+                        <cstring>contact3TextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;3rd choice destination:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>contact3LineEdit</cstring>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="1" column="0">
+                    <property name="name">
+                        <cstring>contact2TextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;2nd choice destination:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>contact2LineEdit</cstring>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="1" column="1">
+                    <property name="name">
+                        <cstring>contact2LineEdit</cstring>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                    </property>
+                </widget>
+                <widget class="QLineEdit" row="0" column="1">
+                    <property name="name">
+                        <cstring>contact1LineEdit</cstring>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="0" column="0">
+                    <property name="name">
+                        <cstring>contact1TextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;1st choice destination:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>contact1LineEdit</cstring>
+                    </property>
+                </widget>
+                <widget class="QToolButton" row="0" column="2">
+                    <property name="name">
+                        <cstring>address1ToolButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string></string>
+                    </property>
+                    <property name="iconSet">
+                        <iconset>kontact_contacts.png</iconset>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Address book</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select an address from the address book.</string>
+                    </property>
+                </widget>
+                <widget class="QToolButton" row="2" column="2">
+                    <property name="name">
+                        <cstring>address3ToolButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string></string>
+                    </property>
+                    <property name="iconSet">
+                        <iconset>kontact_contacts.png</iconset>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Address book</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select an address from the address book.</string>
+                    </property>
+                </widget>
+                <widget class="QToolButton" row="1" column="2">
+                    <property name="name">
+                        <cstring>address2ToolButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string></string>
+                    </property>
+                    <property name="iconSet">
+                        <iconset>kontact_contacts.png</iconset>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Address book</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select an address from the address book.</string>
+                    </property>
+                </widget>
+            </grid>
         </widget>
         <spacer>
             <property name="name">
@@ -120,7 +161,7 @@
             <property name="sizeHint">
                 <size>
                     <width>20</width>
-                    <height>21</height>
+                    <height>16</height>
                 </size>
             </property>
         </spacer>
@@ -185,6 +226,24 @@
         <receiver>RedirectForm</receiver>
         <slot>validate()</slot>
     </connection>
+    <connection>
+        <sender>address1ToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>RedirectForm</receiver>
+        <slot>showAddressBook1()</slot>
+    </connection>
+    <connection>
+        <sender>address2ToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>RedirectForm</receiver>
+        <slot>showAddressBook2()</slot>
+    </connection>
+    <connection>
+        <sender>address3ToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>RedirectForm</receiver>
+        <slot>showAddressBook3()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>contact1LineEdit</tabstop>
@@ -195,16 +254,31 @@
 </tabstops>
 <includes>
     <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="global" impldecl="in declaration">list</include>
     <include location="local" impldecl="in declaration">sockets/url.h</include>
+    <include location="local" impldecl="in declaration">getaddressform.h</include>
     <include location="local" impldecl="in implementation">redirectform.ui.h</include>
 </includes>
+<variables>
+    <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">int nrAddressBook;</variable>
+</variables>
 <signals>
-    <signal>destinations(const list&lt;t_url&gt; &amp;)</signal>
+    <signal>destinations(const list&lt;t_display_url&gt; &amp;)</signal>
 </signals>
 <slots>
     <slot>validate()</slot>
+    <slot>showAddressBook()</slot>
+    <slot>showAddressBook1()</slot>
+    <slot>showAddressBook2()</slot>
+    <slot>showAddressBook3()</slot>
+    <slot>selectedAddress( const QString &amp; address )</slot>
 </slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
+</functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

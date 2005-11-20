@@ -42,6 +42,8 @@ directory. In this directory all user data will be put:
 	user profiles (.cfg)
 	log files (.log)
 	system settings (twinkle.sys)
+	call history (twinkle.ch)
+	lock file (twinkle.lck)
 
 Starting Twinkle
 ----------------
@@ -237,6 +239,7 @@ as your 'domain'.
 
 Currently "sip:" is the only addressing scheme supported by Twinkle.
 
+Novmeber 2005
 
 Michel de Boer
 michel@twinklephone.com

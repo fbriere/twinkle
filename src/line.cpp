@@ -189,6 +189,8 @@ void t_line::cleanup(void) {
 		is_on_hold = false;
 		is_muted = false;
 		call_info.clear();
+		call_history->add_call_record(call_hist_record);
+		call_hist_record.renew();
 		phone->line_cleared(line_number);
 		ui->cb_line_state_changed();
 	}
@@ -214,6 +216,8 @@ void t_line::cleanup_open_pending(void) {
 		state = LS_IDLE;
 		substate = LSSUB_IDLE;
 		call_info.clear();
+		call_history->add_call_record(call_hist_record);
+		call_hist_record.renew();
 		phone->line_cleared(line_number);
 		ui->cb_line_state_changed();
 	}
@@ -486,7 +490,7 @@ void t_line::reject(void) {
 	cleanup();
 }
 
-void t_line::redirect(const list<t_url> &destinations, int code, string reason)
+void t_line::redirect(const list<t_display_url> &destinations, int code, string reason)
 {
 	// Ignore if line is idle
 	if (state == LS_IDLE) return;
@@ -1254,7 +1258,7 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 	phone->lock();
 
 	t_dialog *dialog = get_dialog(did);
-	list<t_url> cf_dest; // call forwarding destinations
+	list<t_display_url> cf_dest; // call forwarding destinations
 
 	switch (timer) {
 	case LTMR_ACK_TIMEOUT:
@@ -1455,12 +1459,14 @@ bool t_line::is_refer_succeeded(void) const {
 	return false;
 }
 
-void t_line::seize(void) {
+bool t_line::seize(void) {
 	// Only an idle line can be seized.
-	if (substate != LSSUB_IDLE) return;
+	if (substate != LSSUB_IDLE) return false;
 
 	substate = LSSUB_SEIZED;
 	ui->cb_line_state_changed();
+	
+	return true;
 }
 
 void t_line::unseize(void) {

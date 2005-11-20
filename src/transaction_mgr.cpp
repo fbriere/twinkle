@@ -320,6 +320,10 @@ void t_transaction_mgr::handle_event_network(t_event_network *e) {
 			{
 				// Report to TU
 				evq_trans_layer->push_user(response, 0, 0);
+			} else {
+				log_file->write_report(
+					"Response does not match any transaction. Discard.",
+					"t_transaction_mgr::handle_event_network");
 			}
 			break;
 		}
@@ -405,6 +409,10 @@ void t_transaction_mgr::handle_event_user(t_event_user *e) {
 		if (!ts) {
 			// This is an error. A response should match a
 			// transaction. Ignore it.
+			log_file->write_report(
+				"Response from user does not match any transaction. Ignore.",
+				"t_transaction_mgr::handle_event_user", 
+				LOG_NORMAL, LOG_WARNING);
 			return;
 		}
 		ts->process_response(response);

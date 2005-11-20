@@ -1,3 +1,18 @@
+twinkle (0.4.1-1) unstable; urgency=low
+
+  * New upstream release
+    - FTBFS on 64 bit arches: cast from 'void*' to 'int' loses precision
+    (Closes: #324395)
+    - ftbfs [sparc] stun.cxx:680: error: 'gethrtime' was not declared in
+    this scope (Closes: #336746)
+  * Fix Build-Depends: FTBFS on GNU/kFreeBSD (Closes: #336859)
+  * Copyright audit to debian/copyright
+  * Use correct QTDIR=/usr/share/qt3, negates need for
+    DEB_AUTO_UPDATE_AUTOCONF
+  * Remove patch against configure.in
+
+ -- Mark Purcell <msp@debian.org>  Sun, 20 Nov 2005 23:05:07 +0000
+
 twinkle (0.3.2-4) unstable; urgency=low
 
   * Add Build-Depends: kdelibs4-dev kdelibs-bin, libasounds2-dev, libxml2-dev

@@ -21,11 +21,12 @@
 
 #include <list>
 #include <string>
+#include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <ifaddrs.h>
 #include <net/if.h>
+#include <ifaddrs.h>
 
 using namespace std;
 
@@ -44,5 +45,8 @@ public:
 
 // Return a list of all interfaces that are UP and not LOOPBACK
 list<t_interface> *get_interfaces(void);
+
+// Check if an interface with a certain IP address exists
+bool exists_interface(const string &hostname);
 
 #endif

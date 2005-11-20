@@ -85,6 +85,17 @@ public:
 	// GUI settings
 	bool		gui_use_systray;
 	bool		gui_hide_on_close;
+	
+	// Address book settings
+	bool		ab_show_sip_only;
+	
+	// Call history settings
+	int		ch_max_size; // #calls
+	
+	// Startup settings
+	string		start_user_profile;
+	string		start_user_host;
+	bool		start_hidden;
 
 	t_sys_settings();
 	

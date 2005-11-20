@@ -34,6 +34,10 @@ public:
 
 	t_hdr_user_agent();
 	void add_server(const t_server &s);
+	
+	// Get string representation of ua_info;
+	string get_ua_info(void) const;
+	
 	string encode(void) const;
 };
 

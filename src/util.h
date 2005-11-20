@@ -44,6 +44,9 @@ string ptr2str(void *p);
 // Convert a bool to a string: "false", "true"
 string bool2str(bool b);
 
+// Convert time/dat to string
+string time2str(time_t t);
+
 // Convert a hex string to an integer
 unsigned long hex2int(const string &h);
 
@@ -67,8 +70,20 @@ int cmp_nocase(const string &s1, const string &s2);
 // Return true if a string must be quoted in text encoding
 bool must_quote(const string &s);
 
+// Escape character c in string by prepending it with a backslash.
+// Backslashed are automatically escaped as well
+string escape(const string &s, char c);
+
+// Unescape a string
+string unescape(const string &s);
+
 // Split a string into elements using c as a separator
 list<string> split(const string &s, char c);
+
+// Split an escaped string into elements using c as a separator
+// Escaped means: \c will not be seen as a seperator and backslash is
+//                escaped itself (\\)
+list<string> split_escaped(const string &s, char c);
 
 // Split a string into elements using spaces as separator
 // If quote_sensitive = true, then spaces within quoted strings will

@@ -28,6 +28,7 @@
 #include <qapplication.h>
 #include "gui.h"
 #include "line.h"
+#include "sys_settings.h"
 #include "user.h"
 #include "audio/rtp_telephone_event.h"
 #include "sockets/interfaces.h"
@@ -40,6 +41,7 @@
 #include "qlabel.h"
 #include "qlistbox.h"
 #include "qmessagebox.h"
+#include "qpixmap.h"
 #include "qstring.h"
 #include "qtextedit.h"
 #include "qtooltip.h"
@@ -219,8 +221,12 @@ void t_gui::run(void) {
 	clearLineFields(0);
 	clearLineFields(1);
 	
-	// Start QApplication
-	mainWindow->show();
+	// Start QApplication/KApplication
+	if (sys_config->start_hidden) {
+		mainWindow->hide();
+	} else {
+		mainWindow->show();
+	}
 	qApp->exec();
 	
 	// Wait till phone is deregistered.
@@ -252,19 +258,6 @@ string t_gui::select_network_intf(void) {
 	// the allocation here.
 	MEMMAN_NEW(l);
 	if (l->size() == 0) {
-		/*
-		QMessageBox *mb = new QMessageBox(PRODUCT_NAME,
-						  "Cannot find a network interface.",
-						  QMessageBox::Critical,
-						  QMessageBox::Abort | QMessageBox::Default,
-						  QMessageBox::NoButton,
-						  QMessageBox::NoButton);
-		MEMMAN_NEW(mb);
-		mb->exec();
-		MEMMAN_DELETE(mb);
-		delete mb;
-		*/
-		
 		cb_show_msg("Cannot find a network interface. Twinkle will use "
 			    "127.0.0.1 as the local IP address. When you connect to "
 			    "the network you have to restart Twinkle to use the correct "
@@ -287,7 +280,9 @@ string t_gui::select_network_intf(void) {
 		for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
 			item = i->name.c_str();
 			item.append(':').append(i->get_ip_addr().c_str());
-			sf->nicListBox->insertItem(item);
+			sf->nicListBox->insertItem(
+					QPixmap::fromMimeSource("kcmpci16.png"), 
+					item);
 		}
 		
 		sf->nicListBox->setCurrentItem(0);
@@ -380,7 +375,10 @@ void t_gui::cb_incoming_call(int line, const t_request *r) {
 #ifdef HAVE_KDE
 		KSystemTray *tray = (KSystemTray *)mainWindow->getSysTray();
 		if (tray) {
-			KPassivePopup::message(fromParty, tray);
+			QString s("Incoming call: ");
+			s.append(fromParty.left(40));
+			if (fromParty.length() > 40) s.append("...");
+			KPassivePopup::message(s, tray);
 		}
 #endif
 	}
@@ -1450,6 +1448,12 @@ void t_gui::cb_log_updated(bool log_zapped) {
 	unlock();
 }
 
+void t_gui::cb_call_history_updated(void) {
+	lock();
+	mainWindow->updateCallHistory();
+	unlock();
+}
+
 // User invoked actions on the phone object
 
 void t_gui::action_register(void) {
@@ -1523,7 +1527,7 @@ void t_gui::action_reject(void) {
 	clearLineFields(line);
 }
 
-void t_gui::action_redirect(const list<t_url> &contacts) {
+void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	QString s;
 	
 	cb_stop_tone(phone->get_active_line());
@@ -1582,8 +1586,8 @@ void t_gui::action_activate_line(unsigned short line) {
 	phone->pub_activate_line(line);
 }
 
-void t_gui::action_seize(void) {
-	phone->pub_seize();
+bool t_gui::action_seize(void) {
+	return phone->pub_seize();
 }
 
 void t_gui::action_unseize(void) {
@@ -1598,7 +1602,7 @@ void t_gui::srv_dnd(bool on) {
 	}
 }
 
-void t_gui::srv_enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest) {
+void t_gui::srv_enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest) {
 	phone->service.enable_cf(cf_type, cf_dest);
 }
 

@@ -120,7 +120,7 @@ private:
 	void invite(const t_url &to_uri, const string &to_display,
 		const string &subject);
 	void answer(void);
-	void redirect(const list<t_url> &destinations, int code, string reason = "");
+	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void reject(void);
 	void end_call(void);
 	void registration(t_register_type register_type,
@@ -220,7 +220,7 @@ public:
 		const string &subject);
 	void pub_answer(void);
 	void pub_reject(void);
-	void pub_redirect(const list<t_url> &destinations, int code, string reason = "");
+	void pub_redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void pub_end_call(void);
 	void pub_registration(t_register_type register_type,
 						int unsigned long = 0);
@@ -238,7 +238,8 @@ public:
 	bool join_3way(unsigned short lineno1, unsigned short lineno2);
 
 	// Seize the line.
-	void pub_seize(void);
+	// Returns false if seizure failed.
+	bool pub_seize(void);
 
 	// Unseize the line
 	void pub_unseize(void);

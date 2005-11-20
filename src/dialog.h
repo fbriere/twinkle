@@ -404,7 +404,7 @@ public:
 	// reason is specified the default reason is used.
 	// destinations is the list of redirect destinations in order of
 	// preference.
-	void redirect(const list<t_url> &destinations, int code, string reason = "");
+	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 
 	// Match response with dialog
 	bool match_response(t_response *r, t_tuid tuid);
