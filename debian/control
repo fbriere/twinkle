@@ -9,6 +9,7 @@ Standards-Version: 3.6.1
 Package: twinkle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: kaddressbook
 Description: Voice over Internet Protocol (VoIP) SIP Phone
  Softphone for making telephone calls using SIP over an IP network.
  .
