@@ -1,3 +1,11 @@
+twinkle (0.4.2-1) unstable; urgency=low
+
+  * New upstream release
+    - Lines hang with "dialing" status (Closes: #340779)
+    - does not play ringtone (Closes: #340233)
+
+ -- Mark Purcell <msp@debian.org>  Tue, 29 Nov 2005 20:47:21 +0000
+
 twinkle (0.4.1-3) unstable; urgency=low
 
   * Rebuild against kdelibs 3.4.2 for unstable

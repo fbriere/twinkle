@@ -41,6 +41,7 @@
 #define FLD_DEV_RINGTONE	"dev_ringtone"
 #define FLD_DEV_SPEAKER		"dev_speaker"
 #define FLD_DEV_MIC		"dev_mic"
+#define FLD_AU_REDUCE_NOISE_MIC	"au_reduce_noise_mic"
 
 // LOG fields
 #define FLD_LOG_MAX_SIZE	"log_max_size"
@@ -120,6 +121,7 @@ t_sys_settings::t_sys_settings() {
 	dev_ringtone = audio_device();
 	dev_speaker = audio_device();
 	dev_mic = audio_device();
+	au_reduce_noise_mic = true;
 	
 	log_max_size = 5;
 	log_show_sip = true;
@@ -419,6 +421,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			dev_speaker = audio_device(value);
 		} else if (parameter == FLD_DEV_MIC) {
 			dev_mic = audio_device(value);
+		} else if (parameter == FLD_AU_REDUCE_NOISE_MIC) {
+			au_reduce_noise_mic = yesno2bool(value);
 		} else if (parameter == FLD_LOG_MAX_SIZE) {
 			log_max_size = atoi(value.c_str());
 		} else if (parameter == FLD_LOG_SHOW_SIP) {
@@ -482,6 +486,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_DEV_RINGTONE << '=' << dev_ringtone.get_settings_value() << endl;
 	config << FLD_DEV_SPEAKER << '=' << dev_speaker.get_settings_value() << endl;
 	config << FLD_DEV_MIC << '=' << dev_mic.get_settings_value() << endl;
+	config << FLD_AU_REDUCE_NOISE_MIC << '=' << bool2yesno(au_reduce_noise_mic) << endl;
 	config << endl;
 	
 	// Write LOG settings

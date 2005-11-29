@@ -600,7 +600,7 @@
         <sender>cancelPushButton</sender>
         <signal>clicked()</signal>
         <receiver>SrvRedirectForm</receiver>
-        <slot>cancel()</slot>
+        <slot>reject()</slot>
     </connection>
     <connection>
         <sender>okPushButton</sender>
@@ -731,7 +731,7 @@
 </signals>
 <slots>
     <slot>show()</slot>
-    <slot>cancel()</slot>
+    <slot>reject()</slot>
     <slot>validate()</slot>
     <slot>toggleAlways( bool on )</slot>
     <slot>toggleBusy( bool on )</slot>

@@ -1,3 +1,15 @@
+28 nov 2005 - Release 0.4.2
+===========================
+- Microphone noise reduction (can be disabled in system settings)
+- System tray icon shows status of active line and enabled services
+- Call history option added to system tray menu
+
+Bug fixes
+---------
+- Twinkle crashes at startup when the systray icon is disabled in the system settings.
+- Line stays forever in dialing state when pressing ESC in the call window
+
+
 19 nov 2005 - Release 0.4.1
 ===========================
 - Fixed build problems with gcc-4.0.2 and qt3-3.4.4

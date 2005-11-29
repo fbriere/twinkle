@@ -116,7 +116,13 @@ bool t_audio_rx::get_sound_samples(void) {
 		}
 	}
 
+	// Convert buffer to a buffer of shorts as the samples are 16 bits
 	short *sb = (short *)sample_buf;
+	
+	// Reduce noise
+	if (sys_config->au_reduce_noise_mic) {
+		pcm_reduce_noise(sb, SAMPLE_BUF_SIZE / 2);
+	}
 
 	if (is_3way) {
 		// Send the sound samples to the other receiver if we

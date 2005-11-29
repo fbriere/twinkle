@@ -105,7 +105,25 @@ IMAGES	= images/filenew \
 	images/1leftarrow-yellow.png \
 	images/editdelete.png \
 	images/kcmpci16.png \
-	images/kontact_contacts-disabled.png
+	images/kontact_contacts-disabled.png \
+	images/sys_auto_ans.png \
+	images/sys_auto_ans_dis.png \
+	images/sys_busy_estab.png \
+	images/sys_busy_estab_dis.png \
+	images/sys_busy_trans.png \
+	images/sys_busy_trans_dis.png \
+	images/sys_dnd.png \
+	images/sys_dnd_dis.png \
+	images/sys_idle.png \
+	images/sys_idle_dis.png \
+	images/sys_redir.png \
+	images/sys_redir_dis.png \
+	images/sys_services.png \
+	images/sys_services_dis.png \
+	images/sys_hold.png \
+	images/sys_hold_dis.png \
+	images/sys_mute.png \
+	images/sys_mute_dis.png
 
 unix {
   UI_DIR = .ui

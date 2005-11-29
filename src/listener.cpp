@@ -40,7 +40,8 @@ void recvd_stun_msg(char *datagram, int datagram_size,
 	StunMessage m;
 	
 	if (!stunParseMessage(datagram, datagram_size, m, false)) {
-		log_file->write_report("Received faulty STUN message", "::recvd_stun_msg");
+		log_file->write_report("Received faulty STUN message", 
+				"::recvd_stun_msg", LOG_STUN);
 		return;
 	}
 	

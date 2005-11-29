@@ -16,7 +16,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <cstdlib>
 #include "audio_codecs.h"
+
+// Upper threshold of noise (16 bits linear pcm)
+#define PCM_NOISE_THRESHOLD	50
 
 short mix_linear_pcm(short pcm1, short pcm2) {
 	long mixed_sample = long(pcm1) + long(pcm2);
@@ -34,4 +38,12 @@ short mix_linear_pcm(short pcm1, short pcm2) {
 	}
 
 	return short(mixed_sample);
+}
+
+void pcm_reduce_noise(short *pcm_buf, int bufsize) {
+	for (int i = 0; i < bufsize; i++) {
+		if (abs(pcm_buf[i]) <= PCM_NOISE_THRESHOLD) {
+			pcm_buf[i] = 0;
+		}
+	}
 }

@@ -61,6 +61,11 @@ public:
 	// All methods first lock the mtx_service mutex before executing
 	// and unlock on return to guarantee the service data does not
 	// get changed by other threads during execution.
+	
+	// General
+	// Is more than 1 service active?
+	// Different types of call forwarding counts as 1.
+	bool multiple_services_active(void);
 
 	// Call forwarding
 	void enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest);

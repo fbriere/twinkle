@@ -49,13 +49,13 @@ void TransferForm::destroy()
 	}
 }
 
-void TransferForm::cancel()
+void TransferForm::reject()
 {
 	if (user_config->referrer_hold) {
 		((t_gui *)ui)->action_retrieve();
 	}
 	
-	reject();
+	QDialog::reject();
 }
 
 void TransferForm::validate()
@@ -73,7 +73,7 @@ void TransferForm::validate()
 
 void TransferForm::closeEvent(QCloseEvent *)
 {
-	cancel();
+	reject();
 }
 
 void TransferForm::showAddressBook()

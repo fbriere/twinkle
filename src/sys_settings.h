@@ -74,6 +74,7 @@ public:
 	t_audio_device		dev_ringtone;
 	t_audio_device		dev_speaker;
 	t_audio_device		dev_mic;
+	bool			au_reduce_noise_mic;
 	
 	// Log file settings
 	unsigned short	log_max_size; // in MB

@@ -1733,6 +1733,7 @@
     <variable access="private">int idTrayRedial;</variable>
     <variable access="private">int idTraySrvRedirect;</variable>
     <variable access="private">int idTrayAutoAnswer;</variable>
+    <variable access="private">int idTrayCallHistory;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * e )</slot>
@@ -1741,6 +1742,7 @@
     <slot>updateState()</slot>
     <slot>updateRegStatus()</slot>
     <slot>updateServicesStatus()</slot>
+    <slot>updateSysTrayStatus()</slot>
     <slot>phoneRegister()</slot>
     <slot>phoneDeregister()</slot>
     <slot>phoneDeregisterAll()</slot>

@@ -177,6 +177,9 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 				i++;
 				// Config file name
 				config_file = argv[i];
+				if (!QString(config_file).endsWith(USER_FILE_EXT)) {
+					config_file += USER_FILE_EXT;
+				}
 			} else {
 				cout << argv[0] << ": ";
 				cout << "Config file name missing for option '-f'.\n";
@@ -234,9 +237,9 @@ int main( int argc, char ** argv )
 	}
 	
 #ifdef HAVE_KDE
-	KApplication *qa;
+	KApplication *qa = NULL;
 #else
-	QApplication *qa;
+	QApplication *qa = NULL;
 #endif
 	
 	// Store id of main thread
@@ -368,7 +371,7 @@ int main( int argc, char ** argv )
 		// Read user configuration
 		if (user_config->read_config(config_file, error_msg)) break;
 		
-		// Delete the user_config object again as they user must select
+		// Delete the user_config object again as the user must select
 		// another profile and could again create a new profile destroying
 		// the user_config pointer.
 		MEMMAN_DELETE(user_config);
@@ -376,6 +379,9 @@ int main( int argc, char ** argv )
 			
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		config_file.clear();
+		
+		// In CLI mode the user cannot select another profile.
+		if (cli_mode) exit(1);
 	}
 	
 	// Create call history
@@ -548,8 +554,10 @@ int main( int argc, char ** argv )
 	MEMMAN_DELETE(evq_timekeeper);
 	delete evq_timekeeper;
 	
-	MEMMAN_DELETE(qa);
-	delete(qa);
+	if (qa) {
+		MEMMAN_DELETE(qa);
+		delete(qa);
+	}
 
 	// Report memory leaks
 	// Report deletion of log_file and sys_config already to get a correct
