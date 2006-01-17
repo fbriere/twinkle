@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,8 @@
 // Indices of categories in the category list box
 #define idxCatGeneral	0
 #define idxCatAudio	1
-#define idxCatLog		2
+#define idxCatNetwork	2
+#define idxCatLog		3
 
 void SysSettingsForm::init()
 {
@@ -47,6 +48,8 @@ void SysSettingsForm::showCategory( QListBoxItem *item )
 		settingsWidgetStack->raiseWidget(pageGeneral);
 	} else if (item->text() == "Audio") {
 		settingsWidgetStack->raiseWidget(pageAudio);
+	} else if (item->text() == "Network") {
+		settingsWidgetStack->raiseWidget(pageNetwork);
 	} else if (item->text() == "Log") {
 		settingsWidgetStack->raiseWidget(pageLog);
 	}
@@ -63,6 +66,16 @@ string SysSettingsForm::comboItem2audio_dev(QString item)
 	}
 	
 	return "";
+}
+
+void SysSettingsForm::populateComboBox(QComboBox *cb, const QString &s)
+{
+	for (int i = 0; i < cb->count(); i++) {
+		if (cb->text(i) == s) {
+			cb->setCurrentItem(i);
+			return;
+		}
+	}
 }
 
 void SysSettingsForm::populate()
@@ -103,6 +116,13 @@ void SysSettingsForm::populate()
 	
 	reduceNoiseMicCheckBox->setChecked(sys_config->au_reduce_noise_mic);
 	
+	populateComboBox(ossFragmentComboBox, 
+			 QString::number(sys_config->oss_fragment_size));
+	populateComboBox(alsaPlayPeriodComboBox,
+			 QString::number(sys_config->alsa_play_period_size));
+	populateComboBox(alsaCapturePeriodComboBox,
+			QString::number(sys_config->alsa_capture_period_size));
+	
 	// Log settings
 	logMaxSizeSpinBox->setValue(sys_config->log_max_size);
 	logDebugCheckBox->setChecked(sys_config->log_show_debug);
@@ -129,17 +149,20 @@ void SysSettingsForm::populate()
 	if (!SelectProfileForm::getUserProfiles(profiles, msg)) {
 		((t_gui *)ui)->cb_show_msg(this, msg.ascii(), MSG_CRITICAL);
 	}
-	profileComboBox->clear();
-	profileComboBox->insertItem("none");
-	profileComboBox->setCurrentItem(0);
-	idx = 1;
-	for (QStringList::Iterator i = profiles.begin(); i != profiles.end(); i++, idx++) {
+	profileListView->clear();
+	for (QStringList::Iterator i = profiles.begin(); i != profiles.end(); i++) {
 		// Strip off the .cfg suffix
 		QString profile = *i;
 		profile.truncate(profile.length() - 4);
-		profileComboBox->insertItem(profile);
-		if (sys_config->start_user_profile == profile.ascii()) {
-			profileComboBox->setCurrentItem(idx);
+		QCheckListItem *item = new QCheckListItem(profileListView, 
+					profile, QCheckListItem::CheckBox);
+		item->setPixmap(0, QPixmap::fromMimeSource("penguin-small.png"));
+		
+		if (std::find(sys_config->start_user_profiles.begin(), 
+			 sys_config->start_user_profiles.end(), profile.ascii()) !=
+		    sys_config->start_user_profiles.end())
+		{
+			item->setOn(true);
 		}
 	}
 	
@@ -159,6 +182,10 @@ void SysSettingsForm::populate()
 	}
 	delete l;
 	MEMMAN_DELETE(l);
+	
+	// Network settings
+	sipUdpPortSpinBox->setValue(sys_config->config_sip_udp_port);
+	rtpPortSpinBox->setValue(sys_config->rtp_port);
 }
 
 void SysSettingsForm::validate()
@@ -173,6 +200,13 @@ void SysSettingsForm::validate()
 	if (dev != "") sys_config->dev_mic = sys_config->audio_device(dev);
 	
 	sys_config->au_reduce_noise_mic = reduceNoiseMicCheckBox->isChecked();
+	
+	sys_config->oss_fragment_size = 
+			ossFragmentComboBox->currentText().toInt();
+	sys_config->alsa_play_period_size =
+			alsaPlayPeriodComboBox->currentText().toInt();
+	sys_config->alsa_capture_period_size = 
+			alsaCapturePeriodComboBox->currentText().toInt();
 	
 	// Log
 	sys_config->log_max_size = logMaxSizeSpinBox->value();
@@ -196,16 +230,28 @@ void SysSettingsForm::validate()
 				   guiUseSystrayCheckBox->isChecked();
 #endif
 	
-	if (profileComboBox->currentItem() == 0) {
-		sys_config->start_user_profile.clear();
-	} else {
-		sys_config->start_user_profile = profileComboBox->currentText().ascii();
+	sys_config->start_user_profiles.clear();
+	QListViewItemIterator i(profileListView, QListViewItemIterator::Checked);
+	while (i.current()) {
+		QCheckListItem *item = (QCheckListItem *)i.current();
+		sys_config->start_user_profiles.push_back(item->text().ascii());
+		i++;
 	}
 	
 	if (userHostComboBox->currentItem() == 0) {
 		sys_config->start_user_host.clear();
 	} else {
 		sys_config->start_user_host = userHostComboBox->currentText().ascii();
+	}
+	
+	// Network
+	if (sys_config->config_sip_udp_port != sipUdpPortSpinBox->value()) {
+		sys_config->config_sip_udp_port = sipUdpPortSpinBox->value();
+		emit sipUdpPortChanged();
+	}
+	if (sys_config->rtp_port != rtpPortSpinBox->value()) {
+		sys_config->rtp_port = rtpPortSpinBox->value();
+		emit rtpPortChanged();
 	}
 	
 	// Save user config

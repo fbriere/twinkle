@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include <string>
 #include "audio_codecs.h"
 #include "media_buffer.h"
+#include "user.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
 #include "gsm/inc/gsm.h"
@@ -43,6 +44,11 @@ class t_audio_rx {
 private:
 	// audio_session owning this audio receiver
 	t_audio_session *audio_session;
+	
+	// User profile of user using the line
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user			*user_config;
 
 	// file descriptor audio capture device
 	t_audio_io* input_device;

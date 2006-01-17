@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <string>
 #include "auth.h"
 #include "dialog.h"
+#include "phone_user.h"
 #include "protocol.h"
 #include "service.h"
 #include "transaction_layer.h"
@@ -69,15 +70,11 @@ enum t_line_substate {
 	LSSUB_RELEASING			// call is being released (BYE sent)
 };
 
-enum t_register_type {
-	REG_REGISTER,
-	REG_QUERY,
-	REG_DEREGISTER,
-	REG_DEREGISTER_ALL
-};
-
 class t_phone : public t_transaction_layer {
 private:
+	// Phone users
+	list<t_phone_user *>	phone_users;
+
 	// Phone lines
 	t_line			*lines[NUM_LINES];
 
@@ -89,45 +86,18 @@ private:
 	t_line			*line1_3way;	// first line in 3-way conf
 	t_line			*line2_3way;	// second line in 3-way conf
 
-	// Requests outside a dialog
-	t_client_request	*r_options;
-	t_client_request	*r_register;
-	t_client_request	*r_deregister;
-	t_client_request	*r_query_register;
-	
-	// STUN request
-	t_client_request	*r_stun;
-
-	// Registration data
-	string			register_call_id;
-	unsigned long		register_seqnr; // last seqnr to issued
-	bool			is_registered;
-	unsigned long		registration_time; // expiration in seconds
-	bool			last_reg_failed; // last registration failed
-
-	// Timers
-	unsigned short		id_registration;
-	unsigned short		id_nat_keepalive;
-
-	// Authorizor
-	t_auth			authorizor;
-	
-	// STUN data
-	unsigned long		stun_public_ip_sip; // Public IP for SIP
-	unsigned short		stun_public_port_sip; // Public port for SIP
-
 	// Actions
-	void invite(const t_url &to_uri, const string &to_display,
+	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject);
 	void answer(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void reject(void);
 	void end_call(void);
-	void registration(t_register_type register_type,
+	void registration(t_phone_user *pu, t_register_type register_type,
 					unsigned long expires = 0);
 
 	// OPTIONS outside dialog
-	void options(const t_url &to_uri, const string &to_display = "");
+	void options(t_phone_user *pu, const t_url &to_uri, const string &to_display = "");
 
 	// OPTIONS inside dialog
 	void options(void);
@@ -149,30 +119,17 @@ private:
 	void set_active_line(unsigned short l);
 	t_line *get_line(unsigned short lineno) const;
 
-	// Check if all required extensions are supported
-	bool check_required_ext(t_request *r, list<string> &unsupported) const;
-
-	// Timer operations
-	void start_timer(t_phone_timer timer);
-	void stop_timer(t_phone_timer timer);
-
-	// Start a timer with the time set in the time-argument.
-	void start_set_timer(t_phone_timer timer, long time);
-
 	// Handle responses for out-of-dialog requests
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
-
-	// Handle REGISTER repsonses. On return the re-register indicates
-	// if an automatic re-registration needs to be done.
-	void handle_response_register(t_response *r, bool &re_register);
-	void handle_response_deregister(t_response *r);
-	void handle_response_query_register(t_response *r);
-
-	void handle_response_options(t_response *r);
 	
-	// Send a NAT keep alive packet
-	void send_nat_keepalive(void);
+	// Find active phone user
+	t_phone_user *find_phone_user(const string &profile_name);
+	
+	// Match an incoming message to a phone user
+	t_phone_user *match_phone_user(t_response *r, t_tuid tuid);
+	t_phone_user *match_phone_user(t_request *r);
+	t_phone_user *match_phone_user(StunMessage *r, t_tuid tuid);
 
 protected:
 	// Events
@@ -199,13 +156,6 @@ protected:
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 
 public:
-	// Supplementary services
-	t_service	service;
-	
-	// STUN
-	bool		use_stun; // Indicates if STUN must be used
-	bool		use_nat_keepalive; // Send NAT keepalive ?
-
 	t_phone();
 	virtual ~t_phone();
 
@@ -216,15 +166,17 @@ public:
 	// private method and then unlock the phone.
 	// The private methods should only be called by the phone, line,
 	// and dialog objects to avoid deadlocks.
-	void pub_invite(const t_url &to_uri, const string &to_display,
+	void pub_invite(t_user *user,
+		const t_url &to_uri, const string &to_display,
 		const string &subject);
 	void pub_answer(void);
 	void pub_reject(void);
 	void pub_redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void pub_end_call(void);
-	void pub_registration(t_register_type register_type,
+	void pub_registration(t_user *user, t_register_type register_type,
 						int unsigned long = 0);
-	void pub_options(const t_url &to_uri, const string &to_display = "");
+	void pub_options(t_user *user, 
+			const t_url &to_uri, const string &to_display = "");
 	void pub_options(void);
 	bool pub_hold(void);
 	void pub_retrieve(void);
@@ -244,35 +196,25 @@ public:
 	// Unseize the line
 	void pub_unseize(void);
 
-	// Create user uri and contact uri
-	string create_user_contact(void) const;
-	string create_user_uri(void) const;
-
-	// Create request. Headers that are the same for each request
-	// are already populated.
-	t_request *create_request(t_method m) const;
-
-	// Create a response to an OPTIONS request
-	// Argument 'in-dialog' indicates if the OPTIONS response is
-	// sent within a dialog.
-	t_response *create_options_response(t_request *r,
-					bool in_dialog = false) const;
-
-	void timeout(t_phone_timer timer);
+	void timeout(t_phone_timer timer, unsigned short id_timer);
 
 	unsigned short get_active_line(void) const;
 
 	// Authorize the request based on the challenge in the response
 	// Returns false if authorization fails.
-	bool authorize(t_request *r, t_response *resp);
+	bool authorize(t_user *user, t_request *r, t_response *resp);
+	
+	// Remove cached credentials for a particular user/realm
+	void remove_cached_credentials(t_user *user, const string &realm);
 
-	bool get_is_registered(void) const;
-	bool get_last_reg_failed(void) const;
+	bool get_is_registered(t_user *user);
+	bool get_last_reg_failed(t_user *user);
 	t_line_state get_line_state(unsigned short lineno) const;
 	t_line_substate get_line_substate(unsigned short lineno) const;
 	bool is_line_on_hold(unsigned short lineno) const;
 	bool is_line_muted(unsigned short lineno) const;
 	t_refer_state get_line_refer_state(unsigned short lineno) const;
+	t_user *get_line_user(unsigned short lineno);
 
 	// Return if a line is part of a 3-way conference
 	bool part_of_3way(unsigned short lineno);
@@ -295,9 +237,63 @@ public:
 	// Initialize the RTP port values for all lines.
 	void init_rtp_ports(void);
 	
+	// Add a phone user
+	// Returns false if there is already a phone user with the same name
+	// and domain. In this case dup_user is a pointer to the user config
+	// of that user.
+	// NOTE: if there is already a user with exactly the same user config
+	// then true is returned, but the user is not added again. The user
+	// will be activated if it was inactive though.
+	bool add_phone_user(const t_user &user_config, t_user **dup_user);
+	
+	// Deactivate/delete the phone user.
+	void remove_phone_user(const t_user &user_config);
+
+	// Get a list of user profiles of all phone users
+	list<t_user *> ref_users(void);
+	
+	// Get the user profile of a user for which user->get_display_uri() ==
+	// display_uri.
+	t_user *ref_user_display_uri(const string &display_uri);
+	
+	// Get the user profile matching the profile name
+	t_user *ref_user_profile(const string &profile_name);
+	
+	// Get service information for a phone user
+	t_service get_service(t_user *user);
+	t_service *ref_service(t_user *user);
+	
 	// Get IP address and port for SIP
-	string get_ip_sip(void) const;
-	unsigned short get_public_port_sip(void) const;
+	string get_ip_sip(t_user *user);
+	unsigned short get_public_port_sip(t_user *user);
+	
+	// Indicates if STUN is used
+	bool use_stun(t_user *user);
+	
+	// Disable STUN for a user
+	void disable_stun(t_user *user);
+	
+	// Perform NAT discovery for all users having STUN enabled.
+	// If NAT discovery indicates that STUN cannot be used for 1 or more
+	// users, then false will be returned and msg_list contains a list
+	// of messages to be shown to the user.
+	bool stun_discover_nat(list<string> &msg_list);
+	
+	// Perform NAT discovery for a single user.
+	bool stun_discover_nat(t_user *user, string &msg);
+	
+	// Create a response to an OPTIONS request
+	// Argument 'in-dialog' indicates if the OPTIONS response is
+	// sent within a dialog.
+	t_response *create_options_response(t_user *user, t_request *r,
+					bool in_dialog = false);
+					
+	// Timer operations
+	void start_timer(t_phone_timer timer, t_phone_user *pu);
+	void stop_timer(t_phone_timer timer, t_phone_user *pu);
+
+	// Start a timer with the time set in the time-argument.
+	void start_set_timer(t_phone_timer timer, long time, t_phone_user *pu);
 };
 
 // Main function for the UAS part of the phone

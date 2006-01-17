@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -115,13 +115,14 @@ void GetAddressForm::selectAddress()
 		phone = phone.stripWhiteSpace();
 		
 		// Remove special symbols from a phone number
-		QRegExp rePhone("(sip:)?\\+?[0-9\\-\\s\\(\\)]*");
+		QRegExp rePhone("(sip:)?\\+?[0-9\\-\\s\\(\\)/]*");
 		if (rePhone.exactMatch(phone)) {
 			phone.remove(' ');
 			phone.remove('\t');
 			phone.remove('-');
 			phone.remove('(');
 			phone.remove(')');
+			phone.remove('/');
 		}
 		
 		emit address(name, phone);

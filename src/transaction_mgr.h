@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@
 #include <map>
 #include "events.h"
 #include "transaction.h"
+#include "user.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "sockets/socket.h"
 #include "stun/stun_transaction.h"
 
 using namespace std;
@@ -38,21 +40,23 @@ private:
 	// Find existing transactions. Return NULL if not found
 	t_trans_client *find_trans_client(t_response *r) const;
 	t_trans_client *find_trans_client(t_tid tid) const;
+	t_trans_client *find_trans_client(const t_icmp_msg &icmp) const;
 	t_trans_server *find_trans_server(t_request *r) const;
 	t_trans_server *find_trans_server(t_tid tid) const;
 	t_stun_transaction *find_stun_trans(StunMessage *r) const;
 	t_stun_transaction *find_stun_trans(t_tid tid) const;
+	t_stun_transaction *find_stun_trans(const t_icmp_msg &icmp) const;
 
 	// Create new transactions.
 	// Return NULL if creation failed.
-	t_tc_invite *create_tc_invite(t_request *r, unsigned short tuid);
-	t_tc_non_invite *create_tc_non_invite(t_request *r,
+	t_tc_invite *create_tc_invite(t_user *user_config, t_request *r, unsigned short tuid);
+	t_tc_non_invite *create_tc_non_invite(t_user *user_config, t_request *r,
 		unsigned short tuid);
 	t_ts_invite *create_ts_invite(t_request *r);
 	t_ts_non_invite *create_ts_non_invite(t_request *r);
-	t_sip_stun_trans *create_sip_stun_trans(StunMessage *r, 
+	t_sip_stun_trans *create_sip_stun_trans(t_user *user_config, StunMessage *r, 
 		unsigned short tuid);
-	t_media_stun_trans *create_media_stun_trans(StunMessage *r, 
+	t_media_stun_trans *create_media_stun_trans(t_user *user_config, StunMessage *r, 
 		unsigned short tuid, unsigned short src_port);
 
 	// Delete transactions
@@ -67,6 +71,7 @@ private:
 	void handle_event_abort(t_event_abort_trans *e);
 	void handle_event_stun_request(t_event_stun_request *e);
 	void handle_event_stun_response(t_event_stun_response *e);
+	void handle_event_icmp(t_event_icmp *e);
 
 public:
 	~t_transaction_mgr();

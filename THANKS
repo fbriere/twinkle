@@ -10,3 +10,6 @@ Marco van Zijl
 Thanks to Richard Bos for RPM building and advertising.
 
 Thanks to Treeve Jelbert for helping me catching build errors in release 0.4
+
+Thanks to Joerg Reisenweber and James Le Cuirot for helping me debug
+several ALSA and RTP problems.

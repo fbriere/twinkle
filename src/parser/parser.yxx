@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1015,7 +1015,12 @@ hdr_server:	  server {
 			MEMMAN_DELETE($2); delete $2; }
 ;
 
-server:		  T_TOKEN comment {
+server:		  comment {
+			$$ = new t_server();
+			MEMMAN_NEW($$);
+			$$->comment = *$1;
+			MEMMAN_DELETE($1); delete $1; }
+		| T_TOKEN comment {
 			$$ = new t_server();
 			MEMMAN_NEW($$);
 			$$->product = *$1;

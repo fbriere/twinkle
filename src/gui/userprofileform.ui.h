@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -148,19 +148,14 @@ t_ext_support UserProfileForm::indexComboItem2ext_support(int index) {
 }
 
 // Populate the form
-// isRunning indicates if Twinkle is currently running
-void UserProfileForm::populate( bool isRunning )
+void UserProfileForm::populate()
 {
 	QString s;
 	
 	// Set user profile name in the titlebar
 	s = PRODUCT_NAME;
-	s.append(" - User profile: ").append(user_config->get_profile_name().c_str());
+	s.append(" - User profile: ").append(current_profile->get_profile_name().c_str());
 	setCaption(s);
-	
-	// In running mode not all settings can be changed.
-	sipUdpPortTextLabel->setEnabled(!isRunning);
-	sipUdpPortSpinBox->setEnabled(!isRunning);
 	
 	// Select the User category
 	categoryListBox->setSelected(idxCatUser, true);
@@ -169,45 +164,43 @@ void UserProfileForm::populate( bool isRunning )
 	// Set focus on first field
 	displayLineEdit->setFocus();
 	
-	// Set the values of the user_config object in the form
+	// Set the values of the current_profile object in the form
 	// USER
-	displayLineEdit->setText(user_config->display.c_str());
-	usernameLineEdit->setText(user_config->name.c_str());
-	domainLineEdit->setText(user_config->domain.c_str());
-	organizationLineEdit->setText(user_config->organization.c_str());
-	authRealmLineEdit->setText(user_config->auth_realm.c_str());
-	authNameLineEdit->setText(user_config->auth_name.c_str());
-	authPasswordLineEdit->setText(user_config->auth_pass.c_str());
+	displayLineEdit->setText(current_profile->display.c_str());
+	usernameLineEdit->setText(current_profile->name.c_str());
+	domainLineEdit->setText(current_profile->domain.c_str());
+	organizationLineEdit->setText(current_profile->organization.c_str());
+	authRealmLineEdit->setText(current_profile->auth_realm.c_str());
+	authNameLineEdit->setText(current_profile->auth_name.c_str());
+	authPasswordLineEdit->setText(current_profile->auth_pass.c_str());
 	
 	// SIP SERVER
-	registrarLineEdit->setText(user_config->registrar.encode_noscheme().c_str());
-	expirySpinBox->setValue(user_config->registration_time);
-	regAtStartupCheckBox->setChecked(user_config->register_at_startup);
-	useProxyCheckBox->setChecked(user_config->use_outbound_proxy);
-	proxyTextLabel->setEnabled(user_config->use_outbound_proxy);
-	proxyLineEdit->setEnabled(user_config->use_outbound_proxy);
-	if (user_config->use_outbound_proxy) {
-		proxyLineEdit->setText(user_config->
+	registrarLineEdit->setText(current_profile->registrar.encode_noscheme().c_str());
+	expirySpinBox->setValue(current_profile->registration_time);
+	regAtStartupCheckBox->setChecked(current_profile->register_at_startup);
+	useProxyCheckBox->setChecked(current_profile->use_outbound_proxy);
+	proxyTextLabel->setEnabled(current_profile->use_outbound_proxy);
+	proxyLineEdit->setEnabled(current_profile->use_outbound_proxy);
+	if (current_profile->use_outbound_proxy) {
+		proxyLineEdit->setText(current_profile->
 				       outbound_proxy.encode_noscheme().c_str());
 	} else {
 		proxyLineEdit->clear();
 	}
-	allRequestsCheckBox->setChecked(user_config->all_requests_to_proxy);
-	allRequestsCheckBox->setEnabled(user_config->use_outbound_proxy);
-	proxyNonResolvableCheckBox->setChecked(user_config->non_resolvable_to_proxy);
-	proxyNonResolvableCheckBox->setEnabled(user_config->use_outbound_proxy);
+	allRequestsCheckBox->setChecked(current_profile->all_requests_to_proxy);
+	allRequestsCheckBox->setEnabled(current_profile->use_outbound_proxy);
+	proxyNonResolvableCheckBox->setChecked(current_profile->non_resolvable_to_proxy);
+	proxyNonResolvableCheckBox->setEnabled(current_profile->use_outbound_proxy);
 	
 	// RTP AUDIO
-	rtpPortSpinBox->setValue(user_config->rtp_port);
-	
 	// Set codec combo boxes to 'none'.
 	codec2ComboBox->setCurrentItem(idxCodecNone);
 	codec3ComboBox->setCurrentItem(idxCodecNone);
 	
 	// Set codec combo boxes to values from user config
 	int codecChoice = 0;
-	for (list<unsigned short>::iterator i = user_config->codecs.begin();
-	i != user_config->codecs.end(); i++)
+	for (list<unsigned short>::iterator i = current_profile->codecs.begin();
+	i != current_profile->codecs.end(); i++)
 	{
 		codecChoice++;
 		if (codecChoice == 1) {
@@ -219,16 +212,14 @@ void UserProfileForm::populate( bool isRunning )
 		}
 	}
 	
-	ptimeSpinBox->setValue(user_config->ptime);
-	dtmfPayloadTypeSpinBox->setValue(user_config->dtmf_payload_type);
-	dtmfDurationSpinBox->setValue(user_config->dtmf_duration);
-	dtmfPauseSpinBox->setValue(user_config->dtmf_pause);
-	dtmfVolumeSpinBox->setValue(user_config->dtmf_volume);
+	ptimeSpinBox->setValue(current_profile->ptime);
+	dtmfPayloadTypeSpinBox->setValue(current_profile->dtmf_payload_type);
+	dtmfDurationSpinBox->setValue(current_profile->dtmf_duration);
+	dtmfPauseSpinBox->setValue(current_profile->dtmf_pause);
+	dtmfVolumeSpinBox->setValue(current_profile->dtmf_volume);
 	
 	// SIP PROTOCOL
-	sipUdpPortSpinBox->setValue(user_config->sip_udp_port);
-	
-	switch(user_config->hold_variant) {
+	switch(current_profile->hold_variant) {
 	case HOLD_RFC2543:
 		holdVariantComboBox->setCurrentItem(idxHoldRfc2543);
 		break;
@@ -237,71 +228,88 @@ void UserProfileForm::populate( bool isRunning )
 		break;
 	}
 	
-	maxForwardsCheckBox->setChecked(user_config->check_max_forwards);
-	missingContactCheckBox->setChecked(user_config->allow_missing_contact_reg);
-	regTimeCheckBox->setChecked(user_config->registration_time_in_contact);
-	compactHeadersCheckBox->setChecked(user_config->compact_headers);
-	allowRedirectionCheckBox->setChecked(user_config->allow_redirection);
-	askUserRedirectCheckBox->setEnabled(user_config->allow_redirection);
-	askUserRedirectCheckBox->setChecked(user_config->ask_user_to_redirect);
-	maxRedirectTextLabel->setEnabled(user_config->allow_redirection);
-	maxRedirectSpinBox->setEnabled(user_config->allow_redirection);
-	maxRedirectSpinBox->setValue(user_config->max_redirections);
+	maxForwardsCheckBox->setChecked(current_profile->check_max_forwards);
+	missingContactCheckBox->setChecked(current_profile->allow_missing_contact_reg);
+	regTimeCheckBox->setChecked(current_profile->registration_time_in_contact);
+	compactHeadersCheckBox->setChecked(current_profile->compact_headers);
+	allowRedirectionCheckBox->setChecked(current_profile->allow_redirection);
+	askUserRedirectCheckBox->setEnabled(current_profile->allow_redirection);
+	askUserRedirectCheckBox->setChecked(current_profile->ask_user_to_redirect);
+	maxRedirectTextLabel->setEnabled(current_profile->allow_redirection);
+	maxRedirectSpinBox->setEnabled(current_profile->allow_redirection);
+	maxRedirectSpinBox->setValue(current_profile->max_redirections);
 	ext100relComboBox->setCurrentItem(
-			ext_support2indexComboItem(user_config->ext_100rel));
-	allowReferCheckBox->setChecked(user_config->allow_refer);
-	askUserReferCheckBox->setEnabled(user_config->allow_refer);
-	askUserReferCheckBox->setChecked(user_config->ask_user_to_refer);
-	refereeHoldCheckBox->setEnabled(user_config->allow_refer);
-	refereeHoldCheckBox->setChecked(user_config->referee_hold);
-	referrerHoldCheckBox->setChecked(user_config->referrer_hold);
-	refreshReferSubCheckBox->setChecked(user_config->auto_refresh_refer_sub);
+			ext_support2indexComboItem(current_profile->ext_100rel));
+	allowReferCheckBox->setChecked(current_profile->allow_refer);
+	askUserReferCheckBox->setEnabled(current_profile->allow_refer);
+	askUserReferCheckBox->setChecked(current_profile->ask_user_to_refer);
+	refereeHoldCheckBox->setEnabled(current_profile->allow_refer);
+	refereeHoldCheckBox->setChecked(current_profile->referee_hold);
+	referrerHoldCheckBox->setChecked(current_profile->referrer_hold);
+	refreshReferSubCheckBox->setChecked(current_profile->auto_refresh_refer_sub);
 	
 	// NAT
-	if (user_config->use_nat_public_ip) {
+	if (current_profile->use_nat_public_ip) {
 		natStaticRadioButton->setChecked(true);
-	} else if (user_config->use_stun) {
+	} else if (current_profile->use_stun) {
 		natStunRadioButton->setChecked(true);
 	} else {
 		natNoneRadioButton->setChecked(true);
 	}
 	
-	publicIPTextLabel->setEnabled(user_config->use_nat_public_ip);
-	publicIPLineEdit->setEnabled(user_config->use_nat_public_ip);
-	publicIPLineEdit->setText(user_config->nat_public_ip.c_str());
-	stunServerTextLabel->setEnabled(user_config->use_stun);
-	stunServerLineEdit->setEnabled(user_config->use_stun);
-	stunServerLineEdit->setText(user_config->stun_server.
+	publicIPTextLabel->setEnabled(current_profile->use_nat_public_ip);
+	publicIPLineEdit->setEnabled(current_profile->use_nat_public_ip);
+	publicIPLineEdit->setText(current_profile->nat_public_ip.c_str());
+	stunServerTextLabel->setEnabled(current_profile->use_stun);
+	stunServerLineEdit->setEnabled(current_profile->use_stun);
+	stunServerLineEdit->setText(current_profile->stun_server.
 				    encode_noscheme().c_str());
 	
 	// ADDRESS FORMAT
-	displayTelUserCheckBox->setChecked(user_config->display_useronly_phone);
+	displayTelUserCheckBox->setChecked(current_profile->display_useronly_phone);
 	numericalUserIsTelCheckBox->setChecked(
-			user_config->numerical_user_is_phone);
+			current_profile->numerical_user_is_phone);
 	
 	// TIMERS
-	tmrNoanswerSpinBox->setValue(user_config->timer_noanswer);
-	tmrNatKeepaliveSpinBox->setValue(user_config->timer_nat_keepalive);
+	tmrNoanswerSpinBox->setValue(current_profile->timer_noanswer);
+	tmrNatKeepaliveSpinBox->setValue(current_profile->timer_nat_keepalive);
+}
+
+void UserProfileForm::initProfileList(list<t_user *> profiles)
+{
+	profile_list = profiles;
+	
+	// Initialize user profile combo box
+	current_profile_idx = -1;
+	profileComboBox->clear();
+	for (list<t_user *>::iterator i = profile_list.begin(); i != profile_list.end(); i++) {
+		profileComboBox->insertItem((*i)->get_profile_name().c_str());
+	}
+	profileComboBox->setEnabled(profile_list.size() > 1);
+	current_profile_idx = 0;
+	current_profile = profile_list.front();
+	profileComboBox->setCurrentItem(current_profile_idx);
 }
 
 // Show the form
-// isRunning indicates if Twinkle is currently running
-void UserProfileForm::show(bool isRunning)
+void UserProfileForm::show(list<t_user *> profiles)
 {
-	populate(isRunning);
+	initProfileList(profiles);
+	populate();
 	
 	// Show form
 	QDialog::show();
 }
 
 // Modal execution
-int UserProfileForm::exec()
+int UserProfileForm::exec(list<t_user *> profiles)
 {
-	populate(false);
+	initProfileList(profiles);
+	populate();
 	return QDialog::exec();
 }
 
-void UserProfileForm::validate()
+bool UserProfileForm::validateValues()
 {
 	QString s;
 	
@@ -313,7 +321,7 @@ void UserProfileForm::validate()
 		((t_gui *)ui)->cb_show_msg(this, "You must fill in a user name for your SIP account.",
 				MSG_CRITICAL);
 		usernameLineEdit->setFocus();
-		return;
+		return false;
 	}
 	
 	// SIP user domain is mandatory
@@ -326,7 +334,7 @@ void UserProfileForm::validate()
 				"if you want direct PC to PC dialing.",
 				MSG_CRITICAL);
 		domainLineEdit->setFocus();
-		return;
+		return false;
 	}
 	
 	// Registrar
@@ -341,7 +349,7 @@ void UserProfileForm::validate()
 						   MSG_CRITICAL);
 			registrarLineEdit->setFocus();
 			registrarLineEdit->selectAll();
-			return;
+			return false;
 		}
 	}
 	
@@ -357,7 +365,7 @@ void UserProfileForm::validate()
 					MSG_CRITICAL);
 			proxyLineEdit->setFocus();
 			proxyLineEdit->selectAll();
-			return;
+			return false;
 		}
 	}
 	
@@ -369,7 +377,7 @@ void UserProfileForm::validate()
 			((t_gui *)ui)->cb_show_msg(this, "Value for public IP address missing.",
 					MSG_CRITICAL);
 			publicIPLineEdit->setFocus();
-			return;
+			return false;
 		}
 	}
 	
@@ -385,7 +393,7 @@ void UserProfileForm::validate()
 					MSG_CRITICAL);
 			stunServerLineEdit->setFocus();
 			stunServerLineEdit->selectAll();
-			return;
+			return false;
 		}
 	}
 	
@@ -404,130 +412,164 @@ void UserProfileForm::validate()
 		stunServerLineEdit->clear();
 	}
 	
-	// Set all values in the user_config object
+	// Set all values in the current_profile object
 	// USER
-	if (user_config->name != usernameLineEdit->text().ascii() ||
-	    user_config->display != displayLineEdit->text().ascii() ||
-	    user_config->domain != domainLineEdit->text().ascii())
+	if (current_profile->name != usernameLineEdit->text().ascii() ||
+	    current_profile->display != displayLineEdit->text().ascii() ||
+	    current_profile->domain != domainLineEdit->text().ascii())
 	{
-		user_config->display = displayLineEdit->text().ascii();
-		user_config->name = usernameLineEdit->text().ascii();
-		user_config->domain = domainLineEdit->text().ascii();
-		emit sipUserChanged();
+		current_profile->display = displayLineEdit->text().ascii();
+		current_profile->name = usernameLineEdit->text().ascii();
+		current_profile->domain = domainLineEdit->text().ascii();
+		emit sipUserChanged(current_profile);
 	}
 	
-	user_config->organization = organizationLineEdit->text().ascii();
-	user_config->auth_realm = authRealmLineEdit->text().ascii();
-	user_config->auth_name = authNameLineEdit->text().ascii();
-	user_config->auth_pass = authPasswordLineEdit->text().ascii();
+	current_profile->organization = organizationLineEdit->text().ascii();
 	
+	if (current_profile->auth_realm != authRealmLineEdit->text().ascii() ||
+	    current_profile->auth_name != authNameLineEdit->text().ascii() ||
+	    current_profile->auth_pass != authPasswordLineEdit->text().ascii())
+	{
+		emit authCredentialsChanged(current_profile,
+					current_profile->auth_realm);
+		
+		current_profile->auth_realm = authRealmLineEdit->text().ascii();
+		current_profile->auth_name = authNameLineEdit->text().ascii();
+		current_profile->auth_pass = authPasswordLineEdit->text().ascii();
+	}
+
 	// SIP SERVER
-	user_config->use_registrar = !registrarLineEdit->text().isEmpty();
+	current_profile->use_registrar = !registrarLineEdit->text().isEmpty();
 	s = USER_SCHEME;
 	s.append(':').append(registrarLineEdit->text());
-	user_config->registrar.set_url(s.ascii());
-	user_config->registration_time = expirySpinBox->value();
-	user_config->register_at_startup = regAtStartupCheckBox->isChecked();
+	current_profile->registrar.set_url(s.ascii());
+	current_profile->registration_time = expirySpinBox->value();
+	current_profile->register_at_startup = regAtStartupCheckBox->isChecked();
 	
-	user_config->use_outbound_proxy = useProxyCheckBox->isChecked();
+	current_profile->use_outbound_proxy = useProxyCheckBox->isChecked();
 	s = USER_SCHEME;
 	s.append(':').append(proxyLineEdit->text());
-	user_config->outbound_proxy.set_url(s.ascii());
-	user_config->all_requests_to_proxy = allRequestsCheckBox->isChecked();
-	user_config->non_resolvable_to_proxy = 
+	current_profile->outbound_proxy.set_url(s.ascii());
+	current_profile->all_requests_to_proxy = allRequestsCheckBox->isChecked();
+	current_profile->non_resolvable_to_proxy = 
 			proxyNonResolvableCheckBox->isChecked();
 	
 	// RTP AUDIO
-	if (user_config->rtp_port != rtpPortSpinBox->value()) {
-		user_config->rtp_port = rtpPortSpinBox->value();
-		emit rtpPortChanged();
-	}
-	
-	user_config->codecs.clear();
+	current_profile->codecs.clear();
 	short codec;
 	codec = indexComboItem2codec(codec1ComboBox->currentItem());
-	if (codec >= 0) user_config->codecs.push_back(codec);
+	if (codec >= 0) current_profile->codecs.push_back(codec);
 	codec = indexComboItem2codec(codec2ComboBox->currentItem());
 	if (codec >= 0 &&
-	    std::find(user_config->codecs.begin(), user_config->codecs.end(), codec) ==
-	    user_config->codecs.end()) 
+	    std::find(current_profile->codecs.begin(), current_profile->codecs.end(), codec) ==
+	    current_profile->codecs.end()) 
 	{
-		user_config->codecs.push_back(codec);
+		current_profile->codecs.push_back(codec);
 	}
 	codec = indexComboItem2codec(codec3ComboBox->currentItem());
 	if (codec >= 0 &&
-	    std::find(user_config->codecs.begin(), user_config->codecs.end(), codec) ==
-	    user_config->codecs.end()) 
+	    std::find(current_profile->codecs.begin(), current_profile->codecs.end(), codec) ==
+	    current_profile->codecs.end()) 
 	{
-		user_config->codecs.push_back(codec);
+		current_profile->codecs.push_back(codec);
 	}
 	
-	user_config->ptime = ptimeSpinBox->value();
-	user_config->dtmf_payload_type = dtmfPayloadTypeSpinBox->value();
-	user_config->dtmf_duration = dtmfDurationSpinBox->value();
-	user_config->dtmf_pause = dtmfPauseSpinBox->value();
-	user_config->dtmf_volume = dtmfVolumeSpinBox->value();
+	current_profile->ptime = ptimeSpinBox->value();
+	current_profile->dtmf_payload_type = dtmfPayloadTypeSpinBox->value();
+	current_profile->dtmf_duration = dtmfDurationSpinBox->value();
+	current_profile->dtmf_pause = dtmfPauseSpinBox->value();
+	current_profile->dtmf_volume = dtmfVolumeSpinBox->value();
 	
 	// SIP PROTOCOL
-	user_config->sip_udp_port = sipUdpPortSpinBox->value();
-	
 	switch(holdVariantComboBox->currentItem()) {
 	case idxHoldRfc2543:
-		user_config->hold_variant = HOLD_RFC2543;
+		current_profile->hold_variant = HOLD_RFC2543;
 		break;
 	default:
-		user_config->hold_variant = HOLD_RFC3264;
+		current_profile->hold_variant = HOLD_RFC3264;
 		break;
 	}
 	
-	user_config->check_max_forwards = maxForwardsCheckBox->isChecked();
-	user_config->allow_missing_contact_reg = missingContactCheckBox->isChecked();
-	user_config->registration_time_in_contact = regTimeCheckBox->isChecked();
-	user_config->compact_headers = compactHeadersCheckBox->isChecked();
-	user_config->allow_redirection = allowRedirectionCheckBox->isChecked();
-	user_config->ask_user_to_redirect = askUserRedirectCheckBox->isChecked();
-	user_config->max_redirections = maxRedirectSpinBox->value();
-	user_config->ext_100rel = indexComboItem2ext_support(
+	current_profile->check_max_forwards = maxForwardsCheckBox->isChecked();
+	current_profile->allow_missing_contact_reg = missingContactCheckBox->isChecked();
+	current_profile->registration_time_in_contact = regTimeCheckBox->isChecked();
+	current_profile->compact_headers = compactHeadersCheckBox->isChecked();
+	current_profile->allow_redirection = allowRedirectionCheckBox->isChecked();
+	current_profile->ask_user_to_redirect = askUserRedirectCheckBox->isChecked();
+	current_profile->max_redirections = maxRedirectSpinBox->value();
+	current_profile->ext_100rel = indexComboItem2ext_support(
 			ext100relComboBox->currentItem());
-	user_config->allow_refer = allowReferCheckBox->isChecked();
-	user_config->ask_user_to_refer = askUserReferCheckBox->isChecked();
-	user_config->referee_hold = refereeHoldCheckBox->isChecked();
-	user_config->referrer_hold = referrerHoldCheckBox->isChecked();
-	user_config->auto_refresh_refer_sub = refreshReferSubCheckBox->isChecked();
+	current_profile->allow_refer = allowReferCheckBox->isChecked();
+	current_profile->ask_user_to_refer = askUserReferCheckBox->isChecked();
+	current_profile->referee_hold = refereeHoldCheckBox->isChecked();
+	current_profile->referrer_hold = referrerHoldCheckBox->isChecked();
+	current_profile->auto_refresh_refer_sub = refreshReferSubCheckBox->isChecked();
 	
 	// NAT
-	user_config->use_nat_public_ip = natStaticRadioButton->isChecked();
-	user_config->nat_public_ip = publicIPLineEdit->text().ascii();
-	user_config->use_stun = natStunRadioButton->isChecked();
+	current_profile->use_nat_public_ip = natStaticRadioButton->isChecked();
+	current_profile->nat_public_ip = publicIPLineEdit->text().ascii();
+	current_profile->use_stun = natStunRadioButton->isChecked();
 	
-	if (user_config->stun_server.encode_noscheme() != 
+	if (current_profile->stun_server.encode_noscheme() != 
 	    stunServerLineEdit->text().ascii()) 
 	{
 		s = "stun:";
 		s.append(stunServerLineEdit->text());
-		user_config->stun_server.set_url(s.ascii());
-		emit stunServerChanged();
+		current_profile->stun_server.set_url(s.ascii());
+		emit stunServerChanged(current_profile);
 	}
 	
 	// ADDRESS FORMAT
-	user_config->display_useronly_phone = 
+	current_profile->display_useronly_phone = 
 			displayTelUserCheckBox->isChecked();
-	user_config->numerical_user_is_phone = 
+	current_profile->numerical_user_is_phone = 
 			numericalUserIsTelCheckBox->isChecked();
 	
 	// TIMERS
-	user_config->timer_noanswer = tmrNoanswerSpinBox->value();
-	user_config->timer_nat_keepalive = tmrNatKeepaliveSpinBox->value();
+	current_profile->timer_noanswer = tmrNoanswerSpinBox->value();
+	current_profile->timer_nat_keepalive = tmrNatKeepaliveSpinBox->value();
 	
 	// Save user config
 	string error_msg;
-	if (!user_config->write_config(user_config->get_filename(), error_msg)) {
+	if (!current_profile->write_config(current_profile->get_filename(), error_msg)) {
 		// Failed to write config file
 		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_CRITICAL);
+		return false;
+	}
+	
+	return true;
+}
+
+void UserProfileForm::validate() {
+	if (validateValues()) {
+		emit success();
+		accept();
+	}
+}
+
+// User wants to change to another profile
+void UserProfileForm::changeProfile(const QString &profileName) {
+	if (current_profile_idx == -1) {
+		// Initializing combo box
 		return;
 	}
 	
-	accept();
+	// Make the current profile permanent.
+	if (!validateValues()) {
+		// Current values are not valid.
+		// Do not change to the new profile.
+		profileComboBox->setCurrentItem(current_profile_idx);
+		return;
+	}
+	
+	// Change to new profile.
+	for (list<t_user *>::iterator i = profile_list.begin(); i != profile_list.end(); i++) {
+		if ((*i)->get_profile_name() == profileName.ascii()) {
+			current_profile = *i;
+			break;
+		}
+	}
+	
+	current_profile_idx = profileComboBox->currentItem();
+	populate();
 }
-
-

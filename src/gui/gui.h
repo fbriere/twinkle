@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,17 +20,35 @@
 #define _GUI_H
 
 #include "userintf.h"
-#include "mphoneform.h"
+#include "qcombobox.h"
 #include "qlabel.h"
 #include "qlineedit.h"
+#include "qprogressdialog.h"
 #include "qwidget.h"
 
 using namespace std;
+
+// Forward declaration
+class MphoneForm;
+
+// Selection purpose for select user form
+enum t_select_purpose {
+	SELECT_REGISTER,
+	SELECT_DEREGISTER,
+	SELECT_DEREGISTER_ALL,
+	SELECT_DND,
+	SELECT_AUTO_ANSWER
+};
+
+QString str2html(const QString &s);
 
 class t_gui : public t_userintf {
 private:
 	MphoneForm	*mainWindow;
 	QApplication	*qApplication;
+	
+	// Progress dialog for FW/NAT discovery progress bar
+	QProgressDialog	*natDiscoveryProgressDialog;
 	
 	// Pointers to line information fields to display information
 	QLineEdit	*fromLabel;
@@ -68,10 +86,10 @@ public:
 	string select_network_intf(void);
 	
 	// Select a user configuration file. Returns false if selection failed.
-	bool select_user_config(string &config_file);
+	bool select_user_config(list<string> &config_files);
 	
 	// Call back functions
-	void cb_incoming_call(int line, const t_request *r);
+	void cb_incoming_call(t_user *user_config, int line, const t_request *r);
 	void cb_call_cancelled(int line);
 	void cb_far_end_hung_up(int line);
 	void cb_answer_timeout(int line);
@@ -83,26 +101,27 @@ public:
 	void cb_prack_failed(int line, const t_response *r);
 	void cb_provisional_resp_invite(int line, const t_response *r);
 	void cb_cancel_failed(int line, const t_response *r);
-	void cb_call_answered(int line, const t_response *r);
-	void cb_call_failed(int line, const t_response *r);
+	void cb_call_answered(t_user *user_config, int line, const t_response *r);
+	void cb_call_failed(t_user *user_config, int line, const t_response *r);
+	void cb_stun_failed_call_ended(int line);
 	void cb_call_ended(int line, const t_response *r);
 	void cb_call_established(int line);
 	void cb_options_response(const t_response *r);
 	void cb_reinvite_success(int line, const t_response *r);
 	void cb_reinvite_failed(int line, const t_response *r);
 	void cb_retrieve_failed(int line, const t_response *r);
-	void cb_invalid_reg_resp(const t_response *r, const string &reason);
-	void cb_register_success(const t_response *r, unsigned long expires,
+	void cb_invalid_reg_resp(t_user *user_config, const t_response *r, const string &reason);
+	void cb_register_success(t_user *user_config, const t_response *r, unsigned long expires,
 				 bool first_success);
-	void cb_register_failed(const t_response *r, bool first_failure);
-	void cb_register_stun_failed(bool first_failure);
-	void cb_deregister_success(const t_response *r);
-	void cb_deregister_failed(const t_response *r);
-	void cb_fetch_reg_failed(const t_response *r);
-	void cb_fetch_reg_result(const t_response *r);
-	void cb_register_inprog(t_register_type register_type);
-	void cb_redirecting_request(int line, const t_contact_param &contact);
-	void cb_redirecting_request(const t_contact_param &contact);
+	void cb_register_failed(t_user *user_config, const t_response *r, bool first_failure);
+	void cb_register_stun_failed(t_user *user_config, bool first_failure);
+	void cb_deregister_success(t_user *user_config, const t_response *r);
+	void cb_deregister_failed(t_user *user_config, const t_response *r);
+	void cb_fetch_reg_failed(t_user *user_config, const t_response *r);
+	void cb_fetch_reg_result(t_user *user_config, const t_response *r);
+	void cb_register_inprog(t_user *user_config, t_register_type register_type);
+	void cb_redirecting_request(t_user *user_config, int line, const t_contact_param &contact);
+	void cb_redirecting_request(t_user *user_config, const t_contact_param &contact);
 	void cb_dtmf_detected(int line, char dtmf_event);
 	void cb_dtmf_not_supported(int line);
 	void cb_dtmf_supported(int line);
@@ -116,23 +135,23 @@ public:
 	void cb_refer_result_inprog(int line);
 	
 	// A call is being referred by the far end. r must be the REFER request.
-	void cb_call_referred(int line, t_request *r);
+	void cb_call_referred(t_user *user_config, int line, t_request *r);
 
 	// The reference failed. Call to referrer is retrieved.
-	void cb_retrieve_referrer(int line);
+	void cb_retrieve_referrer(t_user *user_config, int line);
 	
 	// STUN errors
 	void cb_stun_failed(int err_code, const string &err_reason);
 	void cb_stun_failed(void);
 	
 	// Interactive call back functions
-	bool cb_ask_user_to_redirect_invite(const t_url &destination,
+	bool cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &destination,
 			const string &display);
-	bool cb_ask_user_to_redirect_request(const t_url &destination,
+	bool cb_ask_user_to_redirect_request(t_user *user_config, const t_url &destination,
 			const string &display, t_method method);
-	bool cb_ask_credentials(const string &realm, string &username,
+	bool cb_ask_credentials(t_user *user_config, const string &realm, string &username,
 			string &password);
-	bool cb_ask_user_to_refer(const t_url &refer_to_uri,
+	bool cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 			const string &refer_to_display,
 			const t_url &referred_by_uri,
 			const string &referred_by_display);
@@ -151,11 +170,17 @@ public:
 	// Call history has been updated
 	void cb_call_history_updated(void);
 	
+	// Show firewall/NAT discovery progress
+	void cb_nat_discovery_progress_start(int num_steps);
+	void cb_nat_discovery_progress_step(int step);
+	bool cb_nat_discovery_cancelled(void);
+	
 	// Actions
-	void action_register(void);
-	void action_deregister(bool dereg_all);
-	void action_show_registrations(void);
-	void action_invite(const t_url &destination, const string &display, 
+	void action_register(list<t_user *> user_list);
+	void action_deregister(list<t_user *> user_list, bool dereg_all);
+	void action_show_registrations(list<t_user *> user_list);
+	void action_invite(t_user *user_config, 
+			   const t_url &destination, const string &display, 
 			   const string &subject);
 	void action_answer(void);
 	void action_bye(void);
@@ -167,17 +192,21 @@ public:
 	void action_conference(void);
 	void action_mute(bool on);
 	void action_options(void);
-	void action_options(const t_url &contact);
+	void action_options(t_user *user_config, const t_url &contact);
 	void action_dtmf(const string &digits);
 	void action_activate_line(unsigned short line);
 	bool action_seize(void);
 	void action_unseize(void);
 	
 	// Service (de)activation
-	void srv_dnd(bool on);
-	void srv_enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest);
-	void srv_disable_cf(t_cf_type cf_type);
-	void srv_auto_answer(bool on);
+	void srv_dnd(list<t_user *> user_list, bool on);
+	void srv_enable_cf(t_user *user_config,
+		t_cf_type cf_type, const list<t_display_url> &cf_dest);
+	void srv_disable_cf(t_user *user_config, t_cf_type cf_type);
+	void srv_auto_answer(list<t_user *> user_list, bool on);
+	
+	// Fill a combo box with user names (display, uri) of active users
+	void fill_user_combo(QComboBox *cb);
 };
 
 #endif

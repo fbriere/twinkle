@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include "protocol.h"
 #include "redirect.h"
 #include "session.h"
+#include "user.h"
 #include "sockets/url.h"
 #include "threads/mutex.h"
 #include "parser/request.h"
@@ -60,8 +61,8 @@ public:
 	t_redirector	redirector;
 
 	// A copy of the request is stored in the client_request object
-	t_client_request(t_request *r, const t_tid _tid);
-	t_client_request(StunMessage *r, const t_tid _tid);
+	t_client_request(t_user *user, t_request *r, const t_tid _tid);
+	t_client_request(t_user *user, StunMessage *r, const t_tid _tid);
 	~t_client_request();
 
 	t_client_request *copy(void);
@@ -135,6 +136,11 @@ private:
 	t_line			*line;
 	t_dialog_state		state;
 	t_dialog_type		dialog_type;
+	
+	// User profile of user for which this dialog is created.
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user			*user_config;
 
 	// Dialog state information
 	string		call_id;
@@ -188,6 +194,11 @@ private:
 	
 	// Pending STUN request
 	t_client_request	*req_stun;
+	
+	// Incoming request queue. A request may come in when it cannot be
+	// served yet. Such a request is stored in the queue to be served
+	// later.
+	list<t_client_request *>	inc_req_queue;
 	
 	// Indication if request must be cancelled
 	bool request_cancelled;
@@ -346,6 +357,10 @@ public:
 	// Redirect INVITE to the next destination
 	// Returns false if there is no next destination.
 	bool redirect_invite(t_response *resp);
+	
+	// Failover INVITE to the next destination from DNS lookup.
+	// Returns false if there is no next destination.
+	bool failover_invite(void);
 
 	void send_bye(void);
 	void send_options(void);
@@ -368,6 +383,10 @@ public:
 	// Redirect mid-dialog request to the next destination
 	// Returns false if there is no next destination.
 	bool redirect_request(t_response *resp);
+	
+	// Failover request to the next destination from DNS lookup.
+	// Returns false if there is no next destination.
+	bool failover_request(t_response *resp);
 
 	// Call hold/retrieve (send re-INVITE)
 	// rtponly indicates if only the RTP streams should be stopped and

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "protocol.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "sockets/socket.h"
 #include "threads/mutex.h"
 
 using namespace std;
@@ -130,6 +131,12 @@ public:
 
 	// Returns true if the response matches the transaction
 	bool match(t_response *r) const;
+	
+	// Returns true if the ICMP error matches the transaction
+	bool match(const t_icmp_msg &icmp) const;
+	
+	// Process ICMP errors
+	virtual void process_icmp(const t_icmp_msg &icmp) = 0;
 
 	// Abort a transaction.
 	// This will send a 408 response internally to finish the
@@ -176,6 +183,8 @@ public:
 	// Stop timer B.
 	// Start timer D (for non-2xx final).
 	void process_final(t_response *r);
+	
+	void process_icmp(const t_icmp_msg &icmp);
 
 	void timeout(t_sip_timer t);
 
@@ -216,6 +225,8 @@ public:
 	// Process final response
 	// Stop timer E and F. Start timer K.
 	void process_final(t_response *r);
+	
+	void process_icmp(const t_icmp_msg &icmp);
 
 	void timeout(t_sip_timer t);
 

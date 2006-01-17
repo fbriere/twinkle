@@ -157,21 +157,23 @@
     </connection>
 </connections>
 <includes>
-    <include location="local" impldecl="in implementation">gui.h</include>
-    <include location="local" impldecl="in implementation">user.h</include>
-    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in declaration">qstring.h</include>
     <include location="local" impldecl="in declaration">sockets/url.h</include>
     <include location="local" impldecl="in declaration">getaddressform.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in implementation">transferform.ui.h</include>
 </includes>
 <variables>
     <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">t_user *user_config;</variable>
 </variables>
 <signals>
     <signal>destination(const t_display_url&amp;)</signal>
 </signals>
 <slots>
+    <slot>show( t_user * user )</slot>
     <slot>reject()</slot>
     <slot>validate()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>

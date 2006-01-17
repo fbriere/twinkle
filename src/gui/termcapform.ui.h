@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,13 @@ void TermCapForm::init()
 #endif
 }
 
+void TermCapForm::show()
+{
+	((t_gui *)ui)->fill_user_combo(fromComboBox);
+	fromComboBox->setEnabled(fromComboBox->count() > 1);
+	QDialog::show();
+}
+
 void TermCapForm::destroy()
 {
 	if (getAddressForm) {
@@ -52,12 +59,16 @@ void TermCapForm::destroy()
 void TermCapForm::validate()
 {
 	string display, dest_str;
-	ui->expand_destination(partyLineEdit->text().stripWhiteSpace().ascii(), 
+	t_user *from_user = phone->ref_user_display_uri(
+				fromComboBox->currentText().ascii());
+	
+	ui->expand_destination(from_user, 
+			       partyLineEdit->text().stripWhiteSpace().ascii(), 
 			       display, dest_str);
 	t_url dest(dest_str);
 	
 	if (dest.is_valid()) {
-		emit destination(dest);
+		emit destination(from_user, dest);
 		accept();
 	} else {
 		partyLineEdit->selectAll();

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 
 #include <qapplication.h>
 #include <qmime.h>
+#include <qprogressdialog.h>
 #include "mphoneform.h"
 #include <iostream>
 #include <string>
@@ -116,9 +117,6 @@ t_userintf		*ui;
 // Log file
 t_log			*log_file;
 
-// User config
-t_user			*user_config;
-
 // System config
 t_sys_settings		*sys_config;
 
@@ -132,9 +130,9 @@ pthread_t		thread_id_main;
 bool			threading_is_LinuxThreads;
 
 
-void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file) {
+void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config_files) {
 	cli_mode = false;
-	config_file.clear();
+	config_files.clear();
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
@@ -143,15 +141,20 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 			cout << "Options:\n";
 			cout << " -c";
 			cout << "\t\tRun in command line interface mode\n";
+			cout << endl;
 			cout << " -share <dir>";
 			cout << "\tSet the share directory.\n";
+			cout << endl;
 			cout << " -f <profile>";
 			cout << "\tStartup with a specific profile. You will not be requested\n";
 			cout << "\t\tto choose a profile at startup. The profiles that you created\n";
 			cout << "\t\tare the .cfg files in your .twinkle directory.\n";
+			cout << "\t\tYou may specify multiple profiles separated by spaces.\n";
+			cout << endl;
 			cout << " -i <IP addr>";
 			cout << "\tIf you have multiple IP addresses on your computer,\n";
 			cout << "\t\tthen you can supply the IP address to use here.\n";
+			cout << endl;
 			cout << " --version";
 			cout << "\tGet version information.\n";
 			exit(0);
@@ -173,12 +176,17 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 				exit(0);
 			}
 		} else if (strcmp(argv[i], "-f") == 0) {
-			if (i < argc - 1) {
-				i++;
-				// Config file name
-				config_file = argv[i];
-				if (!QString(config_file).endsWith(USER_FILE_EXT)) {
-					config_file += USER_FILE_EXT;
+			if (i < argc - 1 && argv[i+1][0] != '-') {
+				int j = i;
+				while (i < argc -1 && argv[i+1][0] != '-') {
+					i++;
+					// Config file name
+					QString config_file = argv[i];
+					if (!config_file.endsWith(USER_FILE_EXT)) 
+					{
+						config_file += USER_FILE_EXT;
+					}
+					config_files.push_back(config_file.ascii());
 				}
 			} else {
 				cout << argv[0] << ": ";
@@ -217,7 +225,7 @@ int main( int argc, char ** argv )
 {
 	string error_msg;
 	bool cli_mode;
-	string config_file;
+	list<string> config_files;
 	
 	end_app = false;
 	
@@ -267,7 +275,7 @@ int main( int argc, char ** argv )
 	MEMMAN_NEW(sys_config);
 	
 	// Parse command line arguments
-	parse_main_args(argc, argv, cli_mode, config_file);
+	parse_main_args(argc, argv, cli_mode, config_files);
 	
 	// Read system configuration
 	if (!sys_config->read_config(error_msg)) {
@@ -276,9 +284,14 @@ int main( int argc, char ** argv )
 	}
 	
 	// Get default values from system configuration
-	if (config_file.empty()) {
-		config_file = sys_config->start_user_profile;
-		if (!config_file.empty()) config_file += USER_FILE_EXT;
+	if (config_files.empty()) {
+		for (list<string>::iterator i = sys_config->start_user_profiles.begin();
+		i != sys_config->start_user_profiles.end(); i++)
+		{
+			QString config_file = (*i).c_str();
+			config_file += USER_FILE_EXT;
+			config_files.push_back(config_file.ascii());
+		}
 	}
 	if (user_host.empty()) {
 		if (exists_interface(sys_config->start_user_host)) {
@@ -351,37 +364,57 @@ int main( int argc, char ** argv )
 			"::main", LOG_NORMAL, LOG_INFO);
 	}
 	
-	while(true) {
+	bool profile_selected = false;
+	while(!profile_selected) {
 		// Select user profile
-		if (config_file.empty()) {
-			if (!ui->select_user_config(config_file)) {
+		if (config_files.empty()) {
+			if (!ui->select_user_config(config_files)) {
 				sys_config->delete_lock_file();
 				exit(1);
 			}
 		}
 		
-		// Create user config object
-		// NOTE: the user config object should not be created before
-		// ui->select_user_config is called, as the user can create a new
-		// profile. Creating a new profile destroys the global user_config
-		// pointer.
-		user_config = new t_user();
-		MEMMAN_NEW(user_config);
-
-		// Read user configuration
-		if (user_config->read_config(config_file, error_msg)) break;
-		
-		// Delete the user_config object again as the user must select
-		// another profile and could again create a new profile destroying
-		// the user_config pointer.
-		MEMMAN_DELETE(user_config);
-		delete user_config;
+		for (list<string>::iterator i = config_files.begin();
+		i != config_files.end(); i++)
+		{	
+			t_user user_config;
 			
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
-		config_file.clear();
+			// Read user configuration
+			if (user_config.read_config(*i, error_msg)) {
+				t_user *dup_user;
+				if (phone->add_phone_user(
+						user_config, &dup_user))
+				{
+					profile_selected = true;
+				} else {
+					error_msg = "The following profiles are both for user ";
+					error_msg += user_config.name;
+					error_msg += '@';
+					error_msg += user_config.domain;
+					error_msg += ":\n\n";
+					error_msg += user_config.get_profile_name();
+					error_msg += "\n";
+					error_msg += dup_user->get_profile_name();
+					error_msg += "\n\n";
+					error_msg += "You can only run multiple profiles ";
+					error_msg += "for different users.";
+					ui->cb_show_msg(error_msg, MSG_CRITICAL);
+					profile_selected = false;
+					break;
+				}
+			} else {
+				ui->cb_show_msg(error_msg, MSG_CRITICAL);
+				profile_selected = false;
+				break;
+			}
+		}
 		
 		// In CLI mode the user cannot select another profile.
-		if (cli_mode) exit(1);
+		if (!profile_selected) {
+			if (cli_mode) exit(1);
+		}
+		
+		config_files.clear();
 	}
 	
 	// Create call history
@@ -398,11 +431,16 @@ int main( int argc, char ** argv )
 	
 	// Open socket for SIP signaling
 	try {
-		sip_socket = new t_socket_udp(user_config->sip_udp_port);
+		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port());
 		MEMMAN_NEW(sip_socket);
+		if (sip_socket->enable_icmp()) {
+			log_file->write_report("ICMP processing enabled.", "::main");
+		} else {
+			log_file->write_report("ICMP processing disabled.", "::main");
+		}
 	} catch (int err) {
 		string msg("Failed to create a UDP socket (SIP) on port ");
-		msg += int2str(user_config->sip_udp_port);
+		msg += int2str(sys_config->get_sip_udp_port());
 		msg += "\n";
 		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
 		msg += strerror(err);
@@ -422,13 +460,32 @@ int main( int argc, char ** argv )
 	}
 	
 	// Discover NAT type if STUN is enabled
-	if (user_config->use_stun) {
-		string msg;
-		if (!stun_discover_nat(msg)) {
-			ui->cb_show_msg(msg, MSG_WARNING);
+	list<t_user *> user_list = phone->ref_users();
+	ui->cb_nat_discovery_progress_start(user_list.size());
+	list<string> msg_list;
+	int progressStep = 0;
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		ui->cb_nat_discovery_progress_step(progressStep);
+		
+		if (ui->cb_nat_discovery_cancelled()) {
+			log_file->write_report("User aborted NAT discovery.", "::main");
+			exit(1);
 		}
+		
+		if (!phone->stun_discover_nat(*i, error_msg)) {
+			msg_list.push_back(error_msg);
+		}
+		
+		progressStep++;
 	}
+	ui->cb_nat_discovery_progress_step(user_list.size());
 	
+	for (list<string>::iterator i = msg_list.begin();
+	     i != msg_list.end(); i++)
+	{
+		ui->cb_show_msg(*i, MSG_WARNING);
+	}
+				 
 	// Create threads
 	t_thread *thr_sender_udp;
 	t_thread *thr_listen_udp;
@@ -527,8 +584,6 @@ int main( int argc, char ** argv )
 	MEMMAN_DELETE(thr_sender_udp);
 	delete thr_sender_udp;
 
-	MEMMAN_DELETE(user_config);
-	delete user_config;
 	MEMMAN_DELETE(call_history);
 	delete call_history;
 

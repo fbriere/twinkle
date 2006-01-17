@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@ void MphoneForm::init()
 	sysSettingsForm = 0;
 	logViewForm = 0;
 	historyForm = 0;
+	selectUserForm = 0;
+	selectProfileForm = 0;
 	sysTray = 0;
 	
 	// Set toolbar icons for disabled options.
@@ -129,44 +131,31 @@ void MphoneForm::init()
 		QToolTip::add(sysTray, PRODUCT_NAME);
 		
 		// Add items to the system tray menu
-		// Call menu
 		KPopupMenu *menu = KSYSTRAY->contextMenu();
-		idTrayCall = menu->insertItem(callInvite->iconSet(),
-			"&Call",  this, SLOT(phoneInvite()));
-		idTrayAnswer = menu->insertItem(callAnswer->iconSet(),
-			"&Answer",  this, SLOT(phoneAnswer()));
-		idTrayBye = menu->insertItem(callBye->iconSet(),
-			"&Bye",  this, SLOT(phoneBye()));
-		idTrayReject = menu->insertItem(callReject->iconSet(),
-			"Re&ject",  this, SLOT(phoneReject()));
-		idTrayRedirect = menu->insertItem(callRedirect->iconSet(),
-			"R&edirect call",  this, SLOT(phoneRedirect()));
-		idTrayTransfer = menu->insertItem(callTransfer->iconSet(),
-			"&Xfer",  this, SLOT(phoneTransfer()));
-		idTrayHold = menu->insertItem(callHold->iconSet(),
-			"&Hold",  callHold, SLOT(toggle()));
-		idTrayMute = menu->insertItem(callMute->iconSet(),
-			"M&ute",  callMute, SLOT(toggle()));
-		idTrayDtmf = menu->insertItem(callDTMF->iconSet(),
-			"D&tmf",  this, SLOT(phoneDTMF()));
-		idTrayRedial = menu->insertItem(callRedial->iconSet(),
-			"Redia&l",  this, SLOT(phoneRedial()));
+		
+		// Call menu
+		callInvite->addTo(menu);
+		callAnswer->addTo(menu);
+		callBye->addTo(menu);
+		callReject->addTo(menu);
+		callRedirect->addTo(menu);
+		callTransfer->addTo(menu);
+		callHold->addTo(menu);
+		callMute->addTo(menu);
+		callDTMF->addTo(menu);
+		callRedial->addTo(menu);
 		
 		menu->insertSeparator();
 		
 		// Service menu
-		idTrayDnd = menu->insertItem(
-			"&Do not disturb", serviceDnd, SLOT(toggle()));
-		idTraySrvRedirect = menu->insertItem(
-			"Red&irect service", this, SLOT(srvRedirect()));
-		idTrayAutoAnswer = menu->insertItem(
-			"Auto ans&wer", serviceAutoAnswer, SLOT(toggle()));
+		serviceDnd->addTo(menu);
+		serviceRedirection->addTo(menu);
+		serviceAutoAnswer->addTo(menu);
 		
 		menu->insertSeparator();
 		
 		// View menu
-		idTrayCallHistory - menu->insertItem(
-			"Call Hi&story", this, SLOT(viewHistory()));
+		viewCall_HistoryAction->addTo(menu);
 		
 		// Exit application when user selects Quit from the tray menu
 		connect(KSYSTRAY, SIGNAL(quitSelected()),
@@ -221,6 +210,14 @@ void MphoneForm::destroy()
 		MEMMAN_DELETE(historyForm);
 		delete historyForm;
 	}
+	if (selectUserForm) {
+		MEMMAN_DELETE(selectUserForm);
+		delete selectUserForm;
+	}
+	if (selectProfileForm) {
+		MEMMAN_DELETE(selectProfileForm);
+		delete selectProfileForm;
+	}
 	if (sysTray) {
 		MEMMAN_DELETE(sysTray);
 		delete sysTray;
@@ -267,11 +264,17 @@ void MphoneForm::closeEvent( QCloseEvent *e )
 
 void MphoneForm::fileExit()
 {
-	// Deregister if the phone is registered.
-	if (phone->get_is_registered()) {
-		display("");
-		display("De-registering phone...");
-		phone->pub_registration(REG_DEREGISTER);
+	list<t_user *> user_list = phone->ref_users();
+	
+	// De-register all registered users.
+	display("");
+	display("Deregestering phone ...");
+	for (list<t_user *>::iterator i = user_list.begin();
+	     i != user_list.end(); i++)
+	{
+		if (phone->get_is_registered(*i)) {
+			phone->pub_registration(*i, REG_DEREGISTER);
+		}
 	}
 	
 	QApplication::exit(0);
@@ -487,11 +490,13 @@ void MphoneForm::updateState()
 	t_url last_url;
 	string last_display;
 	string last_subject;
+	t_user *last_user;
 	if (callRedial->isEnabled() && 
-	    ui->get_last_call_info(last_url, last_display, last_subject))
+	    ui->get_last_call_info(last_url, last_display, last_subject, &last_user))
 	{
 		QString s = "Call ";
-		s.append(ui->format_sip_address(last_display, last_url).c_str());
+		s.append(ui->format_sip_address(last_user,
+					last_display, last_url).c_str());
 		callRedial->setToolTip(s);
 	} else {
 		callRedial->setToolTip("Repeat last call invitation");
@@ -503,12 +508,45 @@ void MphoneForm::updateState()
 // Update registration status
 void MphoneForm::updateRegStatus()
 {
-	if (phone->get_is_registered()) {
+	int num_registered = 0;
+	int num_failed = 0;
+	QString toolTip;
+	
+	// Count number of succesful and failed registrations.
+	// Determine tool tip showing registration details for all users.
+	list<t_user *>user_list = phone->ref_users();
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		if (phone->get_is_registered(*i)) {
+			num_registered++;
+			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append(" - Registered\n");
+		} else if (phone->get_last_reg_failed(*i)) {
+			num_failed++;
+			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append(" - Failed\n");
+		} else {
+			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append(" - Not registered\n");
+		}
+	}
+	
+	// Set registration status
+	if (num_registered == user_list.size()) {
 		regStatusTextLabel->setText("Registered");
-	} else if (phone->get_last_reg_failed()) {
+	} else if (num_failed == user_list.size()) {
 		regStatusTextLabel->setText("<font color=red>Failed</font>");
+	} else if (num_registered > 0) {
+		regStatusTextLabel->setText("<i>Registered</i>");
+	} else if (num_failed > 0) {
+		regStatusTextLabel->setText("<i>Failed</i>");	
 	} else {
 		regStatusTextLabel->setText("Not registered");
+	}
+	
+	// Set tool tip with detailed info for multiple users.
+	QToolTip::remove(regStatusTextLabel);
+	if (user_list.size() > 1) {
+		QToolTip::add(regStatusTextLabel, toolTip);
 	}
 	
 	updateSysTrayStatus();
@@ -517,9 +555,71 @@ void MphoneForm::updateRegStatus()
 // Update active services status
 void MphoneForm::updateServicesStatus()
 {	
-	dndTextLabel->setEnabled(phone->service.is_dnd_active());
-	redirectionTextLabel->setEnabled(phone->service.is_cf_active());
-	autoAnswerTextLabel->setEnabled(phone->service.is_auto_answer_active());
+	int num_dnd = 0;
+	int num_cf = 0;
+	int num_auto_answer = 0;
+	QString tipDnd = "Do not disturb active for:\n";
+	QString tipCf = "Redirection active for:\n";
+	QString tipAa = "Auto answer active for:\n";
+	
+	// Calculate number of services active.
+	// Determine tool tips with detailed service status for all users.
+	list<t_user *>user_list = phone->ref_users();
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		if (phone->ref_service(*i)->is_dnd_active()) {
+			num_dnd++;
+			tipDnd.append((*i)->get_display_uri().c_str());
+			tipDnd.append("\n");
+		}
+		if (phone->ref_service(*i)->is_cf_active()) {
+			num_cf++;
+			tipCf.append((*i)->get_display_uri().c_str());
+			tipCf.append("\n");
+		}
+		if (phone->ref_service(*i)->is_auto_answer_active()) {
+			num_auto_answer++;
+			tipAa.append((*i)->get_display_uri().c_str());
+			tipAa.append("\n");
+		}
+	}
+	
+	// Set service status
+	dndTextLabel->setEnabled(num_dnd > 0);
+	redirectionTextLabel->setEnabled(num_cf > 0);
+	autoAnswerTextLabel->setEnabled(num_auto_answer > 0);
+	
+	// Set font to italic if not all users have a service active.
+	// NOTE: all services have the same type of font.
+	QFont fontNormal = dndTextLabel->font();
+	fontNormal.setItalic(false);
+	QFont fontItalic = dndTextLabel->font();
+	fontItalic.setItalic(true);
+	
+	if (num_dnd == user_list.size() || num_dnd == 0) {
+		dndTextLabel->setFont(fontNormal);
+	} else {
+		dndTextLabel->setFont(fontItalic);
+	}
+	if (num_cf == user_list.size() || num_cf == 0) {
+		redirectionTextLabel->setFont(fontNormal);
+	} else {
+		redirectionTextLabel->setFont(fontItalic);
+	}
+	if (num_auto_answer == user_list.size() || num_auto_answer == 0) {
+		autoAnswerTextLabel->setFont(fontNormal);
+	} else {
+		autoAnswerTextLabel->setFont(fontItalic);
+	}
+	
+	// Set tool tip with detailed info for multiple users.
+	QToolTip::remove(dndTextLabel);
+	QToolTip::remove(redirectionTextLabel);
+	QToolTip::remove(autoAnswerTextLabel);
+	if (user_list.size() > 1) {
+		if (num_dnd > 0) QToolTip::add(dndTextLabel, tipDnd);
+		if (num_cf > 0) QToolTip::add(redirectionTextLabel, tipCf);
+		if (num_auto_answer > 0) QToolTip::add(autoAnswerTextLabel, tipAa);
+	}
 	
 	updateSysTrayStatus();
 }
@@ -529,6 +629,11 @@ void MphoneForm::updateSysTrayStatus()
 {
 #ifdef HAVE_KDE
 	QString icon_name;
+	bool cf_active = false;
+	bool dnd_active = false;
+	bool auto_answer_active = false;
+	bool multi_services = false;
+	int num_services;
 	
 	if (!sysTray) return;
 	
@@ -536,26 +641,46 @@ void MphoneForm::updateSysTrayStatus()
 	int line = phone->get_active_line();
 	t_line_substate line_substate = phone->get_line_substate(line);
 	
+	list<t_user *> user_list = phone->ref_users();
+	
 	switch(line_substate) {
 	case LSSUB_IDLE:
 	case LSSUB_SEIZED:
 		// If a service is active, then show the service icon
-		if (phone->service.multiple_services_active()) {
-			icon_name = "sys_services";
-		} else {
-			if (phone->service.is_dnd_active())  {
-				icon_name = "sys_dnd";
-			}
-			if (phone->service.is_cf_active()) {
-				icon_name = "sys_redir";
-			}
-			if (phone->service.is_auto_answer_active()) {
-				icon_name = "sys_auto_ans";
+		user_list = phone->ref_users();
+		for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+			if (phone->ref_service(*i)->multiple_services_active()) {
+				multi_services = true;
+				break;
+			} else {
+				if (phone->ref_service(*i)->is_dnd_active())  {
+					dnd_active = true;
+				}
+				if (phone->ref_service(*i)->is_cf_active()) {
+					cf_active = true;
+				}
+				if (phone->ref_service(*i)->is_auto_answer_active()) {
+					auto_answer_active = true;
+				}
 			}
 		}
 		
-		// If no service is active, show the idle icon
-		if (icon_name.isEmpty()) icon_name = "sys_idle";
+		num_services = (dnd_active ? 1 : 0) + (cf_active ? 1 : 0) + 
+			       (auto_answer_active ? 1 : 0);
+		
+		if (multi_services || num_services > 1) {
+			icon_name = "sys_services";
+		} else if (dnd_active) {
+			icon_name = "sys_dnd";
+		} else if (cf_active) {
+			icon_name = "sys_redir";
+		} else if (auto_answer_active) {
+			icon_name = "sys_auto_ans";
+		} else {
+			// No service is active, show the idle icon
+			if (icon_name.isEmpty()) icon_name = "sys_idle";
+		}
+
 		break;
 	case LSSUB_ESTABLISHED:
 		if (phone->is_line_on_hold(line)) {
@@ -573,60 +698,148 @@ void MphoneForm::updateSysTrayStatus()
 	
 	// Based on the registration status use the active or disabled version
 	// of the icon.
-	if (phone->get_is_registered()) {
+	bool registered = false;
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		if (phone->get_is_registered(*i)) {
+			registered = true;
+			break;
+		}
+	}
+	
+	if (registered) {
 		icon_name += ".png";
 	} else {
 		icon_name += "_dis.png";
 	}
 	
 	KSYSTRAY->setPixmap(QPixmap::fromMimeSource(icon_name));
-	
-	// Enable/disable system tray call menu items
-	KPopupMenu *menu = KSYSTRAY->contextMenu();
-	menu->setItemEnabled(idTrayCall, callInvite->isEnabled());
-	menu->setItemEnabled(idTrayAnswer, callAnswer->isEnabled());
-	menu->setItemEnabled(idTrayBye, callBye->isEnabled());
-	menu->setItemEnabled(idTrayReject, callReject->isEnabled());
-	menu->setItemEnabled(idTrayRedirect, callRedirect->isEnabled());
-	menu->setItemEnabled(idTrayTransfer, callTransfer->isEnabled());
-	menu->setItemEnabled(idTrayHold, callHold->isEnabled());
-	menu->setItemChecked(idTrayHold, callHold->isOn());
-	menu->setItemEnabled(idTrayMute, callMute->isEnabled());
-	menu->setItemChecked(idTrayMute, callMute->isOn());
-	menu->setItemEnabled(idTrayDtmf, callDTMF->isEnabled());
-	menu->setItemEnabled(idTrayRedial, callRedial->isEnabled());
-	
-	// Enable/disable system tray service menu items
-	menu->setItemChecked(idTrayDnd, phone->service.is_dnd_active());
-	menu->setItemChecked(idTraySrvRedirect, phone->service.is_cf_active());
-	menu->setItemChecked(
-			idTrayAutoAnswer, phone->service.is_auto_answer_active());
 #endif
+}
+
+// Update menu status based on the number of active users
+void MphoneForm::updateMenuStatus()
+{
+	// Some menu options should be toggle actions when there is only
+	// 1 user active, but they should be normal actions when there are
+	// multiple users.
+	disconnect(serviceDnd, 0, 0, 0);
+	disconnect(serviceAutoAnswer, 0, 0, 0);
+	if (phone->ref_users().size() == 1) {
+		t_service *srv = phone->ref_service(phone->ref_users().front());
+		
+		serviceDnd->setToggleAction(true);
+		serviceDnd->setOn(srv->is_dnd_active());
+		connect(serviceDnd, SIGNAL(toggled(bool)),
+			this, SLOT(srvDnd(bool)));
+		
+		serviceAutoAnswer->setToggleAction(true);
+		serviceAutoAnswer->setOn(srv->is_auto_answer_active());
+		connect(serviceAutoAnswer, SIGNAL(toggled(bool)),
+			this, SLOT(srvAutoAnswer(bool)));
+	} else {
+		serviceDnd->setOn(false);
+		serviceDnd->setToggleAction(false);
+		connect(serviceDnd, SIGNAL(activated()),
+			this, SLOT(srvDnd()));
+		
+		serviceAutoAnswer->setOn(false);
+		serviceAutoAnswer->setToggleAction(false);
+		connect(serviceAutoAnswer, SIGNAL(activated()),
+			this, SLOT(srvAutoAnswer()));
+	}
 }
 
 void MphoneForm::phoneRegister()
 {
-	((t_gui *)ui)->action_register();
+	t_gui *gui = (t_gui *)ui;
+	list<t_user *> user_list = phone->ref_users();
+	
+	if (user_list.size() > 1) {
+		if (selectUserForm) {
+			MEMMAN_DELETE(selectUserForm);
+			delete (selectUserForm);
+		}
+		
+		selectUserForm = new SelectUserForm(this, "register", true);
+		MEMMAN_NEW(selectUserForm);
+		
+		connect(selectUserForm, SIGNAL(selection(list<t_user *>)), this, 
+			SLOT(do_phoneRegister(list<t_user *>)));
+		selectUserForm->show(SELECT_REGISTER);
+	} else {
+		gui->action_register(user_list);
+	}
+}
+
+void MphoneForm::do_phoneRegister(list<t_user *> user_list)
+{
+	((t_gui *)ui)->action_register(user_list);
 }
 
 void MphoneForm::phoneDeregister()
 {
-	((t_gui *)ui)->action_deregister(false);
+	t_gui *gui = (t_gui *)ui;
+	list<t_user *> user_list = phone->ref_users();
+	
+	if (user_list.size() > 1) {
+		if (selectUserForm) {
+			MEMMAN_DELETE(selectUserForm);
+			delete (selectUserForm);
+		}
+		
+		selectUserForm = new SelectUserForm(this, "deregister", true);
+		MEMMAN_NEW(selectUserForm);
+		
+		connect(selectUserForm, SIGNAL(selection(list<t_user *>)), this, 
+			SLOT(do_phoneDeregister(list<t_user *>)));
+		selectUserForm->show(SELECT_DEREGISTER);
+	} else {
+		gui->action_deregister(user_list, false);
+	}
+}
+
+void MphoneForm::do_phoneDeregister(list<t_user *> user_list)
+{
+	((t_gui *)ui)->action_deregister(user_list, false);
 }
 
 void MphoneForm::phoneDeregisterAll()
 {
-	((t_gui *)ui)->action_deregister(true);
+	t_gui *gui = (t_gui *)ui;
+	list<t_user *> user_list = phone->ref_users();
+	
+	if (user_list.size() > 1) {
+		if (selectUserForm) {
+			MEMMAN_DELETE(selectUserForm);
+			delete (selectUserForm);
+		}
+		
+		selectUserForm = new SelectUserForm(this, "deregister all", true);
+		MEMMAN_NEW(selectUserForm);
+	
+		connect(selectUserForm, SIGNAL(selection(list<t_user *>)), this, 
+			SLOT(do_phoneDeregisterAll(list<t_user *>)));
+		selectUserForm->show(SELECT_DEREGISTER_ALL);
+	} else {
+		gui->action_deregister(user_list, true);
+	}
+}
+
+void MphoneForm::do_phoneDeregisterAll(list<t_user *> user_list)
+{
+	((t_gui *)ui)->action_deregister(user_list, true);
 }
 
 void MphoneForm::phoneShowRegistrations()
 {
-	((t_gui *)ui)->action_show_registrations();
+	list<t_user *> user_list = phone->ref_users();
+	((t_gui *)ui)->action_show_registrations(user_list);
 }
 
 
 // Show the semi-modal invite window
-void MphoneForm::phoneInvite(const QString &dest)
+void MphoneForm::phoneInvite(t_user * user_config, 
+		const QString &dest, const QString &subject)
 {
 	// Seize the line, so no incoming call can take the line
 	if (!((t_gui *)ui)->action_seize()) return;
@@ -639,25 +852,32 @@ void MphoneForm::phoneInvite(const QString &dest)
 	}
 	
 	connect(inviteForm, 
-		SIGNAL(destination(const QString &, const t_url &, const QString &)),
+		SIGNAL(destination(t_user *, const QString &, const t_url &, 
+				   const QString &)),
 		this, 
-		SLOT(do_phoneInvite(const QString &, const t_url &, const QString &)));
+		SLOT(do_phoneInvite(t_user *, const QString &, 
+				    const t_url &, const QString &)));
 	
-	inviteForm->show(dest);
+	inviteForm->show(user_config, dest, subject);
 	updateState();
+}
+
+void MphoneForm::phoneInvite(const QString &dest, const QString &subject)
+{
+	phoneInvite(NULL, "", "");
 }
 
 void MphoneForm::phoneInvite()
 {
-	phoneInvite("");
+	phoneInvite("", "");
 }
 
 // Execute the invite action. This slot is connected to the destination
 // signal of the invite window.
-void MphoneForm::do_phoneInvite(const QString &display, 
+void MphoneForm::do_phoneInvite(t_user *user_config, const QString &display, 
 			const t_url &destination, const QString &subject)
 {
-	((t_gui *)ui)->action_invite(destination, display.ascii(), subject.ascii());
+	((t_gui *)ui)->action_invite(user_config, destination, display.ascii(), subject.ascii());
 	updateState();
 }
 
@@ -666,9 +886,10 @@ void MphoneForm::phoneRedial(void)
 {
 	t_url url;
 	string display, subject;
+	t_user *user_config;
 	
-	if (!ui->get_last_call_info(url, display, subject)) return;
-	((t_gui *)ui)->action_invite(url, display, subject);
+	if (!ui->get_last_call_info(url, display, subject, &user_config)) return;
+	((t_gui *)ui)->action_invite(user_config, url, display, subject);
 	updateState();
 }
 
@@ -696,6 +917,9 @@ void MphoneForm::phoneReject()
 // Show the semi-modal redirect form
 void MphoneForm::phoneRedirect()
 {
+	int active_line = phone->get_active_line();
+	t_user *user_config = phone->get_line_user(active_line);
+	
 	if (redirectForm) {
 		MEMMAN_DELETE(redirectForm);
 		delete (redirectForm);
@@ -706,7 +930,7 @@ void MphoneForm::phoneRedirect()
 	connect(redirectForm, SIGNAL(destinations(const list<t_display_url> &)),
 		this, SLOT(do_phoneRedirect(const list<t_display_url> &)));
 	
-	redirectForm->show();
+	redirectForm->show(user_config);
 }
 
 // Execute the redirect action.
@@ -719,6 +943,9 @@ void MphoneForm::do_phoneRedirect(const list<t_display_url> &destinations)
 // Show the semi-modal call transfer window
 void MphoneForm::phoneTransfer()
 {
+	int active_line = phone->get_active_line();
+	t_user *user_config = phone->get_line_user(active_line);
+	
 	// Hold the call if setting in user profile indicates call hold
 	if (user_config->referrer_hold) {
 		phoneHold(true);
@@ -734,7 +961,7 @@ void MphoneForm::phoneTransfer()
 	connect(transferForm, SIGNAL(destination(const t_display_url &)),
 		this, SLOT(do_phoneTransfer(const t_display_url &)));
 	
-	transferForm->show();
+	transferForm->show(user_config);
 	updateState();
 }
 
@@ -784,17 +1011,17 @@ void MphoneForm::phoneTermCap()
 		delete (termCapForm);
 	}
 	
-	termCapForm = new TermCapForm(this, "redirect", true);
+	termCapForm = new TermCapForm(this, "termcap", true);
 	MEMMAN_NEW(termCapForm);
-	connect(termCapForm, SIGNAL(destination(const t_url &)),
-		this, SLOT(do_phoneTermCap(const t_url &)));
+	connect(termCapForm, SIGNAL(destination(t_user *, const t_url &)),
+		this, SLOT(do_phoneTermCap(t_user *, const t_url &)));
 	
 	termCapForm->show();
 }
 
-void MphoneForm::do_phoneTermCap(const t_url &destination)
+void MphoneForm::do_phoneTermCap(t_user *user_config, const t_url &destination)
 {
-	((t_gui *)ui)->action_options(destination);
+	((t_gui *)ui)->action_options(user_config, destination);
 }
 
 void MphoneForm::phoneDTMF()
@@ -833,15 +1060,75 @@ void MphoneForm::line2rbChangedState( bool on )
 	((t_gui *)ui)->action_activate_line(1);
 }
 
-void MphoneForm::srvDnd( bool on )
+// Enable/disable dnd when there is 1 user active
+void MphoneForm::srvDnd( bool on ) 
 {
-	((t_gui *)ui)->srv_dnd(on);
+	((t_gui *)ui)->srv_dnd(phone->ref_users(), on);
 	updateServicesStatus();
 }
 
-void MphoneForm::srvAutoAnswer( bool on )
+// Enable/disable dnd when there are multiple users active
+void MphoneForm::srvDnd()
 {
-	((t_gui *)ui)->srv_auto_answer(on);
+	if (selectUserForm) {
+		MEMMAN_DELETE(selectUserForm);
+		delete (selectUserForm);
+	}
+		
+	selectUserForm = new SelectUserForm(this, "dnd", true);
+	MEMMAN_NEW(selectUserForm);
+		
+	connect(selectUserForm, SIGNAL(selection(list<t_user *>)), this, 
+			SLOT(do_srvDnd_enable(list<t_user *>)));
+	connect(selectUserForm, SIGNAL(not_selected(list<t_user *>)), this, 
+			SLOT(do_srvDnd_disable(list<t_user *>)));
+			
+	selectUserForm->show(SELECT_DND);
+}
+
+void MphoneForm::do_srvDnd_enable(list<t_user *> user_list) {
+	((t_gui *)ui)->srv_dnd(user_list, true);
+	updateServicesStatus();
+}
+
+void MphoneForm::do_srvDnd_disable(list<t_user *> user_list) {
+	((t_gui *)ui)->srv_dnd(user_list, false);
+	updateServicesStatus();
+}
+
+// Enable/disable auto answer when there is 1 user active
+void MphoneForm::srvAutoAnswer( bool on ) 
+{
+	((t_gui *)ui)->srv_auto_answer(phone->ref_users(), on);
+	updateServicesStatus();
+}
+
+// Enable/disable auto answer when there are multiple users active
+void MphoneForm::srvAutoAnswer()
+{
+	if (selectUserForm) {
+		MEMMAN_DELETE(selectUserForm);
+		delete (selectUserForm);
+	}
+		
+	selectUserForm = new SelectUserForm(this, "auto answer", true);
+	MEMMAN_NEW(selectUserForm);
+		
+	connect(selectUserForm, SIGNAL(selection(list<t_user *>)), this, 
+			SLOT(do_srvAutoAnswer_enable(list<t_user *>)));
+	connect(selectUserForm, SIGNAL(not_selected(list<t_user *>)), this, 
+			SLOT(do_srvAutoAnswer_disable(list<t_user *>)));
+			
+	selectUserForm->show(SELECT_AUTO_ANSWER);
+}
+
+void MphoneForm::do_srvAutoAnswer_enable(list<t_user *> user_list) {
+	((t_gui *)ui)->srv_auto_answer(user_list, true);
+	updateServicesStatus();
+}
+
+void MphoneForm::do_srvAutoAnswer_disable(list<t_user *> user_list) {
+	((t_gui *)ui)->srv_auto_answer(user_list, false);
 	updateServicesStatus();
 }
 
@@ -851,11 +1138,13 @@ void MphoneForm::srvRedirect()
 		srvRedirectForm = new SrvRedirectForm(this, "call redirection", true);
 		MEMMAN_NEW(srvRedirectForm);
 		connect(srvRedirectForm, 
-			SIGNAL(destinations(const list<t_display_url> &,
+			SIGNAL(destinations(t_user *,
+					    const list<t_display_url> &,
 					    const list<t_display_url> &,
 					    const list<t_display_url> &)),
 			this, 
-			SLOT(do_srvRedirect(const list<t_display_url> &,
+			SLOT(do_srvRedirect(t_user *,
+					    const list<t_display_url> &,
 					    const list<t_display_url> &,
 					    const list<t_display_url> &)));
 	}
@@ -863,29 +1152,30 @@ void MphoneForm::srvRedirect()
 	srvRedirectForm->show();
 }
 
-void MphoneForm::do_srvRedirect(const list<t_display_url> &always, 
+void MphoneForm::do_srvRedirect(t_user *user_config,
+				const list<t_display_url> &always, 
 				const list<t_display_url> &busy,
 				const list<t_display_url> &noanswer)
 {
 	// Redirection always
 	if (always.empty()) {
-		((t_gui *)ui)->srv_disable_cf(CF_ALWAYS);
+		((t_gui *)ui)->srv_disable_cf(user_config, CF_ALWAYS);
 	} else {
-		((t_gui *)ui)->srv_enable_cf(CF_ALWAYS, always);
+		((t_gui *)ui)->srv_enable_cf(user_config, CF_ALWAYS, always);
 	}
 	
 	// Redirection busy
 	if (busy.empty()) {
-		((t_gui *)ui)->srv_disable_cf(CF_BUSY);
+		((t_gui *)ui)->srv_disable_cf(user_config, CF_BUSY);
 	} else {
-		((t_gui *)ui)->srv_enable_cf(CF_BUSY, busy);
+		((t_gui *)ui)->srv_enable_cf(user_config, CF_BUSY, busy);
 	}
 	
 	// Redirection no answer
 	if (noanswer.empty()) {
-		((t_gui *)ui)->srv_disable_cf(CF_NOANSWER);
+		((t_gui *)ui)->srv_disable_cf(user_config, CF_NOANSWER);
 	} else {
-		((t_gui *)ui)->srv_enable_cf(CF_NOANSWER, noanswer);
+		((t_gui *)ui)->srv_enable_cf(user_config, CF_NOANSWER, noanswer);
 	}
 	
 	updateServicesStatus();
@@ -916,22 +1206,22 @@ void MphoneForm::editUserProfile()
 		MEMMAN_NEW(userProfileForm);
 	
 		connect(userProfileForm, 
-			SIGNAL(sipUserChanged()),
+			SIGNAL(sipUserChanged(t_user *)),
 			this, 
-			SLOT(displayUser()));
-		
-		connect(userProfileForm, 
-			SIGNAL(rtpPortChanged()),
-			this, 
-			SLOT(updateRtpPorts()));
+			SLOT(displayUser(t_user *)));
 		
 		connect(userProfileForm,
-			SIGNAL(stunServerChanged()),
+			SIGNAL(authCredentialsChanged(t_user *, const string&)),
 			this,
-			SLOT(updateStunSettings()));
+			SLOT(updateAuthCache(t_user *, const string&)));
+		
+		connect(userProfileForm,
+			SIGNAL(stunServerChanged(t_user *)),
+			this,
+			SLOT(updateStunSettings(t_user *)));
 	}
 	
-	userProfileForm->show(true);
+	userProfileForm->show(phone->ref_users());
 }
 
 void MphoneForm::editSysSettings()
@@ -939,21 +1229,184 @@ void MphoneForm::editSysSettings()
 	if (!sysSettingsForm) {
 		sysSettingsForm = new SysSettingsForm(this, "system settings", true);
 		MEMMAN_NEW(sysSettingsForm);
+		connect(sysSettingsForm, SIGNAL(sipUdpPortChanged()),
+			this, SLOT(updateSipUdpPort()));
+		connect(sysSettingsForm, SIGNAL(rtpPortChanged()),
+			this, SLOT(updateRtpPorts()));
 	}
 	
 	sysSettingsForm->show();
 }
 
-void MphoneForm::displayUser()
+void MphoneForm::selectProfile()
+{
+	if (!selectProfileForm) {
+		selectProfileForm = new SelectProfileForm(this, "select profile", true);
+		MEMMAN_NEW(selectProfileForm);
+		connect(selectProfileForm, SIGNAL(selection(const list<string> &)),
+			this, SLOT(newUsers(const list<string> &)));
+	}
+	
+	selectProfileForm->showForm(this);
+}
+
+// A new set of users has been selected.
+// Remove users from the current user set that are not in the selection.
+// Add users from the selection that are not in the current set of users.
+void MphoneForm::newUsers(const list<string> &profiles)
+{
+	string error_msg;
+	
+	// NOTE: First users must be removed. It could be that a
+	// user profile of an active was renamed. In this case, the user 
+	// with the old profile name is first removed and then added again.
+	
+	list<t_user *> user_list = phone->ref_users();
+	
+	// Remove current users that are not selected anymore.
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		if (std::find(profiles.begin(), profiles.end(), 
+			      (*i)->get_filename().c_str()) == profiles.end())
+		{
+			// User is not selected anymore.
+			// Deregister user
+			if (phone->get_is_registered(*i)) {
+				phone->pub_registration(*i, REG_DEREGISTER);
+			}
+			
+			log_file->write_header("MphoneForm::newUsers");
+			log_file->write_raw("Stop user profile: ");
+			log_file->write_raw((*i)->get_profile_name());
+			log_file->write_endl();
+			log_file->write_footer();
+			phone->remove_phone_user(*(*i));
+		}
+	}
+	
+	// Determine which users to add
+	list<string> add_profile_list;
+	for (list<string>::const_iterator i = profiles.begin(); i != profiles.end(); i++) {
+		QString profile = (*i).c_str();
+		// Strip off the .cfg extension
+		profile.truncate(profile.length() - 4);
+		
+		if (!phone->ref_user_profile(profile.ascii())) {
+			add_profile_list.push_back(*i);
+		}
+	}
+	
+	// Add new phone users
+	QProgressDialog progress("Starting user profiles...", "Abort", add_profile_list.size(), this,
+				 "starting user profiles", true);
+	progress.setCaption(PRODUCT_NAME);
+	progress.setMinimumDuration(200);
+	int progressStep = 0;
+	for (list<string>::iterator i = add_profile_list.begin(); i != add_profile_list.end(); i++) {
+		progress.setProgress(progressStep);
+		qApp->processEvents();
+		
+		if (progress.wasCancelled()) {
+			log_file->write_report("User aborted startup of new users.", 
+					       "MphoneForm::newUsers");
+			break;
+		}
+		
+		t_user user_config;
+		
+		// Read user configuration
+		if (user_config.read_config(*i, error_msg)) {
+			t_user *dup_user;
+			
+			log_file->write_header("MphoneForm::newUsers");
+			log_file->write_raw("Run user profile: ");
+			log_file->write_raw(user_config.get_profile_name());
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			if (phone->add_phone_user(user_config, &dup_user))
+			{
+				// NAT discovery
+				if (user_config.use_stun &&
+				    !phone->stun_discover_nat(&user_config, error_msg)) 
+				{
+					// Warn user that the STUN settings will not work.
+					((t_gui *)ui)->cb_show_msg(this, error_msg, 
+							MSG_WARNING);
+				}
+				
+				// Register at startup
+				if (user_config.register_at_startup) {
+					phone->pub_registration(&user_config,
+						REG_REGISTER,
+						DUR_REGISTRATION(&user_config));
+				}
+			} else {
+				error_msg = "The following profiles are both for user ";
+				error_msg += user_config.name;
+				error_msg += '@';
+				error_msg += user_config.domain;
+				error_msg += ":\n\n";
+				error_msg += user_config.get_profile_name();
+				error_msg += "\n";
+				error_msg += dup_user->get_profile_name();
+				error_msg += "\n\n";
+				error_msg += "You can only run multiple profiles ";
+				error_msg += "for different users.";
+				
+				log_file->write_report(error_msg,
+					"MphoneForm::newUsers", 
+					LOG_NORMAL, LOG_WARNING);
+				ui->cb_display_msg(error_msg, MSG_WARNING);
+			}
+		} else {
+			log_file->write_report(error_msg,
+					"MphoneForm::newUsers", 
+					LOG_NORMAL, LOG_CRITICAL);
+			ui->cb_display_msg(error_msg, MSG_CRITICAL);
+		}
+		
+		progressStep++;
+	}
+	progress.setProgress(add_profile_list.size());
+	
+	displayUser(phone->ref_users().front());
+	updateRegStatus();
+	updateServicesStatus();
+	updateSysTrayStatus();
+	updateMenuStatus();
+	updateState();
+}
+
+void MphoneForm::displayUser(t_user *user_config)
 {
 	QString s;
+	QString toolTip;
 	
-	s = user_config->display.c_str();
-	if (s != "") s.append(' ');
-	s.append("<sip:").append(user_config->name.c_str());
-	s.append('@').append(user_config->domain.c_str()).append(">");
+	list<t_user *> user_list = phone->ref_users();
+	if (user_list.size() == 1) {
+		s = user_config->get_display_uri().c_str();
+		toolTip = s;
+	} else {
+		s = "Multiple users";
+		
+		// Tool tip shows all users
+		for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+			toolTip += (*i)->get_display_uri().c_str();
+			toolTip += "\n";
+		}
+	}
+	
 	userTextLabel->setText(s);
 	userTextLabel->setCursorPosition(0);
+	QToolTip::add(userTextLabel, toolTip);
+}
+
+void MphoneForm::updateSipUdpPort()
+{
+	((t_gui *)ui)->cb_show_msg(sysSettingsForm,
+			"You have changed the SIP UDP port. This setting will only become "\
+			"active when you restart Twinkle.",
+			MSG_INFO);
 }
 
 void MphoneForm::updateRtpPorts()
@@ -961,18 +1414,23 @@ void MphoneForm::updateRtpPorts()
 	phone->init_rtp_ports();
 }
 
-void MphoneForm::updateStunSettings()
+void MphoneForm::updateStunSettings(t_user *user_config)
 {
 	if (user_config->use_stun) {
 		string s;
-		if (!stun_discover_nat(s)) {
+		if (!phone->stun_discover_nat(user_config, s)) {
 			// Warn user that the STUN settings will not work.
 			((t_gui *)ui)->cb_show_msg(this, s, MSG_WARNING);
 		}
 	} else {
 		// Disable STUN
-		phone->use_stun = false;
+		phone->disable_stun(user_config);
 	}
+}
+
+void MphoneForm::updateAuthCache(t_user *user_config, const string &realm)
+{
+	phone->remove_cached_credentials(user_config, realm);
 }
 
 void MphoneForm::viewLog()
@@ -998,8 +1456,8 @@ void MphoneForm::viewHistory()
 	}
 	
 	connect(historyForm, 
-		SIGNAL(call(const QString &)), this,  
-		SLOT(phoneInvite(const QString &)));
+		SIGNAL(call(t_user *, const QString &, const QString &)), this,  
+		SLOT(phoneInvite(t_user *, const QString &, const QString &)));
 	
 	historyForm->show();
 }

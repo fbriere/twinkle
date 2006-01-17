@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>740</width>
-            <height>678</height>
+            <height>653</height>
         </rect>
     </property>
     <property name="caption">
@@ -19,88 +19,7 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
-        <widget class="QListBox" row="0" column="0">
-            <item>
-                <property name="text">
-                    <string>User</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>penguin.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>SIP server</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>package_network.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>RTP audio</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>kmix.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>SIP protocol</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>package_system.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>NAT</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>yast_babelfish.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Address format</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>yast_PhoneTTOffhook.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Timers</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>clock.png</pixmap>
-                </property>
-            </item>
-            <property name="name">
-                <cstring>categoryListBox</cstring>
-            </property>
-            <property name="sizePolicy">
-                <sizepolicy>
-                    <hsizetype>1</hsizetype>
-                    <vsizetype>7</vsizetype>
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                </sizepolicy>
-            </property>
-            <property name="minimumSize">
-                <size>
-                    <width>150</width>
-                    <height>0</height>
-                </size>
-            </property>
-            <property name="midLineWidth">
-                <number>0</number>
-            </property>
-            <property name="whatsThis" stdset="0">
-                <string>Select a category for which you want to see or modify the settings.</string>
-            </property>
-        </widget>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+        <widget class="QLayoutWidget" row="2" column="0" rowspan="1" colspan="2">
             <property name="name">
                 <cstring>layout12</cstring>
             </property>
@@ -158,7 +77,7 @@
                 </widget>
             </hbox>
         </widget>
-        <widget class="QWidgetStack" row="0" column="1">
+        <widget class="QWidgetStack" row="1" column="1">
             <property name="name">
                 <cstring>settingsWidgetStack</cstring>
             </property>
@@ -459,7 +378,7 @@ This field is mandatory.</string>
                                     <cstring>registrarLineEdit</cstring>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>The hostname or IP address of your registrar. If you use an outbound proxy that is the same as your registrar, then you may leave this field empty and only fill in the address of the outbound proxy.</string>
+                                    <string>The hostname, domain name or IP address of your registrar. If you use an outbound proxy that is the same as your registrar, then you may leave this field empty and only fill in the address of the outbound proxy.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="1" column="0">
@@ -619,7 +538,7 @@ This field is mandatory.</string>
                                     <bool>true</bool>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>The hostname or IP address of your outbound proxy.</string>
+                                    <string>The hostname, domain name or IP address of your outbound proxy.</string>
                                 </property>
                             </widget>
                         </grid>
@@ -679,73 +598,6 @@ This field is mandatory.</string>
                         <property name="indent">
                             <number>10</number>
                         </property>
-                    </widget>
-                    <widget class="QGroupBox">
-                        <property name="name">
-                            <cstring>audioNetworkGroupBox</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Network</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QLabel">
-                                <property name="name">
-                                    <cstring>rtpPortTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;RTP port:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>rtpPortSpinBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QSpinBox">
-                                <property name="name">
-                                    <cstring>rtpPortSpinBox</cstring>
-                                </property>
-                                <property name="minimumSize">
-                                    <size>
-                                        <width>80</width>
-                                        <height>0</height>
-                                    </size>
-                                </property>
-                                <property name="maximumSize">
-                                    <size>
-                                        <width>32767</width>
-                                        <height>32767</height>
-                                    </size>
-                                </property>
-                                <property name="maxValue">
-                                    <number>65535</number>
-                                </property>
-                                <property name="minValue">
-                                    <number>1025</number>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (eg. 8004) is also used.</string>
-                                </property>
-                            </widget>
-                            <spacer>
-                                <property name="name">
-                                    <cstring>spacer15</cstring>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                                <property name="sizeType">
-                                    <enum>Expanding</enum>
-                                </property>
-                                <property name="sizeHint">
-                                    <size>
-                                        <width>280</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </hbox>
                     </widget>
                     <widget class="QGroupBox">
                         <property name="name">
@@ -1288,81 +1140,6 @@ This field is mandatory.</string>
                             <number>10</number>
                         </property>
                     </widget>
-                    <widget class="QGroupBox" row="1" column="0" rowspan="1" colspan="2">
-                        <property name="name">
-                            <cstring>sipNetworkGroupBox</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Network</string>
-                        </property>
-                        <hbox>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QLabel">
-                                <property name="name">
-                                    <cstring>sipUdpPortTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;SIP UDP port:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>sipUdpPortSpinBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QSpinBox">
-                                <property name="name">
-                                    <cstring>sipUdpPortSpinBox</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>1</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="minimumSize">
-                                    <size>
-                                        <width>90</width>
-                                        <height>0</height>
-                                    </size>
-                                </property>
-                                <property name="maximumSize">
-                                    <size>
-                                        <width>32767</width>
-                                        <height>32767</height>
-                                    </size>
-                                </property>
-                                <property name="maxValue">
-                                    <number>65535</number>
-                                </property>
-                                <property name="minValue">
-                                    <number>1025</number>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>The UDP port used for sending and receiving SIP messages. This setting can only be changed when you have started the user profile from the "select user profile" dialog, i.e. before running it.</string>
-                                </property>
-                            </widget>
-                            <spacer>
-                                <property name="name">
-                                    <cstring>spacer18</cstring>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                                <property name="sizeType">
-                                    <enum>Expanding</enum>
-                                </property>
-                                <property name="sizeHint">
-                                    <size>
-                                        <width>310</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </hbox>
-                    </widget>
                     <spacer row="5" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>spacer39</cstring>
@@ -1874,7 +1651,7 @@ When you choose this option you have to create static address mappings in your N
                                     <cstring>stunServerLineEdit</cstring>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>The hostname or IP address of the STUN server.</string>
+                                    <string>The hostname, domain name or IP address of the STUN server.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="2" column="0">
@@ -2220,6 +1997,118 @@ When you choose this option you have to create static address mappings in your N
                 </vbox>
             </widget>
         </widget>
+        <widget class="QListBox" row="1" column="0">
+            <item>
+                <property name="text">
+                    <string>User</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>penguin.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>SIP server</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>package_network.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>RTP audio</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>kmix.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>SIP protocol</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>package_system.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>NAT</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>yast_babelfish.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Address format</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>yast_PhoneTTOffhook.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Timers</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>clock.png</pixmap>
+                </property>
+            </item>
+            <property name="name">
+                <cstring>categoryListBox</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>1</hsizetype>
+                    <vsizetype>7</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>150</width>
+                    <height>0</height>
+                </size>
+            </property>
+            <property name="midLineWidth">
+                <number>0</number>
+            </property>
+            <property name="whatsThis" stdset="0">
+                <string>Select a category for which you want to see or modify the settings.</string>
+            </property>
+        </widget>
+        <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout142</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>profileTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>User profile:</string>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <property name="name">
+                        <cstring>profileComboBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
     </grid>
 </widget>
 <connections>
@@ -2319,6 +2208,12 @@ When you choose this option you have to create static address mappings in your N
         <receiver>refereeHoldCheckBox</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
+    <connection>
+        <sender>profileComboBox</sender>
+        <signal>activated(const QString&amp;)</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>changeProfile(const QString&amp;)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
@@ -2336,7 +2231,6 @@ When you choose this option you have to create static address mappings in your N
     <tabstop>proxyLineEdit</tabstop>
     <tabstop>allRequestsCheckBox</tabstop>
     <tabstop>proxyNonResolvableCheckBox</tabstop>
-    <tabstop>rtpPortSpinBox</tabstop>
     <tabstop>codec1ComboBox</tabstop>
     <tabstop>codec2ComboBox</tabstop>
     <tabstop>codec3ComboBox</tabstop>
@@ -2345,7 +2239,6 @@ When you choose this option you have to create static address mappings in your N
     <tabstop>dtmfDurationSpinBox</tabstop>
     <tabstop>dtmfPauseSpinBox</tabstop>
     <tabstop>dtmfVolumeSpinBox</tabstop>
-    <tabstop>sipUdpPortSpinBox</tabstop>
     <tabstop>holdVariantComboBox</tabstop>
     <tabstop>maxForwardsCheckBox</tabstop>
     <tabstop>missingContactCheckBox</tabstop>
@@ -2387,16 +2280,24 @@ When you choose this option you have to create static address mappings in your N
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">userprofileform.ui.h</include>
 </includes>
+<variables>
+    <variable access="private">list&lt;t_user *&gt; profile_list;</variable>
+    <variable access="private">int current_profile_idx;</variable>
+    <variable access="private">t_user *current_profile;</variable>
+</variables>
 <signals>
-    <signal>sipUserChanged()</signal>
-    <signal>rtpPortChanged()</signal>
-    <signal>stunServerChanged()</signal>
+    <signal>stunServerChanged(t_user *)</signal>
+    <signal>authCredentialsChanged(t_user *, const string &amp;)</signal>
+    <signal>sipUserChanged(t_user *)</signal>
+    <signal>success()</signal>
 </signals>
 <slots>
     <slot>showCategory( QListBoxItem * item )</slot>
-    <slot>populate( bool isRunning )</slot>
-    <slot>show( bool isRunning )</slot>
+    <slot>populate()</slot>
+    <slot>initProfileList( list&lt;t_user *&gt; profiles )</slot>
+    <slot>show( list&lt;t_user *&gt; profiles )</slot>
     <slot>validate()</slot>
+    <slot>changeProfile( const QString &amp; profileName )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
@@ -2404,7 +2305,8 @@ When you choose this option you have to create static address mappings in your N
     <function returnType="short">indexComboItem2codec( int index )</function>
     <function returnType="int">ext_support2indexComboItem( t_ext_support ext )</function>
     <function returnType="t_ext_support">indexComboItem2ext_support( int index )</function>
-    <function returnType="int">exec()</function>
+    <function returnType="int">exec( list&lt;t_user *&gt; profiles )</function>
+    <function returnType="bool">validateValues()</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,11 +25,16 @@
 #include <iostream>
 #include <list>
 #include "log.h"
+#include "phone.h"
 #include "user.h"
 #include "util.h"
 #include "protocol.h"
+#include "audits/memman.h"
 #include "sdp/sdp.h"
 #include "parser/parse_ctrl.h"
+#include "parser/request.h"
+
+extern t_phone		*phone;
 
 // Field names in the config file
 // USER fields
@@ -50,7 +55,6 @@
 #define FLD_REGISTER_AT_STARTUP		"register_at_startup"
 
 // AUDIO fields
-#define FLD_RTP_PORT			"rtp_port"
 #define FLD_CODECS			"codecs"
 #define FLD_PTIME			"ptime"
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
@@ -59,7 +63,6 @@
 #define FLD_DTMF_VOLUME			"dtmf_volume"
 
 // SIP PROTOCOL fields
-#define FLD_SIP_UDP_PORT		"sip_udp_port"
 #define FLD_HOLD_VARIANT		"hold_variant"
 #define FLD_CHECK_MAX_FORWARDS		"check_max_forwards"
 #define FLD_ALLOW_MISSING_CONTACT_REG	"allow_missing_contact_reg"	
@@ -136,13 +139,11 @@ string t_user::expand_filename(const string &filename) {
 
 t_user::t_user() {
 	// Set defaults
-	sip_udp_port = 5060;
 	use_outbound_proxy = false;
 	all_requests_to_proxy = false;
 	non_resolvable_to_proxy = false;
 	use_registrar = false;
 	registration_time = 3600;
-	rtp_port = 8000;
 	codecs.push_back(SDP_FORMAT_G711_ALAW);
 	codecs.push_back(SDP_FORMAT_G711_ULAW);
 	codecs.push_back(SDP_FORMAT_GSM);
@@ -172,6 +173,12 @@ t_user::t_user() {
 	allow_refer = true;
 	ask_user_to_refer = true;
 	auto_refresh_refer_sub = false;
+}
+
+t_user *t_user::copy(void) const {
+	t_user *u = new t_user(*this);
+	MEMMAN_NEW(u);
+	return u;
 }
 
 bool t_user::read_config(const string &filename, string &error_msg) {
@@ -237,9 +244,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		string parameter = trim(l.front());
 		string value = trim(l.back());
 		
-		if (parameter == FLD_SIP_UDP_PORT) {
-			sip_udp_port = atoi(value.c_str());
-		} else if (parameter == FLD_NAME) {
+		if (parameter == FLD_NAME) {
 			name = value;
 		} else if (parameter == FLD_DOMAIN) {
 			domain = value;
@@ -300,8 +305,6 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			auth_name = value;
 		} else if (parameter == FLD_AUTH_PASS) {
 			auth_pass = value;
-		} else if (parameter == FLD_RTP_PORT) {
-			rtp_port = atoi(value.c_str());
 		} else if (parameter == FLD_CODECS) {
 			list<string> l = split(value, ',');
 			if (l.size() > 0) codecs.clear();
@@ -419,7 +422,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
 				LOG_NORMAL, LOG_WARNING);
-			log_file->write_raw("Unknown paramter in user profile: ");
+			log_file->write_raw("Unknown parameter in user profile: ");
 			log_file->write_raw(parameter);
 			log_file->write_endl();
 			log_file->write_footer();
@@ -517,7 +520,6 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 
 	// Write AUDIO settings
 	config << "# RTP AUDIO\n";
-	config << FLD_RTP_PORT << '=' << rtp_port << endl;
 	config << FLD_CODECS << '=';
 	for (list<unsigned short>::iterator i = codecs.begin();
 	     i != codecs.end(); i++)
@@ -547,7 +549,6 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 
 	// Write SIP PROTOCOL settings
 	config << "# SIP PROTOCOL\n";
-	config << FLD_SIP_UDP_PORT << '=' << sip_udp_port << endl;
 	config << FLD_HOLD_VARIANT << '=';
 	switch(hold_variant) {
 	case HOLD_RFC2543:
@@ -645,4 +646,96 @@ string t_user::get_profile_name(void) const {
 	if (pos_ext == string::npos) return config_filename;
 
 	return config_filename.substr(0, pos_ext);
+}
+
+string t_user::get_contact_name(void) const {
+	string s = name;
+	s += '.';
+	s += domain;
+
+	return s;
+}
+
+string t_user::get_display_uri(void) const {
+	string s;
+	
+	s = display;
+	if (!s.empty()) s += ' ';
+	s += '<';
+	s += USER_SCHEME;
+	s += ':';
+	s += name;
+	s += '@';
+	s += domain;
+	s += '>';
+	
+	return s;
+}
+
+bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
+	bool all_supported = true;
+
+	unsupported.clear();
+	if (!r->hdr_require.is_populated()) return true;
+
+	for (list<string>::iterator i = r->hdr_require.features.begin();
+	     i != r->hdr_require.features.end(); i++)
+	{
+		if (*i == EXT_100REL) {
+			if (ext_100rel != EXT_DISABLED) continue;
+		}
+
+		// Extension is not supported
+		unsupported.push_back(*i);
+		all_supported = false;
+	}
+
+	return all_supported;
+}
+
+string t_user::create_user_contact(void) {
+	string s;
+
+	s = USER_SCHEME;
+	s += ':';
+	s += get_contact_name();
+	s += '@';
+	s += USER_HOST(this);
+
+	if (PUBLIC_SIP_UDP_PORT(this) != get_default_port(USER_SCHEME)) {
+		s += ':';
+		s += int2str(PUBLIC_SIP_UDP_PORT(this));
+	}
+
+	if (numerical_user_is_phone &&
+	    t_url::looks_like_phone(name))
+	{
+		// RFC 3261 19.1.1
+		// If the URI contains a telephone number it SHOULD contain
+		// the user=phone parameter.
+		s += ";user=phone";
+	}
+
+	return s;
+}
+
+string t_user::create_user_uri(void) {
+	string s;
+
+	s = USER_SCHEME;
+	s += ':';
+	s += name;
+	s += '@';
+	s += domain;
+
+	if (numerical_user_is_phone &&
+	    t_url::looks_like_phone(name))
+	{
+		// RFC 3261 19.1.1
+		// If the URI contains a telephone number it SHOULD contain
+		// the user=phone parameter.
+		s += ";user=phone";
+	}
+
+	return s;
 }

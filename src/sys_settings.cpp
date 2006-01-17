@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,9 @@
 #define FLD_DEV_SPEAKER		"dev_speaker"
 #define FLD_DEV_MIC		"dev_mic"
 #define FLD_AU_REDUCE_NOISE_MIC	"au_reduce_noise_mic"
+#define FLD_ALSA_PLAY_PERIOD_SIZE	"alsa_play_period_size"
+#define FLD_ALSA_CAPTURE_PERIOD_SIZE	"alsa_capture_period_size"
+#define FLD_OSS_FRAGMENT_SIZE	"oss_fragment_size"
 
 // LOG fields
 #define FLD_LOG_MAX_SIZE	"log_max_size"
@@ -64,6 +67,10 @@
 #define FLD_START_USER_PROFILE	"start_user_profile"
 #define FLD_START_USER_HOST	"start_user_host"
 #define FLD_START_HIDDEN	"start_hidden"
+
+// Network settings
+#define FLD_SIP_UDP_PORT	"sip_udp_port"
+#define FLD_RTP_PORT		"rtp_port"
 
 string t_audio_device::get_description(void) const {
 	string s = device;
@@ -122,6 +129,9 @@ t_sys_settings::t_sys_settings() {
 	dev_speaker = audio_device();
 	dev_mic = audio_device();
 	au_reduce_noise_mic = true;
+	alsa_play_period_size = 128;
+	alsa_capture_period_size = 32;
+	oss_fragment_size = 128;
 	
 	log_max_size = 5;
 	log_show_sip = true;
@@ -136,9 +146,13 @@ t_sys_settings::t_sys_settings() {
 	
 	ch_max_size = 50;
 	
-	start_user_profile.clear();
+	start_user_profiles.clear();
 	start_user_host.clear();
 	start_hidden = false;
+	
+	config_sip_udp_port = 5060;
+	active_sip_udp_port = 0;
+	rtp_port = 8000;
 }
 
 string t_sys_settings::about(bool html) const {
@@ -150,7 +164,7 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "Copyright (C) 2005  ";
+	s += "Copyright (C) 2005-2006  ";
 	s += PRODUCT_AUTHOR;
 	if (html) s += "<BR>";
 	s += "\n";
@@ -186,8 +200,13 @@ string t_sys_settings::about(bool html) const {
 	s += "* Parts of the STUN project at http://sourceforge.net/projects/stun";
 	if (html) s += "<BR>";
 	s += "\n";
+	
+	s += "* Parts of libsrv at http://libsrv.sourceforge.net/";
 	if (html) s += "<BR>";
-	s += "\n";	
+	s += "\n";
+	
+	if (html) s += "<BR>";
+	s += "\n";
 	
 	s += "For RTP the following dynamic libraries are linked:";
 	if (html) s += "<BR>";
@@ -371,7 +390,6 @@ bool t_sys_settings::read_config(string &error_msg) {
 	
 	// Check if config file exists
 	if (stat(filename.c_str(), &stat_buf) != 0) {
-		// There is no config file. Default settings will be used.
 		return true;
 	}
 	
@@ -423,6 +441,12 @@ bool t_sys_settings::read_config(string &error_msg) {
 			dev_mic = audio_device(value);
 		} else if (parameter == FLD_AU_REDUCE_NOISE_MIC) {
 			au_reduce_noise_mic = yesno2bool(value);
+		} else if (parameter == FLD_ALSA_PLAY_PERIOD_SIZE) {
+			alsa_play_period_size = atoi(value.c_str());
+		} else if (parameter == FLD_ALSA_CAPTURE_PERIOD_SIZE) {
+			alsa_capture_period_size = atoi(value.c_str());
+		} else if (parameter == FLD_OSS_FRAGMENT_SIZE) {
+			oss_fragment_size = atoi(value.c_str());
 		} else if (parameter == FLD_LOG_MAX_SIZE) {
 			log_max_size = atoi(value.c_str());
 		} else if (parameter == FLD_LOG_SHOW_SIP) {
@@ -442,11 +466,15 @@ bool t_sys_settings::read_config(string &error_msg) {
 		} else if (parameter == FLD_CH_MAX_SIZE) {
 			ch_max_size = atoi(value.c_str());
 		} else if (parameter == FLD_START_USER_PROFILE) {
-			start_user_profile = value;
+			if (!value.empty()) start_user_profiles.push_back(value);
 		} else if (parameter == FLD_START_USER_HOST) {
 			start_user_host = value;
 		} else if (parameter == FLD_START_HIDDEN) {
 			start_hidden = yesno2bool(value);
+		} else if (parameter == FLD_SIP_UDP_PORT) {
+			config_sip_udp_port = atoi(value.c_str());
+		} else if (parameter == FLD_RTP_PORT) {
+			rtp_port = atoi(value.c_str());
 		}
 		// Unknown field names are skipped.
 	}
@@ -487,6 +515,9 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_DEV_SPEAKER << '=' << dev_speaker.get_settings_value() << endl;
 	config << FLD_DEV_MIC << '=' << dev_mic.get_settings_value() << endl;
 	config << FLD_AU_REDUCE_NOISE_MIC << '=' << bool2yesno(au_reduce_noise_mic) << endl;
+	config << FLD_ALSA_PLAY_PERIOD_SIZE << '=' << alsa_play_period_size << endl;
+	config << FLD_ALSA_CAPTURE_PERIOD_SIZE << '=' << alsa_capture_period_size << endl;
+	config << FLD_OSS_FRAGMENT_SIZE << '=' << oss_fragment_size << endl;
 	config << endl;
 	
 	// Write LOG settings
@@ -516,9 +547,20 @@ bool t_sys_settings::write_config(string &error_msg) {
 	
 	// Write startup settings
 	config << "# Startup\n";
-	config << FLD_START_USER_PROFILE << '=' << start_user_profile << endl;
+	
+	for (list<string>::iterator i = start_user_profiles.begin();
+	     i != start_user_profiles.end(); i++)
+	{
+		config << FLD_START_USER_PROFILE << '=' << *i << endl;
+	}
 	config << FLD_START_USER_HOST << '=' << start_user_host << endl;
 	config << FLD_START_HIDDEN << '=' << bool2yesno(start_hidden) << endl;
+	config << endl;
+	
+	// Write network settings
+	config << "# Network\n";
+	config << FLD_SIP_UDP_PORT << '=' << config_sip_udp_port << endl;
+	config << FLD_RTP_PORT << '=' << rtp_port << endl;
 	config << endl;
 	
 	// Check if writing succeeded
@@ -697,4 +739,14 @@ t_audio_device t_sys_settings::audio_device(string device) {
 	}
 	
 	return d;	
+}
+
+unsigned short t_sys_settings::get_sip_udp_port(void) {
+	// The configured port becomes the active port after first
+	// usage of the port.
+	if (!active_sip_udp_port) {
+		active_sip_udp_port = config_sip_udp_port;
+	}
+	
+	return active_sip_udp_port;
 }

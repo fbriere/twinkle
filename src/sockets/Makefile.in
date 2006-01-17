@@ -54,8 +54,8 @@ AR = ar
 ARFLAGS = cru
 libsocket_a_AR = $(AR) $(ARFLAGS)
 libsocket_a_LIBADD =
-am_libsocket_a_OBJECTS = interfaces.$(OBJEXT) socket.$(OBJEXT) \
-	url.$(OBJEXT)
+am_libsocket_a_OBJECTS = dnssrv.$(OBJEXT) interfaces.$(OBJEXT) \
+	socket.$(OBJEXT) url.$(OBJEXT)
 libsocket_a_OBJECTS = $(am_libsocket_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -294,10 +294,18 @@ xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
 INCLUDES = -I $(top_builddir)/src -I $(includedir)
 noinst_LIBRARIES = libsocket.a
+
+#noinst_PROGRAMS = srvinfo
+#srvinfo_SOURCES = srvinfo.cpp
+#srvinfo_LDADD = $(top_builddir)/src/util.o\
+#	$(top_builddir)/src/sockets/libsocket.a\
+#	-lresolv
 libsocket_a_SOURCES = \
+	dnssrv.cpp\
         interfaces.cpp\
         socket.cpp\
         url.cpp\
+        dnssrv.h\
         interfaces.h\
         socket.h\
         url.h
@@ -349,6 +357,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssrv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interfaces.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url.Po@am__quote@

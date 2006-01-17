@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,9 +37,10 @@ bool t_redirector::contact_already_added(const t_contact_param contact) const {
 	return false;
 }
 
-t_redirector::t_redirector(const t_url &_org_dest) {
+t_redirector::t_redirector(const t_url &_org_dest, int _max_redirections) {
 	num_contacts = 0;
 	org_dest = _org_dest;
+	max_redirections = _max_redirections;
 }
 
 bool t_redirector::get_next_contact(t_contact_param &contact) {
@@ -53,7 +54,7 @@ bool t_redirector::get_next_contact(t_contact_param &contact) {
 }
 
 void t_redirector::add_contacts(const list<t_contact_param> &contacts) {
-	if (num_contacts >= MAX_REDIRECTIONS) return;
+	if (num_contacts >= max_redirections) return;
 
 	list<t_contact_param> l = contacts;
 	l.sort();
@@ -63,7 +64,7 @@ void t_redirector::add_contacts(const list<t_contact_param> &contacts) {
 			try_contacts.push_back(*i);
 			num_contacts++;
 
-			if (num_contacts >= MAX_REDIRECTIONS) break;
+			if (num_contacts >= max_redirections) break;
 		}
 	}
 }

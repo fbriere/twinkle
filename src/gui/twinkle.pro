@@ -3,7 +3,9 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv
+
+DEFINES	+= QT_NO_STL
 
 INCLUDEPATH	+= ..
 
@@ -31,7 +33,8 @@ FORMS	= mphoneform.ui \
 	logviewform.ui \
 	wizardform.ui \
 	getaddressform.ui \
-	historyform.ui
+	historyform.ui \
+	selectuserform.ui
 
 IMAGES	= images/filenew \
 	images/fileopen \
@@ -123,7 +126,8 @@ IMAGES	= images/filenew \
 	images/sys_hold.png \
 	images/sys_hold_dis.png \
 	images/sys_mute.png \
-	images/sys_mute_dis.png
+	images/sys_mute_dis.png \
+	images/network.png
 
 unix {
   UI_DIR = .ui

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,8 +78,8 @@ public:
 	virtual ~t_transaction_layer() {};
 
 	// Client primitives
-	void send_request(t_request *r, t_tuid tuid);
-	void send_request(StunMessage *r, t_tuid tuid);
+	void send_request(t_user *user_config, t_request *r, t_tuid tuid);
+	void send_request(t_user *user_config, StunMessage *r, t_tuid tuid);
 
 	// Server primitives
 	void send_response(t_response *r, t_tuid tuid, t_tid tid);

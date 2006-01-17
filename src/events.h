@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "timekeeper.h"
 #include "stun/stun.h"
 #include "parser/sip_message.h"
+#include "sockets/socket.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
 
@@ -41,6 +42,7 @@ enum t_event_type {
 	EV_STUN_REQUEST,	// Outgoing STUN request
 	EV_STUN_RESPONSE,	// Received STUN response
 	EV_NAT_KEEPALIVE,	// Send a NAT keep alive packet
+	EV_ICMP,		// ICMP error
 };
 
 ///////////////////////////////////////////////////////////////
@@ -86,11 +88,13 @@ private:
 	// Only set if tid is a CANCEL transaction and the event
 	// is sent towards the user.
 	unsigned short	tid_cancel_target;
+	
+	t_user		*user_config;
 
 public:
-	t_event_user(t_sip_message *m, unsigned short _tuid,
+	t_event_user(t_user *u, t_sip_message *m, unsigned short _tuid,
 		unsigned short _tid);
-	t_event_user(t_sip_message *m, unsigned short _tuid,
+	t_event_user(t_user *u, t_sip_message *m, unsigned short _tuid,
 		unsigned short _tid, unsigned short _tid_cancel_target);
 	~t_event_user();
 	t_event_type get_type(void) const;
@@ -98,6 +102,7 @@ public:
 	unsigned short get_tuid(void) const;
 	unsigned short get_tid(void) const;
 	unsigned short get_tid_cancel_target(void) const;
+	t_user *get_user_config(void) const;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -213,6 +218,7 @@ private:
 	unsigned short		tuid;		// transaction user id
 	unsigned short		tid;		// transaction id
 	t_stun_event_type	stun_event_type;
+	t_user			*user_config;
 
 public:
 	// Address and ports are in host order
@@ -220,7 +226,7 @@ public:
 	unsigned short	dst_port;
 	unsigned short	src_port;	// Src port for media
 
-	t_event_stun_request(StunMessage *m, t_stun_event_type ev_type,
+	t_event_stun_request(t_user *u, StunMessage *m, t_stun_event_type ev_type,
 		unsigned short _tuid, unsigned short _tid);
 	~t_event_stun_request();
 	t_event_type get_type(void) const;
@@ -228,6 +234,7 @@ public:
 	unsigned short get_tuid(void) const;
 	unsigned short get_tid(void) const;
 	t_stun_event_type get_stun_event_type(void) const;
+	t_user *get_user_config(void) const;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -261,6 +268,19 @@ public:
 	t_event_type get_type(void) const;
 };
 
+///////////////////////////////////////////////////////////////
+// ICMP error
+///////////////////////////////////////////////////////////////
+class t_event_icmp : public t_event {
+private:
+	// ICMP message
+	t_icmp_msg	icmp;
+
+public:
+	t_event_icmp(const t_icmp_msg &m);
+	t_event_type get_type(void) const;
+	t_icmp_msg get_icmp(void) const;
+};
 
 ///////////////////////////////////////////////////////////////
 // Event queue
@@ -292,10 +312,14 @@ public:
 		unsigned short port);
 
 	// Create a user event and push it into the queue
+	void push_user(t_user *user_config, t_sip_message *m, unsigned short tuid,
+		unsigned short tid);
 	void push_user(t_sip_message *m, unsigned short tuid,
 		unsigned short tid);
 
 	// Create a cancel event for a user
+	void push_user_cancel(t_user *user_config, t_sip_message *m, unsigned short tuid,
+		unsigned short tid, unsigned short target_tid);
 	void push_user_cancel(t_sip_message *m, unsigned short tuid,
 		unsigned short tid, unsigned short target_tid);
 
@@ -320,7 +344,7 @@ public:
 	
 	// Create a STUN request event
 	// The src_port should only be set for media STUN requests
-	void push_stun_request(StunMessage *m, t_stun_event_type ev_type,
+	void push_stun_request(t_user *user_config, StunMessage *m, t_stun_event_type ev_type,
 		unsigned short tuid, unsigned short tid,
 		unsigned long ipaddr, unsigned short port, unsigned short src_port = 0);
 		
@@ -330,6 +354,9 @@ public:
 		
 	// Create a NAT keepalive event
 	void push_nat_keepalive(unsigned long ipaddr, unsigned short port);
+	
+	// Create ICMP event
+	void push_icmp(const t_icmp_msg &m);
 
 	// Pop an event from the queue. If the queue is empty
 	// then the thread will be blocked until an event arrives.

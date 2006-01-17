@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include "dialog.h"
 #include "phone.h"
 #include "protocol.h"
+#include "user.h"
 #include "audio/audio_codecs.h"
 #include "sockets/url.h"
 #include "parser/request.h"
@@ -103,6 +104,11 @@ private:
 
 	// RTP port to be used for this line.
 	unsigned short		rtp_port;
+	
+	// User profile of user using the line
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user			*user_config;
 
 	// Find a dialog from the list that matches the response.
 	t_dialog *match_response(t_response *r,
@@ -136,9 +142,9 @@ public:
 	void stop_timer(t_line_timer timer, t_dialog_id did = 0);
 
 	// Actions
-	void invite(const t_url &to_uri, const string &to_display,
+	void invite(t_user *user, const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by);
-	void invite(const t_url &to_uri, const string &to_display,
+	void invite(t_user *user, const t_url &to_uri, const string &to_display,
 		const string &subject);
 	void answer(void);
 	void reject(void);
@@ -166,7 +172,7 @@ public:
 	void recvd_server_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_global_error(t_response *r, t_tuid tuid, t_tid tid);
 
-	void recvd_invite(t_request *r, t_tid tid);
+	void recvd_invite(t_user *user, t_request *r, t_tid tid);
 	void recvd_ack(t_request *r, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_bye(t_request *r, t_tid tid);
@@ -258,6 +264,11 @@ public:
 
 	// Get the RTP port to be used for a call on this line
 	unsigned short get_rtp_port(void) const;
+	
+	// Get the user using the phone.
+	// Returns a pointer to the user object owned by the line.
+	// NOT a copy.
+	t_user *get_user(void) const;
 };
 
 #endif

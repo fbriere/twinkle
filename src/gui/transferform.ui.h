@@ -8,7 +8,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,6 +49,12 @@ void TransferForm::destroy()
 	}
 }
 
+void TransferForm::show(t_user *user)
+{
+	user_config = user;
+	QDialog::show();
+}
+
 void TransferForm::reject()
 {
 	if (user_config->referrer_hold) {
@@ -61,7 +67,7 @@ void TransferForm::reject()
 void TransferForm::validate()
 {
 	t_display_url dest;
-	ui->expand_destination(toLineEdit->text().stripWhiteSpace().ascii(), dest);
+	ui->expand_destination(user_config, toLineEdit->text().stripWhiteSpace().ascii(), dest);
 	
 	if (dest.is_valid()) {
 		emit destination(dest);

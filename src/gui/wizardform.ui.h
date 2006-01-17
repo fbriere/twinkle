@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,11 +49,6 @@ void WizardForm::init()
 	initProviders();
 	serviceProviderComboBox->setCurrentItem(serviceProviderComboBox->count() - 1);
 	update(PROV_OTHER);
-	
-	// Set user profile name in the titlebar
-	QString s = PRODUCT_NAME;
-	s.append(" - User profile wizard: ").append(user_config->get_profile_name().c_str());
-	setCaption(s);
 }
 
 void WizardForm::initProviders()
@@ -88,6 +83,30 @@ void WizardForm::initProviders()
 	}
 	
 	serviceProviderComboBox->insertItem(PROV_OTHER);
+}
+
+int WizardForm::exec(t_user *user)
+{
+	user_config = user;
+	
+	// Set user profile name in the titlebar
+	QString s = PRODUCT_NAME;
+	s.append(" - User profile wizard: ").append(user_config->get_profile_name().c_str());
+	setCaption(s);
+	
+	return QDialog::exec();
+}
+
+int WizardForm::show(t_user *user)
+{
+	user_config = user;
+	
+	// Set user profile name in the titlebar
+	QString s = PRODUCT_NAME;
+	s.append(" - User profile wizard: ").append(user_config->get_profile_name().c_str());
+	setCaption(s);
+	
+	QDialog::show();
 }
 
 void WizardForm::update(const QString &item)
@@ -236,5 +255,6 @@ void WizardForm::validate()
 		return;
 	}
 	
+	emit success();
 	accept();
 }

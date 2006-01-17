@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,16 +58,35 @@ void InviteForm::clear()
 	inviteComboBox->setFocus();
 }
 
-void InviteForm::show(const QString &dest)
+void InviteForm::show(t_user *user_config, const QString &dest, const QString &subject)
 {
+	((t_gui *)ui)->fill_user_combo(fromComboBox);
+	fromComboBox->setEnabled(fromComboBox->count() > 1);
+	
+	if (user_config) {
+		for (int i = 0; i < fromComboBox->count(); i++) {
+			if (fromComboBox->text(i) == 
+			    user_config->get_display_uri().c_str())
+			{
+				fromComboBox->setCurrentItem(i);
+				break;
+			}
+		}
+	}
+	
 	inviteComboBox->setEditText(dest);
+	subjectLineEdit->setText(subject);
 	QDialog::show();
 }
 
 void InviteForm::validate()
 {
 	string display, dest_str;
-	ui->expand_destination(inviteComboBox->currentText().stripWhiteSpace().ascii(), 
+	t_user *from_user = phone->ref_user_display_uri(
+				fromComboBox->currentText().ascii());
+	
+	ui->expand_destination(from_user, 
+			       inviteComboBox->currentText().stripWhiteSpace().ascii(), 
 			       display, dest_str);
 	t_url dest(dest_str);
 	
@@ -76,7 +95,7 @@ void InviteForm::validate()
 		if (inviteComboBox->count() > SIZE_REDIAL_LIST) {
 			inviteComboBox->removeItem(inviteComboBox->count() - 1);
 		}
-		emit destination(display.c_str(), dest, subjectLineEdit->text());
+		emit destination(from_user, display.c_str(), dest, subjectLineEdit->text());
 		accept();
 	} else {
 		inviteComboBox->setFocus();

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -95,6 +95,9 @@ string unquote(const string &s);
 
 // Check if a string is a number
 bool is_number(const string &s);
+
+// Check if a string is an IP address
+bool is_ipaddr(const string &s);
 
 // Conversion between yes/no values and bool
 bool yesno2bool(const string &yesno);

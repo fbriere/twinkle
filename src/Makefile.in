@@ -60,12 +60,12 @@ libtwinkle_a_LIBADD =
 am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) call_history.$(OBJEXT) \
 	dialog.$(OBJEXT) events.$(OBJEXT) line.$(OBJEXT) \
 	listener.$(OBJEXT) log.$(OBJEXT) phone.$(OBJEXT) \
-	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
-	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
-	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
-	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
-	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
-	util.$(OBJEXT)
+	phone_user.$(OBJEXT) redirect.$(OBJEXT) sender.$(OBJEXT) \
+	service.$(OBJEXT) session.$(OBJEXT) sub_refer.$(OBJEXT) \
+	subscription.$(OBJEXT) sys_settings.$(OBJEXT) \
+	timekeeper.$(OBJEXT) transaction.$(OBJEXT) \
+	transaction_layer.$(OBJEXT) transaction_mgr.$(OBJEXT) \
+	user.$(OBJEXT) userintf.$(OBJEXT) util.$(OBJEXT)
 libtwinkle_a_OBJECTS = $(am_libtwinkle_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_twinkle_OBJECTS = main.$(OBJEXT)
@@ -336,7 +336,8 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
-	$(CCRTP_LIBS)
+	$(CCRTP_LIBS)\
+	-lresolv
 
 libtwinkle_a_SOURCES = \
         auth.cpp\
@@ -347,6 +348,7 @@ libtwinkle_a_SOURCES = \
         listener.cpp\
         log.cpp\
         phone.cpp\
+        phone_user.cpp\
         redirect.cpp\
         sender.cpp\
         service.cpp\
@@ -370,6 +372,7 @@ libtwinkle_a_SOURCES = \
         listener.h\
         log.h\
         phone.h\
+        phone_user.h\
 	protocol.h\
         redirect.h\
         sender.h\
@@ -467,6 +470,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/phone.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/phone_user.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/redirect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/service.Po@am__quote@

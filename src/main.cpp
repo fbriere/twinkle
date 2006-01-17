@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,9 +107,6 @@ t_userintf		*ui;
 // Log file
 t_log			*log_file;
 
-// User config
-t_user			*user_config;
-
 // System config
 t_sys_settings		*sys_config;
 
@@ -161,8 +158,14 @@ main(int argc, char *argv[]) {
 	}
 	
 	// Get default values from system configuration
-	string config_file = sys_config->start_user_profile;
-	if (!config_file.empty()) config_file += USER_FILE_EXT;
+	list<string> config_files;
+	for (list<string>::iterator i = sys_config->start_user_profiles.begin();
+	     i != sys_config->start_user_profiles.end(); i++)
+	{
+		string config_file = *i;
+		config_file += USER_FILE_EXT;
+		config_files.push_back(config_file);
+	}
 
 	if (user_host.empty()) {
 		if (exists_interface(sys_config->start_user_host)) {
@@ -179,8 +182,7 @@ main(int argc, char *argv[]) {
 
 	log_file = new t_log();
 	MEMMAN_NEW(log_file);
-	user_config = new t_user();
-	MEMMAN_NEW(user_config);
+	
 	call_history = new t_call_history();
 	MEMMAN_NEW(call_history);
 
@@ -194,15 +196,48 @@ main(int argc, char *argv[]) {
 			"::main", LOG_NORMAL, LOG_INFO);
 	}
 
-	if (config_file.empty()) config_file = USER_CONFIG_FILE;
+	// Take default user profile if there are is no default is sys settings
+	if (config_files.empty()) config_files.push_back(USER_CONFIG_FILE);
 
-	if (argc == 2) config_file = argv[1];
+	// Read user configurations.
+	if (argc >= 2) {
+		config_files.clear();
+		for (int i = 1; i < argc; i++) {
+			config_files.push_back(argv[i]);
+		}
+	}
 
-	// Read user configuration
-	if (!user_config->read_config(config_file, error_msg)) {
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
-		sys_config->delete_lock_file();
-		exit(1);
+	// Activate users
+	for (list<string>::iterator i = config_files.begin();
+		i != config_files.end(); i++)
+	{		
+		t_user *user_config = new t_user();
+		MEMMAN_NEW(user_config);
+		if (!user_config->read_config(*i, error_msg)) {
+			ui->cb_show_msg(error_msg, MSG_CRITICAL);
+			sys_config->delete_lock_file();
+			exit(1);
+		}
+		
+		t_user *dup_user;
+		if(!phone->add_phone_user(*user_config, &dup_user)) {
+			error_msg = "The following profiles are both for user ";
+			error_msg += user_config->name;
+			error_msg += '@';
+			error_msg += user_config->domain;
+			error_msg += ":\n\n";
+			error_msg += user_config->get_profile_name();
+			error_msg += "\n";
+			error_msg += dup_user->get_profile_name();
+			error_msg += "\n\n";
+			error_msg += "You can only run multiple profiles ";
+			error_msg += "for different users.";
+			ui->cb_show_msg(error_msg, MSG_CRITICAL);
+			exit(1);
+		}
+			
+		MEMMAN_DELETE(user_config);
+		delete user_config;
 	}
 	
 	// Read call history
@@ -215,11 +250,16 @@ main(int argc, char *argv[]) {
 
 	// Open socket for SIP signaling
 	try {
-		sip_socket = new t_socket_udp(user_config->sip_udp_port);
+		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port());
 		MEMMAN_NEW(sip_socket);
+		if (sip_socket->enable_icmp()) {
+			log_file->write_report("ICMP processing enabled.", "::main");
+		} else {
+			log_file->write_report("ICMP processing disabled.", "::main");
+		}
 	} catch (int err) {
 		string msg("Failed to create a UDP socket (SIP) on port ");
-		msg += int2str(user_config->sip_udp_port);
+		msg += int2str(sys_config->get_sip_udp_port());
 		msg += "\n";
 		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
 		msg += strerror(err);
@@ -239,10 +279,12 @@ main(int argc, char *argv[]) {
 	}
 	
 	// Discover NAT type if STUN is enabled
-	if (user_config->use_stun) {
-		string msg;
-		if (!stun_discover_nat(msg)) {
-			ui->cb_show_msg(msg, MSG_WARNING);
+	list<string> msg_list;
+	if (!phone->stun_discover_nat(msg_list)) {
+		for (list<string>::iterator i = msg_list.begin();
+		     i != msg_list.end(); i++)
+		{
+			ui->cb_show_msg(*i, MSG_WARNING);
 		}
 	}
 
@@ -354,8 +396,6 @@ main(int argc, char *argv[]) {
 	MEMMAN_DELETE(thr_sender_udp);
 	delete thr_sender_udp;
 
-	MEMMAN_DELETE(user_config);
-	delete user_config;
 	MEMMAN_DELETE(call_history);
 	delete call_history;
 

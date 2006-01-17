@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,11 +24,25 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
-int SelectProfileForm::exec()
+void SelectProfileForm::init()
 {
-	profileListBox->clear();
-	idxDefaultProfile = -1;
+	user_config = 0;
+}
+
+void SelectProfileForm::destroy()
+{
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+	}
+}
+
+// The exec() method is called at startup
+int SelectProfileForm::execForm()
+{
+	mainWindow = 0;
+	profileListView->clear();
+	defaultSet = false; // no default has been set
 	
 	// Get list of all profiles
 	QStringList profiles;
@@ -57,19 +71,24 @@ int SelectProfileForm::exec()
 			"&Wizard", "&Profile editor", QString::null);
 		
 		if (useWizard == 0) {
-			wizardProfile();
+			wizardProfile(true);
 		} else if (useWizard == 1) {
-			newProfile();
+			newProfile(true);
 		} else {
 			return QDialog::Rejected;
 		}
 		
-		if (profileListBox->count() == 0) {
+		if (profileListView->childCount() == 0) {
 			// No profile has been created.
 			return QDialog::Rejected;
 		}
-		selectedProfile = profileListBox->currentText();
-		selectedProfile.append(".cfg");
+		
+		// Select the created profile
+		QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
+		QString profile = item->text();
+		profile.append(USER_FILE_EXT);
+		selectedProfiles.clear();
+		selectedProfiles.push_back(profile.ascii());
 		
 		QMessageBox::information(this, PRODUCT_NAME,
 			"Next you may adjust the system settings. "\
@@ -82,55 +101,149 @@ int SelectProfileForm::exec()
 		return QDialog::Accepted;
 	}
 	
-	// Put the profiles in the profile list box
-	for (QStringList::Iterator i = profiles.begin(); i != profiles.end(); i++) {
-		// Strip off the .cfg suffix
-		QString profile = *i;
-		profile.truncate(profile.length() - 4);
-		profileListBox->insertItem(
-			QPixmap::fromMimeSource("penguin-small.png"), profile);
-	}
-	
-	// Set first profile as selected
-	profileListBox->setSelected(0, true);
+	fillProfileListView(profiles);
+	sysPushButton->show();
 	runPushButton->setFocus();
 	
 	// Show the modal dialog
 	return QDialog::exec();
 }
 
+// The showForm() method is called from File menu when Twinkle is running.
+// The execForm() method cannot be used as it will block the Qt event loop.
+// NOTE: the method show() is not re-implemented as Qt calls this method
+//   from exec() internally.
+void SelectProfileForm::showForm(QMainWindow *_mainWindow)
+{
+	mainWindow = _mainWindow;
+	profileListView->clear();
+	defaultSet = false;
+	
+	// Get list of all profiles
+	QStringList profiles;
+	QString error;
+	if (!SelectProfileForm::getUserProfiles(profiles, error)) {
+		QMessageBox::critical(this, PRODUCT_NAME, error);
+		return;
+	}
+	
+	// Initialize profile list view
+	fillProfileListView(profiles);
+	QListViewItemIterator j(profileListView);
+	while (j.current()) {
+		QCheckListItem *item = (QCheckListItem *)j.current();
+		QString profile = item->text();
+		
+		// Set pixmap of default profile
+		if (std::find(sys_config->start_user_profiles.begin(), 
+			 sys_config->start_user_profiles.end(), profile.ascii()) !=
+		    sys_config->start_user_profiles.end())
+		{
+			item->setPixmap(0, QPixmap::fromMimeSource("twinkle16.png"));
+			defaultSet = true;
+		}
+		
+		// Tick check box of active profile
+		if (phone->ref_user_profile(profile.ascii())) {
+			item->setOn(true);
+		}
+
+		j++;
+	}	
+	
+	sysPushButton->hide();
+	runPushButton->setFocus();
+	QDialog::show();
+}
+
 void SelectProfileForm::runProfile()
 {
-	selectedProfile = profileListBox->currentText();
-	selectedProfile.append(".cfg");
+	selectedProfiles.clear();
+	QListViewItemIterator i(profileListView, QListViewItemIterator::Checked);
+	while (i.current()) {
+		QCheckListItem *item = (QCheckListItem *)i.current();
+		QString profile =item->text();
+		profile.append(USER_FILE_EXT);
+		selectedProfiles.push_back(profile.ascii());
+		i++;
+	}
+	
+	if (selectedProfiles.empty()) {
+		QMessageBox::warning(this, PRODUCT_NAME,
+					 "You did not select any user profile to run. "\
+					 "Please select a profile.");
+		return;
+	}
+	
+	// This signal will be caught when Twinkle is running.
+	// At startup the selectedProfiles attribute is read.
+	emit selection(selectedProfiles);
+	
 	accept();
 }
 
 void SelectProfileForm::editProfile()
 {
-	QString profile = profileListBox->currentText();
-	profile.append(".cfg");
+	QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
+	QString profile = item->text();
+	
+	// If the profile to edit is currently active, then edit the in-memory
+	// user profile owned by the t_phone_user object
+	if (mainWindow) {
+		t_user *active_user = phone->ref_user_profile(profile.ascii());
+		if (active_user) {
+			list<t_user *> user_list;
+			user_list.push_back(active_user);
+			UserProfileForm *f = new UserProfileForm(this, 
+						"edit user profile", true, 
+						 Qt::WDestructiveClose);
+			connect(f, SIGNAL(sipUserChanged(t_user *)),
+				mainWindow, SLOT(displayUser(t_user *)));
+			
+			connect(f, SIGNAL(authCredentialsChanged(t_user *, const string&)),
+				mainWindow, 
+				SLOT(updateAuthCache(t_user *, const string&)));
+			
+			connect(f, SIGNAL(stunServerChanged(t_user *)),
+				mainWindow, SLOT(updateStunSettings(t_user *)));
+		
+			f->show(user_list);
+			return;
+		}
+	}
+	
+	// Edit the user profile from disk.
+	profile.append(USER_FILE_EXT);
 	
 	// Read selected config file
 	string error_msg;
-	user_config = new t_user();
-	MEMMAN_NEW(user_config);
-	if (!user_config->read_config(profile.ascii(), error_msg)) {
-		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_WARNING);
+	
+	if (user_config) {
 		MEMMAN_DELETE(user_config);
 		delete user_config;
+	}
+	user_config = new t_user();
+	MEMMAN_NEW(user_config);
+	
+	if (!user_config->read_config(profile.ascii(), error_msg)) {
+		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_WARNING);
 		return;
 	}
 	
 	// Show the edit user profile form (modal dialog)
-	UserProfileForm f(this, "edit user profile", true);
-	f.exec();
-	
-	MEMMAN_DELETE(user_config);
-	delete user_config;
+	list<t_user *> user_list;
+	user_list.push_back(user_config);
+	UserProfileForm *f = new UserProfileForm(this, "edit user profile", true, 
+						 Qt::WDestructiveClose);
+	f->show(user_list);
 }
 
 void SelectProfileForm::newProfile()
+{
+	newProfile(false);
+}
+
+void SelectProfileForm::newProfile(bool exec_mode)
 {
 	// Ask user for a profile name
 	GetProfileNameForm getProfileNameForm(this, "get profile name", true);
@@ -139,40 +252,56 @@ void SelectProfileForm::newProfile()
 	// Create file name
 	QString profile = getProfileNameForm.getProfileName();
 	QString filename = profile;
-	filename.append(".cfg");
+	filename.append(USER_FILE_EXT);
 	
 	// Create a new user config
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+	}
 	user_config = new t_user();
 	MEMMAN_NEW(user_config);
 	user_config->set_config(filename.ascii());
 	
 	// Show the edit user profile form (modal dialog)
-	UserProfileForm f(this, "edit user profile", true);
-	if (f.exec()) {
-		// New profile created
-		// Add the new profile to the profile list box
-		profileListBox->insertItem(
-			QPixmap::fromMimeSource("penguin-small.png"), profile);
-		
-		// Make the new profile the selected profile
-		// Do not change this without changing the exec method.
-		// When there are no profiles, the exec methods relies on the
-		// fact that afer creation of the profile it is selected.
-		profileListBox->setSelected(profileListBox->count() - 1, true);
-		
-		// Enable buttons that act on a profile
-		editPushButton->setEnabled(true);
-		deletePushButton->setEnabled(true);
-		runPushButton->setEnabled(true);
-	}
+	list<t_user *> user_list;
+	user_list.push_back(user_config);
+	UserProfileForm *f = new UserProfileForm(this, "edit user profile", true, 
+						 Qt::WDestructiveClose);
+	connect(f, SIGNAL(success()), this, SLOT(newProfileCreated()));
 	
-	MEMMAN_DELETE(user_config);
-	delete user_config;
+	if (exec_mode) {
+		f->exec(user_list);
+	} else {
+		f->show(user_list);
+	}
+}
+
+void SelectProfileForm::newProfileCreated()
+{
+	// New profile created
+	// Add the new profile to the profile list box
+	QCheckListItem *item = new QCheckListItem(profileListView,
+				user_config->get_profile_name().c_str(), 
+				QCheckListItem::CheckBox);
+	item->setPixmap(0, QPixmap::fromMimeSource("penguin-small.png"));
+		
+	// Make the new profile the selected profile
+	// Do not change this without changing the exec method.
+	// When there are no profiles, the exec methods relies on the
+	// fact that afer creation of the profile it is selected.
+	profileListView->setSelected(item, true);
+		
+	// Enable buttons that act on a profile
+	editPushButton->setEnabled(true);
+	deletePushButton->setEnabled(true);
+	runPushButton->setEnabled(true);
 }
 
 void SelectProfileForm::deleteProfile()
 {
-	QString profile = profileListBox->currentText();
+	QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
+	QString profile = item->text();
 	QString msg = "Are you sure you want to delete profile '";
 	msg.append(profile).append("'?");
 	QMessageBox *mb = new QMessageBox("Delete profile", msg,
@@ -187,7 +316,7 @@ void SelectProfileForm::deleteProfile()
 		QDir d = QDir::home();
 		d.cd(USER_DIR);
 		QString filename = profile;
-		filename.append(".cfg");
+		filename.append(USER_FILE_EXT);
 		QString fullname = d.filePath(filename);
 		if (!QFile::remove(fullname)) {
 			// Failed to delete file
@@ -200,15 +329,18 @@ void SelectProfileForm::deleteProfile()
 			(void)QFile::remove(backupname);
 			
 			// Delete profile from profile list box
-			profileListBox->removeItem(profileListBox->currentItem());
-			if (profileListBox->count() == 0) {
+			QCheckListItem *item = (QCheckListItem *)profileListView->
+					       currentItem();
+			delete item;
+			if (profileListView->childCount() == 0) {
 				// There are no profiles anymore
 				// Disable buttons that act on a profile
 				editPushButton->setEnabled(false);
 				deletePushButton->setEnabled(false);
 				runPushButton->setEnabled(false);
 			} else {
-				profileListBox->setSelected(0, true);
+				profileListView->setSelected(profileListView->
+						firstChild(), true);
 			}
 		}
 	}
@@ -219,7 +351,8 @@ void SelectProfileForm::deleteProfile()
 
 void SelectProfileForm::renameProfile()
 {
-	QString oldProfile = profileListBox->currentText();
+	QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
+	QString oldProfile = item->text();
 	
 	// Ask user for a new profile name
 	GetProfileNameForm getProfileNameForm(this, "get profile name", true);
@@ -228,11 +361,11 @@ void SelectProfileForm::renameProfile()
 	// Create file name for the new profile
 	QString newProfile = getProfileNameForm.getProfileName();
 	QString newFilename = newProfile;
-	newFilename.append(".cfg");
+	newFilename.append(USER_FILE_EXT);
 	
 	// Create file name for the old profile
 	QString oldFilename = oldProfile;
-	oldFilename.append(".cfg");
+	oldFilename.append(USER_FILE_EXT);
 	
 	// Rename the file
 	QDir d = QDir::home();
@@ -253,9 +386,8 @@ void SelectProfileForm::renameProfile()
 		}
 		
 		// Change profile name in the list box
-		profileListBox->changeItem(
-			QPixmap::fromMimeSource("penguin-small.png"), newProfile,
-			profileListBox->currentItem());
+		QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
+		item->setText(0, newProfile);
 	}
 }
 
@@ -263,34 +395,34 @@ void SelectProfileForm::setAsDefault()
 {
 	// Only show the information when the default button is
 	// pressed for the first time.
-	if (idxDefaultProfile == -1) {
+	if (!defaultSet) {
 		QMessageBox::information(this, PRODUCT_NAME, 
 			"If you want to remove or "
 			"change the default at a later time, you can do that "
 			"via the system settings.");
 	}
 	
-	// Store current index as the changeItem method also changes
-	// the current index as a side effect.
-	int idxNewDefault = profileListBox->currentItem();
+	defaultSet = true;
 	
-	// Restore pixmap of the old default
-	if (idxDefaultProfile != -1) {
-		profileListBox->changeItem(
-			QPixmap::fromMimeSource("penguin-small.png"),
-			profileListBox->text(idxDefaultProfile),
-			idxDefaultProfile);
+	// Restore all pixmaps
+	QListViewItemIterator i(profileListView);
+	while (i.current()) {
+		i.current()->setPixmap(0, QPixmap::fromMimeSource("penguin-small.png"));
+		i++;
 	}
 	
-	// Set pixmap of the default
-	idxDefaultProfile = idxNewDefault;
-	profileListBox->changeItem(
-		QPixmap::fromMimeSource("twinkle16.png"),
-		profileListBox->text(idxDefaultProfile),
-		idxDefaultProfile);
+	// Set pixmap of the default profiles.
+	// Set default profiles in system settings.
+	sys_config->start_user_profiles.clear();
+	QListViewItemIterator j(profileListView, QListViewItemIterator::Checked);
+	while (j.current()) {
+		QCheckListItem *item = (QCheckListItem *)j.current();
+		item->setPixmap(0, QPixmap::fromMimeSource("twinkle16.png"));
+		sys_config->start_user_profiles.push_back(item->text().ascii());
+		j++;
+	}	
 	
 	// Write default to system settings
-	sys_config->start_user_profile = profileListBox->currentText().ascii();
 	string error_msg;
 	if (!sys_config->write_config(error_msg)) {
 		// Failed to write config file
@@ -300,6 +432,11 @@ void SelectProfileForm::setAsDefault()
 
 void SelectProfileForm::wizardProfile()
 {
+	wizardProfile(false);
+}
+
+void SelectProfileForm::wizardProfile(bool exec_mode)
+{
 	// Ask user for a profile name
 	GetProfileNameForm getProfileNameForm(this, "get profile name", true);
 	if (!getProfileNameForm.execNewName()) return;
@@ -307,35 +444,33 @@ void SelectProfileForm::wizardProfile()
 	// Create file name
 	QString profile = getProfileNameForm.getProfileName();
 	QString filename = profile;
-	filename.append(".cfg");
+	filename.append(USER_FILE_EXT);
 	
 	// Create a new user config
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+	}	
 	user_config = new t_user();
 	MEMMAN_NEW(user_config);
 	user_config->set_config(filename.ascii());
 	
 	// Show the wizard form (modal dialog)
-	WizardForm f(this, "wizard", true);
-	if (f.exec()) {
-		// New profile created
-		// Add the new profile to the profile list box
-		profileListBox->insertItem(
-			QPixmap::fromMimeSource("penguin-small.png"), profile);
-		
-		// Make the new profile the selected profile
-		// Do not change this without changing the exec method.
-		// When there are no profiles, the exec methods relies on the
-		// fact that afer creation of the profile it is selected.
-		profileListBox->setSelected(profileListBox->count() - 1, true);
-		
-		// Enable buttons that act on a profile
-		editPushButton->setEnabled(true);
-		deletePushButton->setEnabled(true);
-		runPushButton->setEnabled(true);
-	}
+	WizardForm *f = new WizardForm(this, "wizard", true, Qt::WDestructiveClose);
+	connect(f, SIGNAL(success()), this, SLOT(newProfileCreated()));
 	
-	MEMMAN_DELETE(user_config);
-	delete user_config;
+	if (exec_mode) {
+		f->exec(user_config);
+	} else {
+		f->show(user_config);
+	}
+}
+
+void SelectProfileForm::sysSettings()
+{
+	SysSettingsForm *f = new SysSettingsForm(this, "system settings", true,
+						 Qt::WDestructiveClose);
+	f->show();
 }
 
 // Get a list of all profiles. Returns false if there is an error.
@@ -349,10 +484,28 @@ bool SelectProfileForm::getUserProfiles(QStringList &profiles, QString &error)
 	}
 	
 	// Select all config files
+	QString filterName = "*";
+	filterName.append(USER_FILE_EXT);
 	d.setFilter(QDir::Files);
-	d.setNameFilter("*.cfg");
+	d.setNameFilter(filterName);
 	d.setSorting(QDir::Name | QDir::IgnoreCase);
 	profiles = d.entryList();
 	
 	return true;
+}
+
+void SelectProfileForm::fillProfileListView(const QStringList &profiles)
+{
+	// Put the profiles in the profile list view
+	for (QStringList::ConstIterator i = profiles.begin(); i != profiles.end(); i++) {
+		// Strip off the user file extension
+		QString profile = *i;
+		profile.truncate(profile.length() - strlen(USER_FILE_EXT));
+		QCheckListItem *item = new QCheckListItem(
+				profileListView, profile, QCheckListItem::CheckBox);
+		item->setPixmap(0, QPixmap::fromMimeSource("penguin-small.png"));
+	}
+	
+	// Highlight the first profile
+	profileListView->setSelected(profileListView->firstChild(), true);
 }

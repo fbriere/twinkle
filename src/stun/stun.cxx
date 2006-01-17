@@ -2092,8 +2092,10 @@ stunNatType( StunAddress4& dest,
       int e = getErrno();
       if ( err == SOCKET_ERROR )
       {
-         // error occured
-         cerr << "Error " << e << " " << strerror(e) << " in select" << endl;
+        // error occured
+        cerr << "Error " << e << " " << strerror(e) << " in select" << endl;
+        closesocket(myFd1);
+        closesocket(myFd2);
         return StunTypeFailure; 
      }
       else if ( err == 0 )
@@ -2269,6 +2271,9 @@ stunNatType( StunAddress4& dest,
       isNat = true;
       //cerr << "binding failed" << endl;
    }
+   
+   closesocket(myFd1);
+   closesocket(myFd2);
 	
    if (verbose)
    {

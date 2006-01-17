@@ -32,7 +32,7 @@
                         <cstring>stunServerLineEdit</cstring>
                     </property>
                     <property name="whatsThis" stdset="0">
-                        <string>The hostname or IP address of the STUN server.</string>
+                        <string>The hostname, domain name or IP address of the STUN server.</string>
                     </property>
                 </widget>
                 <widget class="QLabel" row="8" column="0">
@@ -163,7 +163,7 @@ This field is mandatory.</string>
                         <bool>true</bool>
                     </property>
                     <property name="whatsThis" stdset="0">
-                        <string>The hostname or IP address of your SIP proxy. If this is the same value as your domain, you may leave this field empty.</string>
+                        <string>The hostname, domain name or IP address of your SIP proxy. If this is the same value as your domain, you may leave this field empty.</string>
                     </property>
                 </widget>
                 <widget class="QLabel" row="0" column="0">
@@ -329,13 +329,14 @@ This field is mandatory.</string>
 </tabstops>
 <includes>
     <include location="global" impldecl="in declaration">map</include>
+    <include location="local" impldecl="in declaration">user.h</include>
     <include location="local" impldecl="in implementation">qregexp.h</include>
     <include location="local" impldecl="in implementation">qlineedit.h</include>
     <include location="local" impldecl="in implementation">qlabel.h</include>
     <include location="local" impldecl="in implementation">qvalidator.h</include>
     <include location="local" impldecl="in implementation">qcombobox.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
-    <include location="local" impldecl="in implementation">user.h</include>
+    <include location="local" impldecl="in implementation">qfile.h</include>
     <include location="local" impldecl="in implementation">wizardform.ui.h</include>
 </includes>
 <forwards>
@@ -344,9 +345,14 @@ This field is mandatory.</string>
 <variables>
     <variable access="private">bool suggestAuthName;</variable>
     <variable access="private">std::map&lt;QString, t_provider&gt; mapProviders;</variable>
+    <variable access="private">t_user *user_config;</variable>
 </variables>
+<signals>
+    <signal>success()</signal>
+</signals>
 <slots>
     <slot>initProviders()</slot>
+    <slot returnType="int">exec( t_user * user )</slot>
     <slot>update( const QString &amp; item )</slot>
     <slot>updateAuthName( const QString &amp; s )</slot>
     <slot>disableSuggestAuthName()</slot>
@@ -354,6 +360,7 @@ This field is mandatory.</string>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
+    <function returnType="int">show( t_user * user )</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

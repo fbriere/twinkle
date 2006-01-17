@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -69,16 +69,21 @@ t_sip_message *t_event_network::get_msg(void) const {
 // class t_event_user
 ///////////////////////////////////////////////////////////
 
-t_event_user::t_event_user(t_sip_message *m, unsigned short _tuid,
+t_event_user::t_event_user(t_user *u, t_sip_message *m, unsigned short _tuid,
 		unsigned short _tid) : t_event()
 {
 	msg = m->copy();
 	tuid = _tuid;
 	tid = _tid;
 	tid_cancel_target = 0;
+	if (u) {
+		user_config = u->copy();
+	} else {
+		user_config = NULL;
+	}
 }
 
-t_event_user::t_event_user(t_sip_message *m, unsigned short _tuid,
+t_event_user::t_event_user(t_user *u, t_sip_message *m, unsigned short _tuid,
 		unsigned short _tid, unsigned short _tid_cancel_target) :
 			t_event()
 {
@@ -86,11 +91,21 @@ t_event_user::t_event_user(t_sip_message *m, unsigned short _tuid,
 	tuid = _tuid;
 	tid = _tid;
 	tid_cancel_target = _tid_cancel_target;
+	if (u) {
+		user_config = u->copy();
+	} else {
+		user_config = NULL;
+	}
 }
 
 t_event_user::~t_event_user() {
 	MEMMAN_DELETE(msg);
 	delete msg;
+	
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+	}
 }
 
 t_event_type t_event_user::get_type(void) const {
@@ -111,6 +126,10 @@ unsigned short t_event_user::get_tid(void) const {
 
 unsigned short t_event_user::get_tid_cancel_target(void) const {
 	return tid_cancel_target;
+}
+
+t_user *t_event_user::get_user_config(void) const {
+	return user_config;
 }
 
 ///////////////////////////////////////////////////////////
@@ -230,7 +249,8 @@ unsigned short t_event_abort_trans::get_tid(void) const {
 // class t_event_stun_request
 ///////////////////////////////////////////////////////////
 
-t_event_stun_request::t_event_stun_request(StunMessage *m, t_stun_event_type ev_type,
+t_event_stun_request::t_event_stun_request(t_user *u,
+		StunMessage *m, t_stun_event_type ev_type,
 		unsigned short _tuid, unsigned short _tid) 
 {
 	msg = new StunMessage(*m);
@@ -240,11 +260,14 @@ t_event_stun_request::t_event_stun_request(StunMessage *m, t_stun_event_type ev_
 	tid = _tid;
 	dst_addr = 0;
 	dst_port = 0;
+	user_config = u->copy();
 }
 
 t_event_stun_request::~t_event_stun_request() {
 	MEMMAN_DELETE(msg);
 	delete msg;
+	MEMMAN_DELETE(user_config);
+	delete user_config;
 }
 
 t_event_type t_event_stun_request::get_type(void) const {
@@ -264,6 +287,10 @@ unsigned short t_event_stun_request::get_tid(void) const {
 
 t_stun_event_type t_event_stun_request::get_stun_event_type(void) const {
 	return stun_event_type;
+}
+
+t_user *t_event_stun_request::get_user_config(void) const {
+	return user_config;
 }
 
 ///////////////////////////////////////////////////////////
@@ -305,6 +332,19 @@ unsigned short t_event_stun_response::get_tid(void) const {
 ///////////////////////////////////////////////////////////
 t_event_type t_event_nat_keepalive::get_type(void) const {
 	return EV_NAT_KEEPALIVE;
+}
+
+///////////////////////////////////////////////////////////
+// class t_event_icmp
+///////////////////////////////////////////////////////////
+t_event_icmp::t_event_icmp(const t_icmp_msg &m) : icmp(m) {}
+
+t_event_type t_event_icmp::get_type(void) const {
+	return EV_ICMP;
+}
+
+t_icmp_msg t_event_icmp::get_icmp(void) const {
+	return icmp;
 }
 
 ///////////////////////////////////////////////////////////
@@ -351,10 +391,24 @@ void t_event_queue::push_network(t_sip_message *m, unsigned long ipaddr,
 	push(event);
 }
 
+void t_event_queue::push_user(t_user *user_config, t_sip_message *m, unsigned short tuid,
+		unsigned short tid)
+{
+	t_event_user *event = new t_event_user(user_config, m, tuid, tid);
+	MEMMAN_NEW(event);
+	push(event);
+}
+
 void t_event_queue::push_user(t_sip_message *m, unsigned short tuid,
 		unsigned short tid)
 {
-	t_event_user *event = new t_event_user(m, tuid, tid);
+	push_user(NULL, m, tuid, tid);
+}
+
+void t_event_queue::push_user_cancel(t_user *user_config, t_sip_message *m, unsigned short tuid,
+		unsigned short tid, unsigned short target_tid)
+{
+	t_event_user *event = new t_event_user(user_config, m, tuid, tid, target_tid);
 	MEMMAN_NEW(event);
 	push(event);
 }
@@ -362,9 +416,7 @@ void t_event_queue::push_user(t_sip_message *m, unsigned short tuid,
 void t_event_queue::push_user_cancel(t_sip_message *m, unsigned short tuid,
 		unsigned short tid, unsigned short target_tid)
 {
-	t_event_user *event = new t_event_user(m, tuid, tid, target_tid);
-	MEMMAN_NEW(event);
-	push(event);
+	push_user_cancel(NULL, m, tuid, tid, target_tid);
 }
 
 void t_event_queue::push_timeout(t_timer *t) {
@@ -406,12 +458,13 @@ void t_event_queue::push_abort_trans(unsigned short tid) {
 	push(event);
 }
 
-void t_event_queue::push_stun_request(StunMessage *m, t_stun_event_type ev_type,
+void t_event_queue::push_stun_request(t_user *user_config, 
+		StunMessage *m, t_stun_event_type ev_type,
 		unsigned short tuid, unsigned short tid,
 		unsigned long ipaddr, unsigned short port, unsigned short src_port)
 {
-	t_event_stun_request *event = new t_event_stun_request(m, ev_type, 
-		tuid, tid);
+	t_event_stun_request *event = new t_event_stun_request(user_config, 
+		m, ev_type, tuid, tid);
 	MEMMAN_NEW(event);
 	event->dst_addr = ipaddr;
 	event->dst_port = port;
@@ -434,6 +487,12 @@ void t_event_queue::push_nat_keepalive(unsigned long ipaddr, unsigned short port
 	event->dst_addr = ipaddr;
 	event->dst_port = port;
 
+	push(event);
+}
+
+void t_event_queue::push_icmp(const t_icmp_msg &m) {
+	t_event_icmp *event = new t_event_icmp(m);
+	MEMMAN_NEW(event);
 	push(event);
 }
 

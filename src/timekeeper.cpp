@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -145,7 +145,7 @@ t_tmr_phone::t_tmr_phone(long dur, t_phone_timer ptmr, t_phone *p) : t_timer(dur
 
 void t_tmr_phone::expired(void) {
 	// Call timeout method on the phone for a timer expiry
-	phone->timeout(phone_timer);
+	phone->timeout(phone_timer, get_id());
 }
 
 t_timer *t_tmr_phone::copy(void) const {
@@ -169,6 +169,7 @@ t_phone *t_tmr_phone::get_phone(void) const {
 string t_tmr_phone::get_name(void) const {
 	switch(phone_timer) {
 	case PTMR_REGISTRATION:	return "PTMR_REGISTRATION";
+	case PTMR_NAT_KEEPALIVE: return "PTMR_NAT_KEEPALIVE";
 	}
 
 	return "UNKNOWN";

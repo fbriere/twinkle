@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,13 @@ using namespace std;
 
 class t_request : public t_sip_message {
 private:
+	// A DNS lookup on the request URI (or outbound proxy) might resolve 
+	// into multiple destinations. get_destination() will return the first 
+	// destination. All destinations are stored here.
+	// get_next_destination() will remove the first destination of this
+	// list.
+	list<t_ip_port>		destinations;
+	
 	// Calculate credentials based on the challenge
 	// Returns false if challenge is not supported; in this case
 	// fail_reason contains the reason for failure.
@@ -65,9 +72,22 @@ public:
 	t_response *create_response(int code, string reason = "") const;
 
 	bool is_valid(bool &fatal, string &reason) const;
+	
+	// Calculate the set of possible destinations for this request.
+	void calc_destinations(const t_user &user_profile);
 
+	// Get destination to send this request to.
 	void get_destination(unsigned long &ipaddr, unsigned short &port,
 		const t_user &user_profile);
+	void get_current_destination(unsigned long &ipaddr, unsigned short &port);
+		
+	// Move to next destination. This method should only be called after
+	// calc_destination() was called.
+	// Returns true if there is a next destination, otherwise returns false.
+	bool next_destination(void);
+	
+	// Set a single destination to send this request to.
+	void set_destination(unsigned long ipaddr, unsigned short port);
 
 	// Create authorization credentials based on the challenge
 	// Returns false if challenge is not supported and fail_reason

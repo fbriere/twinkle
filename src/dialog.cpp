@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 #include "exceptions.h"
 #include "line.h"
 #include "log.h"
+#include "phone_user.h"
 #include "sub_refer.h"
-#include "user.h"
 #include "util.h"
 #include "userintf.h"
 #include "audits/memman.h"
@@ -44,8 +44,8 @@ extern t_phone		*phone;
 t_mutex t_client_request::mtx_next_tuid;
 t_tuid t_client_request::next_tuid = 1;
 
-t_client_request::t_client_request(t_request *r, const t_tid _tid) :
-		redirector(r->uri)
+t_client_request::t_client_request(t_user *user, t_request *r, const t_tid _tid) :
+		redirector(r->uri, user->max_redirections)
 {
 	request = (t_request *)r->copy();
 	stun_request = NULL;
@@ -58,8 +58,8 @@ t_client_request::t_client_request(t_request *r, const t_tid _tid) :
 	mtx_next_tuid.unlock();
 }
 
-t_client_request::t_client_request(StunMessage *r, const t_tid _tid) :
-		redirector(t_url())
+t_client_request::t_client_request(t_user *user, StunMessage *r, const t_tid _tid) :
+		redirector(t_url(), user->max_redirections)
 {
 	request = NULL;
 	stun_request = new StunMessage(*r);
@@ -185,6 +185,14 @@ t_request *t_dialog::create_request(t_method m) {
 		r->hdr_route = orig_req->hdr_route;
 		SET_HDR_USER_AGENT(r->hdr_user_agent);
 		r->uri = orig_req->uri;
+		
+		// RFC 3263 4
+		// CANCEL for a particular SIP request MUST be sent to the same SIP
+		// server that the SIP request was delivered to.
+		unsigned long ipaddr;
+		unsigned short port;
+		orig_req->get_destination(ipaddr, port, *user_config);
+		r->set_destination(ipaddr, port);
 		return r;
 	}
 
@@ -240,7 +248,7 @@ t_request *t_dialog::create_request(t_method m) {
 	}
 
 	// Via header
-	t_via via(USER_HOST, user_config->sip_udp_port);
+	t_via via(USER_HOST(user_config), sys_config->get_sip_udp_port());
 	r->hdr_via.add_via(via);
 
 	// Set Max-Forwards header
@@ -280,6 +288,16 @@ t_request *t_dialog::create_request(t_method m) {
                         r->hdr_route.add_route(route);
                 }
         }
+        
+        // Caculate destination set. A DNS request can result in multiple
+        // IP address. In failover scenario's the request must be sent to
+        // the next IP address in the list. As the request will be copied
+        // in various places, the destination set must be calculated now.
+        // In previous version the DNS request was done by the transaction
+        // manager. This is too late as the transaction manager gets a copy
+        // of the request. The destination set should be set in the copy
+        // kept by the dialog.
+        r->calc_destinations(*user_config);
 
 	return r;
 }
@@ -302,7 +320,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	
 	// If STUN is enabled, then first send a STUN binding request to
 	// discover the IP adderss and port for media.
-	if (phone->use_stun) {
+	if (phone->use_stun(user_config)) {
 		// The STUN transaction may take a while.
 		// Send 100 Trying
 		resp = r->create_response(R_100_TRYING);
@@ -362,7 +380,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 			resp = r->create_response(
 					R_488_NOT_ACCEPTABLE_HERE);
 			resp->hdr_to.set_tag(local_tag);
-			resp->hdr_warning.add_warning(t_warning(USER_HOST,
+			resp->hdr_warning.add_warning(t_warning(USER_HOST(user_config),
 					0, warn_code, warn_text));
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
@@ -386,7 +404,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 		}
 	}
 
-	ui->cb_incoming_call(line->get_line_number(), r);
+	ui->cb_incoming_call(user_config, line->get_line_number(), r);
 	line->call_hist_record.start_call(r, t_call_record::DIR_IN,
 		user_config->get_profile_name());
 	
@@ -607,6 +625,7 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	bool tear_down = false;
+	t_client_request *cr;
 
 	switch(r->method) {
 	case ACK:
@@ -678,11 +697,19 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 		respond_prack(r, tuid, tid);
 		break;
 	default:
-		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
-			"Waiting for ACK");
-		line->send_response(resp, tuid, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
+		// Queue the request as ACK needs to be received first.
+		// Note that the tuid value is not stored in the queue.
+		// For an incoming request tuid is always 0.
+		cr = new t_client_request(user_config, r, tid);
+		MEMMAN_NEW(cr);
+		inc_req_queue.push_back(cr);
+		log_file->write_header("t_dialog::state_w4ack", 
+				LOG_NORMAL, LOG_INFO);
+		log_file->write_raw("Waiting for ACK.\n");
+		log_file->write_raw("Queue incoming ");
+		log_file->write_raw(method2str(r->method, r->unknown_method));
+		log_file->write_endl();
+		log_file->write_footer();
 		break;
 	}
 }
@@ -1026,7 +1053,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 			// Unsupported media
 			resp = r->create_response(
 					R_488_NOT_ACCEPTABLE_HERE);
-			resp->hdr_warning.add_warning(t_warning(USER_HOST,
+			resp->hdr_warning.add_warning(t_warning(USER_HOST(user_config),
 					0, warn_code, warn_text));
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
@@ -1064,7 +1091,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	// If STUN is enabled, then first send a STUN binding request to
 	// discover the IP adderss and port for media if no RTP stream
 	// is currently active.
-	if (phone->use_stun && !session->is_rtp_active()) {
+	if (phone->use_stun(user_config) && !session->is_rtp_active()) {
 		// The STUN transaction may take a while.
 		// Send 100 Trying
 		resp = r->create_response(R_100_TRYING);
@@ -1105,7 +1132,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	resp_invite->hdr_contact.add_contact(contact);
 
 	// Set Allow and Supported headers
-	SET_HDR_ALLOW(resp_invite->hdr_allow);
+	SET_HDR_ALLOW(resp_invite->hdr_allow, user_config);
 	SET_HDR_SUPPORTED(resp_invite->hdr_supported);
 
 	// RFC 3261 13.3.1.4
@@ -1186,13 +1213,13 @@ void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
 
 	if (user_config->ask_user_to_refer) {
 		if (r->hdr_referred_by.is_populated()) {
-			refer_accepted = ui->cb_ask_user_to_refer(
+			refer_accepted = ui->cb_ask_user_to_refer(user_config,
 				r->hdr_refer_to.uri,
 				r->hdr_refer_to.display,
 				r->hdr_referred_by.uri,
 				r->hdr_referred_by.display);
 		} else {
-			refer_accepted = ui->cb_ask_user_to_refer(
+			refer_accepted = ui->cb_ask_user_to_refer(user_config,
 				r->hdr_refer_to.uri,
 				r->hdr_refer_to.display,
 				t_url(), "");
@@ -1365,7 +1392,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 			line->ci_set_refer_supported(true);
 		}
 
-		ui->cb_call_answered(line->get_line_number(), r);
+		ui->cb_call_answered(user_config, line->get_line_number(), r);
 		line->call_hist_record.answer_call(r);
 		state = DS_CONFIRMED;
 
@@ -1386,7 +1413,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
-		ui->cb_call_failed(line->get_line_number(), r);
+		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
 		state = DS_TERMINATED;
@@ -1449,7 +1476,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 			line->ci_set_refer_supported(true);
 		}
 
-		ui->cb_call_answered(line->get_line_number(), r);
+		ui->cb_call_answered(user_config, line->get_line_number(), r);
 		line->call_hist_record.answer_call(r);
 		state = DS_CONFIRMED;
 
@@ -1470,7 +1497,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
-		ui->cb_call_failed(line->get_line_number(), r);
+		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
 		state = DS_TERMINATED;
@@ -1916,7 +1943,7 @@ void t_dialog::send_prack_if_required(t_response *r) {
 				remove_client_request(&req_prack);
 			}
 
-			req_prack = new t_client_request(prack, 0);
+			req_prack = new t_client_request(user_config, prack, 0);
 			MEMMAN_NEW(req_prack);
 			line->send_request(prack, req_prack->get_tuid());
 			MEMMAN_DELETE(prack);
@@ -2009,7 +2036,7 @@ void t_dialog::resend_request(t_client_request *cr) {
 	// Create a new via-header. Otherwise the
 	// request will be seen as a retransmission
 	req->hdr_via.via_list.clear();
-	t_via via(USER_HOST, user_config->sip_udp_port);
+	t_via via(USER_HOST(user_config), sys_config->get_sip_udp_port());
 	req->hdr_via.add_via(via);
 
 	cr->renew(0);
@@ -2028,6 +2055,9 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 	mtx_next_id.unlock();
 
 	line = _line;
+	user_config = line->get_user();
+	assert(user_config);
+	
 	req_out = NULL;
 	req_out_invite = NULL;
 	req_in_invite = NULL;
@@ -2080,7 +2110,7 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 	id_100rel_guard = 0;
 
 	// Create session
-	session = new t_session(this, USER_HOST, _line->get_rtp_port());
+	session = new t_session(this, USER_HOST(user_config), line->get_rtp_port());
 	MEMMAN_NEW(session);
 	session_re_invite = NULL;
 
@@ -2112,6 +2142,13 @@ t_dialog::~t_dialog() {
 		delete session_re_invite;
 	}
 	if (sub_refer) { MEMMAN_DELETE(sub_refer); delete sub_refer; }
+	
+	for (list<t_client_request *>::iterator i = inc_req_queue.begin();
+	     i != inc_req_queue.end(); i++)
+	{
+		MEMMAN_DELETE(*i);
+		delete *i;
+	}
 }
 
 t_dialog_id t_dialog::get_id(void) const {
@@ -2173,13 +2210,14 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	if (state != DS_NULL) {
 		throw X_DIALOG_ALREADY_ESTABLISHED;
 	}
-	
+
 	// If STUN is enabled, then first send a STUN binding request to
 	// discover the IP adderss and port for media.
-	if (phone->use_stun) {
+	if (phone->use_stun(user_config)) {
 		if (!stun_bind_media()) {
-				state = DS_TERMINATED;
-				return;
+			ui->cb_stun_failed_call_ended(line->get_line_number());
+			state = DS_TERMINATED;
+			return;
 		}
 	}
 	
@@ -2187,7 +2225,7 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	invite.uri = to_uri;
 
 	// Set Call-ID header
-	call_id = NEW_CALL_ID;
+	call_id = NEW_CALL_ID(user_config);
 	invite.hdr_call_id.set_call_id(call_id);
 
 	// Set To header
@@ -2213,7 +2251,7 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	invite.hdr_contact.add_contact(contact);
 
 	// Set Via header
-	t_via via(USER_HOST, user_config->sip_udp_port);
+	t_via via(USER_HOST(user_config), sys_config->get_sip_udp_port());
 	invite.hdr_via.add_via(via);
 
 	// Set Max-Forwards header
@@ -2224,7 +2262,7 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 
 	// RFC 3261 13.2.1
 	// Allow and Supported headers
-	SET_HDR_ALLOW(invite.hdr_allow);
+	SET_HDR_ALLOW(invite.hdr_allow, user_config);
 	SET_HDR_SUPPORTED(invite.hdr_supported);
 
 	// Extensions specific for INVITE
@@ -2248,7 +2286,7 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	}
 
 	// Organization
-	SET_HDR_ORGANIZATION(invite.hdr_organization);
+	SET_HDR_ORGANIZATION(invite.hdr_organization, user_config);
 
 	// RFC 3892 Referred-By header if a call is initated because
 	// of an incoming REFER.
@@ -2258,9 +2296,13 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 
 	// Create SDP offer
 	session->create_sdp_offer(&invite, local_uri.get_user());
-
+	
+	// Calculate destinations
+	// See create_request() for more comments
+	invite.calc_destinations(*user_config);
+	
 	// Send INVITE
-	req_out_invite = new t_client_request(&invite, 0);
+	req_out_invite = new t_client_request(user_config, &invite, 0);
 	MEMMAN_NEW(req_out_invite);
 	line->send_request(&invite, req_out_invite->get_tuid());
 	line->call_hist_record.start_call(&invite, t_call_record::DIR_OUT, 
@@ -2277,7 +2319,7 @@ bool t_dialog::resend_invite_auth(t_response *resp) {
 	t_request *req = req_out_invite->get_request();
 
 	// Add authorization header, increment CSeq and create new branch id
-	if (get_phone()->authorize(req, resp)) {
+	if (get_phone()->authorize(user_config, req, resp)) {
 		resend_request(req_out_invite);
 
 		// Reset state in case a 100 Trying was received
@@ -2300,7 +2342,7 @@ bool t_dialog::resend_invite_unsupported(t_response *resp) {
 	// If no extensions were required then return.
 	if (!req->hdr_require.is_populated()) return false;
 	if (req->hdr_require.features.empty()) return false;
-
+	
 	bool removed_ext = false;
 
 	for (list<string>::iterator i = resp->hdr_unsupported.features.begin();
@@ -2363,15 +2405,44 @@ bool t_dialog::redirect_invite(t_response *resp) {
 
 	// Ask user for permission to redirect if indicated by user config
 	if (user_config->ask_user_to_redirect) {
-		if(!ui->cb_ask_user_to_redirect_invite(contact.uri, contact.display)) {
+		if(!ui->cb_ask_user_to_redirect_invite(user_config,
+				contact.uri, contact.display)) 
+		{
 			// User did not permit to redirect
 			return false;
 		}
 	}
 
+	// Change the request URI to the new URI.
+	// As the URI changes the destination set must be recalculated
 	req->uri = contact.uri;
+	req->calc_destinations(*user_config);
 
-	ui->cb_redirecting_request(line->get_line_number(), contact);
+	ui->cb_redirecting_request(user_config, line->get_line_number(), contact);
+	resend_request(req_out_invite);
+
+	// Reset state in case a 100 Trying was received
+	state = DS_W4INVITE_RESP;
+
+	return true;
+}
+
+bool t_dialog::failover_invite(void) {
+	if (!req_out_invite) return false;
+	
+	log_file->write_report("Failover to next destination.",
+				"t_dialog::failover_invite");
+	
+	t_request *req = req_out_invite->get_request();
+	
+	// Get next destination
+	if (!req->next_destination()) {
+		log_file->write_report("No next destination for failover.",
+				"t_dialog::failover_invite");
+		return false;
+	}
+	
+	assert(state == DS_W4INVITE_RESP || state == DS_W4INVITE_RESP2);
 	resend_request(req_out_invite);
 
 	// Reset state in case a 100 Trying was received
@@ -2407,7 +2478,7 @@ void t_dialog::send_bye(void) {
 	if (req_out) { MEMMAN_DELETE(req_out); delete (req_out); }
 
 	t_request *bye = create_request(BYE);
-	req_out = new t_client_request(bye, 0);
+	req_out = new t_client_request(user_config, bye, 0);
 	MEMMAN_NEW(req_out);
 	line->send_request(bye, req_out->get_tuid());
 	line->call_hist_record.end_call(t_call_record::CS_A_PARTY);	
@@ -2428,7 +2499,7 @@ void t_dialog::send_options(void) {
 
 	// Accept
 	r->hdr_accept.add_media(t_media("application","sdp"));
-	req_out = new t_client_request(r, 0);
+	req_out = new t_client_request(user_config, r, 0);
 	MEMMAN_NEW(req_out);
 	line->send_request(r, req_out->get_tuid());
 	MEMMAN_DELETE(r);
@@ -2451,7 +2522,7 @@ void t_dialog::send_cancel(bool early_dialog_exists) {
 	case DS_W4RE_INVITE_RESP2:
 	case DS_EARLY:
 		cancel = create_request(CANCEL);
-		req_cancel = new t_client_request(cancel, 0);
+		req_cancel = new t_client_request(user_config, cancel, 0);
 		MEMMAN_NEW(req_cancel);
 		line->send_request(cancel, req_cancel->get_tuid());
 		MEMMAN_DELETE(cancel);
@@ -2481,7 +2552,7 @@ void t_dialog::send_re_invite(void) {
 
 	// RFC 3261 13.2.1
 	// Allow and Supported headers
-	SET_HDR_ALLOW(r->hdr_allow);
+	SET_HDR_ALLOW(r->hdr_allow, user_config);
 	SET_HDR_SUPPORTED(r->hdr_supported);
 
 	// Extensions specific for INVITE
@@ -2497,7 +2568,7 @@ void t_dialog::send_re_invite(void) {
 	session_re_invite->create_sdp_offer(r, local_uri.get_user());
 
 	// Send INVITE
-	req_out_invite = new t_client_request(r, 0);
+	req_out_invite = new t_client_request(user_config, r, 0);
 	MEMMAN_NEW(req_out_invite);
 	line->send_request(r, req_out_invite->get_tuid());
 	MEMMAN_DELETE(r);
@@ -2525,7 +2596,7 @@ bool t_dialog::resend_request_auth(t_response *resp) {
 	t_request *req = (*current_cr)->get_request();
 
 	// Add authorization header, increment CSeq and create new branch id
-	if (get_phone()->authorize(req, resp)) {
+	if (get_phone()->authorize(user_config, req, resp)) {
 		resend_request(*current_cr);
 
 		if (resp->hdr_cseq.method == INVITE) {
@@ -2541,7 +2612,7 @@ bool t_dialog::resend_request_auth(t_response *resp) {
 bool t_dialog::redirect_request(t_response *resp) {
 	t_contact_param contact;
 	t_client_request **current_cr;
-
+	
 	if (resp->hdr_cseq.method == INVITE) {
 		// re-INVITE
 		if (!req_out_invite) return false;
@@ -2570,16 +2641,20 @@ bool t_dialog::redirect_request(t_response *resp) {
 
 	// Ask user for permission to redirect if indicated by user config
 	if (user_config->ask_user_to_redirect) {
-		if(!ui->cb_ask_user_to_redirect_request(contact.uri, contact.display,
-				resp->hdr_cseq.method)) {
+		if(!ui->cb_ask_user_to_redirect_request(user_config,
+				contact.uri, contact.display, resp->hdr_cseq.method)) 
+		{
 			// User did not permit to redirect
 			return false;
 		}
 	}
 
+	// Change the request URI to the new URI.
+	// As the URI changes the destination set must be recalculated
 	req->uri = contact.uri;
+	req->calc_destinations(*user_config);
 
-	ui->cb_redirecting_request(line->get_line_number(), contact);
+	ui->cb_redirecting_request(user_config, line->get_line_number(), contact);
 	resend_request(*current_cr);
 
 	// Re-INVITE
@@ -2591,6 +2666,43 @@ bool t_dialog::redirect_request(t_response *resp) {
 	return true;
 }
 
+bool t_dialog::failover_request(t_response *resp) {
+	t_client_request **current_cr;
+
+	if (resp->hdr_cseq.method == INVITE) {
+		// re-INVITE
+		if (!req_out_invite) return false;
+		assert(state == DS_W4RE_INVITE_RESP ||
+		       state == DS_W4RE_INVITE_RESP2);
+		current_cr = &req_out_invite;
+	} else {
+		// non-INVITE
+		if (!req_out) return false;
+		current_cr = &req_out;
+	}
+	
+	log_file->write_report("Failover to next destination.",
+				"t_dialog::failover_request");
+	
+	t_request *req = (*current_cr)->get_request();
+	
+	// Get next destination
+	if (!req->next_destination()) {
+		log_file->write_report("No next destination for failover.",
+				"t_dialog::failover_request");
+		return false;
+	}
+	
+	resend_request(*current_cr);
+
+	// Re-INVITE
+	if (resp->hdr_cseq.method == INVITE) {
+		// Reset state in case a 100 Trying was received
+		state = DS_W4RE_INVITE_RESP;
+	}
+
+	return true;	
+}
 
 void t_dialog::hold(bool rtponly) {
 	assert(!session_re_invite);
@@ -2665,7 +2777,7 @@ void t_dialog::retrieve(void) {
 	
 	// If STUN is enabled, then first send a STUN binding request to
 	// discover the IP adderss and port for media.
-	if (phone->use_stun) {
+	if (phone->use_stun(user_config)) {
 		if (!stun_bind_media()) {	
 			// No re-INVITE can be sent. Simply return.
 			// User will decide if the call should be
@@ -2683,7 +2795,7 @@ void t_dialog::send_refer(const t_url &uri, const string &display) {
 	if (state != DS_CONFIRMED) return;
 
 	if (refer_state != REFST_NULL) return;
-
+	
 	// If a previous refer is still in progress, then do nothing
 	if (req_refer) {
 		log_file->write_report("A REFER request is already in progress.",
@@ -2708,7 +2820,7 @@ void t_dialog::send_refer(const t_url &uri, const string &display) {
 	refer->hdr_referred_by.set_uri(line->create_user_uri());
 	refer->hdr_referred_by.set_display(user_config->display);
 
-	req_refer = new t_client_request(refer, 0);
+	req_refer = new t_client_request(user_config, refer, 0);
 	MEMMAN_NEW(req_refer);
 	line->send_request(refer, req_refer->get_tuid());
 	MEMMAN_DELETE(refer);
@@ -2728,7 +2840,7 @@ bool t_dialog::stun_bind_media(void) {
 		unsigned short mapped_port;
 		int stun_err_code;
 		string stun_err_reason;
-		bool ret = get_stun_binding(line->get_rtp_port(),
+		bool ret = get_stun_binding(user_config, line->get_rtp_port(),
 			mapped_ip, mapped_port,
 			stun_err_code, stun_err_reason);
 			
@@ -2940,12 +3052,28 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		if (req_in_invite->get_request()->hdr_cseq.seqnr !=
 				r->hdr_cseq.seqnr)
 		{
+			log_file->write_header("t_dialog::recvd_request",
+					LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("ACK does not match a pending INVITE.\n");
+			log_file->write_raw("Discard ACK.\n");
+			log_file->write_footer();
 			return;
 		}
 		break;
 	case INVITE:
 		if (remote_seqnr_set && r->hdr_cseq.seqnr <= remote_seqnr) {
 			// Request received out of sequence. Discard.
+			log_file->write_header("t_dialog::recvd_request",
+					LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("INVITE is received out of order.\n");
+			log_file->write_raw("Remote seqnr = ");
+			log_file->write_raw(remote_seqnr);
+			log_file->write_endl();
+			log_file->write_raw("Received seqnr = ");
+			log_file->write_raw(r->hdr_cseq.seqnr);
+			log_file->write_endl();
+			log_file->write_raw("Discard INVITE.\n");
+			log_file->write_footer();
 			return;
 		}
 		
@@ -2971,7 +3099,7 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 			delete resp;
 			return;
 		} else {
-			req_in_invite = new t_client_request(r, tid);
+			req_in_invite = new t_client_request(user_config, r, tid);
 			MEMMAN_NEW(req_in_invite);
 		}
 		break;
@@ -3008,6 +3136,8 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		remote_seqnr_set = true;
 	}
 
+	t_dialog_state old_state = state;
+	
 	switch (state) {
 	case DS_NULL:
 		state_null(r, tuid, tid);
@@ -3041,6 +3171,24 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		break;
+	}
+	
+	// If the state has changed, then waiting requests needs to be
+	// processed.
+	if (state != old_state && !inc_req_queue.empty()) {
+		t_client_request *queued_cr = inc_req_queue.front();
+		inc_req_queue.pop_front();
+		
+		log_file->write_header("t_dialog::recvd_request", 
+				LOG_NORMAL, LOG_INFO);
+		log_file->write_raw("Process queued ");
+		log_file->write_raw(method2str(r->method, r->unknown_method));
+		log_file->write_endl();
+		log_file->write_footer();
+
+		recvd_request(queued_cr->get_request(), 0, queued_cr->get_tid());
+		MEMMAN_DELETE(queued_cr);
+		delete queued_cr;
 	}
 }
 
@@ -3099,7 +3247,7 @@ void t_dialog::answer(void) {
 	resp_invite->hdr_to.set_tag(local_tag);
 
 	// Set Organization header
-	SET_HDR_ORGANIZATION(resp_invite->hdr_organization);
+	SET_HDR_ORGANIZATION(resp_invite->hdr_organization, user_config);
 
 	// RFC 3261 12.1.1
 	// Copy the Record-Route header from request to response
@@ -3113,7 +3261,7 @@ void t_dialog::answer(void) {
 	resp_invite->hdr_contact.add_contact(contact);
 
 	// Set Allow and Supported headers
-	SET_HDR_ALLOW(resp_invite->hdr_allow);
+	SET_HDR_ALLOW(resp_invite->hdr_allow, user_config);
 	SET_HDR_SUPPORTED(resp_invite->hdr_supported);
 
 	// RFC 3261 13.3.1.4

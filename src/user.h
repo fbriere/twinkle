@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@
 #include "sys_settings.h"
 #include "sockets/url.h"
 
+// Forward declarations
+class t_request;
+
 // Default config file name
 #define USER_CONFIG_FILE	"twinkle.cfg"
 #define USER_FILE_EXT		".cfg"
@@ -31,8 +34,8 @@
 
 #define USER_SCHEME		"sip"
 
-#define PUBLIC_SIP_UDP_PORT	phone->get_public_port_sip()
-#define USER_HOST		phone->get_ip_sip()
+#define PUBLIC_SIP_UDP_PORT(u)	phone->get_public_port_sip(u)
+#define USER_HOST(u)		phone->get_ip_sip(u)
 #define LOCAL_IP		user_host
 
 using namespace std;
@@ -113,23 +116,6 @@ public:
 
 	// AUDIO
 
-	// rtp_port is the base port for RTP streams. Each phone line
-	// uses has its own RPT port number.
-	// line x has RTP port = rtp_port + x * 2 and
-	//           RTCP port = rtp_port + x * 2 + 1
-	// Where x starts at 0
-	//
-	// NOTE: for call transfer scenario, line 2 (3rd line) is used
-	//       which is not a line that is visible to the user. The user
-	//       only sees 2 lines for its use. By having a dedicated port
-	//       for line 2, the  RTP stream for a referred call uses another
-	//       port than the RTP stream for an original call, preventing
-	//       the RTP streams for these calls to become mixed.
-	//
-	// NOTE: during a call transfer, line 2 will be swapped with another
-	//       line, so the ports swap accordingly.
-	unsigned short		rtp_port;
-
 	list<unsigned short>	codecs; // in order of preference
 	unsigned short		ptime; // ptime (ms) for G.711
 
@@ -147,9 +133,6 @@ public:
 
 
 	// SIP PROTOCOL
-
-	// Port for sending and receiving SIP messages
-	unsigned short	sip_udp_port;
 
 	// SIP protocol options
 	// hold variants: rfc2543, rfc3264
@@ -263,6 +246,8 @@ public:
 
 
 	t_user();
+	
+	t_user *copy(void) const;
 
 	// Read and parse a config file into the user object.
 	// Returns false if it fails. error_msg is an error message that can
@@ -278,8 +263,21 @@ public:
 
 	// Get the name of the profile (filename without extension)
 	string get_profile_name(void) const;
+	
+	// The contact name is created from the name and domain values.
+	// Just the name value is not unique when multiple user profiles are
+	// activated.
+	string get_contact_name(void) const;
+	
+	// Returns "display <sip:name@domain>"
+	string get_display_uri(void) const;
+	
+	// Check if all required extensions are supported
+	bool check_required_ext(t_request *r, list<string> &unsupported) const;
+	
+	// Create user uri and contact uri
+	string create_user_contact(void);
+	string create_user_uri(void);
 };
-
-extern t_user *user_config;
 
 #endif

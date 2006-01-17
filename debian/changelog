@@ -1,3 +1,11 @@
+twinkle (0.5-1) unstable; urgency=low
+
+  * New upstream release
+  * Don't ship upstream NEWS as it is a duplicate of upstream ChangeLog
+  * Remove usr/sbin from debian/dirs
+
+ -- Mark Purcell <msp@debian.org>  Tue, 17 Jan 2006 16:53:16 +0000
+
 twinkle (0.4.2-1) unstable; urgency=low
 
   * New upstream release

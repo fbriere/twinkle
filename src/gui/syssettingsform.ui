@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>727</width>
-            <height>386</height>
+            <height>499</height>
         </rect>
     </property>
     <property name="caption">
@@ -34,6 +34,14 @@
                 </property>
                 <property name="pixmap">
                     <pixmap>kmix.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Network</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>network.png</pixmap>
                 </property>
             </item>
             <item>
@@ -294,6 +302,178 @@
                         <property name="whatsThis" stdset="0">
                             <string>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.</string>
                         </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>advancedSoundGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Advanced</string>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout31</cstring>
+                                </property>
+                                <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>ossFragmnetTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>OSS &amp;fragment size:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>ossFragmentComboBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QComboBox" row="1" column="1">
+                                        <item>
+                                            <property name="text">
+                                                <string>16</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>32</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>64</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>128</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>256</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>alsaPlayPeriodComboBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0">
+                                        <property name="name">
+                                            <cstring>alsaPlayPeriodTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>ALSA &amp;play period size:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>alsaPlayPeriodComboBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="0">
+                                        <property name="name">
+                                            <cstring>alsaCapturePeriosTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;ALSA capture period size:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>alsaCapturePeriodComboBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QComboBox" row="0" column="1">
+                                        <item>
+                                            <property name="text">
+                                                <string>16</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>32</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>64</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>128</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>256</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>ossFragmentComboBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QComboBox" row="2" column="1">
+                                        <item>
+                                            <property name="text">
+                                                <string>16</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>32</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>64</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>128</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>256</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>alsaCapturePeriodComboBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</string>
+                                        </property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer27</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>121</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
                     </widget>
                     <spacer>
                         <property name="name">
@@ -581,58 +761,6 @@
                             <property name="name">
                                 <cstring>unnamed</cstring>
                             </property>
-                            <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
-                                <property name="name">
-                                    <cstring>startHiddenCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>S&amp;tartup hidden in system tray</string>
-                                </property>
-                                <property name="accel">
-                                    <string>Alt+T</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Next time you start Twinkle it will immediately hide in the system tray. This works best when you also select a default user profile.</string>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="1" column="0">
-                                <property name="name">
-                                    <cstring>startProfileTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>Default &amp;user profile:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>profileComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="2" column="0">
-                                <property name="name">
-                                    <cstring>userHostLextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>Default &amp;IP address:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>userHostComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QComboBox" row="1" column="1">
-                                <property name="name">
-                                    <cstring>profileComboBox</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>3</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Next time you start Twinkle, this user profile will be automatically selected.</string>
-                                </property>
-                            </widget>
                             <widget class="QComboBox" row="2" column="1">
                                 <property name="name">
                                     <cstring>userHostComboBox</cstring>
@@ -647,6 +775,56 @@
                                 </property>
                                 <property name="whatsThis" stdset="0">
                                     <string>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple IP addresses.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="2" column="0">
+                                <property name="name">
+                                    <cstring>userHostLextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Default &amp;IP address:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>userHostComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>startHiddenCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>S&amp;tartup hidden in system tray</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+T</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Next time you start Twinkle it will immediately hide in the system tray. This works best when you also select a default user profile.</string>
+                                </property>
+                            </widget>
+                            <widget class="QListView" row="1" column="0" rowspan="1" colspan="2">
+                                <column>
+                                    <property name="text">
+                                        <string>Default user profiles</string>
+                                    </property>
+                                    <property name="clickable">
+                                        <bool>true</bool>
+                                    </property>
+                                    <property name="resizable">
+                                        <bool>true</bool>
+                                    </property>
+                                </column>
+                                <property name="name">
+                                    <cstring>profileListView</cstring>
+                                </property>
+                                <property name="selectionMode">
+                                    <enum>NoSelection</enum>
+                                </property>
+                                <property name="resizeMode">
+                                    <enum>LastColumn</enum>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>If you always use the same profile(s), then you can mark these profiles as default here. The next time you start Twinkle, you will not be asked to select which profiles to run. The default profiles will automatically run.</string>
                                 </property>
                             </widget>
                         </grid>
@@ -703,9 +881,151 @@
                             </spacer>
                         </hbox>
                     </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageNetwork</cstring>
+                </property>
+                <attribute name="id">
+                    <number>3</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>networkTitleTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Network</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout5</cstring>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <spacer row="0" column="2">
+                                <property name="name">
+                                    <cstring>spacer7_2</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>221</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                            <widget class="QSpinBox" row="0" column="1">
+                                <property name="name">
+                                    <cstring>sipUdpPortSpinBox</cstring>
+                                </property>
+                                <property name="maxValue">
+                                    <number>65535</number>
+                                </property>
+                                <property name="minValue">
+                                    <number>1025</number>
+                                </property>
+                                <property name="value">
+                                    <number>5060</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The UDP port used for sending and receiving SIP messages.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>rtpPortTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;RTP port:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>rtpPortSpinBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox" row="1" column="1">
+                                <property name="name">
+                                    <cstring>rtpPortSpinBox</cstring>
+                                </property>
+                                <property name="maxValue">
+                                    <number>65535</number>
+                                </property>
+                                <property name="minValue">
+                                    <number>1025</number>
+                                </property>
+                                <property name="lineStep">
+                                    <number>2</number>
+                                </property>
+                                <property name="value">
+                                    <number>8000</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (eg. 8004) is also used.</string>
+                                </property>
+                            </widget>
+                            <spacer row="1" column="2">
+                                <property name="name">
+                                    <cstring>spacer8</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>211</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>sipUdpPortTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;SIP UDP port:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>sipUdpPortSpinBox</cstring>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
                     <spacer>
                         <property name="name">
-                            <cstring>spacer8</cstring>
+                            <cstring>spacer9</cstring>
                         </property>
                         <property name="orientation">
                             <enum>Vertical</enum>
@@ -716,7 +1036,7 @@
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>20</height>
+                                <height>281</height>
                             </size>
                         </property>
                     </spacer>
@@ -768,13 +1088,18 @@
     <tabstop>guiUseSystrayCheckBox</tabstop>
     <tabstop>guiHideCheckBox</tabstop>
     <tabstop>startHiddenCheckBox</tabstop>
-    <tabstop>profileComboBox</tabstop>
+    <tabstop>profileListView</tabstop>
     <tabstop>userHostComboBox</tabstop>
     <tabstop>histSizeSpinBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
     <tabstop>micComboBox</tabstop>
     <tabstop>reduceNoiseMicCheckBox</tabstop>
+    <tabstop>ossFragmentComboBox</tabstop>
+    <tabstop>alsaPlayPeriodComboBox</tabstop>
+    <tabstop>alsaCapturePeriodComboBox</tabstop>
+    <tabstop>sipUdpPortSpinBox</tabstop>
+    <tabstop>rtpPortSpinBox</tabstop>
     <tabstop>logMaxSizeSpinBox</tabstop>
     <tabstop>logDebugCheckBox</tabstop>
     <tabstop>logSipCheckBox</tabstop>
@@ -792,13 +1117,20 @@
     <include location="local" impldecl="in implementation">selectprofileform.h</include>
     <include location="local" impldecl="in implementation">qstringlist.h</include>
     <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in implementation">qlistview.h</include>
+    <include location="local" impldecl="in implementation">qspinbox.h</include>
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>
     <variable access="private">list&lt;t_audio_device&gt; list_audio_dev;</variable>
 </variables>
+<signals>
+    <signal>sipUdpPortChanged()</signal>
+    <signal>rtpPortChanged()</signal>
+</signals>
 <slots>
     <slot>showCategory( QListBoxItem * item )</slot>
+    <slot>populateComboBox( QComboBox * cb, const QString &amp; s )</slot>
     <slot>populate()</slot>
     <slot>validate()</slot>
     <slot>show()</slot>

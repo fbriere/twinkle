@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -154,7 +154,8 @@ t_request::t_request() : t_sip_message() {
 t_request::t_request(const t_request &r) : t_sip_message(r),
 		uri(r.uri),
 		method(r.method),
-		unknown_method(r.unknown_method)
+		unknown_method(r.unknown_method),
+		destinations(r.destinations)
 {
 }
 
@@ -274,60 +275,81 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 	return true;
 }
 
-void t_request::get_destination(unsigned long &ipaddr, unsigned short &port,
-			const t_user &user_profile)
-{
+void t_request::calc_destinations(const t_user &user_profile) {
+	destinations.clear();
+
 	// Send a REGISTER to the registrar if provisioned.
 	if (method == REGISTER && user_profile.use_registrar) {
-		ipaddr = user_profile.registrar.get_h_ip();
-		port = user_profile.registrar.get_hport();
+		destinations = user_profile.registrar.get_h_ip_srv("udp");
 		return;
 	}
 
-	// A mid dialog request will go to the host in the contact
-	// header (put in the request-URI in this request) or route list
-	// specified in the final response of the invite (the Route-header in
-	// this request).
-	// Note that an ACK for a failed INVITE (3XX-6XX) will be
-	// sent by the transaction layer to the ipaddr/port of the
-	// INVITE.
-	if (hdr_route.is_populated() && hdr_route.route_to_first_route) {
-		// Take URI from first route-header
-		t_url &u = hdr_route.route_list.front().uri;
-		ipaddr = u.get_h_ip();
-		port = u.get_hport();
-	} else {
-		// Take Request-URI
-		ipaddr = uri.get_h_ip();
-		port = uri.get_hport();
+	if (!user_profile.use_outbound_proxy ||
+	    (hdr_to.tag != "" && !user_profile.all_requests_to_proxy)) {
+		// A mid dialog request will go to the host in the contact
+		// header (put in the request-URI in this request) or route list
+		// specified in the final response of the invite (the Route-header in
+		// this request).
+		// Note that an ACK for a failed INVITE (3XX-6XX) will be
+		// sent by the transaction layer to the ipaddr/port of the
+		// INVITE.
+		if (hdr_route.is_populated() && hdr_route.route_to_first_route) {
+			// Take URI from first route-header
+			t_url &u = hdr_route.route_list.front().uri;
+			destinations = u.get_h_ip_srv("udp");
+		} else {
+			// Take Request-URI
+			destinations = uri.get_h_ip_srv("udp");
+		}
 	}
 
-	// Verify if the destination is overriden by outbound proxy settings
+	// Send request to outbound proxy if configured
 	if (user_profile.use_outbound_proxy) {
-		if (user_profile.non_resolvable_to_proxy &&
-		    ipaddr != 0 && port != 0)
+		if (user_profile.non_resolvable_to_proxy && !destinations.empty())
 		{
 			// The destination has been resolved, so do not
 			// use the outbound proxy in this case.
 			return;
 		}
 
-		if (user_profile.all_requests_to_proxy) {
+		if (user_profile.all_requests_to_proxy || hdr_to.tag == "") {
 			// All requests should go to the proxy.
 			// Override destination by the outbound proxy address.
-			ipaddr = user_profile.outbound_proxy.get_h_ip();
-			port = user_profile.outbound_proxy.get_hport();
-			return;
-		} else if (hdr_to.tag == "") {
-			// Only out-of-dialog requests (including
-			// initial INVITE) should go to the outbound
-			// proxy.
-			// Override destination by the outbound proxy address.
-			ipaddr = user_profile.outbound_proxy.get_h_ip();
-			port = user_profile.outbound_proxy.get_hport();
-			return;
+			destinations = user_profile.outbound_proxy.get_h_ip_srv("udp");
 		}
 	}
+}
+
+void t_request::get_destination(unsigned long &ipaddr, unsigned short &port,
+			const t_user &user_profile)
+{
+	if (destinations.empty()) calc_destinations(user_profile);
+	get_current_destination(ipaddr, port);
+}
+
+void t_request::get_current_destination(unsigned long &ipaddr, unsigned short &port) {
+	if (destinations.empty()) {
+		// No destinations could be found.
+		ipaddr =0;
+		port = 0;
+	} else {
+		// Return first destination
+		ipaddr = destinations.front().ipaddr;
+		port = destinations.front().port;
+	}
+}
+
+bool t_request::next_destination(void) {		
+	if (destinations.size() <= 1) return false;
+	
+	// Remove current destination
+	destinations.pop_front();
+	return true;	
+}
+
+void t_request::set_destination(unsigned long ipaddr, unsigned short port) {
+	destinations.clear();
+	destinations.push_back(t_ip_port(ipaddr, port));
 }
 
 bool t_request::www_authorize(const t_challenge &chlg, const string &username,

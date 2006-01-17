@@ -19,7 +19,8 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
-	$(CCRTP_LIBS)
+	$(CCRTP_LIBS)\
+	-lresolv
 
 libtwinkle_a_SOURCES =\
         auth.cpp\
@@ -30,6 +31,7 @@ libtwinkle_a_SOURCES =\
         listener.cpp\
         log.cpp\
         phone.cpp\
+        phone_user.cpp\
         redirect.cpp\
         sender.cpp\
         service.cpp\
@@ -53,6 +55,7 @@ libtwinkle_a_SOURCES =\
         listener.h\
         log.h\
         phone.h\
+        phone_user.h\
 	protocol.h\
         redirect.h\
         sender.h\

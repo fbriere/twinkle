@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,17 +20,20 @@
 #define _STUN_TRANSACTION_H
 
 #include "stun.h"
+#include "phone_user.h"
 #include "protocol.h"
+#include "user.h"
 #include "transaction.h"
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "sockets/socket.h"
+#include "sockets/url.h"
 
 // Create a binding in a NAT.
 // Returns true on success. Returns false when the STUN server returned
 // an error. Throws an int exception (containing errno) when some
 // socket operation fails.
-bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
+bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned long &mapped_ip,
 	unsigned short &mapped_port, int &err_code, string &err_reason);
 	
 	
@@ -39,7 +42,7 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 // It sets the use_stun attribute of phone if STUN should be used.
 // Return false if STUN cannot be used. err_msg will contain an
 // error message that can be displayed to the user.
-bool stun_discover_nat(string &err_msg);
+bool stun_discover_nat(t_phone_user *pu, string &err_msg);
 
 
 //////////////////////////////////////////////
@@ -64,9 +67,12 @@ protected:
 	
 	// Number of transmissions of the request
 	unsigned short		num_transmissions;
+
+	// Destinations for the request	
+	list<t_ip_port> 	destinations;
 	
-	unsigned long	dst_ipaddr;	// destination addr for request
-	unsigned short	dst_port;	// destination port for request
+	// User profile of user that created this transaction
+	t_user			*user_config;
 	
 	void start_timer_req_timeout(void);
 	void stop_timer_req_timeout(void);
@@ -83,9 +89,8 @@ public:
 	t_trans_state get_state(void) const;
 
 	// The transaction will keep a copy of the request
-	t_stun_transaction(StunMessage *r,
-			   unsigned short _tuid, unsigned long ipaddr,
-			   unsigned short port);
+	t_stun_transaction(t_user *user, StunMessage *r,
+			   unsigned short _tuid, const list<t_ip_port> &dst);
 
 	// All request and response pointers contained by the
 	// transaction will be deleted.
@@ -94,11 +99,17 @@ public:
 	// Process STUN response
 	virtual void process_response(StunMessage *r);
 	
+	// Process ICMP error
+	virtual void process_icmp(const t_icmp_msg &icmp);
+	
 	// Process timeout
 	virtual void timeout(t_stun_timer t);	
 	
 	// Match response with transaction
 	bool match(StunMessage *resp) const;
+	
+	// Match ICMP error with transaction
+	bool match(const t_icmp_msg &icmp) const;
 };
 
 //////////////////////////////////////////////
@@ -115,14 +126,15 @@ protected:
 	
 public:
 	// Create transaction and send out STUN request		
-	t_sip_stun_trans(StunMessage *r,
-			 unsigned short _tuid, unsigned long ipaddr,
-			 unsigned short port);
+	t_sip_stun_trans(t_user *user, StunMessage *r,
+			 unsigned short _tuid, const list<t_ip_port> &dst);
 };
 
 //////////////////////////////////////////////
 // Media STUN transaction
 //////////////////////////////////////////////
+
+// TODO: this code is not used anymore. Remove?
 
 // A media STUN transaction is a STUN request to get a binding
 // for a media port. Such a request must be sent from the media
@@ -138,9 +150,9 @@ protected:
 	
 public:
 	// Create transaction and send out STUN request		
-	t_media_stun_trans(StunMessage *r,
-			 unsigned short _tuid, unsigned long _dst_ipaddr,
-			 unsigned short _dst_port, unsigned short src_port);
+	t_media_stun_trans(t_user *user, StunMessage *r,
+			 unsigned short _tuid, const list<t_ip_port> &dst, 
+			 unsigned short src_port);
 	~t_media_stun_trans();
 };
 

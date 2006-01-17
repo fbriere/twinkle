@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "timekeeper.h"
 #include "transaction.h"
 #include "transaction_mgr.h"
+#include "user.h"
 #include "util.h"
 #include "audits/memman.h"
 
@@ -171,6 +172,18 @@ bool t_trans_client::match(t_response *r) const {
 		request->hdr_call_id.call_id == r->hdr_call_id.call_id);
 }
 
+// An ICMP error matches a transaction when the destination IP address/port
+// of the packet that caused the ICMP error equals the destination 
+// IP address/port of the transaction. Other information of the packet causing
+// the ICMP error is not available.
+// In theory when multiple transactions are open for the same destination, the
+// wrong transaction may process the ICMP error. In practice this should rarely
+// happen as the destination will be unreachable for all those transactions.
+// If it happens a transaction gets aborted.
+bool t_trans_client::match(const t_icmp_msg &icmp) const {
+	return (dst_ipaddr == icmp.ipaddr && dst_port == icmp.port);
+}
+
 ///////////////////////////////////////////////////////////
 // RFC 3261 17.1.1
 // Client INVITE transaction
@@ -260,6 +273,9 @@ void t_tc_invite::process_provisional(t_response *r) {
 
 void t_tc_invite::process_final(t_response *r) {
 	assert(r->is_final());
+	
+	unsigned long ipaddr;
+	unsigned short port;
 
 	switch (state) {
 	case TS_CALLING:
@@ -300,6 +316,12 @@ void t_tc_invite::process_final(t_response *r) {
 				ack->hdr_proxy_authorization =
 					request->hdr_proxy_authorization;
 			}
+			
+			// RFC 3263 4
+			// ACK for non-2xx SIP responses to INVITE MUST be sent t
+			// to the same host.
+			request->get_current_destination(ipaddr, port);
+			ack->set_destination(ipaddr, port);			
 
 			// Send ACK
 			evq_sender_udp->push_network(ack, dst_ipaddr,
@@ -323,6 +345,38 @@ void t_tc_invite::process_final(t_response *r) {
 		evq_sender_udp->push_network(ack, dst_ipaddr, dst_port);
 		break;
 	default:
+		break;
+	}
+}
+
+void t_tc_invite::process_icmp(const t_icmp_msg &icmp) {
+	t_response *r;
+
+	switch(state) {
+	case TS_CALLING:
+		stop_timer_A();
+		stop_timer_B();
+		
+		// An ICMP error indicates a kind of network problem.
+		// So the server is not available. Generate an internal
+		// 503 Service Unavailable repsponse to notify the TU.
+		r = create_response(R_503_SERVICE_UNAVAILABLE);
+
+		log_file->write_header("t_tc_invite::process_icmp",
+			LOG_NORMAL, LOG_INFO);
+		log_file->write_raw("ICMP error received.\n\n");
+		log_file->write_raw("Send internal:\n");
+		log_file->write_raw(r->encode());
+		log_file->write_footer();
+
+		evq_trans_layer->push_user(r, tuid, id);
+		MEMMAN_DELETE(r);
+		delete r;
+		state = TS_TERMINATED;
+		break;
+	default:
+		// In other states a response has been received already,
+		// so this ICMP error seems to be a mismatch. Discard.
 		break;
 	}
 }
@@ -511,6 +565,39 @@ void t_tc_non_invite::process_final(t_response *r) {
 		break;
 	}
 }
+
+void t_tc_non_invite::process_icmp(const t_icmp_msg &icmp) {
+	t_response *r;
+
+	switch(state) {
+	case TS_TRYING:
+		stop_timer_E();
+		stop_timer_F();
+		
+		// An ICMP error indicates a kind of network problem.
+		// So the server is not available. Generate an internal
+		// 503 Service Unavailable repsponse to notify the TU.
+		r = create_response(R_503_SERVICE_UNAVAILABLE);
+
+		log_file->write_header("t_tc_non_invite::process_icmp",
+			LOG_NORMAL, LOG_INFO);
+		log_file->write_raw("ICMP error received.\n\n");
+		log_file->write_raw("Send internal:\n");
+		log_file->write_raw(r->encode());
+		log_file->write_footer();
+
+		evq_trans_layer->push_user(r, tuid, id);
+		MEMMAN_DELETE(r);
+		delete r;
+		state = TS_TERMINATED;
+		break;
+	default:
+		// In other states a response has been received already,
+		// so this ICMP error seems to be a mismatch. Discard.
+		break;
+	}
+}
+
 
 void t_tc_non_invite::timeout(t_sip_timer t) {
 	t_response *r;
