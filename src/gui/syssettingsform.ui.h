@@ -30,16 +30,22 @@
 // Indices of categories in the category list box
 #define idxCatGeneral	0
 #define idxCatAudio	1
-#define idxCatNetwork	2
-#define idxCatLog		3
+#define idxCatRingtones	2
+#define idxCatNetwork	3
+#define idxCatLog		4
 
 void SysSettingsForm::init()
 {
-#ifndef HAVE_KDE
-	guiUseSystrayCheckBox->setEnabled(false);
-	guiHideCheckBox->setEnabled(false);
-	startHiddenCheckBox->setEnabled(false);
-#endif
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = openRingtoneToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("fileopen-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	openRingtoneToolButton->setIconSet(i);
+	i = openRingbackToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("fileopen-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	openRingbackToolButton->setIconSet(i);
 }
 
 void SysSettingsForm::showCategory( QListBoxItem *item )
@@ -48,6 +54,8 @@ void SysSettingsForm::showCategory( QListBoxItem *item )
 		settingsWidgetStack->raiseWidget(pageGeneral);
 	} else if (item->text() == "Audio") {
 		settingsWidgetStack->raiseWidget(pageAudio);
+	} else if (item->text() == "Ring tones") {
+		settingsWidgetStack->raiseWidget(pageRingtones);
 	} else if (item->text() == "Network") {
 		settingsWidgetStack->raiseWidget(pageNetwork);
 	} else if (item->text() == "Log") {
@@ -131,19 +139,19 @@ void SysSettingsForm::populate()
 	logMemoryCheckBox->setChecked(sys_config->log_show_memory);
 	
 	// General settings
-#ifdef HAVE_KDE
 	guiUseSystrayCheckBox->setChecked(sys_config->gui_use_systray);
 	guiHideCheckBox->setChecked(sys_config->gui_hide_on_close);
 	guiHideCheckBox->setEnabled(sys_config->gui_use_systray);
-#endif
 	
 	// Call history
 	histSizeSpinBox->setValue(sys_config->ch_max_size);
 	
+	// Services
+	callWaitingCheckBox->setChecked(sys_config->call_waiting);
+	hangupBothCheckBox->setChecked(sys_config->hangup_both_3way);
+	
 	// Startup settings
-#ifdef HAVE_KDE
 	startHiddenCheckBox->setChecked(sys_config->start_hidden);
-#endif
 	
 	QStringList profiles;
 	if (!SelectProfileForm::getUserProfiles(profiles, msg)) {
@@ -186,6 +194,25 @@ void SysSettingsForm::populate()
 	// Network settings
 	sipUdpPortSpinBox->setValue(sys_config->config_sip_udp_port);
 	rtpPortSpinBox->setValue(sys_config->rtp_port);
+	
+	// Ring tone settings
+	playRingtoneCheckBox->setChecked(sys_config->play_ringtone);
+	defaultRingtoneRadioButton->setChecked(sys_config->ringtone_file.empty());
+	customRingtoneRadioButton->setChecked(!sys_config->ringtone_file.empty());
+	ringtoneLineEdit->setText(sys_config->ringtone_file.c_str());
+	defaultRingtoneRadioButton->setEnabled(sys_config->play_ringtone);
+	customRingtoneRadioButton->setEnabled(sys_config->play_ringtone);
+	ringtoneLineEdit->setEnabled(!sys_config->ringtone_file.empty());
+	openRingtoneToolButton->setEnabled(!sys_config->ringtone_file.empty());
+	
+	playRingbackCheckBox->setChecked(sys_config->play_ringback);
+	defaultRingbackRadioButton->setChecked(sys_config->ringback_file.empty());
+	customRingbackRadioButton->setChecked(!sys_config->ringback_file.empty());
+	ringbackLineEdit->setText(sys_config->ringback_file.c_str());
+	defaultRingbackRadioButton->setEnabled(sys_config->play_ringback);
+	customRingbackRadioButton->setEnabled(sys_config->play_ringback);
+	ringbackLineEdit->setEnabled(!sys_config->ringback_file.empty());
+	openRingbackToolButton->setEnabled(!sys_config->ringback_file.empty());
 }
 
 void SysSettingsForm::validate()
@@ -216,19 +243,19 @@ void SysSettingsForm::validate()
 	sys_config->log_show_memory = logMemoryCheckBox->isChecked();
 	
 	// General
-#ifdef HAVE_KDE
 	sys_config->gui_use_systray = guiUseSystrayCheckBox->isChecked();
 	sys_config->gui_hide_on_close = guiHideCheckBox->isChecked();
-#endif
 	
 	// Call history
 	sys_config->ch_max_size = histSizeSpinBox->value();
+	
+	// Services
+	sys_config->call_waiting = callWaitingCheckBox->isChecked();
+	sys_config->hangup_both_3way = hangupBothCheckBox->isChecked();
 
 	// Startup
-#ifdef HAVE_KDE
 	sys_config->start_hidden = startHiddenCheckBox->isChecked() &&
 				   guiUseSystrayCheckBox->isChecked();
-#endif
 	
 	sys_config->start_user_profiles.clear();
 	QListViewItemIterator i(profileListView, QListViewItemIterator::Checked);
@@ -254,6 +281,31 @@ void SysSettingsForm::validate()
 		emit rtpPortChanged();
 	}
 	
+	// Ring tones
+	sys_config->play_ringtone = playRingtoneCheckBox->isChecked();
+	if (sys_config->play_ringtone) {
+		if (defaultRingtoneRadioButton->isOn()) {
+			sys_config->ringtone_file.clear();
+		} else {
+			sys_config->ringtone_file = ringtoneLineEdit->
+					text().stripWhiteSpace().ascii();
+		}
+	} else {
+		sys_config->ringtone_file.clear();
+	}
+	
+	sys_config->play_ringback = playRingbackCheckBox->isChecked();
+	if (sys_config->play_ringback) {
+		if (defaultRingbackRadioButton->isOn()) {
+			sys_config->ringback_file.clear();
+		} else {
+			sys_config->ringback_file = ringbackLineEdit->
+					text().stripWhiteSpace().ascii();
+		}
+	} else {
+		sys_config->ringback_file.clear();
+	}
+	
 	// Save user config
 	string error_msg;
 	if (!sys_config->write_config(error_msg)) {
@@ -275,4 +327,28 @@ int SysSettingsForm::exec()
 {
 	populate();
 	return QDialog::exec();
+}
+
+void SysSettingsForm::chooseRingtone()
+{
+	QString file = QFileDialog::getOpenFileName(
+			((t_gui *)ui)->get_last_file_browse_path(),
+			"Ring tones (*.wav)", this, "ring tone file dialog",
+			"Choose ring tone");
+	if (!file.isEmpty()) {
+		ringtoneLineEdit->setText(file);
+		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
+	}
+}
+
+void SysSettingsForm::chooseRingback()
+{
+	QString file = QFileDialog::getOpenFileName(
+			((t_gui *)ui)->get_last_file_browse_path(),
+			"Ring back tones (*.wav)", this, "ring back file dialog",
+			"Choose ring back tone");
+	if (!file.isEmpty()) {
+		ringbackLineEdit->setText(file);
+		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
+	}
 }

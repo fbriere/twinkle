@@ -78,6 +78,8 @@ public:
 	t_hdr_warning();
 	void add_warning(const t_warning &w);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

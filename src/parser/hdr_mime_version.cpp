@@ -31,6 +31,25 @@ string t_hdr_mime_version::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "MIME-Version: " + version + CRLF;
+	s = "MIME-Version: ";
+	s += encode_value();
+	s += CRLF;
+	
 	return s;
 }
+
+string t_hdr_mime_version::encode_value(void) const {
+	if (!populated) return "";
+
+	return version;
+}
+
+string t_hdr_mime_version::encode_env(void) const {
+	string s;
+
+	s = "SIP_MIME_VERSION=";
+	s += encode_value();
+	
+	return s;
+}
+	

@@ -46,6 +46,16 @@ string t_hdr_call_info::encode(void) const {
 	if (!populated) return s;
 
 	s += "Call-Info: ";
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_call_info::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_info_param>::const_iterator i = info_param_list.begin();
 	     i != info_param_list.end(); i++)
@@ -53,8 +63,15 @@ string t_hdr_call_info::encode(void) const {
 		if (i != info_param_list.begin()) s += ", ";
 		s += i->encode();
 	}
+	
+	return s;
+}
 
-	s += CRLF;
-
+string t_hdr_call_info::encode_env(void) const {
+	string s;
+	
+	s = "SIP_CALL_INFO=";
+	s += encode_value();
+	
 	return s;
 }

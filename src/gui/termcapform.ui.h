@@ -30,11 +30,7 @@ void TermCapForm::init()
 	getAddressForm = 0;
 	
 	// Set toolbutton icons for disabled options.
-	QIconSet i;
-	i = addressToolButton->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	addressToolButton->setIconSet(i);
+	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
 #ifndef HAVE_KDE
 	addressToolButton->setEnabled(false);
@@ -44,7 +40,6 @@ void TermCapForm::init()
 void TermCapForm::show()
 {
 	((t_gui *)ui)->fill_user_combo(fromComboBox);
-	fromComboBox->setEnabled(fromComboBox->count() > 1);
 	QDialog::show();
 }
 
@@ -59,7 +54,7 @@ void TermCapForm::destroy()
 void TermCapForm::validate()
 {
 	string display, dest_str;
-	t_user *from_user = phone->ref_user_display_uri(
+	t_user *from_user = phone->ref_user_profile(
 				fromComboBox->currentText().ascii());
 	
 	ui->expand_destination(from_user, 

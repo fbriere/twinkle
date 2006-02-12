@@ -55,10 +55,31 @@ string t_hdr_rack::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "RAck: " + ulong2str(resp_nr) + ' ';
+	s = "RAck: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_rack::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = ulong2str(resp_nr) + ' ';
 	s += ulong2str(cseq_nr);
 	s += ' ';
 	s += method2str(method, unknown_method);
-	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_rack::encode_env(void) const {
+	string s;
+	
+	s = "SIP_RACK=";
+	s += encode_value();
+	
 	return s;
 }

@@ -53,15 +53,32 @@ string t_hdr_accept_language::encode(void) const {
 	if (!populated) return s;
 
 	s += "Accept-Language: ";
+	s += encode_value();
+	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_accept_language::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+	
 	for (list<t_language>::const_iterator i = language_list.begin();
 	     i != language_list.end(); i++)
 	{
 		if (i != language_list.begin()) s += ", ";
 		s += i->encode();
 	}
+	
+	return s;
+}
 
-	s += CRLF;
-
+string t_hdr_accept_language::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ACCEPT_LANGUAGE=";
+	s += encode_value();
+	
 	return s;
 }

@@ -38,6 +38,8 @@ public:
 
 	void add_credentials(const t_credentials &c);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 
 	// Return true if the header contains credentials for a realm/dest
 	bool contains(const string &realm, const t_url &uri) const;

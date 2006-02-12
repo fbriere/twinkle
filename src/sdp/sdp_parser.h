@@ -40,7 +40,8 @@
      T_LINE_CONNECTION = 266,
      T_LINE_ATTRIBUTE = 267,
      T_LINE_MEDIA = 268,
-     T_LINE_UNKNOWN = 269
+     T_LINE_UNKNOWN = 269,
+     T_NULL = 270
    };
 #endif
 #define T_NUM 258
@@ -55,6 +56,7 @@
 #define T_LINE_ATTRIBUTE 267
 #define T_LINE_MEDIA 268
 #define T_LINE_UNKNOWN 269
+#define T_NULL 270
 
 
 
@@ -74,7 +76,7 @@ typedef union YYSTYPE {
 	list<unsigned short>	*yysdpt_num_list;
 } YYSTYPE;
 /* Line 1249 of yacc.c.  */
-#line 77 "sdp_parser.h"
+#line 79 "sdp_parser.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

@@ -32,6 +32,16 @@ string t_hdr_accept_encoding::encode(void) const {
 	if (!populated) return s;
 
 	s += "Accept-Encoding: ";
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_accept_encoding::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_coding>::const_iterator i = coding_list.begin();
 	     i != coding_list.end(); i++)
@@ -40,7 +50,14 @@ string t_hdr_accept_encoding::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
+	return s;
+}
 
+string t_hdr_accept_encoding::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ACCEPT_ENCODING=";
+	s += encode_value();
+	
 	return s;
 }

@@ -76,7 +76,23 @@ string t_hdr_server::encode(void) const {
 	if (!populated) return s;
 
 	s = "Server: ";
-	s += get_server_info();
+	s += encode_value();
 	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_server::encode_value(void) const {
+	if (!populated) return "";
+
+	return get_server_info();
+}
+
+string t_hdr_server::encode_env(void) const {
+	string s;
+	
+	s = "SIP_SERVER=";
+	s += encode_value();
+	
 	return s;
 }

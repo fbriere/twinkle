@@ -51,11 +51,21 @@ void t_hdr_auth_info::set_nonce_count(const unsigned long &nc) {
 
 string t_hdr_auth_info::encode(void) const {
 	string s;
-	bool add_comma = false;
 
 	if (!populated) return s;
 
 	s += "Authenticate-Info: ";
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_auth_info::encode_value(void) const {
+	string s;
+	bool add_comma = false;
+
+	if (!populated) return s;
 
 	if (next_nonce.size() > 0) {
 		s += "nextnonce=";
@@ -97,7 +107,14 @@ string t_hdr_auth_info::encode(void) const {
 		add_comma = true;
 	}
 
-	s += CRLF;
+	return s;
+}
 
+string t_hdr_auth_info::encode_env(void) const {
+	string s;
+	
+	s = "SIP_AUTHENTICATE_INFO=";
+	s += encode_value();
+	
 	return s;
 }

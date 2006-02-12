@@ -252,6 +252,84 @@ string t_sip_message::encode(bool add_content_length) {
 	return s;
 }
 
+list<string> t_sip_message::encode_env(void) {
+	list<string> l;
+
+	// RFC 3261 7.3.1
+	// Headers needed by a proxy should be on top
+	l.push_back(hdr_via.encode_env());
+	l.push_back(hdr_route.encode_env());
+	l.push_back(hdr_record_route.encode_env());
+	l.push_back(hdr_proxy_require.encode_env());
+	l.push_back(hdr_max_forwards.encode_env());
+	l.push_back(hdr_proxy_authenticate.encode_env());
+	l.push_back(hdr_proxy_authorization.encode_env());
+
+	// Order as in many examples
+	l.push_back(hdr_to.encode_env());
+	l.push_back(hdr_from.encode_env());
+	l.push_back(hdr_call_id.encode_env());
+	l.push_back(hdr_cseq.encode_env());
+	l.push_back(hdr_contact.encode_env());
+	l.push_back(hdr_content_type.encode_env());
+
+	// Authentication headers
+	l.push_back(hdr_auth_info.encode_env());
+	l.push_back(hdr_authorization.encode_env());
+	l.push_back(hdr_www_authenticate.encode_env());
+
+	// Remaining headers in alphabetical order
+	l.push_back(hdr_accept.encode_env());
+	l.push_back(hdr_accept_encoding.encode_env());
+	l.push_back(hdr_accept_language.encode_env());
+	l.push_back(hdr_alert_info.encode_env());
+	l.push_back(hdr_allow.encode_env());
+	l.push_back(hdr_allow_events.encode_env());
+	l.push_back(hdr_call_info.encode_env());
+	l.push_back(hdr_content_disp.encode_env());
+	l.push_back(hdr_content_encoding.encode_env());
+	l.push_back(hdr_content_language.encode_env());
+	l.push_back(hdr_date.encode_env());
+	l.push_back(hdr_error_info.encode_env());
+	l.push_back(hdr_event.encode_env());
+	l.push_back(hdr_expires.encode_env());
+	l.push_back(hdr_in_reply_to.encode_env());
+	l.push_back(hdr_min_expires.encode_env());
+	l.push_back(hdr_mime_version.encode_env());
+	l.push_back(hdr_organization.encode_env());
+	l.push_back(hdr_priority.encode_env());
+	l.push_back(hdr_rack.encode_env());
+	l.push_back(hdr_refer_to.encode_env());
+	l.push_back(hdr_referred_by.encode_env());
+	l.push_back(hdr_reply_to.encode_env());
+	l.push_back(hdr_require.encode_env());
+	l.push_back(hdr_retry_after.encode_env());
+	l.push_back(hdr_rseq.encode_env());
+	l.push_back(hdr_server.encode_env());
+	l.push_back(hdr_subject.encode_env());
+	l.push_back(hdr_subscription_state.encode_env());
+	l.push_back(hdr_supported.encode_env());
+	l.push_back(hdr_timestamp.encode_env());
+	l.push_back(hdr_unsupported.encode_env());
+	l.push_back(hdr_user_agent.encode_env());
+	l.push_back(hdr_warning.encode_env());
+
+	// Unknown headers
+	for (list<t_parameter>::const_iterator i = unknown_headers.begin();
+	     i != unknown_headers.end(); i++)
+	{
+		string s = "SIP_";
+		s += toupper(replace_char(i->name, '-', '_'));
+		s += '=';
+		s += i->value;
+		l.push_back(s);
+	}
+	
+	l.push_back(hdr_content_length.encode_env());
+
+	return l;
+}
+
 t_sip_message *t_sip_message::copy(void) const {
 	t_sip_message *m = new t_sip_message(*this);
 	MEMMAN_NEW(m);

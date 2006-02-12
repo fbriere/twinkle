@@ -9,3 +9,12 @@ export QTDIR=/usr/share/qt3
 include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/simple-patchsys.mk
+
+install/digikam::
+	install -D -o root -g root -m 0644 debian/lintian $(CURDIR)/debian/digikam/usr/share/lintian/overrides/digikam
+	mv $(CURDIR)/debian/digikam/usr/share/applnk/Graphics/digikam.desktop $(CURDIR)/debian/digikam/usr/share/applications/kde/
+
+install/digikam::
+	mkdir -p $(CURDIR)/debian/twinkle/usr/share/applications/kde/
+	mv $(CURDIR)/debian/twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications/kde/
+

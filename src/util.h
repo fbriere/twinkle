@@ -44,8 +44,22 @@ string ptr2str(void *p);
 // Convert a bool to a string: "false", "true"
 string bool2str(bool b);
 
-// Convert time/dat to string
-string time2str(time_t t);
+// Convert time/date to string
+// The format parameter is a strftime() format string
+string time2str(time_t t, const char *format);
+string current_time2str(const char *format);
+
+string weekday2str(int wkday);
+string month2str(int month);
+
+// Convert a duration in seconds to a string with hours, minutes seconds.
+// The hours and minutes are only present if there is at least 1 hour/minute.
+// E.g. 65s -> "1m 5s"
+//      3601s -> "1h 0m 1s"
+string duration2str(unsigned long seconds);
+
+// Convert a timer in seconds to a string (h:mm:ss)
+string timer2str(unsigned long seconds);
 
 // Convert a hex string to an integer
 unsigned long hex2int(const string &h);
@@ -77,8 +91,14 @@ string escape(const string &s, char c);
 // Unescape a string
 string unescape(const string &s);
 
+// Replace all occurrences of 'from' char 'to' char in s
+string replace_char(const string &s, char from, char to);
+
 // Split a string into elements using c as a separator
 list<string> split(const string &s, char c);
+
+// Split a string in two on the first occurence of the separator c.
+list<string> split_on_first(const string &s, char c);
 
 // Split an escaped string into elements using c as a separator
 // Escaped means: \c will not be seen as a seperator and backslash is

@@ -36,6 +36,17 @@ string t_hdr_allow_events::encode(void) const {
 	} else {
 		s = "Allow-Events: ";
 	}
+	
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_allow_events::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<string>::const_iterator i = event_types.begin();
 	     i != event_types.end(); i++)
@@ -44,6 +55,14 @@ string t_hdr_allow_events::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_allow_events::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ALLOW_EVENTS=";
+	s += encode_value();
+	
 	return s;
 }

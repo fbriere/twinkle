@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <string>
 #include <list>
+#include "sockets/url.h"
 #include "twinkle_config.h"
 
 using namespace std;
@@ -99,6 +100,15 @@ public:
 	// Call history settings
 	int		ch_max_size; // #calls
 	
+	// Service settings
+	// Call waiting allows an incoming call if one line is busy.
+	bool		call_waiting;
+	
+	// Indicates if both lines should be hung up when ending a
+	// 3-way conference call.
+	// If false, then only the active line will be hung up.
+	bool		hangup_both_3way;
+	
 	// Startup settings
 	list<string>	start_user_profiles;
 	string		start_user_host;
@@ -126,12 +136,34 @@ public:
 	//
 	// NOTE: during a call transfer, line 2 will be swapped with another
 	//       line, so the ports swap accordingly.
-	unsigned short		rtp_port;	
-
+	unsigned short		rtp_port;
+	
+	// Ring tone settings
+	bool		play_ringtone;
+	string		ringtone_file;
+	bool		play_ringback;
+	string		ringback_file;
+	
+	// Persistent storage for user interface state
+	// The profile that was last used before Twinkle was terminated.
+	string		last_used_profile;
+	
+	// Call information for redial last call function
+	t_url		redial_url;
+	string		redial_display;
+	string		redial_subject;
+	string		redial_profile; // profile used to make the call
+	
+	// History of latest dialed addresses
+	list<string>	dial_history;
+	
 	t_sys_settings();
 	
 	// Return "about" text
 	string about(bool html) const;
+	
+	// Return a string of options that are built, e.g. ALSA, KDE
+	string get_options_built(void) const;
 
 	// Check if the environment of the machine satisfies all requirements.
 	// If not, then false is returned and error_msg contains an appropriate
@@ -143,9 +175,12 @@ public:
 
 	// Get the share directory
 	string get_dir_share(void) const;
+	
+	// Get the user directory
+	string get_dir_user(void) const;
 
 	// Lock file operations
-	bool create_lock_file(string &error_msg) const;
+	bool create_lock_file(string &error_msg, bool &already_running) const;
 	void delete_lock_file(void) const;
 	
 	// Read and parse a config file into the t_sys_settings object.

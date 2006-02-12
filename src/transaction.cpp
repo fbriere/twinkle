@@ -128,7 +128,11 @@ t_response *t_transaction::create_response(int code, string reason) {
 	t_response *r;
 
 	r = request->create_response(code, reason);
-	r->hdr_to.set_tag(get_to_tag());
+	
+	// NOTE: 100 Trying does not establish a dialog
+	if (code != R_100_TRYING) {
+		r->hdr_to.set_tag(get_to_tag());
+	}
 
 	return r;
 }
@@ -152,6 +156,7 @@ t_trans_client::t_trans_client(t_request *r, unsigned long ipaddr,
 // RFC 3261 17.1.3, 8.2.6.2
 // Section 17.1.3 states that only the branch and CSeq method should match.
 // This can lead to the following problem however:
+//
 // 1) A response matches a BYE request, but has a wrong call id.
 // 2) As the response matches the request, the transaction finishes.
 // 3) Then the response is delivered to the TU which tries to match the
@@ -163,13 +168,18 @@ t_trans_client::t_trans_client(t_request *r, unsigned long ipaddr,
 // When a call id is wrong, the BYE request will be retransmitted due to
 // timeouts until the transaction times out completely and a 408 is sent
 // to the TU.
+//
+// Same problem can occur when tags do not match, so tag is take into account
+// as well. So tags are take into account as well.
 bool t_trans_client::match(t_response *r) const {
 	t_via	&req_top_via = request->hdr_via.via_list.front();
 	t_via	&resp_top_via = r->hdr_via.via_list.front();
 
 	return (req_top_via.branch == resp_top_via.branch &&
 		request->hdr_cseq.method == r->hdr_cseq.method &&
-		request->hdr_call_id.call_id == r->hdr_call_id.call_id);
+		request->hdr_call_id.call_id == r->hdr_call_id.call_id &&
+		request->hdr_from.tag == r->hdr_from.tag &&
+		(request->hdr_to.tag.empty() || request->hdr_to.tag == r->hdr_to.tag));
 }
 
 // An ICMP error matches a transaction when the destination IP address/port
@@ -182,6 +192,19 @@ bool t_trans_client::match(t_response *r) const {
 // If it happens a transaction gets aborted.
 bool t_trans_client::match(const t_icmp_msg &icmp) const {
 	return (dst_ipaddr == icmp.ipaddr && dst_port == icmp.port);
+}
+
+void t_trans_client::process_provisional(t_response *r) {
+	// Set the to_tag, such that an internally genrated answer (when needed) 
+	// will have the correct tag.
+	// An INVITE transaction may receive provisional responses with
+	// different to-tags. Only the first to-tag will be kept and an
+	// internally generated response will match this tag.
+	if (!r->hdr_to.tag.empty() && to_tag.empty()) {
+		to_tag = r->hdr_to.tag;
+	}
+	
+	t_transaction::process_provisional(r);
 }
 
 ///////////////////////////////////////////////////////////
@@ -693,7 +716,7 @@ void t_tc_non_invite::abort(void) {
 ///////////////////////////////////////////////////////////
 
 t_trans_server::t_trans_server(t_request *r, unsigned short _tuid) :
-	t_transaction(r, _tuid)
+	t_transaction(r, _tuid), resp_100_trying_sent(false)
 {
 	t_trans_server	*t;
 	t_tid		tid_cancel = 0;
@@ -711,6 +734,11 @@ t_trans_server::t_trans_server(t_request *r, unsigned short _tuid) :
 void t_trans_server::process_provisional(t_response *r) {
 	unsigned long	ipaddr;
 	unsigned short	port;
+	
+	if (r->code == R_100_TRYING && resp_100_trying_sent) {
+		// Send 100 Trying only once
+		return;
+	}
 
 	t_transaction::process_provisional(r);
 	r->hdr_via.get_response_dst(ipaddr, port);
@@ -722,6 +750,10 @@ void t_trans_server::process_provisional(t_response *r) {
 	} else {
 		// Send response
 		evq_sender_udp->push_network(r, ipaddr, port);
+		
+		if (r->code == R_100_TRYING) {
+			resp_100_trying_sent = true;
+		}
 	}
 }
 

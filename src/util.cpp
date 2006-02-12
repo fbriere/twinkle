@@ -26,6 +26,8 @@
 
 string month_abbrv[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", 
 			"Aug", "Sep", "Oct", "Nov", "Dec"};
+			
+string day_abbrv[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 string random_token(int length) {
 	string s;
@@ -92,25 +94,69 @@ string bool2str(bool b) {
 	return (b ? "true" : "false");
 }
 
-string time2str(time_t t) {
-	string s;
+string time2str(time_t t, const char *format) {
 	struct tm tm;
+	char buf[64];
 	
 	localtime_r(&t, &tm);
-	s += int2str(tm.tm_mday, "%02d ");
-	assert(tm.tm_mon < 12);
-	assert(tm.tm_mon >= 0);
-	s += month_abbrv[tm.tm_mon];
-	s += ' ';
-	s += int2str(tm.tm_year + 1900);
-	s += ' ';
-	s += int2str(tm.tm_hour, "%02d");
-	s += ':';
-	s += int2str(tm.tm_min, "%02d");
-	s += ':';
-	s += int2str(tm.tm_sec, "%02d");
+	strftime(buf, 64, format, &tm);
+	return string(buf);
+}
+
+string current_time2str(const char *format) {
+	struct timeval t;
 	
-	return s;
+	gettimeofday(&t, NULL);
+	return time2str(t.tv_sec, format);
+}
+
+string weekday2str(int wkday) {
+	if (wkday >= 0 && wkday <= 6) return day_abbrv[wkday];
+	return "XXX";
+}
+
+string month2str(int month) {
+	if (month >= 0 && month <= 11) return month_abbrv[month];
+	return "XXX";
+}
+
+string duration2str(unsigned long seconds) {
+	string result;
+	long remainder, h, m, s;
+	
+	h = seconds / 3600;
+	remainder = seconds % 3600;
+	m = remainder / 60;
+	s = remainder % 60;
+
+	if (h > 0) {
+		result = ulong2str(h);
+		result += "h ";
+	}
+	
+	if (!result.empty() || m > 0) {
+		result += ulong2str(m);
+		result += "m ";
+	}
+	
+	result += ulong2str(s);
+	result += "s";
+
+	return result;
+}
+
+string timer2str(unsigned long seconds) {
+	string result;
+	long remainder, h, m, s;
+	
+	h = seconds / 3600;
+	remainder = seconds % 3600;
+	m = remainder / 60;
+	s = remainder % 60;
+	
+	char buf[16];
+	snprintf(buf, 16, "%01d:%02d:%02d", h, m, s);
+	return string(buf);
 }
 
 unsigned long hex2int(const string &h) {
@@ -225,6 +271,16 @@ string unescape(const string &s) {
 	return result;
 }
 
+string replace_char(const string &s, char from, char to) {
+	string result = s;
+
+	for (int i = 0; i < result.size(); i++) {
+        	if (result[i] == from) result[i] = to;
+   	}
+   	
+   	return result;
+}
+
 list<string> split(const string &s, char c) {
 	int i;
 	int j = 0;
@@ -249,6 +305,28 @@ list<string> split(const string &s, char c) {
 			return l;
 		}
 	}
+}
+
+list<string> split_on_first(const string &s, char c) {
+	list<string> l;
+	int i = s.find(c);
+	if (i == string::npos) {
+		l.push_back(s);
+	} else {
+		if (i == 0) {
+			l.push_back("");
+		} else {
+			l.push_back(s.substr(0, i));
+		}
+		
+		if (i == s.size() - 1) {
+			l.push_back("");
+		} else {
+			l.push_back(s.substr(i + 1));
+		}
+	}
+	
+	return l;
 }
 
 list<string> split_escaped(const string &s, char c) {

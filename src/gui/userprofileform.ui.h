@@ -33,6 +33,8 @@
 #define idxCatNat		4
 #define idxCatAddrFmt	5
 #define idxCatTimers	6
+#define idxCatRingTones	7
+#define idxCatScripts	8
 
 // Indices of audio codecs in the codec list boxes
 #define idxCodecG711a	0
@@ -66,6 +68,15 @@ void UserProfileForm::init()
 	
 	// NAT
 	publicIPLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = openRingtoneToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("fileopen-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	openRingtoneToolButton->setIconSet(i);
+	openRingbackToolButton->setIconSet(i);
+	openIncomingCallScriptToolButton->setIconSet(i);
 }
 
 void UserProfileForm::showCategory( QListBoxItem *item )
@@ -84,6 +95,10 @@ void UserProfileForm::showCategory( QListBoxItem *item )
 		settingsWidgetStack->raiseWidget(pageAddressFormat);
 	} else if (item->text() == "Timers") {
 		settingsWidgetStack->raiseWidget(pageTimers);
+	} else if (item->text() == "Ring tones") {
+		settingsWidgetStack->raiseWidget(pageRingTones);
+	} else if (item->text() == "Scripts") {
+		settingsWidgetStack->raiseWidget(pageScripts);
 	}
 }
 
@@ -232,6 +247,8 @@ void UserProfileForm::populate()
 	missingContactCheckBox->setChecked(current_profile->allow_missing_contact_reg);
 	regTimeCheckBox->setChecked(current_profile->registration_time_in_contact);
 	compactHeadersCheckBox->setChecked(current_profile->compact_headers);
+	useDomainInContactCheckBox->setChecked(
+			current_profile->use_domain_in_contact);
 	allowRedirectionCheckBox->setChecked(current_profile->allow_redirection);
 	askUserRedirectCheckBox->setEnabled(current_profile->allow_redirection);
 	askUserRedirectCheckBox->setChecked(current_profile->ask_user_to_redirect);
@@ -273,28 +290,50 @@ void UserProfileForm::populate()
 	// TIMERS
 	tmrNoanswerSpinBox->setValue(current_profile->timer_noanswer);
 	tmrNatKeepaliveSpinBox->setValue(current_profile->timer_nat_keepalive);
+	
+	// RING TONES
+	ringtoneLineEdit->setText(current_profile->ringtone_file.c_str());
+	ringbackLineEdit->setText(current_profile->ringback_file.c_str());
+	
+	// SCRIPTS
+	incomingCallScriptLineEdit->setText(current_profile->script_incoming_call.c_str());
 }
 
-void UserProfileForm::initProfileList(list<t_user *> profiles)
+void UserProfileForm::initProfileList(list<t_user *> profiles, QString show_profile_name)
 {
 	profile_list = profiles;
 	
 	// Initialize user profile combo box
 	current_profile_idx = -1;
 	profileComboBox->clear();
+	
+	t_user *show_profile = NULL;
+	int show_idx = 0;
+	int idx = 0;
 	for (list<t_user *>::iterator i = profile_list.begin(); i != profile_list.end(); i++) {
 		profileComboBox->insertItem((*i)->get_profile_name().c_str());
+		if (show_profile_name == (*i)->get_profile_name().c_str()) {
+			show_idx = idx;
+			show_profile = *i;
+		}
+		idx++;
 	}
+	
 	profileComboBox->setEnabled(profile_list.size() > 1);
-	current_profile_idx = 0;
-	current_profile = profile_list.front();
+	current_profile_idx = show_idx;
+	
+	if (show_profile == NULL) {
+		current_profile = profile_list.front();
+	} else {
+		current_profile = show_profile;
+	}
 	profileComboBox->setCurrentItem(current_profile_idx);
 }
 
 // Show the form
-void UserProfileForm::show(list<t_user *> profiles)
+void UserProfileForm::show(list<t_user *> profiles, QString show_profile)
 {
-	initProfileList(profiles);
+	initProfileList(profiles, show_profile);
 	populate();
 	
 	// Show form
@@ -302,9 +341,9 @@ void UserProfileForm::show(list<t_user *> profiles)
 }
 
 // Modal execution
-int UserProfileForm::exec(list<t_user *> profiles)
+int UserProfileForm::exec(list<t_user *> profiles, QString show_profile)
 {
-	initProfileList(profiles);
+	initProfileList(profiles, show_profile);
 	populate();
 	return QDialog::exec();
 }
@@ -333,6 +372,31 @@ bool UserProfileForm::validateValues()
 				"This could be the hostname or IP address of your PC "
 				"if you want direct PC to PC dialing.",
 				MSG_CRITICAL);
+		domainLineEdit->setFocus();
+		return false;
+	}
+	
+	// Check validity of domain
+	s = USER_SCHEME;
+	s.append(':').append(domainLineEdit->text());
+	t_url u_domain(s.ascii());
+	if (!u_domain.is_valid() || u_domain.get_user() != "") {
+		categoryListBox->setSelected(idxCatUser, true);
+		settingsWidgetStack->raiseWidget(pageUser);
+		((t_gui *)ui)->cb_show_msg(this,  "Invalid user name.", MSG_CRITICAL);
+		usernameLineEdit->setFocus();
+		return false;
+	}
+	
+	// Check validity of user
+	s = USER_SCHEME;
+	s.append(':').append(usernameLineEdit->text()).append('@');
+	s.append(domainLineEdit->text());
+	t_url u_user_domain(s.ascii());
+	if (!u_user_domain.is_valid()) {
+		categoryListBox->setSelected(idxCatUser, true);
+		settingsWidgetStack->raiseWidget(pageUser);
+		((t_gui *)ui)->cb_show_msg(this,  "Invalid domain.", MSG_CRITICAL);
 		domainLineEdit->setFocus();
 		return false;
 	}
@@ -494,6 +558,8 @@ bool UserProfileForm::validateValues()
 	current_profile->allow_missing_contact_reg = missingContactCheckBox->isChecked();
 	current_profile->registration_time_in_contact = regTimeCheckBox->isChecked();
 	current_profile->compact_headers = compactHeadersCheckBox->isChecked();
+	current_profile->use_domain_in_contact =
+			useDomainInContactCheckBox->isChecked();
 	current_profile->allow_redirection = allowRedirectionCheckBox->isChecked();
 	current_profile->ask_user_to_redirect = askUserRedirectCheckBox->isChecked();
 	current_profile->max_redirections = maxRedirectSpinBox->value();
@@ -528,6 +594,14 @@ bool UserProfileForm::validateValues()
 	// TIMERS
 	current_profile->timer_noanswer = tmrNoanswerSpinBox->value();
 	current_profile->timer_nat_keepalive = tmrNatKeepaliveSpinBox->value();
+	
+	// RING TONES
+	current_profile->ringtone_file = ringtoneLineEdit->text().stripWhiteSpace().ascii();
+	current_profile->ringback_file = ringbackLineEdit->text().stripWhiteSpace().ascii();
+	
+	// SCRIPTS
+	current_profile->script_incoming_call = incomingCallScriptLineEdit->
+					text().stripWhiteSpace().ascii();
 	
 	// Save user config
 	string error_msg;
@@ -572,4 +646,40 @@ void UserProfileForm::changeProfile(const QString &profileName) {
 	
 	current_profile_idx = profileComboBox->currentItem();
 	populate();
+}
+
+void UserProfileForm::chooseRingtone()
+{
+	QString file = QFileDialog::getOpenFileName(
+			((t_gui *)ui)->get_last_file_browse_path(),
+			"Ring tones (*.wav)", this, "ring tone file dialog",
+			"Choose ring tone");
+	if (!file.isEmpty()) {
+		ringtoneLineEdit->setText(file);
+		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
+	}
+}
+
+void UserProfileForm::chooseRingback()
+{
+	QString file = QFileDialog::getOpenFileName(
+			((t_gui *)ui)->get_last_file_browse_path(),
+			"Ring back tones (*.wav)", this, "ring back file dialog",
+			"Choose ring back tone");
+	if (!file.isEmpty()) {
+		ringbackLineEdit->setText(file);
+		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
+	}
+}
+
+void UserProfileForm::chooseIncomingCallScript()
+{
+	QString file = QFileDialog::getOpenFileName(
+			((t_gui *)ui)->get_last_file_browse_path(),
+			"All files (*)", this, "incoming call script file dialog",
+			"Choose incoming call script");
+	if (!file.isEmpty()) {
+		incomingCallScriptLineEdit->setText(file);
+		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
+	}
 }

@@ -21,6 +21,7 @@
 #include <signal.h>
 #include "exceptions.h"
 #include "line.h"
+#include "log.h"
 #include "sdp/sdp.h"
 #include "util.h"
 #include "user.h"
@@ -188,11 +189,13 @@ void t_line::cleanup(void) {
 		substate = LSSUB_IDLE;
 		is_on_hold = false;
 		is_muted = false;
+		auto_answer = false;
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
 		phone->line_cleared(line_number);
 		user_config = NULL;
+		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
 	}
 }
@@ -214,6 +217,7 @@ void t_line::cleanup_open_pending(void) {
 	if (!active_dialog) {
 		is_on_hold = false;
 		is_muted = false;
+		auto_answer = false;
 		state = LS_IDLE;
 		substate = LSSUB_IDLE;
 		call_info.clear();
@@ -221,6 +225,7 @@ void t_line::cleanup_open_pending(void) {
 		call_hist_record.renew();
 		phone->line_cleared(line_number);
 		user_config = NULL;
+		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
 	}
 }
@@ -242,10 +247,12 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	active_dialog = NULL;
 	is_on_hold = false;
 	is_muted = false;
+	auto_answer = false;
 	line_number = _line_number;
 	id_invite_comp = 0;
 	id_no_answer = 0;
 	user_config = NULL;
+	user_defined_ringtone.clear();
 }
 
 t_line::~t_line() {
@@ -274,11 +281,6 @@ t_line::~t_line() {
 	for (i = dying_dialogs.begin(); i != dying_dialogs.end(); i++) {
 		MEMMAN_DELETE(*i);
 		delete *i;
-	}
-	
-	if (user_config) {
-		MEMMAN_DELETE(user_config);
-		delete user_config;
 	}
 }
 
@@ -372,6 +374,12 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 		MEMMAN_NEW(t);
 		dialog->id_100rel_guard = t->get_id();
 		break;
+	case LTMR_CANCEL_GUARD:
+		assert(dialog);
+		t = new t_tmr_line(DUR_CANCEL_GUARD, timer, this, did);
+		MEMMAN_NEW(t);
+		dialog->id_cancel_guard = t->get_id();
+		break;		
 	default:
 		assert(false);
 	}
@@ -417,6 +425,19 @@ void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
 	case LTMR_100REL_GUARD:
 		assert(dialog);
 		id = &dialog->id_100rel_guard;
+		break;
+	case LTMR_CANCEL_GUARD:
+		assert(dialog);
+		id = &dialog->id_cancel_guard;
+		
+		// KLUDGE
+		if (*id == 0) {
+			// Cancel is always sent on the open dialog.
+			// The timer is probably stopped from a pending dialog,
+			// therefore the timer is stopped on the wrong dialog.
+			// Check if the open dialog has a CANCEL guard timer.
+			if (open_dialog) id = &open_dialog->id_cancel_guard;
+		}
 		break;
 	default:
 		assert(false);
@@ -534,6 +555,10 @@ void t_line::end_call(void) {
 	}
 
 	// Always send the CANCEL on the open dialog.
+	// The pending dialogs will be cleared when the INVITE gets
+	// terminated.
+	// CANCEL is send on the open dialog as the CANCEL must have
+	// the same tags as the INVITE.
 	if (open_dialog) {
 		substate = LSSUB_RELEASING;
 		ui->cb_line_state_changed();
@@ -1162,9 +1187,9 @@ void t_line::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 	recvd_redirect(r, tuid, tid);
 }
 
-void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid) {
+void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &ringtone) {
 	t_response *resp;
-
+	
 	switch (state) {
 	case LS_IDLE:
 		assert(!active_dialog);
@@ -1191,7 +1216,8 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid) {
 		
 		assert(user);
 		user_config = user;
-
+		user_defined_ringtone = ringtone;
+		
 		call_info.from_uri = r->hdr_from.uri;
 		call_info.from_display = r->hdr_from.display;
 		if (r->hdr_organization.is_populated()) {
@@ -1221,6 +1247,9 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid) {
 		ui->cb_line_state_changed();
 		start_timer(LTMR_NO_ANSWER);
 		cleanup();
+		
+		// Answer if auto answer mode is activated
+		if (auto_answer) answer();
 		break;
 	case LS_BUSY:
 		// Only re-INVITEs can be sent to a busy line
@@ -1453,10 +1482,15 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 		// Reject call or redirect it if CF_NOANSWER is active.
 		// If there is no active dialog then ignore the timeout.
 		// The timer should have been stopped already.
+		log_file->write_report("No answer timeout",
+					"t_line::timeout");
+		
 		if (active_dialog) {
 			assert(user_config);
 			t_service srv = phone->get_service(user_config);
 			if (srv.get_cf_active(CF_NOANSWER, cf_dest)) {
+				log_file->write_report("Call redirection no answer",
+					"t_line::timeout");
 				active_dialog->redirect(cf_dest,
 					R_302_MOVED_TEMPORARILY);
 			} else {
@@ -1493,6 +1527,13 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 		if (dialog) {
 			dialog->id_100rel_guard = 0;
 			dialog->dur_100rel_timeout = 0;
+			dialog->timeout(timer);
+		}
+		break;
+	case LTMR_CANCEL_GUARD:
+		// If there is no dialog then ignore the timeout
+		if (dialog) {
+			dialog->id_cancel_guard = 0;
 			dialog->timeout(timer);
 		}
 		break;
@@ -1623,6 +1664,14 @@ bool t_line::get_is_muted(void) const {
 	return is_muted;
 }
 
+bool t_line::get_auto_answer(void) const {
+	return auto_answer;
+}
+
+void t_line::set_auto_answer(bool enable) {
+	auto_answer = enable;
+}
+
 bool t_line::is_refer_succeeded(void) const {
 	if (active_dialog) return active_dialog->refer_succeeded;
 	return false;
@@ -1708,4 +1757,20 @@ unsigned short t_line::get_rtp_port(void) const {
 
 t_user *t_line::get_user(void) const {
 	return user_config;
+}
+
+string t_line::get_ringtone(void) const {
+	if (!user_defined_ringtone.empty()) {
+		// Ring tone returned by incoming call script
+		return user_defined_ringtone;
+	} else if (!user_config->ringtone_file.empty()) {
+		// Ring tone from user profile
+		return user_config->ringtone_file;
+	} else if (!sys_config->ringtone_file.empty()) {
+		// Ring tone from system settings
+		return sys_config->ringtone_file;
+	} else {
+		// Twinkle default
+		return FILE_RINGTONE;
+	}	
 }

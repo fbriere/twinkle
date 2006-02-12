@@ -47,6 +47,17 @@ string t_hdr_event::encode(void) const {
 		s = "Event: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_event::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	s += event_type;
 
 	if (id.size() > 0) {
@@ -56,6 +67,14 @@ string t_hdr_event::encode(void) const {
 
 	s += param_list2str(event_params);
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_event::encode_env(void) const {
+	string s;
+	
+	s = "SIP_EVENT=";
+	s += encode_value();
+	
 	return s;
 }

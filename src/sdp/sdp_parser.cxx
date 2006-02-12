@@ -73,7 +73,8 @@
      T_LINE_CONNECTION = 266,
      T_LINE_ATTRIBUTE = 267,
      T_LINE_MEDIA = 268,
-     T_LINE_UNKNOWN = 269
+     T_LINE_UNKNOWN = 269,
+     T_NULL = 270
    };
 #endif
 #define T_NUM 258
@@ -88,6 +89,7 @@
 #define T_LINE_ATTRIBUTE 267
 #define T_LINE_MEDIA 268
 #define T_LINE_UNKNOWN 269
+#define T_NULL 270
 
 
 
@@ -136,7 +138,7 @@ typedef union YYSTYPE {
 	list<unsigned short>	*yysdpt_num_list;
 } YYSTYPE;
 /* Line 191 of yacc.c.  */
-#line 139 "sdp_parser.cxx"
+#line 141 "sdp_parser.cxx"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -148,7 +150,7 @@ typedef union YYSTYPE {
 
 
 /* Line 214 of yacc.c.  */
-#line 151 "sdp_parser.cxx"
+#line 153 "sdp_parser.cxx"
 
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
@@ -245,22 +247,22 @@ union yyalloc
 #endif
 
 /* YYFINAL -- State number of the termination state. */
-#define YYFINAL  5
+#define YYFINAL  7
 /* YYLAST -- Last index in YYTABLE.  */
 #define YYLAST   48
 
 /* YYNTOKENS -- Number of terminals. */
-#define YYNTOKENS  17
+#define YYNTOKENS  18
 /* YYNNTS -- Number of nonterminals. */
 #define YYNNTS  31
 /* YYNRULES -- Number of rules. */
-#define YYNRULES  38
+#define YYNRULES  39
 /* YYNRULES -- Number of states. */
-#define YYNSTATES  72
+#define YYNSTATES  74
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   269
+#define YYMAXUTOK   270
 
 #define YYTRANSLATE(YYX) 						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -272,8 +274,8 @@ static const unsigned char yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,    16,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    15,     2,
+       2,     2,     2,     2,     2,     2,     2,    17,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    16,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -294,7 +296,8 @@ static const unsigned char yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15
 };
 
 #if YYDEBUG
@@ -302,36 +305,36 @@ static const unsigned char yytranslate[] =
    YYRHS.  */
 static const unsigned char yyprhs[] =
 {
-       0,     0,     3,    12,    13,    14,    20,    21,    22,    33,
-      35,    37,    38,    39,    45,    47,    48,    54,    56,    57,
-      60,    64,    66,    67,    68,    74,    75,    78,    79,    80,
-      93,    95,    99,   100,   103,   104,   107,   108,   109
+       0,     0,     3,    12,    15,    16,    17,    23,    24,    25,
+      36,    38,    40,    41,    42,    48,    50,    51,    57,    59,
+      60,    63,    67,    69,    70,    71,    77,    78,    81,    82,
+      83,    96,    98,   102,   103,   106,   107,   110,   111,   112
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS. */
 static const yysigned_char yyrhs[] =
 {
-      18,     0,    -1,    19,    22,    27,    44,    30,    44,    32,
-      38,    -1,    -1,    -1,     8,    20,     3,    21,     7,    -1,
-      -1,    -1,     9,    23,     5,    24,     4,     4,    25,    26,
-       4,     7,    -1,     4,    -1,     4,    -1,    -1,    -1,    10,
-      28,     6,    29,     7,    -1,    31,    -1,    -1,    11,    25,
-      26,     4,     7,    -1,    33,    -1,    -1,    33,    34,    -1,
-      12,    35,     7,    -1,     4,    -1,    -1,    -1,     4,    15,
-      36,     6,    37,    -1,    -1,    38,    39,    -1,    -1,    -1,
-      13,     4,    40,     3,    41,    42,    43,     7,    44,    31,
-      44,    33,    -1,     4,    -1,     4,    16,     4,    -1,    -1,
-      43,     4,    -1,    -1,    44,    45,    -1,    -1,    -1,    14,
-      46,     6,    47,     7,    -1
+      19,     0,    -1,    20,    23,    28,    45,    31,    45,    33,
+      39,    -1,     1,    15,    -1,    -1,    -1,     8,    21,     3,
+      22,     7,    -1,    -1,    -1,     9,    24,     5,    25,     4,
+       4,    26,    27,     4,     7,    -1,     4,    -1,     4,    -1,
+      -1,    -1,    10,    29,     6,    30,     7,    -1,    32,    -1,
+      -1,    11,    26,    27,     4,     7,    -1,    34,    -1,    -1,
+      34,    35,    -1,    12,    36,     7,    -1,     4,    -1,    -1,
+      -1,     4,    16,    37,     6,    38,    -1,    -1,    39,    40,
+      -1,    -1,    -1,    13,     4,    41,     3,    42,    43,    44,
+       7,    45,    32,    45,    34,    -1,     4,    -1,     4,    17,
+       4,    -1,    -1,    44,     4,    -1,    -1,    45,    46,    -1,
+      -1,    -1,    14,    47,     6,    48,     7,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short yyrline[] =
 {
-       0,   101,   101,   115,   115,   115,   120,   120,   120,   134,
-     149,   160,   161,   160,   166,   171,   172,   182,   187,   188,
-     193,   197,   201,   201,   201,   208,   209,   215,   215,   215,
-     235,   243,   258,   259,   266,   267,   270,   270,   270
+       0,   104,   104,   116,   124,   124,   124,   129,   129,   129,
+     143,   158,   169,   170,   169,   175,   180,   181,   191,   196,
+     197,   202,   206,   210,   210,   210,   217,   218,   224,   224,
+     224,   244,   252,   267,   268,   275,   276,   279,   279,   279
 };
 #endif
 
@@ -343,12 +346,12 @@ static const char *const yytname[] =
   "$end", "error", "$undefined", "T_NUM", "T_TOKEN", "T_SAFE", "T_LINE", 
   "T_CRLF", "T_LINE_VERSION", "T_LINE_ORIGIN", "T_LINE_SESSION_NAME", 
   "T_LINE_CONNECTION", "T_LINE_ATTRIBUTE", "T_LINE_MEDIA", 
-  "T_LINE_UNKNOWN", "':'", "'/'", "$accept", "sdp_body", "version", "@1", 
-  "@2", "origin", "@3", "@4", "network_type", "address_type", 
-  "session_name", "@5", "@6", "sess_connection", "connection", 
-  "sess_attributes", "attributes", "attribute", "attribute2", "@7", "@8", 
-  "media_list", "media", "@9", "@10", "transport", "formats", 
-  "unknown_lines", "unknown_line", "@11", "@12", 0
+  "T_LINE_UNKNOWN", "T_NULL", "':'", "'/'", "$accept", "sdp_body", 
+  "version", "@1", "@2", "origin", "@3", "@4", "network_type", 
+  "address_type", "session_name", "@5", "@6", "sess_connection", 
+  "connection", "sess_attributes", "attributes", "attribute", 
+  "attribute2", "@7", "@8", "media_list", "media", "@9", "@10", 
+  "transport", "formats", "unknown_lines", "unknown_line", "@11", "@12", 0
 };
 #endif
 
@@ -358,26 +361,26 @@ static const char *const yytname[] =
 static const unsigned short yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,   269,    58,    47
+     265,   266,   267,   268,   269,   270,    58,    47
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const unsigned char yyr1[] =
 {
-       0,    17,    18,    20,    21,    19,    23,    24,    22,    25,
-      26,    28,    29,    27,    30,    31,    31,    32,    33,    33,
-      34,    35,    36,    37,    35,    38,    38,    40,    41,    39,
-      42,    42,    43,    43,    44,    44,    46,    47,    45
+       0,    18,    19,    19,    21,    22,    20,    24,    25,    23,
+      26,    27,    29,    30,    28,    31,    32,    32,    33,    34,
+      34,    35,    36,    37,    38,    36,    39,    39,    41,    42,
+      40,    43,    43,    44,    44,    45,    45,    47,    48,    46
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const unsigned char yyr2[] =
 {
-       0,     2,     8,     0,     0,     5,     0,     0,    10,     1,
-       1,     0,     0,     5,     1,     0,     5,     1,     0,     2,
-       3,     1,     0,     0,     5,     0,     2,     0,     0,    12,
-       1,     3,     0,     2,     0,     2,     0,     0,     5
+       0,     2,     8,     2,     0,     0,     5,     0,     0,    10,
+       1,     1,     0,     0,     5,     1,     0,     5,     1,     0,
+       2,     3,     1,     0,     0,     5,     0,     2,     0,     0,
+      12,     1,     3,     0,     2,     0,     2,     0,     0,     5
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -385,23 +388,23 @@ static const unsigned char yyr2[] =
    means the default is an error.  */
 static const unsigned char yydefact[] =
 {
-       0,     3,     0,     0,     0,     1,     6,     0,     4,     0,
-      11,    34,     0,     7,     0,    15,     5,     0,    12,     0,
-      36,    34,    14,    35,     0,     0,     9,     0,     0,    18,
-       0,    13,    10,     0,    37,    25,    17,     0,     0,     0,
-       2,     0,    19,     0,    16,    38,     0,    26,    21,     0,
-       0,    27,    22,    20,     8,     0,     0,    28,    23,     0,
-      24,    30,    32,     0,     0,    31,    33,    34,    15,    34,
-      18,    29
+       0,     0,     4,     0,     0,     3,     0,     1,     7,     0,
+       5,     0,    12,    35,     0,     8,     0,    16,     6,     0,
+      13,     0,    37,    35,    15,    36,     0,     0,    10,     0,
+       0,    19,     0,    14,    11,     0,    38,    26,    18,     0,
+       0,     0,     2,     0,    20,     0,    17,    39,     0,    27,
+      22,     0,     0,    28,    23,    21,     9,     0,     0,    29,
+      24,     0,    25,    31,    33,     0,     0,    32,    34,    35,
+      16,    35,    19,    30
 };
 
 /* YYDEFGOTO[NTERM-NUM]. */
 static const yysigned_char yydefgoto[] =
 {
-      -1,     2,     3,     4,    12,     7,     9,    17,    27,    33,
-      11,    14,    25,    21,    22,    35,    36,    42,    49,    56,
-      60,    40,    47,    55,    59,    62,    64,    15,    23,    28,
-      39
+      -1,     3,     4,     6,    14,     9,    11,    19,    29,    35,
+      13,    16,    27,    23,    24,    37,    38,    44,    51,    58,
+      62,    42,    49,    57,    61,    64,    66,    17,    25,    30,
+      41
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
@@ -409,22 +412,22 @@ static const yysigned_char yydefgoto[] =
 #define YYPACT_NINF -32
 static const yysigned_char yypact[] =
 {
-      -5,   -32,     6,    -1,     4,   -32,   -32,     0,   -32,     7,
-     -32,   -32,     2,   -32,     5,   -10,   -32,     9,   -32,    10,
-     -32,   -32,   -32,   -32,    11,    12,   -32,    13,    14,     8,
-      10,   -32,   -32,    17,   -32,   -32,    15,    13,    16,    18,
-       3,    20,   -32,    22,   -32,   -32,    24,   -32,    19,    23,
-      25,   -32,   -32,   -32,   -32,    26,    27,   -32,   -32,    31,
-     -32,    21,   -32,    32,    -2,   -32,   -32,   -32,   -10,   -32,
-       8,    15
+       0,   -11,   -32,     7,     1,   -32,     6,   -32,   -32,     2,
+     -32,     8,   -32,   -32,     4,   -32,     9,    -9,   -32,    10,
+     -32,    12,   -32,   -32,   -32,   -32,    13,    11,   -32,    15,
+      14,    16,    12,   -32,   -32,    17,   -32,   -32,    19,    15,
+      18,    20,    21,    22,   -32,    24,   -32,   -32,    25,   -32,
+      23,    26,    28,   -32,   -32,   -32,   -32,    29,    30,   -32,
+     -32,    33,   -32,     5,   -32,    34,    -1,   -32,   -32,   -32,
+      -9,   -32,    16,    19
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yysigned_char yypgoto[] =
 {
-     -32,   -32,   -32,   -32,   -32,   -32,   -32,   -32,   -12,    -6,
+     -32,   -32,   -32,   -32,   -32,   -32,   -32,   -32,    -8,   -16,
      -32,   -32,   -32,   -32,   -30,   -32,   -31,   -32,   -32,   -32,
-     -32,   -32,   -32,   -32,   -32,   -32,   -32,   -21,   -32,   -32,
+     -32,   -32,   -32,   -32,   -32,   -32,   -32,   -23,   -32,   -32,
      -32
 };
 
@@ -435,34 +438,34 @@ static const yysigned_char yypgoto[] =
 #define YYTABLE_NINF -1
 static const unsigned char yytable[] =
 {
-      29,    19,    66,     1,    20,    67,     5,     8,     6,    16,
-      10,    18,    13,    24,    26,    30,    46,    32,    37,    31,
-      34,    38,    20,    44,    48,    45,    50,    41,    51,    57,
-      53,    43,    54,    58,    52,    61,    65,    63,    69,    71,
-       0,     0,     0,     0,     0,     0,    68,     0,    70
+      31,     1,    21,    68,     5,    22,    69,     7,     2,    10,
+       8,    18,    12,    15,    26,    20,    28,    32,    33,    34,
+      36,    40,    65,    45,    39,    46,    50,    47,    52,    53,
+      22,    43,    59,    55,    48,    56,    60,    63,    67,    54,
+      71,    73,     0,     0,     0,     0,    70,     0,    72
 };
 
 static const yysigned_char yycheck[] =
 {
-      21,    11,     4,     8,    14,     7,     0,     3,     9,     7,
-      10,     6,     5,     4,     4,     4,    13,     4,    30,     7,
-       6,     4,    14,     7,     4,     7,     4,    12,     4,     3,
-       7,    37,     7,     6,    15,     4,     4,    16,    68,    70,
-      -1,    -1,    -1,    -1,    -1,    -1,    67,    -1,    69
+      23,     1,    11,     4,    15,    14,     7,     0,     8,     3,
+       9,     7,    10,     5,     4,     6,     4,     4,     7,     4,
+       6,     4,    17,    39,    32,     7,     4,     7,     4,     4,
+      14,    12,     3,     7,    13,     7,     6,     4,     4,    16,
+      70,    72,    -1,    -1,    -1,    -1,    69,    -1,    71
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const unsigned char yystos[] =
 {
-       0,     8,    18,    19,    20,     0,     9,    22,     3,    23,
-      10,    27,    21,     5,    28,    44,     7,    24,     6,    11,
-      14,    30,    31,    45,     4,    29,     4,    25,    46,    44,
-       4,     7,     4,    26,     6,    32,    33,    25,     4,    47,
-      38,    12,    34,    26,     7,     7,    13,    39,     4,    35,
-       4,     4,    15,     7,     7,    40,    36,     3,     6,    41,
-      37,     4,    42,    16,    43,     4,     4,     7,    44,    31,
-      44,    33
+       0,     1,     8,    19,    20,    15,    21,     0,     9,    23,
+       3,    24,    10,    28,    22,     5,    29,    45,     7,    25,
+       6,    11,    14,    31,    32,    46,     4,    30,     4,    26,
+      47,    45,     4,     7,     4,    27,     6,    33,    34,    26,
+       4,    48,    39,    12,    35,    27,     7,     7,    13,    40,
+       4,    36,     4,     4,    16,     7,     7,    41,    37,     3,
+       6,    42,    38,     4,    43,    17,    44,     4,     4,     7,
+      45,    32,    45,    34
 };
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
@@ -772,49 +775,49 @@ yydestruct (yytype, yyvaluep)
   switch (yytype)
     {
       case 4: /* T_TOKEN */
-#line 77 "sdp_parser.yxx"
+#line 80 "sdp_parser.yxx"
         { MEMMAN_DELETE(yyvaluep->yysdpt_str); delete yyvaluep->yysdpt_str; };
-#line 777 "sdp_parser.cxx"
+#line 780 "sdp_parser.cxx"
         break;
       case 5: /* T_SAFE */
-#line 78 "sdp_parser.yxx"
+#line 81 "sdp_parser.yxx"
         { MEMMAN_DELETE(yyvaluep->yysdpt_str); delete yyvaluep->yysdpt_str; };
-#line 782 "sdp_parser.cxx"
+#line 785 "sdp_parser.cxx"
         break;
       case 6: /* T_LINE */
-#line 79 "sdp_parser.yxx"
+#line 82 "sdp_parser.yxx"
         { MEMMAN_DELETE(yyvaluep->yysdpt_str); delete yyvaluep->yysdpt_str; };
-#line 787 "sdp_parser.cxx"
+#line 790 "sdp_parser.cxx"
         break;
-      case 31: /* connection */
-#line 91 "sdp_parser.yxx"
-        { MEMMAN_DELETE(yyvaluep->yysdpt_connection); delete yyvaluep->yysdpt_connection; };
-#line 792 "sdp_parser.cxx"
-        break;
-      case 33: /* attributes */
-#line 92 "sdp_parser.yxx"
-        { MEMMAN_DELETE(yyvaluep->yysdpt_attributes); delete yyvaluep->yysdpt_attributes; };
-#line 797 "sdp_parser.cxx"
-        break;
-      case 34: /* attribute */
-#line 93 "sdp_parser.yxx"
-        { MEMMAN_DELETE(yyvaluep->yysdpt_attribute); delete yyvaluep->yysdpt_attribute; };
-#line 802 "sdp_parser.cxx"
-        break;
-      case 35: /* attribute2 */
+      case 32: /* connection */
 #line 94 "sdp_parser.yxx"
-        { MEMMAN_DELETE(yyvaluep->yysdpt_attribute); delete yyvaluep->yysdpt_attribute; };
-#line 807 "sdp_parser.cxx"
+        { MEMMAN_DELETE(yyvaluep->yysdpt_connection); delete yyvaluep->yysdpt_connection; };
+#line 795 "sdp_parser.cxx"
         break;
-      case 39: /* media */
+      case 34: /* attributes */
 #line 95 "sdp_parser.yxx"
-        { MEMMAN_DELETE(yyvaluep->yysdpt_media); delete yyvaluep->yysdpt_media; };
-#line 812 "sdp_parser.cxx"
+        { MEMMAN_DELETE(yyvaluep->yysdpt_attributes); delete yyvaluep->yysdpt_attributes; };
+#line 800 "sdp_parser.cxx"
         break;
-      case 43: /* formats */
+      case 35: /* attribute */
 #line 96 "sdp_parser.yxx"
+        { MEMMAN_DELETE(yyvaluep->yysdpt_attribute); delete yyvaluep->yysdpt_attribute; };
+#line 805 "sdp_parser.cxx"
+        break;
+      case 36: /* attribute2 */
+#line 97 "sdp_parser.yxx"
+        { MEMMAN_DELETE(yyvaluep->yysdpt_attribute); delete yyvaluep->yysdpt_attribute; };
+#line 810 "sdp_parser.cxx"
+        break;
+      case 40: /* media */
+#line 98 "sdp_parser.yxx"
+        { MEMMAN_DELETE(yyvaluep->yysdpt_media); delete yyvaluep->yysdpt_media; };
+#line 815 "sdp_parser.cxx"
+        break;
+      case 44: /* formats */
+#line 99 "sdp_parser.yxx"
         { MEMMAN_DELETE(yyvaluep->yysdpt_num_list); delete yyvaluep->yysdpt_num_list; };
-#line 817 "sdp_parser.cxx"
+#line 820 "sdp_parser.cxx"
         break;
 
       default:
@@ -1117,7 +1120,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 108 "sdp_parser.yxx"
+#line 111 "sdp_parser.yxx"
     {
 		  	/* Parsing stops here. Remaining text is
 			 * not parsed.
@@ -1126,33 +1129,43 @@ yyreduce:
     break;
 
   case 3:
-#line 115 "sdp_parser.yxx"
-    { CTX_NUM; }
+#line 116 "sdp_parser.yxx"
+    {
+			/* KLUDGE to avoid memory leak in bison.
+			 * See the SIP parser for an explanation.
+			 */
+			YYABORT;
+		}
     break;
 
   case 4:
-#line 115 "sdp_parser.yxx"
-    { CTX_INITIAL; }
+#line 124 "sdp_parser.yxx"
+    { CTX_NUM; }
     break;
 
   case 5:
-#line 116 "sdp_parser.yxx"
+#line 124 "sdp_parser.yxx"
+    { CTX_INITIAL; }
+    break;
+
+  case 6:
+#line 125 "sdp_parser.yxx"
     {
 			SDP->version = yyvsp[-2].yysdpt_int; }
     break;
 
-  case 6:
-#line 120 "sdp_parser.yxx"
+  case 7:
+#line 129 "sdp_parser.yxx"
     { CTX_SAFE; }
     break;
 
-  case 7:
-#line 120 "sdp_parser.yxx"
+  case 8:
+#line 129 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
-  case 8:
-#line 121 "sdp_parser.yxx"
+  case 9:
+#line 130 "sdp_parser.yxx"
     {
 			SDP->origin.username = *yyvsp[-7].yysdpt_str;
 			SDP->origin.session_id = *yyvsp[-5].yysdpt_str;
@@ -1166,8 +1179,8 @@ yyreduce:
 			MEMMAN_DELETE(yyvsp[-1].yysdpt_str); delete yyvsp[-1].yysdpt_str; }
     break;
 
-  case 9:
-#line 134 "sdp_parser.yxx"
+  case 10:
+#line 143 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_ntwk_type = str2sdp_ntwk_type(*yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[0].yysdpt_str); delete yyvsp[0].yysdpt_str;
@@ -1183,8 +1196,8 @@ yyreduce:
 			    } }
     break;
 
-  case 10:
-#line 149 "sdp_parser.yxx"
+  case 11:
+#line 158 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_addr_type = str2sdp_addr_type(*yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[0].yysdpt_str); delete yyvsp[0].yysdpt_str;
@@ -1196,37 +1209,37 @@ yyreduce:
 			    } }
     break;
 
-  case 11:
-#line 160 "sdp_parser.yxx"
+  case 12:
+#line 169 "sdp_parser.yxx"
     { CTX_LINE; }
     break;
 
-  case 12:
-#line 161 "sdp_parser.yxx"
+  case 13:
+#line 170 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
-  case 13:
-#line 161 "sdp_parser.yxx"
+  case 14:
+#line 170 "sdp_parser.yxx"
     {
 			SDP->session_name = *yyvsp[-2].yysdpt_str;
 			MEMMAN_DELETE(yyvsp[-2].yysdpt_str); delete yyvsp[-2].yysdpt_str; }
     break;
 
-  case 14:
-#line 166 "sdp_parser.yxx"
+  case 15:
+#line 175 "sdp_parser.yxx"
     {
 			SDP->connection = *yyvsp[0].yysdpt_connection;
 			MEMMAN_DELETE(yyvsp[0].yysdpt_connection); delete yyvsp[0].yysdpt_connection; }
     break;
 
-  case 15:
-#line 171 "sdp_parser.yxx"
+  case 16:
+#line 180 "sdp_parser.yxx"
     { yyval.yysdpt_connection = new t_sdp_connection(); MEMMAN_NEW(yyval.yysdpt_connection); }
     break;
 
-  case 16:
-#line 173 "sdp_parser.yxx"
+  case 17:
+#line 182 "sdp_parser.yxx"
     {
 			yyval.yysdpt_connection = new t_sdp_connection();
 			MEMMAN_NEW(yyval.yysdpt_connection);
@@ -1236,51 +1249,51 @@ yyreduce:
 			MEMMAN_DELETE(yyvsp[-1].yysdpt_str); delete yyvsp[-1].yysdpt_str; }
     break;
 
-  case 17:
-#line 182 "sdp_parser.yxx"
+  case 18:
+#line 191 "sdp_parser.yxx"
     {
 			SDP->attributes = *yyvsp[0].yysdpt_attributes;
 			MEMMAN_DELETE(yyvsp[0].yysdpt_attributes); delete yyvsp[0].yysdpt_attributes; }
     break;
 
-  case 18:
-#line 187 "sdp_parser.yxx"
+  case 19:
+#line 196 "sdp_parser.yxx"
     { yyval.yysdpt_attributes = new list<t_sdp_attr>; MEMMAN_NEW(yyval.yysdpt_attributes); }
     break;
 
-  case 19:
-#line 188 "sdp_parser.yxx"
+  case 20:
+#line 197 "sdp_parser.yxx"
     {
 			yyval.yysdpt_attributes->push_back(*yyvsp[0].yysdpt_attribute);
 			MEMMAN_DELETE(yyvsp[0].yysdpt_attribute); delete yyvsp[0].yysdpt_attribute; }
     break;
 
-  case 20:
-#line 193 "sdp_parser.yxx"
+  case 21:
+#line 202 "sdp_parser.yxx"
     {
 			yyval.yysdpt_attribute = yyvsp[-1].yysdpt_attribute; }
     break;
 
-  case 21:
-#line 197 "sdp_parser.yxx"
+  case 22:
+#line 206 "sdp_parser.yxx"
     {
 			yyval.yysdpt_attribute = new t_sdp_attr(*yyvsp[0].yysdpt_str);
 			MEMMAN_NEW(yyval.yysdpt_attribute);
 			MEMMAN_DELETE(yyvsp[0].yysdpt_str); delete yyvsp[0].yysdpt_str; }
     break;
 
-  case 22:
-#line 201 "sdp_parser.yxx"
+  case 23:
+#line 210 "sdp_parser.yxx"
     { CTX_LINE; }
     break;
 
-  case 23:
-#line 201 "sdp_parser.yxx"
+  case 24:
+#line 210 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
-  case 24:
-#line 201 "sdp_parser.yxx"
+  case 25:
+#line 210 "sdp_parser.yxx"
     {
 			yyval.yysdpt_attribute = new t_sdp_attr(*yyvsp[-4].yysdpt_str, *yyvsp[-1].yysdpt_str);
 			MEMMAN_NEW(yyval.yysdpt_attribute);
@@ -1288,25 +1301,25 @@ yyreduce:
 			MEMMAN_DELETE(yyvsp[-1].yysdpt_str); delete yyvsp[-1].yysdpt_str; }
     break;
 
-  case 26:
-#line 209 "sdp_parser.yxx"
+  case 27:
+#line 218 "sdp_parser.yxx"
     {
 			SDP->media.push_back(*yyvsp[0].yysdpt_media);
 			MEMMAN_DELETE(yyvsp[0].yysdpt_media); delete yyvsp[0].yysdpt_media; }
     break;
 
-  case 27:
-#line 215 "sdp_parser.yxx"
+  case 28:
+#line 224 "sdp_parser.yxx"
     { CTX_NUM; }
     break;
 
-  case 28:
-#line 215 "sdp_parser.yxx"
+  case 29:
+#line 224 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
-  case 29:
-#line 217 "sdp_parser.yxx"
+  case 30:
+#line 226 "sdp_parser.yxx"
     {
 		  	yyval.yysdpt_media = new t_sdp_media();
 			MEMMAN_NEW(yyval.yysdpt_media);
@@ -1325,8 +1338,8 @@ yyreduce:
 			MEMMAN_DELETE(yyvsp[0].yysdpt_attributes); delete yyvsp[0].yysdpt_attributes; }
     break;
 
-  case 30:
-#line 235 "sdp_parser.yxx"
+  case 31:
+#line 244 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_transport = str2sdp_transport(*yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[0].yysdpt_str); delete yyvsp[0].yysdpt_str;
@@ -1337,8 +1350,8 @@ yyreduce:
 			    } }
     break;
 
-  case 31:
-#line 243 "sdp_parser.yxx"
+  case 32:
+#line 252 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_transport = str2sdp_transport(*yyvsp[-2].yysdpt_str + '/' + *yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[-2].yysdpt_str); delete yyvsp[-2].yysdpt_str;
@@ -1351,31 +1364,31 @@ yyreduce:
 			    } }
     break;
 
-  case 32:
-#line 258 "sdp_parser.yxx"
+  case 33:
+#line 267 "sdp_parser.yxx"
     { yyval.yysdpt_num_list = new list<unsigned short>; MEMMAN_NEW(yyval.yysdpt_num_list); }
     break;
 
-  case 33:
-#line 259 "sdp_parser.yxx"
+  case 34:
+#line 268 "sdp_parser.yxx"
     {
 			if (is_number(*yyvsp[0].yysdpt_str)) yyval.yysdpt_num_list->push_back(atoi(yyvsp[0].yysdpt_str->c_str()));
 			MEMMAN_DELETE(yyvsp[0].yysdpt_str);
 			delete yyvsp[0].yysdpt_str; }
     break;
 
-  case 36:
-#line 270 "sdp_parser.yxx"
+  case 37:
+#line 279 "sdp_parser.yxx"
     { CTX_LINE; }
     break;
 
-  case 37:
-#line 270 "sdp_parser.yxx"
+  case 38:
+#line 279 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
-  case 38:
-#line 271 "sdp_parser.yxx"
+  case 39:
+#line 280 "sdp_parser.yxx"
     {
 		  	MEMMAN_DELETE(yyvsp[-2].yysdpt_str); delete yyvsp[-2].yysdpt_str; }
     break;
@@ -1384,7 +1397,7 @@ yyreduce:
     }
 
 /* Line 991 of yacc.c.  */
-#line 1387 "sdp_parser.cxx"
+#line 1400 "sdp_parser.cxx"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1594,7 +1607,7 @@ yyreturn:
 }
 
 
-#line 275 "sdp_parser.yxx"
+#line 284 "sdp_parser.yxx"
 
 
 void

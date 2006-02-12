@@ -53,6 +53,19 @@ enum t_audio_codec {
 // the jitter buffer will not be sent out anymore.
 #define JITTER_BUF_MS		80
 
+// Duration of the expiry timer in the RTP stack.
+// The ccRTP stack checks all data delivered to it against its clock.
+// If the data is too old it will not send it out. Data can be old
+// for several reasons:
+// 
+// 1) The thread reading the soundcard has been paused for a while
+// 2) The audio card buffers sound before releasing it.
+//
+// Especially the latter seems to happen on some soundcards. Data
+// not older than defined delay are still allowed to go out. It's up
+// to the receiving and to deal with the jitter this may cause.
+#define MAX_OUT_AUDIO_DELAY_MS	160
+
 // Buffer sizes
 #define JITTER_BUF_SIZE (JITTER_BUF_MS * AUDIO_SAMPLE_RATE/1000 * AUDIO_SAMPLE_SIZE/8)
 

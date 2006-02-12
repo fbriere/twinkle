@@ -31,8 +31,23 @@ string t_hdr_proxy_authenticate::encode(void) const {
 	if (!populated) return s;
 
 	s += "Proxy-Authenticate: ";
-	s += challenge.encode();
+	s += encode_value();
 	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_proxy_authenticate::encode_value(void) const {
+	if (!populated) return "";
+
+	return challenge.encode();
+}
+
+string t_hdr_proxy_authenticate::encode_env(void) const {
+	string s;
+	
+	s = "SIP_PROXY_AUTHENTICATE=";
+	s += encode_value();
+	
 	return s;
 }

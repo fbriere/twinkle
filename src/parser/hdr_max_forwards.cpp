@@ -34,6 +34,24 @@ string t_hdr_max_forwards::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "Max-Forwards: " + int2str(max_forwards) + CRLF;
+	s = "Max-Forwards: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_max_forwards::encode_value(void) const {
+	if (!populated) return "";
+
+	return int2str(max_forwards);
+}
+
+string t_hdr_max_forwards::encode_env(void) const {
+	string s;
+	
+	s = "SIP_MAX_FORWARDS=";
+	s += encode_value();
+	
 	return s;
 }

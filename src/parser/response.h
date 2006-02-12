@@ -188,6 +188,7 @@ public:
 	bool is_success(void) const;
 
 	string encode(bool add_content_length = true);
+	list<string> encode_env(void);
 	t_sip_message *copy(void) const;
 
 	bool is_valid(bool &fatal, string &reason) const;

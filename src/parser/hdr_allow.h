@@ -40,6 +40,8 @@ public:
 	void add_method(const string &s);
 	bool contains_method(const t_method &m) const;
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

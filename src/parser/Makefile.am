@@ -1,7 +1,13 @@
 INCLUDES = -I $(top_builddir)/src -I $(includedir)
 
+# bison flags
 AM_YFLAGS = -d
-AM_LFLAGS = -is
+
+# flex flags
+# The -s flag is not used on purpose. As it is better to have
+# some unmatched symbols echoed to stdout then a jammed flex
+# causing the process to die.
+AM_LFLAGS = -i
 
 # The output of bison cannot be compiled with the -O2 flag.
 # With the -O2 flag g++ crashes. The -O2 flag is stripped from
@@ -17,7 +23,8 @@ CXXFLAGS = @PARSER_CXXFLAGS@
 # sipparse_LDADD = $(top_builddir)/src/util.o\
 #	$(top_builddir)/src/parser/libsipparser.a\
 #	$(top_builddir)/src/sdp/libsdpparser.a\
-#	$(top_builddir)/src/sockets/libsocket.a
+#	$(top_builddir)/src/sockets/libsocket.a\
+#	-lresolv
 
 noinst_LIBRARIES = libsipparser.a
 

@@ -1,3 +1,16 @@
+twinkle (0.6.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Mark Purcell <msp@debian.org>  Sun, 12 Feb 2006 08:06:44 +0000
+
+twinkle (0.6-1) UNRELEASED; urgency=low
+
+  * (NOT RELEASED YET) New upstream release
+  * Add Build-Depends: libxpm-dev, libsndfile1-dev
+
+ -- Mark Purcell <msp@debian.org>  Fri, 10 Feb 2006 10:32:07 +1100
+
 twinkle (0.5-1) unstable; urgency=low
 
   * New upstream release

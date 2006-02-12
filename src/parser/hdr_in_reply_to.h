@@ -34,6 +34,8 @@ public:
 	t_hdr_in_reply_to();
 	void add_call_id(const string &id);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

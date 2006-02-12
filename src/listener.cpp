@@ -34,6 +34,10 @@ extern t_phone *phone;
 extern t_socket_udp *sip_socket;
 extern t_event_queue *evq_trans_mgr;
 
+// Minimal size of a message. Messages below this size will
+// be silently discarded.
+#define MIN_MESSAGE_SIZE	10
+
 void recvd_stun_msg(char *datagram, int datagram_size, 
 	unsigned long src_addr, unsigned short src_port) 
 {
@@ -41,7 +45,7 @@ void recvd_stun_msg(char *datagram, int datagram_size,
 	
 	if (!stunParseMessage(datagram, datagram_size, m, false)) {
 		log_file->write_report("Received faulty STUN message", 
-				"::recvd_stun_msg", LOG_STUN);
+				"::recvd_stun_msg", LOG_STUN, LOG_DEBUG);
 		return;
 	}
 	
@@ -179,6 +183,11 @@ void *listen_udp(void *arg) {
 			continue;
 		}
 		
+		// Some SIP proxies send small keep alive packets to keep
+		// NAT bindings open. Discard such small packets as these
+		// are not SIP or STUN messages.
+		if (data_size < MIN_MESSAGE_SIZE) continue;
+		
 		// Check if this is a STUN message
 		// The first byte of a STUN message is 0x00 or 0x01.
 		// A SIP message is ASCII so the first byte for SIP is
@@ -225,7 +234,7 @@ void *listen_udp(void *arg) {
 			// Discard malformed SIP messages.
 			log_msg += "Invalid SIP message.\n";
 			log_msg += "Fatal parse error in headers.\n";
-			log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
+			log_file->write_report(log_msg, "::listen_udp", LOG_SIP, LOG_DEBUG);
 			continue;
 		}
 

@@ -99,6 +99,9 @@ enum t_line_timer {
 	LTMR_100REL_TIMEOUT,	// Waiting for PRACK
 	LTMR_100REL_GUARD,	// After this timer PRACK is lost for good
 	LTMR_GLARE_RETRY,	// Waiting before retry re-INVITE after glare
+	LTMR_CANCEL_GUARD,	// Guard for situation where CANCEL has been 
+				// responded to, but 487 on INVITE is never
+				// received.
 };
 
 // Subscription timers
@@ -128,6 +131,11 @@ enum t_stun_timer {
 // where a UAC has sent a re-INVITE, received a 1XX but never receives
 // a final response. No timer for this is defined in RFC 3261
 #define DUR_RE_INVITE_GUARD	10000
+
+// Guard for situation where CANCEL has been 
+// responded to, but 487 on INVITE is never eceived.
+// This situation is not defined by RFC 3261
+#define DUR_CANCEL_GUARD	(64 * DURATION_T1)
 
 // RFC 3261 14.1
 // Maximum values (10th of sec) for timers for retrying a re-INVITE after

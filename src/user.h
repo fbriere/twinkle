@@ -24,7 +24,7 @@
 #include "sys_settings.h"
 #include "sockets/url.h"
 
-// Forward declarations
+// Forward declaration
 class t_request;
 
 // Default config file name
@@ -161,6 +161,11 @@ public:
 
 	// Indicate if compact header names should be used in outgoing messages.
 	bool			compact_headers;
+	
+	// Indicate if a unique contact name should be created by using
+	// the domain name: username_domain
+	// If false then the SIP user name is used as contact name
+	bool			use_domain_in_contact;
 
 	// Redirections
 	// Allow redirection of a request when a 3XX is received.
@@ -243,7 +248,15 @@ public:
 	// to be a telephone number regardless of the presence of the
 	// user=phone parameter.
 	bool			numerical_user_is_phone;
-
+	
+	// RING TONES
+	string		ringtone_file;
+	string		ringback_file;
+	
+	// SCRIPTS
+	// Script to be called on incoming call
+	string		script_incoming_call;
+	
 
 	t_user();
 	

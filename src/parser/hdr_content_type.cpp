@@ -38,6 +38,25 @@ string t_hdr_content_type::encode(void) const {
 		s = "Content-Type: ";
 	}
 
-	s += media.encode() + CRLF;
+	s += encode_value();
+	s += CRLF;
+	return s;
+}
+
+string t_hdr_content_type::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = media.encode();
+	return s;
+}
+
+string t_hdr_content_type::encode_env(void) const {
+	string s;
+	
+	s = "SIP_CONTENT_TYPE=";
+	s += encode_value();
+	
 	return s;
 }

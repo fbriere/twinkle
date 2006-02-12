@@ -20,11 +20,14 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
 	$(CCRTP_LIBS)\
-	-lresolv
+	-lresolv\
+	-lsndfile
 
 libtwinkle_a_SOURCES =\
         auth.cpp\
         call_history.cpp\
+        call_script.cpp\
+        cmd_socket.cpp\
         dialog.cpp\
         events.cpp\
         line.cpp\
@@ -48,6 +51,8 @@ libtwinkle_a_SOURCES =\
         util.cpp\
         auth.h\
         call_history.h\
+        call_script.h\
+        cmd_socket.h\
         dialog.h\
         events.h\
 	exceptions.h\

@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>727</width>
-            <height>499</height>
+            <width>729</width>
+            <height>549</height>
         </rect>
     </property>
     <property name="caption">
@@ -34,6 +34,14 @@
                 </property>
                 <property name="pixmap">
                     <pixmap>kmix.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Ring tones</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>knotify.png</pixmap>
                 </property>
             </item>
             <item>
@@ -300,7 +308,9 @@
                             <string>Alt+N</string>
                         </property>
                         <property name="whatsThis" stdset="0">
-                            <string>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.</string>
+                            <string>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
+
+The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</string>
                         </property>
                     </widget>
                     <widget class="QGroupBox">
@@ -829,6 +839,47 @@
                             </widget>
                         </grid>
                     </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>srvGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Services</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>callWaitingCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Call &amp;waiting</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+W</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>With call waiting an incoming call is accepted when only one line is busy. When you disable call waiting an incoming call will be rejected when one line is busy.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>hangupBothCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Hang up &amp;both lines when ending a 3-way conference call.</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+B</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Hang up both lines when you press bye to end a 3-way conference call. When this option is disabled, only the active line will be hung up and you can continue talking with the party on the other line.</string>
+                                </property>
+                            </widget>
+                        </vbox>
+                    </widget>
                     <widget class="QLayoutWidget">
                         <property name="name">
                             <cstring>layout23</cstring>
@@ -1042,6 +1093,275 @@
                     </spacer>
                 </vbox>
             </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageRingtones</cstring>
+                </property>
+                <attribute name="id">
+                    <number>4</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>ringtonesTitleTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Ring tones</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QButtonGroup">
+                        <property name="name">
+                            <cstring>ringtoneButtonGroup</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Ring tone</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>playRingtoneCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Play ring tone on incoming call</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+P</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if a ring tone should be played when a call comes in.</string>
+                                </property>
+                            </widget>
+                            <widget class="QRadioButton">
+                                <property name="name">
+                                    <cstring>defaultRingtoneRadioButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Default ring tone</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+D</string>
+                                </property>
+                                <property name="checked">
+                                    <bool>true</bool>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Play the default ring tone when a call comes in.</string>
+                                </property>
+                            </widget>
+                            <widget class="QRadioButton">
+                                <property name="name">
+                                    <cstring>customRingtoneRadioButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>C&amp;ustom ring tone</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+U</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Play a custom ring tone when a call comes in.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout16</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer21</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Fixed</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                    <widget class="QLineEdit">
+                                        <property name="name">
+                                            <cstring>ringtoneLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Specify the file name of a .wav file that you want to be played as ring tone.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QToolButton">
+                                        <property name="name">
+                                            <cstring>openRingtoneToolButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="iconSet">
+                                            <iconset>fileopen.png</iconset>
+                                        </property>
+                                    </widget>
+                                </hbox>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <widget class="QButtonGroup">
+                        <property name="name">
+                            <cstring>ringbackButtonGroup</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Ring back tone</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>playRingbackCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>P&amp;lay ring back tone when network does not play ring back tone</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+L</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Play ring back tone while you are waiting for the far-end to answer your call.
+&lt;/p&gt;
+&lt;p&gt;
+Depending on your SIP provider the network might provide ring back tone or an announcement.
+&lt;/p&gt;</string>
+                                </property>
+                            </widget>
+                            <widget class="QRadioButton">
+                                <property name="name">
+                                    <cstring>defaultRingbackRadioButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>D&amp;efault ring back tone</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+E</string>
+                                </property>
+                                <property name="checked">
+                                    <bool>true</bool>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Play the default ring back tone.</string>
+                                </property>
+                            </widget>
+                            <widget class="QRadioButton">
+                                <property name="name">
+                                    <cstring>customRingbackRadioButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Cu&amp;stom ring back tone</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+S</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Play a custom ring back tone.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout16_2</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer21_2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Fixed</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                    <widget class="QLineEdit">
+                                        <property name="name">
+                                            <cstring>ringbackLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Specify the file name of a .wav file that you want to be played as ring back tone.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QToolButton">
+                                        <property name="name">
+                                            <cstring>openRingbackToolButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="iconSet">
+                                            <iconset>fileopen.png</iconset>
+                                        </property>
+                                    </widget>
+                                </hbox>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer23</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>20</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
         </widget>
     </grid>
 </widget>
@@ -1082,6 +1402,90 @@
         <receiver>startHiddenCheckBox</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
+    <connection>
+        <sender>playRingtoneCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>customRingtoneRadioButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingtoneCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>defaultRingtoneRadioButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingtoneCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>ringtoneLineEdit</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingtoneCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>openRingtoneToolButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingbackCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>customRingbackRadioButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingbackCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>defaultRingbackRadioButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingbackCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>ringbackLineEdit</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>playRingbackCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>openRingbackToolButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>openRingtoneToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SysSettingsForm</receiver>
+        <slot>chooseRingtone()</slot>
+    </connection>
+    <connection>
+        <sender>openRingbackToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SysSettingsForm</receiver>
+        <slot>chooseRingback()</slot>
+    </connection>
+    <connection>
+        <sender>customRingtoneRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>ringtoneLineEdit</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>customRingtoneRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>openRingtoneToolButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>customRingbackRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>ringbackLineEdit</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>customRingbackRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>openRingbackToolButton</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
@@ -1090,6 +1494,8 @@
     <tabstop>startHiddenCheckBox</tabstop>
     <tabstop>profileListView</tabstop>
     <tabstop>userHostComboBox</tabstop>
+    <tabstop>callWaitingCheckBox</tabstop>
+    <tabstop>hangupBothCheckBox</tabstop>
     <tabstop>histSizeSpinBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
@@ -1098,6 +1504,12 @@
     <tabstop>ossFragmentComboBox</tabstop>
     <tabstop>alsaPlayPeriodComboBox</tabstop>
     <tabstop>alsaCapturePeriodComboBox</tabstop>
+    <tabstop>playRingtoneCheckBox</tabstop>
+    <tabstop>defaultRingtoneRadioButton</tabstop>
+    <tabstop>ringtoneLineEdit</tabstop>
+    <tabstop>playRingbackCheckBox</tabstop>
+    <tabstop>defaultRingbackRadioButton</tabstop>
+    <tabstop>ringbackLineEdit</tabstop>
     <tabstop>sipUdpPortSpinBox</tabstop>
     <tabstop>rtpPortSpinBox</tabstop>
     <tabstop>logMaxSizeSpinBox</tabstop>
@@ -1107,6 +1519,8 @@
     <tabstop>logMemoryCheckBox</tabstop>
     <tabstop>okPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
+    <tabstop>customRingtoneRadioButton</tabstop>
+    <tabstop>customRingbackRadioButton</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in declaration">sys_settings.h</include>
@@ -1119,6 +1533,8 @@
     <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="local" impldecl="in implementation">qspinbox.h</include>
+    <include location="local" impldecl="in implementation">qfiledialog.h</include>
+    <include location="local" impldecl="in implementation">qfileinfo.h</include>
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>
@@ -1135,6 +1551,8 @@
     <slot>validate()</slot>
     <slot>show()</slot>
     <slot returnType="int">exec()</slot>
+    <slot>chooseRingtone()</slot>
+    <slot>chooseRingback()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

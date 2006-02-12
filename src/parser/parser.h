@@ -99,7 +99,8 @@
      T_HDR_WWW_AUTHENTICATE = 325,
      T_HDR_UNKNOWN = 326,
      T_CRLF = 327,
-     T_ERROR = 328
+     T_ERROR = 328,
+     T_NULL = 329
    };
 #endif
 #define T_NUM 258
@@ -173,6 +174,7 @@
 #define T_HDR_UNKNOWN 326
 #define T_CRLF 327
 #define T_ERROR 328
+#define T_NULL 329
 
 
 
@@ -205,7 +207,7 @@ typedef union YYSTYPE {
 	t_challenge		*yyt_challenge;
 } YYSTYPE;
 /* Line 1249 of yacc.c.  */
-#line 208 "parser.h"
+#line 210 "parser.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

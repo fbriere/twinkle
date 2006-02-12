@@ -74,6 +74,9 @@ void yysdperror(const char *s);
 %token			T_LINE_MEDIA
 %token			T_LINE_UNKNOWN
 
+// The token T_NULL is never returned by the scanner.
+%token			T_NULL
+
 %destructor { MEMMAN_DELETE($$); delete $$; }	T_TOKEN
 %destructor { MEMMAN_DELETE($$); delete $$; }	T_SAFE
 %destructor { MEMMAN_DELETE($$); delete $$; }	T_LINE
@@ -110,6 +113,12 @@ sdp_body:	  version
 			 * not parsed.
 			 */
 		  	YYACCEPT; }
+		| error T_NULL {
+			/* KLUDGE to avoid memory leak in bison.
+			 * See the SIP parser for an explanation.
+			 */
+			YYABORT;
+		}
 ;
 
 version:	  T_LINE_VERSION { CTX_NUM; } T_NUM { CTX_INITIAL; }

@@ -145,9 +145,18 @@ string t_hdr_contact::encode(void) const {
 		s = "Contact: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+	return s;
+}
+
+string t_hdr_contact::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	if (any_flag) {
 		s += '*';
-		s += CRLF;
 		return s;
 	}
 
@@ -158,6 +167,14 @@ string t_hdr_contact::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_contact::encode_env(void) const {
+	string s;
+	
+	s = "SIP_CONTACT=";
+	s += encode_value();
+	
 	return s;
 }

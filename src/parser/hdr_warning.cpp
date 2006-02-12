@@ -79,6 +79,16 @@ string t_hdr_warning::encode(void) const {
 	if (!populated) return s;
 
 	s = "Warning: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_warning::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_warning>::const_iterator i = warnings.begin();
 	     i != warnings.end(); i++)
@@ -87,6 +97,14 @@ string t_hdr_warning::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_warning::encode_env(void) const {
+	string s;
+
+	s = "SIP_WARNING=";
+	s += encode_value();
+	
 	return s;
 }

@@ -58,14 +58,15 @@ ARFLAGS = cru
 libtwinkle_a_AR = $(AR) $(ARFLAGS)
 libtwinkle_a_LIBADD =
 am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) call_history.$(OBJEXT) \
-	dialog.$(OBJEXT) events.$(OBJEXT) line.$(OBJEXT) \
-	listener.$(OBJEXT) log.$(OBJEXT) phone.$(OBJEXT) \
-	phone_user.$(OBJEXT) redirect.$(OBJEXT) sender.$(OBJEXT) \
-	service.$(OBJEXT) session.$(OBJEXT) sub_refer.$(OBJEXT) \
-	subscription.$(OBJEXT) sys_settings.$(OBJEXT) \
-	timekeeper.$(OBJEXT) transaction.$(OBJEXT) \
-	transaction_layer.$(OBJEXT) transaction_mgr.$(OBJEXT) \
-	user.$(OBJEXT) userintf.$(OBJEXT) util.$(OBJEXT)
+	call_script.$(OBJEXT) cmd_socket.$(OBJEXT) dialog.$(OBJEXT) \
+	events.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
+	log.$(OBJEXT) phone.$(OBJEXT) phone_user.$(OBJEXT) \
+	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
+	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
+	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
+	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
+	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
+	util.$(OBJEXT)
 libtwinkle_a_OBJECTS = $(am_libtwinkle_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_twinkle_OBJECTS = main.$(OBJEXT)
@@ -337,11 +338,14 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
 	$(CCRTP_LIBS)\
-	-lresolv
+	-lresolv\
+	-lsndfile
 
 libtwinkle_a_SOURCES = \
         auth.cpp\
         call_history.cpp\
+        call_script.cpp\
+        cmd_socket.cpp\
         dialog.cpp\
         events.cpp\
         line.cpp\
@@ -365,6 +369,8 @@ libtwinkle_a_SOURCES = \
         util.cpp\
         auth.h\
         call_history.h\
+        call_script.h\
+        cmd_socket.h\
         dialog.h\
         events.h\
 	exceptions.h\
@@ -463,6 +469,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/auth.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/call_history.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/call_script.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd_socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/line.Po@am__quote@

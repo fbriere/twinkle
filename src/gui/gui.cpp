@@ -19,7 +19,6 @@
 #include "twinkle_config.h"
 
 #ifdef HAVE_KDE
-#include <ksystemtray.h>
 #include <kpassivepopup.h>
 #endif
 
@@ -38,17 +37,21 @@
 #include "mphoneform.h"
 #include "selectnicform.h"
 #include "selectprofileform.h"
+#include "twinklesystray.h"
 #include "qcombobox.h"
 #include "qlabel.h"
 #include "qlistbox.h"
 #include "qmessagebox.h"
 #include "qpixmap.h"
+#include "qsize.h"
 #include "qstring.h"
 #include "qtextedit.h"
+#include "qtoolbar.h"
 #include "qtooltip.h"
 
 extern string user_host;
 extern pthread_t thread_id_main;
+extern QString callto_destination;
 
 QString str2html(const QString &s)
 {
@@ -59,6 +62,20 @@ QString str2html(const QString &s)
 	result.replace('>', "&gt;");
 	
 	return result;
+}
+
+void setDisabledIcon(QAction *action, const QString &icon) {
+	QIconSet i = action->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource(icon), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	action->setIconSet(i);
+}
+
+void setDisabledIcon(QToolButton *toolButton, const QString &icon) {
+	QIconSet i = toolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource(icon), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	toolButton->setIconSet(i);
 }
 
 /////////////////////////////////////////////////
@@ -143,6 +160,7 @@ void t_gui::displayCodecInfo(int line) {
 /////////////////////////////////////////////////
 
 t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
+	lastFileBrowsePath = DIR_HOME;
 	mainWindow = new MphoneForm();
 	MEMMAN_NEW(mainWindow);
 	qApp->setMainWidget(mainWindow);
@@ -159,19 +177,11 @@ void t_gui::run(void) {
 	
 	// Set configuration file name in titlebar
 	s = PRODUCT_NAME;
-	if (user_list.size() == 1) {
-		// Single user
-		s.append(" - ").append(user_list.front()->get_profile_name().c_str());
-	} else {
-		s.append(" - Multiple users");
-	}
+	s.append(" - ").append(user_host.c_str());
 	mainWindow->setCaption(s);
 	
-	// Display URI
-	mainWindow->displayUser(user_list.front());
-	
-	// Display local IP address
-	mainWindow->ipAddrTextLabel->setText(user_host.c_str());
+	// Set user combo box
+	mainWindow->updateUserComboBox();
 	
 	// Display product information
 	s = PRODUCT_NAME;
@@ -182,23 +192,28 @@ void t_gui::run(void) {
 	s.append(PRODUCT_AUTHOR);
 	mainWindow->display(s);
 	
-	// Automatic registration at startup if requested
-	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
-	{
-		if ((*i)->register_at_startup) {
-			phone->pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
-		}
-	}
+	// Restore user interface state from previous session
+	restore_state();
+	
+	// Initialize phone functions
+	phone->init();
 	
 	// Set controls in correct status
 	mainWindow->updateState();
 	mainWindow->updateRegStatus();
 	mainWindow->updateServicesStatus();
+	mainWindow->updateMissedCallStatus(0);
 	mainWindow->updateMenuStatus();
 	
 	// Clear line field info fields
 	clearLineFields(0);
 	clearLineFields(1);
+	
+	// Set width of window to width of tool bar
+	int widthToolBar = mainWindow->callToolbar->width();
+	QSize sizeMainWin = mainWindow->size();
+	sizeMainWin.setWidth(widthToolBar);
+	mainWindow->resize(sizeMainWin);
 	
 	// Start QApplication/KApplication
 	if (sys_config->start_hidden) {
@@ -206,19 +221,53 @@ void t_gui::run(void) {
 	} else {
 		mainWindow->show();
 	}
+	
+	// Open call window if a callto destination was specified on the
+	// command line
+	if (!callto_destination.isEmpty()) {
+		mainWindow->phoneInvite(callto_destination, "");
+	}
+	
+	// Start Qt application
 	qApp->exec();
 	
-	// Get user list from phone again as it might have changed if the
-	// user added and removed users.
-	user_list = phone->ref_users();
+	// Terminate phone functions
+	phone->terminate();
 	
-	// Wait till phone is deregistered.
-	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
-	{
-		while (phone->get_is_registered(*i)) {
-			sleep(1);
-		}
+	// Make user interface state persistent
+	save_state();
+}
+
+void t_gui::save_state(void) {
+	lock();
+	
+	sys_config->last_used_profile = mainWindow->userComboBox->currentText().ascii();
+	sys_config->dial_history.clear();
+	for (int i = 0; i < mainWindow->callComboBox->count(); i++) {
+		sys_config->dial_history.push_back(mainWindow->callComboBox->text(i).ascii());
 	}
+	
+	t_userintf::save_state();
+	
+	unlock();
+}
+
+void t_gui::restore_state(void) {
+	lock();
+	
+	// The last used profile is selected when the userComboBox is
+	// filled by MphoneForm::updateUserComboBox
+	
+	mainWindow->callComboBox->clear();
+	for (list<string>::reverse_iterator i = sys_config->dial_history.rbegin();
+	i != sys_config->dial_history.rend(); i++)
+	{
+		mainWindow->addToCallComboBox(i->c_str());
+	}
+	
+	t_userintf::restore_state();
+	
+	unlock();
 }
 
 void t_gui::lock(void) {
@@ -315,7 +364,7 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	setLineFields(line);
 	
 	// Incoming call for to-header
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tincoming call for ");
 	s.append(format_sip_address(user_config, r->hdr_to.display, r->hdr_to.uri).c_str());
@@ -353,15 +402,15 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	
 	// Play ringtone if the call is received on the active line.
 	if (line == phone->get_active_line() &&
-	    !phone->ref_service(user_config)->is_auto_answer_active())
+	    !phone->is_line_auto_answered(line))
 	{
-		cb_play_ringtone();	
+		cb_play_ringtone(line);	
 	}
 	
 	// Pop up sys tray balloon if main window is hidden
 	if (mainWindow->isHidden()) {
 #ifdef HAVE_KDE
-		KSystemTray *tray = (KSystemTray *)mainWindow->getSysTray();
+		t_twinkle_sys_tray *tray = mainWindow->getSysTray();
 		if (tray) {
 			QString s("Incoming call: ");
 			s.append(fromParty.left(40));
@@ -382,7 +431,7 @@ void t_gui::cb_call_cancelled(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tfar end cancelled call.");
 	mainWindow->display(s);
@@ -401,7 +450,7 @@ void t_gui::cb_far_end_hung_up(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tfar end released call.");
 	mainWindow->display(s);
@@ -433,7 +482,7 @@ void t_gui::cb_sdp_answer_not_supported(int line, const string &reason) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tSDP answer from far end not supported.");
@@ -457,7 +506,7 @@ void t_gui::cb_sdp_answer_missing(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tSDP answer from far end missing.");
@@ -477,7 +526,7 @@ void t_gui::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tUnsupported content type in answer from far end.");
@@ -502,7 +551,7 @@ void t_gui::cb_ack_timeout(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tno ACK received, call will be terminated.");
@@ -522,7 +571,7 @@ void t_gui::cb_100rel_timeout(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tno PRACK received, call will be terminated.");
@@ -542,7 +591,7 @@ void t_gui::cb_prack_failed(int line, const t_response *r) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tPRACK failed.");
 	mainWindow->display(s);
@@ -575,7 +624,7 @@ void t_gui::cb_cancel_failed(int line, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tfailed to cancel call.");
 	mainWindow->display(s);
@@ -596,7 +645,7 @@ void t_gui::cb_call_answered(t_user *user_config, int line, const t_response *r)
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tfar end answered call.");
 	mainWindow->display(s);
@@ -620,7 +669,7 @@ void t_gui::cb_call_failed(t_user *user_config, int line, const t_response *r) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall failed.");
 	mainWindow->display(s);
@@ -674,7 +723,7 @@ void t_gui::cb_stun_failed_call_ended(int line) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall failed.");
 	mainWindow->display(s);
@@ -691,7 +740,7 @@ void t_gui::cb_call_ended(int line, const t_response *r) {
 	
 	setLineFields(line);
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall released.");
 	mainWindow->display(s);
@@ -706,7 +755,7 @@ void t_gui::cb_call_established(int line) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall established.");
 	mainWindow->display(s);
@@ -718,7 +767,7 @@ void t_gui::cb_options_response(const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Response on terminal capability request: ";
 	s.append(QString().setNum(r->code));
 	s.append(' ').append(r->reason.c_str());
@@ -809,7 +858,7 @@ void t_gui::cb_retrieve_failed(int line, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall retrieve failed.");
 	mainWindow->display(s);
@@ -827,7 +876,7 @@ void  t_gui::cb_invalid_reg_resp(t_user *user_config, const t_response *r, const
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s= user_config->get_profile_name().c_str();
 	s.append(", registration failed: ");
 	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
@@ -845,7 +894,7 @@ void t_gui::cb_register_success(t_user *user_config, const t_response *r, unsign
 	QString s;
 	
 	if (first_success) {
-		mainWindow->display("");
+		mainWindow->displayHeader();
 		s = user_config->get_profile_name().c_str();
 		s += ", registration succeeded (expires = ";
 		s += QString().setNum(expires);
@@ -862,7 +911,7 @@ void t_gui::cb_register_failed(t_user *user_config, const t_response *r, bool fi
 	QString s;
 	
 	if (first_failure) {
-		mainWindow->display("");
+		mainWindow->displayHeader();
 		s = user_config->get_profile_name().c_str();
 		s += ", registration failed: ";
 		s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
@@ -878,7 +927,7 @@ void t_gui::cb_register_stun_failed(t_user *user_config, bool first_failure) {
 	QString s;
 	
 	if (first_failure) {
-		mainWindow->display("");
+		mainWindow->displayHeader();
 		s = user_config->get_profile_name().c_str();
 		s += ", registration failed: STUN failure";
 		mainWindow->display(s);
@@ -892,7 +941,7 @@ void t_gui::cb_deregister_success(t_user *user_config, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = user_config->get_profile_name().c_str();
 	s += ", de-registration succeeded: ";
 	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
@@ -906,7 +955,7 @@ void t_gui::cb_deregister_failed(t_user *user_config, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = user_config->get_profile_name().c_str();
 	s = ", de-registration failed: ";
 	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
@@ -920,7 +969,7 @@ void t_gui::cb_fetch_reg_failed(t_user *user_config, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = user_config->get_profile_name().c_str();
 	s = ", fetching registrations failed: ";
 	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
@@ -933,7 +982,7 @@ void t_gui::cb_fetch_reg_result(t_user *user_config, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	
 	s = user_config->get_profile_name().c_str();
 	const list<t_contact_param> &l = r->hdr_contact.contact_list;
@@ -962,14 +1011,16 @@ void t_gui::cb_register_inprog(t_user *user_config, t_register_type register_typ
 	case REG_REGISTER:
 		// Do not report registration refreshments
 		if (phone->get_is_registered(user_config)) break;
-		mainWindow->regStatusTextLabel->setText("Registering...");
+		mainWindow->statRegLabel->setPixmap(
+				QPixmap::fromMimeSource("gear.png"));
 		break;
 	case REG_DEREGISTER:
 	case REG_DEREGISTER_ALL:
-		mainWindow->regStatusTextLabel->setText("Deregistering...");
+		mainWindow->statRegLabel->setPixmap(
+				QPixmap::fromMimeSource("gear.png"));
 		break;
 	case REG_QUERY:
-		mainWindow->display("");
+		mainWindow->displayHeader();
 		s = user_config->get_profile_name().c_str();
 		s += ": fetching registrations...";
 		mainWindow->display(s);
@@ -985,7 +1036,7 @@ void t_gui::cb_redirecting_request(t_user *user_config, int line, const t_contac
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tredirecting request to");
 	mainWindow->display(s);
@@ -1001,7 +1052,7 @@ void t_gui::cb_redirecting_request(t_user *user_config, const t_contact_param &c
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Redirecting request to: ";
 	s.append(format_sip_address(user_config, contact.display, contact.uri).c_str());
 	mainWindow->display(s);
@@ -1015,7 +1066,7 @@ void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tDTMF telephone event detected: ");
@@ -1041,7 +1092,7 @@ void t_gui::cb_dtmf_not_supported(int line) {
 	
 	lock();
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tfar end does not support DTMF telephone events.");
@@ -1085,7 +1136,7 @@ void t_gui::cb_notify_recvd(int line, const t_request *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\treceived notification.");
 	mainWindow->display(s);
@@ -1119,7 +1170,7 @@ void t_gui::cb_refer_failed(int line, const t_response *r) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall transfer failed.");
 	mainWindow->display(s);
@@ -1141,7 +1192,7 @@ void t_gui::cb_refer_result_success(int line) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall succesfully transferred.");
 	mainWindow->display(s);
@@ -1158,7 +1209,7 @@ void t_gui::cb_refer_result_failed(int line) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall transfer failed.");
 	mainWindow->display(s);
@@ -1175,7 +1226,7 @@ void t_gui::cb_refer_result_inprog(int line) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall transfer still in progress.");
 	mainWindow->display(s);
@@ -1196,7 +1247,7 @@ void t_gui::cb_call_referred(t_user *user_config, int line, t_request *r) {
 	
 	lock();
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\ttransferring call to ");
@@ -1234,7 +1285,7 @@ void t_gui::cb_retrieve_referrer(t_user *user_config, int line) {
 	
 	lock();
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
 	s.append(":\tCall transfer failed. Retrieving original call.");
@@ -1267,7 +1318,7 @@ void t_gui::cb_stun_failed(int err_code, const string &err_reason) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "STUN request failed: ";
 	s.append(QString().setNum(err_code)).append(' ').append(err_reason.c_str());
 	mainWindow->display(s);
@@ -1279,7 +1330,7 @@ void t_gui::cb_stun_failed(void) {
 	lock();
 	QString s;
 	
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "STUN request failed.";
 	mainWindow->display(s);
 
@@ -1481,6 +1532,7 @@ void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
 	}	
 	
 	s.append(msg.c_str());
+	mainWindow->displayHeader();
 	mainWindow->display(s);
 	
 	unlock();
@@ -1495,6 +1547,12 @@ void t_gui::cb_log_updated(bool log_zapped) {
 void t_gui::cb_call_history_updated(void) {
 	lock();
 	mainWindow->updateCallHistory();
+	unlock();
+}
+
+void  t_gui::cb_missed_call(int num_missed_calls) {
+	lock();
+	mainWindow->updateMissedCallStatus(num_missed_calls);
 	unlock();
 }
 
@@ -1513,6 +1571,12 @@ void t_gui::cb_nat_discovery_progress_step(int step) {
 
 bool t_gui::cb_nat_discovery_cancelled(void) {
 	return natDiscoveryProgressDialog->wasCancelled();
+}
+
+void t_gui::cmd_call(const string &destination) {
+	lock();
+	mainWindow->phoneInvite(destination.c_str(), "");
+	unlock();
 }
 
 // User invoked actions on the phone object
@@ -1588,7 +1652,7 @@ void t_gui::action_reject(void) {
 	phone->pub_reject();
 	
 	int line = phone->get_active_line();
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall rejected.");
 	mainWindow->display(s);
@@ -1603,7 +1667,7 @@ void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	phone->pub_redirect(contacts, 302);
 	
 	int line = phone->get_active_line();
-	mainWindow->display("");
+	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1)).append(":\tcall redirected.");
 	mainWindow->display(s);
@@ -1691,9 +1755,23 @@ void t_gui::srv_auto_answer(list<t_user *> user_list, bool on) {
 
 void t_gui::fill_user_combo(QComboBox *cb) {
 	cb->clear();
+	
 	list<t_user *> user_list = phone->ref_users();
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
-		cb->insertItem((*i)->get_display_uri().c_str());
+		// OLD code: used display uri
+		// cb->insertItem((*i)->get_display_uri().c_str());
+		cb->insertItem((*i)->get_profile_name().c_str());
 	}
+	
 	cb->setCurrentItem(0);
+}
+
+QString t_gui::get_last_file_browse_path(void) const {
+	return lastFileBrowsePath;
+}
+
+void t_gui::set_last_file_browse_path(QString path) {
+	lock();
+	lastFileBrowsePath = path;
+	unlock();
 }

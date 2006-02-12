@@ -58,6 +58,16 @@ string t_hdr_record_route::encode(void) const {
 	if (!populated) return s;
 
 	s = "Record-Route: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_record_route::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_route>::const_iterator i = route_list.begin();
 	     i != route_list.end(); i++)
@@ -66,6 +76,15 @@ string t_hdr_record_route::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
 	return s;
 }
+
+string t_hdr_record_route::encode_env(void) const {
+	string s;
+
+	s = "SIP_RECORD_ROUTE=";
+	s += encode_value();
+	
+	return s;
+}
+	

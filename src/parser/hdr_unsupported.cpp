@@ -49,6 +49,16 @@ string t_hdr_unsupported::encode(void) const {
 	if (!populated) return s;
 
 	s = "Unsupported: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_unsupported::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<string>::const_iterator i = features.begin();
 	     i != features.end(); i++)
@@ -57,6 +67,14 @@ string t_hdr_unsupported::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_unsupported::encode_env(void) const {
+	string s;
+	
+	s = "SIP_UNSUPPORTED=";
+	s += encode_value();
+	
 	return s;
 }

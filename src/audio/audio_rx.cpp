@@ -372,7 +372,6 @@ t_audio_rx::~t_audio_rx() {
 			sleeptimer.tv_sec = 0;
 			sleeptimer.tv_nsec = 10000000;
 			nanosleep(&sleeptimer, NULL);
-			continue;
 		} while (is_running);
 	}
 
@@ -488,7 +487,7 @@ void t_audio_rx::run(void) {
 				// Send sound samples
 				// Set the expire timeout to the jitter buffer size.
 				// This allows for old packets still to be sent out.
-				rtp_session->setExpireTimeout(JITTER_BUF_MS * 1000);
+				rtp_session->setExpireTimeout(MAX_OUT_AUDIO_DELAY_MS * 1000);
 				rtp_session->putData(timestamp, payload, payload_size);
 			}
 

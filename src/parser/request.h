@@ -27,6 +27,9 @@
 #include "sockets/url.h"
 #include "user.h"
 
+// Forward declaration
+class t_user;
+
 using namespace std;
 
 class t_request : public t_sip_message {
@@ -58,6 +61,7 @@ public:
 	t_msg_type get_type(void) const { return MSG_REQUEST; }
 	void set_method(const string &s);
 	string encode(bool add_content_length = true);
+	list<string> encode_env(void);
 	t_sip_message *copy(void) const;
 
 	// Create a response with response code based on the

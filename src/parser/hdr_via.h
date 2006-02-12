@@ -63,6 +63,8 @@ public:
 	t_hdr_via();
 	void add_via(const t_via &v);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 
 	// Get the response destination
 	void get_response_dst(unsigned long &ipaddr, unsigned short &prt);

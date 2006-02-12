@@ -270,6 +270,12 @@
         <receiver>SelectProfileForm</receiver>
         <slot>sysSettings()</slot>
     </connection>
+    <connection>
+        <sender>profileListView</sender>
+        <signal>doubleClicked(QListViewItem*)</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>toggleItem(QListViewItem*)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>newPushButton</tabstop>
@@ -314,6 +320,7 @@
 </variables>
 <signals>
     <signal>selection(const list&lt;string&gt; &amp;)</signal>
+    <signal>profileRenamed()</signal>
 </signals>
 <slots>
     <slot>showForm( QMainWindow * _mainWindow )</slot>
@@ -329,6 +336,7 @@
     <slot>wizardProfile( bool exec_mode )</slot>
     <slot>sysSettings()</slot>
     <slot>fillProfileListView( const QStringList &amp; profiles )</slot>
+    <slot>toggleItem( QListViewItem * item )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

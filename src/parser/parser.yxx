@@ -147,6 +147,9 @@ void yyerror(const char *s);
 
 %token			T_ERROR
 
+// The token T_NULL is never returned by the scanner.
+%token			T_NULL
+
 %destructor { MEMMAN_DELETE($$); delete $$; } 	T_TOKEN;
 %destructor { MEMMAN_DELETE($$); delete $$; }	T_QSTRING
 %destructor { MEMMAN_DELETE($$); delete $$; }	T_COMMENT
@@ -226,6 +229,24 @@ sip_message:	{ CTXT_NEW; } sip_message2
 
 sip_message2:	  request
 		| response
+		| error T_NULL {
+			/* KLUDGE to work around a memory leak in bison.
+			 * T_NULL does never match, so the parser never
+			 * gets here. The error keyword causes bison
+			 * to eat all input and destroy all tokens returned
+			 * by the parser.
+			 * Without this workaround the following input causes
+			 * the parser to leak:
+			 *
+			 *   INVITE INVITE ....
+			 *
+			 * In request_line a T_METHOD is returned as look ahead
+			 * token when bison tries to match sip_version.
+			 * This does not match, but the look ahead token is
+			 * never destructed by Bison.
+			 */
+			YYABORT;
+		}
 ;
 
 request:	  request_line headers T_CRLF {

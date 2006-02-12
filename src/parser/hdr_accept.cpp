@@ -37,15 +37,32 @@ string t_hdr_accept::encode(void) const {
 	if (!populated) return s;
 
 	s += "Accept: ";
+	s += encode_value();
+	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_accept::encode_value(void) const {
+	string s;
+	
+	if (!populated) return s;
+	
 	for (list<t_media>::const_iterator i = media_list.begin();
 	     i != media_list.end(); i++)
 	{
 		if (i != media_list.begin()) s += ", ";
 		s += i->encode();
 	}
+	
+	return s;
+}
 
-	s += CRLF;
-
+string t_hdr_accept::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ACCEPT=";
+	s += encode_value();
+	
 	return s;
 }

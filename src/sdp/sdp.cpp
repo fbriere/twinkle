@@ -358,19 +358,20 @@ t_sdp::t_sdp() : t_sip_body() {
 	version = 0;
 }
 
-t_sdp::t_sdp(string user, string sess_id, string sess_version,
+t_sdp::t_sdp(string user, string sess_id, string sess_version, string user_host,
 	     string media_host, unsigned short media_port,
 	     list<unsigned short> formats, unsigned short format_dtmf) :
-		origin(user, sess_id, sess_version, media_host),
+		origin(user, sess_id, sess_version, user_host),
 		connection(media_host)
 {
 	version = 0;
 	media.push_back(t_sdp_media(SDP_AUDIO, media_port, formats, format_dtmf));
 }
 
-t_sdp::t_sdp(string user, string sess_id, string sess_version, string media_host) :
-		origin(user, sess_id, sess_version, media_host),
-		connection(media_host)
+t_sdp::t_sdp(string user, string sess_id, string sess_version, string user_host,
+		string media_host) :
+			origin(user, sess_id, sess_version, user_host),
+			connection(media_host)
 {
 	version = 0;
 }

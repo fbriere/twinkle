@@ -22,6 +22,7 @@
 #include <list>
 #include <string>
 #include "auth.h"
+#include "call_history.h"
 #include "dialog.h"
 #include "phone_user.h"
 #include "protocol.h"
@@ -38,6 +39,10 @@
 #define NUM_USER_LINES	2	// #lines usable for the user
 
 #define LINENO_REFERRER	2	// Internal lineno for referrer
+
+// Number of seconds to wait till all lines are idle when terminating
+// Twinkle
+#define QUIT_IDLE_WAIT	5
 
 using namespace std;
 
@@ -72,6 +77,9 @@ enum t_line_substate {
 
 class t_phone : public t_transaction_layer {
 private:
+	// Indicates if the phone is active, accepting calls.
+	bool			is_active;
+
 	// Phone users
 	list<t_phone_user *>	phone_users;
 
@@ -159,7 +167,13 @@ public:
 	t_phone();
 	virtual ~t_phone();
 
+	// Get busy/idle state of the phone
+	// PS_IDLE - at least one line is idle
+	// PS_BUSY - all lines are busy
 	t_phone_state get_state(void) const;
+	
+	// Returns true if all lines are in the LSSUB_IDLE state
+	bool all_lines_idle(void) const;
 
 	// Actions to be called by the user interface.
 	// These methods first lock the phone, then call the corresponding
@@ -213,6 +227,7 @@ public:
 	t_line_substate get_line_substate(unsigned short lineno) const;
 	bool is_line_on_hold(unsigned short lineno) const;
 	bool is_line_muted(unsigned short lineno) const;
+	bool is_line_auto_answered(unsigned short lineno) const;
 	t_refer_state get_line_refer_state(unsigned short lineno) const;
 	t_user *get_line_user(unsigned short lineno);
 
@@ -233,6 +248,12 @@ public:
 
 	// Get call info record for a line.
 	t_call_info get_call_info(unsigned short lineno) const;
+	
+	// Get the call history record for a line
+	t_call_record get_call_hist(unsigned short lineno) const;
+	
+	// Get ring tone for a line
+	string get_ringtone(unsigned short lineno) const;
 
 	// Initialize the RTP port values for all lines.
 	void init_rtp_ports(void);
@@ -294,6 +315,15 @@ public:
 
 	// Start a timer with the time set in the time-argument.
 	void start_set_timer(t_phone_timer timer, long time, t_phone_user *pu);
+	
+	// Initialize the phone functions.
+	// Register all active users with auto register
+	void init(void);
+	
+	// Terminate the phone functions.
+	// Release all calls, don't accept any new calls.
+	// Deregister all active users.
+	void terminate(void);
 };
 
 // Main function for the UAS part of the phone

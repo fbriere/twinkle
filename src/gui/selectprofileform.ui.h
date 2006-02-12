@@ -55,19 +55,21 @@ int SelectProfileForm::execForm()
 	// If there are no profiles then the user has to create one
 	if (profiles.isEmpty()) {
 		QMessageBox::information(this, PRODUCT_NAME,
+			"<html>"\
 			"Before you can use Twinkle, you must create a user "\
-			"profile.\nClick OK to create a profile.");
+			"profile.<br>Click OK to create a profile.</html>");
 		
 		int useWizard = QMessageBox::question(this, PRODUCT_NAME,
+			"<html>"\
 			"You can use the profile editor to create a profile. "\
 			"With the profile editor you can change many settings "\
-			"to tune the SIP protocol, RTP and many other things.\n"\
+			"to tune the SIP protocol, RTP and many other things.<br><br>"\
 			"Alternatively you can use the wizard to quickly setup a "\
 			"user profile. The wizard asks you only a few essential "\
 			"settings. If you create a user profile with the wizard you "\
 			"can still edit the full profile with the profile editor at a later "\
-			"time.\n"\
-			"Choose what method you wish to use.",
+			"time.<br><br>"\
+			"Choose what method you wish to use.</html>",
 			"&Wizard", "&Profile editor", QString::null);
 		
 		if (useWizard == 0) {
@@ -91,9 +93,11 @@ int SelectProfileForm::execForm()
 		selectedProfiles.push_back(profile.ascii());
 		
 		QMessageBox::information(this, PRODUCT_NAME,
+			"<html>"\
 			"Next you may adjust the system settings. "\
-			"You can change these settings always at a later time.\n"\
-			"Click OK to view and adjust the system settings.");
+			"You can change these settings always at a later time."\
+			"<br><br>"\
+			"Click OK to view and adjust the system settings.</html>");
 		
 		SysSettingsForm f(this, "system settings", true);
 		f.exec();
@@ -152,6 +156,7 @@ void SelectProfileForm::showForm(QMainWindow *_mainWindow)
 	}	
 	
 	sysPushButton->hide();
+	runPushButton->setText("&OK");
 	runPushButton->setFocus();
 	QDialog::show();
 }
@@ -170,8 +175,8 @@ void SelectProfileForm::runProfile()
 	
 	if (selectedProfiles.empty()) {
 		QMessageBox::warning(this, PRODUCT_NAME,
-					 "You did not select any user profile to run. "\
-					 "Please select a profile.");
+				"You did not select any user profile to run.\n"\
+				"Please select a profile.");
 		return;
 	}
 	
@@ -207,7 +212,7 @@ void SelectProfileForm::editProfile()
 			connect(f, SIGNAL(stunServerChanged(t_user *)),
 				mainWindow, SLOT(updateStunSettings(t_user *)));
 		
-			f->show(user_list);
+			f->show(user_list, "");
 			return;
 		}
 	}
@@ -235,7 +240,7 @@ void SelectProfileForm::editProfile()
 	user_list.push_back(user_config);
 	UserProfileForm *f = new UserProfileForm(this, "edit user profile", true, 
 						 Qt::WDestructiveClose);
-	f->show(user_list);
+	f->show(user_list, "");
 }
 
 void SelectProfileForm::newProfile()
@@ -271,9 +276,9 @@ void SelectProfileForm::newProfile(bool exec_mode)
 	connect(f, SIGNAL(success()), this, SLOT(newProfileCreated()));
 	
 	if (exec_mode) {
-		f->exec(user_list);
+		f->exec(user_list, "");
 	} else {
-		f->show(user_list);
+		f->show(user_list, "");
 	}
 }
 
@@ -295,6 +300,8 @@ void SelectProfileForm::newProfileCreated()
 	// Enable buttons that act on a profile
 	editPushButton->setEnabled(true);
 	deletePushButton->setEnabled(true);
+	renamePushButton->setEnabled(true);
+	defaultPushButton->setEnabled(true);
 	runPushButton->setEnabled(true);
 }
 
@@ -328,6 +335,22 @@ void SelectProfileForm::deleteProfile()
 			backupname.append("~");
 			(void)QFile::remove(backupname);
 			
+			// Delete profile from list of default profiles in
+			// system settings
+			if (std::find(sys_config->start_user_profiles.begin(),
+				 sys_config->start_user_profiles.end(),
+				 profile.ascii()) != sys_config->start_user_profiles.end())
+			{
+				sys_config->start_user_profiles.remove(profile.ascii());
+				
+				string error_msg;
+				if (!sys_config->write_config(error_msg)) {
+					// Failed to write config file
+					((t_gui *)ui)->cb_show_msg(this, 
+						error_msg, MSG_CRITICAL);
+				}
+			}
+			
 			// Delete profile from profile list box
 			QCheckListItem *item = (QCheckListItem *)profileListView->
 					       currentItem();
@@ -337,6 +360,8 @@ void SelectProfileForm::deleteProfile()
 				// Disable buttons that act on a profile
 				editPushButton->setEnabled(false);
 				deletePushButton->setEnabled(false);
+				renamePushButton->setEnabled(false);
+				defaultPushButton->setEnabled(false);
 				runPushButton->setEnabled(false);
 			} else {
 				profileListView->setSelected(profileListView->
@@ -385,6 +410,26 @@ void SelectProfileForm::renameProfile()
 			d.rename(oldBackupFilename, newBackupFilename);
 		}
 		
+		// Rename profile in list of default profiles in
+		// system settings
+		if (std::find(sys_config->start_user_profiles.begin(),
+				 sys_config->start_user_profiles.end(),
+				 oldProfile.ascii()) != sys_config->start_user_profiles.end())
+		{
+			std::replace(sys_config->start_user_profiles.begin(),
+				sys_config->start_user_profiles.end(),
+				oldProfile.ascii(), newProfile.ascii());
+				
+			string error_msg;
+			if (!sys_config->write_config(error_msg)) {
+				// Failed to write config file
+				((t_gui *)ui)->cb_show_msg(this, 
+						error_msg, MSG_CRITICAL);
+			}
+		}
+		
+		emit profileRenamed();
+		
 		// Change profile name in the list box
 		QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
 		item->setText(0, newProfile);
@@ -397,9 +442,11 @@ void SelectProfileForm::setAsDefault()
 	// pressed for the first time.
 	if (!defaultSet) {
 		QMessageBox::information(this, PRODUCT_NAME, 
+			"<p>"
 			"If you want to remove or "
 			"change the default at a later time, you can do that "
-			"via the system settings.");
+			"via the system settings."
+			"</p>");
 	}
 	
 	defaultSet = true;
@@ -509,3 +556,10 @@ void SelectProfileForm::fillProfileListView(const QStringList &profiles)
 	// Highlight the first profile
 	profileListView->setSelected(profileListView->firstChild(), true);
 }
+
+void SelectProfileForm::toggleItem(QListViewItem *item)
+{
+	QCheckListItem *checkItem = (QCheckListItem *)item;
+	checkItem->setOn(!checkItem->isOn());
+}
+

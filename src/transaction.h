@@ -135,6 +135,8 @@ public:
 	// Returns true if the ICMP error matches the transaction
 	bool match(const t_icmp_msg &icmp) const;
 	
+	virtual void process_provisional(t_response *r);
+	
 	// Process ICMP errors
 	virtual void process_icmp(const t_icmp_msg &icmp) = 0;
 
@@ -244,6 +246,17 @@ private:
 	// If cancel==false then the request itself is matched,
 	// eg. retransmission or ACK to INVITE matching
 	bool match(t_request *r, bool cancel) const;
+	
+	// Indicates if a 100 Trying has already been sent.
+	// A 100 Trying should only be sent once.
+	// The reason for sending a 100 Trying is to indicate that
+	// the request has been received but that processing will
+	// take some time.
+	// Based on the tasks to perform several parts of the transaction
+	// user can decide independently to send a 100 Trying. This
+	// flag assures that only one 100 Trying will be sent out
+	// though.
+	bool resp_100_trying_sent;
 
 public:
 	t_trans_server(t_request *r, unsigned short _tuid);

@@ -44,6 +44,30 @@ string t_hdr_proxy_authorization::encode(void) const {
 	return s;
 }
 
+string t_hdr_proxy_authorization::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	for (list<t_credentials>::const_iterator i = credentials_list.begin();
+	     i != credentials_list.end(); i++)
+	{
+		if (i != credentials_list.begin()) s += ", ";
+		s += i->encode();
+	}
+
+	return s;
+}
+
+string t_hdr_proxy_authorization::encode_env(void) const {
+	string s;
+	
+	s = "SIP_PROXY_AUTHORIZATION=";
+	s += encode_value();
+	
+	return s;
+}
+
 bool t_hdr_proxy_authorization::contains(const string &realm,
 	const t_url &uri) const
 {

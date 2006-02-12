@@ -16,6 +16,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "twinkle_config.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/soundcard.h>
@@ -24,6 +26,7 @@
 #include <iostream>
 #include <cstring>
 #include "sys_settings.h"
+#include "user.h"
 #include "userintf.h"
 #include "util.h"
 
@@ -63,6 +66,10 @@
 // Call history fields
 #define FLD_CH_MAX_SIZE		"ch_max_size"
 
+// Service settings
+#define FLD_CALL_WAITING	"call_waiting"
+#define FLD_HANGUP_BOTH_3WAY	"hangup_both_3way"
+
 // Startup settings
 #define FLD_START_USER_PROFILE	"start_user_profile"
 #define FLD_START_USER_HOST	"start_user_host"
@@ -71,6 +78,24 @@
 // Network settings
 #define FLD_SIP_UDP_PORT	"sip_udp_port"
 #define FLD_RTP_PORT		"rtp_port"
+
+// Ring tone settings
+#define FLD_PLAY_RINGTONE	"play_ringtone"
+#define FLD_RINGTONE_FILE	"ringtone_file"
+#define FLD_PLAY_RINGBACK	"play_ringback"
+#define FLD_RINGBACK_FILE	"ringback_file"
+
+// Persistent storage for user interface state
+#define FLD_LAST_USED_PROFILE	"last_used_profile"
+#define FLD_REDIAL_URL		"redial_url"
+#define FLD_REDIAL_DISPLAY	"redial_display"
+#define FLD_REDIAL_SUBJECT	"redial_subject"
+#define FLD_REDIAL_PROFILE	"redial_profile"
+#define FLD_DIAL_HISTORY	"dial_history"
+
+/////////////////////////
+// class t_audio_device
+/////////////////////////
 
 string t_audio_device::get_description(void) const {
 	string s = device;
@@ -116,6 +141,11 @@ string t_audio_device::get_settings_value(void) const {
 	return s;
 }
 
+
+/////////////////////////
+// class t_sys_settings
+/////////////////////////
+
 t_sys_settings::t_sys_settings() {
 	dir_share = DIR_SHARE;
 	filename = string(DIR_HOME);
@@ -146,6 +176,9 @@ t_sys_settings::t_sys_settings() {
 	
 	ch_max_size = 50;
 	
+	call_waiting = true;
+	hangup_both_3way = true;
+	
 	start_user_profiles.clear();
 	start_user_host.clear();
 	start_hidden = false;
@@ -153,6 +186,18 @@ t_sys_settings::t_sys_settings() {
 	config_sip_udp_port = 5060;
 	active_sip_udp_port = 0;
 	rtp_port = 8000;
+	
+	play_ringtone = true;
+	ringtone_file.clear();
+	play_ringback = true;
+	ringback_file.clear();
+	
+	last_used_profile.clear();
+	redial_url.set_url("");
+	redial_display.clear();
+	redial_subject.clear();
+	redial_profile.clear();
+	dial_history.clear();
 }
 
 string t_sys_settings::about(bool html) const {
@@ -172,6 +217,14 @@ string t_sys_settings::about(bool html) const {
 	s += "http://www.twinklephone.com";
 	if (html) s += "<BR><BR>";
 	s += "\n\n";
+	
+	string options_built = get_options_built();
+	if (!options_built.empty()) {
+		s += "Built with support for: ";
+		s += options_built;
+		if (html) s += "<BR><BR>";
+		s += "\n\n";
+	}
 	
 	s += "Contributions:";
 	if (html) s += "<BR>";
@@ -242,6 +295,19 @@ string t_sys_settings::about(bool html) const {
 	s += "\n";
 	
 	return s;
+}
+
+string t_sys_settings::get_options_built(void) const {
+	string options_built;
+#ifdef HAVE_LIBASOUND
+	if (!options_built.empty()) options_built += ", ";
+	options_built += "ALSA";
+#endif
+#ifdef HAVE_KDE
+	if (!options_built.empty()) options_built += ", ";
+	options_built += "KDE";
+#endif
+	return options_built;
 }
 
 bool t_sys_settings::check_environment(string &error_msg) const {
@@ -315,9 +381,18 @@ string t_sys_settings::get_dir_share(void) const {
 	return dir_share;
 }
 
-bool t_sys_settings::create_lock_file(string &error_msg) const {
+string t_sys_settings::get_dir_user(void) const {
+	string dir = DIR_HOME;
+	dir += "/";
+	dir += DIR_USER;
+	
+	return dir;
+}
+
+bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) const {
 	struct stat stat_buf;
 	string lck_filename;
+	already_running = false;
 
         lck_filename = DIR_HOME;
         lck_filename += "/";
@@ -342,6 +417,7 @@ bool t_sys_settings::create_lock_file(string &error_msg) const {
 		if (kill(lock_pid, 0) == 0) {
 			// The pid in the lock file exists, so Twinkle is
 			// already running.
+			already_running = true;
 			error_msg = PRODUCT_NAME;
 			error_msg += " is already running.\n";
 			error_msg += "Lock file ";
@@ -421,7 +497,7 @@ bool t_sys_settings::read_config(string &error_msg) {
 		// Skip comment lines
 		if (line[0] == '#') continue;
 
-		list<string> l = split(line, '=');
+		list<string> l = split_on_first(line, '=');
 		if (l.size() != 2) {
 			error_msg = "Syntax error in file ";
 			error_msg += filename;
@@ -465,6 +541,10 @@ bool t_sys_settings::read_config(string &error_msg) {
 			ab_show_sip_only = yesno2bool(value);
 		} else if (parameter == FLD_CH_MAX_SIZE) {
 			ch_max_size = atoi(value.c_str());
+		} else if (parameter == FLD_CALL_WAITING) {
+			call_waiting = yesno2bool(value);
+		} else if (parameter == FLD_HANGUP_BOTH_3WAY) {
+			hangup_both_3way = yesno2bool(value);
 		} else if (parameter == FLD_START_USER_PROFILE) {
 			if (!value.empty()) start_user_profiles.push_back(value);
 		} else if (parameter == FLD_START_USER_HOST) {
@@ -475,7 +555,31 @@ bool t_sys_settings::read_config(string &error_msg) {
 			config_sip_udp_port = atoi(value.c_str());
 		} else if (parameter == FLD_RTP_PORT) {
 			rtp_port = atoi(value.c_str());
+		} else if (parameter == FLD_PLAY_RINGTONE) {
+			play_ringtone = yesno2bool(value);
+		} else if (parameter == FLD_RINGTONE_FILE) {
+			ringtone_file = value;
+		} else if (parameter == FLD_PLAY_RINGBACK) {
+			play_ringback = yesno2bool(value);
+		} else if (parameter == FLD_RINGBACK_FILE) {
+			ringback_file = value;
+		} else if (parameter == FLD_LAST_USED_PROFILE) {
+			last_used_profile = value;
+		} else if (parameter == FLD_REDIAL_URL) {
+			redial_url.set_url(value);
+			if (!redial_url.is_valid()) {
+				redial_url.set_url("");
+			}
+		} else if (parameter == FLD_REDIAL_DISPLAY) {
+			redial_display = value;
+		} else if (parameter == FLD_REDIAL_SUBJECT) {
+			redial_subject = value;
+		} else if (parameter == FLD_REDIAL_PROFILE) {
+			redial_profile = value;
+		} else if (parameter == FLD_DIAL_HISTORY) {
+			dial_history.push_back(value);
 		}
+			
 		// Unknown field names are skipped.
 	}
 		
@@ -545,6 +649,12 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_CH_MAX_SIZE << '=' << ch_max_size << endl;
 	config << endl;
 	
+	// Write service settings
+	config << "# Services\n";
+	config << FLD_CALL_WAITING << '=' << bool2yesno(call_waiting) << endl;
+	config << FLD_HANGUP_BOTH_3WAY << '=' << bool2yesno(hangup_both_3way) << endl;
+	config << endl;
+	
 	// Write startup settings
 	config << "# Startup\n";
 	
@@ -561,6 +671,30 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << "# Network\n";
 	config << FLD_SIP_UDP_PORT << '=' << config_sip_udp_port << endl;
 	config << FLD_RTP_PORT << '=' << rtp_port << endl;
+	config << endl;
+	
+	// Write ring tone settings
+	config << "# Ring tones\n";
+	config << FLD_PLAY_RINGTONE << '=' << bool2yesno(play_ringtone) << endl;
+	config << FLD_RINGTONE_FILE << '=' << ringtone_file << endl;
+	config << FLD_PLAY_RINGBACK << '=' << bool2yesno(play_ringback) << endl;
+	config << FLD_RINGBACK_FILE << '=' << ringback_file << endl;
+	config << endl;
+	
+	// Write persistent user interface state
+	config << "# Persistent user interface state\n";
+	config << FLD_LAST_USED_PROFILE << '=' << last_used_profile << endl;
+	config << FLD_REDIAL_URL << '=' << redial_url.encode() << endl;
+	config << FLD_REDIAL_DISPLAY << '=' << redial_display << endl; 
+	config << FLD_REDIAL_SUBJECT << '=' << redial_subject << endl;
+	config << FLD_REDIAL_PROFILE << '=' << redial_profile << endl;
+	
+	for (list<string>::iterator i = dial_history.begin();
+	     i != dial_history.end(); i++)
+	{
+		config << FLD_DIAL_HISTORY << '=' << *i << endl;
+	}
+	
 	config << endl;
 	
 	// Check if writing succeeded

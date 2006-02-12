@@ -34,6 +34,24 @@ string t_hdr_expires::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "Expires: " + ulong2str(time) + CRLF;
+	s = "Expires: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_expires::encode_value(void) const {
+	if (!populated) return "";
+
+	return ulong2str(time);
+}
+
+string t_hdr_expires::encode_env(void) const {
+	string s;
+
+	s = "SIP_EXPIRES=";
+	s += encode_value();
+	
 	return s;
 }

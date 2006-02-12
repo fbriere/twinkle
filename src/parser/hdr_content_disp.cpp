@@ -41,9 +41,29 @@ string t_hdr_content_disp::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "Content-Disposition: " + type;
-	s += param_list2str(params);
+	s = "Content-Disposition: ";
+	s += encode_value();
 	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_content_disp::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = type;
+	s += param_list2str(params);
+
+	return s;
+}
+
+string t_hdr_content_disp::encode_env(void) const {
+	string s;
+	
+	s = "SIP_CONTENT_DISPOSITION=";
+	s += encode_value();
+	
 	return s;
 }

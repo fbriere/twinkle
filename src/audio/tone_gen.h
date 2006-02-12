@@ -22,6 +22,7 @@
 #include <string>
 #include <fstream>
 #include <cc++/config.h>
+#include <sndfile.h>
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "threads/sema.h"
@@ -35,47 +36,19 @@ class t_audio_io;
 
 using namespace std;
 
-#define IFF_ID_RIFF	"RIFF"
-#define RIFF_TYPE_WAV	"WAVE"
-
-struct t_iff_header {
-	char		id[4];
-	uint32		size;
-	char		type[4];
-};
-
-#define CHK_ID_FMT	"fmt "
-#define CHK_ID_DATA	"data"
-
-struct t_chunk_header {
-	char		id[4];
-	uint32		size;
-};
-
-#define FMT_UNCOMPRESSED	1
-
-struct t_chunk_fmt {
-	short		format_tag;
-	unsigned short	channels;
-	uint32		samples_per_sec;
-	uint32		avg_bytes_per_sec;
-	unsigned short	block_align;
-	unsigned short	bits_per_sample;
-};
-
 class t_tone_gen {
 private:
 	string		wav_filename;	// name of wav file
-	ifstream	*wav_file;	// input file stream for wav file
+	SNDFILE		*wav_file;	// SNDFILE pointer to wav file
+	SF_INFO 	wav_info;	// Information about format of the wav file
 	const t_audio_device*		dev_tone;	// device to play tone
-	t_audio_io*		aio;		// soundcard
-	t_chunk_fmt	wav_format;	// format chunk from wav file
+	t_audio_io*	aio;		// soundcard
 	bool		valid;		// wav file is in a valid format
 	bool		stop_playing;	// indicates if playing should stop
 	t_thread	*thr_play;	// playing thread
 	bool		loop;		// repeat playing
 	int		pause;		// pause (ms) between repetitions
-	char		*data_buf;	// buffer for reading sound samples
+	short		*data_buf;	// buffer for reading sound samples
 	t_semaphore	sema_finished;	// indicates if playing finished
 
 public:

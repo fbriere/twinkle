@@ -295,7 +295,7 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 	if (r->code == R_503_SERVICE_UNAVAILABLE) {
 		if (req->next_destination()) {
 			log_file->write_report("Failover to next destination.",
-				"t_phone::handle_response_out_of_dialog");
+				"t_phone_user::handle_response_out_of_dialog");
 			resend_request(req, is_register, *current_cr);
 			return;
 		}			
@@ -454,14 +454,15 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 phone->stop_timer(PTMR_REGISTRATION, this);
 
                 c = r->hdr_contact.find_contact(user_config->create_user_contact());
-                if (!c) {
-               		log_file->write_report(
-               			"Contact header is missing.",
-               			"t_phone::handle_response_register",
-               			LOG_NORMAL, LOG_WARNING);
-	               	
+                if (!c) {               	
 	               	if (!user_config->allow_missing_contact_reg) {
 				is_registered = false;
+
+	              		log_file->write_report(
+        	       			"Contact header is missing.",
+               				"t_phone_user::handle_response_register",
+               				LOG_NORMAL, LOG_WARNING);
+				
 				ui->cb_invalid_reg_resp(user_config,
 					r, "Contact header missing.");
 				return;
@@ -476,14 +477,15 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 {
                         expires = r->hdr_expires.time;
                 }
-                else {
-               		log_file->write_report(
-               			"Expires parameter/header mising.",
-               			"t_phone::handle_response_register",
-               			LOG_NORMAL, LOG_WARNING);
-               			
+                else {	
                		if (!user_config->allow_missing_contact_reg) {
 				is_registered = false;
+				
+               			log_file->write_report(
+               				"Expires parameter/header mising.",
+               				"t_phone_user::handle_response_register",
+               				LOG_NORMAL, LOG_WARNING);
+				
 				ui->cb_invalid_reg_resp(user_config,
 					r, "Expires parameter/header mising.");
 				return;
@@ -617,7 +619,7 @@ void t_phone_user::send_nat_keepalive(void) {
 	if (register_ipaddr == 0 || register_port == 0) {
 		log_file->write_report(
 			"Cannot resolve destination for NAT keepalive packet.",
-			"t_phone::send_nat_keepalive", LOG_NORMAL, LOG_CRITICAL);
+			"t_phone_user::send_nat_keepalive", LOG_NORMAL, LOG_CRITICAL);
 		return;
 	}
 		
