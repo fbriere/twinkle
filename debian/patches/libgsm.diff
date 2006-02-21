@@ -1,0 +1,79 @@
+diff -ur orig/twinkle-0.6.1/configure.in twinkle-0.6.1/configure.in
+--- orig/twinkle-0.6.1/configure.in	2006-02-11 14:40:40.000000000 +0000
++++ twinkle-0.6.1/configure.in	2006-02-21 10:49:26.000000000 +0000
+@@ -133,6 +133,12 @@
+ 	echo "LIBS += -lasound" >> $QT_INCL_PRO
+ 	])
+ 
++# Check if libgsm is available
++AC_CHECK_LIB(gsm, sf_open, [],
++	[AC_MSG_ERROR([libgsm library is missing.])])
++AC_CHECK_HEADER(gsm.h, [],
++	[AC_MSG_ERROR([gsm header files msiing (gsm.h)])])
++
+ $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
+ echo "distdir:" >> src/gui/Makefile
+ 
+diff -ur orig/twinkle-0.6.1/src/audio/audio_rx.h twinkle-0.6.1/src/audio/audio_rx.h
+--- orig/twinkle-0.6.1/src/audio/audio_rx.h	2006-01-01 15:38:04.000000000 +0000
++++ twinkle-0.6.1/src/audio/audio_rx.h	2006-02-21 10:34:57.000000000 +0000
+@@ -29,7 +29,7 @@
+ #include "user.h"
+ #include "threads/mutex.h"
+ #include "threads/sema.h"
+-#include "gsm/inc/gsm.h"
++#include <gsm.h>
+ #include "audio_device.h"
+ #include "twinkle_rtp_session.h"
+ 
+diff -ur orig/twinkle-0.6.1/src/audio/audio_tx.h twinkle-0.6.1/src/audio/audio_tx.h
+--- orig/twinkle-0.6.1/src/audio/audio_tx.h	2006-01-01 15:38:04.000000000 +0000
++++ twinkle-0.6.1/src/audio/audio_tx.h	2006-02-21 10:35:16.000000000 +0000
+@@ -27,7 +27,7 @@
+ #include "media_buffer.h"
+ #include "rtp_telephone_event.h"
+ #include "threads/mutex.h"
+-#include "gsm/inc/gsm.h"
++#include <gsm.h>
+ #include "audio_device.h"
+ #include "twinkle_rtp_session.h"
+ 
+diff -ur orig/twinkle-0.6.1/src/audio/Makefile.am twinkle-0.6.1/src/audio/Makefile.am
+--- orig/twinkle-0.6.1/src/audio/Makefile.am	2005-10-09 20:11:36.000000000 +0100
++++ twinkle-0.6.1/src/audio/Makefile.am	2006-02-21 10:35:37.000000000 +0000
+@@ -29,6 +29,4 @@
+         tone_gen.h\
+         twinkle_rtp_session.h
+ 
+-SUBDIRS = gsm
+-
+ EXTRA_DIST = README_G711
+diff -ur orig/twinkle-0.6.1/src/gui/twinkle.pro twinkle-0.6.1/src/gui/twinkle.pro
+--- orig/twinkle-0.6.1/src/gui/twinkle.pro	2006-02-11 08:34:27.000000000 +0000
++++ twinkle-0.6.1/src/gui/twinkle.pro	2006-02-21 11:05:20.000000000 +0000
+@@ -3,7 +3,7 @@
+ 
+ CONFIG	+= qt warn_off release thread
+ 
+-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile
++LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile -lgsm
+ 
+ DEFINES	+= QT_NO_STL
+ 
+Only in twinkle-0.6.1/src/gui: .ui
+diff -ur orig/twinkle-0.6.1/src/Makefile.am twinkle-0.6.1/src/Makefile.am
+--- orig/twinkle-0.6.1/src/Makefile.am	2006-02-03 22:28:58.000000000 +0000
++++ twinkle-0.6.1/src/Makefile.am	2006-02-21 10:40:53.000000000 +0000
+@@ -16,11 +16,11 @@
+         $(top_builddir)/src/sockets/libsocket.a\
+         $(top_builddir)/src/threads/libthread.a\
+         $(top_builddir)/src/audio/libaudio.a\
+-        $(top_builddir)/src/audio/gsm/libgsm.a\
+         $(top_builddir)/src/audits/libaudits.a\
+         $(top_builddir)/src/stun/libstun.a\
+ 	$(CCRTP_LIBS)\
+ 	-lresolv\
++	-lgsm\
+ 	-lsndfile
+ 
+ libtwinkle_a_SOURCES =\

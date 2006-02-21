@@ -1,3 +1,10 @@
+twinkle (0.6.1-2) unstable; urgency=low
+
+  * Add debian/patches/libgsm.diff to use Build-Depends: libgsm1-dev
+  * Add debian/patches/gui.cpp.diff (Closes: Bug#352534)
+
+ -- Mark Purcell <msp@debian.org>  Tue, 21 Feb 2006 18:31:51 +0000
+
 twinkle (0.6.1-1) unstable; urgency=low
 
   * New upstream release
