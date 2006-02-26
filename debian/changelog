@@ -1,3 +1,10 @@
+twinkle (0.6.2-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/patches/gui.cpp.diff removed as applied upstream
+
+ -- Mark Purcell <msp@debian.org>  Sun, 26 Feb 2006 17:46:56 +0000
+
 twinkle (0.6.1-2) unstable; urgency=low
 
   * Add debian/patches/libgsm.diff to use Build-Depends: libgsm1-dev

@@ -59,11 +59,13 @@ void GetAddressForm::show()
 	
 	if (addressListView->childCount() == 0) {
 		QMessageBox::information(this, PRODUCT_NAME,
+			"<p>"
 			"You seem not to have any contacts with a phone number "
-			"in KAddressbook, KDE's address book application. "
+			"in <b>KAddressbook</b>, KDE's address book application. "
 			"Twinkle retrieves all contacts with a phone number from "
 			"KAddressbook. To manage your contacts you have to "
-			"use KAddressbook.");
+			"use KAddressbook."
+			"</p>");
 	}
 #endif
 }

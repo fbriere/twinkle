@@ -1322,11 +1322,6 @@ void t_phone::pub_unseize(void) {
 	unlock();
 }
 
-void *phone_uas_main(void *arg) {
-	phone->run();
-}
-
-
 t_phone_state t_phone::get_state(void) const {
 	t_phone *self = const_cast<t_phone *>(this);
 
@@ -2032,4 +2027,20 @@ void t_phone::terminate(void) {
 		sleep(1);
 		dur++;
 	}
+}
+
+void *phone_uas_main(void *arg) {
+	phone->run();
+}
+
+void *phone_sigwait(void *arg) {
+	sigset_t	sigset;
+	int		sig;
+
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigaddset(&sigset, SIGTERM);
+
+	sigwait(&sigset, &sig);
+	ui->cmd_quit();
 }

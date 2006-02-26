@@ -195,6 +195,7 @@ public:
 	
 	// Execute external commands
 	void cmd_call(const string &destination);
+	void cmd_quit(void);
 	
 	// Actions
 	void action_register(list<t_user *> user_list);

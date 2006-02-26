@@ -1,3 +1,21 @@
+24 feb 2006 - Release 0.6.2
+===========================
+- Graceful termination on reception of SIGINT and SIGTERM
+
+Bug fixes
+---------
+- If the URI in a received To-header is not enclosed by '<' and '>', then 
+  the tag parameter is erronesouly parsed as a URI parameter instead of a 
+  header parameter. This causes failing call setup, tear down, when
+  communicating with a far-end that does not enclose the URI in angle
+  brackets in the To-header.
+- Function to flush OSS buffers flushed a random amount of samples that
+  could cause sound clipping (at start of call and after call hold) when 
+  using OSS.
+- In some cases Twinkle added "user=phone" to a URI when the URI already
+  had a user parameter.
+
+
 11 feb 2006 - Release 0.6.1
 ===========================
 - action=autoanswer added to call script actions

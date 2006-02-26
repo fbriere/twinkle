@@ -329,4 +329,8 @@ public:
 // Main function for the UAS part of the phone
 void *phone_uas_main(void *arg);
 
+// Entry function of thread catching signals to terminate
+// the application in a graceful manner
+void *phone_sigwait(void *arg);
+
 #endif

@@ -560,7 +560,7 @@ hd_supported:		T_HDR_SUPPORTED ':'
 ;
 hd_timestamp:		T_HDR_TIMESTAMP ':' { CTXT_NUM; }
 ;
-hd_to:			T_HDR_TO ':' { CTXT_URI; }
+hd_to:			T_HDR_TO ':' { CTXT_URI_SPECIAL; }
 ;
 hd_unsupported:		T_HDR_UNSUPPORTED ':'
 ;

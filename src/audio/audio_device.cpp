@@ -285,13 +285,12 @@ void t_oss_io::flush(bool playback_buffer, bool recording_buffer) {
 	for (int i = 0; i < 2; i++) {
 		// i == 0: flush playback buffer, 1: flush recording buffer
 		if (i == 0 && playback_buffer || i == 1 && recording_buffer) {
-			audio_buf_info dsp_info;
 			int skip_bytes = ( (i==0) ? play_buffersize : 
 				rec_buffersize) - get_buffer_space(i == 1);
 			if(skip_bytes <= 0) continue;
-			unsigned char *trash = new unsigned char[dsp_info.bytes];
+			unsigned char *trash = new unsigned char[skip_bytes];
 			MEMMAN_NEW_ARRAY(trash);
-			read(trash, dsp_info.bytes);
+			read(trash, skip_bytes);
 			MEMMAN_DELETE_ARRAY(trash);
 			delete [] trash;
 		}
