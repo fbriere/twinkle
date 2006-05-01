@@ -220,7 +220,7 @@
     <signal>destination(t_user *, const t_url &amp;)</signal>
 </signals>
 <slots>
-    <slot>show()</slot>
+    <slot>show( t_user * user_config, const QString &amp; dest )</slot>
     <slot>validate()</slot>
     <slot>showAddressBook()</slot>
     <slot>selectedAddress( const QString &amp; address )</slot>

@@ -63,6 +63,23 @@ list<unsigned long> gethostbyname_all(const string &name) {
 	return l;
 }
 
+string display_and_url2str(const string &display, const string &url) {
+	string s;
+	
+	if (!display.empty()) {
+		if (must_quote(display)) s += '"';
+		s += display;
+		if (must_quote(display)) s += '"';
+		s += " <";
+	}
+	
+	s += url;
+	
+	if (!display.empty()) s += '>';
+	
+	return s;
+}
+
 // t_ip_port
 
 t_ip_port::t_ip_port(unsigned long _ipaddr, unsigned short _port) :
@@ -150,7 +167,7 @@ void t_url::construct_machine_url(const string &s) {
 	valid = true;
 }
 
-bool t_url::parse_params_headers(const string &s) {;
+bool t_url::parse_params_headers(const string &s) {
 	string param_str;
 
 	// Find start of headers
@@ -424,24 +441,14 @@ bool t_url::operator==(const t_url &u) const {
 	return sip_match(u);
 }
 
-bool t_url::looks_like_phone(const string &s) {
-	string phone_symbols = "0123456789*#+-";
-
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
-		if (phone_symbols.find(*i) == string::npos) return false;
-	}
-
-	return true;
+bool t_url::user_looks_like_phone(const string &special_symbols) const {
+	return looks_like_phone(user, special_symbols);
 }
 
-bool t_url::user_looks_like_phone(void) const {
-	return looks_like_phone(user);
-}
-
-bool t_url::is_phone(bool looks_like_phone) const {
+bool t_url::is_phone(bool looks_like_phone, const string &special_symbols) const {
 	// RFC 3261 19.1.1
 	if (user_param == "phone") return true;
-	return (looks_like_phone && user_looks_like_phone());
+	return (looks_like_phone && user_looks_like_phone(special_symbols));
 }
 
 string t_url::encode(void) const {
@@ -484,3 +491,4 @@ string t_display_url::encode(void) const {
 	
 	return s;
 }
+

@@ -548,7 +548,7 @@ void t_line::end_call(void) {
 	if (active_dialog) {
 		substate = LSSUB_RELEASING;
 		ui->cb_line_state_changed();
-		ui->cb_stop_tone(line_number);
+		ui->cb_stop_call_notification(line_number);
 		active_dialog->send_bye();
 		cleanup();
 		return;
@@ -562,7 +562,7 @@ void t_line::end_call(void) {
 	if (open_dialog) {
 		substate = LSSUB_RELEASING;
 		ui->cb_line_state_changed();
-		ui->cb_stop_tone(line_number);
+		ui->cb_stop_call_notification(line_number);
 		open_dialog->send_cancel(!pending_dialogs.empty());
 		cleanup();
 		return;
@@ -579,9 +579,9 @@ void t_line::end_call(void) {
 	// proper way. Maybe add to dying_dialogs.
 }
 
-void t_line::send_dtmf(char digit) {
+void t_line::send_dtmf(char digit, bool inband) {
 	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
-		active_dialog->send_dtmf(digit);
+		active_dialog->send_dtmf(digit, inband);
 		cleanup();
 		return;
 	}
@@ -1695,6 +1695,12 @@ void t_line::unseize(void) {
 	ui->cb_line_state_changed();
 }
 
+t_session *t_line::get_session(void) const {
+	if (!active_dialog) return NULL;
+
+	return active_dialog->get_session();
+}
+
 t_audio_session *t_line::get_audio_session(void) const {
 	if (!active_dialog) return NULL;
 
@@ -1727,8 +1733,9 @@ t_call_info t_line::get_call_info(void) const {
 	return call_info;
 }
 
-void t_line::ci_set_dtmf_supported(bool supported) {
+void t_line::ci_set_dtmf_supported(bool supported, bool inband) {
 	call_info.dtmf_supported = supported;
+	call_info.dtmf_inband = inband;
 }
 
 void t_line::ci_set_last_provisional_reason(const string &reason) {

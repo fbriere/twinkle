@@ -6,7 +6,27 @@
 
 export QTDIR=/usr/share/qt3
   
-include /usr/share/cdbs/1/class/autotools.mk
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/rules/simple-patchsys.mk
+DEBVERSION:=$(shell head -n 1 debian/changelog \
+		    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
+UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/^.*://' -e 's/-[0-9.]*$$//' -e 's/.dfsg$$//')
+
+FILENAME := twinkle_$(UPVERSION).orig.tar.gz
+URL := http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-$(UPVERSION).tar.gz
+
+-include /usr/share/cdbs/1/class/autotools.mk
+-include /usr/share/cdbs/1/rules/debhelper.mk
+-include /usr/share/cdbs/1/rules/simple-patchsys.mk
+
+install/twinkle::
+	cp debian/twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications
+
+print-version:
+	@@echo "Debian version:          $(DEBVERSION)"
+	@@echo "Upstream version:        $(UPVERSION)"
+
+get-orig-source:
+	@@dh_testdir
+	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
+	@@echo Downloading $(FILENAME) from $(URL) ...
+	@@wget -N -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
 

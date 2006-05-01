@@ -20,10 +20,7 @@
 
 // 2006 Modified by Michel de Boer
 
-#ifndef HAVE_KDE
-
 #include "freedesksystray.h"
-
 
 FreeDeskSysTray::FreeDeskSysTray ( QWidget *pParent , const char *pszName )
     : QLabel(pParent, pszName, WMouseNoMask | WRepaintNoErase | WType_TopLevel | WStyle_Customize | WStyle_NoBorder | WStyle_StaysOnTop)
@@ -166,5 +163,3 @@ void FreeDeskSysTray::slotMenuItemShow() {
 void FreeDeskSysTray::slotMenuItemQuit() {
    emit quitSelected();
 }
-
-#endif

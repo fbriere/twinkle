@@ -14,30 +14,31 @@ diff -ur orig/twinkle-0.6.1/configure.in twinkle-0.6.1/configure.in
  $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
  echo "distdir:" >> src/gui/Makefile
  
-diff -ur orig/twinkle-0.6.1/src/audio/audio_rx.h twinkle-0.6.1/src/audio/audio_rx.h
---- orig/twinkle-0.6.1/src/audio/audio_rx.h	2006-01-01 15:38:04.000000000 +0000
-+++ twinkle-0.6.1/src/audio/audio_rx.h	2006-02-21 10:34:57.000000000 +0000
-@@ -29,7 +29,7 @@
+diff -Nur twinkle-0.7/src/audio/audio_encoder.h twinkle-0.7.new/src/audio/audio_encoder.h
+--- twinkle-0.7/src/audio/audio_encoder.h       2006-04-16 19:51:14.000000000 +0100
++++ twinkle-0.7.new/src/audio/audio_encoder.h   2006-05-01 22:25:49.000000000 +0100
+@@ -25,7 +25,7 @@
+ #include "twinkle_config.h"
+ #include "audio_codecs.h"
  #include "user.h"
- #include "threads/mutex.h"
- #include "threads/sema.h"
 -#include "gsm/inc/gsm.h"
 +#include <gsm.h>
- #include "audio_device.h"
- #include "twinkle_rtp_session.h"
- 
-diff -ur orig/twinkle-0.6.1/src/audio/audio_tx.h twinkle-0.6.1/src/audio/audio_tx.h
---- orig/twinkle-0.6.1/src/audio/audio_tx.h	2006-01-01 15:38:04.000000000 +0000
-+++ twinkle-0.6.1/src/audio/audio_tx.h	2006-02-21 10:35:16.000000000 +0000
-@@ -27,7 +27,7 @@
- #include "media_buffer.h"
- #include "rtp_telephone_event.h"
- #include "threads/mutex.h"
--#include "gsm/inc/gsm.h"
+
+ #ifdef HAVE_SPEEX
+ #include <speex/speex.h>
+
+diff -Nur twinkle-0.7/src/audio/audio_rx.h twinkle-0.7.new/src/audio/audio_rx.h
+--- twinkle-0.7/src/audio/audio_rx.h    2006-04-16 20:57:15.000000000 +0100
++++ twinkle-0.7.new/src/audio/audio_rx.h        2006-05-01 22:19:25.000000000 +0100
+@@ -24,6 +24,7 @@
+ #include <assert.h>
+ #include <queue>
+ #include <string>
 +#include <gsm.h>
+ #include "audio_codecs.h"
  #include "audio_device.h"
- #include "twinkle_rtp_session.h"
- 
+ #include "audio_encoder.h"
+
 diff -ur orig/twinkle-0.6.1/src/audio/Makefile.am twinkle-0.6.1/src/audio/Makefile.am
 --- orig/twinkle-0.6.1/src/audio/Makefile.am	2005-10-09 20:11:36.000000000 +0100
 +++ twinkle-0.6.1/src/audio/Makefile.am	2006-02-21 10:35:37.000000000 +0000

@@ -24,6 +24,7 @@
 #include "util.h"
 #include "user.h"
 #include "audio/rtp_telephone_event.h"
+#include "parser/parse_ctrl.h"
 #include "sockets/interfaces.h"
 #include "audits/memman.h"
 
@@ -36,17 +37,29 @@ extern string user_host;
 /////////////////////////////
 
 string t_userintf::expand_destination(t_user *user_config, const string &dst) {
+	assert(user_config);
+	
 	string s = dst;
-
-	// Add sip-scheme if missing
-	if (s.substr(0, 4) != "sip:") {
-		s = "sip:" + s;
-	}
 
 	// Add domain if missing
 	if (s.find('@') == string::npos) {
+		// Remove white space
+		s = remove_white_space(s);
+	
+		// Remove special phone symbols
+		if (user_config->remove_special_phone_symbols &&
+		    looks_like_phone(s, user_config->special_phone_symbols)) 
+		{
+			s = remove_symbols(s, user_config->special_phone_symbols);
+		}
+		
 		s += '@';
 		s += user_config->domain;
+	}
+	
+	// Add sip-scheme if missing
+	if (s.substr(0, 4) != "sip:") {
+		s = "sip:" + s;
 	}
 
 	// RFC 3261 19.1.1
@@ -55,7 +68,8 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 	// the user=phone parameter.
 	if (user_config->numerical_user_is_phone) {
 		t_url u(s);
-		if (u.get_user_param().empty() && u.user_looks_like_phone()) {
+		if (u.get_user_param().empty() && 
+		    u.user_looks_like_phone(user_config->special_phone_symbols)) {
 			s += ";user=phone";
 		}
 	}
@@ -101,6 +115,56 @@ void t_userintf::expand_destination(t_user *user_config,
 	
 	expand_destination(user_config, dst, display_url.display, url_str);
 	display_url.url.set_url(url_str);
+}
+
+void t_userintf::expand_destination(t_user *user_config,
+		const string &dst, t_display_url &display_url, string &subject,
+		string &dst_no_headers)
+{
+	string headers;
+	dst_no_headers = dst;
+	t_url u(dst);	
+	
+	// Split headers from URI
+	if (u.is_valid()) {
+		// destination is a valid URI. Strip off the headers if any
+		headers = u.get_headers();
+		
+		// Cut off headers
+		// Note that a separator (?) will be in front of the 
+		// headers string
+		if (!headers.empty()) {
+			int i = dst.find(headers);
+			if (i != string::npos) {
+				dst_no_headers = dst.substr(0, i - 1);
+			}
+		}
+		
+		expand_destination(user_config, dst_no_headers, display_url);
+	} else {
+		// destination may be a short URI.
+		// Split at a '?' to find any headers.
+		// NOTE: this is not fool proof. A user name may contain a '?'
+		list<string> l = split_on_first(dst, '?');
+		dst_no_headers = l.front();
+		expand_destination(user_config, dst_no_headers, display_url);
+		if (display_url.is_valid() && l.size() == 2) {
+			headers = l.back();
+		}
+	}
+	
+	// Parse headers to find subject header
+	subject.clear();
+	if (!headers.empty()) {
+		try {
+			t_sip_message *m = t_parser::parse_headers(headers);
+			if (m->hdr_subject.is_populated()) {
+				subject = m->hdr_subject.subject;
+			}
+		} catch (int) {
+			// ignore invalid headers
+		}
+	}
 }
 
 bool t_userintf::parse_args(const list<string> command_list,
@@ -156,14 +220,14 @@ bool t_userintf::parse_args(const list<string> command_list,
 	return true;
 }
 
-bool t_userintf::exec_invite(const list<string> command_list) {
+bool t_userintf::exec_invite(const list<string> command_list, bool immediate) {
 	list<t_command_arg> al;
 	string display;
 	string subject;
-	t_url destination;
+	string destination;
 
 	if (!parse_args(command_list, al)) {
-		exec_command("help invite");
+		exec_command("help call");
 		return false;
 	}
 
@@ -176,50 +240,80 @@ bool t_userintf::exec_invite(const list<string> command_list) {
 			subject = i->value;
 			break;
 		case 0:
-			destination.set_url(expand_destination(active_user, i->value));
+			destination = i->value;
 			break;
 		default:
-			exec_command("help invite");
+			exec_command("help call");
 			return false;
 			break;
 		}
 	}
 
-	if (!destination.is_valid()) {
-		exec_command("help invite");
+	return do_invite(destination, display, subject, immediate);
+}
+
+bool t_userintf::do_invite(const string &destination, const string &display,
+		const string &subject, bool immediate)
+{
+	t_url dest_url;
+	dest_url.set_url(expand_destination(active_user, destination));
+	
+	if (!dest_url.is_valid()) {
+		exec_command("help call");
 		return false;
 	}
 
 	// Keep call information for redial
-	last_called_url = destination;
+	last_called_url = dest_url;
 	last_called_display = display;
 	last_called_subject = subject;
 	last_called_profile = active_user->get_profile_name();
 
-	phone->pub_invite(active_user, destination, display, subject);
-
+	phone->pub_invite(active_user, dest_url, display, subject);
 	return true;
+}
+
+bool t_userintf::exec_redial(const list<string> command_list) {
+	if (can_redial()) {
+		do_redial();
+		return true;
+	}
+	
+	return false;
+}
+
+void t_userintf::do_redial(void) {
+	t_user *user_config = phone->ref_user_profile(last_called_profile);
+	phone->pub_invite(user_config, last_called_url, last_called_display,
+		last_called_subject);
 }
 
 bool t_userintf::exec_answer(const list<string> command_list) {
-	cb_stop_tone(phone->get_active_line());
-	phone->pub_answer();
+	do_answer();
 	return true;
 }
 
+void t_userintf::do_answer(void) {
+	cb_stop_call_notification(phone->get_active_line());
+	phone->pub_answer();
+}
+
 bool t_userintf::exec_reject(const list<string> command_list) {
-	cb_stop_tone(phone->get_active_line());
+	do_reject();
+	return true;
+}
+
+void t_userintf::do_reject(void) {
+	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_reject();
 	cout << endl;
 	cout << "Line " << phone->get_active_line() + 1 << ": call rejected.\n";
 	cout << endl;
-	return true;
 }
 
-bool t_userintf::exec_redirect(const list<string> command_list) {
+bool t_userintf::exec_redirect(const list<string> command_list, bool immediate) {
 	list<t_command_arg> al;
-	t_display_url destination;
-	list<t_display_url> dest_list;
+	list<string> dest_list;
 	int num_redirections = 0;
 	bool show_status = false;
 	bool action_present = false;
@@ -264,9 +358,7 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 			action_present = true;
 			break;
 		case 0:
-			destination.url = expand_destination(active_user, i->value);
-			destination.display.clear();
-			dest_list.push_back(destination);
+			dest_list.push_back(i->value);
 			num_redirections++;
 			break;
 		default:
@@ -274,6 +366,43 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 			return false;
 			break;
 		}
+	}
+
+	if (type_present && enable && (num_redirections == 0 || num_redirections > 5)) {
+		exec_command("help redirect");
+		return false;
+	}
+	
+	if (!type_present && action_present && enable) { 
+		exec_command("help redirect");
+		return false;
+	}
+	
+	if (!type_present && !action_present && 
+	    (num_redirections == 0 || num_redirections > 5)) 
+	{
+		exec_command("help redirect");
+		return false;
+	}
+		
+	do_redirect(show_status, type_present, cf_type, action_present, enable,
+			num_redirections, dest_list, immediate);
+	return true;
+}
+
+void t_userintf::do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
+		bool action_present, bool enable, int num_redirections,
+		const list<string> &dest_strlist, bool immediate)
+{
+	list<t_display_url> dest_list;
+	for (list<string>::const_iterator i = dest_strlist.begin();
+	     i != dest_strlist.end(); i++)
+	{
+		t_display_url du;
+		du.url = expand_destination(active_user, *i);
+		du.display.clear();
+		if (!du.is_valid()) return;
+		dest_list.push_back(du);
 	}
 
 	if (show_status) {
@@ -321,25 +450,20 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 		cout << endl;
 
 		cout << endl;
-		return true;
+		return;
 	}
 
 	// Enable/disable permanent redirections
 	if (type_present) {
 		if (enable) {
-			if (num_redirections == 0 || num_redirections > 5) {
-				exec_command("help redirect");
-				return false;
-			}
-
 			phone->ref_service(active_user)->enable_cf(cf_type, dest_list);
 			cout << "Redirection enabled.\n\n";
-			return true;
 		} else {
 			phone->ref_service(active_user)->disable_cf(cf_type);
 			cout << "Redirection disabled.\n\n";
-			return true;
 		}
+		
+		return;
 	} else {
 		if (action_present) {
 			if (!enable) {
@@ -347,32 +471,26 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 				phone->ref_service(active_user)->disable_cf(CF_BUSY);
 				phone->ref_service(active_user)->disable_cf(CF_NOANSWER);
 				cout << "All redirections disabled.\n\n";
-				return true;
-			} else {
-				exec_command("help redirect");
-				return false;
+				return;
 			}
+			
+			return;
 		}
 	}
 
 	// Redirect current call
-	if (num_redirections == 0 || num_redirections > 5) {
-		exec_command("help redirect");
-		return false;
-	}
-
-	cb_stop_tone(phone->get_active_line());
+	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_redirect(dest_list, 302);
 	cout << endl;
 	cout << "Line " << phone->get_active_line() + 1 << ": call redirected.\n";
 	cout << endl;
-	return true;
 }
 
 bool t_userintf::exec_dnd(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
-	bool enable = !phone->ref_service(active_user)->is_dnd_active();
+	bool toggle = true;
+	bool enable;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help dnd");
@@ -393,6 +511,7 @@ bool t_userintf::exec_dnd(const list<string> command_list) {
 				exec_command("help dnd");
 				return false;
 			}
+			toggle = false;
 			break;
 		default:
 			exec_command("help dnd");
@@ -400,7 +519,12 @@ bool t_userintf::exec_dnd(const list<string> command_list) {
 			break;
 		}
 	}
+	
+	do_dnd(show_status, toggle, enable);
+	return true;
+}
 
+void t_userintf::do_dnd(bool show_status, bool toggle, bool enable) {
 	if (show_status) {
 		cout << endl;
 		cout << "Do not disturb: ";
@@ -410,24 +534,29 @@ bool t_userintf::exec_dnd(const list<string> command_list) {
 			cout << "not active";
 		}
 		cout << endl;
-		return true;
+		return;
+	}
+	
+	if (toggle) {
+		enable = !phone->ref_service(active_user)->is_dnd_active();
 	}
 
 	if (enable) {
 		phone->ref_service(active_user)->enable_dnd();
 		cout << "Do not disturb enabled.\n\n";
-		return true;
+		return;
 	} else {
 		phone->ref_service(active_user)->disable_dnd();
 		cout << "Do not disturb disabled.\n\n";
-		return true;
+		return;
 	}
 }
 
 bool t_userintf::exec_auto_answer(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
-	bool enable = !phone->ref_service(active_user)->is_auto_answer_active();
+	bool toggle = true;
+	bool enable;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help auto_answer");
@@ -448,6 +577,7 @@ bool t_userintf::exec_auto_answer(const list<string> command_list) {
 				exec_command("help auto_answer");
 				return false;
 			}
+			toggle = false;
 			break;
 		default:
 			exec_command("help auto_answer");
@@ -455,7 +585,12 @@ bool t_userintf::exec_auto_answer(const list<string> command_list) {
 			break;
 		}
 	}
+	
+	do_auto_answer(show_status, toggle, enable);
+	return true;
+}
 
+void t_userintf::do_auto_answer(bool show_status, bool toggle, bool enable) {
 	if (show_status) {
 		cout << endl;
 		cout << "Auto answer: ";
@@ -465,74 +600,102 @@ bool t_userintf::exec_auto_answer(const list<string> command_list) {
 			cout << "not active";
 		}
 		cout << endl;
-		return true;
+		return;
+	}
+	
+	if (toggle) {
+		enable = !phone->ref_service(active_user)->is_auto_answer_active();
 	}
 
 	if (enable) {
 		phone->ref_service(active_user)->enable_auto_answer(true);
 		cout << "Auto answer enabled.\n\n";
-		return true;
+		return;
 	} else {
 		phone->ref_service(active_user)->enable_auto_answer(false);
 		cout << "Auto answer disabled.\n\n";
-		return true;
+		return;
 	}
 }
 
 bool t_userintf::exec_bye(const list<string> command_list) {
-	phone->pub_end_call();
+	do_bye();
 	return true;
+}
+
+void t_userintf::do_bye(void) {
+	phone->pub_end_call();
 }
 
 bool t_userintf::exec_hold(const list<string> command_list) {
-	phone->pub_hold();
+	do_hold();
 	return true;
+}
+
+void t_userintf::do_hold(void) {
+	phone->pub_hold();
 }
 
 bool t_userintf::exec_retrieve(const list<string> command_list) {
-	phone->pub_retrieve();
+	do_retrieve();
 	return true;
 }
 
-bool t_userintf::exec_refer(const list<string> command_list) {
+void t_userintf::do_retrieve(void) {
+	phone->pub_retrieve();
+}
+
+bool t_userintf::exec_refer(const list<string> command_list, bool immediate) {
 	list<t_command_arg> al;
-	t_url destination;
+	string destination;
 	bool dest_set = false;
 
 	if (!parse_args(command_list, al)) {
-		exec_command("help refer");
+		exec_command("help transfer");
 		return false;
 	}
 	
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
 		case 0:
-			destination.set_url(expand_destination(active_user, i->value));
+			destination = i->value;
 			dest_set = true;
 			break;
 		default:
-			exec_command("help refer");
+			exec_command("help transfer");
 			return false;
 			break;
 		}
 	}
 
 	if (!dest_set) {
-		exec_command("help refer");
+		exec_command("help transfer");
 		return false;
 	}
 
-	if (!destination.is_valid()) {
-		exec_command("help refer");
+	return do_refer(destination, immediate);
+}
+
+bool t_userintf::do_refer(const string &destination, bool immediate) {
+	t_url dest_url;
+	dest_url.set_url(expand_destination(active_user, destination));
+	
+	if (!dest_url.is_valid()) {
+		exec_command("help transfer");
 		return false;
 	}
-
-	phone->pub_refer(destination, "");
+	
+	phone->pub_refer(dest_url, "");
 	return true;
 }
 
 
 bool t_userintf::exec_conference(const list<string> command_list) {
+	do_conference();
+	return true;
+}
+
+void t_userintf::do_conference(void) {
 	if (phone->join_3way(0, 1)) {
 		cout << endl;
 		cout << "Started 3-way conference.\n";
@@ -542,13 +705,12 @@ bool t_userintf::exec_conference(const list<string> command_list) {
 		cout << "Failed to start 3-way conference.\n";
 		cout << endl;
 	}
-
-	return true;
 }
 
 bool t_userintf::exec_mute(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
+	bool toggle = true;
 	bool enable = true;
 
 	if (!parse_args(command_list, al)) {
@@ -570,6 +732,7 @@ bool t_userintf::exec_mute(const list<string> command_list) {
 				exec_command("help mute");
 				return false;
 			}
+			toggle = false;
 			break;
 		default:
 			exec_command("help mute");
@@ -577,7 +740,12 @@ bool t_userintf::exec_mute(const list<string> command_list) {
 			break;
 		}
 	}
+	
+	do_mute(show_status, toggle, enable);
+	return true;
+}
 
+void t_userintf::do_mute(bool show_status, bool toggle, bool enable) {
 	if (show_status) {
 		cout << endl;
 		cout << "Line is ";
@@ -587,26 +755,27 @@ bool t_userintf::exec_mute(const list<string> command_list) {
 			cout << "not muted.";
 		}
 		cout << endl;
-		return true;
+		return;
 	}
 
+	if (toggle) enable = !phone->is_line_muted(phone->get_active_line());
 	if (enable) {
 		phone->mute(enable);
 		cout << "Line muted.\n\n";
-		return true;
+		return;
 	} else {
 		phone->mute(enable);
 		cout << "Line unmuted.\n\n";
-		return true;
+		return;
 	}
 }
 
 bool t_userintf::exec_dtmf(const list<string> command_list) {
 	list<t_command_arg> al;
 	string digits;
+	bool raw_mode = false;
 
 	if (phone->get_line_state(phone->get_active_line()) == LS_IDLE) {
-		exec_command("help dtmf");
 		return false;
 	}
 
@@ -617,6 +786,10 @@ bool t_userintf::exec_dtmf(const list<string> command_list) {
 
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
+		case 'r':
+			raw_mode = true;
+			if (!i->value.empty()) digits = i->value;
+			break;
 		case 0:
 			digits = i->value;
 			break;
@@ -627,29 +800,77 @@ bool t_userintf::exec_dtmf(const list<string> command_list) {
 		}
 	}
 
+	if (!raw_mode) {
+		digits = str2dtmf(digits);
+	}
+	
 	if (digits == "") {
 		exec_command("help dtmf");
 		return false;
 	}
 
-	throttle_dtmf_not_supported = false;
-	for (string::iterator i = digits.begin(); i != digits.end(); i++) {
-		if (VALID_DTMF_SYM(*i)) {
-			phone->pub_send_dtmf(*i);
-		}
-	}
-
+	do_dtmf(digits);
 	return true;
 }
 
+void t_userintf::do_dtmf(const string &digits) {
+	const t_call_info call_info = phone->get_call_info(phone->get_active_line());
+	throttle_dtmf_not_supported = false;
+	
+	if (!call_info.dtmf_supported) return;
+	
+	for (string::const_iterator i = digits.begin(); i != digits.end(); i++) {
+		if (VALID_DTMF_SYM(*i)) {
+			phone->pub_send_dtmf(*i, call_info.dtmf_inband);
+		}
+	}
+}
+
 bool t_userintf::exec_register(const list<string> command_list) {
-	phone->pub_registration(active_user, REG_REGISTER, DUR_REGISTRATION(active_user));
+	list<t_command_arg> al;
+	bool reg_all_profiles = false;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help register");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 'a':
+			reg_all_profiles = true;
+			break;
+		default:
+			exec_command("help register");
+			return false;
+			break;
+		}
+	}
+	
+	do_register(reg_all_profiles);
 	return true;
+}
+
+void t_userintf::do_register(bool reg_all_profiles) {
+	if (reg_all_profiles) {
+		list<t_user *> user_list = phone->ref_users();
+		
+		for (list<t_user *>::iterator i = user_list.begin();
+		     i != user_list.end(); i++)
+		{
+			phone->pub_registration(*i, REG_REGISTER, 
+					DUR_REGISTRATION(*i));
+		}	
+	} else {
+		phone->pub_registration(active_user, REG_REGISTER, 
+				DUR_REGISTRATION(active_user));
+	}
 }
 
 bool t_userintf::exec_deregister(const list<string> command_list) {
 	list<t_command_arg> al;
-	bool dereg_all = false;
+	bool dereg_all_devices = false;
+	bool dereg_all_profiles = false;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help deregister");
@@ -659,7 +880,10 @@ bool t_userintf::exec_deregister(const list<string> command_list) {
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
 		case 'a':
-			dereg_all = true;
+			dereg_all_profiles = true;
+			break;
+		case 'd':
+			dereg_all_devices = true;
 			break;
 		default:
 			exec_command("help deregister");
@@ -668,23 +892,42 @@ bool t_userintf::exec_deregister(const list<string> command_list) {
 		}
 	}
 
-	if (dereg_all) {
-		phone->pub_registration(active_user, REG_DEREGISTER_ALL);
-	} else {
-		phone->pub_registration(active_user, REG_DEREGISTER);
-	}
-
+	do_deregister(dereg_all_profiles, dereg_all_devices);
 	return true;
+}
+
+void t_userintf::do_deregister(bool dereg_all_profiles, bool dereg_all_devices) {
+	t_register_type dereg_type = REG_DEREGISTER;
+	
+	if (dereg_all_devices) {
+		dereg_type = REG_DEREGISTER_ALL;
+	}
+	
+	if (dereg_all_profiles) {
+		list<t_user *> user_list = phone->ref_users();
+		
+		for (list<t_user *>::iterator i = user_list.begin();
+		     i != user_list.end(); i++)
+		{
+			phone->pub_registration(*i, dereg_type);
+		}
+	} else {
+		phone->pub_registration(active_user, dereg_type);
+	}
 }
 
 bool t_userintf::exec_fetch_registrations(const list<string> command_list) {
-	phone->pub_registration(active_user, REG_QUERY);
+	do_fetch_registrations();
 	return true;
 }
 
-bool t_userintf::exec_options(const list<string> command_list) {
+void t_userintf::do_fetch_registrations(void) {
+	phone->pub_registration(active_user, REG_QUERY);
+}
+
+bool t_userintf::exec_options(const list<string> command_list, bool immediate) {
 	list<t_command_arg> al;
-	t_url destination;
+	string destination;
 	bool dest_set = false;
 
 	if (!parse_args(command_list, al)) {
@@ -695,7 +938,7 @@ bool t_userintf::exec_options(const list<string> command_list) {
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
 		case 0:
-			destination.set_url(expand_destination(active_user, i->value));
+			destination = i->value;
 			dest_set = true;
 			break;
 		default:
@@ -710,17 +953,26 @@ bool t_userintf::exec_options(const list<string> command_list) {
 			exec_command("help options");
 			return false;
 		}
+	}
 
+	return do_options(dest_set, destination, immediate);
+}
+
+bool t_userintf::do_options(bool dest_set, const string &destination, bool immediate) {
+	if (!dest_set) {
 		phone->pub_options();
-		return true;
+	} else {
+		t_url dest_url;
+		dest_url.set_url(expand_destination(active_user, destination));
+		
+		if (!dest_url.is_valid()) {
+			exec_command("help options");
+			return false;
+		}
+		
+		phone->pub_options(active_user, dest_url);
 	}
-
-	if (!destination.is_valid()) {
-		exec_command("help options");
-		return false;
-	}
-
-	phone->pub_options(active_user, destination);
+	
 	return true;
 }
 
@@ -745,16 +997,21 @@ bool t_userintf::exec_line(const list<string> command_list) {
 		}
 	}
 
+	if (line < 0 || line > 2) {
+		exec_command("help line");
+		return false;
+	}
+
+	do_line(line);
+	return true;
+}
+
+void t_userintf::do_line(int line) {
 	if (line == 0) {
 		cout << endl;
 		cout << "Active line is: " << phone->get_active_line()+1 << endl;
 		cout << endl;
-		return true;
-	}
-
-	if (line < 1 || line > 2) {
-		exec_command("help line");
-		return false;
+		return;
 	}
 
 	int current = phone->get_active_line();
@@ -763,7 +1020,7 @@ bool t_userintf::exec_line(const list<string> command_list) {
 		cout << endl;
 		cout << "Line " << current + 1 << " is already active.\n";
 		cout << endl;
-		return true;
+		return;
 	}
 
 	phone->pub_activate_line(line - 1);
@@ -777,8 +1034,6 @@ bool t_userintf::exec_line(const list<string> command_list) {
 		cout << "Line " << phone->get_active_line()+1 << " is now active.\n";
 		cout << endl;
 	}
-
-	return true;
 }
 
 bool t_userintf::exec_user(const list<string> command_list) {
@@ -802,6 +1057,11 @@ bool t_userintf::exec_user(const list<string> command_list) {
 		}
 	}
 	
+	do_user(profile_name);
+	return true;
+}
+
+void t_userintf::do_user(const string &profile_name) {
 	list<t_user *> user_list = phone->ref_users();
 	if (profile_name.empty()) {
 		// Show all users
@@ -822,7 +1082,7 @@ bool t_userintf::exec_user(const list<string> command_list) {
 			cout << "@" << (*i)->domain << ">\n";
 		}
 		cout << endl;
-		return true;
+		return;
 	}
 
 	for (list<t_user *>::iterator i = user_list.begin();
@@ -835,7 +1095,7 @@ bool t_userintf::exec_user(const list<string> command_list) {
 			cout << " activated.\n";
 			cout << endl;
 			
-			return true;
+			return;
 		}
 	}
 	
@@ -843,12 +1103,15 @@ bool t_userintf::exec_user(const list<string> command_list) {
 	cout << "Unknown user profile: ";
 	cout << profile_name;
 	cout << endl << endl;
-	return false;
 }
 
 bool t_userintf::exec_quit(const list<string> command_list) {
-	end_interface = true;
+	do_quit();
 	return true;
+}
+
+void t_userintf::do_quit(void) {
+	end_interface = true;
 }
 
 bool t_userintf::exec_help(const list<string> command_list) {
@@ -863,20 +1126,26 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		exec_command("help help");
 		return false;
 	}
-
+	
+	do_help(al);
+	return true;
+}
+	
+void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (al.size() == 0) {
 		cout << endl;
-		cout << "invite		Invite someone\n";
+		cout << "call		Call someone\n";
 		cout << "answer		Answer an incoming call\n";
 		cout << "reject		Reject an incoming call\n";
 		cout << "redirect	Redirect an incoming call\n";
-		cout << "refer		Refer a standing call\n";
+		cout << "transfer	Transfer a standing call\n";
 		cout << "bye		End a call\n";
 		cout << "hold		Put a call on-hold\n";
 		cout << "retrieve	Retrieve a held call\n";
 		cout << "conference	Join 2 calls in a 3-way conference\n";
 		cout << "mute		Mute a line\n";
 		cout << "dtmf		Send DTMF\n";
+		cout << "redial		Repeat last call\n";
 		cout << "register	Register your phone at a registrar\n";
 		cout << "deregister	De-register your phone at a registrar\n";
 		cout << "fetch_reg	Fetch registrations from registrar\n";
@@ -889,25 +1158,25 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "help		Get help on a command\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	bool ambiguous;
 	string c = complete_command(tolower(al.front().value), ambiguous);
 
-	if (c == "invite") {
+	if (c == "call") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\tinvite [-s subject] [-d display] dst\n";
+		cout << "\tcall [-s subject] [-d display] dst\n";
 		cout << "Description:\n";
-		cout << "\tInvite someone.\n";
+		cout << "\tCall someone.\n";
 		cout << "Arguments:\n";
 		cout << "\t-s subject	Add a subject header to the INVITE\n";
 		cout << "\t-d display	Add display name to To-header\n";
 		cout << "\tdst		SIP uri of party to invite\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "answer") {
@@ -918,7 +1187,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tAnswer an incoming call.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "reject") {
@@ -930,7 +1199,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\twill be sent.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "redirect") {
@@ -964,20 +1233,20 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tredirect -t busy -a off\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
-	if (c == "refer") {
+	if (c == "transfer") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\trefer dst\n";
+		cout << "\ttransfer dst\n";
 		cout << "Description:\n";
-		cout << "\tRefer a standing call to another destination.\n";
+		cout << "\tTransfer a standing call to another destination.\n";
 		cout << "Arguments:\n";
 		cout << "\tdst	SIP uri of refer destination\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "bye") {
@@ -991,7 +1260,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tthen a CANCEL will be sent.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "hold") {
@@ -1002,7 +1271,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tPut the current call on the acitve line on-hold.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "retrieve") {
@@ -1013,7 +1282,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tRetrieve a held call on the active line.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "conference") {
@@ -1025,7 +1294,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tcommand you must have a call on each line.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "mute") {
@@ -1039,9 +1308,11 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "Arguments:\n";
 		cout << "\t-s		Show if line is muted.\n";
 		cout << "\t-a on|off	Mute/unmute.\n";
+		cout << "Notes:\n";
+		cout << "\tWithout any arguments you can toggle the status.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "dtmf") {
@@ -1054,12 +1325,27 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tThis command can only be given when a call is ";
 		cout << "established.\n";
 		cout << "Arguments:\n";
+		cout << "\t-r	Raw mode: do not convert letters to digits.\n";
 		cout << "\tdigits	0-9 | A-D | * | #\n";
 		cout << "Example:\n";
 		cout << "\tdtmf 1234#\n";
+		cout << "\tdmtf movies\n";
+		cout << "Notes:\n";
+		cout << "\tThe overdecadic digits A-D can only be sent in raw mode.\n";
 		cout << endl;
 
-		return true;
+		return;
+	}
+	
+	if (c == "redial") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tredial\n";
+		cout << "Description:\n";
+		cout << "\tRepeat last call.\n";
+		cout << endl;
+
+		return;
 	}
 
 	if (c == "register") {
@@ -1068,9 +1354,11 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tregister\n";
 		cout << "Description:\n";
 		cout << "\tRegister your phone at a registrar.\n";
+		cout << "Arguments:\n";
+		cout << "\t-a	Register all enabled user profiles.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "deregister") {
@@ -1080,10 +1368,11 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "Description:\n";
 		cout << "\tDe-register your phone at a registrar.\n";
 		cout << "Arguments:\n";
-		cout << "\t-a	De-register all your registrations\n";
+		cout << "\t-a	De-register all enabled user profiles.\n";
+		cout << "\t-d	De-register all devices.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "fetch_reg") {
@@ -1094,7 +1383,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tFetch current registrations from registrar.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "options") {
@@ -1110,7 +1399,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tdst		SIP uri of end-point\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "line") {
@@ -1129,7 +1418,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "1,2)\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "dnd") {
@@ -1148,7 +1437,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tWithout any arguments you can toggle the status.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 	
 	if (c == "auto_answer") {
@@ -1164,7 +1453,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tWithout any arguments you can toggle the status.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 	
 	if (c == "user") {
@@ -1180,7 +1469,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tprofile name	The user profile to activate.\n";
 		cout << endl;
 		
-		return true;
+		return;
 	}
 
 	if (c == "quit") {
@@ -1191,7 +1480,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tQuit.\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	if (c == "help") {
@@ -1204,13 +1493,12 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "\tcommand		Command you want help with\n";
 		cout << endl;
 
-		return true;
+		return;
 	}
 
 	cout << endl;
 	cout << "\nUnknown command\n\n";
 	cout << endl;
-	return false;
 }
 
 
@@ -1222,9 +1510,12 @@ t_userintf::t_userintf(t_phone *_phone) {
 	phone = _phone;
 	end_interface = false;
 	tone_gen = NULL;
+	active_user = NULL;
+	use_stdout = true;
 	throttle_dtmf_not_supported = false;
 
 	all_commands.push_back("invite");
+	all_commands.push_back("call");
 	all_commands.push_back("answer");
 	all_commands.push_back("reject");
 	all_commands.push_back("redirect");
@@ -1232,9 +1523,11 @@ t_userintf::t_userintf(t_phone *_phone) {
 	all_commands.push_back("hold");
 	all_commands.push_back("retrieve");
 	all_commands.push_back("refer");
+	all_commands.push_back("transfer");
 	all_commands.push_back("conference");
 	all_commands.push_back("mute");
 	all_commands.push_back("dtmf");
+	all_commands.push_back("redial");
 	all_commands.push_back("register");
 	all_commands.push_back("deregister");
 	all_commands.push_back("fetch_reg");
@@ -1289,7 +1582,7 @@ string t_userintf::complete_command(const string &c, bool &ambiguous) {
 	return full_command;
 }
 
-bool t_userintf::exec_command(const string &command_line) {
+bool t_userintf::exec_command(const string &command_line, bool immediate) {
 	list<string> l = split_ws(command_line, true);
 	if (l.size() == 0) return false;
 
@@ -1297,27 +1590,33 @@ bool t_userintf::exec_command(const string &command_line) {
 	string command = complete_command(tolower(l.front()), ambiguous);
 
 	if (ambiguous) {
-		cout << endl;
-		cout << "Ambiguous command\n";
-		cout << endl;
+		if (use_stdout) {
+			cout << endl;
+			cout << "Ambiguous command\n";
+			cout << endl;
+		}
+		
 		return false;
 	}
 
-	if (command == "invite") return exec_invite(l);
+	if (command == "invite") return exec_invite(l, immediate);
+	if (command == "call") return exec_invite(l, immediate);
 	if (command == "answer") return exec_answer(l);
 	if (command == "reject") return exec_reject(l);
-	if (command == "redirect") return exec_redirect(l);
+	if (command == "redirect") return exec_redirect(l, immediate);
 	if (command == "bye") return exec_bye(l);
 	if (command == "hold") return exec_hold(l);
 	if (command == "retrieve") return exec_retrieve(l);
-	if (command == "refer") return exec_refer(l);
+	if (command == "refer") return exec_refer(l, immediate);
+	if (command == "transfer") return exec_refer(l, immediate);
 	if (command == "conference") return exec_conference(l);
 	if (command == "mute") return exec_mute(l);
 	if (command == "dtmf") return exec_dtmf(l);
+	if (command == "redial") return exec_redial(l);
 	if (command == "register") return exec_register(l);
 	if (command == "deregister") return exec_deregister(l);
 	if (command == "fetch_reg") return exec_fetch_registrations(l);
-	if (command == "options") return exec_options(l);
+	if (command == "options") return exec_options(l, immediate);
 	if (command == "line") return exec_line(l);
 	if (command == "dnd") return exec_dnd(l);
 	if (command == "auto_answer") return exec_auto_answer(l);
@@ -1330,9 +1629,12 @@ bool t_userintf::exec_command(const string &command_line) {
 	if (command == "h") return exec_help(l);
 	if (command == "?") return exec_help(l);
 
-	cout << endl;
-	cout << "Unknown command\n";
-	cout << endl;
+	if (use_stdout) {
+		cout << endl;
+		cout << "Unknown command\n";
+		cout << endl;
+	}
+	
 	return false;
 }
 
@@ -1345,7 +1647,8 @@ string t_userintf::format_sip_address(t_user *user_config, const string &display
 	if (display != "") s += " <";
 
 	if (user_config->display_useronly_phone &&
-	    uri.is_phone(user_config->numerical_user_is_phone))
+	    uri.is_phone(user_config->numerical_user_is_phone,
+	    			user_config->special_phone_symbols))
 	{
 		// Display telephone number only
 		s += uri.get_user();
@@ -1387,6 +1690,9 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 	case CODEC_G711_ALAW:	return "g711a";
 	case CODEC_G711_ULAW:	return "g711u";
 	case CODEC_GSM:		return "gsm";
+	case CODEC_SPEEX_NB:	return "spx-nb";
+	case CODEC_SPEEX_WB:	return "spx-wb";
+	case CODEC_SPEEX_UWB:	return "spx-uwb";
 	default:		return "???";
 	}
 }
@@ -1521,7 +1827,9 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 	cout << "Line " << line + 1 << ": ";
 	cout << "incoming call\n";
 	cout << "From:\t\t";
-	cout << format_sip_address(user_config, r->hdr_from.display, r->hdr_from.uri) << endl;
+	
+	string from_party = format_sip_address(user_config, r->hdr_from.display, r->hdr_from.uri);
+	cout << from_party << endl;
 
 	if (r->hdr_organization.is_populated()) {
 		cout << "Organization:\t" << r->hdr_organization.name << endl;
@@ -1545,12 +1853,7 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	// Play ringtone if the call is received on the active line
-	if (line == phone->get_active_line() &&
-	    !phone->is_line_auto_answered(line))
-	{
-		cb_play_ringtone(line);
-	}
+	cb_notify_call(line, from_party);
 }
 
 void t_userintf::cb_call_cancelled(int line) {
@@ -1561,7 +1864,7 @@ void t_userintf::cb_call_cancelled(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_far_end_hung_up(int line) {
@@ -1572,7 +1875,7 @@ void t_userintf::cb_far_end_hung_up(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_answer_timeout(int line) {
@@ -1583,7 +1886,7 @@ void t_userintf::cb_answer_timeout(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
@@ -1595,7 +1898,7 @@ void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_sdp_answer_missing(int line) {
@@ -1606,7 +1909,7 @@ void t_userintf::cb_sdp_answer_missing(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
@@ -1619,7 +1922,7 @@ void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_ack_timeout(int line) {
@@ -1630,7 +1933,7 @@ void t_userintf::cb_ack_timeout(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_100rel_timeout(int line) {
@@ -1641,7 +1944,7 @@ void t_userintf::cb_100rel_timeout(int line) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_prack_failed(int line, const t_response *r) {
@@ -1652,7 +1955,7 @@ void t_userintf::cb_prack_failed(int line, const t_response *r) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 }
 
 void t_userintf::cb_provisional_resp_invite(int line, const t_response *r) {
@@ -2088,6 +2391,19 @@ void t_userintf::cb_stop_tone(int line) {
 	tone_gen = NULL;
 }
 
+void t_userintf::cb_notify_call(int line, string from_party) {
+	// Play ringtone if the call is received on the active line
+	if (line == phone->get_active_line() &&
+	    !phone->is_line_auto_answered(line))
+	{
+		cb_play_ringtone(line);
+	}
+}
+
+void t_userintf::cb_stop_call_notification(int line) {
+	cb_stop_call_notification(line);
+}
+
 void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": DTMF telephone event detected: ";
@@ -2357,7 +2673,7 @@ bool t_userintf::can_redial(void) const {
 	       phone->ref_user_profile(last_called_profile) != NULL;
 }
 
-void t_userintf::cmd_call(const string &destination) {
+void t_userintf::cmd_call(const string &destination, bool immediate) {
 	string s = "invite ";
 	s += destination;
 	exec_command(s);
@@ -2365,4 +2681,8 @@ void t_userintf::cmd_call(const string &destination) {
 
 void t_userintf::cmd_quit(void) {
 	exec_command("quit");
+}
+
+void t_userintf::cmd_cli(const string &command, bool immediate) {
+	exec_command(command, immediate);
 }

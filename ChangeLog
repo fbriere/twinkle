@@ -1,4 +1,50 @@
-24 feb 2006 - Release 0.6.2
+29 apr 2006 - Release 0.7
+=========================
+- Speex support (narrow, wide and ultra wide band)
+- Support for dynamic payload numbers for audio codecs in SDP
+- Inband DTMF (option for DTMF transport in user profile)
+- UTF-8 support to properly display non-ASCII characters
+- --cmd command line option to remotely execute CLI commands
+- --immediate command line option to perform --call and --cmd without user
+  confirmation.
+- --set-profile command line option to set the active profile.
+- Support "?subject=<subject>" as part of address for --call
+- The status icon are always displayed: gray -> inactive, full color -> active
+- Clicking the registration status icon fetches current registration status
+- Clicking the service icons enables/disables the service
+- Fancier popup from KDE system tray on incoming call.
+- Popup from system tray shows as long as the phone is ringing.
+- Reload button on address form
+- Remove special phone number symbols from dialed strings.
+  This option can be enabled/disabled via the user profile.
+- Remove duplicate entries from the dial history drop down box
+- Specify in the user profile what symbols are special symbols to remove.
+- Changed default for "use domain to create unique contact header value" to
+  "no"
+- New SIP protocol option: allow SDP change in INVITE responses
+- Do not ask username and password when authentication for an
+  automatic re-regsitration fails. The user may not be at his desk, and 
+  the authentication dialog stalls Twinkle.
+- Ask authentication password when user profile contains authentication
+  name, but no password.
+- Improved handling of socket errors when interface goes down temporarily.
+
+Bug fixes
+---------
+- If the far end holds a call and then resumes a call while Twinkle has
+  been put locally on-hold, then Twinkle will start recording sound from
+  the mic and send it to the far-end while indicating that the call is
+  still on-hold.
+- Crash on no-op SDP in re-INVITE
+- Twinkle exits when it receives SIGSTOP followed by SIGCONT
+- call release cause in history is incorrect for incoming calls.
+
+Build improvements
+------------------
+- Break dependency on X11/xpm.h
+
+
+26 feb 2006 - Release 0.6.2
 ===========================
 - Graceful termination on reception of SIGINT and SIGTERM
 

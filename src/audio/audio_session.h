@@ -19,6 +19,7 @@
 #ifndef _AUDIO_SESSION_H
 #define _AUDIO_SESSION_H
 
+#include <map>
 #include <string>
 #include "audio_rx.h"
 #include "audio_tx.h"
@@ -75,7 +76,9 @@ public:
 	t_audio_session(t_session *_session,
 			const string &_recv_host, unsigned short _recv_port,
 		        const string &_dst_host, unsigned short _dst_port,
-			t_audio_codec _codec, unsigned short _ptime = 0);
+			t_audio_codec _codec, unsigned short _ptime,
+			const map<unsigned short, t_audio_codec> &recv_payload2ac,
+			const map<t_audio_codec, unsigned short> &send_ac2payload);
 
 	~t_audio_session();
 
@@ -86,7 +89,7 @@ public:
 	void set_pt_in_dtmf(unsigned short pt, unsigned short pt_alt);
 
 	// Send DTMF digit
-	void send_dtmf(char digit);
+	void send_dtmf(char digit, bool inband);
 
 	// Get the line that belongs to this audio session
 	t_line *get_line(void) const;
@@ -103,6 +106,11 @@ public:
 	// Get pointer for soundcard I/O object
 	t_audio_io* get_dsp_speaker(void) const;
 	t_audio_io* get_dsp_mic(void) const;
+	
+	// Check if sample rate from speaker and mic match with sample rate
+	// from codec. The sample rates might not match due to 3-way conference
+	// calls with mixed sample rate
+	bool matching_sample_rates(void) const;
 };
 
 // Main functions for rx and tx threads

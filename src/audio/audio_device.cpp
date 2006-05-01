@@ -66,6 +66,15 @@ t_audio_io* t_audio_io::open(const t_audio_device& dev, bool playback, bool capt
 
 t_audio_io::~t_audio_io() {}
 
+int t_audio_io::get_sample_rate(void) const {
+	return _sample_rate;
+}
+
+bool t_audio_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency)
+{
+	_sample_rate = sample_rate;
+}
+
 t_oss_io::t_oss_io() : fd(-1), rec_buffersize(0), play_buffersize(0) {
 }
 
@@ -79,7 +88,11 @@ t_oss_io::~t_oss_io()
 	fd = -1;
 }
 
-bool t_oss_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency) {
+bool t_oss_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency) 
+{
+	t_audio_io::open(device, playback, capture, blocking, channels, format, sample_rate,
+		short_latency);
+
 	int mode = 0;
 	int status;
 	
@@ -257,7 +270,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		msg = "Cannot set sound card sample rate to ";
-		msg += int2str(AUDIO_SAMPLE_RATE);
+		msg += int2str(sample_rate);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
@@ -354,7 +367,11 @@ t_alsa_io::~t_alsa_io() {
 }
 
 
-bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency) {
+bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency) 
+{
+	t_audio_io::open(device, playback, capture, blocking, channels, format, sample_rate,
+		short_latency);
+		
 	int mode = 0;
 	int status;
 	string msg;

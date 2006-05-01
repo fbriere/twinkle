@@ -72,7 +72,7 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		
 		num_non_icmp_errors = 0;
 		
-		// If the ICMP error comes from the same destination is the
+		// If the ICMP error comes from the same destination as the
 		// destination of the packet that failed to be sent, then the
 		// packet should be discarded as it can most likely not b
 		// delivered and would cause an infinite loop of ICMP errors
@@ -93,6 +93,7 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 			log_msg = "Excessive number of socket errors.";
 			log_file->write_report(log_msg, "::handle_socket_err", 
 				LOG_NORMAL, LOG_CRITICAL);
+			return false;
 			ui->cb_show_msg(log_msg, MSG_CRITICAL);
 			exit(1);
 		}

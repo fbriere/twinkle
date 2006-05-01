@@ -20,8 +20,10 @@
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <cc++/config.h>
 #include "audio_rx.h"
 #include "log.h"
+#include "phone.h"
 #include "rtp_telephone_event.h"
 #include "userintf.h"
 #include "line.h"
@@ -30,7 +32,10 @@
 #include <cstdlib>
 #include "audits/memman.h"
 
-#define SAMPLE_BUF_SIZE (ptime * AUDIO_SAMPLE_RATE/1000 * AUDIO_SAMPLE_SIZE/8)
+extern t_phone *phone;
+
+#define SAMPLE_BUF_SIZE (audio_encoder->get_ptime() * audio_encoder->get_sample_rate()/1000 *\
+				AUDIO_SAMPLE_SIZE/8)
 
 // Debug macro to print timestamp
 #define DEBUG_TS(s)	{ gettimeofday(&debug_timer, NULL);\
@@ -44,21 +49,12 @@
 // PRIVATE
 //////////
 
-unsigned char t_audio_rx::encode(short pcm_sample) {
-	switch(codec) {
-	case CODEC_G711_ALAW:
-		return linear2alaw(pcm_sample);
-	case CODEC_G711_ULAW:
-		return linear2ulaw(pcm_sample);
-	default:
-		assert(false);
-	}
-}
-
-bool t_audio_rx::get_sound_samples(void) {
+bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &silence) {
 	int status;
 	struct timespec sleeptimer;
 	struct timeval debug_timer;
+	
+	silence = false;
 
 	mtx_3way.lock();
 
@@ -81,11 +77,6 @@ bool t_audio_rx::get_sound_samples(void) {
 			sleeptimer.tv_sec = 0;
 			sleeptimer.tv_nsec = 1000000;
 			nanosleep(&sleeptimer, NULL);
-			// Do not use the nobreak_count here. It might be that
-			// the other receiver uses a different payload size.
-			// Then it might take a little longer before the 1st
-			// data is available. In case of a tight loop, it will
-			// be broken by the main receiver.
 			return false;
 		}
 	} else {
@@ -111,7 +102,7 @@ bool t_audio_rx::get_sound_samples(void) {
 		// Note that we keep reading the dsp, to prevent the DSP buffers
 		// from filling up.
 		if (get_line()->get_is_muted()) {
-			bzero(sample_buf, SAMPLE_BUF_SIZE);
+			memset(sample_buf, 0, SAMPLE_BUF_SIZE);
 		}
 	}
 
@@ -129,7 +120,8 @@ bool t_audio_rx::get_sound_samples(void) {
 		// There may be no other receiver when one of the far-ends
 		// has put the call on-hold.
 		if (is_main_rx_3way && peer_rx_3way) {
-			peer_rx_3way->post_media_peer_rx_3way(sample_buf, SAMPLE_BUF_SIZE);
+			peer_rx_3way->post_media_peer_rx_3way(sample_buf, SAMPLE_BUF_SIZE,
+				audio_encoder->get_sample_rate());
 		}
 
 		// Mix the sound samples with the 3rd party
@@ -144,91 +136,10 @@ bool t_audio_rx::get_sound_samples(void) {
 	mtx_3way.unlock();
 
 	// Encode sound samples
-	switch (codec) {
-	case CODEC_G711_ALAW:
-	case CODEC_G711_ULAW:
-		for (int i = 0; i < payload_size; i++) {
-			payload[i] = encode(sb[i]);
-		}
-		break;
-	case CODEC_GSM:
-		gsm_encode(gsm_encoder, (short *)sb, payload);
-		break;
-	default:
-		assert(false);
-	}
+	sound_payload_size = audio_encoder->encode(
+			sb, nsamples, payload, payload_size, silence);
 
 	return true;
-}
-
-void t_audio_rx::get_dtmf_payload(void) {
-	struct timespec sleeptimer;
-	
-	t_rtp_telephone_event *dtmf_payload = (t_rtp_telephone_event *)payload;
-
-	// RFC 2833 3.5, 3.6
-	dtmf_payload->set_event(dtmf_current);
-	dtmf_payload->set_reserved(false);
-	dtmf_payload->set_volume(user_config->dtmf_volume);
-
-	if (dtmf_pause) {
-		// Trailing pause phase of a DTMF tone
-		// Repeat the last packet
-		dtmf_payload->set_end(true);
-
-		int pause_duration = timestamp - dtmf_timestamp - dtmf_duration +
-				     nsamples;
-		if (pause_duration / payload_size * ptime >=
-					user_config->dtmf_pause)
-		{
-			// This is the last packet to be sent for the
-			// current DTMF tone.
-			dtmf_stop = true;
-			log_file->write_header("t_audio_rx::get_dtmf_payload", LOG_NORMAL);
-			log_file->write_raw("Audio rx line ");
-			log_file->write_raw(get_line()->get_line_number()+1);
-			log_file->write_raw(": finish DTMF event - ");
-			log_file->write_raw(dtmf_current);
-			log_file->write_endl();
-			log_file->write_footer();
-		}
-	} else {
-		// Play phase of a DTMF tone
-		// The duration counts from the start of the tone.
-		dtmf_duration = timestamp - dtmf_timestamp + nsamples;
-
-		// Check if the tone must end
-		if (dtmf_duration / nsamples * ptime >=
-						user_config->dtmf_duration)
-		{
-			dtmf_payload->set_end(true);
-			dtmf_pause = true;
-		} else {
-			dtmf_payload->set_end(false);
-		}
-	}
-
-	dtmf_payload->set_duration(dtmf_duration);
-	
-	// Sleep ptime ms
-	// The reason for sleeping is that the DTMF event indicates that
-	// the DTMF tone lasts for ptime ms. So this time really has to pass.
-	sleeptimer.tv_sec = 0;
-
-	if (ptime >= 20) {
-		sleeptimer.tv_nsec =
-			ptime * 1000000 - 5000000;
-	} else {
-		// With a thread schedule of 10ms
-		// granularity, this will schedule the
-		// thread every 10ms.
-		sleeptimer.tv_nsec = 5000000;
-	}
-	nanosleep(&sleeptimer, NULL);
-
-	// Empty sound card buffer.
-	// During the DTMF tone, no sound from the sound card is played out.
-	input_device->flush(false, true);
 }
 
 bool t_audio_rx::get_dtmf_event(void) {
@@ -242,57 +153,58 @@ bool t_audio_rx::get_dtmf_event(void) {
 	
 	// Get next DTMF event
 	mtx_dtmf_q.lock();
-	dtmf_current = dtmf_queue.front();
+	t_dtmf_event dtmf_event = dtmf_queue.front();
 	dtmf_queue.pop();
 	mtx_dtmf_q.unlock();
+	
+	// Create DTMF player
+	if (dtmf_event.inband) {
+		dtmf_player = new t_inband_dtmf_player(this, audio_encoder, user_config,
+				dtmf_event.dtmf_tone, timestamp, nsamples);
+		MEMMAN_NEW(dtmf_player);
+		
+		// Log DTMF event
+		log_file->write_header("t_audio_rx::get_dtmf_event", LOG_NORMAL);
+		log_file->write_raw("Audio rx line ");
+		log_file->write_raw(get_line()->get_line_number()+1);
+		log_file->write_raw(": start inband DTMF tone - ");
+		log_file->write_raw(dtmf_event.dtmf_tone);
+		log_file->write_endl();
+		log_file->write_footer();
+	} else {
+		dtmf_player = new t_rtp_event_dtmf_player(this, audio_encoder, user_config,
+				dtmf_event.dtmf_tone, timestamp, nsamples);
+		MEMMAN_NEW(dtmf_player);
 
-	// Initialize DTMF settings
-	dtmf_playing = true;
-	dtmf_pause = false;
-	dtmf_stop = false;
-	dtmf_timestamp = timestamp;
-	dtmf_duration = nsamples;
+		// Log DTMF event
+		log_file->write_header("t_audio_rx::get_dtmf_event", LOG_NORMAL);
+		log_file->write_raw("Audio rx line ");
+		log_file->write_raw(get_line()->get_line_number()+1);
+		log_file->write_raw(": start DTMF event - ");
+		log_file->write_raw(dtmf_event.dtmf_tone);
+		log_file->write_endl();
+		log_file->write_raw("Payload type: ");
+		log_file->write_raw(pt_telephone_event);
+		log_file->write_endl();
+		log_file->write_footer();
 
-	// Log DTMF event
-	log_file->write_header("t_audio_rx::get_dtmf_event", LOG_NORMAL);
-	log_file->write_raw("Audio rx line ");
-	log_file->write_raw(get_line()->get_line_number()+1);
-	log_file->write_raw(": start DTMF event - ");
-	log_file->write_raw(dtmf_current);
-	log_file->write_endl();
-	log_file->write_raw("Payload type: ");
-	log_file->write_raw(pt_telephone_event);
-	log_file->write_endl();
-
-	log_file->write_footer();
-
-	// Set RTP payload format
-	rtp_session->setPayloadFormat(
-		DynamicPayloadFormat(pt_telephone_event, AUDIO_SAMPLE_RATE));
-
-	// As all RTP event contain the same timestamp, the ccRTP stack will
-	// discard packets when the timestamp gets to old.
-	// Increase the expire timeout value to prevent this.
-	rtp_session->setExpireTimeout((JITTER_BUF_MS +
-		user_config->dtmf_duration + user_config->dtmf_pause) * 1000);
+		// Set RTP payload format
+		rtp_session->setPayloadFormat(DynamicPayloadFormat(pt_telephone_event,
+				audio_sample_rate(CODEC_TELEPHONE_EVENT)));
+	
+		// As all RTP event contain the same timestamp, the ccRTP stack will
+		// discard packets when the timestamp gets to old.
+		// Increase the expire timeout value to prevent this.
+		rtp_session->setExpireTimeout((JITTER_BUF_MS +
+			user_config->dtmf_duration + user_config->dtmf_pause) * 1000);
+	}
 
 	return true;
 }
 
 void t_audio_rx::set_sound_payload_format(void) {
-	switch(codec) {
-	case CODEC_G711_ALAW:
-		rtp_session->setPayloadFormat(StaticPayloadFormat(sptPCMA));
-		break;
-	case CODEC_G711_ULAW:
-		rtp_session->setPayloadFormat(StaticPayloadFormat(sptPCMU));
-		break;
-	case CODEC_GSM:
-		rtp_session->setPayloadFormat(StaticPayloadFormat(sptGSM));
-		break;
-	default:
-		assert(false);
-	}
+	rtp_session->setPayloadFormat(DynamicPayloadFormat(audio_encoder->get_payload_id(),
+			audio_encoder->get_sample_rate()));
 }
 
 //////////
@@ -301,7 +213,8 @@ void t_audio_rx::set_sound_payload_format(void) {
 
 t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 		   t_audio_io *_input_device, t_twinkle_rtp_session *_rtp_session,
-	           t_audio_codec _codec, unsigned short _ptime) : sema_dtmf_q(0)
+	           t_audio_codec _codec, unsigned short _payload_id,
+	           unsigned short _ptime) : sema_dtmf_q(0)
 {
 	audio_session = _audio_session;
 	
@@ -310,49 +223,57 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	
 	input_device = _input_device;
 	rtp_session = _rtp_session;
-	codec = _codec;
-	dtmf_playing = false;
-	dtmf_pause = false;
-	dtmf_stop = false;
+	dtmf_player = NULL;
 	is_running = false;
 	stop_running = false;
 	logged_capture_failure = false;
+	use_nat_keepalive = phone->use_nat_keepalive(user_config);
 
 	pt_telephone_event = -1;
-
-	// Set ptime
-	if (codec == CODEC_GSM) {
-		// GSM has fixed ptime
-		ptime = PTIME_GSM;
-	} else if (_ptime == 0) {
-		switch(codec) {
-		case CODEC_G711_ALAW:
-			ptime = PTIME_G711_ALAW;
-			break;
-		case CODEC_G711_ULAW:
-			ptime = PTIME_G711_ULAW;
-			break;
-		default:
-			assert(false);
-		}
-	} else {
-		ptime = _ptime;
+	
+	// Create audio encoder
+	switch (_codec) {
+	case CODEC_G711_ALAW:
+		audio_encoder = new t_g711a_audio_encoder(_payload_id, _ptime, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_G711_ULAW:
+		audio_encoder = new t_g711u_audio_encoder(_payload_id, _ptime, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_GSM:
+		audio_encoder = new t_gsm_audio_encoder(_payload_id, _ptime, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+#ifdef HAVE_SPEEX
+	case CODEC_SPEEX_NB:
+		audio_encoder = new t_speex_audio_encoder(_payload_id, _ptime,
+				t_speex_audio_encoder::MODE_NB, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_SPEEX_WB:
+		audio_encoder = new t_speex_audio_encoder(_payload_id, _ptime,
+				t_speex_audio_encoder::MODE_WB, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_SPEEX_UWB:
+		audio_encoder = new t_speex_audio_encoder(_payload_id, _ptime,
+				t_speex_audio_encoder::MODE_UWB, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+#endif
+	default:
+		assert(false);
 	}
+	
+	payload_size = audio_encoder->get_max_payload_size();
 
 	sample_buf = new unsigned char[SAMPLE_BUF_SIZE];
 	MEMMAN_NEW_ARRAY(sample_buf);
 
-	// Determine payload size
-	if (codec == CODEC_GSM) {
-		gsm_encoder = gsm_create();
-		payload_size = 33;
-	} else {
-		payload_size = AUDIO_SAMPLE_RATE/1000 * ptime;
-	}
-
 	payload = new unsigned char[payload_size];
 	MEMMAN_NEW_ARRAY(payload);
-	nsamples = AUDIO_SAMPLE_RATE/1000 * ptime;
+	nsamples = audio_encoder->get_sample_rate()/1000 * audio_encoder->get_ptime();
 
 	// Initialize 3-way settings to 'null'
 	media_3way_peer_tx = NULL;
@@ -377,11 +298,12 @@ t_audio_rx::~t_audio_rx() {
 
 	MEMMAN_DELETE_ARRAY(sample_buf);
 	delete [] sample_buf;
+	
 	MEMMAN_DELETE_ARRAY(payload);
 	delete [] payload;
 
-	// Clean up resources for the GSM codec.
-	if (codec == CODEC_GSM) gsm_destroy(gsm_encoder);
+	MEMMAN_DELETE(audio_encoder);
+	delete audio_encoder;
 
 	// Clean up resources for 3-way conference calls
 	if (media_3way_peer_tx) {
@@ -396,16 +318,38 @@ t_audio_rx::~t_audio_rx() {
 		MEMMAN_DELETE_ARRAY(mix_buf_3way);
 		delete [] mix_buf_3way;
 	}
+	
+	if (dtmf_player) {
+		MEMMAN_DELETE(dtmf_player);
+		delete dtmf_player;
+	}
 }
 
 void t_audio_rx::set_running(bool running) {
 	is_running = running;
 }
 
+// NOTE: no operations on the phone object are allowed inside the run() method.
+//       Such an operation needs a lock on the transaction layer. The destructor
+//       on audio_rx is called while this lock is locked. The destructor waits
+//	 in a busy loop for the run() method to finish. If the run() method would
+//       need the phone lock, this would lead to a dead lock (and a long trip
+//	 in debug hell!)
 void t_audio_rx::run(void) {
 	int status;
 	struct timespec sleeptimer;
 	struct timeval debug_timer;
+	unsigned short sound_payload_size;
+	uint32 dtmf_rtp_timestamp;
+	
+	// This flag indicates if we are currently in a silence period.
+	// The start of a new stream is assumed to start in silence, such
+	// that the very first RTP packet will be marked.
+	bool silence_period = true;
+	uint64 silence_nsamples = 0; // duration in samples
+	
+	// This flag indicates if a sound frame can be suppressed
+	bool suppress_samples = false;
 
 	// The running flag is set already in t_audio_session::run to prevent
 	// a crash when the thread gets destroyed before it starts running.
@@ -432,36 +376,54 @@ void t_audio_rx::run(void) {
 	// RTP clock is a bit ahead already.
 	timestamp = rtp_session->getCurrentTimestamp() + nsamples;
 
-	// The nobreak_count will count how many times the loop below cycles
-	// without taking a real time break.
-	// TODO: this is not used anymore. Can be removed in the future if note needed.
-	nobreak_count = 0;
-
+	// This loop keeps running until the stop_running flag is set to true.
+	// When a call is being released the stop_running flag is set to true.
+	// At that moment the lock on the transaction layer (phone) is taken.
+	// So do not use operations that take the phone lock, otherwise a
+	// dead lock may occur during call release.
 	while (true) {
 		if (stop_running) break;
 
-		// If we are in a tight loop for more than ptime msecs then
-		// something must be wrong. For some reason no data is coming
-		// from the soundcard anymore.
-		if (nobreak_count > ptime) {
-			log_file->write_header("t_audio_rx::run");
-			log_file->write_raw("Audio rx line ");
-			log_file->write_raw(get_line()->get_line_number()+1);
-			log_file->write_raw(": tight loop detected.\n");
-			log_file->write_footer();
-			break;
-		}
-
-		if (dtmf_playing) {
+		if (dtmf_player) {
 			rtp_session->setMark(false);
-			get_dtmf_payload();
+			// Skip samples from sound card
+			input_device->read(sample_buf, SAMPLE_BUF_SIZE);
+			sound_payload_size = dtmf_player->get_payload(
+				payload, payload_size, timestamp, dtmf_rtp_timestamp);
+			silence_period = false;
 		} else if (get_dtmf_event()) {
 			// RFC 2833
 			// Set marker in first RTP packet of a DTMF event
 			rtp_session->setMark(true);
-			get_dtmf_payload();
-		} else if (get_sound_samples()) {
-			rtp_session->setMark(false);
+			// Skip samples from sound card
+			input_device->read(sample_buf, SAMPLE_BUF_SIZE);
+			assert(dtmf_player);
+			sound_payload_size = dtmf_player->get_payload(
+				payload, payload_size, timestamp, dtmf_rtp_timestamp);
+			silence_period = false;
+		} else if (get_sound_samples(sound_payload_size, suppress_samples)) {
+			if (suppress_samples && use_nat_keepalive) {
+				if (!silence_period) silence_nsamples = 0;
+				
+				// Send a silence packet at the NAT keep alive interval
+				// to keep the NAT bindings for RTP fresh.
+				silence_nsamples += SAMPLE_BUF_SIZE / 2;
+				if (silence_nsamples > 
+					user_config->timer_nat_keepalive * 1000 *
+					audio_encoder->get_sample_rate())
+				{
+					suppress_samples = false;
+				}
+			}
+		
+			if (silence_period && !suppress_samples) {
+				// RFC 3551 4.1
+				// Set marker bit in first RTP packet after silence
+				rtp_session->setMark(true);
+			} else {
+				rtp_session->setMark(false);
+			}
+			silence_period = suppress_samples;
 		} else {
 			continue;
 		}
@@ -472,23 +434,29 @@ void t_audio_rx::run(void) {
 		// sound samples than the set sample rate. To compensate for this
 		// samples must be dropped.
 		if (timestamp <= rtp_session->getCurrentTimestamp() + nsamples) {
-			if (dtmf_playing) {
+			if (dtmf_player) {
 				// Send DTMF payload
-				rtp_session->putData(dtmf_timestamp, payload,
-							sizeof(t_rtp_telephone_event));
+				rtp_session->putData(dtmf_rtp_timestamp, payload,
+							sound_payload_size);
 
 				// If DTMF has ended then set payload back to sound
-				if (dtmf_stop) {
+				if (dtmf_player->finished()) {
 					set_sound_payload_format();
-					dtmf_playing = false;
-					dtmf_stop = false;
+					MEMMAN_DELETE(dtmf_player);
+					delete dtmf_player;
+					dtmf_player = NULL;
 				}
-			} else {
+	
+				// Empty sound card buffer.
+				// During the DTMF tone, no sound from the sound 
+				// card is played out.
+				input_device->flush(false, true);
+			} else if (!suppress_samples) {
 				// Send sound samples
 				// Set the expire timeout to the jitter buffer size.
 				// This allows for old packets still to be sent out.
 				rtp_session->setExpireTimeout(MAX_OUT_AUDIO_DELAY_MS * 1000);
-				rtp_session->putData(timestamp, payload, payload_size);
+				rtp_session->putData(timestamp, payload, sound_payload_size);
 			}
 
 			timestamp += nsamples;
@@ -519,14 +487,15 @@ void t_audio_rx::run(void) {
 		// slower than the set sample rate. Advance the timestamp to get
 		// in sync again.
 		if (timestamp <= rtp_session->getCurrentTimestamp() - 
-			(JITTER_BUF_MS / ptime) * nsamples)
+			(JITTER_BUF_MS / audio_encoder->get_ptime()) * nsamples)
 		{
-			timestamp += nsamples * (JITTER_BUF_MS / ptime);
+			timestamp += nsamples * (JITTER_BUF_MS / audio_encoder->get_ptime());
 			log_file->write_header("t_audio_rx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": timestamp forwarded by ");
-			log_file->write_raw(nsamples * (JITTER_BUF_MS / ptime));
+			log_file->write_raw(nsamples * (JITTER_BUF_MS /
+					audio_encoder->get_ptime()));
 			log_file->write_endl();
 			log_file->write_footer();
 		}			
@@ -539,23 +508,19 @@ void t_audio_rx::set_pt_telephone_event(int pt) {
 	pt_telephone_event = pt;
 }
 
-void t_audio_rx::push_dtmf(char digit) {
+void t_audio_rx::push_dtmf(char digit, bool inband) {
 	// Ignore invalid DTMF digits
 	if (!VALID_DTMF_SYM(digit)) return;
-
-	// Ignore if DTMF tones are not supported for this session
-	if (pt_telephone_event < 0) {
-		ui->cb_dtmf_not_supported(get_line()->get_line_number());
-		return;
-	}
 
 	// Ignore DTMF tones in a 3-way conference
 	if (is_3way) return;
 
-	char dtmf_ev = char2dtmf_ev(digit);
+	t_dtmf_event dtmf_event;
+	dtmf_event.dtmf_tone = char2dtmf_ev(digit);
+	dtmf_event.inband = inband;
 
 	mtx_dtmf_q.lock();
-	dtmf_queue.push(dtmf_ev);
+	dtmf_queue.push(dtmf_event);
 	mtx_dtmf_q.unlock();
 	sema_dtmf_q.up();
 }
@@ -608,9 +573,11 @@ void t_audio_rx::join_3way(bool main_rx, t_audio_rx *peer_rx) {
 	// to the far-end. Meanwhile the buffer will fill up with data such
 	// that from the next captured sample there will be sufficient data
 	// for mixing.
-	media_3way_peer_tx = new t_media_buffer(JITTER_BUF_SIZE);
+	media_3way_peer_tx = new t_media_buffer(
+			JITTER_BUF_SIZE(audio_encoder->get_sample_rate()));
 	MEMMAN_NEW(media_3way_peer_tx);
-	media_3way_peer_rx = new t_media_buffer(JITTER_BUF_SIZE);
+	media_3way_peer_rx = new t_media_buffer(
+			JITTER_BUF_SIZE(audio_encoder->get_sample_rate()));
 	MEMMAN_NEW(media_3way_peer_rx);
 
 	// Create a mix buffer for one sample frame.
@@ -623,7 +590,11 @@ void t_audio_rx::join_3way(bool main_rx, t_audio_rx *peer_rx) {
 	is_main_rx_3way = main_rx;
 
 	// Stop DTMF tones as these are not supported in a 3way
-	dtmf_playing = false;
+	if (dtmf_player) {
+		MEMMAN_DELETE(dtmf_player);
+		delete dtmf_player;
+		dtmf_player = NULL;
+	}
 
 	mtx_3way.unlock();
 }
@@ -714,7 +685,7 @@ void t_audio_rx::stop_3way(void) {
 	log_file->write_header("t_audio_rx::stop_3way");
 	log_file->write_raw("Audio rx line ");
 	log_file->write_raw(get_line()->get_line_number()+1);
-	log_file->write_raw(": stop 3-way.");
+	log_file->write_raw(": stop 3-way.\n");
 	log_file->write_footer();
 
 	is_3way = false;
@@ -735,7 +706,9 @@ void t_audio_rx::stop_3way(void) {
 	mtx_3way.unlock();
 }
 
-void t_audio_rx::post_media_peer_tx_3way(unsigned char *media, int len) {
+void t_audio_rx::post_media_peer_tx_3way(unsigned char *media, int len,
+		unsigned short peer_sample_rate) 
+{
 	mtx_3way.lock();
 
 	if (!is_3way) {
@@ -746,13 +719,27 @@ void t_audio_rx::post_media_peer_tx_3way(unsigned char *media, int len) {
 		mtx_3way.unlock();
 		return;
 	}
-
-	media_3way_peer_tx->add(media, len);
+	
+	if (peer_sample_rate != audio_encoder->get_sample_rate()) {
+		// Resample media from peer to sample rate of this receiver
+		int output_len = (len / 2) * audio_encoder->get_sample_rate() / peer_sample_rate;
+		short *output_buf = new short[output_len];
+		MEMMAN_NEW_ARRAY(output_buf);
+		int resample_len = resample((short *)media, len / 2, peer_sample_rate,
+					output_buf, output_len, audio_encoder->get_sample_rate());
+		media_3way_peer_tx->add((unsigned char *)output_buf, resample_len * 2);
+		MEMMAN_DELETE_ARRAY(output_buf);
+		delete [] output_buf;
+	} else {
+		media_3way_peer_tx->add(media, len);
+	}
 
 	mtx_3way.unlock();
 }
 
-void t_audio_rx::post_media_peer_rx_3way(unsigned char *media, int len) {
+void t_audio_rx::post_media_peer_rx_3way(unsigned char *media, int len,
+		unsigned short peer_sample_rate) 
+{
 	mtx_3way.lock();
 
 	if (!is_3way) {
@@ -763,8 +750,20 @@ void t_audio_rx::post_media_peer_rx_3way(unsigned char *media, int len) {
 		mtx_3way.unlock();
 		return;
 	}
-
-	media_3way_peer_rx->add(media, len);
+	
+	if (peer_sample_rate != audio_encoder->get_sample_rate()) {
+		// Resample media from peer to sample rate of this receiver
+		int output_len = (len / 2) * audio_encoder->get_sample_rate() / peer_sample_rate;
+		short *output_buf = new short[output_len];
+		MEMMAN_NEW_ARRAY(output_buf);
+		int resample_len = resample((short *)media, len / 2, peer_sample_rate,
+					output_buf, output_len, audio_encoder->get_sample_rate());
+		media_3way_peer_rx->add((unsigned char *)output_buf, resample_len * 2);
+		MEMMAN_DELETE_ARRAY(output_buf);
+		delete [] output_buf;
+	} else {
+		media_3way_peer_rx->add(media, len);
+	}
 
 	mtx_3way.unlock();
 }

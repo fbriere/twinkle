@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>740</width>
-            <height>682</height>
+            <height>711</height>
         </rect>
     </property>
     <property name="caption">
@@ -146,64 +146,6 @@
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>Select which profile you want to edit.</string>
-                    </property>
-                </widget>
-            </hbox>
-        </widget>
-        <widget class="QLayoutWidget" row="2" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout12</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer8</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>441</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
                     </property>
                 </widget>
             </hbox>
@@ -743,221 +685,501 @@ This field is mandatory.</string>
                             </property>
                             <widget class="QLayoutWidget">
                                 <property name="name">
+                                    <cstring>layout19</cstring>
+                                </property>
+                                <vbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>availCodecTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Available codecs:</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QListBox">
+                                        <item>
+                                            <property name="text">
+                                                <string>G.711 A-law</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>G.711 u-law</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>GSM</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>speex-nb (8 kHz)</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>speex-wb (16 kHz)</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>speex-uwb (32 kHz)</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>availCodecListBox</cstring>
+                                        </property>
+                                        <property name="resizePolicy">
+                                            <enum>Manual</enum>
+                                        </property>
+                                        <property name="hScrollBarMode">
+                                            <enum>AlwaysOff</enum>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>List of available codecs.</string>
+                                        </property>
+                                    </widget>
+                                </vbox>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
                                     <cstring>layout14</cstring>
+                                </property>
+                                <vbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer17_2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Vertical</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                    <widget class="QPushButton">
+                                        <property name="name">
+                                            <cstring>addCodecPushButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="pixmap">
+                                            <pixmap>1rightarrow.png</pixmap>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Move a codec from the list of available codecs to the list of active codecs.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QPushButton">
+                                        <property name="name">
+                                            <cstring>rmvCodecPushButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="pixmap">
+                                            <pixmap>1leftarrow.png</pixmap>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Move a codec from the list of active codecs to the list of available codecs.</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer18</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Vertical</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>21</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </vbox>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout20</cstring>
+                                </property>
+                                <vbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>useCodecTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Active codecs:</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QListBox">
+                                        <property name="name">
+                                            <cstring>activeCodecListBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>List of active codecs. These are the codecs that will be used for media negotiation during call setup. The order of the codecs is the order of preference of use.</string>
+                                        </property>
+                                    </widget>
+                                </vbox>
+                            </widget>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout15</cstring>
+                                </property>
+                                <vbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer19_2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Vertical</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>21</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                    <widget class="QPushButton">
+                                        <property name="name">
+                                            <cstring>upCodecPushButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="pixmap">
+                                            <pixmap>1uparrow.png</pixmap>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Move a codec upwards in the list of active codecs, i.e. increase its preference of use.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QPushButton">
+                                        <property name="name">
+                                            <cstring>downCodecPushButton</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string></string>
+                                        </property>
+                                        <property name="pixmap">
+                                            <pixmap>1downarrow.png</pixmap>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Move a codec downwards in the list of active codecs, i.e. decrease its preference of use.</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer20_2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Vertical</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>20</width>
+                                                <height>31</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </vbox>
+                            </widget>
+                        </hbox>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout18</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>ptimeTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>G.711 payload &amp;size:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>ptimeSpinBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox">
+                                <property name="name">
+                                    <cstring>ptimeSpinBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>1</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>46</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="maximumSize">
+                                    <size>
+                                        <width>32767</width>
+                                        <height>32767</height>
+                                    </size>
+                                </property>
+                                <property name="maxValue">
+                                    <number>50</number>
+                                </property>
+                                <property name="minValue">
+                                    <number>10</number>
+                                </property>
+                                <property name="lineStep">
+                                    <number>10</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The payload size for the G.711 codecs.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>payloadMsTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>ms</string>
+                                </property>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer24</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>121</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>speexGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Speex</string>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout17</cstring>
                                 </property>
                                 <grid>
                                     <property name="name">
                                         <cstring>unnamed</cstring>
                                     </property>
-                                    <widget class="QLabel" row="0" column="0">
+                                    <widget class="QCheckBox" row="3" column="0">
                                         <property name="name">
-                                            <cstring>codec1TextLabel</cstring>
+                                            <cstring>spxPenhCheckBox</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>&amp;1st codec:</string>
+                                            <string>Perceptual &amp;enhancement</string>
                                         </property>
-                                        <property name="buddy" stdset="0">
-                                            <cstring>codec1ComboBox</cstring>
-                                        </property>
-                                    </widget>
-                                    <widget class="QLabel" row="0" column="4">
-                                        <property name="name">
-                                            <cstring>payloadMsTextLabel</cstring>
-                                        </property>
-                                        <property name="text">
-                                            <string>ms</string>
-                                        </property>
-                                    </widget>
-                                    <widget class="QComboBox" row="1" column="1">
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 A-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 u-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>GSM</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>None</string>
-                                            </property>
-                                        </item>
-                                        <property name="name">
-                                            <cstring>codec2ComboBox</cstring>
-                                        </property>
-                                        <property name="minimumSize">
-                                            <size>
-                                                <width>130</width>
-                                                <height>0</height>
-                                            </size>
-                                        </property>
-                                        <property name="maximumSize">
-                                            <size>
-                                                <width>32767</width>
-                                                <height>32767</height>
-                                            </size>
+                                        <property name="accel">
+                                            <string>Alt+E</string>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>There are 3 codec fields. The order of the codecs determines the preference of usage. If you want to disable a particular codec you can select 'none' instead of that codec.</string>
+                                            <string>Perceptual enhancement is a part of the decoder which, when turned on, tries to reduce (the perception of) the noise produced by the coding/decoding process. In most cases, perceptual enhancement make the sound further from the original objectively (if you use SNR), but in the end it still sounds better (subjective improvement).</string>
                                         </property>
                                     </widget>
-                                    <widget class="QLabel" row="1" column="0">
+                                    <widget class="QLabel" row="3" column="1">
                                         <property name="name">
-                                            <cstring>codec2TextLabel</cstring>
+                                            <cstring>spxUwbPayloadTextLabel</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>&amp;2nd codec:</string>
+                                            <string>&amp;Ultra wide band payload type:</string>
                                         </property>
                                         <property name="buddy" stdset="0">
-                                            <cstring>codec2ComboBox</cstring>
+                                            <cstring>spxUwbPayloadSpinBox</cstring>
                                         </property>
                                     </widget>
-                                    <widget class="QSpinBox" row="0" column="3">
+                                    <widget class="QCheckBox" row="1" column="0">
                                         <property name="name">
-                                            <cstring>ptimeSpinBox</cstring>
+                                            <cstring>spxVadCheckBox</cstring>
                                         </property>
-                                        <property name="sizePolicy">
-                                            <sizepolicy>
-                                                <hsizetype>1</hsizetype>
-                                                <vsizetype>0</vsizetype>
-                                                <horstretch>0</horstretch>
-                                                <verstretch>0</verstretch>
-                                            </sizepolicy>
+                                        <property name="text">
+                                            <string>&amp;VAD</string>
                                         </property>
-                                        <property name="minimumSize">
-                                            <size>
-                                                <width>46</width>
-                                                <height>0</height>
-                                            </size>
+                                        <property name="accel">
+                                            <string>Alt+V</string>
                                         </property>
-                                        <property name="maximumSize">
-                                            <size>
-                                                <width>32767</width>
-                                                <height>32767</height>
-                                            </size>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called "comfort noise generation" (CNG).</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="1">
+                                        <property name="name">
+                                            <cstring>spxWbPayloadTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;Wide band payload type:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>spxWbPayloadSpinBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>spxVbrCheckBox</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>V&amp;BR</string>
+                                        </property>
+                                        <property name="accel">
+                                            <string>Alt+B</string>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Variable bit-rate (VBR) allows a codec to change its bit-rate dynamically to adapt to the "difficulty" of the audio being encoded. In the example of Speex, sounds like vowels and high-energy transients require a higher bit-rate to achieve good quality, while fricatives (e.g. s,f sounds) can be coded adequately with less bits. For this reason, VBR can achieve a lower bit-rate for the same quality, or a better quality for a certain bit-rate. Despite its advantages, VBR has two main drawbacks: first, by only specifying quality, there's no guarantee about the final average bit-rate. Second, for some real-time applications like voice over IP (VoIP), what counts is the maximum bit-rate, which must be low enough for the communication channel.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QSpinBox" row="3" column="2">
+                                        <property name="name">
+                                            <cstring>spxUwbPayloadSpinBox</cstring>
                                         </property>
                                         <property name="maxValue">
-                                            <number>50</number>
+                                            <number>255</number>
                                         </property>
                                         <property name="minValue">
-                                            <number>10</number>
-                                        </property>
-                                        <property name="lineStep">
-                                            <number>10</number>
+                                            <number>96</number>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>The payload size for the G.711 codecs.</string>
+                                            <string>The dynamic type value (96 or higher) to be used for speex wide band.</string>
                                         </property>
                                     </widget>
-                                    <widget class="QComboBox" row="2" column="1">
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 A-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 u-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>GSM</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>None</string>
-                                            </property>
-                                        </item>
+                                    <widget class="QLabel" row="0" column="1">
                                         <property name="name">
-                                            <cstring>codec3ComboBox</cstring>
-                                        </property>
-                                        <property name="minimumSize">
-                                            <size>
-                                                <width>130</width>
-                                                <height>0</height>
-                                            </size>
-                                        </property>
-                                        <property name="maximumSize">
-                                            <size>
-                                                <width>32767</width>
-                                                <height>32767</height>
-                                            </size>
-                                        </property>
-                                        <property name="whatsThis" stdset="0">
-                                            <string>There are 3 codec fields. The order of the codecs determines the preference of usage. If you want to disable a particular codec you can select 'none' instead of that codec.</string>
-                                        </property>
-                                    </widget>
-                                    <widget class="QLabel" row="2" column="0">
-                                        <property name="name">
-                                            <cstring>codec3TextLabel</cstring>
+                                            <cstring>spxComplexityTextLabel</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>&amp;3rd codec:</string>
+                                            <string>Co&amp;mplexity:</string>
                                         </property>
                                         <property name="buddy" stdset="0">
-                                            <cstring>codec3ComboBox</cstring>
+                                            <cstring>spxComplexitySpinBox</cstring>
                                         </property>
                                     </widget>
-                                    <widget class="QLabel" row="0" column="2">
+                                    <widget class="QCheckBox" row="2" column="0">
                                         <property name="name">
-                                            <cstring>ptimeTextLabel</cstring>
+                                            <cstring>spxDtxCheckBox</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>G.711 payload &amp;size:</string>
+                                            <string>DT&amp;X</string>
                                         </property>
-                                        <property name="buddy" stdset="0">
-                                            <cstring>ptimeSpinBox</cstring>
-                                        </property>
-                                    </widget>
-                                    <widget class="QComboBox" row="0" column="1">
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 A-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>G.711 u-law</string>
-                                            </property>
-                                        </item>
-                                        <item>
-                                            <property name="text">
-                                                <string>GSM</string>
-                                            </property>
-                                        </item>
-                                        <property name="name">
-                                            <cstring>codec1ComboBox</cstring>
-                                        </property>
-                                        <property name="minimumSize">
-                                            <size>
-                                                <width>130</width>
-                                                <height>0</height>
-                                            </size>
-                                        </property>
-                                        <property name="maximumSize">
-                                            <size>
-                                                <width>32767</width>
-                                                <height>32767</height>
-                                            </size>
+                                        <property name="accel">
+                                            <string>Alt+X</string>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>There are 3 codec fields. The order of the codecs determines the preference of usage. If you want to disable a particular codec you can select 'none' instead of that codec.</string>
+                                            <string>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QSpinBox" row="2" column="2">
+                                        <property name="name">
+                                            <cstring>spxWbPayloadSpinBox</cstring>
+                                        </property>
+                                        <property name="maxValue">
+                                            <number>255</number>
+                                        </property>
+                                        <property name="minValue">
+                                            <number>96</number>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The dynamic type value (96 or higher) to be used for speex wide band.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QSpinBox" row="1" column="2">
+                                        <property name="name">
+                                            <cstring>spxNbPayloadSpinBox</cstring>
+                                        </property>
+                                        <property name="maxValue">
+                                            <number>255</number>
+                                        </property>
+                                        <property name="minValue">
+                                            <number>96</number>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The dynamic type value (96 or higher) to be used for speex narrow band.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QSpinBox" row="0" column="2">
+                                        <property name="name">
+                                            <cstring>spxComplexitySpinBox</cstring>
+                                        </property>
+                                        <property name="maxValue">
+                                            <number>10</number>
+                                        </property>
+                                        <property name="minValue">
+                                            <number>1</number>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that's similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="1">
+                                        <property name="name">
+                                            <cstring>spxNbPayloadTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;Narrow band payload type:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>spxNbPayloadSpinBox</cstring>
                                         </property>
                                     </widget>
                                 </grid>
                             </widget>
                             <spacer>
                                 <property name="name">
-                                    <cstring>spacer16</cstring>
+                                    <cstring>spacer23_2</cstring>
                                 </property>
                                 <property name="orientation">
                                     <enum>Horizontal</enum>
@@ -979,13 +1201,30 @@ This field is mandatory.</string>
                             <cstring>dtmfGroupBox</cstring>
                         </property>
                         <property name="title">
-                            <string>DTMF events (RFC 2833)</string>
+                            <string>DTMF</string>
                         </property>
-                        <hbox>
+                        <grid>
                             <property name="name">
                                 <cstring>unnamed</cstring>
                             </property>
-                            <widget class="QLayoutWidget">
+                            <spacer row="1" column="1">
+                                <property name="name">
+                                    <cstring>spacer17</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>280</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                            <widget class="QLayoutWidget" row="1" column="0">
                                 <property name="name">
                                     <cstring>layout8</cstring>
                                 </property>
@@ -1040,7 +1279,7 @@ This field is mandatory.</string>
                                             <cstring>dtmfVolumeTextLabel</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>DTMF &amp;volume:</string>
+                                            <string>DTMF vo&amp;lume:</string>
                                         </property>
                                         <property name="buddy" stdset="0">
                                             <cstring>dtmfVolumeSpinBox</cstring>
@@ -1051,13 +1290,19 @@ This field is mandatory.</string>
                                             <cstring>dtmfVolumeSpinBox</cstring>
                                         </property>
                                         <property name="maxValue">
-                                            <number>63</number>
+                                            <number>0</number>
                                         </property>
-                                        <property name="value">
+                                        <property name="minValue">
+                                            <number>-63</number>
+                                        </property>
+                                        <property name="lineStep">
                                             <number>10</number>
                                         </property>
+                                        <property name="value">
+                                            <number>-10</number>
+                                        </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>This value is put in the volume field of the DTMF event packet.</string>
+                                            <string>The power level of the DTMF tone in dB.</string>
                                         </property>
                                     </widget>
                                     <widget class="QSpinBox" row="2" column="2">
@@ -1094,7 +1339,7 @@ This field is mandatory.</string>
                                             <number>10</number>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>The pause after a DTMF event. During this pause the last event packet will be retransmitted.</string>
+                                            <string>The pause after a DTMF tone.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="1" column="0" rowspan="1" colspan="2">
@@ -1143,18 +1388,7 @@ This field is mandatory.</string>
                                             <cstring>dtmfVolDbmTextLabel</cstring>
                                         </property>
                                         <property name="text">
-                                            <string>dBm</string>
-                                        </property>
-                                    </widget>
-                                    <widget class="QLabel" row="3" column="1">
-                                        <property name="name">
-                                            <cstring>dtmfVolMinusTextLabel</cstring>
-                                        </property>
-                                        <property name="text">
-                                            <string>-</string>
-                                        </property>
-                                        <property name="alignment">
-                                            <set>AlignVCenter|AlignRight</set>
+                                            <string>dB</string>
                                         </property>
                                     </widget>
                                     <widget class="QSpinBox" row="1" column="2">
@@ -1191,29 +1425,78 @@ This field is mandatory.</string>
                                             <number>10</number>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>Duration of the DTMF event, e.g. the duration of the tone the event represents.</string>
+                                            <string>Duration of a DTMF tone.</string>
                                         </property>
                                     </widget>
                                 </grid>
                             </widget>
-                            <spacer>
+                            <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
                                 <property name="name">
-                                    <cstring>spacer17</cstring>
+                                    <cstring>layout15</cstring>
                                 </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                                <property name="sizeType">
-                                    <enum>Expanding</enum>
-                                </property>
-                                <property name="sizeHint">
-                                    <size>
-                                        <width>250</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </hbox>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>dtmfTransportTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>DTMF t&amp;ransport:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>dtmfTransportComboBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QComboBox">
+                                        <item>
+                                            <property name="text">
+                                                <string>Auto</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>RFC 2833</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>Inband</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>dtmfTransportComboBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>&lt;h2&gt;RFC 2833&lt;/h2&gt;
+&lt;p&gt;Send DTMF tones as RFC 2833 telephone events.&lt;/p&gt;
+&lt;h2&gt;Inband&lt;/h2&gt;
+&lt;p&gt;Send DTMF inband.&lt;/p&gt;
+&lt;h2&gt;Auto&lt;/h2&gt;
+&lt;p&gt;If the far end of your call supports RFC 2833, then a DTMF tone will be send as RFC 2833 telephone event, otherwise it will be sent inband.&lt;/p&gt;</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer22_2</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>161</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </hbox>
+                            </widget>
+                        </grid>
                     </widget>
                     <spacer>
                         <property name="name">
@@ -1228,7 +1511,7 @@ This field is mandatory.</string>
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>150</height>
+                                <height>20</height>
                             </size>
                         </property>
                     </spacer>
@@ -1284,7 +1567,7 @@ This field is mandatory.</string>
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>20</height>
+                                <height>16</height>
                             </size>
                         </property>
                     </spacer>
@@ -1640,34 +1923,6 @@ This field is mandatory.</string>
                                     <string>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox" row="5" column="0" rowspan="1" colspan="3">
-                                <property name="name">
-                                    <cstring>useDomainInContactCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>Use domain name to create a unique contact header value</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>&lt;p&gt;
-Twinkle creates a unique contact header value by combining the SIP user name and domain:
-&lt;/p&gt;
-&lt;p&gt;
-&lt;tt&gt;&amp;nbsp;user_domain@local_ip&lt;/tt&gt;
-&lt;/p&gt;
-&lt;p&gt;
-This way 2 user profiles, having the same user name but different domain names, have unique contact addresses and hence can be activated simultaneously.
-&lt;/p&gt;
-&lt;p&gt;
-Some proxies do not handle a contact header value like this. You can disable this option to get a contact header value like this:
-&lt;/p&gt;
-&lt;p&gt;
-&lt;tt&gt;&amp;nbsp;user@local_ip&lt;/tt&gt;
-&lt;/p&gt;
-&lt;p&gt;
-This format is what most SIP phones use.
-&lt;/p&gt;</string>
-                                </property>
-                            </widget>
                             <widget class="QCheckBox" row="3" column="0" rowspan="1" colspan="3">
                                 <property name="name">
                                     <cstring>regTimeCheckBox</cstring>
@@ -1694,6 +1949,46 @@ This format is what most SIP phones use.
                                 </property>
                                 <property name="whatsThis" stdset="0">
                                     <string>Indicates if compact header names should be used for headers that have a compact form.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="6" column="0" rowspan="1" colspan="3">
+                                <property name="name">
+                                    <cstring>allowSdpChangeCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Allow SDP change during call setup</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;A SIP UAS may send SDP in a 1XX response for early media, e.g. ringing tone. When the call is answered the SIP UAS should send the same SDP in the 200 OK response according to RFC 3261. Once SDP has been received, SDP in subsequent responses should be discarded.&lt;/p&gt;
+&lt;p&gt;By allowing SDP to change during call setup, Twinkle will not discard SDP in subsequent responses and modify the media stream if the SDP is changed. When the SDP in a response is changed, it must have a new version number in the o= line.&lt;/p&gt;</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="5" column="0" rowspan="1" colspan="3">
+                                <property name="name">
+                                    <cstring>useDomainInContactCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Use domain name to create a unique contact header value</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Twinkle creates a unique contact header value by combining the SIP user name and domain:
+&lt;/p&gt;
+&lt;p&gt;
+&lt;tt&gt;&amp;nbsp;user_domain@local_ip&lt;/tt&gt;
+&lt;/p&gt;
+&lt;p&gt;
+This way 2 user profiles, having the same user name but different domain names, have unique contact addresses and hence can be activated simultaneously.
+&lt;/p&gt;
+&lt;p&gt;
+Some proxies do not handle a contact header value like this. You can disable this option to get a contact header value like this:
+&lt;/p&gt;
+&lt;p&gt;
+&lt;tt&gt;&amp;nbsp;user@local_ip&lt;/tt&gt;
+&lt;/p&gt;
+&lt;p&gt;
+This format is what most SIP phones use.
+&lt;/p&gt;</string>
                                 </property>
                             </widget>
                         </grid>
@@ -1904,7 +2199,7 @@ When you choose this option you have to create static address mappings in your N
                             <property name="name">
                                 <cstring>unnamed</cstring>
                             </property>
-                            <widget class="QCheckBox" row="0" column="0">
+                            <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
                                 <property name="name">
                                     <cstring>displayTelUserCheckBox</cstring>
                                 </property>
@@ -1918,7 +2213,7 @@ When you choose this option you have to create static address mappings in your N
                                     <string>If a URI indicates a telephone number, then only display the user part. E.g. if a call comes in from sip:123456@twinklephone.com then display only "123456" to the user. A URI indicates a telephone number if it contains the "user=phone" parameter or when it has a numerical user part and you ticked the next option.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox" row="1" column="0">
+                            <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="2">
                                 <property name="name">
                                     <cstring>numericalUserIsTelCheckBox</cstring>
                                 </property>
@@ -1929,7 +2224,40 @@ When you choose this option you have to create static address mappings in your N
                                     <string>Alt+U</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>If you tick this option, then Twinkle considers a SIP address that has a user part that consists of digits, *, #, +, - only as a telephone number. In an outgoing message, Twinkle will add the "user=phone" parameter to such a URI.</string>
+                                    <string>If you tick this option, then Twinkle considers a SIP address that has a user part that consists of digits, *, #, + and special symbols only as a telephone number. In an outgoing message, Twinkle will add the "user=phone" parameter to such a URI.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>removeSpecialCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Remove special symbols from numerical dial strings</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+R</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Telephone numbers are often written with special symbols like dashes and brackets to make them readable to humans. When you dial such a number the special symbols must not be dialed. To allow you to simply copy/paste such a number into Twinkle, Twinkle can remove these symbols when you hit the dial button.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="3" column="0">
+                                <property name="name">
+                                    <cstring>specialTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Special symbols:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>specialLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="3" column="1">
+                                <property name="name">
+                                    <cstring>specialLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The special symbols that may be part of a telephone number for nice formatting, but must be removed when dialing.</string>
                                 </property>
                             </widget>
                         </grid>
@@ -1947,7 +2275,7 @@ When you choose this option you have to create static address mappings in your N
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>71</height>
+                                <height>240</height>
                             </size>
                         </property>
                     </spacer>
@@ -2367,6 +2695,7 @@ With your script you can customize call handling by outputing one or more of the
 action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
 reason=&amp;lt;string&amp;gt;&lt;br&gt;
 contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;
+caller_name=&amp;lt;name of caller to display&amp;gt;&lt;br&gt;
 ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
@@ -2383,13 +2712,18 @@ ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
 &lt;p&gt;
 When the script does not write an action to stdout, then the default action is continue.
 &lt;/p&gt;
-&lt;h3&gt;reason&lt;/h3&gt;
 &lt;p&gt;
+&lt;b&gt;reason: &lt;/b&gt;
 With the reason parameter you can set the reason string for reject or dnd. This might be shown to the far-end user.
 &lt;/p&gt;
-&lt;h3&gt;ringtone&lt;/h3&gt;
 &lt;p&gt;
+&lt;b&gt;caller_name: &lt;/b&gt;
+This parameter will override the display name of the caller.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;ringtone: &lt;/b&gt;
 The ringtone parameter specifies the .wav file that will be played as ring tone when action is continue.
+&lt;/p&gt;
 &lt;h2&gt;Environment variables&lt;/h2&gt;
 &lt;p&gt;
 The values of all SIP headers in the incoming INVITE message are passed in environment variables to your script. The variable names are formatted as &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; E.g. SIP_FROM contains the value of the from header.
@@ -2430,6 +2764,64 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
                     </spacer>
                 </vbox>
             </widget>
+        </widget>
+        <widget class="QLayoutWidget" row="2" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout12</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer8</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>441</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
         </widget>
     </grid>
 </widget>
@@ -2554,6 +2946,42 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
         <receiver>UserProfileForm</receiver>
         <slot>chooseIncomingCallScript()</slot>
     </connection>
+    <connection>
+        <sender>addCodecPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>addCodec()</slot>
+    </connection>
+    <connection>
+        <sender>rmvCodecPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>removeCodec()</slot>
+    </connection>
+    <connection>
+        <sender>upCodecPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>upCodec()</slot>
+    </connection>
+    <connection>
+        <sender>downCodecPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>downCodec()</slot>
+    </connection>
+    <connection>
+        <sender>availCodecListBox</sender>
+        <signal>doubleClicked(QListBoxItem*)</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>addCodec()</slot>
+    </connection>
+    <connection>
+        <sender>activeCodecListBox</sender>
+        <signal>doubleClicked(QListBoxItem*)</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>removeCodec()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
@@ -2571,10 +2999,22 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <tabstop>proxyLineEdit</tabstop>
     <tabstop>allRequestsCheckBox</tabstop>
     <tabstop>proxyNonResolvableCheckBox</tabstop>
-    <tabstop>codec1ComboBox</tabstop>
-    <tabstop>codec2ComboBox</tabstop>
-    <tabstop>codec3ComboBox</tabstop>
+    <tabstop>availCodecListBox</tabstop>
+    <tabstop>addCodecPushButton</tabstop>
+    <tabstop>rmvCodecPushButton</tabstop>
+    <tabstop>activeCodecListBox</tabstop>
+    <tabstop>upCodecPushButton</tabstop>
+    <tabstop>downCodecPushButton</tabstop>
     <tabstop>ptimeSpinBox</tabstop>
+    <tabstop>spxVbrCheckBox</tabstop>
+    <tabstop>spxVadCheckBox</tabstop>
+    <tabstop>spxDtxCheckBox</tabstop>
+    <tabstop>spxPenhCheckBox</tabstop>
+    <tabstop>spxComplexitySpinBox</tabstop>
+    <tabstop>spxNbPayloadSpinBox</tabstop>
+    <tabstop>spxWbPayloadSpinBox</tabstop>
+    <tabstop>spxUwbPayloadSpinBox</tabstop>
+    <tabstop>dtmfTransportComboBox</tabstop>
     <tabstop>dtmfPayloadTypeSpinBox</tabstop>
     <tabstop>dtmfDurationSpinBox</tabstop>
     <tabstop>dtmfPauseSpinBox</tabstop>
@@ -2585,6 +3025,7 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <tabstop>regTimeCheckBox</tabstop>
     <tabstop>compactHeadersCheckBox</tabstop>
     <tabstop>useDomainInContactCheckBox</tabstop>
+    <tabstop>allowSdpChangeCheckBox</tabstop>
     <tabstop>allowRedirectionCheckBox</tabstop>
     <tabstop>askUserRedirectCheckBox</tabstop>
     <tabstop>maxRedirectSpinBox</tabstop>
@@ -2601,6 +3042,8 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <tabstop>stunServerLineEdit</tabstop>
     <tabstop>displayTelUserCheckBox</tabstop>
     <tabstop>numericalUserIsTelCheckBox</tabstop>
+    <tabstop>removeSpecialCheckBox</tabstop>
+    <tabstop>specialLineEdit</tabstop>
     <tabstop>tmrNoanswerSpinBox</tabstop>
     <tabstop>tmrNatKeepaliveSpinBox</tabstop>
     <tabstop>ringtoneLineEdit</tabstop>
@@ -2611,7 +3054,6 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <tabstop>profileComboBox</tabstop>
 </tabstops>
 <includes>
-    <include location="local" impldecl="in declaration">user.h</include>
     <include location="local" impldecl="in implementation">qlistbox.h</include>
     <include location="local" impldecl="in implementation">qlineedit.h</include>
     <include location="local" impldecl="in implementation">qlabel.h</include>
@@ -2625,6 +3067,10 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">qfiledialog.h</include>
     <include location="local" impldecl="in implementation">qfileinfo.h</include>
+    <include location="local" impldecl="in implementation">qstringlist.h</include>
+    <include location="local" impldecl="in implementation">twinkle_config.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">qvaluelist.h</include>
     <include location="local" impldecl="in implementation">userprofileform.ui.h</include>
 </includes>
 <variables>
@@ -2648,14 +3094,19 @@ The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt
     <slot>chooseRingtone()</slot>
     <slot>chooseRingback()</slot>
     <slot>chooseIncomingCallScript()</slot>
+    <slot>addCodec()</slot>
+    <slot>removeCodec()</slot>
+    <slot>upCodec()</slot>
+    <slot>downCodec()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
-    <function returnType="int">codec2indexComboItem( short codec )</function>
-    <function returnType="short">indexComboItem2codec( int index )</function>
+    <function returnType="t_audio_codec">label2codec( const QString &amp; label )</function>
+    <function returnType="QString">codec2label( t_audio_codec &amp; codec )</function>
     <function returnType="int">ext_support2indexComboItem( t_ext_support ext )</function>
     <function returnType="t_ext_support">indexComboItem2ext_support( int index )</function>
     <function returnType="int">exec( list&lt;t_user *&gt; profiles, QString show_profile )</function>
+    <function returnType="bool">check_dynamic_payload( QSpinBox * spb, QValueList&lt;int&gt; &amp; checked_list )</function>
     <function returnType="bool">validateValues()</function>
 </functions>
 <pixmapinproject/>

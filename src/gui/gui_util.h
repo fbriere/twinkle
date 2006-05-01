@@ -16,43 +16,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef _PARAMETER_H
-#define _PARAMETER_H
+#ifndef _GUI_UTIL_H
+#define _GUI_UTIL_H
 
 #include <string>
-#include <list>
+#include "qstring.h"
 
 using namespace std;
 
-class t_parameter {
-public:
-enum t_param_type{
-	NOVALUE,	// a parameter without a value
-	VALUE		// parameter having a value (default)
-};
-
-	t_param_type	type;	// type of parameter
-	string		name;	// name of parameter
-	string		value;	// value of parameter if type is VALUE
-
-	t_parameter();
-
-	// Construct a NOVALUE parameter with name = n
-	t_parameter(const string &n);
-
-	// Construct a VALUE parameter with name = n, value = v
-	t_parameter(const string &n, const string &v);
-
-	string encode(void) const;
-};
-
-// Decode a parameter
-t_parameter str2param(const string &s);
-
-// Encode a parameter list
-string param_list2str(const list<t_parameter> &l);
-
-// Decode a parameter list
-list<t_parameter> str2param_list(const string &s);
+QString str2qstr(const string &s);
 
 #endif

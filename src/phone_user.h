@@ -111,7 +111,7 @@ public:
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
 	
-	void registration(t_register_type register_type,
+	void registration(t_register_type register_type, bool re_register,
 					unsigned long expires = 0);
 					
 	// OPTIONS outside dialog

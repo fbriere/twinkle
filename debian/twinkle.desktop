@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Twinkle
+Comment=VOIP softphone
+Exec=twinkle
+Icon=/usr/share/twinkle/twinkle48.png
+StartupNotify=true
+Terminal=false
+Type=Application
+Categories=Qt;KDE;Network;
+GenericName=VoIP softphone

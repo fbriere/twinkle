@@ -49,9 +49,10 @@ void TransferForm::destroy()
 	}
 }
 
-void TransferForm::show(t_user *user)
+void TransferForm::show(t_user *user, const string &dest)
 {
 	user_config = user;
+	toLineEdit->setText(dest.c_str());
 	QDialog::show();
 }
 

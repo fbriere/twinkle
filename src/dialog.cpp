@@ -684,7 +684,7 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
-		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
+		line->call_hist_record.end_call(true);
 
 		// The session will be ended when an ACK has been
 		// received.
@@ -778,7 +778,7 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
-		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
+		line->call_hist_record.end_call(true);
 
 		// The session will be ended when an ACK has been
 		// received.
@@ -858,7 +858,7 @@ void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
-		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
+		line->call_hist_record.end_call(true);
 
 		if (!sub_refer) {
 			state = DS_TERMINATED;
@@ -914,7 +914,7 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
-		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
+		line->call_hist_record.end_call(true);
 
 		if (!sub_refer) {
 			state = DS_TERMINATED;
@@ -1418,7 +1418,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
-		ui->cb_stop_tone(line->get_line_number());
+		ui->cb_stop_call_notification(line->get_line_number());
 		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
@@ -1529,7 +1529,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
-		ui->cb_stop_tone(line->get_line_number());
+		ui->cb_stop_call_notification(line->get_line_number());
 		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
@@ -1851,25 +1851,27 @@ void t_dialog::state_w4re_invite_resp(t_line_timer timer) {
 }
 
 void t_dialog::activate_new_session(void) {
-	t_audio_session *as = NULL;
-
 	if (session->equal_audio(*session_re_invite)) {
-		// Remove the audio session from the current session object
-		as = session->get_audio_session();
-		session->set_audio_session(NULL);
+		log_file->write_report("SDP in re-INVITE is a noop.",
+			"t_dialog::activate_new_session");
+	
+		MEMMAN_DELETE(session_re_invite);
+		delete session_re_invite;
+		session_re_invite = NULL;
+		return;
 	}
+	
+	log_file->write_report("Renew session as specified by SDP in re-INVITE.",
+		"t_dialog::activate_new_session");
 
+	// Stop current session
 	MEMMAN_DELETE(session);
 	delete session;
+
+	// Create new session
 	session = session_re_invite;
 	session_re_invite = NULL;
-
-	if (as) {
-		// Copy the audio session from the old session object
-		session->set_audio_session(as);
-	} else {
-		session->start_rtp();
-	}
+	session->start_rtp();
 }
 
 void t_dialog::create_route_set(t_response *r) {
@@ -1911,7 +1913,7 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 	//       does, then stop the current RTP stream and start a new one.
 	//	 Care must be taken that a 2nd 2xx will not override an already
 	//	 established call though.
-	if (!session->recvd_answer && r->body) {
+	if (r->body) {
 		int warn_code;
 		string warn_text;
 
@@ -1919,27 +1921,41 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 			// Only SDP bodies are supported
 			ui->cb_unsupported_content_type(line->get_line_number(), r);
 			request_cancelled = true;
-		} else if (session->process_sdp_answer((t_sdp *)r->body,
-				warn_code, warn_text))
+		} else if (!session->recvd_answer || 
+		           (user_config->allow_sdp_change && 
+		            ((t_sdp *)r->body)->origin.session_version !=
+		            session->dst_sdp_version))
 		{
-			session->recvd_answer = true;
-
-			if (r->is_provisional()) {
-				log_file->write_report("Starting early media.",
-					"t_dialog::process_1xx_2xx_invite_resp");
+			// Only process SDP if no SDP was received yet (RFC 3261
+			// 13.3.1. Or process SDP if overridden by the
+			// allow_sdp_change setting in the user profile.
+			// A changed SDP must have a new version number (RFC 3264)
+			if (session->process_sdp_answer((t_sdp *)r->body,
+					warn_code, warn_text))
+			{
+				// If this is a changed SDP, then stop the
+				// current RTP stream based on the previous SDP.
+				if (session->recvd_answer) session->stop_rtp();
+				
+				session->recvd_answer = true;
+	
+				if (r->is_provisional()) {
+					log_file->write_report("Starting early media.",
+						"t_dialog::process_1xx_2xx_invite_resp");
+				}
+	
+				// Stop locally played tones to free the soundcard
+				// for the voice stream
+				ui->cb_stop_call_notification(line->get_line_number());
+	
+				session->start_rtp();
+			} else {
+				// SDP answer is not supported. Cancel
+				// the INVITE.
+				request_cancelled = true;
+				ui->cb_sdp_answer_not_supported(
+						line->get_line_number(), warn_text);
 			}
-
-			// Stop locally played tones to free the soundcard
-			// for the voice stream
-			ui->cb_stop_tone(line->get_line_number());
-
-			session->start_rtp();
-		} else {
-			// SDP answer is not supported. Cancel
-			// the INVITE.
-			request_cancelled = true;
-			ui->cb_sdp_answer_not_supported(
-					line->get_line_number(), warn_text);
 		}
 	} else if (r->code == R_180_RINGING &&
 	           !ringing_received && !session->recvd_answer)
@@ -2545,7 +2561,7 @@ void t_dialog::send_bye(void) {
 	req_out = new t_client_request(user_config, bye, 0);
 	MEMMAN_NEW(req_out);
 	line->send_request(bye, req_out->get_tuid());
-	line->call_hist_record.end_call(t_call_record::CS_A_PARTY);	
+	line->call_hist_record.end_call(false);	
 	MEMMAN_DELETE(bye);
 	delete bye;
 
@@ -2815,8 +2831,9 @@ void t_dialog::hold(bool rtponly) {
 	// second call is retrieved.
 	session->stop_rtp();
 
-	// Prevent RTP stream from getting started even after the
-	// hold fails.
+	// Prevent RTP stream from getting started even if the signaling 
+	// for hold fails. After all the user has put the phone locally
+	// on-hold, so RTP should never be started.
 	session->hold();
 }
 
@@ -2894,8 +2911,8 @@ void t_dialog::send_refer(const t_url &uri, const string &display) {
 	refer_state = REFST_W4RESP;
 }
 
-void t_dialog::send_dtmf(char digit) {
-	if (session) session->send_dtmf(digit);
+void t_dialog::send_dtmf(char digit, bool inband) {
+	if (session) session->send_dtmf(digit, inband);
 }
 
 bool t_dialog::stun_bind_media(void) {
@@ -3579,6 +3596,10 @@ t_phone *t_dialog::get_phone(void) const {
 
 t_line *t_dialog::get_line(void) const {
 	return line;
+}
+
+t_session *t_dialog::get_session(void) const {
+	return session;
 }
 
 t_audio_session *t_dialog::get_audio_session(void) const {

@@ -401,7 +401,7 @@ public:
 	void send_refer(const t_url &uri, const string &display);
 
 	// Send DTMF digit
-	void send_dtmf(char digit);
+	void send_dtmf(char digit, bool inband);
 	
 	// Create a binding for the media port via STUN.
 	// Returns false if binding cannot be created.
@@ -457,8 +457,9 @@ public:
 	// Get the line that belongs to this dialog
 	t_line *get_line(void) const;
 
-	// Return the audio session belonging to this dialog.
-	// Returns NULL if there is no audio session
+	// Return the (audio) session belonging to this dialog.
+	// Returns NULL if there is no (audio) session
+	t_session * get_session(void) const;
 	t_audio_session *get_audio_session(void) const;
 
 	// Notify the dialog of the progress of a reference

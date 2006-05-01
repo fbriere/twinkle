@@ -75,23 +75,24 @@ private:
 
         // The command_list must contain the command itself as first
         // argument. Subsequent elements are the arguments.
-        bool exec_invite(const list<string> command_list);
+        bool exec_invite(const list<string> command_list, bool immediate = false);
+        bool exec_redial(const list<string> command_list);
         bool exec_answer(const list<string> command_list);
         bool exec_reject(const list<string> command_list);
-	bool exec_redirect(const list<string> command_list);
+	bool exec_redirect(const list<string> command_list, bool immediate = false);
 	bool exec_dnd(const list<string> command_list);
 	bool exec_auto_answer(const list<string> command_list);
         bool exec_bye(const list<string> command_list);
         bool exec_hold(const list<string> command_list);
         bool exec_retrieve(const list<string> command_list);
-	bool exec_refer(const list<string> command_list);
+	bool exec_refer(const list<string> command_list, bool immediate = false);
 	bool exec_conference(const list<string> command_list);
 	bool exec_mute(const list<string> command_list);
 	bool exec_dtmf(const list<string> command_list);
         bool exec_register(const list<string> command_list);
         bool exec_deregister(const list<string> command_list);
         bool exec_fetch_registrations(const list<string> command_list);
-        bool exec_options(const list<string> command_list);
+        bool exec_options(const list<string> command_list, bool immediate = false);
         bool exec_line(const list<string> command_list);
         bool exec_user(const list<string> command_list);
         bool exec_quit(const list<string> command_list);
@@ -99,6 +100,9 @@ private:
 
 protected:
         t_phone         *phone;
+        
+        // Indicates if commands should print output to stdout
+        bool		use_stdout;
 
 	// Throttle dtmtf not supported messages
 	bool		throttle_dtmf_not_supported;
@@ -108,6 +112,33 @@ protected:
 	string		last_called_display;
 	string		last_called_subject;
 	string		last_called_profile; // profile used to make the call
+	
+	// The do_* methods perform the commands parsed by the exec_* methods.
+	virtual bool do_invite(const string &destination, const string &display, 
+			const string &subject, bool immediate);
+	virtual void do_redial(void);
+	virtual void do_answer(void);
+	virtual void do_reject(void);
+	virtual void do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
+		bool action_present, bool enable, int num_redirections,
+		const list<string> &dest_strlist, bool immediate);
+	virtual void do_dnd(bool show_status, bool toggle, bool enable);
+	virtual void do_auto_answer(bool show_status, bool toggle, bool enable);
+	virtual void do_bye(void);
+	virtual void do_hold(void);
+	virtual void do_retrieve(void);
+	virtual bool do_refer(const string &destination, bool immediate);
+	virtual void do_conference(void);
+	virtual void do_mute(bool show_status, bool toggle, bool enable);
+	virtual void do_dtmf(const string &digits);
+	virtual void do_register(bool reg_all_profiles);
+	virtual void do_deregister(bool dereg_all_profiles, bool dereg_all_devices);
+	virtual void do_fetch_registrations(void);
+	virtual bool do_options(bool dest_set, const string &destination, bool immediate);
+	virtual void do_line(int line);
+	virtual void do_user(const string &profile_name);
+	virtual void do_quit(void);
+	virtual void do_help(const list<t_command_arg> &al);
 
 public:
         t_userintf(t_phone *_phone);
@@ -122,6 +153,15 @@ public:
         	const string &dst, string &display, string &dst_url);
         void expand_destination(t_user *user_config, 
         	const string &dst, t_display_url &display_url);
+        	
+        // Expand a SIP destination as above, but split of any headers if any.
+        // If the subject header is present, then its value will be returned in
+        // subject.
+        // The dst_no_headers parameter will contain the dst string with the headers
+        // cut off.
+	void expand_destination(t_user *user_config,
+		const string &dst, t_display_url &display_url, string &subject,
+		string &dst_no_headers);
 
 	// Format a SIP address for user display
 	virtual string format_sip_address(t_user *user_config, const string &display,
@@ -133,7 +173,8 @@ public:
 	// Format a codec for user display
 	virtual string format_codec(t_audio_codec codec) const;
 
-        bool exec_command(const string &command_line);
+	// The immediate flag is by the cmd_cli method (see below)
+        bool exec_command(const string &command_line, bool immediate = false);
         
         // Run the user interface
         virtual void run(void);
@@ -195,6 +236,8 @@ public:
         virtual void cb_play_ringtone(int line);
 	virtual void cb_play_ringback(t_user *user_config);
         virtual void cb_stop_tone(int line);
+        virtual void cb_notify_call(int line, string from_party);
+        virtual void cb_stop_call_notification(int line);
 	virtual void cb_dtmf_detected(int line, char dtmf_event);
 	virtual void cb_dtmf_not_supported(int line);
 	virtual void cb_dtmf_supported(int line);
@@ -258,8 +301,13 @@ public:
 	virtual bool can_redial(void) const;
 	
 	// Execute external commands
-	virtual void cmd_call(const string &destination);
+	// Some comments require confirmation from the user via the user
+	// interface, e.g. in GUI mode, a call dialog may popup for cmd_call.
+	// The 'immediate' flag indicates that no user confirmation is required.
+	// The command should be executed immediately.
+	virtual void cmd_call(const string &destination, bool immediate);
 	virtual void cmd_quit(void);
+	virtual void cmd_cli(const string &command, bool immeidate);
 };
 
 extern t_userintf *ui;

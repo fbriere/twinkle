@@ -82,6 +82,10 @@ enum t_context {
 
 	// Parse string s. Throw int exception when parsing fails.
 	static t_sip_message *parse(const string &s);
+	
+	// Parse a string of headers (hdr1=val1;hdr=val2;...)
+	// The resulting SIP message is a SIP request with a fake request line
+	static t_sip_message *parse_headers(const string &s);
 
 	static void enter_ctx_comment(void);
 

@@ -104,7 +104,7 @@ void t_phone::end_call(void) {
 void t_phone::registration(t_phone_user *pu, t_register_type register_type, 
 		unsigned long expires)
 {
-	pu->registration(register_type, expires);
+	pu->registration(register_type, false, expires);
 }
 
 void t_phone::options(t_phone_user *pu, const t_url &to_uri, const string &to_display) {
@@ -160,12 +160,12 @@ void t_phone::activate_line(unsigned short l) {
 			// line, but decided to switch line, so tear down
 			// the call.
 			end_call();
-			ui->cb_stop_tone(a);
+			ui->cb_stop_call_notification(a);
 			break;
 		case LSSUB_INCOMING_PROGRESS:
 			// The incoming call on the current active will stay,
 			// just stop the ring tone.
-			ui->cb_stop_tone(a);
+			ui->cb_stop_call_notification(a);
 			break;
 		case LSSUB_ANSWERING:
 			// Answering is in progress, so call cannot be put
@@ -204,8 +204,8 @@ void t_phone::activate_line(unsigned short l) {
 	ui->cb_line_state_changed();
 }
 
-void t_phone::send_dtmf(char digit) {
-	lines[active_line]->send_dtmf(digit);
+void t_phone::send_dtmf(char digit, bool inband) {
+	lines[active_line]->send_dtmf(digit, inband);
 }
 
 void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
@@ -493,6 +493,17 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 			
 			t_call_script script(user_config->script_incoming_call);
 			script.exec(script_result, user_config, r);
+			
+			// Override display name with caller name returned by script
+			if (!script_result.caller_name.empty()) {
+				r->hdr_from.set_display(script_result.caller_name);
+				log_file->write_header("t_phone::recvd_invite", 
+						LOG_NORMAL, LOG_DEBUG);
+				log_file->write_raw("Overwrite display name with caller name:\n");
+				log_file->write_raw(script_result.caller_name);
+				log_file->write_endl();
+				log_file->write_footer();
+			}
 		}
 		
 		// Perform the action in the script_result.
@@ -1300,9 +1311,9 @@ void t_phone::pub_activate_line(unsigned short l) {
 	unlock();
 }
 
-void t_phone::pub_send_dtmf(char digit) {
+void t_phone::pub_send_dtmf(char digit, bool inband) {
 	lock();
-	send_dtmf(digit);
+	send_dtmf(digit, inband);
 	unlock();
 }
 
@@ -1630,6 +1641,19 @@ void t_phone::line_cleared(unsigned short lineno) {
 
 			// Make the peer line the active line
 			set_active_line(line_peer->get_line_number());
+			
+			// If the 3-way was with mixed codec sample rates, then
+			// the remaining audio session might have a mismatch
+			// between the sound card sample rate and the codec
+			// sample rate. In that case clear the sample rate by
+			// toggling the audio session off and on.
+			if (!as_peer->matching_sample_rates()) {
+				log_file->write_report(
+					"Hold/retrieve call to align codec and sound card.",
+					"t_phone::line_cleared", LOG_NORMAL, LOG_DEBUG);
+				line_peer->hold(true);
+				line_peer->retrieve();
+			}
 
 			is_3way = false;
 			line1_3way = NULL;
@@ -1835,6 +1859,7 @@ t_service t_phone::get_service(t_user *user) {
 }
 
 t_service *t_phone::ref_service(t_user *user) {
+	assert(user);
 	t_service *srv;
 	
 	lock();
@@ -1888,6 +1913,21 @@ bool t_phone::use_stun(t_user *user) {
 	unlock();
 	
 	return result;
+}
+
+bool t_phone::use_nat_keepalive(t_user *user) {
+	bool result;
+
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		result = pu->use_nat_keepalive;
+	} else {
+		result = false;
+	}
+	unlock();
+	
+	return result;	
 }
 
 void t_phone::disable_stun(t_user *user) {
@@ -1983,11 +2023,11 @@ void t_phone::terminate(void) {
 			lines[i]->unseize();
 			break;
 		case LSSUB_INCOMING_PROGRESS:
-			ui->cb_stop_tone(i);
+			ui->cb_stop_call_notification(i);
 			lines[i]->reject();
 			break;
 		case LSSUB_OUTGOING_PROGRESS:
-			ui->cb_stop_tone(i);
+			ui->cb_stop_call_notification(i);
 			// Fall thru
 		case LSSUB_ANSWERING:
 		case LSSUB_ESTABLISHED:
@@ -1999,8 +2039,6 @@ void t_phone::terminate(void) {
 	// Deactivate phone
 	is_active = false;
 	
-	unlock();
-	
 	// De-register all registered users.
 	list<t_user *> user_list = ref_users();
 	ui->cb_display_msg("Deregistering phone...");
@@ -2011,6 +2049,8 @@ void t_phone::terminate(void) {
 			pub_registration(*i, REG_DEREGISTER);
 		}
 	}
+	
+	unlock();
 	
 	// Wait till phone is deregistered.
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
@@ -2041,6 +2081,26 @@ void *phone_sigwait(void *arg) {
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
 
-	sigwait(&sigset, &sig);
-	ui->cmd_quit();
+	while (true) {
+		// When SIGCONT is received after SIGSTOP, sigwait returns
+		// with EINTR ??
+		if (sigwait(&sigset, &sig) == EINTR) continue;
+		
+		switch (sig) {
+		case SIGINT:
+			log_file->write_report("SIGINT received.", "::phone_sigwait");
+			ui->cmd_quit();
+			return NULL;
+		case SIGTERM:
+			log_file->write_report("SIGTERM received.", "::phone_sigwait");
+			ui->cmd_quit();
+			return NULL;
+		default:
+			log_file->write_header("::phone_sigwait", LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Unexpected signal (");
+			log_file->write_raw(sig);
+			log_file->write_raw(") received.\n");
+			log_file->write_footer();
+		}
+	}
 }

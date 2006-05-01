@@ -1651,13 +1651,16 @@
     <slot>phoneAnswer()</slot>
     <slot>phoneBye()</slot>
     <slot>phoneReject()</slot>
+    <slot>phoneRedirect( const list&lt;string&gt; &amp; contacts )</slot>
     <slot>phoneRedirect()</slot>
     <slot>do_phoneRedirect( const list&lt;t_display_url&gt; &amp; destinations )</slot>
+    <slot>phoneTransfer( const string &amp; dest )</slot>
     <slot>phoneTransfer()</slot>
     <slot>do_phoneTransfer( const t_display_url &amp; destination )</slot>
     <slot>phoneHold( bool on )</slot>
     <slot>phoneConference()</slot>
     <slot>phoneMute( bool on )</slot>
+    <slot>phoneTermCap( const QString &amp; dest )</slot>
     <slot>phoneTermCap()</slot>
     <slot>do_phoneTermCap( t_user * user_config, const t_url &amp; destination )</slot>
     <slot>phoneDTMF()</slot>

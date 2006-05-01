@@ -12,13 +12,15 @@ INCLUDEPATH	+= ..
 HEADERS	+= gui.h \
 	historylistview.h \
 	freedesksystray.h \
-	twinklesystray.h
+	twinklesystray.h \
+	gui_util.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
 	historylistview.cpp \
 	freedesksystray.cpp \
-	twinklesystray.cpp
+	twinklesystray.cpp \
+	gui_util.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -153,7 +155,10 @@ IMAGES	= images/filenew \
 	images/settings.png \
 	images/reg-query.png \
 	images/log_small.png \
-	images/qt-logo.png
+	images/qt-logo.png \
+	images/1leftarrow.png \
+	images/1uparrow.png \
+	images/1downarrow.png
 
 unix {
   UI_DIR = .ui

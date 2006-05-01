@@ -51,6 +51,15 @@ string t_parameter::encode(void) const {
 	return s;
 }
 
+t_parameter str2param(const string &s) {
+	list<string> l = split_on_first(s, '=');
+	if (l.size() == 1) {
+		return t_parameter(s);
+	} else {
+		return t_parameter(trim(l.front()), trim(l.back()));
+	}
+}
+
 string param_list2str(const list<t_parameter> &l) {
 	string s;
 
@@ -62,4 +71,16 @@ string param_list2str(const list<t_parameter> &l) {
 	}
 
 	return s;
+}
+
+list<t_parameter> str2param_list(const string &s) {
+	list<t_parameter> result;
+	
+	list<string> l = split(s, ';');
+	for (list<string>::const_iterator i = l.begin(); i != l.end(); i++) {
+		t_parameter p = str2param(trim(*i));
+		result.push_back(p);
+	}
+	
+	return result;
 }

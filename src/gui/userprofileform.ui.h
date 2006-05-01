@@ -36,12 +36,6 @@
 #define idxCatRingTones	7
 #define idxCatScripts	8
 
-// Indices of audio codecs in the codec list boxes
-#define idxCodecG711a	0
-#define idxCodecG711u	1
-#define idxCodecGsm	2
-#define idxCodecNone	3
-
 // Indices of call hold variants in the call hold variant list box
 #define idxHoldRfc2543	0
 #define idxHoldRfc3264	1
@@ -51,6 +45,19 @@
 #define idxExtSupported	1
 #define idxExtRequired	2
 #define idxExtPreferred	3
+
+// Codec labels
+#define labelCodecG711a		"G.711 A-law"
+#define labelCodecG711u		"G.711 u-law"
+#define labelCodecGSM		"GSM"
+#define labelCodecSpeexNb		"speex-nb (8 kHz)"
+#define labelCodecSpeexWb	"speex-wb (16 kHz)"
+#define labelCodecSpeexUwb	"speex-uwb (32 kHz)"
+
+// Indices of DTMF transport modes in the DTMF transport list box
+#define idxDtmfAuto	0
+#define idxDtmfRfc2833	1
+#define idxDtmfInband	2
 
 void UserProfileForm::init()
 {
@@ -68,6 +75,11 @@ void UserProfileForm::init()
 	
 	// NAT
 	publicIPLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
+	
+#ifndef HAVE_SPEEX
+	// Speex
+	speexGroupBox->hide();
+#endif
 	
 	// Set toolbutton icons for disabled options.
 	QIconSet i;
@@ -102,31 +114,42 @@ void UserProfileForm::showCategory( QListBoxItem *item )
 	}
 }
 
-// Convert a codec to an index in the codec combobox
-int UserProfileForm::codec2indexComboItem(short codec) {
-	switch(codec) {
-	case SDP_FORMAT_G711_ALAW:	
-		return idxCodecG711a;
-	case SDP_FORMAT_G711_ULAW:
-		return idxCodecG711u;
-	case SDP_FORMAT_GSM:
-		return idxCodecGsm;
+// Convert a label to a codec
+t_audio_codec UserProfileForm::label2codec(const QString &label) {
+	if (label == labelCodecG711a) {
+		return CODEC_G711_ALAW;
+	} else if (label == labelCodecG711u) {
+		return CODEC_G711_ULAW;
+	} else if (label == labelCodecGSM) {
+		return CODEC_GSM;
+	} else if (label == labelCodecSpeexNb) {
+		return CODEC_SPEEX_NB;
+	} else if (label == labelCodecSpeexWb) {
+		return CODEC_SPEEX_WB;
+	} else if (label == labelCodecSpeexUwb) {
+		return CODEC_SPEEX_UWB;
 	}
-	
-	return idxCodecNone;
+	return CODEC_NULL;
 }
 
-short UserProfileForm::indexComboItem2codec(int index) {
-	switch(index) {
-	case idxCodecG711a:
-		return SDP_FORMAT_G711_ALAW;
-	case idxCodecG711u:
-		return SDP_FORMAT_G711_ULAW;
-	case idxCodecGsm:
-		return SDP_FORMAT_GSM;
+// Convert a codec to a label
+QString UserProfileForm::codec2label(t_audio_codec &codec) {
+	switch (codec) {
+	case CODEC_G711_ALAW:
+		return labelCodecG711a;
+	case CODEC_G711_ULAW:
+		return labelCodecG711u;
+	case CODEC_GSM:
+		return labelCodecGSM;
+	case CODEC_SPEEX_NB:
+		return labelCodecSpeexNb;
+	case CODEC_SPEEX_WB:
+		return labelCodecSpeexWb;
+	case CODEC_SPEEX_UWB:
+		return labelCodecSpeexUwb;
+	default:
+		return "";
 	}
-	
-	return -1;
 }
 
 // Convert t_ext_support to an index in the SIP extension combo box
@@ -208,33 +231,60 @@ void UserProfileForm::populate()
 	proxyNonResolvableCheckBox->setEnabled(current_profile->use_outbound_proxy);
 	
 	// RTP AUDIO
-	// Set codec combo boxes to 'none'.
-	codec2ComboBox->setCurrentItem(idxCodecNone);
-	codec3ComboBox->setCurrentItem(idxCodecNone);
-	
-	// Set codec combo boxes to values from user config
-	int codecChoice = 0;
-	for (list<unsigned short>::iterator i = current_profile->codecs.begin();
+	// Codecs
+	QStringList allCodecs;
+	allCodecs.append(labelCodecG711a);
+	allCodecs.append(labelCodecG711u);
+	allCodecs.append(labelCodecGSM);
+#ifdef HAVE_SPEEX
+	allCodecs.append(labelCodecSpeexNb);
+	allCodecs.append(labelCodecSpeexWb);
+	allCodecs.append(labelCodecSpeexUwb);
+#endif
+	activeCodecListBox->clear();
+	for (list<t_audio_codec>::iterator i = current_profile->codecs.begin();
 	i != current_profile->codecs.end(); i++)
 	{
-		codecChoice++;
-		if (codecChoice == 1) {
-			codec1ComboBox->setCurrentItem(codec2indexComboItem(*i));
-		} else if (codecChoice == 2) {
-			codec2ComboBox->setCurrentItem(codec2indexComboItem(*i));
-		} else if (codecChoice == 3) {
-			codec3ComboBox->setCurrentItem(codec2indexComboItem(*i));
-		}
+		activeCodecListBox->insertItem(codec2label(*i));
+		allCodecs.remove(codec2label(*i));
+	}
+	availCodecListBox->clear();
+	if (!allCodecs.empty()) availCodecListBox->insertStringList(allCodecs);
+	
+	// G.711
+	ptimeSpinBox->setValue(current_profile->ptime);
+	
+	// Speex
+	spxVbrCheckBox->setChecked(
+			current_profile->speex_bit_rate_type == BIT_RATE_VBR);
+	spxVadCheckBox->setChecked(current_profile->speex_vad);
+	spxDtxCheckBox->setChecked(current_profile->speex_dtx);
+	spxPenhCheckBox->setChecked(current_profile->speex_penh);
+	spxComplexitySpinBox->setValue(current_profile->speex_complexity);
+	spxNbPayloadSpinBox->setValue(current_profile->speex_nb_payload_type);
+	spxWbPayloadSpinBox->setValue(current_profile->speex_wb_payload_type);
+	spxUwbPayloadSpinBox->setValue(current_profile->speex_uwb_payload_type);
+	
+	// DTMF
+	switch (current_profile->dtmf_transport) {
+	case DTMF_RFC2833:
+		dtmfTransportComboBox->setCurrentItem(idxDtmfRfc2833);
+		break;
+	case DTMF_INBAND:
+		dtmfTransportComboBox->setCurrentItem(idxDtmfInband);
+		break;
+	default:
+		dtmfTransportComboBox->setCurrentItem(idxDtmfAuto);
+		break;
 	}
 	
-	ptimeSpinBox->setValue(current_profile->ptime);
 	dtmfPayloadTypeSpinBox->setValue(current_profile->dtmf_payload_type);
 	dtmfDurationSpinBox->setValue(current_profile->dtmf_duration);
 	dtmfPauseSpinBox->setValue(current_profile->dtmf_pause);
-	dtmfVolumeSpinBox->setValue(current_profile->dtmf_volume);
+	dtmfVolumeSpinBox->setValue(-(current_profile->dtmf_volume));
 	
 	// SIP PROTOCOL
-	switch(current_profile->hold_variant) {
+	switch (current_profile->hold_variant) {
 	case HOLD_RFC2543:
 		holdVariantComboBox->setCurrentItem(idxHoldRfc2543);
 		break;
@@ -249,6 +299,7 @@ void UserProfileForm::populate()
 	compactHeadersCheckBox->setChecked(current_profile->compact_headers);
 	useDomainInContactCheckBox->setChecked(
 			current_profile->use_domain_in_contact);
+	allowSdpChangeCheckBox->setChecked(current_profile->allow_sdp_change);
 	allowRedirectionCheckBox->setChecked(current_profile->allow_redirection);
 	askUserRedirectCheckBox->setEnabled(current_profile->allow_redirection);
 	askUserRedirectCheckBox->setChecked(current_profile->ask_user_to_redirect);
@@ -286,6 +337,9 @@ void UserProfileForm::populate()
 	displayTelUserCheckBox->setChecked(current_profile->display_useronly_phone);
 	numericalUserIsTelCheckBox->setChecked(
 			current_profile->numerical_user_is_phone);
+	removeSpecialCheckBox->setChecked(
+			current_profile->remove_special_phone_symbols);
+	specialLineEdit->setText(current_profile->special_phone_symbols.c_str());
 	
 	// TIMERS
 	tmrNoanswerSpinBox->setValue(current_profile->timer_noanswer);
@@ -348,6 +402,24 @@ int UserProfileForm::exec(list<t_user *> profiles, QString show_profile)
 	return QDialog::exec();
 }
 
+bool UserProfileForm::check_dynamic_payload(QSpinBox *spb, 
+					    QValueList<int> &checked_list) 
+{
+	if (checked_list.contains(spb->value())) {
+		categoryListBox->setSelected(idxCatRtpAudio, true);
+		settingsWidgetStack->raiseWidget(pageRtpAudio);
+		QString msg = "Dynamic payload type ";
+		msg += QString().setNum(spb->value());
+		msg += " is used more than once.";
+		((t_gui *)ui)->cb_show_msg(this, msg.ascii(), MSG_CRITICAL);
+		spb->setFocus();
+		return false;
+	}
+	
+	checked_list.append(spb->value());
+	return true;
+}
+	    
 bool UserProfileForm::validateValues()
 {
 	QString s;
@@ -445,6 +517,13 @@ bool UserProfileForm::validateValues()
 		}
 	}
 	
+	// Check for double RTP dynamic payload types
+	QValueList<int> checked_types;
+	if (!check_dynamic_payload(spxNbPayloadSpinBox, checked_types)) return false;
+	if (!check_dynamic_payload(spxWbPayloadSpinBox, checked_types)) return false;
+	if (!check_dynamic_payload(spxUwbPayloadSpinBox, checked_types)) return false;
+	if (!check_dynamic_payload(dtmfPayloadTypeSpinBox, checked_types)) return false;
+	
 	// STUN server
 	if (natStunRadioButton->isChecked()) {
 		s = "stun:";
@@ -519,33 +598,47 @@ bool UserProfileForm::validateValues()
 			proxyNonResolvableCheckBox->isChecked();
 	
 	// RTP AUDIO
+	// Codecs
 	current_profile->codecs.clear();
-	short codec;
-	codec = indexComboItem2codec(codec1ComboBox->currentItem());
-	if (codec >= 0) current_profile->codecs.push_back(codec);
-	codec = indexComboItem2codec(codec2ComboBox->currentItem());
-	if (codec >= 0 &&
-	    std::find(current_profile->codecs.begin(), current_profile->codecs.end(), codec) ==
-	    current_profile->codecs.end()) 
-	{
-		current_profile->codecs.push_back(codec);
-	}
-	codec = indexComboItem2codec(codec3ComboBox->currentItem());
-	if (codec >= 0 &&
-	    std::find(current_profile->codecs.begin(), current_profile->codecs.end(), codec) ==
-	    current_profile->codecs.end()) 
-	{
-		current_profile->codecs.push_back(codec);
+	for (int i = 0; i < activeCodecListBox->count(); i++) {
+		current_profile->codecs.push_back(
+				label2codec(activeCodecListBox->text(i)));
 	}
 	
+	// G.711
 	current_profile->ptime = ptimeSpinBox->value();
+	
+	// Speex
+	current_profile->speex_bit_rate_type = 
+		(spxVbrCheckBox->isChecked() ? BIT_RATE_VBR : BIT_RATE_CBR);
+	current_profile->speex_vad = spxVadCheckBox->isChecked();
+	current_profile->speex_dtx = spxDtxCheckBox->isChecked();
+	current_profile->speex_penh = spxPenhCheckBox->isChecked();
+	current_profile->speex_complexity = spxComplexitySpinBox->value();
+	current_profile->speex_nb_payload_type = spxNbPayloadSpinBox->value();
+	current_profile->speex_wb_payload_type = spxWbPayloadSpinBox->value();
+	current_profile->speex_uwb_payload_type = spxUwbPayloadSpinBox->value();
+	
+	// DTMF
+	switch (dtmfTransportComboBox->currentItem()) {
+	case idxDtmfRfc2833:
+		current_profile->dtmf_transport = DTMF_RFC2833;
+		break;
+	case idxDtmfInband:
+		current_profile->dtmf_transport = DTMF_INBAND;
+		break;
+	default:
+		current_profile->dtmf_transport = DTMF_AUTO;
+		break;
+	}
+	
 	current_profile->dtmf_payload_type = dtmfPayloadTypeSpinBox->value();
 	current_profile->dtmf_duration = dtmfDurationSpinBox->value();
 	current_profile->dtmf_pause = dtmfPauseSpinBox->value();
-	current_profile->dtmf_volume = dtmfVolumeSpinBox->value();
+	current_profile->dtmf_volume = -(dtmfVolumeSpinBox->value());
 	
 	// SIP PROTOCOL
-	switch(holdVariantComboBox->currentItem()) {
+	switch (holdVariantComboBox->currentItem()) {
 	case idxHoldRfc2543:
 		current_profile->hold_variant = HOLD_RFC2543;
 		break;
@@ -560,6 +653,7 @@ bool UserProfileForm::validateValues()
 	current_profile->compact_headers = compactHeadersCheckBox->isChecked();
 	current_profile->use_domain_in_contact =
 			useDomainInContactCheckBox->isChecked();
+	current_profile->allow_sdp_change = allowSdpChangeCheckBox->isChecked();
 	current_profile->allow_redirection = allowRedirectionCheckBox->isChecked();
 	current_profile->ask_user_to_redirect = askUserRedirectCheckBox->isChecked();
 	current_profile->max_redirections = maxRedirectSpinBox->value();
@@ -590,6 +684,10 @@ bool UserProfileForm::validateValues()
 			displayTelUserCheckBox->isChecked();
 	current_profile->numerical_user_is_phone = 
 			numericalUserIsTelCheckBox->isChecked();
+	current_profile->remove_special_phone_symbols =
+			removeSpecialCheckBox->isChecked();
+	current_profile->special_phone_symbols =
+			specialLineEdit->text().stripWhiteSpace().ascii();
 	
 	// TIMERS
 	current_profile->timer_noanswer = tmrNoanswerSpinBox->value();
@@ -682,4 +780,54 @@ void UserProfileForm::chooseIncomingCallScript()
 		incomingCallScriptLineEdit->setText(file);
 		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
 	}
+}
+
+void UserProfileForm::addCodec() {
+	for (int i = 0; i < availCodecListBox->count(); i++) {
+		if (availCodecListBox->isSelected(i)) {
+			activeCodecListBox->insertItem(availCodecListBox->text(i));
+			activeCodecListBox->setSelected(
+					activeCodecListBox->count() - 1, true);
+			availCodecListBox->removeItem(i);
+			return;
+		}
+	}
+}
+
+void UserProfileForm::removeCodec() {
+	for (int i = 0; i < activeCodecListBox->count(); i++) {
+		if (activeCodecListBox->isSelected(i)) {
+			availCodecListBox->insertItem(activeCodecListBox->text(i));
+			availCodecListBox->setSelected(
+					availCodecListBox->count() - 1, true);
+			activeCodecListBox->removeItem(i);
+			return;
+		}
+	}
+}
+
+void UserProfileForm::upCodec() {
+	QListBoxItem *lbi = activeCodecListBox->selectedItem();
+	if (!lbi) return;
+	
+	int idx = activeCodecListBox->index(lbi);
+	if (idx == 0) return;
+	
+	QString label = lbi->text();
+	activeCodecListBox->removeItem(idx);
+	activeCodecListBox->insertItem(label, idx - 1);
+	activeCodecListBox->setSelected(idx - 1, true);
+}
+
+void UserProfileForm::downCodec() {
+	QListBoxItem *lbi = activeCodecListBox->selectedItem();
+	if (!lbi) return;
+	
+	int idx = activeCodecListBox->index(lbi);
+	if (idx == activeCodecListBox->count() - 1) return;
+	
+	QString label = lbi->text();
+	activeCodecListBox->removeItem(idx);
+	activeCodecListBox->insertItem(label, idx + 1);
+	activeCodecListBox->setSelected(idx + 1, true);
 }

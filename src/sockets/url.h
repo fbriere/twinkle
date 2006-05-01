@@ -72,7 +72,7 @@ private:
 	void construct_user_url(const string &s);    // eg sip:, mailto:
 	void construct_machine_url(const string &s); // eg http:, ftp:
 
-	// Parse uri parameters and headers. Returns false is parsing
+	// Parse uri parameters and headers. Returns false if parsing
 	// fails.
 	bool parse_params_headers(const string &s);
 
@@ -130,18 +130,16 @@ public:
 	bool sip_match(const t_url &u) const;
 	bool operator==(const t_url &u) const;
 
-	// Return true if string s looks like a phone number
-	static bool looks_like_phone(const string &s);
-
-	// Return true if the user part looks like a phone number
-	bool user_looks_like_phone(void) const;
+	// Return true if the user part looks like a phone number, i.e.
+	// consists of digits, *, # and special symbols
+	bool user_looks_like_phone(const string &special_symbols) const;
 
 	// Return true if the URI indicates a phone number, i.e.
 	// - the user=phone parameter is present
 	// or
 	// - if looks_like_phone == true and the user part looks like
 	//   a phone number
-	bool is_phone(bool looks_like_phone) const;
+	bool is_phone(bool looks_like_phone, const string &special_symbols) const;
 
 	// Return string encoding of url
 	string encode(void) const;

@@ -18,13 +18,13 @@
 
 // Session description
 
-// TODO: multicast IP addresses
-
 #ifndef _H_SDP
 #define _H_SDP
 
 #include <list>
+#include <map>
 #include <string>
+#include "audio/audio_codecs.h"
 #include "parser/sip_body.h"
 
 // Audio codec formats
@@ -36,7 +36,17 @@
 #define SDP_RTPMAP_G711_ULAW	"PCMU/8000"
 #define SDP_RTPMAP_GSM		"GSM/8000"
 #define SDP_RTPMAP_G711_ALAW	"PCMA/8000"
+#define SDP_RTPMAP_SPEEX_NB	"speex/8000"
+#define SDP_RTPMAP_SPEEX_WB	"speex/16000"
+#define SDP_RTPMAP_SPEEX_UWB	"speex/32000"
 #define SDP_RTPMAP_TELEPHONE_EV	"telephone-event/8000"
+
+// Audio codec names
+#define SDP_AC_NAME_G711_ULAW		"PCMU"
+#define SDP_AC_NAME_G711_ALAW		"PCMA"
+#define SDP_AC_NAME_GSM			"GSM"
+#define SDP_AC_NAME_SPEEX		"speex"
+#define SDP_AC_NAME_TELEPHONE_EV	"telephone-event"
 
 using namespace std;
 
@@ -140,11 +150,12 @@ public:
 
 	t_sdp_media();
 	t_sdp_media(t_sdp_media_type _media_type,
-		    unsigned short _port, list<unsigned short> _formats,
-	            unsigned short _format_dtmf);
+		    unsigned short _port, const list<t_audio_codec> &_formats,
+	            unsigned short _format_dtmf, 
+	            const map<t_audio_codec, unsigned short> &ac2format);
 
 	string encode(void) const;
-	void add_format(unsigned short f);
+	void add_format(unsigned short f, t_audio_codec codec);
 	t_sdp_attr *get_attribute(const string &name);
 	list<t_sdp_attr *>get_attributes(const string &name);
 	t_sdp_media_direction get_direction(void) const;
@@ -163,13 +174,14 @@ public:
 	t_sdp();
 
 	// Create SDP with a single audio media stream
-	t_sdp(string user, string sess_id, string sess_version, string user_host,
-	      string media_host, unsigned short media_port,
-	      list<unsigned short> formats, unsigned short format_dtmf);
+	t_sdp(const string &user, const string &sess_id, const string &sess_version, 
+	      const string &user_host, const string &media_host, unsigned short media_port,
+	      const list<t_audio_codec> &formats, unsigned short format_dtmf,
+	      const map<t_audio_codec, unsigned short> &ac2format);
 
 	// Create SDP without media streams
-	t_sdp(string user, string sess_id, string sess_version, string user_host,
-		string media_host);
+	t_sdp(const string &user, const string &sess_id, const string &sess_version, 
+		const string &user_host, const string &media_host);
 
 	// Add media stream
 	void add_media(const t_sdp_media &m);
@@ -195,13 +207,20 @@ public:
 	// Get codec description from rtpmap
 	string get_codec_description(t_sdp_media_type media_type,
 			unsigned short codec) const;
+	t_audio_codec get_rtpmap_codec(const string &rtpmap) const;
+	t_audio_codec get_codec(t_sdp_media_type media_type,
+			unsigned short codec) const;
 	t_sdp_media_direction get_direction(t_sdp_media_type media_type) const;
+	
+	// Get ftmp attribute
+	string get_fmtp(t_sdp_media_type media_type, unsigned short codec) const;
 
 	// Get ptime. Returns 0 if ptime is not present
 	unsigned short get_ptime(t_sdp_media_type media_type) const;
 
 	void set_ptime(t_sdp_media_type media_type, unsigned short ptime);
 	void set_direction(t_sdp_media_type media_type, t_sdp_media_direction direction);
+	void set_fmtp(t_sdp_media_type media_type, unsigned short codec, const string &fmtp);
 
 	// Returns a pointer to the first media stream in the list of media
 	// streams having a non-zero port value for the give media type.
