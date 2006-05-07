@@ -19,6 +19,7 @@
 #include <iostream>
 #include "events.h"
 #include "log.h"
+#include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
 
@@ -35,6 +36,8 @@ string event_type2str(t_event_type t) {
 	case EV_STUN_REQUEST:	return "EV_STUN_REQUEST";
 	case EV_STUN_RESPONSE:	return "EV_STUN_RESPONSE";
 	case EV_NAT_KEEPALIVE:	return "EV_NAT_KEEPALIVE";
+	case EV_ICMP:		return "EV_ICMP";
+	case EV_UI:		return "EV_UI";
 	}
 
 	return "UNKNOWN";
@@ -345,6 +348,43 @@ t_event_type t_event_icmp::get_type(void) const {
 
 t_icmp_msg t_event_icmp::get_icmp(void) const {
 	return icmp;
+}
+
+///////////////////////////////////////////////////////////
+// class t_event_ui
+///////////////////////////////////////////////////////////
+t_event_ui::t_event_ui(t_ui_event_type _type) : type(_type) {}
+
+t_event_type t_event_ui::get_type(void) const {
+	return EV_UI;
+}
+
+void t_event_ui::set_line(int _line) {
+	line = _line;
+}
+
+void t_event_ui::set_codec(t_audio_codec _codec) {
+	codec = _codec;
+}
+
+void t_event_ui::set_dtmf_event(char _dtmf_event) {
+	dtmf_event = _dtmf_event;
+}
+
+void t_event_ui::exec(t_userintf *user_intf) {
+	switch (type) {
+	case TYPE_UI_CB_DTMF_DETECTED:
+		ui->cb_dtmf_detected(line, dtmf_event);
+		break;
+	case TYPE_UI_CB_SEND_DTMF:
+		ui->cb_send_dtmf(line, dtmf_event);
+		break;
+	case TYPE_UI_CB_RECV_CODEC_CHANGED:
+		ui->cb_recv_codec_changed(line, codec);
+		break;
+	default:
+		assert(false);
+	}
 }
 
 ///////////////////////////////////////////////////////////

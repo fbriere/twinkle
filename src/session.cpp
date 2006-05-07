@@ -83,7 +83,16 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	src_sdp_version = int2str(rand());
 	src_sdp_id = int2str(rand());
 	use_codec = CODEC_NULL;
-	recv_dtmf_pt = user_config->dtmf_payload_type;
+	
+	switch (user_config->dtmf_transport) {
+	case DTMF_RFC2833:
+	case DTMF_AUTO:
+		recv_dtmf_pt = user_config->dtmf_payload_type;
+		break;
+	default:
+		recv_dtmf_pt = 0;
+	}
+	
 	send_dtmf_pt = 0;
 
 	offer_codecs = user_config->codecs;
@@ -280,7 +289,12 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		} else if (*i == CODEC_TELEPHONE_EVENT) {
 			// telephone-event payload is supported
 			send_dtmf_pt = send_ac2payload[*i];
-			recv_dtmf_pt = send_dtmf_pt; // this goes into answer as well
+			
+			// When we support RFC 2833 events, then take the payload
+			// type from the far end.
+			if (recv_dtmf_pt > 0) {
+				recv_dtmf_pt = send_dtmf_pt; // this goes into answer as well
+			}
 		}
 	}
 

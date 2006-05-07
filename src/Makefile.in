@@ -61,12 +61,12 @@ am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) call_history.$(OBJEXT) \
 	call_script.$(OBJEXT) cmd_socket.$(OBJEXT) dialog.$(OBJEXT) \
 	events.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
 	log.$(OBJEXT) phone.$(OBJEXT) phone_user.$(OBJEXT) \
-	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
-	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
-	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
-	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
-	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
-	util.$(OBJEXT)
+	prohibit_thread.$(OBJEXT) redirect.$(OBJEXT) sender.$(OBJEXT) \
+	service.$(OBJEXT) session.$(OBJEXT) sub_refer.$(OBJEXT) \
+	subscription.$(OBJEXT) sys_settings.$(OBJEXT) \
+	timekeeper.$(OBJEXT) transaction.$(OBJEXT) \
+	transaction_layer.$(OBJEXT) transaction_mgr.$(OBJEXT) \
+	user.$(OBJEXT) userintf.$(OBJEXT) util.$(OBJEXT)
 libtwinkle_a_OBJECTS = $(am_libtwinkle_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_twinkle_OBJECTS = main.$(OBJEXT)
@@ -353,6 +353,7 @@ libtwinkle_a_SOURCES = \
         log.cpp\
         phone.cpp\
         phone_user.cpp\
+        prohibit_thread.cpp\
         redirect.cpp\
         sender.cpp\
         service.cpp\
@@ -379,6 +380,7 @@ libtwinkle_a_SOURCES = \
         log.h\
         phone.h\
         phone_user.h\
+        prohibit_thread.h\
 	protocol.h\
         redirect.h\
         sender.h\
@@ -479,6 +481,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/phone.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/phone_user.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prohibit_thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/redirect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sender.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/service.Po@am__quote@

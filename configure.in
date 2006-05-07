@@ -10,8 +10,8 @@ AC_ARG_WITH(kde,
 	AC_HELP_STRING([--without-kde], [do not compile KDE features]),
 	[ac_cv_kde=$withval], [ac_cv_kde=yes])
 
-AM_INIT_AUTOMAKE(twinkle,0.7)
-AC_DEFINE(VERSION_DATE,["April 30 2006"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,0.7.1)
+AC_DEFINE(VERSION_DATE,["May 07 2006"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -118,10 +118,10 @@ else
 fi
 
 # Check if sndfile library is available
-AC_CHECK_LIB(sndfile, sf_open, [], 
-	[AC_MSG_ERROR([libsndfile library is missing.])])
 AC_CHECK_HEADER(sndfile.h, [],
 	[AC_MSG_ERROR([sndfile header files missing (libsndfile-devel package)])])
+AC_CHECK_LIB(sndfile, sf_open, [], 
+	[AC_MSG_ERROR([libsndfile library is missing.])])
 
 # Check if ALSA is available
 AC_CHECK_LIB(asound, main, [

@@ -271,6 +271,12 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				i++;
 				// SIP URI
 				callto_destination = argv[i];
+				
+				if (callto_destination.isEmpty()) {
+					cout << argv[0] << ": ";
+					cout << "--call argument may not be empty.\n";
+					exit(0);
+				}
 			} else {
 				cout << argv[0] << ": ";
 				cout << "SIP URI missing for option '--call'.\n";
@@ -281,17 +287,24 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				i++;
 				// CLI command
 				cli_command = argv[i];
+				
+				if (cli_command.isEmpty()) {
+					cout << argv[0] << ": ";
+					cout << "--cmd argument may not be empty.\n";
+					exit(0);
+				}
 			} else {
 				cout << argv[0] << ": ";
 				cout << "CLI command missing for option '--cmd'.\n";
 				exit(0);
 			}
 		} else if (strcmp(argv[i], "--immediate") == 0) {
+			// Immediate mode
 			cmd_immediate_mode = true;
 		} else if (strcmp(argv[i], "--set-profile") == 0) {
 			if (i < argc - 1) {
 				i++;
-				// CLI command
+				// Set profile
 				cmd_set_profile = argv[i];
 			} else {
 				cout << argv[0] << ": ";
@@ -302,7 +315,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			string cmd_help("help ");
 			if (i < argc -1) {
 				i++;
-				// CLI command
+				// Help CLI
 				cmd_help += argv[i];
 			}
 			
