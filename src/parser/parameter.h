@@ -44,6 +44,8 @@ enum t_param_type{
 	t_parameter(const string &n, const string &v);
 
 	string encode(void) const;
+	
+	bool operator==(const t_parameter &rhs);
 };
 
 // Decode a parameter

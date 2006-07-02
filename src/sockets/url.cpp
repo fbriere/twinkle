@@ -233,6 +233,7 @@ bool t_url::parse_params_headers(const string &s) {
 // Public
 
 t_url::t_url(void) {
+	modified = false;
 	valid = false;
 	port = 0;
 	lr = false;
@@ -247,10 +248,23 @@ void t_url::set_url(const string &s) {
 	int i;
 	string r;
 
+	modified = false;
 	valid = false;
+	scheme.clear();
+	user.clear();
+	password.clear();
+	host.clear();
 	port = 0;
+	transport.clear();
+	maddr.clear();
 	lr = false;
+	user_param.clear();
+	method.clear();
 	ttl = 0;
+	other_params.clear();
+	headers.clear();
+	user_url = false;
+	
 	text_format = s;
 
 	// Determine scheme. A scheme is mandatory. There should
@@ -400,12 +414,19 @@ string t_url::get_headers(void) const {
 	return headers;
 }
 
+void t_url::set_user(const string &u) {
+	modified = true;
+	user = u;
+}
+
 bool t_url::is_valid(void) const {
 	return valid;
 }
 
 // RCF 3261 19.1.4
 bool t_url::sip_match(const t_url &u) const {
+	if (!u.is_valid() || !is_valid()) return false;
+
 	// Compare schemes
 	if (scheme != "sip" && scheme != "sips") return false;
 	if (u.get_scheme() != "sip" && u.get_scheme() != "sips") {
@@ -441,6 +462,31 @@ bool t_url::operator==(const t_url &u) const {
 	return sip_match(u);
 }
 
+bool t_url::user_host_match(const t_url &u, bool looks_like_phone, 
+		const string &special_symbols) const
+{
+	string u1 = get_user();
+	string u2 = u.get_user();
+	
+	if (is_phone(looks_like_phone, special_symbols)) {
+		u1 = remove_symbols(u1, special_symbols);
+	}
+	
+	if (u.is_phone(looks_like_phone, special_symbols)) {
+		u2 = remove_symbols(u2, special_symbols);
+	}
+	
+	if (u1 != u2) return false;
+	
+	if (is_phone(looks_like_phone, special_symbols)) {
+		// Both URLs are phone numbers. Do not compare
+		// the host-part.
+		return true;
+	}
+	
+	return (get_host() == u.get_host());
+}
+
 bool t_url::user_looks_like_phone(const string &special_symbols) const {
 	return looks_like_phone(user, special_symbols);
 }
@@ -452,7 +498,73 @@ bool t_url::is_phone(bool looks_like_phone, const string &special_symbols) const
 }
 
 string t_url::encode(void) const {
-	return text_format;
+	if (modified) {
+		if (!user_url) {
+			// TODO: machine URL's are currently not used
+			return text_format;
+		}
+	
+		string s;
+		
+		s = scheme;
+		s += ':';
+		s += user;
+		
+		if (!password.empty()) {
+			s += ':';
+			s += password;
+		}
+		
+		s += '@';
+		s += host;
+		
+		if (port > 0) {
+			s += ':';
+			s += int2str(port);
+		}
+		
+		if (!transport.empty()) {
+			s += ";transport=";
+			s += transport;
+		}
+	
+		if (!maddr.empty()) {
+			s += ";maddr=";
+			s += maddr;
+		}
+		
+		if (lr) {
+			s += ";lr";
+		}
+		
+		if (!user_param.empty()) {
+			s += ";user=";
+			s += user_param;
+		}
+		
+		if (!method.empty()) {
+			s += ";method=";
+			s += method;
+		}
+		
+		if (ttl > 0) {
+			s += ";ttl=";
+			s += int2str(ttl);
+		}
+		
+		if (!other_params.empty()) {
+			s += other_params;
+		}
+		
+		if (!headers.empty()) {
+			s += "?";
+			s += headers;
+		}
+		
+		return s;
+	} else {
+		return text_format;
+	}
 }
 
 string t_url::encode_noscheme(void) const {

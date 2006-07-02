@@ -23,13 +23,11 @@
 #include <fstream>
 #include <cc++/config.h>
 #include <sndfile.h>
+#include "sys_settings.h"
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "threads/sema.h"
 
-#ifndef _SYS_SETTINGS_H
-class t_audio_device;
-#endif
 #ifndef _AUDIO_DEVICE_H
 class t_audio_io;
 #endif
@@ -41,7 +39,7 @@ private:
 	string		wav_filename;	// name of wav file
 	SNDFILE		*wav_file;	// SNDFILE pointer to wav file
 	SF_INFO 	wav_info;	// Information about format of the wav file
-	const t_audio_device*		dev_tone;	// device to play tone
+	t_audio_device	dev_tone;	// device to play tone
 	t_audio_io*	aio;		// soundcard
 	bool		valid;		// wav file is in a valid format
 	bool		stop_playing;	// indicates if playing should stop

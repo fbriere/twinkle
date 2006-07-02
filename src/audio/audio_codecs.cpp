@@ -28,6 +28,7 @@ unsigned short audio_sample_rate(t_audio_codec codec) {
 	case CODEC_G711_ULAW:
 	case CODEC_GSM:
 	case CODEC_SPEEX_NB:
+	case CODEC_ILBC:
 	case CODEC_TELEPHONE_EVENT:
 		return 8000;
 	case CODEC_SPEEX_WB:

@@ -84,10 +84,10 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	src_sdp_id = int2str(rand());
 	use_codec = CODEC_NULL;
 	
-	switch (user_config->dtmf_transport) {
+	switch (user_config->get_dtmf_transport()) {
 	case DTMF_RFC2833:
 	case DTMF_AUTO:
-		recv_dtmf_pt = user_config->dtmf_payload_type;
+		recv_dtmf_pt = user_config->get_dtmf_payload_type();
 		break;
 	default:
 		recv_dtmf_pt = 0;
@@ -95,8 +95,9 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	
 	send_dtmf_pt = 0;
 
-	offer_codecs = user_config->codecs;
-	ptime = user_config->ptime;
+	offer_codecs = user_config->get_codecs();
+	ptime = user_config->get_ptime();
+	ilbc_mode = user_config->get_ilbc_mode();
 
 	recvd_offer = false;
 	recvd_answer = false;
@@ -110,20 +111,22 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	recv_ac2payload[CODEC_G711_ULAW] = SDP_FORMAT_G711_ULAW;
 	recv_ac2payload[CODEC_G711_ALAW] = SDP_FORMAT_G711_ALAW;
 	recv_ac2payload[CODEC_GSM] = SDP_FORMAT_GSM;
-	recv_ac2payload[CODEC_SPEEX_NB] = user_config->speex_nb_payload_type;
-	recv_ac2payload[CODEC_SPEEX_WB] = user_config->speex_wb_payload_type;
-	recv_ac2payload[CODEC_SPEEX_UWB] = user_config->speex_uwb_payload_type;
-	recv_ac2payload[CODEC_TELEPHONE_EVENT] = user_config->dtmf_payload_type;
+	recv_ac2payload[CODEC_SPEEX_NB] = user_config->get_speex_nb_payload_type();
+	recv_ac2payload[CODEC_SPEEX_WB] = user_config->get_speex_wb_payload_type();
+	recv_ac2payload[CODEC_SPEEX_UWB] = user_config->get_speex_uwb_payload_type();
+	recv_ac2payload[CODEC_ILBC] = user_config->get_ilbc_payload_type();
+	recv_ac2payload[CODEC_TELEPHONE_EVENT] = user_config->get_dtmf_payload_type();
 	send_ac2payload.clear();
 	
 	// Initialize pauload to audio codec mappings
 	recv_payload2ac[SDP_FORMAT_G711_ULAW] = CODEC_G711_ULAW;
 	recv_payload2ac[SDP_FORMAT_G711_ALAW] = CODEC_G711_ALAW;
 	recv_payload2ac[SDP_FORMAT_GSM] = CODEC_GSM;
-	recv_payload2ac[user_config->speex_nb_payload_type] = CODEC_SPEEX_NB;
-	recv_payload2ac[user_config->speex_wb_payload_type] = CODEC_SPEEX_WB;
-	recv_payload2ac[user_config->speex_uwb_payload_type] = CODEC_SPEEX_UWB;
-	recv_payload2ac[user_config->dtmf_payload_type] = CODEC_TELEPHONE_EVENT;
+	recv_payload2ac[user_config->get_speex_nb_payload_type()] = CODEC_SPEEX_NB;
+	recv_payload2ac[user_config->get_speex_wb_payload_type()] = CODEC_SPEEX_WB;
+	recv_payload2ac[user_config->get_speex_uwb_payload_type()] = CODEC_SPEEX_UWB;
+	recv_payload2ac[user_config->get_ilbc_payload_type()] = CODEC_ILBC;
+	recv_payload2ac[user_config->get_dtmf_payload_type()] = CODEC_TELEPHONE_EVENT;
 	send_payload2ac.clear();
 }
 
@@ -157,9 +160,9 @@ t_session *t_session::create_new_version(void) {
 t_session *t_session::create_call_hold(void) {
 	t_session *s = create_new_version();
 
-	if (user_config->hold_variant == HOLD_RFC2543) {
+	if (user_config->get_hold_variant() == HOLD_RFC2543) {
 		s->receive_host = "0.0.0.0";
-	} else if (user_config->hold_variant == HOLD_RFC3264) {
+	} else if (user_config->get_hold_variant() == HOLD_RFC3264) {
 		// RFC 3264 8.4
 		if (direction == SDP_SENDRECV) {
 			s->direction = SDP_SENDONLY;
@@ -183,9 +186,9 @@ t_session *t_session::create_call_hold(void) {
 t_session *t_session::create_call_retrieve(void) {
 	t_session *s = create_new_version();
 
-	if (user_config->hold_variant == HOLD_RFC2543) {
+	if (user_config->get_hold_variant() == HOLD_RFC2543) {
 		s->receive_host = retrieve_host;
-	} else if (user_config->hold_variant == HOLD_RFC3264) {
+	} else if (user_config->get_hold_variant() == HOLD_RFC3264) {
 		// RFC 3264 8.4
 		if (direction == SDP_SENDONLY) {
 			s->direction = SDP_SENDRECV;
@@ -243,7 +246,7 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		direction = SDP_INACTIVE;
 		break;
 	case SDP_SENDONLY:
-		if (is_on_hold && user_config->hold_variant == HOLD_RFC3264) {
+		if (is_on_hold && user_config->get_hold_variant() == HOLD_RFC3264) {
 			// The phone is put on-hold. We don't want to
 			// receive media.
 			direction = SDP_INACTIVE;
@@ -255,7 +258,7 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		direction = SDP_SENDONLY;
 		break;
 	case SDP_SENDRECV:
-		if (is_on_hold && user_config->hold_variant == HOLD_RFC3264) {
+		if (is_on_hold && user_config->get_hold_variant() == HOLD_RFC3264) {
 			// The phone is put on-hold. We don't want to
 			// receive media.
 			direction = SDP_SENDONLY;
@@ -304,8 +307,20 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		return false;
 	}
 
+	// Overwrite ptime value with ptime from SDP
 	unsigned short p = sdp->get_ptime(SDP_AUDIO);
 	if (p > 0) ptime = p;
+	
+	// RFC 3952 5
+	// Select the iLBC mode that needs the lowest bandwidth
+	if (use_codec == CODEC_ILBC) {
+		int recvd_mode = sdp->get_fmtp_int_param(SDP_AUDIO, 
+				send_ac2payload[use_codec], "mode");
+		if (recvd_mode == -1) recvd_mode = 30;
+		if (VALID_ILBC_MODE(recvd_mode) && recvd_mode > ilbc_mode) {
+			ilbc_mode = static_cast<unsigned short>(recvd_mode);
+		}
+	}
 
 	return true;
 }
@@ -350,14 +365,26 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 		return false;
 	}
 
+	// Overwrite ptime value with ptime from SDP
 	unsigned short p = sdp->get_ptime(SDP_AUDIO);
 	if (p > 0) ptime = p;
+	
+	// RFC 3952 5
+	// Select the iLBC mode that needs the lowest bandwidth
+	if (use_codec == CODEC_ILBC) {
+		int recvd_mode = sdp->get_fmtp_int_param(SDP_AUDIO, 
+				send_ac2payload[use_codec], "mode");
+		if (recvd_mode == -1) recvd_mode = 30;
+		if (VALID_ILBC_MODE(recvd_mode) && recvd_mode > ilbc_mode) {
+			ilbc_mode = static_cast<unsigned short>(recvd_mode);
+		}
+	}
 
 	return true;
 }
 
 void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
-	list<t_audio_codec>::iterator it_g711a, it_g711u;
+	list<t_audio_codec>::iterator it_g711a, it_g711u, it_ilbc;
 
 	// Delete old body if present
 	if (m->body) {
@@ -377,7 +404,15 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	if (it_g711a != offer_codecs.end() || it_g711u != offer_codecs.end()) {
 		((t_sdp *)m->body)->set_ptime(SDP_AUDIO, ptime);
 	}
+	
+	// Set mode for iLBC codecs
+	it_ilbc = find(offer_codecs.begin(), offer_codecs.end(), CODEC_ILBC);
+	if (it_ilbc != offer_codecs.end() && ilbc_mode != 30) {
+		((t_sdp *)m->body)->set_fmtp_int_param(SDP_AUDIO, recv_ac2payload[CODEC_ILBC],
+				"mode", ilbc_mode);
+	}
 
+	// Set direction
 	if (direction != SDP_SENDRECV) {
 		((t_sdp *)m->body)->set_direction(SDP_AUDIO, direction);
 	}
@@ -434,6 +469,15 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 		((t_sdp *)m->body)->set_ptime(SDP_AUDIO, ptime);
 	}
 
+	// Set mode for iLBC codecs
+	if (use_codec == CODEC_ILBC && ilbc_mode != 30) {
+		unsigned short ilbc_payload = const_cast<t_session *>(this)->
+				recv_ac2payload[CODEC_ILBC];
+		((t_sdp *)m->body)->set_fmtp_int_param(SDP_AUDIO, ilbc_payload,
+				"mode", ilbc_mode);
+	}
+	
+	// Set direction
 	if (direction != SDP_SENDRECV) {
 		((t_sdp *)m->body)->set_direction(SDP_AUDIO, direction);
 	}
@@ -463,6 +507,14 @@ void t_session::start_rtp(void) {
 	get_line()->ci_set_recv_codec(use_codec);
 	ui->cb_send_codec_changed(get_line()->get_line_number(), use_codec);
 	ui->cb_recv_codec_changed(get_line()->get_line_number(), use_codec);
+	
+	// Determine ptime
+	unsigned short audio_ptime;
+	if (use_codec == CODEC_ILBC) {
+		audio_ptime = ilbc_mode;
+	} else {
+		audio_ptime = ptime;
+	}
 
 	// Start the RTP streams
 	if (dst_rtp_host == "0.0.0.0" || dst_rtp_port == 0 ||
@@ -470,8 +522,8 @@ void t_session::start_rtp(void) {
 	{
 		// Local hold -> do not send RTP
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, ptime,
-				recv_payload2ac, send_ac2payload);
+				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, 
+				audio_ptime, recv_payload2ac, send_ac2payload);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 	else if (receive_host == "0.0.0.0" || receive_port == 0 ||
@@ -489,7 +541,7 @@ void t_session::start_rtp(void) {
 		// Bi-directional audio
 		audio_rtp_session = new t_audio_session(this,
 				LOCAL_IP, get_line()->get_rtp_port(),
-				dst_rtp_host, dst_rtp_port, use_codec, ptime,
+				dst_rtp_host, dst_rtp_port, use_codec, audio_ptime,
 				recv_payload2ac, send_ac2payload);
 		MEMMAN_NEW(audio_rtp_session);
 	}
@@ -521,7 +573,7 @@ void t_session::start_rtp(void) {
 	if (send_dtmf_pt > 0) {
 		audio_rtp_session->set_pt_out_dtmf(send_dtmf_pt);
 		
-		switch (user_config->dtmf_transport) {
+		switch (user_config->get_dtmf_transport()) {
 		case DTMF_AUTO:
 		case DTMF_RFC2833:
 			get_line()->ci_set_dtmf_supported(true, false);
@@ -535,7 +587,7 @@ void t_session::start_rtp(void) {
 		
 		ui->cb_dtmf_supported(get_line()->get_line_number());
 	} else {
-		switch (user_config->dtmf_transport) {
+		switch (user_config->get_dtmf_transport()) {
 		case DTMF_AUTO:
 		case DTMF_INBAND:
 			get_line()->ci_set_dtmf_supported(true, true);

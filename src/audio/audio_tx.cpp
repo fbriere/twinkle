@@ -42,21 +42,6 @@ extern t_phone *phone;
 			}
 
 //////////
-// PRIVATE
-//////////
-
-short t_audio_tx::decode(unsigned char sample) {
-	switch(codec) {
-	case CODEC_G711_ALAW:
-		return (short)alaw2linear(sample);
-	case CODEC_G711_ULAW:
-		return (short)ulaw2linear(sample);
-	default:
-		assert(false);
-	}
-}
-
-//////////
 // PUBLIC
 //////////
 
@@ -79,70 +64,35 @@ t_audio_tx::t_audio_tx(t_audio_session *_audio_session,
 	is_running = false;
 	stop_running = false;
 	
-	// Create GSM decoder
-	gsm_decoder = gsm_create();
+	// Create audio decoders
+	map_audio_decoder[CODEC_G711_ALAW] = new t_g711a_audio_decoder(_ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G711_ALAW]);
+	
+	map_audio_decoder[CODEC_G711_ULAW] = new t_g711u_audio_decoder(_ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G711_ULAW]);
+	
+	map_audio_decoder[CODEC_GSM] = new t_gsm_audio_decoder(user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_GSM]);
 	
 #ifdef HAVE_SPEEX
-	// Create speex decoder
-	speex_bits_init(&speex_nb_bits);
-	speex_bits_init(&speex_wb_bits);
-	speex_bits_init(&speex_uwb_bits);
-	speex_nb_dec_state = speex_decoder_init(&speex_nb_mode);
-	speex_wb_dec_state = speex_decoder_init(&speex_wb_mode);
-	speex_uwb_dec_state = speex_decoder_init(&speex_uwb_mode);
+	map_audio_decoder[CODEC_SPEEX_NB] = new t_speex_audio_decoder(
+			t_speex_audio_decoder::MODE_NB, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_SPEEX_NB]);
+
+	map_audio_decoder[CODEC_SPEEX_WB] = new t_speex_audio_decoder(
+			t_speex_audio_decoder::MODE_WB, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_SPEEX_WB]);
 	
-	// Initialize decoder with user settings
-	int arg = (user_config->speex_penh ? 1 : 0);
-	speex_decoder_ctl(speex_nb_dec_state, SPEEX_SET_ENH, &arg);
-	speex_decoder_ctl(speex_wb_dec_state, SPEEX_SET_ENH, &arg);
-	speex_decoder_ctl(speex_uwb_dec_state, SPEEX_SET_ENH, &arg);
+	map_audio_decoder[CODEC_SPEEX_UWB] = new t_speex_audio_decoder(
+			t_speex_audio_decoder::MODE_UWB, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_SPEEX_UWB]);
+#endif
+#ifdef HAVE_ILBC
+	map_audio_decoder[CODEC_ILBC] = new t_ilbc_audio_decoder(_ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_ILBC]);
 #endif
 
-	// Determine the expected ptime. The ptime of received packets
-	// might differ.
-#ifdef HAVE_SPEEX
-	int speex_frame_size;
-#endif
-	
-	switch(codec) {
-	case CODEC_G711_ALAW:
-		if (_ptime == 0) {
-			ptime = PTIME_G711_ALAW;
-		} else {
-			ptime = _ptime;
-		}
-		break;
-	case CODEC_G711_ULAW:
-		if (_ptime == 0) {
-			ptime = PTIME_G711_ULAW;
-		} else {
-			ptime = _ptime;
-		}
-		break;	
-	case CODEC_GSM:
-		// GSM has fixed ptime
-		ptime = PTIME_GSM;
-		break;
-#ifdef HAVE_SPEEX
-	case CODEC_SPEEX_NB:
-		speex_decoder_ctl(speex_nb_dec_state, SPEEX_GET_FRAME_SIZE, 
-				&speex_frame_size);
-		ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-		break;
-	case CODEC_SPEEX_WB:
-		speex_decoder_ctl(speex_wb_dec_state, SPEEX_GET_FRAME_SIZE, 
-				&speex_frame_size);
-		ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-		break;
-	case CODEC_SPEEX_UWB:
-		speex_decoder_ctl(speex_uwb_dec_state, SPEEX_GET_FRAME_SIZE, 
-				&speex_frame_size);
-		ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-		break;
-#endif
-	default:
-		assert(false);
-	}
+	ptime = map_audio_decoder[codec]->get_default_ptime();
 
 	sample_buf = new unsigned char[SAMPLE_BUF_SIZE];
 	MEMMAN_NEW_ARRAY(sample_buf);
@@ -198,19 +148,14 @@ t_audio_tx::~t_audio_tx() {
 		MEMMAN_DELETE_ARRAY(conceal_buf[i]);
 		delete [] conceal_buf[i];
 	}
-
-	// Destroy GSM decoder
-	gsm_destroy(gsm_decoder);
 	
-#ifdef HAVE_SPEEX
-	// Destroy speex decoder
-	speex_bits_destroy(&speex_nb_bits);
-	speex_bits_destroy(&speex_wb_bits);
-	speex_bits_destroy(&speex_uwb_bits);
-	speex_decoder_destroy(speex_nb_dec_state);
-	speex_decoder_destroy(speex_wb_dec_state);
-	speex_decoder_destroy(speex_uwb_dec_state);
-#endif
+	// Destroy audio decoders
+	for (map<t_audio_codec, t_audio_decoder *>::iterator i = map_audio_decoder.begin();
+	     i != map_audio_decoder.end(); i++)
+	{
+		MEMMAN_DELETE(i->second);
+		delete i->second;
+	}
 
 	// Cleanup 3-way resources
 	if (media_3way_peer_tx) {
@@ -245,56 +190,23 @@ void t_audio_tx::retain_for_concealment(unsigned char *buf, unsigned short len) 
 }
 
 void t_audio_tx::conceal(short num) {
-#ifdef HAVE_SPEEX
-	// The speex codec has a PLC algorithm itself
+	// Some codecs have a PLC.
 	// Only use this PLC is the sound card sample rate equals the codec
-	// sample rate. If they differ, then we should resample the speex
+	// sample rate. If they differ, then we should resample the codec
 	// samples. As this should be a rare case, we are lazy here. In
 	// this rare case, use Twinkle's low-tech PLC.
-	if (is_speex_codec(codec) && audio_sample_rate(codec) == sc_sample_rate) {
+	if (map_audio_decoder[codec]->has_plc() && audio_sample_rate(codec) == sc_sample_rate) {
 		short *sb = (short *)sample_buf;
 		for (int i = 0; i < num; i++) {
-			int speex_frame_size;
-			int retval;
-			
-			switch(codec) {
-			case CODEC_SPEEX_NB:
-				retval = speex_decode_int(speex_nb_dec_state, NULL, sb);
-				if (retval < 0) {
-					LOG_SPEEX_ERROR("t_audio_tx::conceal", 
-						"speex_decode_int", retval);
-				}
-				speex_decoder_ctl(speex_nb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-				break;
-			case CODEC_SPEEX_WB:
-				retval = speex_decode_int(speex_wb_dec_state, NULL, sb);
-				if (retval < 0) {
-					LOG_SPEEX_ERROR("t_audio_tx::conceal", 
-						"speex_decode_int", retval);
-				}
-				speex_decoder_ctl(speex_wb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-				break;
-			case CODEC_SPEEX_UWB:
-				retval = speex_decode_int(speex_uwb_dec_state, NULL, sb);
-				if (retval < 0) {
-					LOG_SPEEX_ERROR("t_audio_tx::conceal", 
-						"speex_decode_int", retval);
-				}
-				speex_decoder_ctl(speex_uwb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-				break;
-			default:
-				assert(false);
+			int nsamples;
+			nsamples = map_audio_decoder[codec]->conceal(sb, SAMPLE_BUF_SIZE);
+			if (nsamples > 0) {
+				play_pcm(sample_buf, nsamples * 2);
 			}
-
-			play_pcm(sample_buf, speex_frame_size * 2);
 		}
 		
 		return;
 	}
-#endif
 
 	// Replay previous packets for other codecs
 	short i = (conceal_pos + (MAX_CONCEALMENT - num)) % MAX_CONCEALMENT;
@@ -411,7 +323,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 		log_file->write_header("t_audio_tx::play_pcm", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("Audio tx line ");
 		log_file->write_raw(get_line()->get_line_number()+1);
-		log_file->write_raw(": jitter buffer empy.\n");
+		log_file->write_raw(": jitter buffer empty.\n");
 		log_file->write_footer();
 		return;
 	}
@@ -465,7 +377,7 @@ void t_audio_tx::run(void) {
 	// a crash when the thread gets destroyed before it starts running.
 	// is_running = true;
 
-	unsigned long rtp_timestamp;
+	uint32 rtp_timestamp;
 	
 	// This thread may not take the lock on the transaction layer to
 	// prevent dead locks
@@ -540,14 +452,10 @@ void t_audio_tx::run(void) {
 		if (it_codec != payload2codec.end()) {
 			recvd_codec = it_codec->second;
 		}
-
-		switch(recvd_codec) {
-		case CODEC_G711_ULAW:
-		case CODEC_G711_ALAW:
-		case CODEC_GSM:
-		case CODEC_SPEEX_NB:
-		case CODEC_SPEEX_WB:
-		case CODEC_SPEEX_UWB:
+		
+		map<t_audio_codec, t_audio_decoder *>::const_iterator it_decoder;
+		it_decoder = map_audio_decoder.find(recvd_codec);
+		if (it_decoder != map_audio_decoder.end()) {
 			if (codec != recvd_codec) {
 				codec = recvd_codec;
 				get_line()->ci_set_recv_codec(codec);
@@ -563,36 +471,33 @@ void t_audio_tx::run(void) {
 				log_file->write_endl();
 				log_file->write_footer();
 			}
-			break;
-		default:
+		} else {
 			if (adu->getType() == pt_telephone_event ||
 			    adu->getType() == pt_telephone_event_alt) 
 			{
 				recvd_dtmf = true;
-				break;
+			} else {
+				if (codec != CODEC_UNSUPPORTED) {
+					codec = CODEC_UNSUPPORTED;
+					get_line()->ci_set_recv_codec(codec);
+					ui->cb_async_recv_codec_changed(
+						get_line()->get_line_number(), codec);
+	
+					log_file->write_header("t_audio_tx::run", 
+						LOG_NORMAL, LOG_DEBUG);
+					log_file->write_raw("Audio tx line ");
+					log_file->write_raw(get_line()->get_line_number()+1);
+					log_file->write_raw(": payload type ");
+					log_file->write_raw(adu->getType());
+					log_file->write_raw(" not supported\n");
+					log_file->write_footer();
+				}
+	
+				last_seqnum = adu->getSeqNum();
+				MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
+				delete adu;
+				continue;
 			}
-
-			if (codec != CODEC_UNSUPPORTED) {
-				codec = CODEC_UNSUPPORTED;
-				get_line()->ci_set_recv_codec(codec);
-				ui->cb_async_recv_codec_changed(get_line()->get_line_number(),
-					codec);
-
-				log_file->write_header("t_audio_tx::run", 
-					LOG_NORMAL, LOG_DEBUG);
-				log_file->write_raw("Audio tx line ");
-				log_file->write_raw(get_line()->get_line_number()+1);
-				log_file->write_raw(": payload type ");
-				log_file->write_raw(adu->getType());
-				log_file->write_raw(" not supported\n");
-				log_file->write_footer();
-			}
-
-			last_seqnum = adu->getSeqNum();
-			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
-			delete adu;
-			continue;
-			break;
 		}
 
 		// DTMF event
@@ -628,16 +533,17 @@ void t_audio_tx::run(void) {
 			continue;
 		}
 
-		// Skip packet if the payload size is too big
-		if ((codec == CODEC_G711_ALAW || codec == CODEC_G711_ULAW) &&
-		    adu->getSize() > SAMPLE_BUF_SIZE / 2) 
+		// Discard invalide payload sizes
+		if (!map_audio_decoder[codec]->valid_payload_size(
+				adu->getSize(), SAMPLE_BUF_SIZE / 2))
 		{
 			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": RTP payload size (");
 			log_file->write_raw((unsigned long)(adu->getSize()));
-			log_file->write_raw(" bytes) exceeds maximum\n");
+			log_file->write_raw(" bytes) invalid for \n");
+			log_file->write_raw(ui->format_codec(codec));
 			log_file->write_footer();
 			last_seqnum = adu->getSeqNum();
 			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
@@ -645,40 +551,8 @@ void t_audio_tx::run(void) {
 			continue;
 		}
 		
-#ifdef HAVE_SPEEX
-		int speex_frame_size;
-#endif
-
-		// Determine received ptime
 		unsigned short recvd_ptime;
-		switch(codec) {
-		case CODEC_GSM:
-			recvd_ptime = PTIME_GSM;
-			break;
-		case CODEC_G711_ULAW:
-		case CODEC_G711_ALAW:
-			recvd_ptime = adu->getSize() / (audio_sample_rate(codec) / 1000);
-			break;
-#ifdef HAVE_SPEEX
-		case CODEC_SPEEX_NB:
-			speex_decoder_ctl(speex_nb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-			recvd_ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-			break;
-		case CODEC_SPEEX_WB:
-			speex_decoder_ctl(speex_wb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-			recvd_ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-			break;
-		case CODEC_SPEEX_UWB:
-			speex_decoder_ctl(speex_uwb_dec_state, SPEEX_GET_FRAME_SIZE, 
-					&speex_frame_size);
-			recvd_ptime = speex_frame_size / (audio_sample_rate(codec) / 1000);
-			break;
-#endif	
-		default:
-			assert(false);
-		}
+		recvd_ptime = map_audio_decoder[codec]->get_ptime(adu->getSize());
 
 		// Log a change of ptime
 		if (ptime != recvd_ptime) {
@@ -692,21 +566,6 @@ void t_audio_tx::run(void) {
 			log_file->write_raw(" ms\n");
 			log_file->write_footer();
 			ptime = recvd_ptime;
-		}
-
-		// Discard invalid GSM payload sizes
-		if (codec == CODEC_GSM && adu->getSize() != 33) {
-			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
-			log_file->write_raw("Audio tx line ");
-			log_file->write_raw(get_line()->get_line_number()+1);
-			log_file->write_raw(": invalid GSM payload size: ");
-			log_file->write_raw((unsigned long)(adu->getSize()));
-			log_file->write_endl();
-			log_file->write_footer();
-			last_seqnum = adu->getSeqNum();
-			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
-			delete adu;
-			continue;
 		}
 		
 		// Check for lost packets
@@ -748,76 +607,26 @@ void t_audio_tx::run(void) {
 		// Otherwise a temporary sample buffers is created that will
 		// be resampled to the object's sample buffer later.
 		short *sb;
+		int sb_size;
 		if (downsample_factor > 1) {
-			sb = new short[SAMPLE_BUF_SIZE / 2 * downsample_factor];
+			sb_size = SAMPLE_BUF_SIZE / 2 * downsample_factor;
+			sb = new short[sb_size];
 			MEMMAN_NEW_ARRAY(sb);
 		} else if (upsample_factor > 1) {
+			sb_size = SAMPLE_BUF_SIZE / 2;
 			sb = new short[SAMPLE_BUF_SIZE / 2];
 			MEMMAN_NEW_ARRAY(sb);
 		} else {
+			sb_size = SAMPLE_BUF_SIZE / 2;
 			sb = (short *)sample_buf;
 		}
 				
 		// Decode the audio
 		unsigned char *payload = const_cast<uint8 *>(adu->getData());
-		short sample_size;
-		int retval;
-		bool decode_failed = false;
-		switch (codec) {
-		case CODEC_G711_ALAW:
-		case CODEC_G711_ULAW:
-			for (int i = 0; i < adu->getSize(); i++) {
-				sb[i] = decode(payload[i]);
-			}
-			sample_size = adu->getSize() * 2;
-			break;
-		case CODEC_GSM:
-			gsm_decode(gsm_decoder, payload, sb);
-			sample_size = 320; // 160 2-byte samples
-			break;
-#ifdef HAVE_SPEEX
-		case CODEC_SPEEX_NB:
-			speex_bits_read_from(&speex_nb_bits, (char *)payload, adu->getSize());
-			retval = speex_decode_int(speex_nb_dec_state, &speex_nb_bits, sb);
-			if (retval < 0) {
-				LOG_SPEEX_ERROR("t_audio_tx::run",  
-					"speex_decode_int", retval);
-				decode_failed = true;
-			}
-			sample_size = speex_frame_size * 2;
-			break;
-		case CODEC_SPEEX_WB:
-			speex_bits_read_from(&speex_wb_bits, (char *)payload, adu->getSize());
-			retval = speex_decode_int(speex_wb_dec_state, &speex_wb_bits, sb);
-			if (retval < 0) {
-				LOG_SPEEX_ERROR("t_audio_tx::run", 
-					"speex_decode_int", retval);
-				decode_failed = true;
-			}
-			sample_size = speex_frame_size * 2;
-			break;
-		case CODEC_SPEEX_UWB:
-			speex_bits_read_from(&speex_uwb_bits, (char *)payload, adu->getSize());
-			retval = speex_decode_int(speex_uwb_dec_state, &speex_uwb_bits, sb);
-			if (retval < 0) {
-				LOG_SPEEX_ERROR("t_audio_tx::run", 
-					"speex_decode_int", retval);
-				decode_failed = true;
-			}
-			sample_size = speex_frame_size * 2;
-			break;
-#endif
-		default:
-			assert(false);
-		}
-		
-		if (decode_failed) {
-			last_seqnum = adu->getSeqNum();
-			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
-			delete adu;
-			continue;
-		}
-		
+		short sample_size; // size in bytes
+		sample_size = 2 * map_audio_decoder[codec]->decode(payload, adu->getSize(),
+					sb, sb_size);
+				
 		// Resample if needed
 		if (downsample_factor > 1) {
 			short *p = sb;
@@ -841,18 +650,21 @@ void t_audio_tx::run(void) {
 			sample_size *= upsample_factor;
 		}
 		
+		// If the decoder deliverd 0 bytes, then it failed
+		if (sample_size == 0) {
+			last_seqnum = adu->getSeqNum();
+			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
+			delete adu;	
+			continue;
+		}
+		
 		// Discard packet if we are lacking behind. This happens if the
 		// soundcard plays at a rate less than the requested sample rate.
 		if (rtp_session->isWaiting()) {
 			uint32 last_ts = rtp_session->getLastTimestamp();
 			uint32 diff;
 			
-			if (last_ts >= rtp_timestamp) {
-				diff = last_ts - rtp_timestamp;
-			} else {
-				// Timestamp wrapped around
-				diff = last_ts - rtp_timestamp + 2^64;
-			}
+			diff = last_ts - rtp_timestamp;
 			
 			if (diff > (JITTER_BUF_SIZE(sc_sample_rate) / AUDIO_SAMPLE_SIZE) * 8)
 			{

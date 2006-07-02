@@ -103,3 +103,11 @@ string t_hdr_from::encode_env(void) const {
 	
 	return s;
 }
+
+string t_hdr_from::get_display_presentation(void) const {
+	if (display_override.empty()) {
+		return display;
+	} else {
+		return display_override;
+	}
+}

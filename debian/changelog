@@ -1,3 +1,10 @@
+twinkle (0.8.dfsg-1) unstable; urgency=low
+
+  * New upstream release
+  * Remove non-free iLBC code from DFSG release
+
+ -- Mark Purcell <msp@debian.org>  Sun,  2 Jul 2006 21:37:09 +0100
+
 twinkle (0.7.1-2) unstable; urgency=low
 
   * Enable sip URIs: debian/sip.protocol

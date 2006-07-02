@@ -48,7 +48,7 @@ void GetAddressForm::init()
 		SIGNAL(addressBookChanged(AddressBook *)),
 		this, SLOT(loadAddresses()));
 	
-	sipOnlyCheckBox->setChecked(sys_config->ab_show_sip_only);
+	sipOnlyCheckBox->setChecked(sys_config->get_ab_show_sip_only());
 #endif
 }
 
@@ -99,7 +99,7 @@ void GetAddressForm::loadAddresses()
 		j != phoneNrs.end(); j++)
 		{
 			QString phone = (*j).number();
-			if (!sys_config->ab_show_sip_only ||
+			if (!sys_config->get_ab_show_sip_only() ||
 			    phone.startsWith("sip:"))
 			{
 				new QListViewItem(addressListView, i->realName(), 
@@ -148,7 +148,7 @@ void GetAddressForm::toggleSipOnly(bool on)
 #ifdef HAVE_KDE
 	string msg;
 	
-	sys_config->ab_show_sip_only = on;
+	sys_config->set_ab_show_sip_only(on);
 	
 	// Ignore write failures. If for some reason the system config
 	// could not be written, then this settings is lost after exiting Twinkle.

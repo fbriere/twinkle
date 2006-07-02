@@ -234,7 +234,6 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			}
 		} else if (strcmp(argv[i], "-f") == 0) {
 			if (i < argc - 1 && argv[i+1][0] != '-') {
-				int j = i;
 				while (i < argc -1 && argv[i+1][0] != '-') {
 					i++;
 					// Config file name
@@ -341,6 +340,30 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 	return;
 }
 
+bool open_sip_socket(void) {
+	// Open socket for SIP signaling
+	try {
+		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port(true));
+		MEMMAN_NEW(sip_socket);
+		if (sip_socket->enable_icmp()) {
+			log_file->write_report("ICMP processing enabled.", "::main");
+		} else {
+			log_file->write_report("ICMP processing disabled.", "::main");
+		}
+	} catch (int err) {
+		string msg("Failed to create a UDP socket (SIP) on port ");
+		msg += int2str(sys_config->get_sip_udp_port());
+		msg += "\n";
+		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
+		msg += strerror(err);
+		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_show_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+	
+	return true;
+}
+
 int main( int argc, char ** argv )
 {
 	string error_msg;
@@ -445,8 +468,9 @@ int main( int argc, char ** argv )
 	
 	// Get default values from system configuration
 	if (config_files.empty()) {
-		for (list<string>::iterator i = sys_config->start_user_profiles.begin();
-		i != sys_config->start_user_profiles.end(); i++)
+		list<string> start_user_profiles = sys_config->get_start_user_profiles();
+		for (list<string>::iterator i = start_user_profiles.begin();
+		i != start_user_profiles.end(); i++)
 		{
 			QString config_file = (*i).c_str();
 			config_file += USER_FILE_EXT;
@@ -454,8 +478,8 @@ int main( int argc, char ** argv )
 		}
 	}
 	if (user_host.empty()) {
-		if (exists_interface(sys_config->start_user_host)) {
-			user_host = sys_config->start_user_host;
+		if (exists_interface(sys_config->get_start_user_host())) {
+			user_host = sys_config->get_start_user_host();
 		}
 	}
 
@@ -547,9 +571,9 @@ int main( int argc, char ** argv )
 					profile_selected = true;
 				} else {
 					error_msg = "The following profiles are both for user ";
-					error_msg += user_config.name;
+					error_msg += user_config.get_name();
 					error_msg += '@';
-					error_msg += user_config.domain;
+					error_msg += user_config.get_domain();
 					error_msg += ":\n\n";
 					error_msg += user_config.get_profile_name();
 					error_msg += "\n";
@@ -568,6 +592,12 @@ int main( int argc, char ** argv )
 			}
 		}
 		
+		if (profile_selected && !open_sip_socket()) {
+			// Opening SIP socket failed. Let user pick a user profile
+			// again, so he can make changes in settings to fix the error.
+			profile_selected = false;
+		}
+		
 		// In CLI mode the user cannot select another profile.
 		if (!profile_selected) {
 			if (cli_mode) exit(1);
@@ -576,6 +606,9 @@ int main( int argc, char ** argv )
 		config_files.clear();
 	}
 	
+	// Initialize RTP port settings.
+	phone->init_rtp_ports();
+	
 	// Create call history
 	call_history = new t_call_history();
 	MEMMAN_NEW(call_history);
@@ -583,30 +616,6 @@ int main( int argc, char ** argv )
 	// Read call history
 	if (!call_history->read_history(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
-	}
-	
-	// Initialize RTP port settings.
-	phone->init_rtp_ports();
-	
-	// Open socket for SIP signaling
-	try {
-		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port());
-		MEMMAN_NEW(sip_socket);
-		if (sip_socket->enable_icmp()) {
-			log_file->write_report("ICMP processing enabled.", "::main");
-		} else {
-			log_file->write_report("ICMP processing disabled.", "::main");
-		}
-	} catch (int err) {
-		string msg("Failed to create a UDP socket (SIP) on port ");
-		msg += int2str(sys_config->get_sip_udp_port());
-		msg += "\n";
-		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
-		msg += strerror(err);
-		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_show_msg(msg, MSG_CRITICAL);
-		sys_config->delete_lock_file();
-		exit(1);
 	}
 	
 	// Pick network interface
@@ -637,7 +646,7 @@ int main( int argc, char ** argv )
 		
 		progressStep++;
 	}
-	ui->cb_nat_discovery_progress_step(user_list.size());
+	ui->cb_nat_discovery_finished();
 	
 	for (list<string>::iterator i = msg_list.begin();
 	     i != msg_list.end(); i++)
@@ -692,12 +701,13 @@ int main( int argc, char ** argv )
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
 	}
 	
-	// Block SIGINT and SIGTERM as those will be caught by the
+	// Block signals as those will be caught by the
 	// signal catcher thread
 	sigset_t sigset;
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
+	sigaddset(&sigset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
 				 
 	// Create threads

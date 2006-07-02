@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include "audio_codecs.h"
+#include "audio_decoder.h"
 #include "audio_rx.h"
 #include "media_buffer.h"
 #include "rtp_telephone_event.h"
@@ -33,10 +34,6 @@
 #include "audio_device.h"
 #include "twinkle_rtp_session.h"
 #include "twinkle_config.h"
-
-#ifdef HAVE_SPEEX
-#include <speex/speex.h>
-#endif
 
 using namespace std;
 using namespace ost;
@@ -98,19 +95,9 @@ private:
 	// sample rate of the sound card! (capture and playback cannot
 	// be done at different sampling rates).
 	unsigned short	sc_sample_rate;
-
-	// GSM decoder
-	gsm		gsm_decoder;
 	
-#ifdef HAVE_SPEEX
-	// Speex decoder
-	SpeexBits	speex_nb_bits;
-	SpeexBits	speex_wb_bits;
-	SpeexBits	speex_uwb_bits;
-	void		*speex_nb_dec_state;
-	void		*speex_wb_dec_state;
-	void		*speex_uwb_dec_state;
-#endif
+	// Mapping from codecs to decoders
+	map<t_audio_codec, t_audio_decoder *> map_audio_decoder;
 
 	// Buffer to store PCM samples of a received RTP packet
 	unsigned char	*sample_buf;
@@ -143,9 +130,6 @@ private:
 
 	// Timestamp of previous DTMF tone
 	unsigned long	dtmf_previous_timestamp;
-
-	// Decode a coded sample to a linear PCM sample
-	short		decode(unsigned char sample);
 
 	// Inidicates if the playing thread is running
 	bool is_running;

@@ -138,4 +138,8 @@ string remove_symbols(const string &s, const string &special_symbols);
 // Remove spaces and tabs from a string
 string remove_white_space(const string &s);
 
+// Truncate a string. If the string was longer than the truncated
+// result, then "..." will be appended.
+string dotted_truncate(const string &s, int len);
+
 #endif

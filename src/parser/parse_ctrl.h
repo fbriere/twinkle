@@ -76,6 +76,9 @@ enum t_context {
 
 	// Encode headers in compact forom
 	static bool		compact_headers;
+	
+	// Encode multiple values as comma separated list or multiple headers
+	static bool		multi_values_as_list;
 
 	static t_context	context;    // Scan context
 	static t_sip_message	*msg;       // Message that has been parsed

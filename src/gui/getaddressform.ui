@@ -217,6 +217,7 @@
     </connection>
 </connections>
 <includes>
+    <include location="local" impldecl="in declaration">user.h</include>
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="local" impldecl="in implementation">qstring.h</include>
     <include location="local" impldecl="in implementation">qmessagebox.h</include>
@@ -225,6 +226,7 @@
     <include location="local" impldecl="in implementation">util.h</include>
     <include location="local" impldecl="in implementation">qregexp.h</include>
     <include location="local" impldecl="in implementation">sockets/url.h</include>
+    <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">getaddressform.ui.h</include>
 </includes>
 <variables>

@@ -58,7 +58,7 @@ void TransferForm::show(t_user *user, const string &dest)
 
 void TransferForm::reject()
 {
-	if (user_config->referrer_hold) {
+	if (user_config->get_referrer_hold()) {
 		((t_gui *)ui)->action_retrieve();
 	}
 	

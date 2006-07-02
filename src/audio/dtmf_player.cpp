@@ -73,7 +73,7 @@ uint16 t_rtp_event_dtmf_player::get_payload(uint8 *payload,
 	// RFC 2833 3.5, 3.6
 	dtmf_payload->set_event(_dtmf_current);
 	dtmf_payload->set_reserved(false);
-	dtmf_payload->set_volume(_user_config->dtmf_volume);
+	dtmf_payload->set_volume(_user_config->get_dtmf_volume());
 
 	if (_dtmf_pause) {
 		// Trailing pause phase of a DTMF tone
@@ -83,7 +83,7 @@ uint16 t_rtp_event_dtmf_player::get_payload(uint8 *payload,
 		int pause_duration = timestamp - _dtmf_timestamp - _dtmf_duration +
 				     _nsamples;
 		if (pause_duration / _nsamples * _audio_encoder->get_ptime() >=
-					_user_config->dtmf_pause)
+					_user_config->get_dtmf_pause())
 		{
 			// This is the last packet to be sent for the
 			// current DTMF tone.
@@ -104,7 +104,7 @@ uint16 t_rtp_event_dtmf_player::get_payload(uint8 *payload,
 
 		// Check if the tone must end
 		if (_dtmf_duration / _nsamples * _audio_encoder->get_ptime() >=
-						_user_config->dtmf_duration)
+						_user_config->get_dtmf_duration())
 		{
 			dtmf_payload->set_end(true);
 			_dtmf_pause = true;
@@ -129,7 +129,7 @@ t_inband_dtmf_player::t_inband_dtmf_player(t_audio_rx *audio_rx,
 		uint16 nsamples) :
 	t_dtmf_player(audio_rx, audio_encoder, user_config, dtmf_tone, dtmf_timestamp, 
 			nsamples),
-	_freq_gen(dtmf_tone, -(user_config->dtmf_volume))
+	_freq_gen(dtmf_tone, -(user_config->get_dtmf_volume()))
 {
 }
 
@@ -145,7 +145,7 @@ uint16 t_inband_dtmf_player::get_payload(uint8 *payload,
 		memset(sample_buf, 0, _nsamples * 2);
 				     
 		if (pause_duration / _nsamples * _audio_encoder->get_ptime() >=
-					_user_config->dtmf_pause)
+					_user_config->get_dtmf_pause())
 		{
 			// This is the last packet to be sent for the
 			// current DTMF tone.
@@ -170,7 +170,7 @@ uint16 t_inband_dtmf_player::get_payload(uint8 *payload,
 
 		// Check if the tone must end
 		if (_dtmf_duration / _nsamples * _audio_encoder->get_ptime() >=
-						_user_config->dtmf_duration)
+						_user_config->get_dtmf_duration())
 		{
 			_dtmf_pause = true;
 		}

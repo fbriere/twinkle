@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>729</width>
-            <height>549</height>
+            <width>709</width>
+            <height>558</height>
         </rect>
     </property>
     <property name="caption">
@@ -46,6 +46,14 @@
             </item>
             <item>
                 <property name="text">
+                    <string>Address book</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>kontact_contacts32.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
                     <string>Network</string>
                 </property>
                 <property name="pixmap">
@@ -74,64 +82,6 @@
             <property name="whatsThis" stdset="0">
                 <string>Select a category for which you want to see or modify the settings.</string>
             </property>
-        </widget>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout38</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer98</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>321</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
-                    </property>
-                </widget>
-            </hbox>
         </widget>
         <widget class="QWidgetStack" row="0" column="1">
             <property name="name">
@@ -212,56 +162,7 @@
                                     <string>Select the sound card for playing the ring tone for incoming calls.</string>
                                 </property>
                             </widget>
-                            <widget class="QLabel" row="0" column="0">
-                                <property name="name">
-                                    <cstring>ringtoneTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Ring tone:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>ringtoneComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QComboBox" row="1" column="1">
-                                <property name="name">
-                                    <cstring>speakerComboBox</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>7</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Select the sound card for the speaker function during a call.</string>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="1" column="0">
-                                <property name="name">
-                                    <cstring>speakerTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Speaker:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>speakerComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="2" column="0">
-                                <property name="name">
-                                    <cstring>micTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Microphone:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>micComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QComboBox" row="2" column="1">
+                            <widget class="QComboBox" row="4" column="1">
                                 <property name="name">
                                     <cstring>micComboBox</cstring>
                                 </property>
@@ -277,7 +178,104 @@
                                     <string>Select the sound card to which your microphone is connected.</string>
                                 </property>
                             </widget>
-                            <widget class="QLabel" row="3" column="0" rowspan="1" colspan="2">
+                            <widget class="QComboBox" row="2" column="1">
+                                <property name="name">
+                                    <cstring>speakerComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>7</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select the sound card for the speaker function during a call.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="2" column="0">
+                                <property name="name">
+                                    <cstring>speakerTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Speaker:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>speakerComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>ringtoneTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Ring tone:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>ringtoneComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>otherRingtoneTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Other device:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>otherRingtoneLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="3" column="0">
+                                <property name="name">
+                                    <cstring>otherSpeakerTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Other device:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>otherSpeakerLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="5" column="0">
+                                <property name="name">
+                                    <cstring>otherMicTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Other device:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>otherMicLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="4" column="0">
+                                <property name="name">
+                                    <cstring>micTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Microphone:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>micComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="1" column="1">
+                                <property name="name">
+                                    <cstring>otherRingtoneLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="5" column="1">
+                                <property name="name">
+                                    <cstring>otherMicLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="3" column="1">
+                                <property name="name">
+                                    <cstring>otherSpeakerLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="6" column="0" rowspan="1" colspan="2">
                                 <property name="name">
                                     <cstring>alsaNoteTextLabel</cstring>
                                 </property>
@@ -932,6 +930,66 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
                             </spacer>
                         </hbox>
                     </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout21</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>autoShowCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Auto show main window on incoming call after</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+A</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>When the main window is hidden, it will be automatically shown on an incoming call after the number of specified seconds.</string>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox">
+                                <property name="name">
+                                    <cstring>autoShowTimeoutSpinBox</cstring>
+                                </property>
+                                <property name="maxValue">
+                                    <number>60</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Number of seconds after which the main window should be shown.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>secAutoShowTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>secs</string>
+                                </property>
+                            </widget>
+                            <spacer>
+                                <property name="name">
+                                    <cstring>spacer14</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>29</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </hbox>
+                    </widget>
                 </vbox>
             </widget>
             <widget class="QWidget">
@@ -1362,6 +1420,162 @@ Depending on your SIP provider the network might provide ring back tone or an an
                     </spacer>
                 </vbox>
             </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageAddressBook</cstring>
+                </property>
+                <attribute name="id">
+                    <number>5</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>ringtonesTitleTextLabel_2</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Address book</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>abLookupNameCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Lookup name for incoming call</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+L</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>On an incoming call, Twinkle will try to find the name the name belonging to the incoming SIP address in your address book. This name will be displayed.</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>abOverrideDisplayCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Ove&amp;rride received display name</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+R</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>The caller may have provided a display name already. Tick this box if you want to override that name with the name you have in your address book.</string>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>abLookupPhotoCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>Lookup &amp;photo for incoming call</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+P</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Lookup the photo of a caller in your address book and display it on an incoming call.</string>
+                        </property>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer61</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>121</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
+        </widget>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout38</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer98</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>321</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
         </widget>
     </grid>
 </widget>
@@ -1486,6 +1700,30 @@ Depending on your SIP provider the network might provide ring back tone or an an
         <receiver>openRingbackToolButton</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
+    <connection>
+        <sender>abLookupNameCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>abOverrideDisplayCheckBox</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>ringtoneComboBox</sender>
+        <signal>activated(int)</signal>
+        <receiver>SysSettingsForm</receiver>
+        <slot>devRingtoneSelected(int)</slot>
+    </connection>
+    <connection>
+        <sender>speakerComboBox</sender>
+        <signal>activated(int)</signal>
+        <receiver>SysSettingsForm</receiver>
+        <slot>devSpeakerSelected(int)</slot>
+    </connection>
+    <connection>
+        <sender>micComboBox</sender>
+        <signal>activated(int)</signal>
+        <receiver>SysSettingsForm</receiver>
+        <slot>devMicSelected(int)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
@@ -1497,6 +1735,8 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>callWaitingCheckBox</tabstop>
     <tabstop>hangupBothCheckBox</tabstop>
     <tabstop>histSizeSpinBox</tabstop>
+    <tabstop>autoShowCheckBox</tabstop>
+    <tabstop>autoShowTimeoutSpinBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
     <tabstop>micComboBox</tabstop>
@@ -1521,6 +1761,9 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>cancelPushButton</tabstop>
     <tabstop>customRingtoneRadioButton</tabstop>
     <tabstop>customRingbackRadioButton</tabstop>
+    <tabstop>abLookupNameCheckBox</tabstop>
+    <tabstop>abOverrideDisplayCheckBox</tabstop>
+    <tabstop>abLookupPhotoCheckBox</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in declaration">sys_settings.h</include>
@@ -1535,10 +1778,13 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <include location="local" impldecl="in implementation">qspinbox.h</include>
     <include location="local" impldecl="in implementation">qfiledialog.h</include>
     <include location="local" impldecl="in implementation">qfileinfo.h</include>
+    <include location="local" impldecl="in implementation">twinkle_config.h</include>
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>
     <variable access="private">list&lt;t_audio_device&gt; list_audio_dev;</variable>
+    <variable access="private">int idxOtherDevAlsa;</variable>
+    <variable access="private">int idxOtherDevOss;</variable>
 </variables>
 <signals>
     <signal>sipUdpPortChanged()</signal>
@@ -1553,10 +1799,13 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <slot returnType="int">exec()</slot>
     <slot>chooseRingtone()</slot>
     <slot>chooseRingback()</slot>
+    <slot>devRingtoneSelected( int idx )</slot>
+    <slot>devSpeakerSelected( int idx )</slot>
+    <slot>devMicSelected( int idx )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
-    <function returnType="string">comboItem2audio_dev( QString item )</function>
+    <function returnType="string">comboItem2audio_dev( QString item, QLineEdit * qleOther )</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

@@ -61,7 +61,7 @@ void SelectNicForm::setAsDefault()
 	
 	// Write default to system settings
 	QStringList l = QStringList::split(':', nicListBox->currentText());
-	sys_config->start_user_host = l[1].ascii();
+	sys_config->set_start_user_host(l[1].ascii());
 	string error_msg;
 	if (!sys_config->write_config(error_msg)) {
 		// Failed to write config file

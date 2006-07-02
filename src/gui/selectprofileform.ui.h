@@ -139,9 +139,8 @@ void SelectProfileForm::showForm(QMainWindow *_mainWindow)
 		QString profile = item->text();
 		
 		// Set pixmap of default profile
-		if (std::find(sys_config->start_user_profiles.begin(), 
-			 sys_config->start_user_profiles.end(), profile.ascii()) !=
-		    sys_config->start_user_profiles.end())
+		list<string> l = sys_config->get_start_user_profiles();
+		if (std::find(l.begin(),  l.end(), profile.ascii()) != l.end())
 		{
 			item->setPixmap(0, QPixmap::fromMimeSource("twinkle16.png"));
 			defaultSet = true;
@@ -335,13 +334,20 @@ void SelectProfileForm::deleteProfile()
 			backupname.append("~");
 			(void)QFile::remove(backupname);
 			
+			// Delete service files
+			filename = profile;
+			filename.append(SVC_FILE_EXT);
+			fullname = d.filePath(filename);
+			(void)QFile::remove(fullname);
+			fullname.append("~");
+			(void)QFile::remove(fullname);
+			
 			// Delete profile from list of default profiles in
 			// system settings
-			if (std::find(sys_config->start_user_profiles.begin(),
-				 sys_config->start_user_profiles.end(),
-				 profile.ascii()) != sys_config->start_user_profiles.end())
-			{
-				sys_config->start_user_profiles.remove(profile.ascii());
+			list<string> l = sys_config->get_start_user_profiles();
+			if (std::find(l.begin(), l.end(), profile.ascii()) != l.end()) {
+				l.remove(profile.ascii());
+				sys_config->set_start_user_profiles(l);
 				
 				string error_msg;
 				if (!sys_config->write_config(error_msg)) {
@@ -410,15 +416,31 @@ void SelectProfileForm::renameProfile()
 			d.rename(oldBackupFilename, newBackupFilename);
 		}
 		
+		// Rename service files
+		oldFilename = oldProfile;
+		oldFilename.append(SVC_FILE_EXT);
+		QString oldFullname = d.filePath(oldFilename);
+		if (QFile::exists(oldFullname)) {
+			newFilename = newProfile;
+			newFilename.append(SVC_FILE_EXT);
+			d.rename(oldFilename, newFilename);
+		}
+		
+		// Rename service backup file
+		oldFilename.append("~");
+		oldFullname = d.filePath(oldFilename);
+		if (QFile::exists(oldFullname)) {
+			newFilename.append("~");
+			d.rename(oldFilename, newFilename);
+		}
+		
 		// Rename profile in list of default profiles in
 		// system settings
-		if (std::find(sys_config->start_user_profiles.begin(),
-				 sys_config->start_user_profiles.end(),
-				 oldProfile.ascii()) != sys_config->start_user_profiles.end())
+		list<string> l = sys_config->get_start_user_profiles();
+		if (std::find(l.begin(), l.end(), oldProfile.ascii()) != l.end())
 		{
-			std::replace(sys_config->start_user_profiles.begin(),
-				sys_config->start_user_profiles.end(),
-				oldProfile.ascii(), newProfile.ascii());
+			std::replace(l.begin(), l.end(), oldProfile.ascii(), newProfile.ascii());
+			sys_config->set_start_user_profiles(l);
 				
 			string error_msg;
 			if (!sys_config->write_config(error_msg)) {
@@ -460,14 +482,15 @@ void SelectProfileForm::setAsDefault()
 	
 	// Set pixmap of the default profiles.
 	// Set default profiles in system settings.
-	sys_config->start_user_profiles.clear();
+	list<string> l;
 	QListViewItemIterator j(profileListView, QListViewItemIterator::Checked);
 	while (j.current()) {
 		QCheckListItem *item = (QCheckListItem *)j.current();
 		item->setPixmap(0, QPixmap::fromMimeSource("twinkle16.png"));
-		sys_config->start_user_profiles.push_back(item->text().ascii());
+		l.push_back(item->text().ascii());
 		j++;
-	}	
+	}
+	sys_config->set_start_user_profiles(l);
 	
 	// Write default to system settings
 	string error_msg;

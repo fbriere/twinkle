@@ -49,12 +49,12 @@ void *tone_gen_play(void *arg) {
 }
 
 t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) :
-		sema_finished(0) 
+		sema_finished(0),
+		dev_tone(_dev_tone)
 {
 	string f;
 
 	wav_file = NULL;
-	dev_tone = &_dev_tone;
 	aio = 0;
 	valid = false;
 	data_buf = NULL;
@@ -135,7 +135,7 @@ void t_tone_gen::play(void) {
 		return;
 	}
 
-	aio = t_audio_io::open(*dev_tone, true, false, true, wav_info.channels,
+	aio = t_audio_io::open(dev_tone, true, false, true, wav_info.channels,
 		SAMPLEFORMAT_S16, wav_info.samplerate, false);
 	if (!aio) {
 		string msg("Failed to open sound card: ");
@@ -236,9 +236,11 @@ void t_tone_gen::stop(void) {
 	// Stop audio play out
 	int arg = 0;
 
-	MEMMAN_DELETE(aio);
-	delete aio;
-	aio = 0;
+	if (aio) {
+		MEMMAN_DELETE(aio);
+		delete aio;
+		aio = 0;
+	}
 }
 
 

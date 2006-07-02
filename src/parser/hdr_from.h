@@ -31,6 +31,13 @@ using namespace std;
 class t_hdr_from : public t_header {
 public:
 	string			display; // display name
+	
+	// The display_override may be set by the UA to display another
+	// name to the user, then the display name received in the
+	// signalling, e.g. a lookup from an address book. This value
+	// does NOT appear in the SIP message.
+	string			display_override;
+	
 	t_url			uri;
 	string			tag;
 	list<t_parameter>	params;
@@ -45,6 +52,9 @@ public:
 	string encode(void) const;
 	string encode_value(void) const;
 	string encode_env(void) const;
+	
+	// Get the display name to show to the user.
+	string get_display_presentation(void) const;
 };
 
 #endif

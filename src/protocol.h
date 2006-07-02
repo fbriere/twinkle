@@ -116,11 +116,11 @@ enum t_stun_timer {
 
 
 // No answer timer (ms)
-#define DUR_NO_ANSWER(u)	((u)->timer_noanswer * 1000)
+#define DUR_NO_ANSWER(u)	((u)->get_timer_noanswer() * 1000)
 
 // Registration timers (s)
 // Registration duration (seconds)
-#define DUR_REGISTRATION(u)	((u)->registration_time)
+#define DUR_REGISTRATION(u)	((u)->get_registration_time())
 #define RE_REGISTER_DELTA	5   // Re-register 5 seconds before expiry
 #define DUR_REG_FAILURE         30  // Re-registration interval after reg. failure
 
@@ -213,7 +213,7 @@ enum t_stun_timer {
 				  (h).add_method(BYE); \
 				  (h).add_method(CANCEL); \
 				  (h).add_method(OPTIONS); \
-				  if ((u)->ext_100rel != EXT_DISABLED) {\
+				  if ((u)->get_ext_100rel() != EXT_DISABLED) {\
 				  	(h).add_method(PRACK);\
 				  }\
 				  (h).add_method(REFER); \
@@ -245,7 +245,7 @@ enum t_stun_timer {
 					PRODUCT_VERSION)); }
 
 // Set Organization header
-#define SET_HDR_ORGANIZATION(h, u)	{ if ((u)->organization != "") {\
-					(h).set_name((u)->organization); }}
+#define SET_HDR_ORGANIZATION(h, u)	{ if ((u)->get_organization() != "") {\
+					(h).set_name((u)->get_organization()); }}
 
 #endif

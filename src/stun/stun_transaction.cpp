@@ -37,13 +37,13 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 	unsigned short &mapped_port, int &err_code, string &err_reason)
 {
 	list<t_ip_port> destinations = 
-		user_config->stun_server.get_h_ip_srv("udp");
+		user_config->get_stun_server().get_h_ip_srv("udp");
 	
 	if (destinations.empty()) {
 		// Cannot resolve STUN server address.
 		log_file->write_header("::get_stun_binding", LOG_NORMAL, LOG_CRITICAL);
 		log_file->write_raw("Failed to resolve: ");
-		log_file->write_raw(user_config->stun_server.encode());
+		log_file->write_raw(user_config->get_stun_server().encode());
 		log_file->write_endl();
 		log_file->write_raw("Return internal STUN bind error: 404 Not Found");
 		log_file->write_endl();
@@ -238,18 +238,18 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 	pu->use_nat_keepalive = false;
 
 	list<t_ip_port> destinations = 
-		user_config->stun_server.get_h_ip_srv("udp");
+		user_config->get_stun_server().get_h_ip_srv("udp");
 
 	if (destinations.empty()) {
 		// Cannot resolve STUN server address.
 		log_file->write_header("::main", LOG_NORMAL, LOG_CRITICAL);
 		log_file->write_raw("Failed to resolve: ");
-		log_file->write_raw(user_config->stun_server.encode());
+		log_file->write_raw(user_config->get_stun_server().encode());
 		log_file->write_endl();
 		log_file->write_footer();
 
 		err_msg = "Cannot resolve STUN server: ";
-		err_msg += user_config->stun_server.encode().c_str();
+		err_msg += user_config->get_stun_server().encode().c_str();
 		return false;
 	}
 
@@ -283,13 +283,13 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 			err_msg += int2str(sys_config->get_sip_udp_port());
 			err_msg += " (for SIP signaling)\n";
 			err_msg += "public IP:";
-			err_msg += int2str(sys_config->rtp_port);
+			err_msg += int2str(sys_config->get_rtp_port());
 			err_msg += "-";
-			err_msg += int2str(sys_config->rtp_port + 5);
+			err_msg += int2str(sys_config->get_rtp_port() + 5);
 			err_msg += " --> private IP:";
-			err_msg += int2str(sys_config->rtp_port);
+			err_msg += int2str(sys_config->get_rtp_port());
 			err_msg += "-";
-			err_msg += int2str(sys_config->rtp_port + 5);
+			err_msg += int2str(sys_config->get_rtp_port() + 5);
 			err_msg += " (for RTP/RTCP)";
 			return false;
 		case StunTypeSymFirewall:
@@ -307,7 +307,7 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 		
 			if (destinations.empty()) {
 				err_msg = "Cannot reach the STUN server: ";
-				err_msg += user_config->stun_server.encode().c_str();
+				err_msg += user_config->get_stun_server().encode().c_str();
 				err_msg += "\n\n";
 				err_msg += "If you are behind a firewall then you need to open ";
 				err_msg += "the following UDP ports for a proper working of ";
@@ -317,9 +317,9 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 				err_msg += int2str(sys_config->get_sip_udp_port());
 				err_msg += " (for SIP signaling)\n";
 				err_msg += "Ports ";
-				err_msg += int2str(sys_config->rtp_port);
+				err_msg += int2str(sys_config->get_rtp_port());
 				err_msg += "-";
-				err_msg += int2str(sys_config->rtp_port + 5);
+				err_msg += int2str(sys_config->get_rtp_port() + 5);
 				err_msg += " (for RTP/RTCP)";
 				
 				return false;

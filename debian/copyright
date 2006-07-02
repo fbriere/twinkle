@@ -3,6 +3,10 @@ Sun, 29 May 2005 09:40:22 +0100.
 
 It was downloaded from http://www.twinklephone.com/
 
+In order to make twinkle DFSG compliant the audio/ilbc portion of code
+has been removed and the package as been built with 
+	./configure --without-ilbc
+
 Copyright Holder: 
  
 Author of Twinkle.

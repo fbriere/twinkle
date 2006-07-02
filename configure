@@ -881,6 +881,7 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-kde           do not compile KDE features
+  --without-ilbc          do not compile iLBC
   --with-extra-includes=DIR
                           adds non standard include paths
   --with-extra-libs=DIR   adds non standard library paths
@@ -1466,6 +1467,15 @@ else
   ac_cv_kde=yes
 fi;
 
+
+# Check whether --with-ilbc or --without-ilbc was given.
+if test "${with_ilbc+set}" = set; then
+  withval="$with_ilbc"
+  ac_cv_ilbc=$withval
+else
+  ac_cv_ilbc=yes
+fi;
+
 am__api_version="1.9"
 
 
@@ -1781,7 +1791,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION=0.7.1
+ VERSION=0.8
 
 
 cat >>confdefs.h <<_ACEOF
@@ -1913,7 +1923,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "May 07 2006"
+#define VERSION_DATE "July 1 2006"
 _ACEOF
 
 ac_ext=c
@@ -5481,23 +5491,23 @@ fi
   else
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
-        echo "$as_me:$LINENO: checking for qt-mt >= 3.3.0" >&5
-echo $ECHO_N "checking for qt-mt >= 3.3.0... $ECHO_C" >&6
+        echo "$as_me:$LINENO: checking for qt-mt >= 3.3.0 qt-mt < 4.0" >&5
+echo $ECHO_N "checking for qt-mt >= 3.3.0 qt-mt < 4.0... $ECHO_C" >&6
 
-        if $PKG_CONFIG --exists "qt-mt >= 3.3.0" ; then
+        if $PKG_CONFIG --exists "qt-mt >= 3.3.0 qt-mt < 4.0" ; then
             echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
             succeeded=yes
 
             echo "$as_me:$LINENO: checking QT_CFLAGS" >&5
 echo $ECHO_N "checking QT_CFLAGS... $ECHO_C" >&6
-            QT_CFLAGS=`$PKG_CONFIG --cflags "qt-mt >= 3.3.0"`
+            QT_CFLAGS=`$PKG_CONFIG --cflags "qt-mt >= 3.3.0 qt-mt < 4.0"`
             echo "$as_me:$LINENO: result: $QT_CFLAGS" >&5
 echo "${ECHO_T}$QT_CFLAGS" >&6
 
             echo "$as_me:$LINENO: checking QT_LIBS" >&5
 echo $ECHO_N "checking QT_LIBS... $ECHO_C" >&6
-            QT_LIBS=`$PKG_CONFIG --libs "qt-mt >= 3.3.0"`
+            QT_LIBS=`$PKG_CONFIG --libs "qt-mt >= 3.3.0 qt-mt < 4.0"`
             echo "$as_me:$LINENO: result: $QT_LIBS" >&5
 echo "${ECHO_T}$QT_LIBS" >&6
         else
@@ -5505,7 +5515,7 @@ echo "${ECHO_T}$QT_LIBS" >&6
             QT_LIBS=""
             ## If we have a custom action on failure, don't print errors, but
             ## do set a variable so people can do so.
-            QT_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "qt-mt >= 3.3.0"`
+            QT_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "qt-mt >= 3.3.0 qt-mt < 4.0"`
             echo $QT_PKG_ERRORS
         fi
 
@@ -5520,8 +5530,8 @@ echo "${ECHO_T}$QT_LIBS" >&6
   if test $succeeded = yes; then
      :
   else
-     { { echo "$as_me:$LINENO: error: Library requirements (qt-mt >= 3.3.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&5
-echo "$as_me: error: Library requirements (qt-mt >= 3.3.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&2;}
+     { { echo "$as_me:$LINENO: error: Library requirements (qt-mt >= 3.3.0 qt-mt < 4.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&5
+echo "$as_me: error: Library requirements (qt-mt >= 3.3.0 qt-mt < 4.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&2;}
    { (exit 1); exit 1; }; }
   fi
 
@@ -12995,7 +13005,7 @@ for i in $jpeg_incdirs;
 do
   for j in jpeglib.h;
   do
-    echo "configure: 12998: $i/$j" >&5
+    echo "configure: 13008: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       jpeg_incdir=$i
@@ -13303,7 +13313,7 @@ for i in $qt_incdirs;
 do
   for j in $kde_qt_header;
   do
-    echo "configure: 13306: $i/$j" >&5
+    echo "configure: 13316: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       qt_incdir=$i
@@ -14521,7 +14531,7 @@ for i in $kde_incdirs;
 do
   for j in $kde_check_header;
   do
-    echo "configure: 14524: $i/$j" >&5
+    echo "configure: 14534: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_incdir=$i
@@ -14551,7 +14561,7 @@ for i in $kde_libdirs;
 do
   for j in $kde_check_lib;
   do
-    echo "configure: 14554: $i/$j" >&5
+    echo "configure: 14564: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_libdir=$i
@@ -14569,7 +14579,7 @@ for i in $kde_libdirs;
 do
   for j in "kde3/plugins/designer/kdewidgets.la";
   do
-    echo "configure: 14572: $i/$j" >&5
+    echo "configure: 14582: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_widgetdir=$i
@@ -16071,7 +16081,7 @@ for i in $kde_sharedirs;
 do
   for j in apps/ksgmltools2/customization/kde-chunk.xsl;
   do
-    echo "configure: 16074: $i/$j" >&5
+    echo "configure: 16084: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       KDE_XSL_STYLESHEET=$i
@@ -16932,6 +16942,240 @@ else
 fi
 
 
+# iLBC
+if test "x$ac_cv_ilbc" = "xyes"
+then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ILBC 1
+_ACEOF
+
+	have_ilbc="yes"
+else
+	have_ilbc="no"
+fi
+
+# Check if boost is available
+if test "${ac_cv_header_boost_regex_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for boost/regex.h" >&5
+echo $ECHO_N "checking for boost/regex.h... $ECHO_C" >&6
+if test "${ac_cv_header_boost_regex_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_boost_regex_h" >&5
+echo "${ECHO_T}$ac_cv_header_boost_regex_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking boost/regex.h usability" >&5
+echo $ECHO_N "checking boost/regex.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <boost/regex.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking boost/regex.h presence" >&5
+echo $ECHO_N "checking boost/regex.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <boost/regex.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: boost/regex.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: boost/regex.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: boost/regex.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: boost/regex.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: boost/regex.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: boost/regex.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: boost/regex.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: boost/regex.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: boost/regex.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for boost/regex.h" >&5
+echo $ECHO_N "checking for boost/regex.h... $ECHO_C" >&6
+if test "${ac_cv_header_boost_regex_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_boost_regex_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_boost_regex_h" >&5
+echo "${ECHO_T}$ac_cv_header_boost_regex_h" >&6
+
+fi
+if test $ac_cv_header_boost_regex_h = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: boost/regex.h missing (boost-devel package)" >&5
+echo "$as_me: error: boost/regex.h missing (boost-devel package)" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
+echo "$as_me:$LINENO: checking for main in -lboost_regex" >&5
+echo $ECHO_N "checking for main in -lboost_regex... $ECHO_C" >&6
+if test "${ac_cv_lib_boost_regex_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lboost_regex  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_boost_regex_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_boost_regex_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_boost_regex_main" >&5
+echo "${ECHO_T}$ac_cv_lib_boost_regex_main" >&6
+if test $ac_cv_lib_boost_regex_main = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBBOOST_REGEX 1
+_ACEOF
+
+  LIBS="-lboost_regex $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: libboost_regex library is missing (boost package)." >&5
+echo "$as_me: error: libboost_regex library is missing (boost package)." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+
 $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
 echo "distdir:" >> src/gui/Makefile
 
@@ -16941,7 +17185,7 @@ echo "distdir:" >> src/gui/Makefile
 PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
 
 
-                                                                                                              ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile twinkle.spec"
+                                                                                                                        ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audio/ilbc/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile twinkle.spec"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -17516,6 +17760,7 @@ do
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "src/audio/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/Makefile" ;;
   "src/audio/gsm/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/gsm/Makefile" ;;
+  "src/audio/ilbc/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/ilbc/Makefile" ;;
   "src/audits/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audits/Makefile" ;;
   "src/sdp/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/sdp/Makefile" ;;
   "src/parser/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/parser/Makefile" ;;
@@ -18525,3 +18770,5 @@ echo "$as_me:$LINENO: result: ALSA:        $have_libasound" >&5
 echo "${ECHO_T}ALSA:        $have_libasound" >&6
 echo "$as_me:$LINENO: result: Speex:       $have_speex" >&5
 echo "${ECHO_T}Speex:       $have_speex" >&6
+echo "$as_me:$LINENO: result: iLBC:        $have_ilbc" >&5
+echo "${ECHO_T}iLBC:        $have_ilbc" >&6

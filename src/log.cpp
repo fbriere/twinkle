@@ -125,7 +125,7 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 	mtx_log.lock();
 	
 	if (severity == LOG_DEBUG) {
-		 if (!sys_config->log_show_debug) {
+		 if (!sys_config->get_log_show_debug()) {
 		 	log_report_disabled = true;
 		 	return;
 		 }
@@ -133,19 +133,19 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 	
 	switch (log_class) {
 	case LOG_SIP:
-		if (!sys_config->log_show_sip) {
+		if (!sys_config->get_log_show_sip()) {
 			log_report_disabled = true;
 			return;
 		}
 		break;
 	case LOG_STUN:
-		if (!sys_config->log_show_stun) {
+		if (!sys_config->get_log_show_stun()) {
 			log_report_disabled = true;
 			return;
 		}
 		break;
 	case LOG_MEMORY:
-		if (!sys_config->log_show_memory) {
+		if (!sys_config->get_log_show_memory()) {
 			log_report_disabled = true;
 			return;
 		}
@@ -243,7 +243,7 @@ void t_log::write_footer(void) {
 	}
 
 	bool log_zapped = false;
-	if (log_stream->tellp() >= sys_config->log_max_size * 1000000) {
+	if (log_stream->tellp() >= sys_config->get_log_max_size() * 1000000) {
 		log_stream->close();
 
 		if (!move_current_to_old()) {

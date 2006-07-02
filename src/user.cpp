@@ -69,6 +69,8 @@ extern t_phone		*phone;
 #define FLD_SPEEX_DTX			"speex_dtx"
 #define FLD_SPEEX_PENH			"speex_penh"
 #define FLD_SPEEX_COMPLEXITY		"speex_complexity"
+#define FLD_ILBC_PAYLOAD_TYPE		"ilbc_payload_type"
+#define FLD_ILBC_MODE			"ilbc_mode"
 #define FLD_DTMF_TRANSPORT		"dtmf_transport"
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
 #define FLD_DTMF_DURATION		"dtmf_duration"
@@ -81,6 +83,7 @@ extern t_phone		*phone;
 #define FLD_ALLOW_MISSING_CONTACT_REG	"allow_missing_contact_reg"	
 #define FLD_REGISTRATION_TIME_IN_CONTACT	"registration_time_in_contact"
 #define FLD_COMPACT_HEADERS		"compact_headers"
+#define FLD_ENCODE_MULTI_VALUES_AS_LIST	"encode_multi_values_as_list"
 #define FLD_USE_DOMAIN_IN_CONTACT	"use_domain_in_contact"
 #define FLD_ALLOW_SDP_CHANGE		"allow_sdp_change"
 #define FLD_ALLOW_REDIRECTION		"allow_redirection"
@@ -113,6 +116,16 @@ extern t_phone		*phone;
 
 // Incoming call script
 #define FLD_SCRIPT_INCOMING_CALL	"script_incoming_call"
+#define FLD_SCRIPT_IN_CALL_ANSWERED	"script_in_call_answered"
+#define FLD_SCRIPT_IN_CALL_FAILED	"script_in_call_failed"
+#define FLD_SCRIPT_OUTGOING_CALL	"script_outgoing_call"
+#define FLD_SCRIPT_OUT_CALL_ANSWERED	"script_out_call_answered"
+#define FLD_SCRIPT_OUT_CALL_FAILED	"script_out_call_failed"
+#define FLD_SCRIPT_LOCAL_RELEASE	"script_local_release"
+#define FLD_SCRIPT_REMOTE_RELEASE	"script_remote_release"
+
+// Number conversion
+#define FLD_NUMBER_CONVERSION		"number_conversion"
 
 /////////////////////////
 // class t_user
@@ -195,6 +208,34 @@ string t_user::expand_filename(const string &filename) {
 	return f;
 }
 
+bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
+	list<string> l = split_escaped(value, ',');
+	
+	if (l.size() != 2) {
+		// Invalid conversion rule
+		return false;
+	}
+	
+	try {
+		c.re.assign(l.front());
+		c.fmt = l.back();
+	} catch (boost::bad_expression) {
+		// Invalid regular expression
+		log_file->write_header("t_user::parse_num_conversion", 
+				LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("Bad number conversion:\n");
+		log_file->write_raw(l.front());
+		log_file->write_raw(" --> ");
+		log_file->write_raw(l.back());
+		log_file->write_endl();
+		log_file->write_footer();
+		
+		return false;
+	}
+	
+	return true;
+}
+
 
 ////////////////////
 // Public
@@ -211,6 +252,9 @@ t_user::t_user() {
 	codecs.push_back(CODEC_SPEEX_WB);
 	codecs.push_back(CODEC_SPEEX_NB);
 #endif
+#ifdef HAVE_ILBC
+	codecs.push_back(CODEC_ILBC);
+#endif
 	codecs.push_back(CODEC_G711_ALAW);
 	codecs.push_back(CODEC_G711_ULAW);
 	codecs.push_back(CODEC_GSM);
@@ -222,6 +266,7 @@ t_user::t_user() {
 	check_max_forwards = false;
 	allow_missing_contact_reg = true;
 	compact_headers = false;
+	encode_multi_values_as_list = true;
 	registration_time_in_contact = true;
 	use_domain_in_contact = false;
 	allow_sdp_change = false;
@@ -241,6 +286,8 @@ t_user::t_user() {
 	speex_dtx = false;
 	speex_penh = true;
 	speex_complexity = 2;
+	ilbc_payload_type = 96;
+	ilbc_mode = 30;
 	dtmf_transport = DTMF_AUTO;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
@@ -258,6 +305,94 @@ t_user::t_user() {
 	ringtone_file.clear();
 	ringback_file.clear();
 	script_incoming_call.clear();
+	script_in_call_answered.clear();
+	script_in_call_failed.clear();
+	script_outgoing_call.clear();
+	script_out_call_answered.clear();
+	script_out_call_failed.clear();
+	script_local_release.clear();
+	script_remote_release.clear();
+	number_conversions.clear();
+}
+
+t_user::t_user(const t_user &u) {
+	u.mtx_user.lock();
+
+	config_filename = u.config_filename;
+	name = u.name;
+	domain = u.domain;
+	display = u.display;	
+	organization = u.organization;
+	auth_realm = u.auth_realm;
+	auth_name = u.auth_name;
+	auth_pass = u.auth_pass;
+	use_outbound_proxy = u.use_outbound_proxy;
+	outbound_proxy = u.outbound_proxy;
+	all_requests_to_proxy = u.all_requests_to_proxy;
+	non_resolvable_to_proxy = u.non_resolvable_to_proxy;
+	use_registrar = u.use_registrar;
+	registrar = u.registrar;
+	registration_time = u.registration_time;
+	register_at_startup = u.register_at_startup;
+	codecs = u.codecs;
+	ptime = u.ptime;
+	speex_nb_payload_type = u.speex_nb_payload_type;
+	speex_wb_payload_type = u.speex_wb_payload_type;
+	speex_uwb_payload_type = u.speex_uwb_payload_type;
+	speex_bit_rate_type = u.speex_bit_rate_type;
+	speex_abr_nb = u.speex_abr_nb;
+	speex_abr_wb = u.speex_abr_wb;
+	speex_vad = u.speex_vad;
+	speex_dtx = u.speex_dtx;
+	speex_penh = u.speex_penh;
+	speex_complexity = u.speex_complexity;
+	ilbc_payload_type = u.ilbc_payload_type;
+	ilbc_mode = u.ilbc_mode;
+	dtmf_transport = u.dtmf_transport;
+	dtmf_payload_type = u.dtmf_payload_type;
+	dtmf_duration = u.dtmf_duration;
+	dtmf_pause = u.dtmf_pause;
+	dtmf_volume = u.dtmf_volume;
+	hold_variant = u.hold_variant;
+	check_max_forwards = u.check_max_forwards;
+	allow_missing_contact_reg = u.allow_missing_contact_reg;
+	registration_time_in_contact = u.registration_time_in_contact;
+	compact_headers = u.compact_headers;
+	encode_multi_values_as_list = u.encode_multi_values_as_list;
+	use_domain_in_contact = u.use_domain_in_contact;
+	allow_sdp_change = u.allow_sdp_change;
+	allow_redirection = u.allow_redirection;
+	ask_user_to_redirect = u.ask_user_to_redirect;
+	max_redirections = u.max_redirections;
+	ext_100rel = u.ext_100rel;
+	referee_hold = u.referee_hold;
+	referrer_hold = u.referrer_hold;
+	allow_refer = u.allow_refer;
+	ask_user_to_refer = u.ask_user_to_refer;
+	auto_refresh_refer_sub = u.auto_refresh_refer_sub;
+	use_nat_public_ip = u.use_nat_public_ip;
+	nat_public_ip = u.nat_public_ip;
+	use_stun = u.use_stun;
+	stun_server = u.stun_server;
+	timer_noanswer = u.timer_noanswer;
+	timer_nat_keepalive = u.timer_nat_keepalive; 
+	display_useronly_phone = u.display_useronly_phone;
+	numerical_user_is_phone = u.numerical_user_is_phone;
+	remove_special_phone_symbols = u.remove_special_phone_symbols;
+	special_phone_symbols = u.special_phone_symbols;
+	ringtone_file = u.ringtone_file;
+	ringback_file = u.ringback_file;
+	script_incoming_call = u.script_incoming_call;
+	script_in_call_answered = u.script_in_call_answered;
+	script_in_call_failed = u.script_in_call_failed;
+	script_outgoing_call = u.script_outgoing_call;
+	script_out_call_answered = u.script_out_call_answered;
+	script_out_call_failed = u.script_out_call_failed;
+	script_local_release = u.script_local_release;
+	script_remote_release = u.script_remote_release;
+	number_conversions = u.number_conversions;
+	
+	u.mtx_user.unlock();
 }
 
 t_user *t_user::copy(void) const {
@@ -266,13 +401,1027 @@ t_user *t_user::copy(void) const {
 	return u;
 }
 
+string t_user::get_name(void) const {
+	string result;
+	mtx_user.lock();
+	result = name;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_domain(void) const {
+	string result;
+	mtx_user.lock();
+	result = domain;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_display(void) const {
+	string result;
+	mtx_user.lock();
+	result = display;
+	mtx_user.unlock();
+	return result;
+}
+	
+string t_user::get_organization(void) const {
+	string result;
+	mtx_user.lock();
+	result = organization;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_auth_realm(void) const {
+	string result;
+	mtx_user.lock();
+	result = auth_realm;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_auth_name(void) const {
+	string result;
+	mtx_user.lock();
+	result = auth_name;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_auth_pass(void) const {
+	string result;
+	mtx_user.lock();
+	result = auth_pass;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_use_outbound_proxy(void) const {
+	bool result;
+	mtx_user.lock();
+	result = use_outbound_proxy;
+	mtx_user.unlock();
+	return result;
+}
+
+t_url t_user::get_outbound_proxy(void) const {
+	t_url result;
+	mtx_user.lock();
+	result = outbound_proxy;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_all_requests_to_proxy(void) const {
+	bool result;
+	mtx_user.lock();
+	result = all_requests_to_proxy;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_non_resolvable_to_proxy(void) const {
+	bool result;
+	mtx_user.lock();
+	result = non_resolvable_to_proxy;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_use_registrar(void) const {
+	bool result;
+	mtx_user.lock();
+	result = use_registrar;
+	mtx_user.unlock();
+	return result;
+}
+
+t_url t_user::get_registrar(void) const {
+	t_url result;
+	mtx_user.lock();
+	result = registrar;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned long t_user::get_registration_time(void) const {
+	unsigned long result;
+	mtx_user.lock();
+	result = registration_time;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_register_at_startup(void) const {
+	bool result;
+	mtx_user.lock();
+	result = register_at_startup;
+	mtx_user.unlock();
+	return result;
+}
+
+list<t_audio_codec> t_user::get_codecs(void) const {
+	list<t_audio_codec> result;
+	mtx_user.lock();
+	result = codecs;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_ptime(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = ptime;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_speex_nb_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_nb_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_speex_wb_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_wb_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_speex_uwb_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_uwb_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+t_bit_rate_type t_user::get_speex_bit_rate_type(void) const {
+	t_bit_rate_type result;
+	mtx_user.lock();
+	result = speex_bit_rate_type;
+	mtx_user.unlock();
+	return result;
+}
+
+int t_user::get_speex_abr_nb(void) const {
+	int result;
+	mtx_user.lock();
+	result = speex_abr_nb;
+	mtx_user.unlock();
+	return result;
+}
+
+int t_user::get_speex_abr_wb(void) const {
+	int result;
+	mtx_user.lock();
+	result = speex_abr_wb;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_vad(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_vad;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_dtx(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_dtx;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_penh(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_penh;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_speex_complexity(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_complexity;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_ilbc_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = ilbc_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_ilbc_mode(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = ilbc_mode;
+	mtx_user.unlock();
+	return result;
+}
+
+t_dtmf_transport t_user::get_dtmf_transport(void) const {
+	t_dtmf_transport result;
+	mtx_user.lock();
+	result = dtmf_transport;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_dtmf_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = dtmf_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_dtmf_duration(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = dtmf_duration;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_dtmf_pause(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = dtmf_pause;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_dtmf_volume(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = dtmf_volume;
+	mtx_user.unlock();
+	return result;
+}
+
+t_hold_variant t_user::get_hold_variant(void) const {
+	t_hold_variant result;
+	mtx_user.lock();
+	result = hold_variant;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_check_max_forwards(void) const {
+	bool result;
+	mtx_user.lock();
+	result = check_max_forwards;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_allow_missing_contact_reg(void) const {
+	bool result;
+	mtx_user.lock();
+	result = allow_missing_contact_reg;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_registration_time_in_contact(void) const {
+	bool result;
+	mtx_user.lock();
+	result = registration_time_in_contact;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_compact_headers(void) const {
+	bool result;
+	mtx_user.lock();
+	result = compact_headers;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_encode_multi_values_as_list(void) const {
+	bool result;
+	mtx_user.lock();
+	result = encode_multi_values_as_list;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_use_domain_in_contact(void) const {
+	bool result;
+	mtx_user.lock();
+	result = use_domain_in_contact;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_allow_sdp_change(void) const {
+	bool result;
+	mtx_user.lock();
+	result = allow_sdp_change;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_allow_redirection(void) const {
+	bool result;
+	mtx_user.lock();
+	result = allow_redirection;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_ask_user_to_redirect(void) const {
+	bool result;
+	mtx_user.lock();
+	result = ask_user_to_redirect;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_max_redirections(void) const {
+	bool result;
+	mtx_user.lock();
+	result = max_redirections;
+	mtx_user.unlock();
+	return result;
+}
+
+t_ext_support t_user::get_ext_100rel(void) const {
+	t_ext_support result;
+	mtx_user.lock();
+	result = ext_100rel;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_referee_hold(void) const {
+	bool result;
+	mtx_user.lock();
+	result = referee_hold;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_referrer_hold(void) const {
+	bool result;
+	mtx_user.lock();
+	result = referrer_hold;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_allow_refer(void) const {
+	bool result;
+	mtx_user.lock();
+	result = allow_refer;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_ask_user_to_refer(void) const {
+	bool result;
+	mtx_user.lock();
+	result = ask_user_to_refer;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_auto_refresh_refer_sub(void) const {
+	bool result;
+	mtx_user.lock();
+	result = auto_refresh_refer_sub;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_use_nat_public_ip(void) const {
+	bool result;
+	mtx_user.lock();
+	result = use_nat_public_ip;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_nat_public_ip(void) const {
+	string result;
+	mtx_user.lock();
+	result = nat_public_ip;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_use_stun(void) const {
+	bool result;
+	mtx_user.lock();
+	result = use_stun;
+	mtx_user.unlock();
+	return result;
+}
+
+t_url t_user::get_stun_server(void) const {
+	t_url result;
+	mtx_user.lock();
+	result = stun_server;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_timer_noanswer(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = timer_noanswer;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned long t_user::get_timer_nat_keepalive(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = timer_nat_keepalive;
+	mtx_user.unlock();
+	return result;
+}
+ 
+bool t_user::get_display_useronly_phone(void) const {
+	bool result;
+	mtx_user.lock();
+	result = display_useronly_phone;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_numerical_user_is_phone(void) const {
+	bool result;
+	mtx_user.lock();
+	result = numerical_user_is_phone;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_remove_special_phone_symbols(void) const {
+	bool result;
+	mtx_user.lock();
+	result = remove_special_phone_symbols;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_special_phone_symbols(void) const {
+	string result;
+	mtx_user.lock();
+	result = special_phone_symbols;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_ringtone_file(void) const {
+	string result;
+	mtx_user.lock();
+	result = ringtone_file;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_ringback_file(void) const {
+	string result;
+	mtx_user.lock();
+	result = ringback_file;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_incoming_call(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_incoming_call;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_in_call_answered(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_in_call_answered;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_in_call_failed(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_in_call_failed;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_outgoing_call(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_outgoing_call;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_out_call_answered(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_out_call_answered;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_out_call_failed(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_out_call_failed;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_local_release(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_local_release;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_script_remote_release(void) const {
+	string result;
+	mtx_user.lock();
+	result = script_remote_release;
+	mtx_user.unlock();
+	return result;
+}
+
+list<t_number_conversion> t_user::get_number_conversions(void) const {
+	list<t_number_conversion> result;
+	mtx_user.lock();
+	result = number_conversions;
+	mtx_user.unlock();
+	return result;	
+}
+
+
+	
+void t_user::set_name(const string &_name) {
+	mtx_user.lock();
+	name = _name;
+	mtx_user.unlock();
+}
+
+void t_user::set_domain(const string &_domain) {
+	mtx_user.lock();
+	domain = _domain;
+	mtx_user.unlock();
+}
+
+void t_user::set_display(const string &_display) {	
+	mtx_user.lock();
+	display = _display;
+	mtx_user.unlock();
+}
+
+void t_user::set_organization(const string &_organization) {
+	mtx_user.lock();
+	organization = _organization;
+	mtx_user.unlock();
+}
+
+void t_user::set_auth_realm(const string &realm) {
+	mtx_user.lock();
+	auth_realm = realm;
+	mtx_user.unlock();
+}
+
+void t_user::set_auth_name(const string &name) {
+	mtx_user.lock();
+	auth_name = name;
+	mtx_user.unlock();
+}
+
+void t_user::set_auth_pass(const string &pass) {
+	mtx_user.lock();
+	auth_pass = pass;
+	mtx_user.unlock();
+}
+
+void t_user::set_use_outbound_proxy(bool b) {
+	mtx_user.lock();
+	use_outbound_proxy = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_outbound_proxy(const t_url &url) {
+	mtx_user.lock();
+	outbound_proxy = url;
+	mtx_user.unlock();
+}
+
+void t_user::set_all_requests_to_proxy(bool b) {
+	mtx_user.lock();
+	all_requests_to_proxy = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_non_resolvable_to_proxy(bool b) {
+	mtx_user.lock();
+	non_resolvable_to_proxy = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_use_registrar(bool b) {
+	mtx_user.lock();
+	use_registrar = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_registrar(const t_url &url) {
+	mtx_user.lock();
+	registrar = url;
+	mtx_user.unlock();
+}
+
+void t_user::set_registration_time(const unsigned long time) {
+	mtx_user.lock();
+	registration_time = time;
+	mtx_user.unlock();
+}
+
+void t_user::set_register_at_startup(bool b) {
+	mtx_user.lock();
+	register_at_startup = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_codecs(const list<t_audio_codec> &_codecs) {
+	mtx_user.lock();
+	codecs = _codecs;
+	mtx_user.unlock();
+}
+
+void t_user::set_ptime(unsigned short _ptime) {
+	mtx_user.lock();
+	ptime = _ptime;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_nb_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	speex_nb_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_wb_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	speex_wb_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_uwb_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	speex_uwb_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_bit_rate_type(t_bit_rate_type bit_rate_type) {
+	mtx_user.lock();
+	speex_bit_rate_type = bit_rate_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_abr_nb(int abr) {
+	mtx_user.lock();
+	speex_abr_nb = abr;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_abr_wb(int abr) {
+	mtx_user.lock();
+	speex_abr_wb = abr;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_vad(bool b) {
+	mtx_user.lock();
+	speex_vad = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dtx(bool b) {
+	mtx_user.lock();
+	speex_dtx = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_penh(bool b) {
+	mtx_user.lock();
+	speex_penh = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_complexity(unsigned short complexity) {
+	mtx_user.lock();
+	speex_complexity = complexity;
+	mtx_user.unlock();
+}
+
+void t_user::set_ilbc_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	ilbc_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_ilbc_mode(unsigned short mode) {
+	mtx_user.lock();
+	ilbc_mode = mode;
+	mtx_user.unlock();
+}
+
+void t_user::set_dtmf_transport(t_dtmf_transport _dtmf_transport) {
+	mtx_user.lock();
+	dtmf_transport = _dtmf_transport;
+	mtx_user.unlock();
+}
+
+void t_user::set_dtmf_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	dtmf_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_dtmf_duration(unsigned short duration) {
+	mtx_user.lock();
+	dtmf_duration = duration;
+	mtx_user.unlock();
+}
+
+void t_user::set_dtmf_pause(unsigned short pause) {
+	mtx_user.lock();
+	dtmf_pause = pause;
+	mtx_user.unlock();
+}
+
+void t_user::set_dtmf_volume(unsigned short volume) {
+	mtx_user.lock();
+	dtmf_volume = volume;
+	mtx_user.unlock();
+}
+
+void t_user::set_hold_variant(t_hold_variant _hold_variant) {
+	mtx_user.lock();
+	hold_variant = _hold_variant;
+	mtx_user.unlock();
+}
+
+void t_user::set_check_max_forwards(bool b) {
+	mtx_user.lock();
+	check_max_forwards = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_allow_missing_contact_reg(bool b) {
+	mtx_user.lock();
+	allow_missing_contact_reg = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_registration_time_in_contact(bool b) {
+	mtx_user.lock();
+	registration_time_in_contact = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_compact_headers(bool b) {
+	mtx_user.lock();
+	compact_headers = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_encode_multi_values_as_list(bool b) {
+	mtx_user.lock();
+	encode_multi_values_as_list = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_use_domain_in_contact(bool b) {
+	mtx_user.lock();
+	use_domain_in_contact = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_allow_sdp_change(bool b) {
+	mtx_user.lock();
+	allow_sdp_change = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_allow_redirection(bool b) {
+	mtx_user.lock();
+	allow_redirection = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_ask_user_to_redirect(bool b) {
+	mtx_user.lock();
+	ask_user_to_redirect = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_max_redirections(unsigned short _max_redirections) {
+	mtx_user.lock();
+	max_redirections = _max_redirections;
+	mtx_user.unlock();
+}
+
+void t_user::set_ext_100rel(t_ext_support ext_support) {
+	mtx_user.lock();
+	ext_100rel = ext_support;
+	mtx_user.unlock();
+}
+
+void t_user::set_referee_hold(bool b) {
+	mtx_user.lock();
+	referee_hold = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_referrer_hold(bool b) {
+	mtx_user.lock();
+	referrer_hold = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_allow_refer(bool b) {
+	mtx_user.lock();
+	allow_refer = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_ask_user_to_refer(bool b) {
+	mtx_user.lock();
+	ask_user_to_refer = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_auto_refresh_refer_sub(bool b) {
+	mtx_user.lock();
+	auto_refresh_refer_sub = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_use_nat_public_ip(bool b) {
+	mtx_user.lock();
+	use_nat_public_ip = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_nat_public_ip(const string &public_ip) {
+	mtx_user.lock();
+	nat_public_ip = public_ip;
+	mtx_user.unlock();
+}
+
+void t_user::set_use_stun(bool b) {
+	mtx_user.lock();
+	use_stun = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_stun_server(const t_url &url) {
+	mtx_user.lock();
+	stun_server = url;
+	mtx_user.unlock();
+}
+
+void t_user::set_timer_noanswer(unsigned short timer) {
+	mtx_user.lock();
+	timer_noanswer = timer;
+	mtx_user.unlock();
+}
+
+void t_user::set_timer_nat_keepalive(unsigned short timer) { 
+	mtx_user.lock();
+	timer_nat_keepalive = timer;
+	mtx_user.unlock();
+}
+
+void t_user::set_display_useronly_phone(bool b) {
+	mtx_user.lock();
+	display_useronly_phone = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_numerical_user_is_phone(bool b) {
+	mtx_user.lock();
+	numerical_user_is_phone = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_remove_special_phone_symbols(bool b) {
+	mtx_user.lock();
+	remove_special_phone_symbols = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_special_phone_symbols(const string &symbols) {
+	mtx_user.lock();
+	special_phone_symbols = symbols;
+	mtx_user.unlock();
+}
+
+void t_user::set_ringtone_file(const string &file) {
+	mtx_user.lock();
+	ringtone_file = file;
+	mtx_user.unlock();
+}
+
+void t_user::set_ringback_file(const string &file) {
+	mtx_user.lock();
+	ringback_file = file;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_incoming_call(const string &script) {
+	mtx_user.lock();
+	script_incoming_call = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_in_call_answered(const string &script) {
+	mtx_user.lock();
+	script_in_call_answered = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_in_call_failed(const string &script) {
+	mtx_user.lock();
+	script_in_call_failed = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_outgoing_call(const string &script) {
+	mtx_user.lock();
+	script_outgoing_call = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_out_call_answered(const string &script) {
+	mtx_user.lock();
+	script_out_call_answered = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_out_call_failed(const string &script) {
+	mtx_user.lock();
+	script_out_call_failed = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_local_release(const string &script) {
+	mtx_user.lock();
+	script_local_release = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_script_remote_release(const string &script) {
+	mtx_user.lock();
+	script_remote_release = script;
+	mtx_user.unlock();
+}
+
+void t_user::set_number_conversions(const list<t_number_conversion> &l) {
+	mtx_user.lock();
+	number_conversions = l;
+	mtx_user.unlock();
+}
+
 bool t_user::read_config(const string &filename, string &error_msg) {
 	string f;
+	string msg;
+	
+	mtx_user.lock();
 	
 	if (filename.size() == 0) {
 		error_msg = "Cannot read user profile: missing file name.";
 		log_file->write_report(error_msg, "t_user::read_config",
 			LOG_NORMAL, LOG_CRITICAL);
+		mtx_user.unlock();
 		return false;
 	}
 
@@ -285,6 +1434,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		error_msg += f;
 		log_file->write_report(error_msg, "t_user::read_config",
 			LOG_NORMAL, LOG_CRITICAL);
+		mtx_user.unlock();
 		return false;
 	}
 
@@ -304,6 +1454,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			error_msg += f;
 			log_file->write_report(error_msg, "t_user::read_config",
 				LOG_NORMAL, LOG_CRITICAL);
+			mtx_user.unlock();
 			return false;
 		}
 
@@ -323,6 +1474,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			error_msg += line;
 			log_file->write_report(error_msg, "t_user::read_config",
 				LOG_NORMAL, LOG_CRITICAL);
+			mtx_user.unlock();
 			return false;
 		}
 
@@ -358,6 +1510,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;
 			}
 			use_registrar = true;
@@ -377,6 +1530,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;
 			}
 			use_outbound_proxy = true;
@@ -411,16 +1565,19 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				} else if (codec == "speex-uwb") {
 					codecs.push_back(CODEC_SPEEX_UWB);
 #endif
+#ifdef HAVE_ILBC
+				} else if (codec == "ilbc") {
+					codecs.push_back(CODEC_ILBC);
+#endif
 				} else {
-					error_msg = "Syntax error in file ";
-					error_msg += f;
-					error_msg += "\n";
-					error_msg += "Invalid codec: ";
-					error_msg += value;
-					log_file->write_report(error_msg,
+					msg = "Syntax error in file ";
+					msg += f;
+					msg += "\n";
+					msg += "Invalid codec: ";
+					msg += value;
+					log_file->write_report(msg,
 						"t_user::read_config",
-						LOG_NORMAL, LOG_CRITICAL);
-					return false;
+						LOG_NORMAL, LOG_WARNING);
 				}
 			}
 		} else if (parameter == FLD_PTIME) {
@@ -438,6 +1595,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;
 			}
 		} else if (parameter == FLD_CHECK_MAX_FORWARDS) {
@@ -482,6 +1640,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;
 			}
 			use_stun = true;
@@ -499,10 +1658,13 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;
 			}
 		} else if (parameter == FLD_COMPACT_HEADERS) {
 			compact_headers = yesno2bool(value);
+		} else if (parameter == FLD_ENCODE_MULTI_VALUES_AS_LIST) {
+			encode_multi_values_as_list = yesno2bool(value);
 		} else if (parameter == FLD_SPEEX_NB_PAYLOAD_TYPE) {
 			speex_nb_payload_type = atoi(value.c_str());
 		} else if (parameter == FLD_SPEEX_WB_PAYLOAD_TYPE) {
@@ -519,6 +1681,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;		
 			}
 		} else if (parameter == FLD_SPEEX_ABR_NB) {
@@ -541,8 +1704,13 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
 				return false;	
 			}
+		} else if (parameter == FLD_ILBC_PAYLOAD_TYPE) {
+			ilbc_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_ILBC_MODE) {
+			ilbc_mode = atoi(value.c_str());
 		} else if (parameter == FLD_DTMF_TRANSPORT) {
 			dtmf_transport = str2dtmf_transport(value);	
 		} else if (parameter == FLD_DTMF_PAYLOAD_TYPE) {
@@ -567,6 +1735,25 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			ringback_file = value;
 		} else if (parameter == FLD_SCRIPT_INCOMING_CALL) {
 			script_incoming_call = value;
+		} else if (parameter == FLD_SCRIPT_IN_CALL_ANSWERED) {
+			script_in_call_answered = value;
+		} else if (parameter == FLD_SCRIPT_IN_CALL_FAILED) {
+			script_in_call_failed = value;
+		} else if (parameter == FLD_SCRIPT_OUTGOING_CALL) {
+			script_outgoing_call = value;
+		} else if (parameter == FLD_SCRIPT_OUT_CALL_ANSWERED) {
+			script_out_call_answered = value;
+		} else if (parameter == FLD_SCRIPT_OUT_CALL_FAILED) {
+			script_out_call_failed = value;
+		} else if (parameter == FLD_SCRIPT_LOCAL_RELEASE) {
+			script_local_release = value;
+		} else if (parameter == FLD_SCRIPT_REMOTE_RELEASE) {
+			script_remote_release = value;
+		} else if (parameter == FLD_NUMBER_CONVERSION) {
+			t_number_conversion c;
+			if (parse_num_conversion(value, c)) {
+				number_conversions.push_back(c);
+			}
 		} else {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
@@ -581,18 +1768,23 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 	// Set parser options
 	t_parser::check_max_forwards = check_max_forwards;
 	t_parser::compact_headers = compact_headers;
+	t_parser::multi_values_as_list = encode_multi_values_as_list;
 
+	mtx_user.unlock();
 	return true;
 }
 
 bool t_user::write_config(const string &filename, string &error_msg) {
 	struct stat stat_buf;
 	string f;
+	
+	mtx_user.lock();
 
 	if (filename.size() == 0) {
 		error_msg = "Cannot write user profile: missing file name.";
 		log_file->write_report(error_msg, "t_user::write_config",
 			LOG_NORMAL, LOG_CRITICAL);
+		mtx_user.unlock();
 		return false;
 	}
 
@@ -613,6 +1805,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 			error_msg += err;
 			log_file->write_report(error_msg, "t_user::write_config",
 				LOG_NORMAL, LOG_CRITICAL);
+			mtx_user.unlock();
 			return false;
 		}
 	}
@@ -623,6 +1816,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		error_msg += f;
 		log_file->write_report(error_msg, "t_user::write_config",
 			LOG_NORMAL, LOG_CRITICAL);
+		mtx_user.unlock();
 		return false;
 	}
 
@@ -693,6 +1887,9 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		case CODEC_SPEEX_UWB:
 			config << "speex-uwb";
 			break;
+		case CODEC_ILBC:
+			config << "ilbc";
+			break;
 		default:
 			assert(false);
 		}
@@ -710,6 +1907,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_SPEEX_DTX << '=' << bool2yesno(speex_dtx) << endl;
 	config << FLD_SPEEX_PENH << '=' << bool2yesno(speex_penh) << endl;
 	config << FLD_SPEEX_COMPLEXITY << '=' << speex_complexity << endl;
+	config << FLD_ILBC_PAYLOAD_TYPE << '=' << ilbc_payload_type << endl;
+	config << FLD_ILBC_MODE << '=' << ilbc_mode << endl;
 	config << FLD_DTMF_TRANSPORT << '=' << dtmf_transport2str(dtmf_transport) << endl;
 	config << FLD_DTMF_PAYLOAD_TYPE << '=' << dtmf_payload_type << endl;
 	config << FLD_DTMF_DURATION << '=' << dtmf_duration << endl;
@@ -738,6 +1937,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_REGISTRATION_TIME_IN_CONTACT << '=';
 	config << bool2yesno(registration_time_in_contact) << endl;
 	config << FLD_COMPACT_HEADERS << '=' << bool2yesno(compact_headers) << endl;
+	config << FLD_ENCODE_MULTI_VALUES_AS_LIST << '=';
+	config << bool2yesno(encode_multi_values_as_list) << endl;
 	config << FLD_USE_DOMAIN_IN_CONTACT << '=';
 	config << bool2yesno(use_domain_in_contact) << endl;
 	config << FLD_ALLOW_SDP_CHANGE << '=' << bool2yesno(allow_sdp_change) << endl;
@@ -797,6 +1998,27 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	// Write script settings
 	config << "# SCRIPTS\n";
 	config << FLD_SCRIPT_INCOMING_CALL << '=' << script_incoming_call << endl;
+	config << FLD_SCRIPT_IN_CALL_ANSWERED << '=' << script_in_call_answered << endl;
+	config << FLD_SCRIPT_IN_CALL_FAILED << '=' << script_in_call_failed << endl;
+	config << FLD_SCRIPT_OUTGOING_CALL << '=' << script_outgoing_call << endl;
+	config << FLD_SCRIPT_OUT_CALL_ANSWERED << '=' << script_out_call_answered << endl;
+	config << FLD_SCRIPT_OUT_CALL_FAILED << '=' << script_out_call_failed << endl;
+	config << FLD_SCRIPT_LOCAL_RELEASE << '=' << script_local_release << endl;
+	config << FLD_SCRIPT_REMOTE_RELEASE << '=' << script_remote_release << endl;
+	config << endl;
+	
+	// Write number conversion rules
+	config << "# Number conversion\n";
+
+	for (list<t_number_conversion>::iterator i = number_conversions.begin();
+	     i != number_conversions.end(); i++)
+	{
+		config << FLD_NUMBER_CONVERSION << '=';
+		config << escape(i->re.str(), ',');
+		config << ',';
+		config << escape(i->fmt, ',');
+		config << endl;
+	}
 
 	// Check if writing succeeded
 	if (!config.good()) {
@@ -808,36 +2030,64 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		error_msg += f;
 		log_file->write_report(error_msg, "t_user::write_config",
 			LOG_NORMAL, LOG_CRITICAL);
+		mtx_user.unlock();
 		return false;
 	}
 
 	// Set parser options
 	t_parser::check_max_forwards = check_max_forwards;
 	t_parser::compact_headers = compact_headers;
+	t_parser::multi_values_as_list = encode_multi_values_as_list;
 
+	mtx_user.unlock();
 	return true;
 }
 
 string t_user::get_filename(void) const {
-	return config_filename;
+	string result;
+	
+	mtx_user.lock();
+	result = config_filename;
+	mtx_user.unlock();
+	
+	return result;
 }
 
 void t_user::set_config(string filename) {
+	mtx_user.lock();
 	config_filename = filename;
+	mtx_user.unlock();
 }
 
 string t_user::get_profile_name(void) const {
-	int pos_ext = config_filename.find(USER_FILE_EXT);
+	string result;
+	
+	mtx_user.lock();
+	
+	string::size_type pos_ext = config_filename.find(USER_FILE_EXT);
 
-	if (pos_ext == string::npos) return config_filename;
-
-	return config_filename.substr(0, pos_ext);
+	if (pos_ext == string::npos) {
+		result = config_filename;
+	} else {
+		result = config_filename.substr(0, pos_ext);
+	}
+	
+	mtx_user.unlock();
+	
+	return result;
 }
 
 string t_user::get_contact_name(void) const {
+	mtx_user.lock();
+	
+	string s = name;
+	
 	// Some broken proxies expect the contact name to be the same
 	// as the SIP user name.
-	if (!use_domain_in_contact) return name;
+	if (!use_domain_in_contact) {
+		mtx_user.unlock();
+		return s;
+	}
 	
 	// Create a unique contact name from the user name and domain:
 	// 
@@ -849,7 +2099,6 @@ string t_user::get_contact_name(void) const {
 	//   michel@domainA
 	//   michel@domainB
 
-	string s = name;
 	s += '_';
 	
 	// Cut of port and/or uri-parameters if present in domain
@@ -864,10 +2113,12 @@ string t_user::get_contact_name(void) const {
 		s += replace_char(domain, '.', '_');
 	}
 
+	mtx_user.unlock();
 	return s;
 }
 
 string t_user::get_display_uri(void) const {
+	mtx_user.lock();
 	string s;
 	
 	s = display;
@@ -880,15 +2131,21 @@ string t_user::get_display_uri(void) const {
 	s += domain;
 	s += '>';
 	
+	mtx_user.unlock();
 	return s;
 }
 
 bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 	bool all_supported = true;
+	
+	mtx_user.lock();
 
 	unsupported.clear();
-	if (!r->hdr_require.is_populated()) return true;
-
+	if (!r->hdr_require.is_populated()) {
+		mtx_user.unlock();
+		return true;
+	}
+	
 	for (list<string>::iterator i = r->hdr_require.features.begin();
 	     i != r->hdr_require.features.end(); i++)
 	{
@@ -901,11 +2158,14 @@ bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 		all_supported = false;
 	}
 
+	mtx_user.unlock();
 	return all_supported;
 }
 
 string t_user::create_user_contact(void) {
 	string s;
+	
+	mtx_user.lock();
 
 	s = USER_SCHEME;
 	s += ':';
@@ -926,11 +2186,14 @@ string t_user::create_user_contact(void) {
 		s += ";user=phone";
 	}
 
+	mtx_user.unlock();
 	return s;
 }
 
 string t_user::create_user_uri(void) {
 	string s;
+	
+	mtx_user.lock();
 
 	s = USER_SCHEME;
 	s += ':';
@@ -946,5 +2209,52 @@ string t_user::create_user_uri(void) {
 		s += ";user=phone";
 	}
 
+	mtx_user.unlock();
 	return s;
+}
+
+string t_user::convert_number(const string &number, const list<t_number_conversion> &l) const {
+	for (list<t_number_conversion>::const_iterator i = l.begin();
+	     i != l.end(); i++)
+	{
+		boost::smatch m;
+		
+		try {
+			if (boost::regex_match(number, m, i->re)) {
+				string result = m.format(i->fmt);
+			
+				log_file->write_header("t_user::convert_number", 
+					LOG_NORMAL, LOG_DEBUG);
+				log_file->write_raw("Apply conversion: ");
+				log_file->write_raw(i->str());
+				log_file->write_endl();
+				log_file->write_raw(number);
+				log_file->write_raw(" converted to ");
+				log_file->write_raw(result);
+				log_file->write_endl();
+				log_file->write_footer();
+					
+				return result;
+			}
+		} catch (std::runtime_error) {
+			log_file->write_header("t_user::convert_number", 
+					LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Number conversion rule too complex:\n");
+			log_file->write_raw("Number: ");
+			log_file->write_raw(number);
+			log_file->write_endl();
+			log_file->write_raw(i->str());
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			return number;
+		}
+	}
+	
+	// No match found
+	return number;
+}
+
+string t_user::convert_number(const string &number) const {
+	return convert_number(number, number_conversions);
 }

@@ -52,7 +52,9 @@ t_audio_session *t_audio_session::get_peer_3way(void) const {
 }
 
 bool t_audio_session::open_dsp(void) {
-	if (sys_config->equal_audio_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+	if (sys_config->equal_audio_dev(sys_config->get_dev_speaker(), 
+			sys_config->get_dev_mic())) 
+	{
 		return open_dsp_full_duplex();
 	}
 	
@@ -62,7 +64,7 @@ bool t_audio_session::open_dsp(void) {
 bool t_audio_session::open_dsp_full_duplex(void) {
 
 	// Open audio device
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, true, true, 1, 
+	speaker = t_audio_io::open(sys_config->get_dev_speaker(), true, true, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
@@ -89,7 +91,7 @@ bool t_audio_session::open_dsp_full_duplex(void) {
 
 bool t_audio_session::open_dsp_speaker(void) {
 	
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, false, true, 1, 
+	speaker = t_audio_io::open(sys_config->get_dev_speaker(), true, false, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
@@ -110,7 +112,7 @@ bool t_audio_session::open_dsp_mic(void) {
 	// first try to open the device in non-blocking mode.
 	// If the device is still open by another twinkle thread then that
 	// is a bug, but this way at least non deadlock is caused.
-	mic = t_audio_io::open(sys_config->dev_mic, false, true, true, 1, 
+	mic = t_audio_io::open(sys_config->get_dev_mic(), false, true, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!mic) {
 		string msg("Failed to open sound card: ");

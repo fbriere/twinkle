@@ -19,6 +19,10 @@
 #include <cassert>
 #include "audio_encoder.h"
 
+#ifdef HAVE_ILBC
+#include "ilbc/iLBC_encode.h"
+#endif
+
 //////////////////////////////////////////
 // class t_audio_encoder
 //////////////////////////////////////////
@@ -142,7 +146,8 @@ t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime,
 {
 	assert(ptime > 0);
 	speex_bits_init(&speex_bits);
-
+	_mode = mode;
+	
 	switch (mode) {
 	case MODE_NB:
 		_codec = CODEC_SPEEX_NB;
@@ -163,7 +168,7 @@ t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime,
 	int arg;
 	
 	// Bit rate type
-	switch (_user_config->speex_bit_rate_type) {
+	switch (_user_config->get_speex_bit_rate_type()) {
 	case BIT_RATE_CBR:
 		arg = 0;
 		speex_encoder_ctl(speex_enc_state, SPEEX_SET_VBR, &arg);
@@ -174,10 +179,10 @@ t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime,
 		break;
 	case BIT_RATE_ABR:
 		if (_codec == CODEC_SPEEX_NB) {
-			arg = user_config->speex_abr_nb;
+			arg = user_config->get_speex_abr_nb();
 			speex_encoder_ctl(speex_enc_state, SPEEX_SET_ABR, &arg);
 		} else {
-			arg = user_config->speex_abr_wb;
+			arg = user_config->get_speex_abr_wb();
 			speex_encoder_ctl(speex_enc_state, SPEEX_SET_ABR, &arg);
 		}
 		break;
@@ -186,15 +191,15 @@ t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime,
 	}
 	
 	// VAD
-	arg = (_user_config->speex_vad ? 1 : 0);
+	arg = (_user_config->get_speex_vad() ? 1 : 0);
 	speex_encoder_ctl(speex_enc_state, SPEEX_SET_VAD, &arg);
 	
 	// DTX
-	arg = (_user_config->speex_dtx ? 1 : 0);
+	arg = (_user_config->get_speex_dtx() ? 1 : 0);
 	speex_encoder_ctl(speex_enc_state, SPEEX_SET_DTX, &arg);
 		
 	// Complexity
-	arg = _user_config->speex_complexity;
+	arg = _user_config->get_speex_complexity();
 	speex_encoder_ctl(speex_enc_state, SPEEX_SET_COMPLEXITY, &arg);
 	
 	_max_payload_size = 1500;
@@ -218,5 +223,47 @@ uint16 t_speex_audio_encoder::encode(int16 *sample_buf, uint16 nsamples,
 		silence = true;
 	}
 	return speex_bits_write(&speex_bits, (char *)payload, payload_size);
+}
+#endif
+
+#ifdef HAVE_ILBC
+//////////////////////////////////////////
+// class t_ilbc_audio_encoder
+//////////////////////////////////////////
+
+t_ilbc_audio_encoder::t_ilbc_audio_encoder(uint16 payload_id, uint16 ptime,
+		t_user *user_config) :
+	t_audio_encoder(payload_id, ptime, user_config)
+{
+	assert((ptime == 20 || ptime == 30));
+	
+	_codec = CODEC_ILBC;
+	_mode = ptime;
+	
+	if (_mode == 20) {
+		_max_payload_size = NO_OF_BYTES_20MS;
+	} else {
+		_max_payload_size = NO_OF_BYTES_30MS;
+	}
+	
+	initEncode(&_ilbc_encoder, _mode);
+}
+
+uint16 t_ilbc_audio_encoder::encode(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size, bool &silence)
+{
+	assert(payload_size >= _max_payload_size);
+	assert(nsamples == _ilbc_encoder.blockl);
+	
+	silence = false;
+	float block[nsamples];
+	
+	for (int i = 0; i < nsamples; i++) {
+		block[i] = static_cast<float>(sample_buf[i]);
+	}
+	
+	iLBC_encode((unsigned char*)payload, block, &_ilbc_encoder);
+	
+	return _ilbc_encoder.no_of_bytes;
 }
 #endif

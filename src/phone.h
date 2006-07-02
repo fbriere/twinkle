@@ -135,9 +135,9 @@ private:
 	t_phone_user *find_phone_user(const string &profile_name);
 	
 	// Match an incoming message to a phone user
-	t_phone_user *match_phone_user(t_response *r, t_tuid tuid);
-	t_phone_user *match_phone_user(t_request *r);
-	t_phone_user *match_phone_user(StunMessage *r, t_tuid tuid);
+	t_phone_user *match_phone_user(t_response *r, t_tuid tuid, bool active_only = false);
+	t_phone_user *match_phone_user(t_request *r, bool active_only = false);
+	t_phone_user *match_phone_user(StunMessage *r, t_tuid tuid, bool active_only = false);
 
 protected:
 	// Events
@@ -281,7 +281,6 @@ public:
 	t_user *ref_user_profile(const string &profile_name);
 	
 	// Get service information for a phone user
-	t_service get_service(t_user *user);
 	t_service *ref_service(t_user *user);
 	
 	// Get IP address and port for SIP

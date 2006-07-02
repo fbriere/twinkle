@@ -41,6 +41,7 @@ t_call_info::t_call_info() {
 void t_call_info::clear(void) {
 	from_uri.set_url("");
 	from_display.clear();
+	from_display_override.clear();
 	from_organization.clear();
 	to_uri.set_url("");
 	to_display.clear();
@@ -52,6 +53,14 @@ void t_call_info::clear(void) {
 	send_codec = CODEC_NULL;
 	recv_codec = CODEC_NULL;
 	refer_supported = false;
+}
+
+string t_call_info::get_from_display_presentation(void) const {
+	if (from_display_override.empty()) {
+		return from_display;
+	} else {
+		return from_display_override;
+	}
 }
 
 
@@ -468,8 +477,8 @@ void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 	user_config = user;
 
 	call_info.from_uri = create_user_uri();
-	call_info.from_display = user_config->display;
-	call_info.from_organization = user_config->organization;
+	call_info.from_display = user_config->get_display();
+	call_info.from_organization = user_config->get_organization();
 	call_info.to_uri = to_uri;
 	call_info.to_display = to_display;
 	call_info.to_organization.clear();
@@ -762,7 +771,7 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 		// only be for this dialog.
 		if (active_dialog->match_response(r, 0)) {
 			// Redirection of mid-dialog request
-			if (!user_config->allow_redirection ||
+			if (!user_config->get_allow_redirection() ||
 			    !active_dialog->redirect_request(r))
 			{
 				// Redirection not allowed/failed
@@ -795,7 +804,7 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 			pending_dialogs.clear();
 
 			if (open_dialog) {
-				if (!user_config->allow_redirection ||
+				if (!user_config->get_allow_redirection() ||
 				    !open_dialog->redirect_invite(r))
 				{
 					MEMMAN_DELETE(open_dialog);
@@ -824,7 +833,7 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 		}
 
 		if (r->hdr_cseq.method == INVITE) {
-			if (!user_config->allow_redirection ||
+			if (!user_config->get_allow_redirection() ||
 			    !open_dialog->redirect_invite(r))
 			{
 				// Redirection failed/not allowed
@@ -879,7 +888,7 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 			if (!response_processed) {
 				// The request failed, redirect it if there
 				// are other destinations available.
-				if (!user_config->allow_redirection ||
+				if (!user_config->get_allow_redirection() ||
 				    !active_dialog->redirect_request(r))
 				{
 					// Request failed
@@ -938,7 +947,7 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 				if (!response_processed) {
 					// The request failed, redirect it if there
 					// are other destinations available.
-					if (!user_config->allow_redirection ||
+					if (!user_config->get_allow_redirection() ||
 					    !open_dialog->redirect_invite(r))
 					{
 						// Request failed
@@ -995,7 +1004,7 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 			if (!response_processed) {
 				// The request failed, redirect it if there
 				// are other destinations available.
-				if (!user_config->allow_redirection ||
+				if (!user_config->get_allow_redirection() ||
 				    !open_dialog->redirect_invite(r))
 				{
 					// Request failed
@@ -1052,7 +1061,7 @@ void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 			if (!response_processed) {
 				// The request failed, redirect it if there
 				// are other destinations available.
-				if (!user_config->allow_redirection ||
+				if (!user_config->get_allow_redirection() ||
 				    !active_dialog->redirect_request(r))
 				{
 					// Request failed
@@ -1103,7 +1112,7 @@ void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 				if (!response_processed) {
 					// The request failed, redirect it if there
 					// are other destinations available.
-					if (!user_config->allow_redirection ||
+					if (!user_config->get_allow_redirection() ||
 					    !open_dialog->redirect_invite(r))
 					{
 						// Request failed
@@ -1152,7 +1161,7 @@ void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 			if (!response_processed) {
 				// The request failed, redirect it if there
 				// are other destinations available.
-				if (!user_config->allow_redirection ||
+				if (!user_config->get_allow_redirection() ||
 				    !open_dialog->redirect_invite(r))
 				{
 					// Request failed
@@ -1220,6 +1229,7 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &r
 		
 		call_info.from_uri = r->hdr_from.uri;
 		call_info.from_display = r->hdr_from.display;
+		call_info.from_display_override = r->hdr_from.display_override;
 		if (r->hdr_organization.is_populated()) {
 			call_info.from_organization = r->hdr_organization.name;
 		} else {
@@ -1487,8 +1497,8 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 		
 		if (active_dialog) {
 			assert(user_config);
-			t_service srv = phone->get_service(user_config);
-			if (srv.get_cf_active(CF_NOANSWER, cf_dest)) {
+			t_service *srv = phone->ref_service(user_config);
+			if (srv->get_cf_active(CF_NOANSWER, cf_dest)) {
 				log_file->write_report("Call redirection no answer",
 					"t_line::timeout");
 				active_dialog->redirect(cf_dest,
@@ -1755,7 +1765,7 @@ void t_line::ci_set_refer_supported(bool supported) {
 }
 
 void t_line::init_rtp_port(void) {
-	rtp_port = sys_config->rtp_port + line_number * 2;
+	rtp_port = sys_config->get_rtp_port() + line_number * 2;
 }
 
 unsigned short t_line::get_rtp_port(void) const {
@@ -1770,12 +1780,12 @@ string t_line::get_ringtone(void) const {
 	if (!user_defined_ringtone.empty()) {
 		// Ring tone returned by incoming call script
 		return user_defined_ringtone;
-	} else if (!user_config->ringtone_file.empty()) {
+	} else if (!user_config->get_ringtone_file().empty()) {
 		// Ring tone from user profile
-		return user_config->ringtone_file;
-	} else if (!sys_config->ringtone_file.empty()) {
+		return user_config->get_ringtone_file();
+	} else if (!sys_config->get_ringtone_file().empty()) {
 		// Ring tone from system settings
-		return sys_config->ringtone_file;
+		return sys_config->get_ringtone_file();
 	} else {
 		// Twinkle default
 		return FILE_RINGTONE;

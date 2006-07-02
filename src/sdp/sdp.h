@@ -39,6 +39,7 @@
 #define SDP_RTPMAP_SPEEX_NB	"speex/8000"
 #define SDP_RTPMAP_SPEEX_WB	"speex/16000"
 #define SDP_RTPMAP_SPEEX_UWB	"speex/32000"
+#define SDP_RTPMAP_ILBC		"iLBC/8000"
 #define SDP_RTPMAP_TELEPHONE_EV	"telephone-event/8000"
 
 // Audio codec names
@@ -46,7 +47,11 @@
 #define SDP_AC_NAME_G711_ALAW		"PCMA"
 #define SDP_AC_NAME_GSM			"GSM"
 #define SDP_AC_NAME_SPEEX		"speex"
+#define SDP_AC_NAME_ILBC		"iLBC"
 #define SDP_AC_NAME_TELEPHONE_EV	"telephone-event"
+
+// Check on fmtp parameter values
+#define VALID_ILBC_MODE(mode) ((mode) == 20 || (mode == 30))
 
 using namespace std;
 
@@ -214,6 +219,12 @@ public:
 	
 	// Get ftmp attribute
 	string get_fmtp(t_sdp_media_type media_type, unsigned short codec) const;
+	
+	// Get a specific parameter from fmtp, assuming the fmtp string is a list
+	// of paramter=value strings separated by semi-colons
+	// Returns -1 on failure
+	int get_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec,
+			const string param) const;
 
 	// Get ptime. Returns 0 if ptime is not present
 	unsigned short get_ptime(t_sdp_media_type media_type) const;
@@ -221,6 +232,8 @@ public:
 	void set_ptime(t_sdp_media_type media_type, unsigned short ptime);
 	void set_direction(t_sdp_media_type media_type, t_sdp_media_direction direction);
 	void set_fmtp(t_sdp_media_type media_type, unsigned short codec, const string &fmtp);
+	void set_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec,
+			const string &param, int value);
 
 	// Returns a pointer to the first media stream in the list of media
 	// streams having a non-zero port value for the give media type.

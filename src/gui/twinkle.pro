@@ -3,7 +3,7 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audio/ilbc/libilbc.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile -lboost_regex
 
 DEFINES	+= QT_NO_STL
 
@@ -13,14 +13,16 @@ HEADERS	+= gui.h \
 	historylistview.h \
 	freedesksystray.h \
 	twinklesystray.h \
-	gui_util.h
+	gui_util.h \
+	address_finder.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
 	historylistview.cpp \
 	freedesksystray.cpp \
 	twinklesystray.cpp \
-	gui_util.cpp
+	gui_util.cpp \
+	address_finder.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -40,7 +42,8 @@ FORMS	= mphoneform.ui \
 	wizardform.ui \
 	getaddressform.ui \
 	historyform.ui \
-	selectuserform.ui
+	selectuserform.ui \
+	numberconversionform.ui
 
 IMAGES	= images/filenew \
 	images/filesave \
@@ -158,7 +161,8 @@ IMAGES	= images/filenew \
 	images/qt-logo.png \
 	images/1leftarrow.png \
 	images/1uparrow.png \
-	images/1downarrow.png
+	images/1downarrow.png \
+	images/kontact_contacts32.png
 
 unix {
   UI_DIR = .ui

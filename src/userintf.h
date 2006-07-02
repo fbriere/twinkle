@@ -304,6 +304,7 @@ public:
 	// Show firewall/NAT discovery progress
 	virtual void cb_nat_discovery_progress_start(int num_steps);
 	virtual void cb_nat_discovery_progress_step(int step);
+	virtual void cb_nat_discovery_finished(void);
 	virtual bool cb_nat_discovery_cancelled(void);
 
 	// Get last call information
@@ -321,6 +322,9 @@ public:
 	virtual void cmd_call(const string &destination, bool immediate);
 	virtual void cmd_quit(void);
 	virtual void cmd_cli(const string &command, bool immeidate);
+	
+	// Lookup a URL in the address book
+	virtual string get_name_from_abook(t_user *user_config, const t_url &u);
 };
 
 void *process_events_main(void *arg);

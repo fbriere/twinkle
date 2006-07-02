@@ -47,14 +47,17 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 		s = remove_white_space(s);
 	
 		// Remove special phone symbols
-		if (user_config->remove_special_phone_symbols &&
-		    looks_like_phone(s, user_config->special_phone_symbols)) 
+		if (user_config->get_remove_special_phone_symbols() &&
+		    looks_like_phone(s, user_config->get_special_phone_symbols())) 
 		{
-			s = remove_symbols(s, user_config->special_phone_symbols);
+			s = remove_symbols(s, user_config->get_special_phone_symbols());
 		}
 		
+		// Convert number according to the number conversion rules
+		s = user_config->convert_number(s);
+		
 		s += '@';
-		s += user_config->domain;
+		s += user_config->get_domain();
 	}
 	
 	// Add sip-scheme if missing
@@ -66,10 +69,10 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 	// Add user=phone for telehpone numbers
 	// If the URI contains a telephone number it SHOULD contain
 	// the user=phone parameter.
-	if (user_config->numerical_user_is_phone) {
+	if (user_config->get_numerical_user_is_phone()) {
 		t_url u(s);
 		if (u.get_user_param().empty() && 
-		    u.user_looks_like_phone(user_config->special_phone_symbols)) {
+		    u.user_looks_like_phone(user_config->get_special_phone_symbols())) {
 			s += ";user=phone";
 		}
 	}
@@ -1077,9 +1080,9 @@ void t_userintf::do_user(const string &profile_name) {
 			
 			cout << (*i)->get_profile_name();
 			cout << "\n    ";
-			cout << (*i)->display;
-			cout << " <sip:" << (*i)->name;
-			cout << "@" << (*i)->domain << ">\n";
+			cout << (*i)->get_display();
+			cout << " <sip:" << (*i)->get_name();
+			cout << "@" << (*i)->get_domain() << ">\n";
 		}
 		cout << endl;
 		return;
@@ -1654,15 +1657,22 @@ string t_userintf::format_sip_address(t_user *user_config, const string &display
 	s = display;
 	if (display != "") s += " <";
 
-	if (user_config->display_useronly_phone &&
-	    uri.is_phone(user_config->numerical_user_is_phone,
-	    			user_config->special_phone_symbols))
+	if (user_config->get_display_useronly_phone() &&
+	    uri.is_phone(user_config->get_numerical_user_is_phone(),
+	    			user_config->get_special_phone_symbols()))
 	{
 		// Display telephone number only
-		s += uri.get_user();
+		s += user_config->convert_number(uri.get_user());
 	} else {
 		// Display full URI
-		s += uri.encode();
+		// Convert the username according to the number conversion
+		// rules.
+		t_url u(uri);
+		string username = user_config->convert_number(u.get_user());
+		if (username != u.get_user()) {
+			u.set_user(username);
+		}
+		s += u.encode();
 	}
 
 	if (display != "") s += ">";
@@ -1701,6 +1711,7 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 	case CODEC_SPEEX_NB:	return "spx-nb";
 	case CODEC_SPEEX_WB:	return "spx-wb";
 	case CODEC_SPEEX_UWB:	return "spx-uwb";
+	case CODEC_ILBC:	return "ilbc";
 	default:		return "???";
 	}
 }
@@ -1763,19 +1774,19 @@ void t_userintf::process_events(void) {
 void t_userintf::save_state(void) {
 	string err_msg;
 	
-	sys_config->redial_url = last_called_url;
-	sys_config->redial_display = last_called_display;
-	sys_config->redial_subject = last_called_subject;
-	sys_config->redial_profile = last_called_profile;
+	sys_config->set_redial_url(last_called_url);
+	sys_config->set_redial_display(last_called_display);
+	sys_config->set_redial_subject(last_called_subject);
+	sys_config->set_redial_profile(last_called_profile);
 	
 	sys_config->write_config(err_msg);
 }
 
 void t_userintf::restore_state(void) {
-	last_called_url = sys_config->redial_url;
-	last_called_display = sys_config->redial_display;
-	last_called_subject = sys_config->redial_subject;
-	last_called_profile = sys_config->redial_profile;
+	last_called_url = sys_config->get_redial_url();
+	last_called_display = sys_config->get_redial_display();
+	last_called_subject = sys_config->get_redial_subject();
+	last_called_profile = sys_config->get_redial_profile();
 }
 
 void t_userintf::lock(void) {
@@ -1853,7 +1864,8 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 	cout << "incoming call\n";
 	cout << "From:\t\t";
 	
-	string from_party = format_sip_address(user_config, r->hdr_from.display, r->hdr_from.uri);
+	string from_party = format_sip_address(user_config, 
+		r->hdr_from.get_display_presentation(), r->hdr_from.uri);
 	cout << from_party << endl;
 
 	if (r->hdr_organization.is_populated()) {
@@ -2344,7 +2356,7 @@ void t_userintf::cb_redirecting_request(t_user *user_config, const t_contact_par
 }
 
 void t_userintf::cb_play_ringtone(int line) {
-	if (!sys_config->play_ringtone) return;
+	if (!sys_config->get_play_ringtone()) return;
 
 	if (tone_gen) {
 		tone_gen->stop();
@@ -2355,14 +2367,14 @@ void t_userintf::cb_play_ringtone(int line) {
 	// Determine ring tone
 	string ringtone_file = phone->get_ringtone(line);
 
-	tone_gen = new t_tone_gen(ringtone_file, sys_config->dev_ringtone);
+	tone_gen = new t_tone_gen(ringtone_file, sys_config->get_dev_ringtone());
 	MEMMAN_NEW(tone_gen);
 	
 	// If ring tone does not exist, then fall back to system default.
 	if (!tone_gen->is_valid() && ringtone_file != FILE_RINGTONE) {
 		MEMMAN_DELETE(tone_gen);
 		delete tone_gen;
-		tone_gen = new t_tone_gen(FILE_RINGTONE, sys_config->dev_ringtone);
+		tone_gen = new t_tone_gen(FILE_RINGTONE, sys_config->get_dev_ringtone());
 		MEMMAN_NEW(tone_gen);
 	}
 	
@@ -2371,7 +2383,7 @@ void t_userintf::cb_play_ringtone(int line) {
 }
 
 void t_userintf::cb_play_ringback(t_user *user_config) {
-	if (!sys_config->play_ringback) return;
+	if (!sys_config->get_play_ringback()) return;
 	
 	if (tone_gen) {
 		tone_gen->stop();
@@ -2381,23 +2393,23 @@ void t_userintf::cb_play_ringback(t_user *user_config) {
 	
 	// Determine ring back tone
 	string ringback_file;
-	if (!user_config->ringback_file.empty()) {
-		ringback_file = user_config->ringback_file;
-	} else if (!sys_config->ringback_file.empty()) {
-		ringback_file = sys_config->ringback_file;
+	if (!user_config->get_ringback_file().empty()) {
+		ringback_file = user_config->get_ringback_file();
+	} else if (!sys_config->get_ringback_file().empty()) {
+		ringback_file = sys_config->get_ringback_file();
 	} else {
 		// System default
 		ringback_file = FILE_RINGBACK;
 	}
 
-	tone_gen = new t_tone_gen(ringback_file, sys_config->dev_speaker);
+	tone_gen = new t_tone_gen(ringback_file, sys_config->get_dev_speaker());
 	MEMMAN_NEW(tone_gen);
 	
 	// If ring back tone does not exist, then fall back to system default.
 	if (!tone_gen->is_valid() && ringback_file != FILE_RINGBACK) {
 		MEMMAN_DELETE(tone_gen);
 		delete tone_gen;
-		tone_gen = new t_tone_gen(FILE_RINGBACK, sys_config->dev_speaker);
+		tone_gen = new t_tone_gen(FILE_RINGBACK, sys_config->get_dev_speaker());
 		MEMMAN_NEW(tone_gen);
 	}
 	
@@ -2702,6 +2714,10 @@ void t_userintf::cb_nat_discovery_progress_start(int num_steps) {
 	cout << endl;
 }
 
+void t_userintf::cb_nat_discovery_finished(void) {
+	// Nothing to do in CLI mode.
+}
+
 void t_userintf::cb_nat_discovery_progress_step(int step) {
 	// Nothing to do in CLI mode.
 }
@@ -2741,6 +2757,11 @@ void t_userintf::cmd_quit(void) {
 
 void t_userintf::cmd_cli(const string &command, bool immediate) {
 	exec_command(command, immediate);
+}
+
+string t_userintf::get_name_from_abook(t_user *user_config, const t_url &u) {
+	// No address book in CLI version
+	return "";
 }
 
 void *process_events_main(void *arg) {
