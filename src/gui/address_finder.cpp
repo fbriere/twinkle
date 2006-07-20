@@ -20,6 +20,7 @@
 #include "gui.h"
 
 t_address_finder *t_address_finder::instance = NULL;
+t_mutex t_address_finder::mtx_instance;
 
 t_address_finder::t_address_finder() {
 #ifdef HAVE_KDE
@@ -63,6 +64,7 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 			{
 				last_name = i->realName().ascii();
 				last_photo = i->photo().data();
+				last_photo.detach(); // avoid sharing of QImage with kabc
 				return;
 			}
 		}
@@ -73,25 +75,35 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 }
 
 t_address_finder *t_address_finder::get_instance(void) {
+	mtx_instance.lock();
 	if (!instance) {
 		instance = new t_address_finder();
 		// No MEMMAN audit as this instance will only be
 		// cleaned up by process termination.
 	}
+	mtx_instance.unlock();
 	
 	return instance;
 }
 
 string t_address_finder::find_name(t_user *user_config, const t_url &u) {
+	mtx_finder.lock();
 	find_address(user_config, u);
-	return last_name;
+	string name = last_name;
+	mtx_finder.unlock();
+	return name;
 }
 
 QImage t_address_finder:: find_photo(t_user *user_config, const t_url &u) {
+	mtx_finder.lock();
 	find_address(user_config, u);
-	return last_photo;
+	QImage photo = last_photo;
+	mtx_finder.unlock();
+	return photo;
 }
 	
 void t_address_finder::invalidate_cache(void) {
+	mtx_finder.lock();
 	last_url.set_url("");
+	mtx_finder.unlock();
 }

@@ -1,0 +1,80 @@
+diff -Nur twinkle-0.8.1/configure.in twinkle-0.8.1.new/configure.in
+--- twinkle-0.8.1/configure.in	2006-07-19 21:53:07.000000000 +0100
++++ twinkle-0.8.1.new/configure.in	2006-07-19 21:53:30.000000000 +0100
+@@ -135,6 +135,17 @@
+ AC_CHECK_LIB(sndfile, sf_open, [], 
+ 	[AC_MSG_ERROR([libsndfile library is missing.])])
+ 
++# Check if libgsm is available
++AC_CHECK_LIB(gsm, sf_open, [
++	AC_CHECK_HEADER(gsm.h, [],
++		[AC_MSG_ERROR([gsm header files missing (gsm.h)])])
++	AC_DEFINE(HAVE_GSM, 1, [Define to 1 if you have the <libgsm> library.])
++	LIBS="-lgsm $LIBS"
++	echo "LIBS += -lgsm" >> $QT_INCL_PRO
++	have_gsm="yes" ], [
++	have_gsm="no"
++	echo "$(top_builddir)/src/audio/gsm/libgsm.a" >> $QT_INCL_PRO ])
++
+ # Check if ALSA is available
+ AC_CHECK_LIB(asound, main, [
+ 	AC_CHECK_HEADER(alsa/asoundlib.h, [],
+diff -Nur twinkle-0.8.1/src/Makefile.am twinkle-0.8.1.new/src/Makefile.am
+--- twinkle-0.8.1/src/Makefile.am	2006-07-19 21:53:07.000000000 +0100
++++ twinkle-0.8.1.new/src/Makefile.am	2006-07-19 21:53:45.000000000 +0100
+@@ -16,10 +16,10 @@
+         $(top_builddir)/src/sockets/libsocket.a\
+         $(top_builddir)/src/threads/libthread.a\
+         $(top_builddir)/src/audio/libaudio.a\
+-        $(top_builddir)/src/audio/gsm/libgsm.a\
+         $(top_builddir)/src/audits/libaudits.a\
+         $(top_builddir)/src/stun/libstun.a\
+ 	$(CCRTP_LIBS)\
++	$(LIBS)\
+ 	-lresolv\
+ 	-lsndfile\
+ 	-lboost_regex
+diff -Nur twinkle-0.8.1/src/audio/audio_decoder.h twinkle-0.8.1.new/src/audio/audio_decoder.h
+--- twinkle-0.8.1/src/audio/audio_decoder.h	2006-07-19 21:53:08.000000000 +0100
++++ twinkle-0.8.1.new/src/audio/audio_decoder.h	2006-07-19 21:53:30.000000000 +0100
+@@ -25,7 +25,12 @@
+ #include "twinkle_config.h"
+ #include "audio_codecs.h"
+ #include "user.h"
++
++#ifdef HAVE_GSM
++#include <gsm.h>
++#else
+ #include "gsm/inc/gsm.h"
++#endif
+ 
+ #ifdef HAVE_SPEEX
+ #include <speex/speex.h>
+diff -Nur twinkle-0.8.1/src/audio/audio_encoder.h twinkle-0.8.1.new/src/audio/audio_encoder.h
+--- twinkle-0.8.1/src/audio/audio_encoder.h	2006-07-19 21:53:08.000000000 +0100
++++ twinkle-0.8.1.new/src/audio/audio_encoder.h	2006-07-19 21:53:30.000000000 +0100
+@@ -25,7 +25,12 @@
+ #include "twinkle_config.h"
+ #include "audio_codecs.h"
+ #include "user.h"
++
++#ifdef HAVE_GSM
++#include <gsm.h>
++#else
+ #include "gsm/inc/gsm.h"
++#endif
+ 
+ #ifdef HAVE_SPEEX
+ #include <speex/speex.h>
+diff -Nur twinkle-0.8.1/src/gui/twinkle.pro twinkle-0.8.1.new/src/gui/twinkle.pro
+--- twinkle-0.8.1/src/gui/twinkle.pro	2006-07-19 21:53:08.000000000 +0100
++++ twinkle-0.8.1.new/src/gui/twinkle.pro	2006-07-19 21:53:30.000000000 +0100
+@@ -3,7 +3,7 @@
+ 
+ CONFIG	+= qt warn_off release thread
+ 
+-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile -lboost_regex
++LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile -lboost_regex
+ 
+ DEFINES	+= QT_NO_STL
+ 

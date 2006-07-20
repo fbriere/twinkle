@@ -1,3 +1,14 @@
+twinkle (1:0.8.1-1) unstable; urgency=low
+
+  [ Kilian Krause ]
+  * New upstream release. Ships without iLBC, therefore no need to repackage.
+
+  [ Mark Purcell ]
+  * Cleanup debian/patches/libgsm.patch
+  * Use upstream supplied sip.protocol & twinkle.desktop
+
+ -- Mark Purcell <msp@debian.org>  Thu, 20 Jul 2006 19:33:00 +0100
+
 twinkle (0.8.dfsg-1) unstable; urgency=low
 
   * New upstream release

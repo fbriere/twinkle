@@ -2147,8 +2147,12 @@ void t_gui::cmd_quit(void) {
 }
 
 string t_gui::get_name_from_abook(t_user *user_config, const t_url &u) {
+	lock();
 	t_address_finder *af = t_address_finder::get_instance();
-	return af->find_name(user_config, u);
+	string name = af->find_name(user_config, u);
+	unlock();
+	
+	return name;
 }
 
 // User invoked actions on the phone object

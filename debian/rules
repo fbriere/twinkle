@@ -21,8 +21,8 @@ URL := http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-$(UPVERSION).tar.g
 DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc
 
 install/twinkle::
-	cp debian/twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications
-	cp debian/sip.protocol $(CURDIR)/debian/twinkle/usr/share/services
+	cp twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications
+	cp sip.protocol $(CURDIR)/debian/twinkle/usr/share/services
 
 print-version:
 	@@echo "Debian version:          $(DEBVERSION)"

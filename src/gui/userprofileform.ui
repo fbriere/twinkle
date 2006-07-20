@@ -3955,8 +3955,6 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>categoryListBox</tabstop>
 </tabstops>
 <includes>
-    <include location="local" impldecl="in declaration">user.h</include>
-    <include location="local" impldecl="in declaration">qvaluelist.h</include>
     <include location="local" impldecl="in implementation">qlistbox.h</include>
     <include location="local" impldecl="in implementation">qlineedit.h</include>
     <include location="local" impldecl="in implementation">qlabel.h</include>
@@ -3975,6 +3973,10 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="local" impldecl="in implementation">numberconversionform.h</include>
     <include location="local" impldecl="in implementation">util.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">qvaluelist.h</include>
+    <include location="global" impldecl="in declaration">map</include>
+    <include location="global" impldecl="in declaration">list</include>
     <include location="local" impldecl="in implementation">userprofileform.ui.h</include>
 </includes>
 <variables>
