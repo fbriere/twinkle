@@ -32,6 +32,7 @@ string method2str(const t_method &m, const string &unknown) {
 	case SUBSCRIBE:		return "SUBSCRIBE";
 	case NOTIFY:		return "NOTIFY";
 	case REFER:		return "REFER";
+	case INFO:		return "INFO";
 	case METHOD_UNKNOWN:	return unknown;
 	default:		assert(false);
 	}
@@ -48,6 +49,7 @@ t_method str2method(const string &s) {
 	if (s == "SUBSCRIBE") return SUBSCRIBE;
 	if (s == "NOTIFY") return NOTIFY;
 	if (s == "REFER") return REFER;
+	if (s == "INFO") return INFO;
 
 	return METHOD_UNKNOWN;
 }

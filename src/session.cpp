@@ -115,6 +115,10 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	recv_ac2payload[CODEC_SPEEX_WB] = user_config->get_speex_wb_payload_type();
 	recv_ac2payload[CODEC_SPEEX_UWB] = user_config->get_speex_uwb_payload_type();
 	recv_ac2payload[CODEC_ILBC] = user_config->get_ilbc_payload_type();
+	recv_ac2payload[CODEC_G726_16] = user_config->get_g726_16_payload_type();
+	recv_ac2payload[CODEC_G726_24] = user_config->get_g726_24_payload_type();
+	recv_ac2payload[CODEC_G726_32] = user_config->get_g726_32_payload_type();
+	recv_ac2payload[CODEC_G726_40] = user_config->get_g726_40_payload_type();
 	recv_ac2payload[CODEC_TELEPHONE_EVENT] = user_config->get_dtmf_payload_type();
 	send_ac2payload.clear();
 	
@@ -126,15 +130,16 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	recv_payload2ac[user_config->get_speex_wb_payload_type()] = CODEC_SPEEX_WB;
 	recv_payload2ac[user_config->get_speex_uwb_payload_type()] = CODEC_SPEEX_UWB;
 	recv_payload2ac[user_config->get_ilbc_payload_type()] = CODEC_ILBC;
+	recv_payload2ac[user_config->get_g726_16_payload_type()] = CODEC_G726_16;
+	recv_payload2ac[user_config->get_g726_24_payload_type()] = CODEC_G726_24;
+	recv_payload2ac[user_config->get_g726_32_payload_type()] = CODEC_G726_32;
+	recv_payload2ac[user_config->get_g726_40_payload_type()] = CODEC_G726_40;
 	recv_payload2ac[user_config->get_dtmf_payload_type()] = CODEC_TELEPHONE_EVENT;
 	send_payload2ac.clear();
 }
 
 t_session::~t_session() {
-	if (audio_rtp_session) {
-		MEMMAN_DELETE(audio_rtp_session);
-		delete audio_rtp_session;
-	}
+	stop_rtp();
 }
 
 t_session *t_session::create_new_version(void) {
@@ -233,10 +238,16 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 
 	dst_sdp_version = sdp->origin.session_version;
 	dst_sdp_id = sdp->origin.session_id;
+	recvd_sdp_offer = *sdp;
+	
+	// RFC 3264 5
+	// SDP may contain 0 m= lines
+	if (sdp->media.empty()) return true;
+	
 	dst_rtp_host = sdp->get_rtp_host(SDP_AUDIO);
 	dst_rtp_port = sdp->get_rtp_port(SDP_AUDIO);
 	set_recvd_codecs(sdp);
-	recvd_sdp_offer = *sdp;
+	dst_zrtp_support = sdp->get_zrtp_support(SDP_AUDIO);
 
 	// The direction in the SDP is from the point of view of the
 	// far end. Swap the direction to store it as the point of view
@@ -329,11 +340,21 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 		string &warn_text)
 {
 	if (!sdp->is_supported(warn_code, warn_text)) return false;
+	
+	// As our offer always contains an audio m= line, the answer
+	// should contain one as well. If there are media lines, then
+	// the sdp->is_supported already verified there is audio.
+	if (sdp->media.empty()) {
+		warn_code = W_304_MEDIA_TYPE_NOT_AVAILABLE;
+		warn_text = "Valid media stream for audio is missing";
+		return false;
+	}
 
 	dst_sdp_version = sdp->origin.session_version;
 	dst_sdp_id = sdp->origin.session_id;
 	dst_rtp_host = sdp->get_rtp_host(SDP_AUDIO);
 	dst_rtp_port = sdp->get_rtp_port(SDP_AUDIO);
+	dst_zrtp_support = sdp->get_zrtp_support(SDP_AUDIO);
 	set_recvd_codecs(sdp);
 
 	// Find the first codec in the received codecs list that
@@ -384,8 +405,6 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 }
 
 void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
-	list<t_audio_codec>::iterator it_g711a, it_g711u, it_ilbc;
-
 	// Delete old body if present
 	if (m->body) {
 		MEMMAN_DELETE(m->body);
@@ -398,14 +417,30 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	MEMMAN_NEW(m->body);
 
 
-	// Set ptime for G711 codecs
-	it_g711a = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ALAW);
-	it_g711u = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ULAW);
-	if (it_g711a != offer_codecs.end() || it_g711u != offer_codecs.end()) {
+	// Set ptime for G711/G726 codecs
+	list<t_audio_codec>::iterator it_g7xx;
+	it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ALAW);
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ULAW);
+	}
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G726_16);
+	}
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G726_24);
+	}
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G726_32);
+	}
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G726_40);
+	}
+	if (it_g7xx != offer_codecs.end()) {
 		((t_sdp *)m->body)->set_ptime(SDP_AUDIO, ptime);
 	}
 	
 	// Set mode for iLBC codecs
+	list<t_audio_codec>::iterator it_ilbc;
 	it_ilbc = find(offer_codecs.begin(), offer_codecs.end(), CODEC_ILBC);
 	if (it_ilbc != offer_codecs.end() && ilbc_mode != 30) {
 		((t_sdp *)m->body)->set_fmtp_int_param(SDP_AUDIO, recv_ac2payload[CODEC_ILBC],
@@ -415,6 +450,11 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	// Set direction
 	if (direction != SDP_SENDRECV) {
 		((t_sdp *)m->body)->set_direction(SDP_AUDIO, direction);
+	}
+	
+	// Set zrtp support
+	if (user_config->get_zrtp_enabled() && user_config->get_zrtp_sdp()) {
+		((t_sdp *)m->body)->set_zrtp_support(SDP_AUDIO);
 	}
 
 	m->hdr_content_type.set_media(t_media("application", "sdp"));
@@ -461,7 +501,15 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 			((t_sdp *)m->body)->add_media(reject_media);
 		}
 	}
+	
+	m->hdr_content_type.set_media(t_media("application", "sdp"));
+	
+	// If there were no media lines in the offer, we sent no media
+	// lines in the answer
+	if (recvd_sdp_offer.media.empty()) return;
 
+	// Set audio attributes
+	
 	// Set ptime for G711 codecs
 	if (use_codec == CODEC_G711_ALAW ||
 	    use_codec == CODEC_G711_ULAW)
@@ -481,13 +529,16 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 	if (direction != SDP_SENDRECV) {
 		((t_sdp *)m->body)->set_direction(SDP_AUDIO, direction);
 	}
-
-	m->hdr_content_type.set_media(t_media("application", "sdp"));
+	
+	// Set zrtp support
+	if (user_config->get_zrtp_enabled() && user_config->get_zrtp_sdp()) {
+		((t_sdp *)m->body)->set_zrtp_support(SDP_AUDIO);
+	}
 }
 
 void t_session::start_rtp(void) {
 	t_audio_codec codec;
-
+	
 	// If a session is on-hold then do not start RTP.
 	if (is_on_hold) return;
 
@@ -515,6 +566,12 @@ void t_session::start_rtp(void) {
 	} else {
 		audio_ptime = ptime;
 	}
+	
+	// Determine if audio must be encrypted
+	bool encrypt_audio = get_line()->get_try_to_encrypt();
+	if (user_config->get_zrtp_send_if_supported()) {
+		encrypt_audio = encrypt_audio && dst_zrtp_support;
+	}
 
 	// Start the RTP streams
 	if (dst_rtp_host == "0.0.0.0" || dst_rtp_port == 0 ||
@@ -523,7 +580,8 @@ void t_session::start_rtp(void) {
 		// Local hold -> do not send RTP
 		audio_rtp_session = new t_audio_session(this,
 				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, 
-				audio_ptime, recv_payload2ac, send_ac2payload);
+				audio_ptime, recv_payload2ac, send_ac2payload,
+				encrypt_audio);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 	else if (receive_host == "0.0.0.0" || receive_port == 0 ||
@@ -542,7 +600,8 @@ void t_session::start_rtp(void) {
 		audio_rtp_session = new t_audio_session(this,
 				LOCAL_IP, get_line()->get_rtp_port(),
 				dst_rtp_host, dst_rtp_port, use_codec, audio_ptime,
-				recv_payload2ac, send_ac2payload);
+				recv_payload2ac, send_ac2payload,
+				encrypt_audio);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 
@@ -581,6 +640,9 @@ void t_session::start_rtp(void) {
 		case DTMF_INBAND:
 			get_line()->ci_set_dtmf_supported(true, true);
 			break;
+		case DTMF_INFO:
+			get_line()->ci_set_dtmf_supported(true, false, true);
+			break;
 		default:
 			assert(false);
 		}
@@ -594,6 +656,9 @@ void t_session::start_rtp(void) {
 			break;
 		case DTMF_RFC2833:
 			get_line()->ci_set_dtmf_supported(false);
+			break;
+		case DTMF_INFO:
+			get_line()->ci_set_dtmf_supported(true, false, true);
 			break;
 		default:
 			assert(false);
@@ -611,6 +676,9 @@ void t_session::stop_rtp(void) {
 		delete audio_rtp_session;
 		audio_rtp_session = NULL;
 	}
+	
+	get_line()->ci_set_dtmf_supported(false);
+	ui->cb_line_state_changed();
 }
 
 t_audio_session *t_session::get_audio_session(void) const {

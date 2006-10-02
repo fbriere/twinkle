@@ -43,6 +43,7 @@
 #include "qlistbox.h"
 #include "qmessagebox.h"
 #include "qpixmap.h"
+#include "qpushbutton.h"
 #include "qsize.h"
 #include "qsizepolicy.h"
 #include "qstring.h"
@@ -167,6 +168,11 @@ void t_gui::displayCodecInfo(int line) {
 }
 
 void t_gui::displayPhoto(const QImage &photo) {
+	if (mainWindow->getViewCompactLineStatus()) {
+		// In compact line status mode, no photo can be shown
+		return;
+	}
+	
 	if (photo.isNull()) {
 		photoLabel->hide();
 	} else {
@@ -217,6 +223,16 @@ void t_gui::do_answer(void) {
 	lock();
 	if (mainWindow->callAnswer->isEnabled()) {
 		mainWindow->phoneAnswer();
+	}
+	unlock();
+}
+
+void t_gui::do_answerbye(void) {
+	lock();
+	if (mainWindow->callAnswer->isEnabled()) {
+		mainWindow->phoneAnswer();
+	} else if (mainWindow->callBye->isEnabled()) {
+		mainWindow->phoneBye();
 	}
 	unlock();
 }
@@ -512,6 +528,29 @@ void t_gui::do_user(const string &profile_name) {
 	unlock();
 }
 
+void t_gui::do_zrtp(t_zrtp_cmd zrtp_cmd) {
+	lock();
+	
+	switch (zrtp_cmd) {
+	case ZRTP_ENCRYPT:
+		mainWindow->phoneEnableZrtp(true);
+		break;
+	case ZRTP_GO_CLEAR:
+		mainWindow->phoneEnableZrtp(false);
+		break;
+	case ZRTP_CONFIRM_SAS:
+		mainWindow->phoneConfirmZrtpSas();
+		break;
+	case ZRTP_RESET_SAS:
+		mainWindow->phoneResetZrtpSasConfirmation();
+		break;
+	default:
+		assert(false);
+	}
+	
+	unlock();
+}
+
 void t_gui::do_quit(void) {
 	lock();
 	mainWindow->fileExit();
@@ -644,6 +683,9 @@ void t_gui::save_state(void) {
 	}
 	sys_config->set_dial_history(history);
 	
+	sys_config->set_show_display(mainWindow->getViewDisplay());
+	sys_config->set_compact_line_status(mainWindow->getViewCompactLineStatus());
+	
 	t_userintf::save_state();
 	
 	unlock();
@@ -661,6 +703,9 @@ void t_gui::restore_state(void) {
 	{
 		mainWindow->addToCallComboBox(i->c_str());
 	}
+	
+	mainWindow->showDisplay(sys_config->get_show_display());
+	mainWindow->showCompactLineStatus(sys_config->get_compact_line_status());
 	
 	t_userintf::restore_state();
 	
@@ -927,7 +972,7 @@ void t_gui::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	
 	s = "\t";
 	s.append(r->hdr_content_type.media.type.c_str());
-	s.append("/").append(r->hdr_content_type.media.type.c_str());
+	s.append("/").append(r->hdr_content_type.media.subtype.c_str());
 	mainWindow->display(s);
 	
 	clearLineFields(line);
@@ -1470,7 +1515,7 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 	// Pop up sys tray balloon
 #ifdef HAVE_KDE
 	t_twinkle_sys_tray *tray = mainWindow->getSysTray();
-	if (tray && !sys_tray_popup) {
+	if (tray && !sys_tray_popup &&  !phone->is_line_auto_answered(line)) {
 		QString presFromParty("");
 		if (!from_party.isEmpty()) {
 			presFromParty = dotted_truncate(from_party.ascii(), 40).c_str();
@@ -1529,6 +1574,19 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 			lastLabel = lblSubject;
 		}
 		lastLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		
+		// Answer and reject buttons
+		
+		QHBox *buttonBox = new QHBox(vb);
+		QIconSet iconAnswer(QPixmap::fromMimeSource("answer.png"));
+		QPushButton *pbAnswer = new QPushButton(iconAnswer, "Answer", buttonBox);
+		QObject::connect(pbAnswer, SIGNAL(clicked()), 
+				 mainWindow, SLOT(phoneAnswerFromSystrayPopup()));
+		QIconSet iconReject(QPixmap::fromMimeSource("reject.png"));
+		QPushButton *pbReject = new QPushButton(iconReject, "Reject", buttonBox);
+		QObject::connect(pbReject, SIGNAL(clicked()), 
+				 mainWindow, SLOT(phoneRejectFromSystrayPopup()));
+		
 		sys_tray_popup->setView(popup_view);
 		
 		// Show the popup
@@ -1575,7 +1633,7 @@ void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
 	mainWindow->displayHeader();
 	s = "Line ";
 	s.append(QString().setNum(line + 1));
-	s.append(":\tDTMF telephone event detected: ");
+	s.append(":\tDTMF detected: ");
 	
 	if (VALID_DTMF_EV(dtmf_event)) {
 		s.append(dtmf_ev2char(dtmf_event));
@@ -2120,6 +2178,73 @@ bool t_gui::cb_nat_discovery_cancelled(void) {
 	return natDiscoveryProgressDialog->wasCancelled();
 }
 
+void t_gui::cb_line_encrypted(int line, bool encrypted, const string &cipher_mode) {
+	// Nothing todo in GUI
+	// Encryption state is shown by the line state updata methods on
+	// MphoneForm
+}
+
+void t_gui::cb_show_zrtp_sas(int line, const string &sas) {
+		if (line >= NUM_USER_LINES) return;
+	
+	lock();
+	QString s;
+	
+	setLineFields(line);
+	
+	mainWindow->displayHeader();
+	s = "Line ";
+	s.append(QString().setNum(line + 1)).append(":\tSAS = ").append(sas.c_str());
+	mainWindow->display(s);
+	s = "Click the padlock to confirm a correct SAS.";
+	mainWindow->display(s);
+	
+	unlock();
+}
+
+void t_gui::cb_zrtp_confirm_go_clear(int line) {
+	t_user *user_config = phone->get_line_user(line);
+	if (!user_config) return;
+	
+	QString msg("The remote user on line ");
+	msg.append(QString().setNum(line + 1)). append(" disabled the encryption.");
+	if (user_config->get_zrtp_goclear_warning()) {
+		cb_show_msg(msg.ascii(), MSG_WARNING);
+	} else {
+		cb_display_msg(msg.ascii(), MSG_WARNING);
+	}
+	
+	action_zrtp_go_clear_ok(line);
+}
+
+void t_gui::cb_zrtp_sas_confirmed(int line) {
+	lock();
+	QString s;
+	
+	setLineFields(line);
+	
+	mainWindow->displayHeader();
+	s = "Line ";
+	s.append(QString().setNum(line + 1)).append(":\tSAS confirmed.");
+	mainWindow->display(s);
+	
+	unlock();
+}
+
+void t_gui::cb_zrtp_sas_confirmation_reset(int line) {
+	lock();
+	QString s;
+	
+	setLineFields(line);
+	
+	mainWindow->displayHeader();
+	s = "Line ";
+	s.append(QString().setNum(line + 1)).append(":\tSAS confirmation reset.");
+	mainWindow->display(s);
+	
+	unlock();
+}
+
 void t_gui::cmd_call(const string &destination, bool immediate) {
 	string subject;
 	string dst_no_headers;
@@ -2236,6 +2361,20 @@ void t_gui::action_reject(void) {
 	clearLineFields(line);
 }
 
+void t_gui::action_reject(unsigned short line) {
+	QString s;
+	
+	cb_stop_call_notification(line);
+	phone->pub_reject(line);
+	
+	mainWindow->displayHeader();
+	s = "Line ";
+	s.append(QString().setNum(line + 1)).append(":\tcall rejected.");
+	mainWindow->display(s);
+	
+	clearLineFields(line);
+}
+
 void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	QString s;
 	
@@ -2289,7 +2428,7 @@ void t_gui::action_dtmf(const string &digits) {
 	
 	for (string::const_iterator i = digits.begin(); i != digits.end(); i++) {
 		if (VALID_DTMF_SYM(*i)) {
-			phone->pub_send_dtmf(*i, call_info.dtmf_inband);
+			phone->pub_send_dtmf(*i, call_info.dtmf_inband, call_info.dtmf_info);
 		}
 	}
 }
@@ -2304,6 +2443,34 @@ bool t_gui::action_seize(void) {
 
 void t_gui::action_unseize(void) {
 	phone->pub_unseize();
+}
+
+void t_gui::action_confirm_zrtp_sas(int line) {
+	phone->pub_confirm_zrtp_sas(line);
+}
+
+void t_gui::action_confirm_zrtp_sas() {
+	phone->pub_confirm_zrtp_sas();
+}
+
+void t_gui::action_reset_zrtp_sas_confirmation(int line) {
+	phone->pub_reset_zrtp_sas_confirmation(line);
+}
+
+void t_gui::action_reset_zrtp_sas_confirmation() {
+	phone->pub_reset_zrtp_sas_confirmation();
+}
+
+void  t_gui::action_enable_zrtp(void) {
+	phone->pub_enable_zrtp();
+}
+
+void  t_gui::action_zrtp_request_go_clear(void) {
+	phone->pub_zrtp_request_go_clear();
+}
+
+void  t_gui::action_zrtp_go_clear_ok(unsigned short line) {
+	phone->pub_zrtp_go_clear_ok(line);
 }
 
 void t_gui::srv_dnd(list<t_user *> user_list, bool on) {
@@ -2354,3 +2521,9 @@ void t_gui::set_last_file_browse_path(QString path) {
 	lastFileBrowsePath = path;
 	unlock();
 }
+
+#ifdef HAVE_KDE
+unsigned short t_gui::get_line_sys_tray_popup(void) const {
+	return line_sys_tray_popup;
+}
+#endif

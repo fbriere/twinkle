@@ -30,7 +30,7 @@ void i_prohibit_thread::remove_prohibited_thread(void) {
 	prohibited_mutex.unlock();
 }
 
-bool i_prohibit_thread::is_prohibited_thread(void) {
+bool i_prohibit_thread::is_prohibited_thread(void) const {
 	prohibited_mutex.lock();
 	bool result = (prohibited_threads.find(t_thread::self()) != prohibited_threads.end());
 	prohibited_mutex.unlock();

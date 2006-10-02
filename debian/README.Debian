@@ -1,6 +1,7 @@
 twinkle for Debian
 ------------------
 
-Need to use Debian supplied libgsm, not included Twinkle libgsm.
+This package has been configured to use the Debian system shared library 
+libgsm, rather than libgsm included with twinkle.
 
  -- Mark Purcell <msp@debian.org>, Sun, 29 May 2005 09:40:22 +0100

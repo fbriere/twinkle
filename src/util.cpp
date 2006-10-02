@@ -198,7 +198,7 @@ string toupper(const string &s) {
 }
 
 string rtrim(const string &s) {
-	int i;
+	string::size_type i;
 
 	i = s.find_last_not_of(' ');
 	if (i == string::npos) return "";
@@ -207,7 +207,7 @@ string rtrim(const string &s) {
 }
 
 string ltrim(const string &s) {
-	int i;
+	string::size_type i;
 
 	i = s.find_first_not_of(' ');
 	if (i == string::npos) return "";
@@ -282,8 +282,8 @@ string replace_char(const string &s, char from, char to) {
 }
 
 list<string> split(const string &s, char c) {
-	int i;
-	int j = 0;
+	string::size_type i;
+	string::size_type j = 0;
 	list<string> l;
 
 	while (true) {
@@ -307,9 +307,35 @@ list<string> split(const string &s, char c) {
 	}
 }
 
+list<string> split(const string &s, const string& separator) {
+	string::size_type i;
+	string::size_type j = 0;
+	list<string> l;
+
+	while (true) {
+		i = s.find(separator, j);
+		if (i == string::npos) {
+			l.push_back(s.substr(j));
+			return l;
+		}
+
+		if (i == j)
+			l.push_back("");
+		else
+			l.push_back(s.substr(j, i-j));
+
+		j = i + separator.size();
+
+		if (j == s.size()) {
+			l.push_back("");
+			return l;
+		}
+	}
+}
+
 list<string> split_on_first(const string &s, char c) {
 	list<string> l;
-	int i = s.find(c);
+	string::size_type i = s.find(c);
 	if (i == string::npos) {
 		l.push_back(s);
 	} else {

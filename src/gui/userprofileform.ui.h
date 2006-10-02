@@ -35,6 +35,7 @@
 #define idxCatTimers	6
 #define idxCatRingTones	7
 #define idxCatScripts	8
+#define idxCatSecurity	9
 
 // Indices of call hold variants in the call hold variant list box
 #define idxHoldRfc2543	0
@@ -60,6 +61,10 @@
 #define labelCodecSpeexWb	"speex-wb (16 kHz)"
 #define labelCodecSpeexUwb	"speex-uwb (32 kHz)"
 #define labelCodecIlbc		"iLBC"
+#define labelCodecG726_16		"G.726 16 kbps"
+#define labelCodecG726_24		"G.726 24 kbps"
+#define labelCodecG726_32		"G.726 32 kbps"
+#define labelCodecG726_40		"G.726 40 kbps"
 
 // Indices of iLBC modes
 #define idxIlbcMode20	0
@@ -69,6 +74,7 @@
 #define idxDtmfAuto	0
 #define idxDtmfRfc2833	1
 #define idxDtmfInband	2
+#define idxDtmfInfo		3
 
 // Columns in the number conversion list view
 #define colExpr		0
@@ -101,6 +107,11 @@ void UserProfileForm::init()
 	ilbcGroupBox->hide();
 	rtpAudioTabWidget->setTabEnabled(rtpAudioTabWidget->page(idxRtpIlbc), false);
 #endif
+#ifndef HAVE_ZRTP
+	// Zrtp
+	zrtpEnabledCheckBox->setEnabled(false);
+	zrtpSettingsGroupBox->hide();
+#endif
 	
 	// Set toolbutton icons for disabled options.
 	QIconSet i;
@@ -132,6 +143,8 @@ void UserProfileForm::showCategory( QListBoxItem *item )
 		settingsWidgetStack->raiseWidget(pageRingTones);
 	} else if (item->text() == "Scripts") {
 		settingsWidgetStack->raiseWidget(pageScripts);
+	} else if (item->text() == "Security") {
+		settingsWidgetStack->raiseWidget(pageSecurity);
 	}
 }
 
@@ -151,6 +164,14 @@ t_audio_codec UserProfileForm::label2codec(const QString &label) {
 		return CODEC_SPEEX_UWB;
 	} else if (label == labelCodecIlbc) {
 		return CODEC_ILBC;
+	} else if (label == labelCodecG726_16) {
+		return CODEC_G726_16;
+	} else if (label == labelCodecG726_24) {
+		return CODEC_G726_24;
+	} else if (label == labelCodecG726_32) {
+		return CODEC_G726_32;
+	} else if (label == labelCodecG726_40) {
+		return CODEC_G726_40;
 	}
 	return CODEC_NULL;
 }
@@ -172,6 +193,14 @@ QString UserProfileForm::codec2label(t_audio_codec &codec) {
 		return labelCodecSpeexUwb;
 	case CODEC_ILBC:
 		return labelCodecIlbc;
+	case CODEC_G726_16:
+		return labelCodecG726_16;
+	case CODEC_G726_24:
+		return labelCodecG726_24;
+	case CODEC_G726_32:
+		return labelCodecG726_32;
+	case CODEC_G726_40:
+		return labelCodecG726_40;
 	default:
 		return "";
 	}
@@ -269,6 +298,10 @@ void UserProfileForm::populate()
 #ifdef HAVE_ILBC
 	allCodecs.append(labelCodecIlbc);
 #endif
+	allCodecs.append(labelCodecG726_16);
+	allCodecs.append(labelCodecG726_24);
+	allCodecs.append(labelCodecG726_32);
+	allCodecs.append(labelCodecG726_40);
 	activeCodecListBox->clear();
 	list<t_audio_codec> audio_codecs = current_profile->get_codecs();
 	for (list<t_audio_codec>::iterator i = audio_codecs.begin(); i != audio_codecs.end(); i++)
@@ -302,6 +335,12 @@ void UserProfileForm::populate()
 		ilbcPayloadSizeComboBox->setCurrentItem(idxIlbcMode30);
 	}
 	
+	// G.726
+	g72616PayloadSpinBox->setValue(current_profile->get_g726_16_payload_type());
+	g72624PayloadSpinBox->setValue(current_profile->get_g726_24_payload_type());
+	g72632PayloadSpinBox->setValue(current_profile->get_g726_32_payload_type());
+	g72640PayloadSpinBox->setValue(current_profile->get_g726_40_payload_type());
+	
 	// DTMF
 	switch (current_profile->get_dtmf_transport()) {
 	case DTMF_RFC2833:
@@ -309,6 +348,9 @@ void UserProfileForm::populate()
 		break;
 	case DTMF_INBAND:
 		dtmfTransportComboBox->setCurrentItem(idxDtmfInband);
+		break;
+	case DTMF_INFO:
+		dtmfTransportComboBox->setCurrentItem(idxDtmfInfo);
 		break;
 	default:
 		dtmfTransportComboBox->setCurrentItem(idxDtmfAuto);
@@ -405,6 +447,13 @@ void UserProfileForm::populate()
 	outCallFailedLineEdit->setText(current_profile->get_script_out_call_failed().c_str());
 	localReleaseLineEdit->setText(current_profile->get_script_local_release().c_str());
 	remoteReleaseLineEdit->setText(current_profile->get_script_remote_release().c_str());
+	
+	// Security
+	zrtpEnabledCheckBox->setChecked(current_profile->get_zrtp_enabled());
+	zrtpSettingsGroupBox->setEnabled(current_profile->get_zrtp_enabled());
+	zrtpSendIfSupportedCheckBox->setChecked(current_profile->get_zrtp_send_if_supported());
+	zrtpSdpCheckBox->setChecked(current_profile->get_zrtp_sdp());
+	zrtpGoClearWarningCheckBox->setChecked(current_profile->get_zrtp_goclear_warning());
 }
 
 void UserProfileForm::initProfileList(list<t_user *> profiles, QString show_profile_name)
@@ -611,6 +660,14 @@ bool UserProfileForm::validateValues()
 		return false;
 	}
 	
+	if (!check_dynamic_payload(g72616PayloadSpinBox, checked_types) ||
+	    !check_dynamic_payload(g72624PayloadSpinBox, checked_types) ||
+	    !check_dynamic_payload(g72632PayloadSpinBox, checked_types) ||
+	    !check_dynamic_payload(g72640PayloadSpinBox, checked_types)) {
+		rtpAudioTabWidget->showPage(tabG726);
+		return false;
+	}
+	
 	if (!check_dynamic_payload(dtmfPayloadTypeSpinBox, checked_types)) {
 		rtpAudioTabWidget->showPage(tabDtmf);
 		return false;
@@ -722,6 +779,12 @@ bool UserProfileForm::validateValues()
 		break;
 	}
 	
+	// G726
+	current_profile->set_g726_16_payload_type(g72616PayloadSpinBox->value());
+	current_profile->set_g726_24_payload_type(g72624PayloadSpinBox->value());
+	current_profile->set_g726_32_payload_type(g72632PayloadSpinBox->value());
+	current_profile->set_g726_40_payload_type(g72640PayloadSpinBox->value());
+	
 	// DTMF
 	switch (dtmfTransportComboBox->currentItem()) {
 	case idxDtmfRfc2833:
@@ -729,6 +792,9 @@ bool UserProfileForm::validateValues()
 		break;
 	case idxDtmfInband:
 		current_profile->set_dtmf_transport(DTMF_INBAND);
+		break;
+	case idxDtmfInfo:
+		current_profile->set_dtmf_transport(DTMF_INFO);
 		break;
 	default:
 		current_profile->set_dtmf_transport(DTMF_AUTO);
@@ -820,6 +886,12 @@ bool UserProfileForm::validateValues()
 					text().stripWhiteSpace().ascii());
 	current_profile->set_script_remote_release(remoteReleaseLineEdit->
 					text().stripWhiteSpace().ascii());
+	
+	// Security
+	current_profile->set_zrtp_enabled(zrtpEnabledCheckBox->isChecked());
+	current_profile->set_zrtp_send_if_supported(zrtpSendIfSupportedCheckBox->isChecked());
+	current_profile->set_zrtp_sdp(zrtpSdpCheckBox->isChecked());
+	current_profile->set_zrtp_goclear_warning(zrtpGoClearWarningCheckBox->isChecked());
 	
 	// Save user config
 	string error_msg;

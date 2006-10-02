@@ -33,7 +33,7 @@ class t_transaction_layer : public i_prohibit_thread {
 private:
 	// Mutex to guarantee that only 1 thread at a time is
 	// accessing the transaction layer.
-	t_recursive_mutex	tl_mutex;
+	mutable t_recursive_mutex	tl_mutex;
 
 	void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_request(t_request *r, t_tid tid, t_tid tid_cancel_target);
@@ -68,6 +68,7 @@ protected:
 	virtual void recvd_subscribe(t_request *r, t_tid tid) = 0;
 	virtual void recvd_notify(t_request *r, t_tid tid) = 0;
 	virtual void recvd_refer(t_request *r, t_tid tid) = 0;
+	virtual void recvd_info(t_request *r, t_tid tid) = 0;
 
 	// The transaction failed and is aborted
 	virtual void failure(t_failure failure, t_tid tid) = 0;
@@ -90,8 +91,8 @@ public:
 
 	// Lock and unlocking methods for dedicated access to the
 	// transaction layer.
-	void lock(void);
-	void unlock(void);
+	void lock(void) const;
+	void unlock(void) const;
 };
 
 #endif

@@ -26,14 +26,14 @@
 
 void SelectNicForm::init()
 {
-	idxDefaultNic = -1;
+	idxDefault = -1;
 }
 
-void SelectNicForm::setAsDefault()
+void SelectNicForm::setAsDefault(bool setIp)
 {
 	// Only show the information when the default button is
 	// pressed for the first time.
-	if (idxDefaultNic == -1) {
+	if (idxDefault == -1) {
 		QMessageBox::information(this, PRODUCT_NAME,
 			"If you want to remove or "
 			"change the default at a later time, you can do that "
@@ -45,26 +45,42 @@ void SelectNicForm::setAsDefault()
 	int idxNewDefault = nicListBox->currentItem();
 	
 	// Restore pixmap of the old default
-	if (idxDefaultNic != -1) {
+	if (idxDefault != -1) {
 		nicListBox->changeItem(
 			QPixmap::fromMimeSource("kcmpci16.png"),
-			nicListBox->text(idxDefaultNic),
-			idxDefaultNic);
+			nicListBox->text(idxDefault),
+			idxDefault);
 	}
 	
 	// Set pixmap of the default
-	idxDefaultNic = idxNewDefault;
+	idxDefault = idxNewDefault;
 	nicListBox->changeItem(
 		QPixmap::fromMimeSource("twinkle16.png"),
-		nicListBox->text(idxDefaultNic),
-		idxDefaultNic);	
+		nicListBox->text(idxDefault),
+		idxDefault);	
 	
 	// Write default to system settings
-	QStringList l = QStringList::split(':', nicListBox->currentText());
-	sys_config->set_start_user_host(l[1].ascii());
+	int pos = nicListBox->currentText().findRev(':');
+	if (setIp) {
+		sys_config->set_start_user_host(nicListBox->currentText().mid(pos + 1).ascii());
+		sys_config->set_start_user_nic("");
+	} else {
+		sys_config->set_start_user_nic(nicListBox->currentText().left(pos).ascii());
+		sys_config->set_start_user_host("");
+	}
 	string error_msg;
 	if (!sys_config->write_config(error_msg)) {
 		// Failed to write config file
 		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_CRITICAL);
 	}
+}
+
+void SelectNicForm::setAsDefaultIp()
+{
+	setAsDefault(true);
+}
+
+void SelectNicForm::setAsDefaultNic()
+{
+	setAsDefault(false);
 }

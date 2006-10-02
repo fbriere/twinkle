@@ -97,6 +97,9 @@ string replace_char(const string &s, char from, char to);
 // Split a string into elements using c as a separator
 list<string> split(const string &s, char c);
 
+// Split a string into elements using separator as a separator
+list<string> split(const string &s, const string &separator);
+
 // Split a string in two on the first occurence of the separator c.
 list<string> split_on_first(const string &s, char c);
 

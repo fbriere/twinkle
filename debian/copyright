@@ -117,3 +117,9 @@ src/stun/stun.*
  * <http://www.vovida.org/>.
  *
  */
+
+src/sockets/dnssrv.cpp:
+   This software is copyrighted (c) 2002 Rick van Rein, the Netherlands.
+
+   This software has been modified by Michel de Boer. 2005
+

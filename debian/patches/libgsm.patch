@@ -43,7 +43,7 @@ diff -Nur twinkle-0.8.1/src/audio/audio_decoder.h twinkle-0.8.1.new/src/audio/au
  #include "user.h"
 +
 +#ifdef HAVE_GSM
-+#include <gsm.h>
++#include <gsm/gsm.h>
 +#else
  #include "gsm/inc/gsm.h"
 +#endif
@@ -59,7 +59,7 @@ diff -Nur twinkle-0.8.1/src/audio/audio_encoder.h twinkle-0.8.1.new/src/audio/au
  #include "user.h"
 +
 +#ifdef HAVE_GSM
-+#include <gsm.h>
++#include <gsm/gsm.h>
 +#else
  #include "gsm/inc/gsm.h"
 +#endif

@@ -144,4 +144,34 @@ public:
 };
 #endif
 
+class t_g726_audio_encoder : public t_audio_encoder {
+public:
+	enum t_bit_rate {
+		BIT_RATE_16,
+		BIT_RATE_24,
+		BIT_RATE_32,
+		BIT_RATE_40
+	};
+	
+private:
+	uint16 encode_16(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size);
+	uint16 encode_24(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size);
+	uint16 encode_32(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size);
+	uint16 encode_40(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size);
+
+	g72x_state	_state;
+	t_bit_rate	_bit_rate;
+	
+public:
+	t_g726_audio_encoder(uint16 payload_id, uint16 ptime, t_bit_rate bit_rate, 
+		t_user *user_config);
+		
+	virtual uint16 encode(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size, bool &silence);
+};
+
 #endif

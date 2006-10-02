@@ -57,6 +57,11 @@ void t_memman::trc_new(void *p, const string &filename, int lineno,
 		// Most likely this is an error in the usage of the
 		// MEMMAN_NEW. A wrong pointer has been passed.
 		num_new_duplicate++;
+		
+		// Unlock now. If memman gets called again via the log,
+		// there will be no dead lock.
+		mtx_memman.unlock();
+		
 		log_file->write_header("t_memman::trc_new",
 			LOG_MEMORY, LOG_WARNING);
 		log_file->write_raw(filename);
@@ -71,7 +76,6 @@ void t_memman::trc_new(void *p, const string &filename, int lineno,
 		log_file->write_raw(i->second.lineno);
 		log_file->write_endl();
 		log_file->write_footer();
-		mtx_memman.unlock();
 		return;
 	}
 
@@ -94,6 +98,8 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 	// Check if the pointer allocation has been reported
 	if (i == pointer_map.end()) {
 		num_delete_mismatch++;
+		mtx_memman.unlock();
+		
 		log_file->write_header("t_memman::trc_delete",
 			LOG_MEMORY, LOG_WARNING);
 		log_file->write_raw(filename);
@@ -104,12 +110,16 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 		log_file->write_raw(" is deleted.\n");
 		log_file->write_raw("This pointer is not allocated however.\n");
 		log_file->write_footer();
-		mtx_memman.unlock();
+		
 		return;
 	}
 
+	pointer_map.erase(p);
+	bool array_mismatch = (is_array != i->second.is_array);
+	mtx_memman.unlock();
+
 	// Check mixing of array new/delete
-	if (is_array != i->second.is_array) {
+	if (array_mismatch) {
 		num_array_mixing++;
 		log_file->write_header("t_memman::trc_delete",
 			LOG_MEMORY, LOG_WARNING);
@@ -136,10 +146,6 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 		log_file->write_endl();
 		log_file->write_footer();
 	}
-
-	pointer_map.erase(p);
-
-	mtx_memman.unlock();
 }
 
 void t_memman::report_leaks(void) {

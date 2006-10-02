@@ -78,6 +78,7 @@
 // Startup settings
 #define FLD_START_USER_PROFILE	"start_user_profile"
 #define FLD_START_USER_HOST	"start_user_host"
+#define FLD_START_USER_NIC	"start_user_nic"
 #define FLD_START_HIDDEN	"start_hidden"
 
 // Network settings
@@ -97,6 +98,8 @@
 #define FLD_REDIAL_SUBJECT	"redial_subject"
 #define FLD_REDIAL_PROFILE	"redial_profile"
 #define FLD_DIAL_HISTORY	"dial_history"
+#define FLD_SHOW_DISPLAY	"show_display"
+#define FLD_COMPACT_LINE_STATUS	"compact_line_status"
 
 /////////////////////////
 // class t_audio_device
@@ -191,6 +194,7 @@ t_sys_settings::t_sys_settings() {
 	
 	start_user_profiles.clear();
 	start_user_host.clear();
+	start_user_nic.clear();
 	start_hidden = false;
 	
 	config_sip_udp_port = 5060;
@@ -208,6 +212,8 @@ t_sys_settings::t_sys_settings() {
 	redial_subject.clear();
 	redial_profile.clear();
 	dial_history.clear();
+	show_display = true;
+	compact_line_status = false;
 }
 
 // Getters
@@ -411,6 +417,14 @@ string t_sys_settings::get_start_user_host(void) const {
 	return result;	
 }
 
+string t_sys_settings::get_start_user_nic(void) const {
+	string result;
+	mtx_sys.lock();
+	result = start_user_nic;
+	mtx_sys.unlock();
+	return result;
+}
+
 bool t_sys_settings::get_start_hidden(void) const {
 	bool result;
 	mtx_sys.lock();
@@ -513,6 +527,22 @@ list<string> t_sys_settings::get_dial_history(void) const {
 	result = dial_history;
 	mtx_sys.unlock();
 	return result;	
+}
+
+bool t_sys_settings::get_show_display(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = show_display;
+	mtx_sys.unlock();
+	return result;
+}
+
+bool t_sys_settings::get_compact_line_status(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = compact_line_status;
+	mtx_sys.unlock();
+	return result;
 }
 
 
@@ -667,6 +697,12 @@ void t_sys_settings::set_start_user_host(const string &host) {
 	mtx_sys.unlock();
 }
 
+void t_sys_settings::set_start_user_nic(const string &dev) {
+	mtx_sys.lock();
+	start_user_nic = dev;
+	mtx_sys.unlock();
+}
+
 void t_sys_settings::set_start_hidden(bool b) {
 	mtx_sys.lock();
 	start_hidden = b;
@@ -745,6 +781,18 @@ void t_sys_settings::set_dial_history(const list<string> &history) {
 	mtx_sys.unlock();
 }
 
+void t_sys_settings::set_show_display(bool b) {
+	mtx_sys.lock();
+	show_display = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_compact_line_status(bool b) {
+	mtx_sys.lock();
+	compact_line_status = b;
+	mtx_sys.unlock();
+}
+
 
 string t_sys_settings::about(bool html) const {
 	string s = PRODUCT_NAME;
@@ -777,11 +825,14 @@ string t_sys_settings::about(bool html) const {
 	s += "\n";
 	
 	if (html) {
-		s += "* Initial code for ALSA support was written by Rickard Petz&auml;ll";
-		s += "<BR><BR>";
+		s += "* ALSA - Rickard Petz&auml;ll";
+		s += "<BR>";
 	} else {
-		s += "* Initial code for ALSA support was written by Rickard Petzall";
+		s += "* ALSA - Rickard Petzall";
 	}
+	s += "\n";
+	s += "* ZRTP/SRTP - Werner Dittmann";
+	if (html) s += "<BR><BR>";
 	s += "\n\n";
 
 	s += "This software contains the following software from 3rd parties:";		
@@ -792,7 +843,7 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 
-	s += "* G.711 codecs from Sun Microsystems (public domain)";	
+	s += "* G.711/G.726 codecs from Sun Microsystems (public domain)";	
 	if (html) s += "<BR>";
 	s += "\n";
 	
@@ -867,6 +918,11 @@ string t_sys_settings::get_options_built(void) const {
 	if (!options_built.empty()) options_built += ", ";
 	options_built += "iLBC";
 #endif
+#ifdef HAVE_ZRTP
+	if (!options_built.empty()) options_built += ", ";
+	options_built += "ZRTP";
+#endif
+
 	return options_built;
 }
 
@@ -1140,6 +1196,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			if (!value.empty()) start_user_profiles.push_back(value);
 		} else if (parameter == FLD_START_USER_HOST) {
 			start_user_host = value;
+		} else if (parameter == FLD_START_USER_NIC) {
+			start_user_nic = value;
 		} else if (parameter == FLD_START_HIDDEN) {
 			start_hidden = yesno2bool(value);
 		} else if (parameter == FLD_SIP_UDP_PORT) {
@@ -1169,6 +1227,10 @@ bool t_sys_settings::read_config(string &error_msg) {
 			redial_profile = value;
 		} else if (parameter == FLD_DIAL_HISTORY) {
 			dial_history.push_back(value);
+		} else if (parameter == FLD_SHOW_DISPLAY) {
+			show_display = yesno2bool(value);
+		} else if (parameter == FLD_COMPACT_LINE_STATUS) {
+			//compact_line_status = yesno2bool(value);
 		}
 			
 		// Unknown field names are skipped.
@@ -1265,6 +1327,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 		config << FLD_START_USER_PROFILE << '=' << *i << endl;
 	}
 	config << FLD_START_USER_HOST << '=' << start_user_host << endl;
+	config << FLD_START_USER_NIC  << '=' << start_user_nic << endl;
 	config << FLD_START_HIDDEN << '=' << bool2yesno(start_hidden) << endl;
 	config << endl;
 	
@@ -1289,6 +1352,8 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_REDIAL_DISPLAY << '=' << redial_display << endl; 
 	config << FLD_REDIAL_SUBJECT << '=' << redial_subject << endl;
 	config << FLD_REDIAL_PROFILE << '=' << redial_profile << endl;
+	config << FLD_SHOW_DISPLAY << '=' << bool2yesno(show_display) << endl;
+	//config << FLD_COMPACT_LINE_STATUS << '=' << bool2yesno(compact_line_status) << endl;
 	
 	for (list<string>::iterator i = dial_history.begin();
 	     i != dial_history.end(); i++)

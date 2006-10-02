@@ -61,7 +61,7 @@ void recvd_stun_msg(char *datagram, int datagram_size,
 	evq_trans_mgr->push_stun_response(&m, 0, 0);
 }
 
-t_sip_body *parse_body(string &data, const t_sip_message *msg) {
+t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 	if (!msg->hdr_content_type.is_populated()) {
 		// Content-Type header is missing. Pass body
 		// unparsed. The upper application layer will
@@ -83,7 +83,13 @@ t_sip_body *parse_body(string &data, const t_sip_message *msg) {
 
 		// Parse sipfrag body (RFC 3420)
 		try {
-			t_sip_message *m = t_parser::parse(data);
+			// If the sipfrag does not contain a body itself,
+			// then the CRLF at the end of the headers is optional!
+			// Add an additional CRLF such that the SIP parser will
+			// parse a sipfrag if the CRLF is not present. The SIP
+			// parser will stop after it finds the double CRLF. So
+			// a 3rd CRLF will not be detected by the parser (yuck).
+			t_sip_message *m = t_parser::parse(data + CRLF);
 			b = new t_sip_body_sipfrag(m);
 			MEMMAN_NEW(b);
 			MEMMAN_DELETE(m);
@@ -97,6 +103,7 @@ t_sip_body *parse_body(string &data, const t_sip_message *msg) {
 			string tmp = "SIP/2.0 100 Trying";
 			tmp += CRLF;
 			tmp += data;
+			tmp += CRLF;
 			t_sip_message *resp = t_parser::parse(tmp);
 
 			// Parsing succeeded. Now strip the fake header
@@ -110,6 +117,15 @@ t_sip_body *parse_body(string &data, const t_sip_message *msg) {
 			delete m;
 			return b;
 		}
+	} else if (msg->hdr_content_type.media.type == "application" &&
+	           msg->hdr_content_type.media.subtype == "dtmf-relay")
+	{
+		t_sip_body_dtmf_relay *b = new t_sip_body_dtmf_relay();
+		MEMMAN_NEW(b);
+		if (b->parse(data)) return b;
+		MEMMAN_DELETE(b);
+		delete b;
+		throw -1;
 	} else {
 		// Pass other bodies unparsed. The upper application
 		// layer will decide what to do.
@@ -128,7 +144,7 @@ void *listen_udp(void *arg) {
 	t_sip_message	*msg;
 	t_event_network	*ev_network;
 	t_event_icmp	*ev_icmp;
-	int		pos_body;	// position of body in msg
+	string::size_type	pos_body;	// position of body in msg
 	string		log_msg;
 
 	// Number of consecutive non-icmp errors received

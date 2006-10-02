@@ -58,10 +58,10 @@ am_libaudio_a_OBJECTS = audio_device.$(OBJEXT) audio_decoder.$(OBJEXT) \
 	audio_encoder.$(OBJEXT) audio_codecs.$(OBJEXT) \
 	audio_rx.$(OBJEXT) audio_session.$(OBJEXT) audio_tx.$(OBJEXT) \
 	dtmf_player.$(OBJEXT) freq_gen.$(OBJEXT) g711.$(OBJEXT) \
-	g721.$(OBJEXT) g723_24.$(OBJEXT) g723_40.$(OBJEXT) \
-	g72x.$(OBJEXT) media_buffer.$(OBJEXT) \
+	g721.$(OBJEXT) g723_16.$(OBJEXT) g723_24.$(OBJEXT) \
+	g723_40.$(OBJEXT) g72x.$(OBJEXT) media_buffer.$(OBJEXT) \
 	rtp_telephone_event.$(OBJEXT) tone_gen.$(OBJEXT) \
-	twinkle_rtp_session.$(OBJEXT)
+	twinkle_rtp_session.$(OBJEXT) twinkle_zrtp_ui.$(OBJEXT)
 libaudio_a_OBJECTS = $(am_libaudio_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -319,6 +319,7 @@ libaudio_a_SOURCES = \
         freq_gen.cpp\
         g711.cpp\
         g721.cpp\
+	g723_16.cpp\
         g723_24.cpp\
         g723_40.cpp\
         g72x.cpp\
@@ -326,6 +327,7 @@ libaudio_a_SOURCES = \
         rtp_telephone_event.cpp\
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
+        twinkle_zrtp_ui.cpp\
         audio_device.h\
 	audio_decoder.h\
         audio_encoder.h\
@@ -340,7 +342,8 @@ libaudio_a_SOURCES = \
         media_buffer.h\
         rtp_telephone_event.h\
         tone_gen.h\
-        twinkle_rtp_session.h
+        twinkle_rtp_session.h\
+        twinkle_zrtp_ui.h
 
 SUBDIRS = gsm
 EXTRA_DIST = README_G711
@@ -402,6 +405,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/freq_gen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g711.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g721.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g723_16.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g723_24.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g723_40.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g72x.Po@am__quote@
@@ -409,6 +413,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rtp_telephone_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tone_gen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/twinkle_rtp_session.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/twinkle_zrtp_ui.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

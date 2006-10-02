@@ -248,6 +248,18 @@ void SysSettingsForm::populate()
 			userHostComboBox->setCurrentItem(idx);
 		}
 	}
+
+	userDevComboBox->clear();
+	userDevComboBox->insertItem("none");
+	userDevComboBox->setCurrentItem(0);
+	idx = 1;
+	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
+		userDevComboBox->insertItem(i->name.c_str());
+		if (sys_config->get_start_user_nic() == i->name) {
+			userDevComboBox->setCurrentItem(idx);
+		}
+	}
+
 	delete l;
 	MEMMAN_DELETE(l);
 	
@@ -283,6 +295,14 @@ void SysSettingsForm::populate()
 
 void SysSettingsForm::validate()
 {
+	if (userHostComboBox->currentItem() != 0 && userDevComboBox->currentItem() != 0)
+	{
+		((t_gui *)ui)->cb_show_msg(this, 
+			"Either choose a default IP address or a default network interface.", 
+			MSG_WARNING);
+		return;
+	}
+	
 	// Audio
 	string dev;
 	dev = comboItem2audio_dev(ringtoneComboBox->currentText(), otherRingtoneLineEdit);
@@ -340,6 +360,12 @@ void SysSettingsForm::validate()
 		sys_config->set_start_user_host("");
 	} else {
 		sys_config->set_start_user_host(userHostComboBox->currentText().ascii());
+	}
+	
+	if (userDevComboBox->currentItem() == 0) {
+		sys_config->set_start_user_nic("");
+	} else {
+		sys_config->set_start_user_nic(userDevComboBox->currentText().ascii());
 	}
 	
 	// Network

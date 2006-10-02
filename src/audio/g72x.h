@@ -114,12 +114,20 @@ tandem_adjust_ulaw(
 	int		sign,
 	short		*qtab);
 
-void g72x_init_stat(struct g72x_state *);
+void g72x_init_state(struct g72x_state *);
 int g721_encoder(
 		int sample,
 		int in_coding,
 		struct g72x_state *state_ptr);
 int g721_decoder(
+		int code,
+		int out_coding,
+		struct g72x_state *state_ptr);
+int g723_16_encoder(
+		int sample,
+		int in_coding,
+		struct g72x_state *state_ptr);
+int g723_16_decoder(
 		int code,
 		int out_coding,
 		struct g72x_state *state_ptr);

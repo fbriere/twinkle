@@ -14,6 +14,7 @@ libaudio_a_SOURCES =\
         freq_gen.cpp\
         g711.cpp\
         g721.cpp\
+	g723_16.cpp\
         g723_24.cpp\
         g723_40.cpp\
         g72x.cpp\
@@ -21,6 +22,7 @@ libaudio_a_SOURCES =\
         rtp_telephone_event.cpp\
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
+        twinkle_zrtp_ui.cpp\
         audio_device.h\
 	audio_decoder.h\
         audio_encoder.h\
@@ -35,7 +37,8 @@ libaudio_a_SOURCES =\
         media_buffer.h\
         rtp_telephone_event.h\
         tone_gen.h\
-        twinkle_rtp_session.h
+        twinkle_rtp_session.h\
+        twinkle_zrtp_ui.h
 
 SUBDIRS = gsm
 

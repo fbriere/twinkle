@@ -72,7 +72,8 @@ enum t_bit_rate_type {
 enum t_dtmf_transport {
 	DTMF_INBAND,
 	DTMF_RFC2833,
-	DTMF_AUTO
+	DTMF_AUTO,
+	DTMF_INFO
 };
 
 struct t_number_conversion {
@@ -143,7 +144,7 @@ private:
 	// AUDIO
 
 	list<t_audio_codec>	codecs; // in order of preference
-	unsigned short		ptime; // ptime (ms) for G.711
+	unsigned short		ptime; // ptime (ms) for G.711/G.726
 	
 	// RTP dynamic payload types for speex
 	unsigned short		speex_nb_payload_type;
@@ -159,11 +160,17 @@ private:
 	bool			speex_penh;
 	unsigned short		speex_complexity;
 	
-	// RTP dynamic payuload types for iLBC
+	// RTP dynamic payload types for iLBC
 	unsigned short		ilbc_payload_type;
 	
 	// iLBC options
 	unsigned short		ilbc_mode; // 20 or 30 ms frame size
+	
+	// RTP dynamic payload types for G.726
+	unsigned short		g726_16_payload_type;
+	unsigned short		g726_24_payload_type;
+	unsigned short		g726_32_payload_type;
+	unsigned short		g726_40_payload_type;
 	
 	// Transport mode for DTMF
 	t_dtmf_transport	dtmf_transport;
@@ -331,6 +338,19 @@ private:
 	string		script_local_release;
 	string		script_remote_release;
 	
+	// SECURITY
+	// zrtp setting
+	bool		zrtp_enabled;
+	
+	// Popup warning when far-end sends goclear command
+	bool		zrtp_goclear_warning;
+	
+	// Send a=zrtp in SDP
+	bool		zrtp_sdp;
+	
+	// Only negotiate zrtp if far-end signalled support for zrtp
+	bool		zrtp_send_if_supported;
+	
 	// Number conversion
 	list<t_number_conversion>	number_conversions;
 	
@@ -385,6 +405,10 @@ public:
 	unsigned short get_speex_complexity(void) const;
 	unsigned short get_ilbc_payload_type(void) const;
 	unsigned short get_ilbc_mode(void) const;
+	unsigned short get_g726_16_payload_type(void) const;
+	unsigned short get_g726_24_payload_type(void) const;
+	unsigned short get_g726_32_payload_type(void) const;
+	unsigned short get_g726_40_payload_type(void) const;
 	t_dtmf_transport get_dtmf_transport(void) const;
 	unsigned short get_dtmf_payload_type(void) const;
 	unsigned short get_dtmf_duration(void) const;
@@ -428,6 +452,11 @@ public:
 	string get_script_local_release(void) const;
 	string get_script_remote_release(void) const;
 	list<t_number_conversion> get_number_conversions(void) const;
+	bool get_zrtp_enabled(void) const;
+	bool get_zrtp_goclear_warning(void) const;
+	bool get_zrtp_sdp(void) const;
+	bool get_zrtp_send_if_supported(void) const;
+
 	
 	// Setters
 	void set_name(const string &_name);
@@ -458,6 +487,10 @@ public:
 	void set_speex_penh(bool b);
 	void set_speex_complexity(unsigned short complexity);
 	void set_ilbc_payload_type(unsigned short payload_type);
+	void set_g726_16_payload_type(unsigned short payload_type);
+	void set_g726_24_payload_type(unsigned short payload_type);
+	void set_g726_32_payload_type(unsigned short payload_type);
+	void set_g726_40_payload_type(unsigned short payload_type);
 	void set_ilbc_mode(unsigned short mode);
 	void set_dtmf_transport(t_dtmf_transport _dtmf_transport);
 	void set_dtmf_payload_type(unsigned short payload_type);
@@ -502,6 +535,10 @@ public:
 	void set_script_local_release(const string &script);
 	void set_script_remote_release(const string &script);
 	void set_number_conversions(const list<t_number_conversion> &l);
+	void set_zrtp_enabled(bool b);
+	void set_zrtp_goclear_warning(bool b);
+	void set_zrtp_sdp(bool b);
+	void set_zrtp_send_if_supported(bool b);
 
 	// Read and parse a config file into the user object.
 	// Returns false if it fails. error_msg is an error message that can

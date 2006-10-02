@@ -38,7 +38,9 @@ extern t_phone *phone;
 			  cout << "DEBUG: ";\
 			  cout << debug_timer.tv_sec * 1000 +\
 			          debug_timer.tv_usec / 1000;\
+			  cout << ":" << debug_timer.tv_sec * 1000 + debug_timer.tv_usec / 1000 - (debug_timer_prev.tv_sec * 1000 + debug_timer_prev.tv_usec / 1000);\
 			  cout << " " << (s) << endl;\
+			  debug_timer_prev = debug_timer;\
 			}
 
 //////////
@@ -91,6 +93,21 @@ t_audio_tx::t_audio_tx(t_audio_session *_audio_session,
 	map_audio_decoder[CODEC_ILBC] = new t_ilbc_audio_decoder(_ptime, user_config);
 	MEMMAN_NEW(map_audio_decoder[CODEC_ILBC]);
 #endif
+	map_audio_decoder[CODEC_G726_16] = new t_g726_audio_decoder(
+			t_g726_audio_decoder::BIT_RATE_16, _ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G726_16]);
+	
+	map_audio_decoder[CODEC_G726_24] = new t_g726_audio_decoder(
+			t_g726_audio_decoder::BIT_RATE_24, _ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G726_24]);
+	
+	map_audio_decoder[CODEC_G726_32] = new t_g726_audio_decoder(
+			t_g726_audio_decoder::BIT_RATE_32, _ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G726_32]);
+	
+	map_audio_decoder[CODEC_G726_40] = new t_g726_audio_decoder(
+			t_g726_audio_decoder::BIT_RATE_40, _ptime, user_config);
+	MEMMAN_NEW(map_audio_decoder[CODEC_G726_40]);
 
 	ptime = map_audio_decoder[codec]->get_default_ptime();
 
@@ -233,7 +250,7 @@ void t_audio_tx::clear_conceal_buf(void) {
 
 void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_party) {
 	int status;
-	struct timeval debug_timer;
+	struct timeval debug_timer, debug_timer_prev;
 
 	unsigned char *playbuf = buf;
 
@@ -369,8 +386,16 @@ void t_audio_tx::set_running(bool running) {
 void t_audio_tx::run(void) {
 	const AppDataUnit* adu;
 	struct timespec sleeptimer;
-	struct timeval debug_timer;
+	struct timeval debug_timer, debug_timer_prev;
 	int last_seqnum = -1; // seqnum of last received RTP packet
+	
+	// RTP packets with multiple SSRCs may be received. Twinkle locks
+	// down on the first SSRC containing a supported codec. Other SSRCs
+	// will be ignored.
+	uint32 ssrc_locked = 0;
+	bool ssrc_locked_down = false;
+	SyncSource *locked_sync_source;
+	
 	bool recvd_dtmf = false; // indicates if last RTP packets is a DTMF event
 
 	// The running flag is set already in t_audio_session::run to prevent
@@ -451,6 +476,56 @@ void t_audio_tx::run(void) {
 		t_audio_codec recvd_codec = CODEC_NULL;
 		if (it_codec != payload2codec.end()) {
 			recvd_codec = it_codec->second;
+		}
+		
+		// Lock down on first SSRC containing a supported codec.
+		if (!ssrc_locked_down) {
+			if (recvd_codec != CODEC_NULL) {
+				ssrc_locked = adu->getSource().getID();
+				ssrc_locked_down = true;
+				
+				log_file->write_header("t_audio_tx::run", 
+					LOG_NORMAL);
+				log_file->write_raw("Audio tx line ");
+				log_file->write_raw(get_line()->get_line_number()+1);
+				log_file->write_raw(": SSRC locked down to ");
+				log_file->write_raw(ssrc_locked);
+				log_file->write_endl();
+				log_file->write_footer();
+			} else {
+				// First SSRC received had an unsupported codec
+				// Discard.
+				log_file->write_header("t_audio_tx::run", 
+					LOG_NORMAL);
+				log_file->write_raw("Audio tx line ");
+				log_file->write_raw(get_line()->get_line_number()+1);
+				log_file->write_raw(": First SSRC received (");
+				log_file->write_raw(adu->getSource().getID());
+				log_file->write_raw(") has unsupported codec ");
+				log_file->write_raw(ui->format_codec(codec));
+				log_file->write_endl();
+				log_file->write_footer();
+				
+				MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
+				delete adu;
+				continue;
+			}
+		}
+		
+		// Discard SSRC's different from the locked down SSRC
+		if (ssrc_locked != adu->getSource().getID()) {
+			log_file->write_header("t_audio_tx::run", 
+				LOG_NORMAL, LOG_DEBUG);
+			log_file->write_raw("Audio tx line ");
+			log_file->write_raw(get_line()->get_line_number()+1);
+			log_file->write_raw(": Discard SSRC ");
+			log_file->write_raw(adu->getSource().getID());
+			log_file->write_endl();
+			log_file->write_footer();
+		
+			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
+			delete adu;
+			continue;
 		}
 		
 		map<t_audio_codec, t_audio_decoder *>::const_iterator it_decoder;
@@ -660,8 +735,8 @@ void t_audio_tx::run(void) {
 		
 		// Discard packet if we are lacking behind. This happens if the
 		// soundcard plays at a rate less than the requested sample rate.
-		if (rtp_session->isWaiting()) {
-			uint32 last_ts = rtp_session->getLastTimestamp();
+		if (rtp_session->isWaiting(&(adu->getSource()))) {
+			uint32 last_ts = rtp_session->getLastTimestamp(&(adu->getSource()));
 			uint32 diff;
 			
 			diff = last_ts - rtp_timestamp;

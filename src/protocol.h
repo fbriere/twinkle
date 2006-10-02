@@ -219,6 +219,7 @@ enum t_stun_timer {
 				  (h).add_method(REFER); \
 				  (h).add_method(NOTIFY); \
 				  (h).add_method(SUBSCRIBE); \
+				  (h).add_method(INFO); \
 				}
 
 // Set Supported header with supported extensions

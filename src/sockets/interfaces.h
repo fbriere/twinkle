@@ -50,4 +50,7 @@ list<t_interface> *get_interfaces(bool include_loopback = false);
 // Check if an interface with a certain IP address exists
 bool exists_interface(const string &hostname);
 
+// Check if an interface exists and return its IP address
+bool exists_interface_dev(const string &devname, string &ip_address);
+
 #endif

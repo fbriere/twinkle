@@ -25,9 +25,12 @@
     </property>
     <property name="minimumSize">
         <size>
-            <width>403</width>
-            <height>663</height>
+            <width>571</width>
+            <height>639</height>
         </size>
+    </property>
+    <property name="cursor">
+        <cursor>0</cursor>
     </property>
     <property name="caption">
         <string>Twinkle</string>
@@ -173,6 +176,12 @@
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
                             </property>
+                            <property name="cursor">
+                                <cursor>13</cursor>
+                            </property>
+                            <property name="frameShadow">
+                                <enum>Plain</enum>
+                            </property>
                             <property name="text">
                                 <string></string>
                             </property>
@@ -194,6 +203,9 @@
                                     <horstretch>0</horstretch>
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
+                            </property>
+                            <property name="cursor">
+                                <cursor>13</cursor>
                             </property>
                             <property name="text">
                                 <string></string>
@@ -217,6 +229,9 @@
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
                             </property>
+                            <property name="cursor">
+                                <cursor>13</cursor>
+                            </property>
                             <property name="text">
                                 <string></string>
                             </property>
@@ -239,6 +254,9 @@
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
                             </property>
+                            <property name="cursor">
+                                <cursor>13</cursor>
+                            </property>
                             <property name="text">
                                 <string></string>
                             </property>
@@ -260,6 +278,9 @@
                                     <horstretch>0</horstretch>
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
+                            </property>
+                            <property name="cursor">
+                                <cursor>13</cursor>
                             </property>
                             <property name="text">
                                 <string></string>
@@ -337,7 +358,7 @@
                 </sizepolicy>
             </property>
             <property name="title">
-                <string>Lines</string>
+                <string>Line status</string>
             </property>
             <property name="exclusive">
                 <bool>true</bool>
@@ -348,7 +369,7 @@
                 </property>
                 <widget class="QLayoutWidget">
                     <property name="name">
-                        <cstring>layout30</cstring>
+                        <cstring>layout20</cstring>
                     </property>
                     <hbox>
                         <property name="name">
@@ -365,6 +386,14 @@
                                 <widget class="QRadioButton">
                                     <property name="name">
                                         <cstring>line1RadioButton</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
                                     </property>
                                     <property name="text">
                                         <string>Line &amp;1:</string>
@@ -440,7 +469,7 @@
                         </widget>
                         <widget class="QLayoutWidget">
                             <property name="name">
-                                <cstring>layout26</cstring>
+                                <cstring>layout19</cstring>
                             </property>
                             <vbox>
                                 <property name="name">
@@ -448,7 +477,7 @@
                                 </property>
                                 <widget class="QLayoutWidget">
                                     <property name="name">
-                                        <cstring>layout21</cstring>
+                                        <cstring>layout17</cstring>
                                     </property>
                                     <hbox>
                                         <property name="name">
@@ -456,7 +485,58 @@
                                         </property>
                                         <widget class="QLabel">
                                             <property name="name">
+                                                <cstring>line1StatLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_ringing.png</pixmap>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>&lt;p&gt;
+The padlock indicates that your voice is encrypted during transport over the network.
+&lt;/p&gt;
+&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
+&lt;p&gt;
+Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel is probably compromised by a man-in-the-middle attack (MitM).
+&lt;/p&gt;
+&lt;p&gt;
+If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same person.
+&lt;/p&gt;</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
                                                 <cstring>status1TextLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>5</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
                                             </property>
                                             <property name="paletteForegroundColor">
                                                 <color>
@@ -470,6 +550,204 @@
                                             </property>
                                             <property name="textFormat">
                                                 <enum>RichText</enum>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line1HoldLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>hold.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Call is on hold</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line1MuteLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_mute.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Voice is muted</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line1ConfLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_conference.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Conference call</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line1ReferLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>cf.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Transferring call</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>crypt1Label</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>13</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>Panel</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Raised</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>encrypted.png</pixmap>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>&lt;p&gt;
+The padlock indicates that your voice is encrypted during transport over the network.
+&lt;/p&gt;
+&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
+&lt;p&gt;
+Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel may be compromised by a man-in-the-middle attack (MitM).
+&lt;/p&gt;
+&lt;p&gt;
+If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same destination. For subsequent calls to the same destination, you don't have to confirm the SAS again. The padlock will show a check symbol when the SAS has been confirmed.
+&lt;/p&gt;</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line1SasLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="text">
+                                                <string>sas</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Short authentication string</string>
                                             </property>
                                         </widget>
                                         <widget class="QLabel">
@@ -497,6 +775,9 @@
                                             <property name="alignment">
                                                 <set>AlignVCenter|AlignRight</set>
                                             </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Audio codec</string>
+                                            </property>
                                         </widget>
                                         <widget class="QLabel">
                                             <property name="name">
@@ -517,6 +798,9 @@
                                             </property>
                                             <property name="text">
                                                 <string>0:00:00</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Call duration</string>
                                             </property>
                                         </widget>
                                     </hbox>
@@ -645,7 +929,7 @@
                 </widget>
                 <widget class="QLayoutWidget">
                     <property name="name">
-                        <cstring>layout33</cstring>
+                        <cstring>layout22</cstring>
                     </property>
                     <hbox>
                         <property name="name">
@@ -662,6 +946,14 @@
                                 <widget class="QRadioButton">
                                     <property name="name">
                                         <cstring>line2RadioButton</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
                                     </property>
                                     <property name="text">
                                         <string>Line &amp;2:</string>
@@ -734,7 +1026,7 @@
                         </widget>
                         <widget class="QLayoutWidget">
                             <property name="name">
-                                <cstring>layout32</cstring>
+                                <cstring>layout21</cstring>
                             </property>
                             <vbox>
                                 <property name="name">
@@ -742,7 +1034,7 @@
                                 </property>
                                 <widget class="QLayoutWidget">
                                     <property name="name">
-                                        <cstring>layout6</cstring>
+                                        <cstring>layout18</cstring>
                                     </property>
                                     <hbox>
                                         <property name="name">
@@ -750,7 +1042,58 @@
                                         </property>
                                         <widget class="QLabel">
                                             <property name="name">
+                                                <cstring>line2StatLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_ringing.png</pixmap>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>&lt;p&gt;
+The padlock indicates that your voice is encrypted during transport over the network.
+&lt;/p&gt;
+&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
+&lt;p&gt;
+Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel is probably compromised by a man-in-the-middle attack (MitM).
+&lt;/p&gt;
+&lt;p&gt;
+If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same person.
+&lt;/p&gt;</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
                                                 <cstring>status2TextLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>5</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
                                             </property>
                                             <property name="paletteForegroundColor">
                                                 <color>
@@ -764,6 +1107,204 @@
                                             </property>
                                             <property name="textFormat">
                                                 <enum>RichText</enum>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line2HoldLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>hold.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Call is on hold</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line2MuteLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_mute.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Voice is muted</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line2ConfLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>stat_conference.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Conference call</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line2ReferLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>0</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>NoFrame</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Plain</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>cf.png</pixmap>
+                                            </property>
+                                            <property name="toolTip" stdset="0">
+                                                <string>Transferring call</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>crypt2Label</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="cursor">
+                                                <cursor>13</cursor>
+                                            </property>
+                                            <property name="frameShape">
+                                                <enum>Panel</enum>
+                                            </property>
+                                            <property name="frameShadow">
+                                                <enum>Raised</enum>
+                                            </property>
+                                            <property name="lineWidth">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="text">
+                                                <string></string>
+                                            </property>
+                                            <property name="pixmap">
+                                                <pixmap>encrypted.png</pixmap>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>&lt;p&gt;
+The padlock indicates that your voice is encrypted during transport over the network.
+&lt;/p&gt;
+&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
+&lt;p&gt;
+Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel may be compromised by a man-in-the-middle attack (MitM).
+&lt;/p&gt;
+&lt;p&gt;
+If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same destination. For subsequent calls to the same destination, you don't have to confirm the SAS again. The padlock will show a check symbol when the SAS has been confirmed.
+&lt;/p&gt;</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel">
+                                            <property name="name">
+                                                <cstring>line2SasLabel</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>0</hsizetype>
+                                                    <vsizetype>5</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="text">
+                                                <string>sas</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Short authentication string</string>
                                             </property>
                                         </widget>
                                         <widget class="QLabel">
@@ -791,6 +1332,9 @@
                                             <property name="alignment">
                                                 <set>AlignVCenter|AlignRight</set>
                                             </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Audio codec</string>
+                                            </property>
                                         </widget>
                                         <widget class="QLabel">
                                             <property name="name">
@@ -811,6 +1355,9 @@
                                             </property>
                                             <property name="text">
                                                 <string>0:00:00</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Call duration</string>
                                             </property>
                                         </widget>
                                     </hbox>
@@ -956,6 +1503,9 @@
         <action name="callAnswer"/>
         <action name="callBye"/>
         <action name="callReject"/>
+        <item text="&amp;Reject" name="popupMenu_9" accel="F8">
+            <action name="actionLine1"/>
+        </item>
         <action name="callRedirect"/>
         <action name="callTransfer"/>
         <action name="callHold"/>
@@ -965,6 +1515,11 @@
         <action name="callRedial"/>
         <separator/>
         <action name="callTermCap"/>
+        <action name="callActivate_LineAction"/>
+        <item text="Activate line" name="popupMenu_20" accel="">
+            <action name="actionLine1"/>
+            <action name="actionLine2"/>
+        </item>
     </item>
     <item text="&amp;Registration" name="PopupMenu_2">
         <action name="regRegister"/>
@@ -980,6 +1535,7 @@
     <item text="&amp;View" name="View">
         <action name="viewCall_HistoryAction"/>
         <action name="viewLogAction"/>
+        <action name="viewDisplayAction"/>
     </item>
     <item text="&amp;Help" name="helpMenu">
         <action name="helpWhats_ThisAction"/>
@@ -987,6 +1543,7 @@
         <action name="helpAboutAction"/>
         <action name="helpAboutQtAction"/>
     </item>
+    <separator/>
 </menubar>
 <toolbars>
     <toolbar dock="2">
@@ -1265,10 +1822,10 @@
             <iconset>cf.png</iconset>
         </property>
         <property name="text">
-            <string>Call Redirection</string>
+            <string>Call &amp;redirection...</string>
         </property>
         <property name="menuText">
-            <string>Call &amp;Redirection...</string>
+            <string>Call &amp;redirection...</string>
         </property>
     </action>
     <action>
@@ -1313,10 +1870,10 @@
             <iconset>penguin-small.png</iconset>
         </property>
         <property name="text">
-            <string>User Profile</string>
+            <string>&amp;User profile...</string>
         </property>
         <property name="menuText">
-            <string>&amp;User Profile...</string>
+            <string>&amp;User profile...</string>
         </property>
     </action>
     <action>
@@ -1381,10 +1938,10 @@
             <iconset>settings.png</iconset>
         </property>
         <property name="text">
-            <string>System Settings...</string>
+            <string>&amp;System settings...</string>
         </property>
         <property name="menuText">
-            <string>&amp;System Settings...</string>
+            <string>&amp;System settings...</string>
         </property>
     </action>
     <action>
@@ -1454,10 +2011,10 @@
             <iconset>missed.png</iconset>
         </property>
         <property name="text">
-            <string>Call History...</string>
+            <string>Call &amp;history...</string>
         </property>
         <property name="menuText">
-            <string>Call &amp;History...</string>
+            <string>Call &amp;history...</string>
         </property>
         <property name="accel">
             <string>F9</string>
@@ -1497,175 +2054,83 @@
             <string>Shift+F1</string>
         </property>
     </action>
+    <actiongroup>
+        <property name="name">
+            <cstring>actgrActivateLine</cstring>
+        </property>
+        <property name="on">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>Activate line</string>
+        </property>
+        <property name="usesDropDown">
+            <bool>false</bool>
+        </property>
+        <action>
+            <property name="name">
+                <cstring>actionLine1</cstring>
+            </property>
+            <property name="toggleAction">
+                <bool>true</bool>
+            </property>
+            <property name="on">
+                <bool>true</bool>
+            </property>
+            <property name="text">
+                <string>Line 1</string>
+            </property>
+        </action>
+        <action>
+            <property name="name">
+                <cstring>actionLine2</cstring>
+            </property>
+            <property name="toggleAction">
+                <bool>true</bool>
+            </property>
+            <property name="text">
+                <string>Line 2</string>
+            </property>
+        </action>
+    </actiongroup>
+    <action>
+        <property name="name">
+            <cstring>callActivate_LineAction</cstring>
+        </property>
+        <property name="on">
+            <bool>false</bool>
+        </property>
+        <property name="text">
+            <string>Activate line</string>
+        </property>
+        <property name="menuText">
+            <string>Activate line</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>viewDisplayAction</cstring>
+        </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
+        <property name="on">
+            <bool>true</bool>
+        </property>
+        <property name="text">
+            <string>Display</string>
+        </property>
+        <property name="menuText">
+            <string>Display</string>
+        </property>
+    </action>
 </actions>
 <connections>
     <connection>
-        <sender>fileExitAction</sender>
+        <sender>helpWhats_ThisAction</sender>
         <signal>activated()</signal>
         <receiver>MphoneForm</receiver>
-        <slot>fileExit()</slot>
-    </connection>
-    <connection>
-        <sender>line1RadioButton</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>line1rbChangedState(bool)</slot>
-    </connection>
-    <connection>
-        <sender>line2RadioButton</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>line2rbChangedState(bool)</slot>
-    </connection>
-    <connection>
-        <sender>callTermCap</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneTermCap()</slot>
-    </connection>
-    <connection>
-        <sender>callAnswer</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneAnswer()</slot>
-    </connection>
-    <connection>
-        <sender>callBye</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneBye()</slot>
-    </connection>
-    <connection>
-        <sender>callDTMF</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneDTMF()</slot>
-    </connection>
-    <connection>
-        <sender>callInvite</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneInvite()</slot>
-    </connection>
-    <connection>
-        <sender>callRedirect</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneRedirect()</slot>
-    </connection>
-    <connection>
-        <sender>callReject</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneReject()</slot>
-    </connection>
-    <connection>
-        <sender>callHold</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneHold(bool)</slot>
-    </connection>
-    <connection>
-        <sender>regRegister</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneRegister()</slot>
-    </connection>
-    <connection>
-        <sender>regDeregister</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneDeregister()</slot>
-    </connection>
-    <connection>
-        <sender>regShow</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneShowRegistrations()</slot>
-    </connection>
-    <connection>
-        <sender>serviceRedirection</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>srvRedirect()</slot>
-    </connection>
-    <connection>
-        <sender>callRedial</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneRedial()</slot>
-    </connection>
-    <connection>
-        <sender>helpAboutAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>about()</slot>
-    </connection>
-    <connection>
-        <sender>helpAboutQtAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>aboutQt()</slot>
-    </connection>
-    <connection>
-        <sender>editUserProfileAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>editUserProfile()</slot>
-    </connection>
-    <connection>
-        <sender>callConference</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneConference()</slot>
-    </connection>
-    <connection>
-        <sender>callMute</sender>
-        <signal>toggled(bool)</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneMute(bool)</slot>
-    </connection>
-    <connection>
-        <sender>callTransfer</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneTransfer()</slot>
-    </connection>
-    <connection>
-        <sender>editSysSettingsAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>editSysSettings()</slot>
-    </connection>
-    <connection>
-        <sender>regDeregisterAll</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneDeregisterAll()</slot>
-    </connection>
-    <connection>
-        <sender>viewLogAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>viewLog()</slot>
-    </connection>
-    <connection>
-        <sender>viewCall_HistoryAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>viewHistory()</slot>
-    </connection>
-    <connection>
-        <sender>fileChangeUserAction</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>selectProfile()</slot>
-    </connection>
-    <connection>
-        <sender>callPushButton</sender>
-        <signal>clicked()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>quickCall()</slot>
+        <slot>whatsThis()</slot>
     </connection>
     <connection>
         <sender>addressToolButton</sender>
@@ -1674,10 +2139,190 @@
         <slot>showAddressBook()</slot>
     </connection>
     <connection>
-        <sender>helpWhats_ThisAction</sender>
+        <sender>callPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>quickCall()</slot>
+    </connection>
+    <connection>
+        <sender>fileChangeUserAction</sender>
         <signal>activated()</signal>
         <receiver>MphoneForm</receiver>
-        <slot>whatsThis()</slot>
+        <slot>selectProfile()</slot>
+    </connection>
+    <connection>
+        <sender>viewCall_HistoryAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>viewHistory()</slot>
+    </connection>
+    <connection>
+        <sender>viewLogAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>viewLog()</slot>
+    </connection>
+    <connection>
+        <sender>regDeregisterAll</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDeregisterAll()</slot>
+    </connection>
+    <connection>
+        <sender>editSysSettingsAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>editSysSettings()</slot>
+    </connection>
+    <connection>
+        <sender>callTransfer</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneTransfer()</slot>
+    </connection>
+    <connection>
+        <sender>callMute</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneMute(bool)</slot>
+    </connection>
+    <connection>
+        <sender>callConference</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneConference()</slot>
+    </connection>
+    <connection>
+        <sender>editUserProfileAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>editUserProfile()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutQtAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>aboutQt()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>about()</slot>
+    </connection>
+    <connection>
+        <sender>callRedial</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRedial()</slot>
+    </connection>
+    <connection>
+        <sender>serviceRedirection</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>srvRedirect()</slot>
+    </connection>
+    <connection>
+        <sender>regShow</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneShowRegistrations()</slot>
+    </connection>
+    <connection>
+        <sender>regDeregister</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDeregister()</slot>
+    </connection>
+    <connection>
+        <sender>regRegister</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRegister()</slot>
+    </connection>
+    <connection>
+        <sender>callHold</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneHold(bool)</slot>
+    </connection>
+    <connection>
+        <sender>callReject</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneReject()</slot>
+    </connection>
+    <connection>
+        <sender>callRedirect</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRedirect()</slot>
+    </connection>
+    <connection>
+        <sender>callInvite</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneInvite()</slot>
+    </connection>
+    <connection>
+        <sender>callDTMF</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDTMF()</slot>
+    </connection>
+    <connection>
+        <sender>callBye</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneBye()</slot>
+    </connection>
+    <connection>
+        <sender>callAnswer</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneAnswer()</slot>
+    </connection>
+    <connection>
+        <sender>callTermCap</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneTermCap()</slot>
+    </connection>
+    <connection>
+        <sender>line2RadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>line2rbChangedState(bool)</slot>
+    </connection>
+    <connection>
+        <sender>line1RadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>line1rbChangedState(bool)</slot>
+    </connection>
+    <connection>
+        <sender>fileExitAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>fileExit()</slot>
+    </connection>
+    <connection>
+        <sender>actionLine1</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>actionLine1Toggled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>actionLine2</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>actionLine2Toggled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>viewDisplayAction</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>showDisplay(bool)</slot>
     </connection>
 </connections>
 <tabstops>
@@ -1725,31 +2370,35 @@
     <include location="local" impldecl="in implementation">util.h</include>
     <include location="local" impldecl="in implementation">qtimer.h</include>
     <include location="global" impldecl="in implementation">sys/time.h</include>
+    <include location="local" impldecl="in implementation">qframe.h</include>
+    <include location="local" impldecl="in implementation">qcursor.h</include>
     <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
 </includes>
 <forwards>
     <forward>extern t_phone *phone;</forward>
 </forwards>
 <variables>
-    <variable access="private">GetAddressForm *getAddressForm;</variable>
-    <variable access="private">SelectProfileForm *selectProfileForm;</variable>
-    <variable access="private">SelectUserForm *selectUserForm;</variable>
-    <variable access="private">HistoryForm *historyForm;</variable>
-    <variable access="private">TransferForm *transferForm;</variable>
-    <variable access="private">UserProfileForm *userProfileForm;</variable>
-    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
-    <variable access="private">TermCapForm *termCapForm;</variable>
-    <variable access="private">RedirectForm *redirectForm;</variable>
-    <variable access="private">InviteForm *inviteForm;</variable>
-    <variable access="private">DtmfForm *dtmfForm;</variable>
-    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
-    <variable access="private">QStringList displayContents;</variable>
-    <variable access="private">LogViewForm *logViewForm;</variable>
-    <variable access="private">t_twinkle_sys_tray *sysTray;</variable>
-    <variable access="private">QTimer *lineTimer1;</variable>
-    <variable access="private">QTimer *lineTimer2;</variable>
-    <variable access="private">QTimer *hideLineTimer1;</variable>
+    <variable access="private">bool viewCompactLineStatus;</variable>
+    <variable access="private">bool viewDisplay;</variable>
     <variable access="private">QTimer *hideLineTimer2;</variable>
+    <variable access="private">QTimer *hideLineTimer1;</variable>
+    <variable access="private">QTimer *lineTimer2;</variable>
+    <variable access="private">QTimer *lineTimer1;</variable>
+    <variable access="private">t_twinkle_sys_tray *sysTray;</variable>
+    <variable access="private">LogViewForm *logViewForm;</variable>
+    <variable access="private">QStringList displayContents;</variable>
+    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
+    <variable access="private">DtmfForm *dtmfForm;</variable>
+    <variable access="private">InviteForm *inviteForm;</variable>
+    <variable access="private">RedirectForm *redirectForm;</variable>
+    <variable access="private">TermCapForm *termCapForm;</variable>
+    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">UserProfileForm *userProfileForm;</variable>
+    <variable access="private">TransferForm *transferForm;</variable>
+    <variable access="private">HistoryForm *historyForm;</variable>
+    <variable access="private">SelectUserForm *selectUserForm;</variable>
+    <variable access="private">SelectProfileForm *selectProfileForm;</variable>
+    <variable access="private">GetAddressForm *getAddressForm;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * e )</slot>
@@ -1760,6 +2409,8 @@
     <slot>showLineTimer1()</slot>
     <slot>showLineTimer2()</slot>
     <slot>updateLineTimer( int line )</slot>
+    <slot>updateLineEncryptionState( int line )</slot>
+    <slot>updateLineStatus( int line )</slot>
     <slot>updateState()</slot>
     <slot>updateRegStatus()</slot>
     <slot>updateServicesStatus()</slot>
@@ -1779,8 +2430,10 @@
     <slot>do_phoneInvite( t_user * user_config, const QString &amp; display, const t_url &amp; destination, const QString &amp; subject )</slot>
     <slot>phoneRedial( void )</slot>
     <slot>phoneAnswer()</slot>
+    <slot>phoneAnswerFromSystrayPopup()</slot>
     <slot>phoneBye()</slot>
     <slot>phoneReject()</slot>
+    <slot>phoneRejectFromSystrayPopup()</slot>
     <slot>phoneRedirect( const list&lt;string&gt; &amp; contacts )</slot>
     <slot>phoneRedirect()</slot>
     <slot>do_phoneRedirect( const list&lt;t_display_url&gt; &amp; destinations )</slot>
@@ -1795,8 +2448,16 @@
     <slot>do_phoneTermCap( t_user * user_config, const t_url &amp; destination )</slot>
     <slot>phoneDTMF()</slot>
     <slot>sendDTMF( const QString &amp; digits )</slot>
+    <slot>phoneConfirmZrtpSas( int line )</slot>
+    <slot>phoneConfirmZrtpSas()</slot>
+    <slot>phoneResetZrtpSasConfirmation( int line )</slot>
+    <slot>phoneResetZrtpSasConfirmation()</slot>
+    <slot>phoneEnableZrtp( bool on )</slot>
+    <slot>phoneZrtpGoClearOk( unsigned short line )</slot>
     <slot>line1rbChangedState( bool on )</slot>
     <slot>line2rbChangedState( bool on )</slot>
+    <slot>actionLine1Toggled( bool on )</slot>
+    <slot>actionLine2Toggled( bool on )</slot>
     <slot>srvDnd( bool on )</slot>
     <slot>srvDnd()</slot>
     <slot>do_srvDnd_enable( list&lt;t_user *&gt; user_list )</slot>
@@ -1829,12 +2490,19 @@
     <slot>enableCallOptions( bool enable )</slot>
     <slot>keyPressEvent( QKeyEvent * e )</slot>
     <slot>mouseReleaseEvent( QMouseEvent * e )</slot>
+    <slot>processLeftMouseButtonRelease( QMouseEvent * e )</slot>
+    <slot>processRightMouseButtonRelease( QMouseEvent * e )</slot>
+    <slot>processCryptLabelClick( int line )</slot>
+    <slot>showDisplay( bool on )</slot>
+    <slot>showCompactLineStatus( bool on )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
     <function access="private" specifier="non virtual">destroy()</function>
     <function access="private" returnType="QString">lineSubstate2str( int line )</function>
     <function returnType="t_twinkle_sys_tray *">getSysTray()</function>
+    <function returnType="bool">getViewDisplay()</function>
+    <function returnType="bool">getViewCompactLineStatus()</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

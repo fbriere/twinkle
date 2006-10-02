@@ -20,6 +20,7 @@
 #ifndef _H_SIP_BODY
 #define _H_SIP_BODY
 
+#include <cc++/config.h>
 #include <string>
 
 class t_sip_message;
@@ -29,7 +30,8 @@ using namespace std;
 enum t_body_type {
 	BODY_OPAQUE,
 	BODY_SDP,
-	BODY_SIPFRAG
+	BODY_SIPFRAG,
+	BODY_DTMF_RELAY
 };
 
 // Base class for SIP bodies
@@ -75,6 +77,20 @@ public:
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;
+};
+
+// application/dtmf-relay body
+class t_sip_body_dtmf_relay : public t_sip_body {
+public:
+	char	signal;
+	uint16	duration; // ms
+	
+	t_sip_body_dtmf_relay();
+	t_sip_body_dtmf_relay(char _signal, uint16 _duration);
+	string encode(void) const;
+	t_sip_body *copy(void) const;
+	t_body_type get_type(void) const;
+	bool parse(const string &s);
 };
 
 #endif

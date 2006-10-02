@@ -284,6 +284,26 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 		MEMMAN_NEW(audio_encoder);
 		break;
 #endif
+	case CODEC_G726_16:
+		audio_encoder = new t_g726_audio_encoder(_payload_id, _ptime,
+				t_g726_audio_encoder::BIT_RATE_16, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_G726_24:
+		audio_encoder = new t_g726_audio_encoder(_payload_id, _ptime,
+				t_g726_audio_encoder::BIT_RATE_24, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_G726_32:
+		audio_encoder = new t_g726_audio_encoder(_payload_id, _ptime,
+				t_g726_audio_encoder::BIT_RATE_32, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+	case CODEC_G726_40:
+		audio_encoder = new t_g726_audio_encoder(_payload_id, _ptime,
+				t_g726_audio_encoder::BIT_RATE_40, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
 	default:
 		assert(false);
 	}

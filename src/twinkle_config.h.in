@@ -111,6 +111,9 @@
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF
 
+/* Define to 1 if you have the <libzrtpcpp> library. */
+#undef HAVE_ZRTP
+
 /* Suffix for lib directories */
 #undef KDELIBSUFF
 

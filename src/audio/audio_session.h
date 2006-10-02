@@ -48,13 +48,20 @@ private:
 	// file descriptor audio device
 	t_audio_io		*speaker;
 	t_audio_io		*mic;
-	t_twinkle_rtp_session *rtp_session;
+	t_twinkle_rtp_session   *rtp_session;
 
 	t_audio_codec	codec;
 	unsigned short	ptime;	// in milliseconds
 
 	t_thread	*thr_audio_rx; // recording thread
 	t_thread	*thr_audio_tx; // playing thread
+	
+	// ZRTP info
+	mutable t_mutex	mtx_zrtp_data;
+	bool		is_encrypted;
+	string		zrtp_sas;
+	bool		zrtp_sas_confirmed;
+	string		srtp_cipher_mode;
 
 	// 3-way conference data
 	// Returns if this audio session is part of a 3-way conference
@@ -78,7 +85,8 @@ public:
 		        const string &_dst_host, unsigned short _dst_port,
 			t_audio_codec _codec, unsigned short _ptime,
 			const map<unsigned short, t_audio_codec> &recv_payload2ac,
-			const map<t_audio_codec, unsigned short> &send_ac2payload);
+			const map<t_audio_codec, unsigned short> &send_ac2payload,
+			bool encrypt);
 
 	~t_audio_session();
 
@@ -111,6 +119,24 @@ public:
 	// from codec. The sample rates might not match due to 3-way conference
 	// calls with mixed sample rate
 	bool matching_sample_rates(void) const;
+	
+	// ZRTP actions
+	void confirm_zrtp_sas(void);
+	void reset_zrtp_sas_confirmation(void);
+	void enable_zrtp(void);
+	void zrtp_request_go_clear(void);
+	void zrtp_go_clear_ok(void);
+	
+	// ZRTP data manipulations
+	bool get_is_encrypted(void) const;
+	string get_zrtp_sas(void) const;
+	bool get_zrtp_sas_confirmed(void) const;
+	string get_srtp_cipher_mode(void) const;
+	
+	void set_is_encrypted(bool on);
+	void set_zrtp_sas(const string &sas);
+	void set_zrtp_sas_confirmed(bool confirmed);
+	void set_srtp_cipher_mode(const string &cipher_mode);
 };
 
 // Main functions for rx and tx threads

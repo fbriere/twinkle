@@ -57,6 +57,7 @@ public:
 	string			subject;
 	bool			dtmf_supported;
 	bool			dtmf_inband; // DTMF must be sent inband
+	bool			dtmf_info; // DTMF must be sent via SIP INFO
 	t_hdr_referred_by	hdr_referred_by;
 
 	// The reason phrase of the last received provisional response
@@ -66,7 +67,7 @@ public:
 	t_audio_codec	send_codec;
 	t_audio_codec	recv_codec;
 	bool		refer_supported;
-
+	
 	t_call_info();
 	void clear(void);
 	
@@ -82,6 +83,9 @@ private:
 	t_line_substate		substate;
 	bool			is_on_hold;
 	bool			is_muted;
+	
+	// Indicates if media encryption should be negotiated.
+	bool			try_to_encrypt;
 	
 	// Indicates if call must be auto answered
 	bool			auto_answer;
@@ -143,6 +147,9 @@ private:
 
 	// Cleanup all open and pending dialogs
 	void cleanup_open_pending(void);
+	
+	// Forcefully cleanup all dialogs
+	void cleanup_forced(void);
 
 public:
 	// Call history record
@@ -168,7 +175,7 @@ public:
 	void reject(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void end_call(void);
-	void send_dtmf(char digit, bool inband);
+	void send_dtmf(char digit, bool inband, bool info);
 
 	// OPTIONS inside dialog
 	void options(void);
@@ -199,6 +206,7 @@ public:
 	void recvd_prack(t_request *r, t_tid tid);
 	void recvd_subscribe(t_request *r, t_tid tid);
 	void recvd_notify(t_request *r, t_tid tid);
+	void recvd_info(t_request *r, t_tid tid);
 
 	// Returns true if refer has been accepted.
 	bool recvd_refer(t_request *r, t_tid tid);
@@ -243,9 +251,12 @@ public:
 	unsigned short get_line_number(void) const;
 	bool get_is_on_hold(void) const;
 	bool get_is_muted(void) const;
+	bool get_is_encrypted(void) const;
+	bool get_try_to_encrypt(void) const;
 	bool get_auto_answer(void) const;
 	void set_auto_answer(bool enable);
 	bool is_refer_succeeded(void) const;
+	bool has_media(void) const;
 
 	// Seize the line. User wants to make an outgoing call, so
 	// the line must be marked as busy, such that an incoming call
@@ -267,13 +278,13 @@ public:
 	void failed_retrieve(void);
 	void failed_hold(void);
 
-	// Called by dialog if retrt of a retrieve after a glare (491 response)
+	// Called by dialog if retry of a retrieve after a glare (491 response)
 	// succeeded.
 	void retry_retrieve_succeeded(void);
 
 	// Get the call info record
 	t_call_info get_call_info(void) const;
-	void ci_set_dtmf_supported(bool supported, bool inband = false);
+	void ci_set_dtmf_supported(bool supported, bool inband = false, bool info = false);
 	void ci_set_last_provisional_reason(const string &reason);
 	void ci_set_send_codec(t_audio_codec codec);
 	void ci_set_recv_codec(t_audio_codec codec);
@@ -293,6 +304,16 @@ public:
 	
 	// Get the ring tone to be played for an incoming call
 	string get_ringtone(void) const;
+	
+	// ZRTP actions
+	void confirm_zrtp_sas(void);
+	void reset_zrtp_sas_confirmation(void);
+	void enable_zrtp(void);
+	void zrtp_request_go_clear(void);
+	void zrtp_go_clear_ok(void);
+	
+	// Force a line to the idle state (during termination of Twinkle)
+	void force_idle(void);
 };
 
 #endif

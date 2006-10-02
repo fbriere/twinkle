@@ -73,6 +73,7 @@ int t_audio_io::get_sample_rate(void) const {
 bool t_audio_io::open(const string& device, bool playback, bool capture, bool blocking, int channels, t_audio_sampleformat format, int sample_rate, bool short_latency)
 {
 	_sample_rate = sample_rate;
+	return true;
 }
 
 t_oss_io::t_oss_io() : fd(-1), rec_buffersize(0), play_buffersize(0) {

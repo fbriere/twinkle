@@ -17,8 +17,14 @@
 */
 
 #include "sip_body.h"
+
+#include <list>
+#include <cstdlib>
+#include "protocol.h"
 #include "sip_message.h"
+#include "util.h"
 #include "audits/memman.h"
+#include "audio/rtp_telephone_event.h"
 
 ////////////////////////////////////
 // class t_sip_body
@@ -77,3 +83,69 @@ t_body_type t_sip_body_sipfrag::get_type(void) const {
 	return BODY_SIPFRAG;
 }
 
+////////////////////////////////////
+// class t_sip_body_dtmf_relay
+////////////////////////////////////
+
+t_sip_body_dtmf_relay::t_sip_body_dtmf_relay() {
+	signal = '0';
+	duration = 250;
+}
+
+t_sip_body_dtmf_relay::t_sip_body_dtmf_relay(char _signal, uint16 _duration) :
+	signal(_signal), duration(_duration)
+{}
+
+string t_sip_body_dtmf_relay::encode(void) const {
+	string s = "Signal=";
+	s += signal;
+	s += CRLF;
+	
+	s += "Duration=";
+	s += int2str(duration);
+	s += CRLF;
+	
+	return s;
+}
+
+t_sip_body *t_sip_body_dtmf_relay::copy(void) const {
+	t_sip_body_dtmf_relay *sb = new t_sip_body_dtmf_relay(*this);
+	MEMMAN_NEW(sb);
+	return sb;	
+}
+
+t_body_type t_sip_body_dtmf_relay::get_type(void) const {
+	return BODY_DTMF_RELAY;
+}
+
+bool t_sip_body_dtmf_relay::parse(const string &s) {
+	signal = 0;
+	duration = 250;
+	
+	bool valid = false;
+	list<string> lines = split(s, CRLF);
+	
+	for (list<string>::iterator i = lines.begin(); i != lines.end(); i++) {
+		string line = trim(*i);
+		if (line.empty()) continue;
+		
+		list<string> l = split_on_first(line, '=');
+		if (l.size() != 2) continue;
+		
+		string parameter = tolower(trim(l.front()));
+		string value = tolower(trim(l.back()));
+		
+		if (value.empty()) continue;
+		
+		if (parameter == "signal") {
+			if (!VALID_DTMF_SYM(value[0])) return false;
+			signal = value[0];
+			valid = true;
+		} else if (parameter == "duration") {
+			duration = atoi(value.c_str());
+			if (duration == 0) return false;
+		}
+	}
+	
+	return valid;
+}

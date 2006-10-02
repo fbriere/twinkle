@@ -1,3 +1,11 @@
+twinkle (1:0.9-1) unstable; urgency=low
+
+  * New upstream release
+  * Update Build-Depends
+  * PRACK messages should be authenticated (Closes: #389252)
+
+ -- Mark Purcell <msp@debian.org>  Mon,  2 Oct 2006 09:50:03 +0800
+
 twinkle (1:0.8.1-1) unstable; urgency=low
 
   [ Kilian Krause ]

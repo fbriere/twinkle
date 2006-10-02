@@ -120,6 +120,18 @@ string get_rtpmap(unsigned format, t_audio_codec codec) {
 	case CODEC_ILBC:
 		rtpmap += SDP_RTPMAP_ILBC;
 		break;
+	case CODEC_G726_16:
+		rtpmap += SDP_RTPMAP_G726_16;
+		break;
+	case CODEC_G726_24:
+		rtpmap += SDP_RTPMAP_G726_24;
+		break;
+	case CODEC_G726_32:
+		rtpmap += SDP_RTPMAP_G726_32;
+		break;
+	case CODEC_G726_40:
+		rtpmap += SDP_RTPMAP_G726_40;
+		break;
 	case CODEC_TELEPHONE_EVENT:
 		rtpmap += SDP_RTPMAP_TELEPHONE_EV;
 		break;
@@ -451,19 +463,12 @@ bool t_sdp::is_supported(int &warn_code, string &warn_text) const {
 		return false;
 	}
 
-	// There must be at least 1 audio stream with a non-zero port value
 	const t_sdp_media *m = get_first_media(SDP_AUDIO);
-
-	if (m == NULL) {
-		warn_code = W_304_MEDIA_TYPE_NOT_AVAILABLE;
-		warn_text = "Valid media stream for audio is missing";
-		return false;
-	}
 
 	// Connection information must be present at the session level
 	// and/or the media level
 	if (connection.network_type == SDP_NTWK_NULL) {
-		if (m->connection.network_type == SDP_NTWK_NULL) {
+		if (m == NULL || m->connection.network_type == SDP_NTWK_NULL) {
 			warn_code = W_399_MISCELLANEOUS;
 			warn_text = "c-line missing";
 			return false;
@@ -481,8 +486,21 @@ bool t_sdp::is_supported(int &warn_code, string &warn_text) const {
 			return false;
 		}
 	}
+	
+	// There must be at least 1 audio stream with a non-zero port value
+	if (m == NULL && !media.empty()) {
+		warn_code = W_304_MEDIA_TYPE_NOT_AVAILABLE;
+		warn_text = "Valid media stream for audio is missing";
+		return false;
+	}
+	
+	// RFC 3264 5, RFC 3725 flow IV
+	// There may be 0 media streams
+	if (media.empty()) {
+		return true;
+	}
 
-	// Check connection informatio on media level
+	// Check connection information on media level
 	if (m->connection.network_type != SDP_NTWK_NULL &&
 	    m->connection.address_type != SDP_ADDR_IP4) {
 		warn_code = W_301_INCOMPATIBLE_ADDR_FORMAT;
@@ -596,6 +614,14 @@ t_audio_codec t_sdp::get_rtpmap_codec(const string &rtpmap) const {
 		return CODEC_SPEEX_UWB;
 	} else if (cmp_nocase(codec_name, SDP_AC_NAME_ILBC) == 0 && sample_rate == 8000) {
 		return CODEC_ILBC;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_G726_16) == 0 && sample_rate == 8000) {
+		return CODEC_G726_16;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_G726_24) == 0 && sample_rate == 8000) {
+		return CODEC_G726_24;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_G726_32) == 0 && sample_rate == 8000) {
+		return CODEC_G726_32;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_G726_40) == 0 && sample_rate == 8000) {
+		return CODEC_G726_40;
 	} else if (cmp_nocase(codec_name, SDP_AC_NAME_TELEPHONE_EV) == 0) {
 		return CODEC_TELEPHONE_EVENT;
 	}
@@ -657,7 +683,7 @@ string t_sdp::get_fmtp(t_sdp_media_type media_type, unsigned short codec) const 
 int t_sdp::get_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec,
 			const string param) const
 {
-	string fmtp = get_fmtp(SDP_AUDIO, codec);
+	string fmtp = get_fmtp(media_type, codec);
 	if (fmtp.empty()) return -1;
 	
 	int value;
@@ -679,6 +705,15 @@ unsigned short t_sdp::get_ptime(t_sdp_media_type media_type) const {
 	const t_sdp_attr *a = m->get_attribute("ptime");
 	if (!a) return 0;
 	return atoi(a->value.c_str());
+}
+
+bool t_sdp::get_zrtp_support(t_sdp_media_type media_type) const {
+	t_sdp_media *m = const_cast<t_sdp_media *>(get_first_media(media_type));
+	assert(m != NULL);
+	
+	const t_sdp_attr *a = m->get_attribute("zrtp");
+	if (!a) return false;
+	return true;
 }
 
 void t_sdp::set_ptime(t_sdp_media_type media_type, unsigned short ptime) {
@@ -715,6 +750,14 @@ void t_sdp::set_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec
 	fmtp += '=';
 	fmtp += int2str(value);
 	set_fmtp(media_type, codec, fmtp);
+}
+
+void t_sdp::set_zrtp_support(t_sdp_media_type media_type) {
+	t_sdp_media *m = const_cast<t_sdp_media *>(get_first_media(media_type));
+	assert(m != NULL);
+	
+	t_sdp_attr a("zrtp");
+	m->attributes.push_back(a);
 }
 
 const t_sdp_media *t_sdp::get_first_media(t_sdp_media_type media_type) const {

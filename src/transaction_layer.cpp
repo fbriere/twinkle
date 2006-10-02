@@ -129,6 +129,9 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	case REFER:
 		recvd_refer(r, tid);
 		break;
+	case INFO:
+		recvd_info(r, tid);
+		break;
 	default:
 		resp = r->create_response(R_501_NOT_IMPLEMENTED);
 		send_response(resp, 0, tid);
@@ -217,7 +220,7 @@ void t_transaction_layer::run(void) {
 	}
 }
 
-void t_transaction_layer::lock(void) {
+void t_transaction_layer::lock(void) const {
 	// Prohibited threads may not lock the transaction layer
 	assert(!is_prohibited_thread());
 
@@ -232,7 +235,7 @@ void t_transaction_layer::lock(void) {
 	tl_mutex.lock();
 }
 
-void t_transaction_layer::unlock(void) {
+void t_transaction_layer::unlock(void) const {
 	tl_mutex.unlock();
 	if (!end_app) ui->unlock();
 }

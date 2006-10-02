@@ -17,6 +17,7 @@
 */
 
 #include <cassert>
+#include <iostream>
 #include "audio_decoder.h"
 #include "log.h"
 
@@ -340,3 +341,156 @@ bool t_ilbc_audio_decoder::valid_payload_size(uint16 payload_size, uint16 sample
 	return payload_size == NO_OF_BYTES_20MS || payload_size == NO_OF_BYTES_30MS;
 }
 #endif
+
+//////////////////////////////////////////
+// class t_g726_audio_decoder
+//////////////////////////////////////////
+t_g726_audio_decoder::t_g726_audio_decoder(t_bit_rate bit_rate, uint16 default_ptime, 
+		t_user *user_config) :
+	t_audio_decoder(default_ptime, false, user_config)
+{
+	_bit_rate = bit_rate;
+	
+	if (default_ptime == 0) {
+		_default_ptime = PTIME_G726;
+	}
+	
+	switch (_bit_rate) {
+	case BIT_RATE_16:
+		_codec = CODEC_G726_16;
+		_bits_per_sample = 2;
+		break;
+	case BIT_RATE_24:
+		_codec = CODEC_G726_24;
+		_bits_per_sample = 3;
+		break;
+	case BIT_RATE_32:
+		_codec = CODEC_G726_32;
+		_bits_per_sample = 4;
+		break;
+	case BIT_RATE_40:
+		_codec = CODEC_G726_40;
+		_bits_per_sample = 5;
+		break;
+	default:
+		assert(false);
+	}
+	
+	g72x_init_state(&_state);
+}
+
+uint16 t_g726_audio_decoder::get_ptime(uint16 payload_size) const {
+	return (payload_size * 8 / _bits_per_sample) / (audio_sample_rate(_codec) / 1000);
+}
+
+uint16 t_g726_audio_decoder::decode_16(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size)
+{
+	assert(payload_size * 4 <= pcm_buf_size);
+
+	for (int i = 0; i < payload_size; i++) {
+		for (int j = 0; j < 4; j++) {
+			pcm_buf[4*i+j] = g723_16_decoder(
+				(payload[i] >> (j*2)) & 0x3, AUDIO_ENCODING_LINEAR, &_state);
+		}
+	}
+	
+	return payload_size * 4;
+}
+
+uint16 t_g726_audio_decoder::decode_24(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size)
+{
+	assert(payload_size % 3 == 0);
+	assert(payload_size * 8 / 3 <= pcm_buf_size);
+
+	for (int i = 0; i < payload_size; i += 3) {
+		uint32 v = (static_cast<uint32>(payload[i+2]) << 16) |
+			   (static_cast<uint32>(payload[i+1]) << 8) |
+			    static_cast<uint32>(payload[i]);
+			     
+		for (int j = 0; j < 8; j++) {
+			pcm_buf[8*(i/3)+j] = g723_24_decoder(
+				(v >> (j*3)) & 0x7, AUDIO_ENCODING_LINEAR, &_state);
+		}
+	}
+
+	return payload_size * 8 / 3;
+}
+
+uint16 t_g726_audio_decoder::decode_32(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size)
+{
+	assert(payload_size * 2 <= pcm_buf_size);
+
+	for (int i = 0; i < payload_size; i++) {
+		for (int j = 0; j < 2; j++) {
+			pcm_buf[2*i+j] = g721_decoder(
+				(payload[i] >> (j*4)) & 0xf, AUDIO_ENCODING_LINEAR, &_state);
+		}
+	}
+	
+	return payload_size * 2;
+}
+
+uint16 t_g726_audio_decoder::decode_40(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size)
+{
+	assert(payload_size % 5 == 0);
+	assert(payload_size * 8 / 5 <= pcm_buf_size);
+
+	for (int i = 0; i < payload_size; i += 5) {
+		uint64 v = (static_cast<uint64>(payload[i+4]) << 32) |
+			   (static_cast<uint64>(payload[i+3]) << 24) |
+		           (static_cast<uint64>(payload[i+2]) << 16) |
+			   (static_cast<uint64>(payload[i+1]) << 8) |
+			    static_cast<uint64>(payload[i]);
+			     
+		for (int j = 0; j < 8; j++) {
+			pcm_buf[8*(i/5)+j] = g723_40_decoder(
+				(v >> (j*5)) & 0x1f, AUDIO_ENCODING_LINEAR, &_state);
+		}
+	}
+
+	return payload_size * 8 / 5;
+}
+
+uint16 t_g726_audio_decoder::decode(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size)
+{
+	switch (_bit_rate) {
+	case BIT_RATE_16:
+		return decode_16(payload, payload_size, pcm_buf, pcm_buf_size);
+		break;
+	case BIT_RATE_24:
+		return decode_24(payload, payload_size, pcm_buf, pcm_buf_size);
+		break;
+	case BIT_RATE_32:
+		return decode_32(payload, payload_size, pcm_buf, pcm_buf_size);
+		break;
+	case BIT_RATE_40:
+		return decode_40(payload, payload_size, pcm_buf, pcm_buf_size);
+		break;
+	default:
+		assert(false);
+	}
+	
+	return 0;
+}
+
+bool t_g726_audio_decoder::valid_payload_size(uint16 payload_size, 
+		uint16 sample_buf_size) const
+{
+	switch (_bit_rate) {
+	case BIT_RATE_24:
+		// Payload size must be multiple of 3
+		if (payload_size % 3 != 0) return false;
+		break;
+	case BIT_RATE_40:
+		// Payload size must be multiple of 5
+		if (payload_size % 5 != 0) return false;
+		break;
+	}
+	
+	return (payload_size * 8 / _bits_per_sample ) <= sample_buf_size;
+}

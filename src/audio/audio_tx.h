@@ -54,7 +54,7 @@ private:
 
 	// file descriptor audio capture device
 	t_audio_io		*playback_device;
-	t_twinkle_rtp_session 	*rtp_session;
+	t_twinkle_rtp_session	*rtp_session;
 
 	// Indicates if this transmitter is part of a 3-way conference
 	bool		is_3way;
@@ -132,10 +132,10 @@ private:
 	unsigned long	dtmf_previous_timestamp;
 
 	// Inidicates if the playing thread is running
-	bool is_running;
+	volatile bool is_running;
 
 	// The thread exits when this indicator is set to true
-	bool stop_running;
+	volatile bool stop_running;
 
 	// Retain a packet (PCM encoded) for possible concealment.
 	void retain_for_concealment(unsigned char *buf, unsigned short len);
