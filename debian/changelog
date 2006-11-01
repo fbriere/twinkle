@@ -1,3 +1,9 @@
+twinkle (1:0.9-3) unstable; urgency=low
+
+  * Rebuild
+
+ -- Mark Purcell <msp@debian.org>  Wed,  1 Nov 2006 21:38:21 +0000
+
 twinkle (1:0.9-2) unstable; urgency=low
 
   * Build-Depends: libzrtpcpp-dev
