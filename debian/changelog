@@ -1,3 +1,12 @@
+twinkle (1:0.9-4) unstable; urgency=low
+
+  * Grab upstream patches: DTMF & Invite4xx
+  * VoIP Provider issue: Can't talk for more than a minute (Closes: #365588)
+  * help2man generated manpage
+  * Linitan cleanup: manpage-has-useless-whatis-entry
+
+ -- Mark Purcell <msp@debian.org>  Sat,  4 Nov 2006 13:17:50 +0000
+
 twinkle (1:0.9-3) unstable; urgency=low
 
   * Rebuild
