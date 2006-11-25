@@ -1,3 +1,11 @@
+twinkle (1:0.9-5) unstable; urgency=low
+
+  * Pre-run autoheader to include expected src/twinkle_config.h.in changes
+    inside debian/patches/libgsm.patch
+    - Closes: #394153: FTBFS: undefined reference to gsm_decode
+
+ -- Mark Purcell <msp@debian.org>  Sat, 25 Nov 2006 08:57:34 +0000
+
 twinkle (1:0.9-4) unstable; urgency=low
 
   * Grab upstream patches: DTMF & Invite4xx

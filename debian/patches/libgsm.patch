@@ -1,7 +1,7 @@
-diff -Nur twinkle-0.8.1/configure.in twinkle-0.8.1.new/configure.in
---- twinkle-0.8.1/configure.in	2006-07-19 21:53:07.000000000 +0100
-+++ twinkle-0.8.1.new/configure.in	2006-07-19 21:53:30.000000000 +0100
-@@ -135,6 +135,17 @@
+diff -Nur twinkle-0.9/configure.in twinkle-0.9.new/configure.in
+--- twinkle-0.9/configure.in	2006-11-25 08:39:02.000000000 +0000
++++ twinkle-0.9.new/configure.in	2006-11-25 08:39:03.000000000 +0000
+@@ -140,6 +140,17 @@
  AC_CHECK_LIB(sndfile, sf_open, [], 
  	[AC_MSG_ERROR([libsndfile library is missing.])])
  
@@ -19,9 +19,14 @@ diff -Nur twinkle-0.8.1/configure.in twinkle-0.8.1.new/configure.in
  # Check if ALSA is available
  AC_CHECK_LIB(asound, main, [
  	AC_CHECK_HEADER(alsa/asoundlib.h, [],
-diff -Nur twinkle-0.8.1/src/Makefile.am twinkle-0.8.1.new/src/Makefile.am
---- twinkle-0.8.1/src/Makefile.am	2006-07-19 21:53:07.000000000 +0100
-+++ twinkle-0.8.1.new/src/Makefile.am	2006-07-19 21:53:45.000000000 +0100
+@@ -228,3 +239,4 @@
+ AC_MSG_RESULT([Speex:       $have_speex])
+ AC_MSG_RESULT([iLBC:        $have_ilbc])
+ AC_MSG_RESULT([ZRTP:        $have_zrtp])
++AC_MSG_RESULT([Libgsm dynamic link:	$have_gsm])
+diff -Nur twinkle-0.9/src/Makefile.am twinkle-0.9.new/src/Makefile.am
+--- twinkle-0.9/src/Makefile.am	2006-11-25 08:39:02.000000000 +0000
++++ twinkle-0.9.new/src/Makefile.am	2006-11-25 08:39:03.000000000 +0000
 @@ -16,10 +16,10 @@
          $(top_builddir)/src/sockets/libsocket.a\
          $(top_builddir)/src/threads/libthread.a\
@@ -34,9 +39,9 @@ diff -Nur twinkle-0.8.1/src/Makefile.am twinkle-0.8.1.new/src/Makefile.am
  	-lresolv\
  	-lsndfile\
  	-lboost_regex
-diff -Nur twinkle-0.8.1/src/audio/audio_decoder.h twinkle-0.8.1.new/src/audio/audio_decoder.h
---- twinkle-0.8.1/src/audio/audio_decoder.h	2006-07-19 21:53:08.000000000 +0100
-+++ twinkle-0.8.1.new/src/audio/audio_decoder.h	2006-07-19 21:53:30.000000000 +0100
+diff -Nur twinkle-0.9/src/audio/audio_decoder.h twinkle-0.9.new/src/audio/audio_decoder.h
+--- twinkle-0.9/src/audio/audio_decoder.h	2006-11-25 08:39:02.000000000 +0000
++++ twinkle-0.9.new/src/audio/audio_decoder.h	2006-11-25 08:39:03.000000000 +0000
 @@ -25,7 +25,12 @@
  #include "twinkle_config.h"
  #include "audio_codecs.h"
@@ -50,9 +55,9 @@ diff -Nur twinkle-0.8.1/src/audio/audio_decoder.h twinkle-0.8.1.new/src/audio/au
  
  #ifdef HAVE_SPEEX
  #include <speex/speex.h>
-diff -Nur twinkle-0.8.1/src/audio/audio_encoder.h twinkle-0.8.1.new/src/audio/audio_encoder.h
---- twinkle-0.8.1/src/audio/audio_encoder.h	2006-07-19 21:53:08.000000000 +0100
-+++ twinkle-0.8.1.new/src/audio/audio_encoder.h	2006-07-19 21:53:30.000000000 +0100
+diff -Nur twinkle-0.9/src/audio/audio_encoder.h twinkle-0.9.new/src/audio/audio_encoder.h
+--- twinkle-0.9/src/audio/audio_encoder.h	2006-11-25 08:39:02.000000000 +0000
++++ twinkle-0.9.new/src/audio/audio_encoder.h	2006-11-25 08:39:03.000000000 +0000
 @@ -25,7 +25,12 @@
  #include "twinkle_config.h"
  #include "audio_codecs.h"
@@ -66,9 +71,9 @@ diff -Nur twinkle-0.8.1/src/audio/audio_encoder.h twinkle-0.8.1.new/src/audio/au
  
  #ifdef HAVE_SPEEX
  #include <speex/speex.h>
-diff -Nur twinkle-0.8.1/src/gui/twinkle.pro twinkle-0.8.1.new/src/gui/twinkle.pro
---- twinkle-0.8.1/src/gui/twinkle.pro	2006-07-19 21:53:08.000000000 +0100
-+++ twinkle-0.8.1.new/src/gui/twinkle.pro	2006-07-19 21:53:30.000000000 +0100
+diff -Nur twinkle-0.9/src/gui/twinkle.pro twinkle-0.9.new/src/gui/twinkle.pro
+--- twinkle-0.9/src/gui/twinkle.pro	2006-11-25 08:39:02.000000000 +0000
++++ twinkle-0.9.new/src/gui/twinkle.pro	2006-11-25 08:39:03.000000000 +0000
 @@ -3,7 +3,7 @@
  
  CONFIG	+= qt warn_off release thread
@@ -78,3 +83,45 @@ diff -Nur twinkle-0.8.1/src/gui/twinkle.pro twinkle-0.8.1.new/src/gui/twinkle.pr
  
  DEFINES	+= QT_NO_STL
  
+diff -Nur twinkle-0.9/src/twinkle_config.h.in twinkle-0.9.new/src/twinkle_config.h.in
+--- twinkle-0.9/src/twinkle_config.h.in	2006-10-01 20:11:58.000000000 +0100
++++ twinkle-0.9.new/src/twinkle_config.h.in	2006-11-25 08:39:50.000000000 +0000
+@@ -12,6 +12,9 @@
+ /* Defines if your system has the crypt function */
+ #undef HAVE_CRYPT
+ 
++/* Define to 1 if you have the <libgsm> library. */
++#undef HAVE_GSM
++
+ /* Define to 1 if you have the <ilbc> library. */
+ #undef HAVE_ILBC
+ 
+@@ -135,22 +138,22 @@
+ /* Define to the version of this package. */
+ #undef PACKAGE_VERSION
+ 
+-/* The size of a `char *', as computed by sizeof. */
++/* The size of `char *', as computed by sizeof. */
+ #undef SIZEOF_CHAR_P
+ 
+-/* The size of a `int', as computed by sizeof. */
++/* The size of `int', as computed by sizeof. */
+ #undef SIZEOF_INT
+ 
+-/* The size of a `long', as computed by sizeof. */
++/* The size of `long', as computed by sizeof. */
+ #undef SIZEOF_LONG
+ 
+-/* The size of a `short', as computed by sizeof. */
++/* The size of `short', as computed by sizeof. */
+ #undef SIZEOF_SHORT
+ 
+-/* The size of a `size_t', as computed by sizeof. */
++/* The size of `size_t', as computed by sizeof. */
+ #undef SIZEOF_SIZE_T
+ 
+-/* The size of a `unsigned long', as computed by sizeof. */
++/* The size of `unsigned long', as computed by sizeof. */
+ #undef SIZEOF_UNSIGNED_LONG
+ 
+ /* Define to 1 if you have the ANSI C header files. */
