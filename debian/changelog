@@ -1,3 +1,11 @@
+twinkle (1:0.9-6) testing-proposed-updates; urgency=medium
+
+  * Apply upstream memman.patch to fix random twinkle crashes
+    - crash on call end (Closes: #402509)
+  * Loaded direct to t-p-u as discussed on debian-release
+
+ -- Mark Purcell <msp@debian.org>  Sun,  7 Jan 2007 06:27:36 +0000
+
 twinkle (1:0.9-5) unstable; urgency=low
 
   * Pre-run autoheader to include expected src/twinkle_config.h.in changes
