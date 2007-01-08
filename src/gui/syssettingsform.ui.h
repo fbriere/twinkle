@@ -49,24 +49,24 @@ void SysSettingsForm::init()
 	openRingbackToolButton->setIconSet(i);
 }
 
-void SysSettingsForm::showCategory( QListBoxItem *item )
+void SysSettingsForm::showCategory( int index )
 {
-	if (item->text() == "General") {
+	if (index == idxCatGeneral) {
 		settingsWidgetStack->raiseWidget(pageGeneral);
-	} else if (item->text() == "Audio") {
+	} else if (index == idxCatAudio) {
 		settingsWidgetStack->raiseWidget(pageAudio);
-	} else if (item->text() == "Ring tones") {
+	} else if (index == idxCatRingtones) {
 		settingsWidgetStack->raiseWidget(pageRingtones);
-	} else if (item->text() == "Address book") {
+	} else if (index == idxCatAddressBook) {
 		settingsWidgetStack->raiseWidget(pageAddressBook);
-	} else if (item->text() == "Network") {
+	} else if (index == idxCatNetwork) {
 		settingsWidgetStack->raiseWidget(pageNetwork);
-	} else if (item->text() == "Log") {
+	} else if (index == idxCatLog) {
 		settingsWidgetStack->raiseWidget(pageLog);
 	}
 }
 
-string SysSettingsForm::comboItem2audio_dev(QString item, QLineEdit *qleOther)
+string SysSettingsForm::comboItem2audio_dev(QString item, QLineEdit *qleOther, bool playback)
 {
 	if (item == QString("ALSA: ") + DEV_OTHER) {
 		if (qleOther->text().isEmpty()) return "";
@@ -77,6 +77,9 @@ string SysSettingsForm::comboItem2audio_dev(QString item, QLineEdit *qleOther)
 		if (qleOther->text().isEmpty()) return "";
 		return (QString(PFX_OSS) + qleOther->text()).ascii();
 	}
+	
+	list<t_audio_device> &list_audio_dev = (playback ?
+			list_audio_playback_dev : list_audio_capture_dev);
 	
 	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
 	i != list_audio_dev.end(); i++)
@@ -112,20 +115,22 @@ void SysSettingsForm::populate()
 	ringtoneComboBox->setFocus();
 	
 	// Audio settings
-	list_audio_dev = sys_config->get_audio_devices();
+	list_audio_playback_dev = sys_config->get_audio_devices(true);
+	list_audio_capture_dev = sys_config->get_audio_devices(false);
 	ringtoneComboBox->clear();
 	speakerComboBox->clear();
 	micComboBox->clear();
 	bool devRingtoneFound = false;
 	bool devSpeakerFound = false;
 	bool devMicFound = false;
+	
+	// Playback devices
 	idx = 0;
-	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
-	i != list_audio_dev.end(); i++, idx++) {
+	for (list<t_audio_device>::iterator i = list_audio_playback_dev.begin(); 
+	i != list_audio_playback_dev.end(); i++, idx++) {
 		string item = i->get_description();
 		ringtoneComboBox->insertItem(QString(item.c_str()));
 		speakerComboBox->insertItem(QString(item.c_str()));
-		micComboBox->insertItem(QString(item.c_str()));
 		
 		// Select audio device
 		if (sys_config->get_dev_ringtone().device == i->device) {
@@ -138,18 +143,13 @@ void SysSettingsForm::populate()
 			otherSpeakerLineEdit->clear();
 			devSpeakerFound = true;
 		}
-		if (sys_config->get_dev_mic().device == i->device) {
-			micComboBox->setCurrentItem(idx);
-			otherMicLineEdit->clear();
-			devMicFound = true;
-		}
 		
 		// Determine index for other non-standard device
 		if (i->device == DEV_OTHER) {
 			if (i->type == t_audio_device::ALSA) {
-				idxOtherDevAlsa = idx;
+				idxOtherPlaybackDevAlsa = idx;
 			} else {
-				idxOtherDevOss = idx;
+				idxOtherPlaybackDevOss = idx;
 			}
 		}
 	}
@@ -159,19 +159,45 @@ void SysSettingsForm::populate()
 		t_audio_device dev = sys_config->get_dev_ringtone();
 		otherRingtoneLineEdit->setText(dev.device.c_str());
 		ringtoneComboBox->setCurrentItem(
-			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+			(dev.type == t_audio_device::ALSA ? idxOtherPlaybackDevAlsa : idxOtherPlaybackDevOss));
 	}
 	if (!devSpeakerFound) {
 		t_audio_device dev = sys_config->get_dev_speaker();
 		otherSpeakerLineEdit->setText(dev.device.c_str());
 		speakerComboBox->setCurrentItem(
-			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+			(dev.type == t_audio_device::ALSA ? idxOtherPlaybackDevAlsa : idxOtherPlaybackDevOss));
 	}
+	
+	// Capture device
+	idx = 0;
+	for (list<t_audio_device>::iterator i = list_audio_capture_dev.begin(); 
+	i != list_audio_capture_dev.end(); i++, idx++) {
+		string item = i->get_description();
+		micComboBox->insertItem(QString(item.c_str()));
+		
+		// Select audio device
+		if (sys_config->get_dev_mic().device == i->device) {
+			micComboBox->setCurrentItem(idx);
+			otherMicLineEdit->clear();
+			devMicFound = true;
+		}
+		
+		// Determine index for other non-standard device
+		if (i->device == DEV_OTHER) {
+			if (i->type == t_audio_device::ALSA) {
+				idxOtherCaptureDevAlsa = idx;
+			} else {
+				idxOtherCaptureDevOss = idx;
+			}
+		}
+	}
+	
+	// Check for non-standard audio devices
 	if (!devMicFound) {
 		t_audio_device dev = sys_config->get_dev_mic();
 		otherMicLineEdit->setText(dev.device.c_str());
 		micComboBox->setCurrentItem(
-			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+			(dev.type == t_audio_device::ALSA ? idxOtherCaptureDevAlsa : idxOtherCaptureDevOss));
 	}
 	
 	// Enable/disable line edit for non-standard device
@@ -179,6 +205,7 @@ void SysSettingsForm::populate()
 	devSpeakerSelected(speakerComboBox->currentItem());
 	devMicSelected(micComboBox->currentItem());
 	
+	validateAudioCheckBox->setChecked(sys_config->get_validate_audio_dev());
 	reduceNoiseMicCheckBox->setChecked(sys_config->get_au_reduce_noise_mic());
 	
 	populateComboBox(ossFragmentComboBox, 
@@ -239,7 +266,7 @@ void SysSettingsForm::populate()
 	// the allocation here.
 	MEMMAN_NEW(l);
 	userHostComboBox->clear();
-	userHostComboBox->insertItem("none");
+	userHostComboBox->insertItem(tr("none", "This is the 'none' in default IP address combo"));
 	userHostComboBox->setCurrentItem(0);
 	idx = 1;
 	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
@@ -250,7 +277,7 @@ void SysSettingsForm::populate()
 	}
 
 	userDevComboBox->clear();
-	userDevComboBox->insertItem("none");
+	userDevComboBox->insertItem(tr("none", "This is the 'none' in default network interface combo"));
 	userDevComboBox->setCurrentItem(0);
 	idx = 1;
 	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
@@ -298,20 +325,21 @@ void SysSettingsForm::validate()
 	if (userHostComboBox->currentItem() != 0 && userDevComboBox->currentItem() != 0)
 	{
 		((t_gui *)ui)->cb_show_msg(this, 
-			"Either choose a default IP address or a default network interface.", 
+			tr("Either choose a default IP address or a default network interface.").ascii(), 
 			MSG_WARNING);
 		return;
 	}
 	
 	// Audio
 	string dev;
-	dev = comboItem2audio_dev(ringtoneComboBox->currentText(), otherRingtoneLineEdit);
+	dev = comboItem2audio_dev(ringtoneComboBox->currentText(), otherRingtoneLineEdit, true);
 	if (dev != "") sys_config->set_dev_ringtone(sys_config->audio_device(dev));
-	dev = comboItem2audio_dev(speakerComboBox->currentText(), otherSpeakerLineEdit);
+	dev = comboItem2audio_dev(speakerComboBox->currentText(), otherSpeakerLineEdit, true);
 	if (dev != "") sys_config->set_dev_speaker(sys_config->audio_device(dev));
-	dev = comboItem2audio_dev(micComboBox->currentText(), otherMicLineEdit);
+	dev = comboItem2audio_dev(micComboBox->currentText(), otherMicLineEdit, false);
 	if (dev != "") sys_config->set_dev_mic(sys_config->audio_device(dev));
 	
+	sys_config->set_validate_audio_dev(validateAudioCheckBox->isChecked());
 	sys_config->set_au_reduce_noise_mic(reduceNoiseMicCheckBox->isChecked());
 	
 	sys_config->set_oss_fragment_size(
@@ -435,8 +463,8 @@ void SysSettingsForm::chooseRingtone()
 {
 	QString file = QFileDialog::getOpenFileName(
 			((t_gui *)ui)->get_last_file_browse_path(),
-			"Ring tones (*.wav)", this, "ring tone file dialog",
-			"Choose ring tone");
+			tr("Ring tones", "Description of .wav files in file dialog").append(" (*.wav)"), this, "ring tone file dialog",
+			tr("Choose ring tone"));
 	if (!file.isEmpty()) {
 		ringtoneLineEdit->setText(file);
 		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
@@ -447,8 +475,8 @@ void SysSettingsForm::chooseRingback()
 {
 	QString file = QFileDialog::getOpenFileName(
 			((t_gui *)ui)->get_last_file_browse_path(),
-			"Ring back tones (*.wav)", this, "ring back file dialog",
-			"Choose ring back tone");
+			tr("Ring back tones", "Description of .wav files in file dialog").append(" (*.wav)"), this, "ring back file dialog",
+			tr("Choose ring back tone"));
 	if (!file.isEmpty()) {
 		ringbackLineEdit->setText(file);
 		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
@@ -456,19 +484,19 @@ void SysSettingsForm::chooseRingback()
 }
 
 void SysSettingsForm::devRingtoneSelected(int idx) {
-	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	bool b = (idx == idxOtherPlaybackDevAlsa || idx == idxOtherPlaybackDevOss);
 	otherRingtoneTextLabel->setEnabled(b);
 	otherRingtoneLineEdit->setEnabled(b);
 }
 
 void SysSettingsForm::devSpeakerSelected(int idx) {
-	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	bool b = (idx == idxOtherPlaybackDevAlsa || idx == idxOtherPlaybackDevOss);
 	otherSpeakerTextLabel->setEnabled(b);
 	otherSpeakerLineEdit->setEnabled(b);
 }
 
 void SysSettingsForm::devMicSelected(int idx) {
-	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	bool b = (idx == idxOtherCaptureDevAlsa || idx == idxOtherCaptureDevOss);
 	otherMicTextLabel->setEnabled(b);
 	otherMicLineEdit->setEnabled(b);
 }

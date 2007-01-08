@@ -13,7 +13,7 @@
         </rect>
     </property>
     <property name="caption">
-        <string>Number conversion</string>
+        <string>Twinkle - Number conversion</string>
     </property>
     <vbox>
         <property name="name">
@@ -159,12 +159,15 @@
     <include location="local" impldecl="in implementation">qstring.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">boost/regex.hpp</include>
+    <include location="local" impldecl="in implementation">qregexp.h</include>
+    <include location="local" impldecl="in implementation">qvalidator.h</include>
     <include location="local" impldecl="in implementation">numberconversionform.ui.h</include>
 </includes>
 <slots>
     <slot>validate()</slot>
 </slots>
 <functions>
+    <function access="private" specifier="non virtual">init()</function>
     <function returnType="int">exec( QString &amp; expr, QString &amp; replace )</function>
 </functions>
 <pixmapinproject/>

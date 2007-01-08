@@ -19,23 +19,11 @@
 #include "definitions.h"
 #include "hdr_proxy_require.h"
 
-t_hdr_proxy_require::t_hdr_proxy_require() : t_header() {};
+t_hdr_proxy_require::t_hdr_proxy_require() : t_header("Proxy-Require") {};
 
 void t_hdr_proxy_require::add_feature(const string &f) {
 	populated = true;
 	features.push_back(f);
-}
-
-string t_hdr_proxy_require::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Proxy-Require: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_proxy_require::encode_value(void) const {
@@ -50,14 +38,5 @@ string t_hdr_proxy_require::encode_value(void) const {
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_proxy_require::encode_env(void) const {
-	string s;
-	
-	s = "SIP_PROXY_REQUIRE=";
-	s += encode_value();
-	
 	return s;
 }

@@ -24,11 +24,13 @@
 #include "userintf.h"
 #include "audits/memman.h"
 
-t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
-		t_subscription(_dialog, _role)
-{
-	event_type = SIP_EVENT_REFER;
+t_dialog *t_sub_refer::get_dialog(void) const {
+	return dynamic_cast<t_dialog *>(dialog);
+}
 
+t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
+		t_subscription(_dialog, _role, SIP_EVENT_REFER)
+{
 	// A refer subscription is implicitly defined by the REFER
 	// transaction
 	state = SS_ESTABLISHED;
@@ -46,7 +48,10 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
 	}
 
 	auto_refresh = user_config->get_auto_refresh_refer_sub();
+	subscription_expiry = DUR_REFER_SUBSCRIPTION;
 	sr_result = SRR_INPROG;
+	
+	last_response = NULL;
 
 	log_file->write_header("t_sub_refer::t_sub_refer");
 	log_file->write_raw("Refer ");
@@ -63,9 +68,8 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
 
 t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role,
 		const string &_event_id) :
-			t_subscription(_dialog, _role, _event_id)
+			t_subscription(_dialog, _role, SIP_EVENT_REFER, _event_id)
 {
-	event_type = SIP_EVENT_REFER;
 	state = SS_ESTABLISHED;
 
 	if (role == SR_NOTIFIER) {
@@ -79,6 +83,7 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role,
 	}
 
 	auto_refresh = user_config->get_auto_refresh_refer_sub();
+	subscription_expiry = DUR_REFER_SUBSCRIPTION;
 	sr_result = SRR_INPROG;
 
 	last_response = NULL;
@@ -212,7 +217,7 @@ bool t_sub_refer::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 
 
 	// Inform user about progress
-	ui->cb_notify_recvd(dialog->get_line()->get_line_number(), r);
+	ui->cb_notify_recvd(get_dialog()->get_line()->get_line_number(), r);
 
 	t_response *resp = r->create_response(R_200_OK);
 	send_response(user_config, resp, 0, tid);
@@ -246,11 +251,11 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 	// RFC 3265 7.1
 	// Contact header is mandatory
 	t_contact_param contact;
-	contact.uri.set_url(dialog->get_line()->create_user_contact());
-	r->hdr_contact.add_contact(contact);
+	contact.uri.set_url(get_dialog()->get_line()->create_user_contact());
+	resp->hdr_contact.add_contact(contact);
 
 	// Expires header is mandatory
-	r->hdr_expires.set_time(expires);
+	resp->hdr_expires.set_time(expires);
 
 	send_response(user_config, resp, 0, tid);
 	MEMMAN_DELETE(resp);
@@ -303,17 +308,7 @@ bool t_sub_refer::timeout(t_subscribe_timer timer) {
 
 			return true;
 		case SR_SUBSCRIBER:
-			log_file->write_report("Refer subscriber timed out.",
-				"t_sub_refer::timeout");
-
-			if (auto_refresh) {
-				// Refresh subscription
-				refresh_subscribe();
-			} else {
-				state = SS_TERMINATED;
-			}
-
-			return true;
+			// Should have been handled by parent class
 		default:
 			assert(false);
 		}
@@ -323,10 +318,6 @@ bool t_sub_refer::timeout(t_subscribe_timer timer) {
 	}
 
 	return false;
-}
-
-void t_sub_refer::refresh_subscribe(void) {
-	t_subscription::refresh_subscribe(DUR_REFER_SUBSCRIPTION);
 }
 
 t_sub_refer_result t_sub_refer::get_sr_result(void) const {

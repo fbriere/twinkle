@@ -30,9 +30,7 @@ public:
 
 	t_hdr_content_type();
 	void set_media(const t_media &m);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

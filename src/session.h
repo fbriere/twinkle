@@ -58,6 +58,10 @@ private:
 	// or received for this session.
 	bool			is_on_hold;
 	
+	// Indicates if a session is killed, i.e. RTP will never be
+	// sent or received anymore.
+	bool			is_killed;
+	
 	// Mapping from audio codecs to RTP payload numbers for receiving
 	// and sending directions.
 	map<t_audio_codec, unsigned short>	recv_ac2payload;
@@ -155,6 +159,10 @@ public:
 	// When a session is on-hold then start_rtp simply returns.
 	void start_rtp(void);
 	void stop_rtp(void);
+	
+	// Kill RTP streams. The difference with stopping an RTP stream
+	// is that it cannot be started after being killed.
+	void kill_rtp(void);
 
 	t_audio_session *get_audio_session(void) const;
 	void set_audio_session(t_audio_session *as);

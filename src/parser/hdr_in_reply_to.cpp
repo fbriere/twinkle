@@ -19,23 +19,11 @@
 #include "hdr_in_reply_to.h"
 #include "definitions.h"
 
-t_hdr_in_reply_to::t_hdr_in_reply_to() : t_header() {};
+t_hdr_in_reply_to::t_hdr_in_reply_to() : t_header("In-Reply-To") {};
 
 void t_hdr_in_reply_to::add_call_id(const string &id) {
 	populated = true;
 	call_ids.push_back(id);
-}
-
-string t_hdr_in_reply_to::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "In-Reply-To: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_in_reply_to::encode_value(void) const {
@@ -50,14 +38,5 @@ string t_hdr_in_reply_to::encode_value(void) const {
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_in_reply_to::encode_env(void) const {
-	string s;
-	
-	s = "SIP_IN_REPLY_TO=";
-	s += encode_value();
-	
 	return s;
 }

@@ -51,14 +51,19 @@
 #include "hdr_min_expires.h"
 #include "hdr_mime_version.h"
 #include "hdr_organization.h"
+#include "hdr_p_asserted_identity.h"
+#include "hdr_p_preferred_identity.h"
 #include "hdr_priority.h"
+#include "hdr_privacy.h"
 #include "hdr_proxy_authenticate.h"
 #include "hdr_proxy_authorization.h"
 #include "hdr_proxy_require.h"
 #include "hdr_rack.h"
 #include "hdr_record_route.h"
+#include "hdr_refer_sub.h"
 #include "hdr_refer_to.h"
 #include "hdr_referred_by.h"
+#include "hdr_replaces.h"
 #include "hdr_reply_to.h"
 #include "hdr_require.h"
 #include "hdr_retry_after.h"
@@ -123,14 +128,19 @@ public:
 	t_hdr_min_expires	hdr_min_expires;
 	t_hdr_mime_version	hdr_mime_version;
 	t_hdr_organization	hdr_organization;
+	t_hdr_p_asserted_identity hdr_p_asserted_identity;
+	t_hdr_p_preferred_identity hdr_p_preferred_identity;
 	t_hdr_priority		hdr_priority;
+	t_hdr_privacy		hdr_privacy;
 	t_hdr_proxy_authenticate  hdr_proxy_authenticate;
 	t_hdr_proxy_authorization hdr_proxy_authorization;
 	t_hdr_proxy_require	hdr_proxy_require;
 	t_hdr_rack		hdr_rack;
 	t_hdr_record_route	hdr_record_route;
+	t_hdr_refer_sub		hdr_refer_sub;
 	t_hdr_refer_to		hdr_refer_to;
 	t_hdr_referred_by	hdr_referred_by;
+	t_hdr_replaces		hdr_replaces;
 	t_hdr_reply_to		hdr_reply_to;
 	t_hdr_require		hdr_require;
 	t_hdr_retry_after	hdr_retry_after;

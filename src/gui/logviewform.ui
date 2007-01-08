@@ -33,7 +33,7 @@
                 <bool>true</bool>
             </property>
             <property name="whatsThis" stdset="0">
-                <string>Contents of the current log file (~/.twinkle/.twinkle.log)</string>
+                <string>Contents of the current log file (~/.twinkle/twinkle.log)</string>
             </property>
         </widget>
         <widget class="QPushButton" row="1" column="2">

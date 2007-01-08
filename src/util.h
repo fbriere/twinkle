@@ -19,7 +19,7 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
-#include <list>
+#include <vector>
 #include <string>
 
 using namespace std;
@@ -51,6 +51,9 @@ string current_time2str(const char *format);
 
 string weekday2str(int wkday);
 string month2str(int month);
+
+// Convert a full month name to an int (0-11)
+int str2month_full(const string &month);
 
 // Convert a duration in seconds to a string with hours, minutes seconds.
 // The hours and minutes are only present if there is at least 1 hour/minute.
@@ -91,27 +94,43 @@ string escape(const string &s, char c);
 // Unescape a string
 string unescape(const string &s);
 
+// Escape reserved chars in s by there hex-notation (%HEX)
+// All chars that are not in unreserved are considered as reserved.
+string escape_hex(const string &s, const string &unreserved);
+
+// Unescape the hex-values in a string
+string unescape_hex(const string &s);
+
 // Replace all occurrences of 'from' char 'to' char in s
 string replace_char(const string &s, char from, char to);
 
+// Replace first occurrence of 'from'-string to 'to'-string in s
+string replace_first(const string &s, const string &from, const string &to);
+
 // Split a string into elements using c as a separator
-list<string> split(const string &s, char c);
+vector<string> split(const string &s, char c);
 
 // Split a string into elements using separator as a separator
-list<string> split(const string &s, const string &separator);
+vector<string> split(const string &s, const string &separator);
+
+// Split a string into elements using line breaks as seperator
+// If the string contains a CRLF, then CRLF is used as line break.
+// Otherwise if the string contains a CR, then CR is used as line break.
+// Otherwise LF is used as line break.
+vector<string> split_linebreak(const string &s);
 
 // Split a string in two on the first occurence of the separator c.
-list<string> split_on_first(const string &s, char c);
+vector<string> split_on_first(const string &s, char c);
 
 // Split an escaped string into elements using c as a separator
 // Escaped means: \c will not be seen as a seperator and backslash is
 //                escaped itself (\\)
-list<string> split_escaped(const string &s, char c);
+vector<string> split_escaped(const string &s, char c);
 
 // Split a string into elements using spaces as separator
 // If quote_sensitive = true, then spaces within quoted strings will
 // not be used to split the string.
-list<string> split_ws(const string &s, bool quote_sensitive = false);
+vector<string> split_ws(const string &s, bool quote_sensitive = false);
 
 // Remove surrounding quotes of a string if present.
 string unquote(const string &s);
@@ -144,5 +163,9 @@ string remove_white_space(const string &s);
 // Truncate a string. If the string was longer than the truncated
 // result, then "..." will be appended.
 string dotted_truncate(const string &s, int len);
+
+// Convert a string to a printable representation, i.e. change
+// all non-printable chars into dots
+string to_printable(const string &s);
 
 #endif

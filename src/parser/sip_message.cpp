@@ -60,14 +60,19 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_min_expires(m.hdr_min_expires),
 		hdr_mime_version(m.hdr_mime_version),
 		hdr_organization(m.hdr_organization),
+		hdr_p_asserted_identity(m.hdr_p_asserted_identity),
+		hdr_p_preferred_identity(m.hdr_p_preferred_identity),
 		hdr_priority(m.hdr_priority),
+		hdr_privacy(m.hdr_privacy),
 		hdr_proxy_authenticate(m.hdr_proxy_authenticate),
 		hdr_proxy_authorization(m.hdr_proxy_authorization),
 		hdr_proxy_require(m.hdr_proxy_require),
 		hdr_rack(m.hdr_rack),
 		hdr_record_route(m.hdr_record_route),
+		hdr_refer_sub(m.hdr_refer_sub),
 		hdr_refer_to(m.hdr_refer_to),
 		hdr_referred_by(m.hdr_referred_by),
+		hdr_replaces(m.hdr_replaces),
 		hdr_reply_to(m.hdr_reply_to),
 		hdr_require(m.hdr_require),
 		hdr_retry_after(m.hdr_retry_after),
@@ -176,6 +181,11 @@ string t_sip_message::encode(bool add_content_length) {
 	s += hdr_cseq.encode();
 	s += hdr_contact.encode();
 	s += hdr_content_type.encode();
+	
+	// Privacy related headers
+	s += hdr_privacy.encode();
+	s += hdr_p_asserted_identity.encode();
+	s += hdr_p_preferred_identity.encode();
 
 	// Authentication headers
 	s += hdr_auth_info.encode();
@@ -203,8 +213,10 @@ string t_sip_message::encode(bool add_content_length) {
 	s += hdr_organization.encode();
 	s += hdr_priority.encode();
 	s += hdr_rack.encode();
+	s += hdr_refer_sub.encode();
 	s += hdr_refer_to.encode();
 	s += hdr_referred_by.encode();
+	s += hdr_replaces.encode();
 	s += hdr_reply_to.encode();
 	s += hdr_require.encode();
 	s += hdr_retry_after.encode();
@@ -272,6 +284,11 @@ list<string> t_sip_message::encode_env(void) {
 	l.push_back(hdr_cseq.encode_env());
 	l.push_back(hdr_contact.encode_env());
 	l.push_back(hdr_content_type.encode_env());
+	
+	// Authentication headers
+	l.push_back(hdr_auth_info.encode_env());
+	l.push_back(hdr_authorization.encode_env());
+	l.push_back(hdr_www_authenticate.encode_env());
 
 	// Authentication headers
 	l.push_back(hdr_auth_info.encode_env());
@@ -299,8 +316,10 @@ list<string> t_sip_message::encode_env(void) {
 	l.push_back(hdr_organization.encode_env());
 	l.push_back(hdr_priority.encode_env());
 	l.push_back(hdr_rack.encode_env());
+	l.push_back(hdr_refer_sub.encode_env());
 	l.push_back(hdr_refer_to.encode_env());
 	l.push_back(hdr_referred_by.encode_env());
+	l.push_back(hdr_replaces.encode_env());
 	l.push_back(hdr_reply_to.encode_env());
 	l.push_back(hdr_require.encode_env());
 	l.push_back(hdr_retry_after.encode_env());

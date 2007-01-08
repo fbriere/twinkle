@@ -35,9 +35,7 @@ public:
 	t_hdr_allow_events();
 	void add_event_type(const string &t);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

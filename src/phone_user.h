@@ -28,6 +28,8 @@
 #include "service.h"
 #include "transaction_layer.h"
 #include "user.h"
+#include "mwi/mwi.h"
+#include "mwi/mwi_dialog.h"
 #include "parser/request.h"
 #include "parser/response.h"
 #include "stun/stun.h"
@@ -72,9 +74,17 @@ private:
 	// Authorizor
 	t_auth			authorizor;
 	
+	// MWI dialog
+	t_mwi_dialog		*mwi_dialog;
+	
+	// Indicates if MWI must be automatically resubscribed to, if the
+	// subscription terminates with a reason telling that resubscription
+	// is possible.
+	bool			mwi_auto_resubscribe;
+	
 	// Resend the request: a new sequence number will be assigned and a new via
 	// header created (new transaction).
-	// is_register indicates is this request is a register
+	// is_register indicates if this request is a register
 	// cr is the current client request for this request.
 	void resend_request(t_request *req, bool is_register, t_client_request *cr);
 
@@ -89,13 +99,20 @@ private:
 	// Send a NAT keep alive packet
 	void send_nat_keepalive(void);
 	
+	// Handle MWI dialog termination
+	void cleanup_mwi_dialog(void);
+	
 public:
 	// Timers
 	unsigned short		id_registration;
 	unsigned short		id_nat_keepalive;
+	unsigned short		id_resubscribe_mwi; // re-subscribe after failure
 	
 	// Supplementary services
 	t_service	*service;
+	
+	// MWI
+	t_mwi		mwi;
 	
 	// STUN
 	bool		use_stun; // Indicates if STUN must be used
@@ -108,7 +125,7 @@ public:
 	t_user *get_user_profile(void);
 	
 	// Handle responses for out-of-dialog requests
-	void handle_response_out_of_dialog(t_response *r, t_tuid tuid);
+	void handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
 	
 	void registration(t_register_type register_type, bool re_register,
@@ -117,7 +134,34 @@ public:
 	// OPTIONS outside dialog
 	void options(const t_url &to_uri, const string &to_display = "");
 	
+	// MWI
+	void subscribe_mwi(unsigned long expires);
+	void unsubscribe_mwi(void);
+	
+	// Returns true is an MWI subscription is established
+	bool is_mwi_subscribed(void) const;
+	
+	// Returns true if there is no MWI subscription
+	bool is_mwi_terminated(void) const;
+	
+	// Proces an unsollicited NOTIFY for MWI
+	void handle_mwi_unsollicited(t_request *r, t_tid tid);
+	
+	// Subscriptions
+	void recvd_notify(t_request *r, t_tid tid);
+	
+	// Process timeout
 	void timeout(t_phone_timer timer);
+	void timeout_sub(t_subscribe_timer timer, t_object_id id_timer);
+	
+	// Match subscribe timeout with a subcription
+	bool match_subscribe_timer(t_subscribe_timer timer, t_object_id id_timer) const;
+	
+	// Start the re-subscribe timer after an MWI subscription failure
+	void start_resubscribe_mwi_timer(unsigned long duration);
+	
+	// Stop MWI resubscribe timer
+	void stop_resubscribe_mwi_timer(void);
 	
 	// Create request. Headers that are the same for each request
 	// are already populated.

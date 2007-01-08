@@ -43,24 +43,24 @@ void SelectUserForm::show(t_select_purpose purpose)
 	title += " - ";
 	switch (purpose) {
 	case SELECT_REGISTER:
-		title.append("Register");
-		msg_purpose = "Select users that you want to register.";
+		title.append(tr("Register"));
+		msg_purpose = tr("Select users that you want to register.");
 		break;
 	case SELECT_DEREGISTER:
-		title.append("Deregister");
-		msg_purpose = "Select users that you want to deregister.";
+		title.append(tr("Deregister"));
+		msg_purpose = tr("Select users that you want to deregister.");
 		break;
 	case SELECT_DEREGISTER_ALL:
-		title.append("Deregister all devices");
-		msg_purpose = "Select users for which you want to deregister all devices.";
+		title.append(tr("Deregister all devices"));
+		msg_purpose = tr("Select users for which you want to deregister all devices.");
 		break;
 	case SELECT_DND:
-		title.append("Do not disturb");
-		msg_purpose = "Select users for which you want to enable 'do not disturb'.";
+		title.append(tr("Do not disturb"));
+		msg_purpose = tr("Select users for which you want to enable 'do not disturb'.");
 		break;
 	case SELECT_AUTO_ANSWER:
-		title.append("Auto answer");
-		msg_purpose = "Select users for which you want to enable 'auto answer'.";
+		title.append(tr("Auto answer"));
+		msg_purpose = tr("Select users for which you want to enable 'auto answer'.");
 		break;
 	default:
 		assert(false);

@@ -19,7 +19,7 @@
 #include "definitions.h"
 #include "hdr_unsupported.h"
 
-t_hdr_unsupported::t_hdr_unsupported() : t_header() {};
+t_hdr_unsupported::t_hdr_unsupported() : t_header("Unsupported") {};
 
 void t_hdr_unsupported::add_feature(const string &f) {
 	populated = true;
@@ -43,18 +43,6 @@ bool t_hdr_unsupported::contains(const string &f) const {
 	return false;
 }
 
-string t_hdr_unsupported::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Unsupported: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_unsupported::encode_value(void) const {
 	string s;
 
@@ -63,18 +51,9 @@ string t_hdr_unsupported::encode_value(void) const {
 	for (list<string>::const_iterator i = features.begin();
 	     i != features.end(); i++)
 	{
-		if (i != features.begin()) s += ", ";
+		if (i != features.begin()) s += ",";
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_unsupported::encode_env(void) const {
-	string s;
-	
-	s = "SIP_UNSUPPORTED=";
-	s += encode_value();
-	
 	return s;
 }

@@ -43,7 +43,7 @@ void GetProfileNameForm::validate()
 	QDir d = QDir::home();
 	if (!d.cd(USER_DIR)) {
 		QMessageBox::critical(this, PRODUCT_NAME,
-			"Cannot find .twinkle directory in your home directory.");
+			tr("Cannot find .twinkle directory in your home directory."));
 		reject();
 	}
 	
@@ -52,7 +52,7 @@ void GetProfileNameForm::validate()
 	QString fullname = d.filePath(filename);
 	if (QFile::exists(fullname)) {
 		QMessageBox::warning(this, PRODUCT_NAME,
-			"Profile already exists.");
+			tr("Profile already exists."));
 		return;
 	}
 	
@@ -67,16 +67,14 @@ QString GetProfileNameForm:: getProfileName()
 // Execute a dialog to get a name for a new profile
 int GetProfileNameForm::execNewName()
 {
-	profileTextLabel->setText("Enter a name for your profile:");
+	profileTextLabel->setText(tr("Enter a name for your profile:"));
 	return exec();
 }
 
 // Execute this dialog to get a new name for an existing profile
 int GetProfileNameForm::execRename(const QString &oldName)
 {
-	QString s = "Rename profile '";
-	s.append(oldName);
-	s.append("' to:");
+	QString s = tr("Rename profile '%1' to:").arg(oldName);
 	profileTextLabel->setText(s);
 	return exec();
 }

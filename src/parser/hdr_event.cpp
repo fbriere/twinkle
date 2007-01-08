@@ -19,7 +19,7 @@
 #include "hdr_event.h"
 #include "parse_ctrl.h"
 
-t_hdr_event::t_hdr_event() : t_header() {}
+t_hdr_event::t_hdr_event() : t_header("Event", "o") {}
 
 void t_hdr_event::set_event_type(const string &t) {
 	populated = true;
@@ -36,23 +36,6 @@ void t_hdr_event::add_event_param(const t_parameter &p) {
 	event_params.push_back(p);
 }
 
-string t_hdr_event::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "o: ";
-	} else {
-		s = "Event: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_event::encode_value(void) const {
 	string s;
 
@@ -67,14 +50,5 @@ string t_hdr_event::encode_value(void) const {
 
 	s += param_list2str(event_params);
 
-	return s;
-}
-
-string t_hdr_event::encode_env(void) const {
-	string s;
-	
-	s = "SIP_EVENT=";
-	s += encode_value();
-	
 	return s;
 }

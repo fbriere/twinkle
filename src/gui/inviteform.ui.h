@@ -31,9 +31,9 @@ void InviteForm::init()
 	// Set toolbutton icons for disabled options.
 	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
-#ifndef HAVE_KDE
-	addressToolButton->setEnabled(false);
-#endif
+	// A QComboBox accepts a new line through copy/paste.
+	QRegExp rxNoNewLine("[^\\n\\r]*");
+	inviteComboBox->setValidator(new QRegExpValidator(rxNoNewLine, this));
 }
 
 void InviteForm::destroy()
@@ -48,10 +48,12 @@ void InviteForm::clear()
 {
 	inviteComboBox->clearEdit();
 	subjectLineEdit->clear();
+	hideUserCheckBox->setChecked(false);
 	inviteComboBox->setFocus();
 }
 
-void InviteForm::show(t_user *user_config, const QString &dest, const QString &subject)
+void InviteForm::show(t_user *user_config, const QString &dest, const QString &subject,
+		      bool anonymous)
 {
 	((t_gui *)ui)->fill_user_combo(fromComboBox);
 	
@@ -69,6 +71,7 @@ void InviteForm::show(t_user *user_config, const QString &dest, const QString &s
 	
 	inviteComboBox->setEditText(dest);
 	subjectLineEdit->setText(subject);
+	hideUserCheckBox->setChecked(anonymous);
 	QDialog::show();
 }
 
@@ -86,7 +89,8 @@ void InviteForm::validate()
 	if (dest.is_valid()) {
 		addToInviteComboBox(inviteComboBox->currentText());
 		emit raw_destination(inviteComboBox->currentText());
-		emit destination(from_user, display.c_str(), dest, subjectLineEdit->text());
+		emit destination(from_user, display.c_str(), dest, subjectLineEdit->text(),
+				 hideUserCheckBox->isChecked());
 		accept();
 	} else {
 		inviteComboBox->setFocus();
@@ -134,4 +138,16 @@ void InviteForm::showAddressBook()
 void InviteForm::selectedAddress(const QString &address)
 {
 	inviteComboBox->setEditText(address);
+}
+
+void InviteForm::warnHideUser(void) {
+	// Warn only once
+	if (!sys_config->get_warn_hide_user()) return;
+	
+	QString msg = tr("Not all SIP providers support identity hiding. Make sure your SIP provider "
+			 "supports it if you really need it.");
+	((t_gui *)ui)->cb_show_msg(this, msg.ascii(), MSG_WARNING);
+	
+	// Do not warn again
+	sys_config->set_warn_hide_user(false);
 }

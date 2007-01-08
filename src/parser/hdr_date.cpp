@@ -23,7 +23,7 @@
 #include "definitions.h"
 #include "util.h"
 
-t_hdr_date::t_hdr_date() : t_header() {}
+t_hdr_date::t_hdr_date() : t_header("Date") {}
 
 void t_hdr_date::set_date_gm(struct tm *tm) {
 	populated = true;
@@ -36,18 +36,6 @@ void t_hdr_date::set_now(void) {
 	populated = true;
 	gettimeofday(&t, NULL);
 	date = t.tv_sec;
-}
-
-string t_hdr_date::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Date: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_date::encode_value(void) const {
@@ -72,14 +60,5 @@ string t_hdr_date::encode_value(void) const {
 	s += int2str(tm.tm_sec, "%02d");
 	s += " GMT";
 
-	return s;
-}
-
-string t_hdr_date::encode_env(void) const {
-	string s;
-	
-	s = "SIP_DATE=";
-	s += encode_value();
-	
 	return s;
 }

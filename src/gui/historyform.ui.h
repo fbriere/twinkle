@@ -30,7 +30,6 @@
 
 void HistoryForm::init()
 {
-	
 	historyListView->setSorting(HISTCOL_TIMESTAMP, false);
 	historyListView->setColumnWidthMode(HISTCOL_FROMTO, QListView::Manual);
 	historyListView->setColumnWidth(HISTCOL_FROMTO, 200);
@@ -43,7 +42,7 @@ void HistoryForm::init()
 	missedCheckBox->setChecked(true);
 	profileCheckBox->setChecked(true);
 	
-	loadHistory();
+	timeLastViewed = phone->get_startup_time();
 }
 
 void HistoryForm::loadHistory()
@@ -87,25 +86,7 @@ void HistoryForm::loadHistory()
 		}
 		
 		HistoryListViewItem *item = new HistoryListViewItem(historyListView,
-			*i,
-			i->get_direction().c_str(),
-			(i->direction == t_call_record::DIR_IN ?
-			 ui->format_sip_address(user_config, 
-					i->from_display, i->from_uri).c_str() :
-			 ui->format_sip_address(user_config,
-					i->to_display, i->to_uri).c_str()),
-			i->subject.c_str(),
-			i->invite_resp_reason.c_str());
-		
-		// Set direction icon
-		item->setPixmap(HISTCOL_DIRECTION, (i->direction == t_call_record::DIR_IN ?
-				    QPixmap::fromMimeSource("1leftarrow-yellow.png") :
-				    QPixmap::fromMimeSource("1rightarrow.png")));
-		
-		// Set status icon
-		item->setPixmap(HISTCOL_STATUS, (i->invite_resp_code < 300 ?
-				    QPixmap::fromMimeSource("ok.png") :
-				    QPixmap::fromMimeSource("cancel.png")));
+			*i, user_config, timeLastViewed);
 	}
 	
 	// Make the first entry the selected entry.
@@ -129,8 +110,6 @@ void HistoryForm::update()
 
 void HistoryForm::show()
 {
-	call_history->clear_num_missed_calls();
-	
 	if (isShown()) {
 		raise();
 		return;
@@ -143,6 +122,10 @@ void HistoryForm::show()
 
 void HistoryForm::closeEvent( QCloseEvent *e )
 {
+	struct timeval t;
+	
+	gettimeofday(&t, NULL);
+	timeLastViewed = t.tv_sec;
 	call_history->clear_num_missed_calls();
 	QDialog::closeEvent(e);
 }
@@ -165,20 +148,20 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	
 	// Left column: header names
 	s += "<tr><td><b>";
-	s += "Call start:<br>";
-	s += "Call answer:<br>";
-	s += "Call end:<br>";
-	s += "Call duration:<br>";
-	s += "Direction:<br>";
-	s += "From:<br>";
-	s += "To:<br>";
-	if (cr.reply_to_uri.is_valid()) s += "Reply to:<br>";
-	if (cr.referred_by_uri.is_valid()) s += "Referred by:<br>";
-	s += "Subject:<br>";
-	s += "Released by:<br>";
-	s += "Status:<br>";
-	if (!cr.far_end_device.empty()) s += "Far end device:<br>";
-	s += "User profile:";
+	s += tr("Call start:") + "<br>";
+	s += tr("Call answer:") + "<br>";
+	s += tr("Call end:") + "<br>";
+	s += tr("Call duration:") + "<br>";
+	s += tr("Direction:") + "<br>";
+	s += tr("From:") + "<br>";
+	s += tr("To:") + "<br>";
+	if (cr.reply_to_uri.is_valid()) s += tr("Reply to:") + "<br>";
+	if (cr.referred_by_uri.is_valid()) s += tr("Referred by:") + "<br>";
+	s += tr("Subject:") + "<br>";
+	s += tr("Released by:") + "<br>";
+	s += tr("Status:") + "<br>";
+	if (!cr.far_end_device.empty()) s += tr("Far end device:") + "<br>";
+	s += tr("User profile:");
 	s += "</b></td>";
 	
 	// Right column: values
@@ -194,7 +177,9 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	
 	s += duration2str((unsigned long)(cr.time_end - cr.time_start)).c_str();
 	if (cr.time_answer != 0) {
-		s += " (conversation: ";
+		s += " (";
+		s += tr("conversation");
+		s += ": ";
 		s += duration2str((unsigned long)(cr.time_end - cr.time_answer)).c_str();
 		s += ")";
 	}
@@ -249,13 +234,19 @@ void HistoryForm::popupMenu(QListViewItem *item, const QPoint &pos)
 	if (!item) return;
 	
 	HistoryListViewItem *histItem = (HistoryListViewItem *)item;
+	t_call_record cr = histItem->get_call_record();
+	
+	// An anonymous caller cannot be called
+	bool canCall = !(cr.direction == t_call_record::DIR_IN &&
+			    cr.from_uri.encode() == ANONYMOUS_URI);
 	
 	QIconSet inviteIcon(QPixmap::fromMimeSource("invite.png"));
 	QIconSet deleteIcon(QPixmap::fromMimeSource("editdelete.png"));
 	QPopupMenu menu(this);
 	
-	int itemCall = menu.insertItem(inviteIcon, "Call...");
-	int itemDelete = menu.insertItem(deleteIcon, "Delete");
+	int itemCall = menu.insertItem(inviteIcon, tr("Call..."));
+	menu.setItemEnabled(itemCall, canCall);
+	int itemDelete = menu.insertItem(deleteIcon, tr("Delete"));
 	int selected = menu.exec(pos);
 	
 	if (selected == -1) return;
@@ -284,8 +275,8 @@ void HistoryForm::call(QListViewItem *item)
 	QString subject;
 	if (cr.direction == t_call_record::DIR_IN) {
 		if (!cr.subject.empty()) {
-			if (cr.subject.substr(0, 3) != "Re:") {
-				subject = "Re: ";
+			if (cr.subject.substr(0, tr("Re:").length()) != tr("Re:").ascii()) {
+				subject = tr("Re:").append(" ");
 				subject += cr.subject.c_str();
 			} else {
 				subject = cr.subject.c_str();
@@ -300,12 +291,18 @@ void HistoryForm::call(QListViewItem *item)
 		// Call to the Reply-To contact
 		emit call(user_config,
 			ui->format_sip_address(user_config, 
-				cr.reply_to_display, cr.reply_to_uri).c_str(),
-			subject);
+				cr.reply_to_display, cr.reply_to_uri).c_str(), 
+			subject, false);
 	} else {
 		// For incoming calls, call to the From contact
 		// For outgoing calls, call to the To contact
-		emit call(user_config, item->text(HISTCOL_FROMTO), subject);
+		bool hide_user = false;
+		if (cr.direction == t_call_record::DIR_OUT && 
+		    cr.from_uri.encode() == ANONYMOUS_URI)
+		{
+			hide_user = true;
+		}
+		emit call(user_config, item->text(HISTCOL_FROMTO), subject, hide_user);
 	}
 }
 

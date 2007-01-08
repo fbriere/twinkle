@@ -105,6 +105,7 @@
                     </property>
                     <property name="text">
                         <string>purpose</string>
+                        <comment>No need to translate</comment>
                     </property>
                 </widget>
                 <widget class="QListView">

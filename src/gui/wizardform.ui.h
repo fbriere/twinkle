@@ -27,8 +27,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#define PROV_NONE	"None (direct IP to IP calls)"
-#define PROV_OTHER	"Other"
+#define PROV_NONE	QT_TRANSLATE_NOOP("WizardForm", "None (direct IP to IP calls)")
+#define PROV_OTHER	QT_TRANSLATE_NOOP("WizardForm", "Other")
 
 struct t_provider {
 	QString domain;
@@ -48,13 +48,13 @@ void WizardForm::init()
 	
 	initProviders();
 	serviceProviderComboBox->setCurrentItem(serviceProviderComboBox->count() - 1);
-	update(PROV_OTHER);
+	update(tr(PROV_OTHER));
 }
 
 void WizardForm::initProviders()
 {
 	serviceProviderComboBox->clear();
-	serviceProviderComboBox->insertItem(PROV_NONE);
+	serviceProviderComboBox->insertItem(tr(PROV_NONE));
 	
 	QString fname = sys_config->get_dir_share().c_str();
 	fname.append("/").append(FILE_PROVIDERS);
@@ -82,7 +82,7 @@ void WizardForm::initProviders()
 		providersFile.close();
 	}
 	
-	serviceProviderComboBox->insertItem(PROV_OTHER);
+	serviceProviderComboBox->insertItem(tr(PROV_OTHER));
 }
 
 int WizardForm::exec(t_user *user)
@@ -91,7 +91,8 @@ int WizardForm::exec(t_user *user)
 	
 	// Set user profile name in the titlebar
 	QString s = PRODUCT_NAME;
-	s.append(" - User profile wizard: ").append(user_config->get_profile_name().c_str());
+	s.append(" - ").append(tr("User profile wizard:")).append(" ");
+	s.append(user_config->get_profile_name().c_str());
 	setCaption(s);
 	
 	return QDialog::exec();
@@ -103,7 +104,8 @@ int WizardForm::show(t_user *user)
 	
 	// Set user profile name in the titlebar
 	QString s = PRODUCT_NAME;
-	s.append(" - User profile wizard: ").append(user_config->get_profile_name().c_str());
+	s.append(" - ").append(tr("User profile wizard:")).append(" ");
+	s.append(user_config->get_profile_name().c_str());
 	setCaption(s);
 	
 	QDialog::show();
@@ -177,7 +179,7 @@ void WizardForm::validate()
 	// Validity check user page
 	// SIP username is mandatory
 	if (usernameLineEdit->text().isEmpty()) {
-		((t_gui *)ui)->cb_show_msg(this, "You must fill in a user name for your SIP account.",
+		((t_gui *)ui)->cb_show_msg(this, tr("You must fill in a user name for your SIP account.").ascii(),
 				MSG_CRITICAL);
 		usernameLineEdit->setFocus();
 		return;
@@ -185,10 +187,10 @@ void WizardForm::validate()
 	
 	// SIP user domain is mandatory
 	if (domainLineEdit->text().isEmpty()) {
-		((t_gui *)ui)->cb_show_msg(this, 
+		((t_gui *)ui)->cb_show_msg(this, tr(
 				"You must fill in a domain name for your SIP account.\n"
 				"This could be the hostname or IP address of your PC "
-				"if you want direct PC to PC dialing.",
+				"if you want direct PC to PC dialing.").ascii(),
 				MSG_CRITICAL);
 		domainLineEdit->setFocus();
 		return;
@@ -200,7 +202,7 @@ void WizardForm::validate()
 		s.append(':').append(proxyLineEdit->text());
 		t_url u(s.ascii());
 		if (!u.is_valid() || u.get_user() != "") {
-			((t_gui *)ui)->cb_show_msg(this, "Invalid value for SIP proxy.", 
+			((t_gui *)ui)->cb_show_msg(this, tr("Invalid value for SIP proxy.").ascii(), 
 					MSG_CRITICAL);
 			proxyLineEdit->setFocus();
 			proxyLineEdit->selectAll();
@@ -219,7 +221,7 @@ void WizardForm::validate()
 		s.append(stunServerLineEdit->text());
 		t_url u(s.ascii());
 		if (!u.is_valid() || u.get_user() != "") {
-			((t_gui *)ui)->cb_show_msg(this, "Invalid value for STUN server.", 
+			((t_gui *)ui)->cb_show_msg(this, tr("Invalid value for STUN server.").ascii(), 
 					MSG_CRITICAL);
 			stunServerLineEdit->setFocus();
 			stunServerLineEdit->selectAll();

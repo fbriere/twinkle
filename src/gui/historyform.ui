@@ -33,7 +33,7 @@
             </column>
             <column>
                 <property name="text">
-                    <string>In./Out</string>
+                    <string>In/Out</string>
                 </property>
                 <property name="clickable">
                     <bool>true</bool>
@@ -363,8 +363,11 @@
 <forwards>
     <forward>extern t_phone *phone;</forward>
 </forwards>
+<variables>
+    <variable access="private">time_t timeLastViewed;</variable>
+</variables>
 <signals>
-    <signal>call(t_user *, const QString &amp;, const QString &amp;)</signal>
+    <signal>call(t_user *, const QString &amp;, const QString &amp;, bool)</signal>
 </signals>
 <slots>
     <slot>loadHistory()</slot>

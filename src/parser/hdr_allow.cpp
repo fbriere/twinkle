@@ -19,7 +19,7 @@
 #include "definitions.h"
 #include "hdr_allow.h"
 
-t_hdr_allow::t_hdr_allow() : t_header() {}
+t_hdr_allow::t_hdr_allow() : t_header("Allow") {}
 
 void t_hdr_allow::add_method(const t_method &m, const string &unknown) {
 	populated = true;
@@ -46,18 +46,6 @@ bool t_hdr_allow::contains_method(const t_method &m) const {
 	return (find(method_list.begin(), method_list.end(), m) != method_list.end());
 }
 
-string t_hdr_allow::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Allow: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_allow::encode_value(void) const {
 	string s;
 
@@ -66,7 +54,7 @@ string t_hdr_allow::encode_value(void) const {
 	for (list<t_method>::const_iterator i = method_list.begin();
 	     i != method_list.end(); i++)
 	{
-		if (i != method_list.begin()) s += ", ";
+		if (i != method_list.begin()) s += ",";
 		s += method2str(*i);
 	}
 
@@ -74,19 +62,10 @@ string t_hdr_allow::encode_value(void) const {
 	     i != unknown_methods.end(); i++)
 	{
 		if (i != unknown_methods.begin() || method_list.size() != 0) {
-			s += ", ";
+			s += ",";
 		}
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_allow::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ALLOW=";
-	s += encode_value();
-	
 	return s;
 }

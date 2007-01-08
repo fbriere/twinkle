@@ -31,10 +31,6 @@ void TermCapForm::init()
 	
 	// Set toolbutton icons for disabled options.
 	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
-	
-#ifndef HAVE_KDE
-	addressToolButton->setEnabled(false);
-#endif
 }
 
 void TermCapForm::show(t_user *user_config, const QString &dest)

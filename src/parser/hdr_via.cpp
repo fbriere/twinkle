@@ -140,7 +140,7 @@ bool t_via::rfc3261_compliant(void) const {
 }
 
 
-t_hdr_via::t_hdr_via() : t_header() {}
+t_hdr_via::t_hdr_via() : t_header("Via", "v") {}
 
 void t_hdr_via::add_via(const t_via &v) {
 	populated = true;
@@ -148,24 +148,8 @@ void t_hdr_via::add_via(const t_via &v) {
 }
 
 string t_hdr_via::encode(void) const {
-	return (t_parser::multi_values_as_list ? encode_list() : encode_multi_header());
-}
-
-string t_hdr_via::encode_list(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "v: ";
-	} else {
-		s = "Via: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
+	return (t_parser::multi_values_as_list ? 
+			t_header::encode() : encode_multi_header());
 }
 
 string t_hdr_via::encode_multi_header(void) const {
@@ -176,12 +160,8 @@ string t_hdr_via::encode_multi_header(void) const {
 	for (list<t_via>::const_iterator i = via_list.begin();
 	     i != via_list.end(); i++)
 	{
-		if (t_parser::compact_headers) {
-			s += "v: ";
-		} else {
-			s += "Via: ";
-		}
-	
+		s += (t_parser::compact_headers ? compact_name : header_name);
+		s += ": ";
 		s += i->encode();
 		s += CRLF;
 	}
@@ -197,19 +177,10 @@ string t_hdr_via::encode_value(void) const {
 	for (list<t_via>::const_iterator i = via_list.begin();
 	     i != via_list.end(); i++)
 	{
-		if (i != via_list.begin()) s += ", ";
+		if (i != via_list.begin()) s += ",";
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_via::encode_env(void) const {
-	string s;
-	
-	s = "SIP_VIA=";
-	s += encode_value();
-	
 	return s;
 }
 

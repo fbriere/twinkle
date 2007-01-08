@@ -55,6 +55,8 @@ void t_transaction_layer::recvd_response(t_response *r, t_tuid tuid,
 		assert(false);
 		break;
 	}
+	
+	post_process_response(r, tuid, tid);
 
 	unlock();
 }
@@ -139,7 +141,24 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 		delete resp;
 		break;
 	}
+	
+	post_process_request(r, tid, tid_cancel_target);
 
+	unlock();
+}
+
+void t_transaction_layer::recvd_async_response(t_event_async_response *event) {
+	lock();
+	
+	switch (event->get_response_type()) {
+	case t_event_async_response::RESP_REFER_PERMISSION:
+		recvd_refer_permission(event->get_bool_response());
+		break;
+	default:
+		// Ignore other responses
+		break;
+	}
+	
 	unlock();
 }
 
@@ -164,13 +183,15 @@ void t_transaction_layer::run(void) {
 	t_event_user		*ev_user;
 	t_event_failure		*ev_failure;
 	t_event_stun_response	*ev_stun_resp;
+	t_event_async_response	*ev_async_resp;
 	t_sip_message		*msg;
 	StunMessage		*stun_msg;
 	t_tid			tid;
 	t_tid			tid_cancel;
 	t_tuid			tuid;
 
-	while (true) {
+	bool quit = false;
+	while (!quit) {
 		event = evq_trans_layer->pop();
 
 		switch (event->get_type()) {
@@ -208,6 +229,13 @@ void t_transaction_layer::run(void) {
 			tuid = ev_stun_resp->get_tuid();
 			stun_msg = ev_stun_resp->get_msg();
 			recvd_stun_resp(stun_msg, tuid, tid);
+			break;
+		case EV_ASYNC_RESPONSE:
+			ev_async_resp = dynamic_cast<t_event_async_response *>(event);
+			recvd_async_response(ev_async_resp);
+			break;
+		case EV_QUIT:
+			quit = true;
 			break;
 		default:
 			// other types of event are not expected

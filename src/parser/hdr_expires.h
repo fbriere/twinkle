@@ -33,9 +33,7 @@ public:
 	t_hdr_expires();
 	void set_time(unsigned long t);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

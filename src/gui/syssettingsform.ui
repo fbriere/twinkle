@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>709</width>
-            <height>583</height>
+            <height>587</height>
         </rect>
     </property>
     <property name="caption">
@@ -82,6 +82,64 @@
             <property name="whatsThis" stdset="0">
                 <string>Select a category for which you want to see or modify the settings.</string>
             </property>
+        </widget>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout38</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer98</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>321</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
         </widget>
         <widget class="QWidgetStack" row="0" column="1">
             <property name="name">
@@ -291,6 +349,27 @@
                                 </property>
                                 <property name="alignment">
                                     <set>WordBreak|AlignVCenter</set>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="7" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>validateAudioCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Validate devices before usage</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+V</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Twinkle validates the audio devices before usage to avoid an established call without an audio channel.
+&lt;p&gt;
+On startup of Twinkle a warning is given if an audio device is inaccessible.
+&lt;p&gt;
+If before making a call, the microphone or speaker appears to be invalid, a warning is given and no call can be made.
+&lt;p&gt;
+If before answering a call, the microphone or speaker appears to be invalid, a warning is given and the call will not be answered.</string>
                                 </property>
                             </widget>
                         </grid>
@@ -1546,64 +1625,6 @@ Depending on your SIP provider the network might provide ring back tone or an an
                 </vbox>
             </widget>
         </widget>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout38</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer98</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>321</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
-                    </property>
-                </widget>
-            </hbox>
-        </widget>
     </grid>
 </widget>
 <connections>
@@ -1621,9 +1642,9 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </connection>
     <connection>
         <sender>categoryListBox</sender>
-        <signal>highlighted(QListBoxItem*)</signal>
+        <signal>highlighted(int)</signal>
         <receiver>SysSettingsForm</receiver>
-        <slot>showCategory(QListBoxItem*)</slot>
+        <slot>showCategory(int)</slot>
     </connection>
     <connection>
         <sender>guiUseSystrayCheckBox</sender>
@@ -1810,16 +1831,19 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>
-    <variable access="private">list&lt;t_audio_device&gt; list_audio_dev;</variable>
-    <variable access="private">int idxOtherDevAlsa;</variable>
-    <variable access="private">int idxOtherDevOss;</variable>
+    <variable access="private">int idxOtherCaptureDevOss;</variable>
+    <variable access="private">int idxOtherCaptureDevAlsa;</variable>
+    <variable access="private">int idxOtherPlaybackDevOss;</variable>
+    <variable access="private">int idxOtherPlaybackDevAlsa;</variable>
+    <variable access="private">list&lt;t_audio_device&gt; list_audio_playback_dev;</variable>
+    <variable access="private">list&lt;t_audio_device&gt; list_audio_capture_dev;</variable>
 </variables>
 <signals>
     <signal>sipUdpPortChanged()</signal>
     <signal>rtpPortChanged()</signal>
 </signals>
 <slots>
-    <slot>showCategory( QListBoxItem * item )</slot>
+    <slot>showCategory( int index )</slot>
     <slot>populateComboBox( QComboBox * cb, const QString &amp; s )</slot>
     <slot>populate()</slot>
     <slot>validate()</slot>
@@ -1833,7 +1857,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
-    <function returnType="string">comboItem2audio_dev( QString item, QLineEdit * qleOther )</function>
+    <function returnType="string">comboItem2audio_dev( QString item, QLineEdit * qleOther, bool playback )</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

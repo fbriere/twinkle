@@ -50,18 +50,6 @@ void SrvRedirectForm::init()
 	addrNoanswer1ToolButton->setIconSet(i);
 	addrNoanswer2ToolButton->setIconSet(i);
 	addrNoanswer3ToolButton->setIconSet(i);
-	
-#ifndef HAVE_KDE
-	addrAlways1ToolButton->setEnabled(false);
-	addrAlways2ToolButton->setEnabled(false);
-	addrAlways3ToolButton->setEnabled(false);
-	addrBusy1ToolButton->setEnabled(false);
-	addrBusy2ToolButton->setEnabled(false);
-	addrBusy3ToolButton->setEnabled(false);
-	addrNoanswer1ToolButton->setEnabled(false);
-	addrNoanswer2ToolButton->setEnabled(false);
-	addrNoanswer3ToolButton->setEnabled(false);
-#endif
 }
 
 void SrvRedirectForm::destroy()
@@ -146,7 +134,7 @@ void SrvRedirectForm::validate()
 		accept();
 	} else {
 		((t_gui *)ui)->cb_show_msg(this,
-			"You have entered an invalid destination.",
+			tr("You have entered an invalid destination.").ascii(),
 			MSG_WARNING);
 	}
 }
@@ -287,7 +275,7 @@ void SrvRedirectForm::changedUser(const QString &user_profile)
 	if (!validateValues()) {
 		userComboBox->setCurrentItem(current_user_idx);
 		((t_gui *)ui)->cb_show_msg(this,
-			"You have entered an invalid destination.",
+			tr("You have entered an invalid destination.").ascii(),
 			MSG_WARNING);
 		return;
 	}

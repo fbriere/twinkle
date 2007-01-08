@@ -33,23 +33,11 @@ string t_alert_param::encode(void) const {
 }
 
 
-t_hdr_alert_info::t_hdr_alert_info() : t_header() {};
+t_hdr_alert_info::t_hdr_alert_info() : t_header("Alert-Info") {};
 
 void t_hdr_alert_info::add_param(const t_alert_param &p) {
 	populated = true;
 	alert_param_list.push_back(p);
-}
-
-string t_hdr_alert_info::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Alert-Info: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_alert_info::encode_value(void) const {
@@ -64,14 +52,5 @@ string t_hdr_alert_info::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_alert_info::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ALERT_INFO=";
-	s += encode_value();
-	
 	return s;
 }

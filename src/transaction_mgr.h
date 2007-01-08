@@ -81,13 +81,13 @@ public:
 	t_trans_server *find_cancel_target(t_request *r) const;
 
 	// Start transaction timer. Return timer id (needed for stopping)
-	unsigned short start_timer(long dur, t_sip_timer tmr,
+	t_object_id start_timer(long dur, t_sip_timer tmr,
 						unsigned short tid);
-	unsigned short start_stun_timer(long dur, t_stun_timer tmr,
+	t_object_id start_stun_timer(long dur, t_stun_timer tmr,
 						unsigned short tid);
 
 	// Stop timer. Pass id that is returned by start_timer
-	void stop_timer(unsigned short id);
+	void stop_timer(t_object_id id);
 
 	// Main loop of the transaction manager (infinite)
 	void run (void);

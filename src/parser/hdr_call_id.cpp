@@ -20,40 +20,14 @@
 #include "definitions.h"
 #include "parse_ctrl.h"
 
-t_hdr_call_id::t_hdr_call_id() : t_header() {};
+t_hdr_call_id::t_hdr_call_id() : t_header("Call-ID", "i") {};
 
-void t_hdr_call_id::set_call_id(string id) {
+void t_hdr_call_id::set_call_id(const string &id) {
 	populated = true;
 	call_id = id;
-}
-
-string t_hdr_call_id::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "i: ";
-	} else {
-		s = "Call-ID: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_call_id::encode_value(void) const {
 	if (!populated) return "";
 	return call_id;
-}
-
-string t_hdr_call_id::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CALL_ID=";
-	s += encode_value();
-	
-	return s;
 }

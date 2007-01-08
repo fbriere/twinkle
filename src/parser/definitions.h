@@ -21,6 +21,7 @@
 
 #include <string>
 #include "protocol.h"
+#include "sockets/url.h"
 
 using namespace std;
 

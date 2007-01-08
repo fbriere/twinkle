@@ -76,6 +76,11 @@ enum t_dtmf_transport {
 	DTMF_INFO
 };
 
+enum t_g726_packing {
+	G726_PACK_RFC3551,
+	G726_PACK_AAL2
+};
+
 struct t_number_conversion {
 	boost::regex	re;
 	string		fmt;
@@ -146,6 +151,14 @@ private:
 	list<t_audio_codec>	codecs; // in order of preference
 	unsigned short		ptime; // ptime (ms) for G.711/G.726
 	
+	// For outgoing calls, obey the preference from the far-end (SDP answer),
+	// i.e. pick the first codec from the SDP answer that we support.
+	bool			out_obey_far_end_codec_pref;
+	
+	// For incoming calls, obey the preference from the far-end (SDP offer),
+	// i.e. pick the first codec from the SDP offer that we support.
+	bool			in_obey_far_end_codec_pref;
+	
 	// RTP dynamic payload types for speex
 	unsigned short		speex_nb_payload_type;
 	unsigned short		speex_wb_payload_type;
@@ -171,6 +184,9 @@ private:
 	unsigned short		g726_24_payload_type;
 	unsigned short		g726_32_payload_type;
 	unsigned short		g726_40_payload_type;
+	
+	// Bit packing order for G,726
+	t_g726_packing		g726_packing;
 	
 	// Transport mode for DTMF
 	t_dtmf_transport	dtmf_transport;
@@ -246,7 +262,7 @@ private:
 	unsigned short		max_redirections;
 
 	// SIP extensions
-	// 100rel extension (PRACK)
+	// 100rel extension (PRACK, RFC 3262)
 	// Possible values:
 	// - disabled	100rel extension is disabled
 	// - supported	100rel is supported (it is added in the supported header of
@@ -260,6 +276,9 @@ private:
 	//		indicates it does not support 100rel (420 response) then the
 	//		call will be re-attempted without the 100rel requirement.
 	t_ext_support		ext_100rel;
+	
+	// Replaces (RFC 3891)
+	bool			ext_replaces;
 
 	// REFER options
 	// Hold the current call when an incoming REFER is accepted.
@@ -276,6 +295,18 @@ private:
 
 	// Referrer automatically refreshes subscription before expiry.
 	bool			auto_refresh_refer_sub;
+	
+	// An attended transfer should use the contact-URI of the transfer target.
+	// This contact-URI is not always globally routable however. As an
+	// alternative the AoR (address of record) can be used. Disadvantage is
+	// that the AoR may route to multiple phones in case of forking, whereas
+	// the contact-URI routes to a particular phone.
+	bool			attended_refer_to_aor;
+	
+	// Privacy options
+	// Send P-Preferred-Identity header in initial INVITE when hiding
+	// user identity.
+	bool			send_p_preferred_id;
 
 	// NAT
 
@@ -323,6 +354,9 @@ private:
 	// Special symbols that must be removed from telephone numbers
 	string			special_phone_symbols;
 	
+	// Number conversion
+	list<t_number_conversion>	number_conversions;
+	
 	// RING TONES
 	string		ringtone_file;
 	string		ringback_file;
@@ -351,9 +385,27 @@ private:
 	// Only negotiate zrtp if far-end signalled support for zrtp
 	bool		zrtp_send_if_supported;
 	
-	// Number conversion
-	list<t_number_conversion>	number_conversions;
+	// MWI
+	// Indicate if MWI is sollicited or unsollicited.
+	// RFC 3842 specifies that MWI must be sollicited (SUBSCRIBE).
+	// Asterisk however only supported non-standard unsollicited MWI.
+	bool		mwi_sollicited;
 	
+	// User name for subscribing to the mailbox
+	string		mwi_user;
+	
+	// The mailbox server to which the SUBSCRIBE must be sent
+	t_url		mwi_server;
+	
+	// Send the SUBSCRIBE via the proxy to the mailbox server
+	bool		mwi_via_proxy;
+	
+	// Requested MWI subscription duration
+	unsigned long	mwi_subscription_time;
+	
+	// The voice mail address to call to access messages
+	string		mwi_vm_address;
+		
 	// Expand file name to a fully qualified file name
 	string expand_filename(const string &filename);
 
@@ -363,11 +415,17 @@ private:
 	string bit_rate_type2str(t_bit_rate_type b) const;
 	t_dtmf_transport str2dtmf_transport(const string &s) const;
 	string dtmf_transport2str(t_dtmf_transport d) const;
+	t_g726_packing str2g726_packing(const string &s) const;
+	string g726_packing2str(t_g726_packing packing) const;
 	
 	// Parse a number conversion rule
 	// If the rule can be parsed, then c contains the conversion rule and
 	// true is returned. Otherwise false is returned.
 	bool parse_num_conversion(const string &value, t_number_conversion &c);
+	
+	// Set a server URL.
+	// Returns false, if the passed value is not a valid URL.
+	bool set_server_value(t_url &server, const string &scheme, const string &value);
 	
 public:
 	t_user();
@@ -378,7 +436,7 @@ public:
 	// Getters
 	string get_name(void) const;
 	string get_domain(void) const;
-	string get_display(void) const;	
+	string get_display(bool anonymous) const;	
 	string get_organization(void) const;
 	string get_auth_realm(void) const;
 	string get_auth_name(void) const;
@@ -393,6 +451,8 @@ public:
 	bool get_register_at_startup(void) const;
 	list<t_audio_codec> get_codecs(void) const;
 	unsigned short get_ptime(void) const;
+	bool get_out_obey_far_end_codec_pref(void) const;
+	bool get_in_obey_far_end_codec_pref(void) const;
 	unsigned short get_speex_nb_payload_type(void) const;
 	unsigned short get_speex_wb_payload_type(void) const;
 	unsigned short get_speex_uwb_payload_type(void) const;
@@ -409,6 +469,7 @@ public:
 	unsigned short get_g726_24_payload_type(void) const;
 	unsigned short get_g726_32_payload_type(void) const;
 	unsigned short get_g726_40_payload_type(void) const;
+	t_g726_packing get_g726_packing(void) const;
 	t_dtmf_transport get_dtmf_transport(void) const;
 	unsigned short get_dtmf_payload_type(void) const;
 	unsigned short get_dtmf_duration(void) const;
@@ -426,11 +487,14 @@ public:
 	bool get_ask_user_to_redirect(void) const;
 	unsigned short get_max_redirections(void) const;
 	t_ext_support get_ext_100rel(void) const;
+	bool get_ext_replaces(void) const;
 	bool get_referee_hold(void) const;
 	bool get_referrer_hold(void) const;
 	bool get_allow_refer(void) const;
 	bool get_ask_user_to_refer(void) const;
 	bool get_auto_refresh_refer_sub(void) const;
+	bool get_attended_refer_to_aor(void) const;
+	bool get_send_p_preferred_id(void) const;
 	bool get_use_nat_public_ip(void) const;
 	string get_nat_public_ip(void) const;
 	bool get_use_stun(void) const;
@@ -456,6 +520,12 @@ public:
 	bool get_zrtp_goclear_warning(void) const;
 	bool get_zrtp_sdp(void) const;
 	bool get_zrtp_send_if_supported(void) const;
+	bool get_mwi_sollicited(void) const;
+	string get_mwi_user(void) const;
+	t_url get_mwi_server(void) const;
+	bool get_mwi_via_proxy(void) const;
+	unsigned long get_mwi_subscription_time(void) const;
+	string get_mwi_vm_address(void) const;
 
 	
 	// Setters
@@ -476,6 +546,8 @@ public:
 	void set_register_at_startup(bool b);
 	void set_codecs(const list<t_audio_codec> &_codecs);
 	void set_ptime(unsigned short _ptime);
+	void set_out_obey_far_end_codec_pref(bool b);
+	void set_in_obey_far_end_codec_pref(bool b);
 	void set_speex_nb_payload_type(unsigned short payload_type);
 	void set_speex_wb_payload_type(unsigned short payload_type);
 	void set_speex_uwb_payload_type(unsigned short payload_type);
@@ -491,6 +563,7 @@ public:
 	void set_g726_24_payload_type(unsigned short payload_type);
 	void set_g726_32_payload_type(unsigned short payload_type);
 	void set_g726_40_payload_type(unsigned short payload_type);
+	void set_g726_packing(t_g726_packing packing);
 	void set_ilbc_mode(unsigned short mode);
 	void set_dtmf_transport(t_dtmf_transport _dtmf_transport);
 	void set_dtmf_payload_type(unsigned short payload_type);
@@ -509,11 +582,14 @@ public:
 	void set_ask_user_to_redirect(bool b);
 	void set_max_redirections(unsigned short _max_redirections);
 	void set_ext_100rel(t_ext_support ext_support);
+	void set_ext_replaces(bool b);
 	void set_referee_hold(bool b);
 	void set_referrer_hold(bool b);
 	void set_allow_refer(bool b);
 	void set_ask_user_to_refer(bool b);
 	void set_auto_refresh_refer_sub(bool b);
+	void set_attended_refer_to_aor(bool b);
+	void set_send_p_preferred_id(bool b);
 	void set_use_nat_public_ip(bool b);
 	void set_nat_public_ip(const string &public_ip);
 	void set_use_stun(bool b);
@@ -539,6 +615,12 @@ public:
 	void set_zrtp_goclear_warning(bool b);
 	void set_zrtp_sdp(bool b);
 	void set_zrtp_send_if_supported(bool b);
+	void set_mwi_sollicited(bool b);
+	void set_mwi_user(const string &user);
+	void set_mwi_server(const t_url &url);
+	void set_mwi_via_proxy(bool b);
+	void set_mwi_subscription_time(unsigned long t);
+	void set_mwi_vm_address(const string &address);
 
 	// Read and parse a config file into the user object.
 	// Returns false if it fails. error_msg is an error message that can
@@ -567,12 +649,15 @@ public:
 	bool check_required_ext(t_request *r, list<string> &unsupported) const;
 	
 	// Create user uri and contact uri
-	string create_user_contact(void);
-	string create_user_uri(void);
+	string create_user_contact(bool anonymous);
+	string create_user_uri(bool anonymous);
 	
 	// Convert a number by applying the number conversions.
 	string convert_number(const string &number, const list<t_number_conversion> &l) const;
 	string convert_number(const string &number) const;
+	
+	// Get URI for sending a SUBSCRIBE for MWI
+	t_url get_mwi_uri(void) const;
 };
 
 #endif

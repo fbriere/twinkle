@@ -23,6 +23,7 @@
 #include <string>
 #include "call_history.h"
 #include "dialog.h"
+#include "id_object.h"
 #include "phone.h"
 #include "protocol.h"
 #include "user.h"
@@ -75,7 +76,7 @@ public:
 	string get_from_display_presentation(void) const;
 };
 
-class t_line {
+class t_line : public t_id_object {
 	friend class t_phone;
 	
 private:
@@ -83,6 +84,20 @@ private:
 	t_line_substate		substate;
 	bool			is_on_hold;
 	bool			is_muted;
+	bool			hide_user; // Anonymous call
+	
+	// Indicates if a call is a consultation for a transfer
+	bool			is_transfer_consult;
+	
+	// The line about which this consultation handles.
+	unsigned short		consult_transfer_from_line;
+	
+	// Indicates if this call is to be transferred after consultation.
+	bool			to_be_transferred;
+	
+	// After consultation this line should be transferred to the
+	// transfer_to_line.
+	unsigned short		consult_transfer_to_line;
 	
 	// Indicates if media encryption should be negotiated.
 	bool			try_to_encrypt;
@@ -91,6 +106,9 @@ private:
 	bool			auto_answer;
 
 	// Line number (starting from 0)
+	// The number of a line may change when it moves from the user lines
+	// to the pool of dying lines. So a line number cannot be used as
+	// unique line identification over longer times.
 	unsigned short		line_number;
 
 	// The phone that owns this line
@@ -112,8 +130,8 @@ private:
 	list<t_dialog *>	dying_dialogs;
 
 	// Timers
-	unsigned short		id_invite_comp;
-	unsigned short		id_no_answer;
+	t_object_id		id_invite_comp;
+	t_object_id		id_no_answer;
 
 	// Call info
 	t_call_info		call_info;
@@ -131,16 +149,23 @@ private:
 	// stored here. If there is no specific ring tone to be played
 	// then this attribute is empty
 	string			user_defined_ringtone;
+	
+	// Indicates if the line must go to seized state when it
+	// becomes idle.
+	bool			keep_seized;
 
 	// Find a dialog from the list that matches the response.
 	t_dialog *match_response(t_response *r,
 				const list<t_dialog *> &l) const;
 	t_dialog *match_response(StunMessage *r, t_tuid tuid,
 				const list<t_dialog *> &l) const;
+	t_dialog *match_call_id_tags(const string &call_id,
+		const string &to_tag, const string &from_tag,
+		const list<t_dialog *> &l) const;
 
 	// Get the dialog with id == did. If dialog does not exist
 	// then NULL is returned.
-	t_dialog *get_dialog(t_dialog_id did) const;
+	t_dialog *get_dialog(t_object_id did) const;
 
 	// Clean up terminated dialogs
 	void cleanup(void);
@@ -150,6 +175,13 @@ private:
 	
 	// Forcefully cleanup all dialogs
 	void cleanup_forced(void);
+	
+	// Cleanup state for a transfer with consultation.
+	// If the call on this line is a consult, then the consult state of 
+	// the line that is to be transferred will be cleaned too.
+	// If the call on this line is to be transferred, then the consult
+	// state of the consultation line will be cleared too.
+	void cleanup_transfer_consult_state(void);
 
 public:
 	// Call history record
@@ -163,14 +195,16 @@ public:
 	t_refer_state get_refer_state(void) const;
 
 	// Timer operations
-	void start_timer(t_line_timer timer, t_dialog_id did = 0);
-	void stop_timer(t_line_timer timer, t_dialog_id did = 0);
+	void start_timer(t_line_timer timer, t_object_id did = 0);
+	void stop_timer(t_line_timer timer, t_object_id did = 0);
 
 	// Actions
 	void invite(t_user *user, const t_url &to_uri, const string &to_display,
-		const string &subject, const t_hdr_referred_by &hdr_referred_by);
+		const string &subject, const t_hdr_referred_by &hdr_referred_by,
+		const t_hdr_replaces &hdr_replaces, const t_hdr_require &hdr_require, 
+		bool anonymous);
 	void invite(t_user *user, const t_url &to_uri, const string &to_display,
-		const string &subject);
+		const string &subject, bool anonymous);
 	void answer(void);
 	void reject(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
@@ -182,6 +216,10 @@ public:
 
 	bool hold(bool rtponly = false); // returns false if call cannot be put on hold
 	void retrieve(void);
+	
+	// Kill all RTP stream associated with this line
+	void kill_rtp(void);
+	
 	void refer(const t_url &uri, const string &display);
 
 	// Mute/unmute a call
@@ -208,23 +246,39 @@ public:
 	void recvd_notify(t_request *r, t_tid tid);
 	void recvd_info(t_request *r, t_tid tid);
 
-	// Returns true if refer has been accepted.
+	// Returns true if refer has been accepted sofar. The refer may still
+	// be rejected by the user.
 	bool recvd_refer(t_request *r, t_tid tid);
+	
+	// Handle the response from the user on the question for refer
+	// permission. This response is received on the dialog that received
+	// the REFER before.
+	// The request (r) is the REFER request that was received.
+	void t_line::recvd_refer_permission(bool permission, t_request *r);
 	
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 
 	void failure(t_failure failure, t_tid tid);
 
-	void timeout(t_line_timer timer, t_dialog_id did);
-	void timeout_sub(t_subscribe_timer timer, t_dialog_id did,
+	void timeout(t_line_timer timer, t_object_id did);
+	void timeout_sub(t_subscribe_timer timer, t_object_id did,
 		const string &event_type, const string &event_id);
 
-	// Return true if the reponse or request matches a dialog that
+	// Return true if the response or request matches a dialog that
 	// is owned by this line
-	bool match(t_response *r, t_tuid tuid);
-	bool match(t_request *r);
-	bool match_cancel(t_request *r, t_tid target_tid);
-	bool match(StunMessage *r, t_tuid tuid);
+	bool match(t_response *r, t_tuid tuid) const;
+	bool match(t_request *r) const;
+	bool match_cancel(t_request *r, t_tid target_tid) const;
+	bool match(StunMessage *r, t_tuid tuid) const;
+	
+	// RFC 3891
+	// Match for info from Replaces header
+	// Match call id, to-tag and from tag like an incoming request.
+	// Return true if a match is found with an associated dialog.
+	// When a match is found, early_matched indicates if the match
+	// was on an early dialog.
+	bool match_replaces(const string &call_id, const string &to_tag, 
+		const string &from_tag, bool &early_matched) const;
 
 	// Check if an incoming INVITE is a retransmission of an INVITE
 	// that is already being processed by this line
@@ -251,12 +305,50 @@ public:
 	unsigned short get_line_number(void) const;
 	bool get_is_on_hold(void) const;
 	bool get_is_muted(void) const;
+	bool get_hide_user(void) const;
+	
+	// If this is a transfer consult, then true will be returned and
+	// lineno will be set to the line that must be transferred.
+	bool get_is_transfer_consult(unsigned short &lineno) const;
+	
+	// When setting the transfer consult indication to true, the
+	// line that must be transferred must be passed.
+	void set_is_transfer_consult(bool enable, unsigned short lineno);
+	
+	// If this line is to be transferred after consultation, then
+	// true will be returned and lineno will be set to the line
+	// where this line should be transferred to.
+	bool get_to_be_transferred(unsigned short &lineno) const;
+	
+	// When setting the to be transferred indication to true, the
+	// line to which must be transferred must be passed.
+	void set_to_be_transferred(bool enable, unsigned short lineno);
+	
 	bool get_is_encrypted(void) const;
 	bool get_try_to_encrypt(void) const;
 	bool get_auto_answer(void) const;
 	void set_auto_answer(bool enable);
 	bool is_refer_succeeded(void) const;
 	bool has_media(void) const;
+	
+	// Return the remote (target) uri/display of the active dialog.
+	// If there is no active dialog, then an empty url/display will
+	// be returned.
+	t_url get_remote_target_uri(void) const;
+	string get_remote_target_display(void) const;
+	t_url get_remote_uri(void) const;
+	string get_remote_display(void) const;
+	
+	// Get call-id and tags of the active dialog
+	// If there is no active dialog, then empty strings are returned.
+	string get_call_id(void) const;
+	string get_local_tag(void) const;
+	string get_remote_tag(void) const;
+	
+	// Returns true if the remote party of the active dialog supports
+	// the extension.
+	// If there is no active dialog, then false is returned.
+	bool remote_extension_supported(const string &extension) const;
 
 	// Seize the line. User wants to make an outgoing call, so
 	// the line must be marked as busy, such that an incoming call
@@ -314,6 +406,10 @@ public:
 	
 	// Force a line to the idle state (during termination of Twinkle)
 	void force_idle(void);
+	
+	// Indicate if the line must be seized after releasing
+	void set_keep_seized(bool seize);
+	bool get_keep_seized(void) const;
 };
 
 #endif

@@ -61,7 +61,7 @@ void yyerror(const char *s);
 	list<t_contact_param>	*yyt_contacts;
 	t_contact_param		*yyt_contact;
 	t_error_param		*yyt_error_param;
-	t_hdr_from		*yyt_from_addr;
+	t_identity		*yyt_from_addr;
 	t_route			*yyt_route;
 	t_server		*yyt_server;
 	t_via			*yyt_via;
@@ -117,14 +117,19 @@ void yyerror(const char *s);
 %token			T_HDR_MIN_EXPIRES
 %token			T_HDR_MIME_VERSION
 %token			T_HDR_ORGANIZATION
+%token			T_HDR_P_ASSERTED_IDENTITY
+%token			T_HDR_P_PREFERRED_IDENTITY
 %token			T_HDR_PRIORITY
+%token			T_HDR_PRIVACY
 %token			T_HDR_PROXY_AUTHENTICATE
 %token			T_HDR_PROXY_AUTHORIZATION
 %token			T_HDR_PROXY_REQUIRE
 %token			T_HDR_RACK
 %token			T_HDR_RECORD_ROUTE
+%token			T_HDR_REFER_SUB
 %token			T_HDR_REFER_TO
 %token			T_HDR_REFERRED_BY
+%token			T_HDR_REPLACES
 %token			T_HDR_REPLY_TO
 %token			T_HDR_REQUIRE
 %token			T_HDR_RETRY_AFTER
@@ -329,14 +334,19 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_min_expires hdr_min_expires T_CRLF
 		| hd_mime_version hdr_mime_version T_CRLF
 		| hd_organization hdr_organization T_CRLF
+		| hd_p_asserted_identity hdr_p_asserted_identity T_CRLF
+		| hd_p_preferred_identity hdr_p_preferred_identity T_CRLF
 		| hd_priority hdr_priority T_CRLF
+		| hd_privacy hdr_privacy T_CRLF
 		| hd_proxy_authenticate hdr_proxy_authenticate T_CRLF
 		| hd_proxy_authorization hdr_proxy_authorization T_CRLF
 		| hd_proxy_require hdr_proxy_require T_CRLF
 		| hd_rack hdr_rack T_CRLF
 		| hd_record_route hdr_record_route T_CRLF
+		| hd_refer_sub hdr_refer_sub T_CRLF
 		| hd_refer_to hdr_refer_to T_CRLF
 		| hd_referred_by hdr_referred_by T_CRLF
+		| hd_replaces hdr_replaces T_CRLF
 		| hd_reply_to hdr_reply_to T_CRLF
 		| hd_require hdr_require T_CRLF
 		| hd_retry_after hdr_retry_after T_CRLF
@@ -411,8 +421,14 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("MIME-Version"); }
 		| hd_organization error T_CRLF
 			{ PARSE_ERROR("Organization"); }
+		| hd_p_asserted_identity error T_CRLF
+			{ PARSE_ERROR("P-Asserted-Identity"); }
+		| hd_p_preferred_identity error T_CRLF
+			{ PARSE_ERROR("P-Preferred-Identity"); }
 		| hd_priority error T_CRLF
 			{ PARSE_ERROR("Priority"); }
+		| hd_privacy error T_CRLF
+			{ PARSE_ERROR("Privacy"); }
 		| hd_proxy_authenticate error T_CRLF
 			{ PARSE_ERROR("Proxy-Authenticate"); }
 		| hd_proxy_authorization error T_CRLF
@@ -423,10 +439,14 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("RAck"); }
 		| hd_record_route error T_CRLF
 			{ PARSE_ERROR("Record-Route"); }
+		| hd_refer_sub error T_CRLF
+			{ PARSE_ERROR("Refer-Sub"); }
 		| hd_refer_to error T_CRLF
 			{ PARSE_ERROR("Refer-To"); }
 		| hd_referred_by error T_CRLF
 			{ PARSE_ERROR("Referred-By"); }
+		| hd_replaces error T_CRLF
+			{ PARSE_ERROR("Replaces"); }
 		| hd_reply_to error T_CRLF
 			{ PARSE_ERROR("Reply-To"); }
 		| hd_require error T_CRLF
@@ -524,7 +544,13 @@ hd_mime_version:	T_HDR_MIME_VERSION ':'
 ;
 hd_organization:	T_HDR_ORGANIZATION ':' { CTXT_LINE; }
 ;
+hd_p_asserted_identity:	T_HDR_P_ASSERTED_IDENTITY ':' { CTXT_URI_SPECIAL; }
+;
+hd_p_preferred_identity: T_HDR_P_PREFERRED_IDENTITY ':' { CTXT_URI_SPECIAL; }
+;
 hd_priority:		T_HDR_PRIORITY ':'
+;
+hd_privacy:		T_HDR_PRIVACY ':'
 ;
 hd_proxy_authenticate:	T_HDR_PROXY_AUTHENTICATE ':' { CTXT_AUTH_SCHEME; }
 ;
@@ -536,9 +562,13 @@ hd_rack:		T_HDR_RACK ':' { CTXT_NUM; }
 ;
 hd_record_route:	T_HDR_RECORD_ROUTE ':' { CTXT_URI; }
 ;
+hd_refer_sub:		T_HDR_REFER_SUB ':'
+;
 hd_refer_to:		T_HDR_REFER_TO ':' { CTXT_URI_SPECIAL; }
 ;
 hd_referred_by:		T_HDR_REFERRED_BY ':' { CTXT_URI_SPECIAL; }
+;
+hd_replaces:		T_HDR_REPLACES ':' { CTXT_WORD; }
 ;
 hd_reply_to:		T_HDR_REPLY_TO ':' { CTXT_URI_SPECIAL; }
 ;
@@ -893,7 +923,7 @@ hdr_from:	  { CTXT_URI_SPECIAL; } from_addr parameters {
 ;
 
 from_addr:	  T_URI { CTXT_INITIAL; } {
-			$$ = new t_hdr_from();
+			$$ = new t_identity();
 			MEMMAN_NEW($$);
 			$$->set_uri(*$1);
 
@@ -904,7 +934,7 @@ from_addr:	  T_URI { CTXT_INITIAL; } {
 			
 			MEMMAN_DELETE($1); delete $1; }
 		| display_name '<' { CTXT_URI; } T_URI { CTXT_INITIAL; } '>' {
-			$$ = new t_hdr_from();
+			$$ = new t_identity();
 			MEMMAN_NEW($$);
 			$$->set_display(*$1);
 			$$->set_uri(*$4);
@@ -944,9 +974,33 @@ hdr_organization: { CTXT_LINE; } T_LINE { CTXT_INITIAL; } {
 			MEMMAN_DELETE($2); delete $2; }
 ;
 
+hdr_p_asserted_identity:  { CTXT_URI_SPECIAL; } from_addr {
+				MSG->hdr_p_asserted_identity.add_identity(*$2);
+				MEMMAN_DELETE($2); delete $2; }	
+			| hdr_p_asserted_identity ',' from_addr {
+				MSG->hdr_p_asserted_identity.add_identity(*$3);
+				MEMMAN_DELETE($3); delete $3; }
+;
+
+hdr_p_preferred_identity: { CTXT_URI_SPECIAL; } from_addr {
+				MSG->hdr_p_preferred_identity.add_identity(*$2);
+				MEMMAN_DELETE($2); delete $2; }	
+			| hdr_p_preferred_identity ',' from_addr {
+				MSG->hdr_p_preferred_identity.add_identity(*$3);
+				MEMMAN_DELETE($3); delete $3; }
+;
+
 hdr_priority:	  T_TOKEN {
 			MSG->hdr_priority.set_priority(tolower(*$1));
 			MEMMAN_DELETE($1); delete $1; }
+;
+
+hdr_privacy:	  T_TOKEN {
+			MSG->hdr_privacy.add_privacy(tolower(*$1));
+			MEMMAN_DELETE($1); delete $1; }
+		| hdr_privacy ';' T_TOKEN {
+			MSG->hdr_privacy.add_privacy(tolower(*$3));
+			MEMMAN_DELETE($3); delete $3; }
 ;
 
 hdr_proxy_require:   T_TOKEN {
@@ -981,6 +1035,28 @@ rec_route:	{ CTXT_URI; } display_name '<' T_URI { CTXT_INITIAL; } '>'
 			MEMMAN_DELETE($2); delete $2;
 			MEMMAN_DELETE($4); delete $4;
 			MEMMAN_DELETE($7); delete $7; }
+;
+
+hdr_replaces:	  { CTXT_WORD; } call_id { CTXT_INITIAL; } parameters {
+			MSG->hdr_replaces.set_call_id(*$2);
+			
+			list<t_parameter>::const_iterator i;
+			for (i = $4->begin(); i != $4->end(); i++) {
+				if (i->name == "to-tag") {
+					MSG->hdr_replaces.set_to_tag(i->value);
+				} else if (i->name == "from-tag") {
+					MSG->hdr_replaces.set_from_tag(i->value);
+				} else if (i->name == "early-only") {
+					MSG->hdr_replaces.set_early_only(true);
+				} else {
+					MSG->hdr_replaces.add_param(*i);
+				}
+			}
+			
+			if (!MSG->hdr_replaces.is_valid()) YYERROR;
+			
+			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($4); delete $4; }
 ;
 
 hdr_reply_to:  { CTXT_URI_SPECIAL; } from_addr parameters {
@@ -1239,6 +1315,7 @@ digest_response:  parameter {
 			$$ = new t_digest_response();
 			MEMMAN_NEW($$);
 			if (!$$->set_attr(*$1)) {
+				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
 			}
 			MEMMAN_DELETE($1); delete $1; }
@@ -1283,6 +1360,7 @@ digest_challenge: parameter {
 			$$ = new t_digest_challenge();
 			MEMMAN_NEW($$);
 			if (!$$->set_attr(*$1)) {
+				MEMMAN_DELETE($$); delete $$;
 				YYERROR;
 			}
 			MEMMAN_DELETE($1); delete $1; }
@@ -1369,7 +1447,7 @@ hdr_subscription_state:	T_TOKEN parameters {
 							set_expires(strtoul(
 							  i->value.c_str(),
 							  NULL, 10));
-					} else if (i->name == "retry_after") {
+					} else if (i->name == "retry-after") {
 						MSG->hdr_subscription_state.
 							set_retry_after(strtoul(
 							  i->value.c_str(),
@@ -1405,6 +1483,16 @@ hdr_referred_by:  { CTXT_URI_SPECIAL; } from_addr parameters {
 			MEMMAN_DELETE($2); delete $2;
 			MEMMAN_DELETE($3); delete $3; }
 ;
+
+hdr_refer_sub:	  T_TOKEN parameters {
+			string value(tolower(*$1));
+			if (value != "true" && value != "false") {
+				YYERROR;
+			}
+			MSG->hdr_refer_sub.set_create_refer_sub(value == "true");
+			MSG->hdr_refer_sub.set_extensions(*$2);
+			MEMMAN_DELETE($1); delete $1;
+			MEMMAN_DELETE($2); delete $2; }
 
 %%
 

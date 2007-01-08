@@ -27,9 +27,6 @@
 /* Define to 1 if you have the <libasound> library. */
 #undef HAVE_LIBASOUND
 
-/* Define to 1 if you have the `boost_regex' library (-lboost_regex). */
-#undef HAVE_LIBBOOST_REGEX
-
 /* Define if you have libjpeg */
 #undef HAVE_LIBJPEG
 

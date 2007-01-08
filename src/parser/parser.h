@@ -73,34 +73,39 @@
      T_HDR_MIN_EXPIRES = 299,
      T_HDR_MIME_VERSION = 300,
      T_HDR_ORGANIZATION = 301,
-     T_HDR_PRIORITY = 302,
-     T_HDR_PROXY_AUTHENTICATE = 303,
-     T_HDR_PROXY_AUTHORIZATION = 304,
-     T_HDR_PROXY_REQUIRE = 305,
-     T_HDR_RACK = 306,
-     T_HDR_RECORD_ROUTE = 307,
-     T_HDR_REFER_TO = 308,
-     T_HDR_REFERRED_BY = 309,
-     T_HDR_REPLY_TO = 310,
-     T_HDR_REQUIRE = 311,
-     T_HDR_RETRY_AFTER = 312,
-     T_HDR_ROUTE = 313,
-     T_HDR_RSEQ = 314,
-     T_HDR_SERVER = 315,
-     T_HDR_SUBJECT = 316,
-     T_HDR_SUBSCRIPTION_STATE = 317,
-     T_HDR_SUPPORTED = 318,
-     T_HDR_TIMESTAMP = 319,
-     T_HDR_TO = 320,
-     T_HDR_UNSUPPORTED = 321,
-     T_HDR_USER_AGENT = 322,
-     T_HDR_VIA = 323,
-     T_HDR_WARNING = 324,
-     T_HDR_WWW_AUTHENTICATE = 325,
-     T_HDR_UNKNOWN = 326,
-     T_CRLF = 327,
-     T_ERROR = 328,
-     T_NULL = 329
+     T_HDR_P_ASSERTED_IDENTITY = 302,
+     T_HDR_P_PREFERRED_IDENTITY = 303,
+     T_HDR_PRIORITY = 304,
+     T_HDR_PRIVACY = 305,
+     T_HDR_PROXY_AUTHENTICATE = 306,
+     T_HDR_PROXY_AUTHORIZATION = 307,
+     T_HDR_PROXY_REQUIRE = 308,
+     T_HDR_RACK = 309,
+     T_HDR_RECORD_ROUTE = 310,
+     T_HDR_REFER_SUB = 311,
+     T_HDR_REFER_TO = 312,
+     T_HDR_REFERRED_BY = 313,
+     T_HDR_REPLACES = 314,
+     T_HDR_REPLY_TO = 315,
+     T_HDR_REQUIRE = 316,
+     T_HDR_RETRY_AFTER = 317,
+     T_HDR_ROUTE = 318,
+     T_HDR_RSEQ = 319,
+     T_HDR_SERVER = 320,
+     T_HDR_SUBJECT = 321,
+     T_HDR_SUBSCRIPTION_STATE = 322,
+     T_HDR_SUPPORTED = 323,
+     T_HDR_TIMESTAMP = 324,
+     T_HDR_TO = 325,
+     T_HDR_UNSUPPORTED = 326,
+     T_HDR_USER_AGENT = 327,
+     T_HDR_VIA = 328,
+     T_HDR_WARNING = 329,
+     T_HDR_WWW_AUTHENTICATE = 330,
+     T_HDR_UNKNOWN = 331,
+     T_CRLF = 332,
+     T_ERROR = 333,
+     T_NULL = 334
    };
 #endif
 #define T_NUM 258
@@ -147,34 +152,39 @@
 #define T_HDR_MIN_EXPIRES 299
 #define T_HDR_MIME_VERSION 300
 #define T_HDR_ORGANIZATION 301
-#define T_HDR_PRIORITY 302
-#define T_HDR_PROXY_AUTHENTICATE 303
-#define T_HDR_PROXY_AUTHORIZATION 304
-#define T_HDR_PROXY_REQUIRE 305
-#define T_HDR_RACK 306
-#define T_HDR_RECORD_ROUTE 307
-#define T_HDR_REFER_TO 308
-#define T_HDR_REFERRED_BY 309
-#define T_HDR_REPLY_TO 310
-#define T_HDR_REQUIRE 311
-#define T_HDR_RETRY_AFTER 312
-#define T_HDR_ROUTE 313
-#define T_HDR_RSEQ 314
-#define T_HDR_SERVER 315
-#define T_HDR_SUBJECT 316
-#define T_HDR_SUBSCRIPTION_STATE 317
-#define T_HDR_SUPPORTED 318
-#define T_HDR_TIMESTAMP 319
-#define T_HDR_TO 320
-#define T_HDR_UNSUPPORTED 321
-#define T_HDR_USER_AGENT 322
-#define T_HDR_VIA 323
-#define T_HDR_WARNING 324
-#define T_HDR_WWW_AUTHENTICATE 325
-#define T_HDR_UNKNOWN 326
-#define T_CRLF 327
-#define T_ERROR 328
-#define T_NULL 329
+#define T_HDR_P_ASSERTED_IDENTITY 302
+#define T_HDR_P_PREFERRED_IDENTITY 303
+#define T_HDR_PRIORITY 304
+#define T_HDR_PRIVACY 305
+#define T_HDR_PROXY_AUTHENTICATE 306
+#define T_HDR_PROXY_AUTHORIZATION 307
+#define T_HDR_PROXY_REQUIRE 308
+#define T_HDR_RACK 309
+#define T_HDR_RECORD_ROUTE 310
+#define T_HDR_REFER_SUB 311
+#define T_HDR_REFER_TO 312
+#define T_HDR_REFERRED_BY 313
+#define T_HDR_REPLACES 314
+#define T_HDR_REPLY_TO 315
+#define T_HDR_REQUIRE 316
+#define T_HDR_RETRY_AFTER 317
+#define T_HDR_ROUTE 318
+#define T_HDR_RSEQ 319
+#define T_HDR_SERVER 320
+#define T_HDR_SUBJECT 321
+#define T_HDR_SUBSCRIPTION_STATE 322
+#define T_HDR_SUPPORTED 323
+#define T_HDR_TIMESTAMP 324
+#define T_HDR_TO 325
+#define T_HDR_UNSUPPORTED 326
+#define T_HDR_USER_AGENT 327
+#define T_HDR_VIA 328
+#define T_HDR_WARNING 329
+#define T_HDR_WWW_AUTHENTICATE 330
+#define T_HDR_UNKNOWN 331
+#define T_CRLF 332
+#define T_ERROR 333
+#define T_NULL 334
 
 
 
@@ -196,7 +206,7 @@ typedef union YYSTYPE {
 	list<t_contact_param>	*yyt_contacts;
 	t_contact_param		*yyt_contact;
 	t_error_param		*yyt_error_param;
-	t_hdr_from		*yyt_from_addr;
+	t_identity		*yyt_from_addr;
 	t_route			*yyt_route;
 	t_server		*yyt_server;
 	t_via			*yyt_via;
@@ -207,7 +217,7 @@ typedef union YYSTYPE {
 	t_challenge		*yyt_challenge;
 } YYSTYPE;
 /* Line 1249 of yacc.c.  */
-#line 210 "parser.h"
+#line 220 "parser.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

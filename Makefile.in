@@ -14,6 +14,11 @@
 
 @SET_MAKE@
 
+# The Makefile for the Qt-part of the program is created by qmake.
+# That Makefile builts the executable. 
+# So here the executable is defined as a script such that it will
+# only be installed and not built.
+
 
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
@@ -304,11 +309,7 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-
-# The Makefile for the Qt-part of the program is created by qmake.
-# That Makefile builts the executable. 
-# So here the executable is defined as a script such that it will
-# only be installed and not built.
+pkglangdir = $(pkgdatadir)/lang
 bin_SCRIPTS = src/gui/twinkle
 noinst_SCRIPTS = twinkle.desktop
 pkgdata_DATA = data/ringback.wav data/ringtone.wav \

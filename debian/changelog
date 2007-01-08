@@ -1,3 +1,14 @@
+twinkle (1:1.0~beta-1) unstable; urgency=low
+
+  * New upstream release
+  * Needed for the preceeding package to get into etch
+  * delete debian/patches dtmf, invite4xx and memman included upstream
+  * debian/rules get-orig-source targets rewritten
+  * Cleanup debian/watch
+  * Add extra-qualifications.patch to fix upstream g 4.1.1 build errors
+
+ -- Mark Purcell <msp@debian.org>  Mon,  8 Jan 2007 21:29:49 +0000
+
 twinkle (1:0.9-6) testing-proposed-updates; urgency=medium
 
   * Apply upstream memman.patch to fix random twinkle crashes

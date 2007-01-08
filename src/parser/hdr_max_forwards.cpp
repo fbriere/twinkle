@@ -20,7 +20,7 @@
 #include "hdr_max_forwards.h"
 #include "util.h"
 
-t_hdr_max_forwards::t_hdr_max_forwards() : t_header() {
+t_hdr_max_forwards::t_hdr_max_forwards() : t_header("Max-Forwards") {
 	max_forwards = 0;
 }
 
@@ -29,29 +29,8 @@ void t_hdr_max_forwards::set_max_forwards(int m) {
 	max_forwards = m;
 }
 
-string t_hdr_max_forwards::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Max-Forwards: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_max_forwards::encode_value(void) const {
 	if (!populated) return "";
 
 	return int2str(max_forwards);
-}
-
-string t_hdr_max_forwards::encode_env(void) const {
-	string s;
-	
-	s = "SIP_MAX_FORWARDS=";
-	s += encode_value();
-	
-	return s;
 }

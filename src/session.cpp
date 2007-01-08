@@ -106,6 +106,7 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 
 	audio_rtp_session = NULL;
 	is_on_hold = false;
+	is_killed = false;
 	
 	// Initialize audio codec to payload mappings
 	recv_ac2payload[CODEC_G711_ULAW] = SDP_FORMAT_G711_ULAW;
@@ -284,16 +285,18 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 	// Check if the list of received codecs has at least 1 codec
 	// in common with the list of codecs we can offer. If there
 	// is no common codec, then no call can be established.
-	bool supported_codec = false;
+	list<t_audio_codec>::iterator supported_codec_it = offer_codecs.end();
 	for (list<t_audio_codec>::const_iterator i = recvd_codecs.begin();
 	     i != recvd_codecs.end(); i++)
 	{
-		if (!supported_codec &&
-		    find(offer_codecs.begin(), offer_codecs.end(), *i) !=
-					offer_codecs.end())
+		list<t_audio_codec>::iterator tmp_it;
+		if ((supported_codec_it == offer_codecs.end() ||
+		     !user_config->get_in_obey_far_end_codec_pref()) &&
+		    (tmp_it = std::find(offer_codecs.begin(), supported_codec_it, *i)) !=
+					supported_codec_it)
 		{
 			// Codec supported
-			supported_codec = true;
+			supported_codec_it = tmp_it;
 			use_codec = *i; // this codec goes into answer
 			
 			// Use the payload to codec bindings as signalled in the
@@ -312,7 +315,7 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		}
 	}
 
-	if (!supported_codec) {
+	if (supported_codec_it == offer_codecs.end()) {
 		warn_code = W_305_INCOMPATIBLE_MEDIA_FORMAT;
 		warn_text = "None of the audio codecs is supported";
 		return false;
@@ -362,24 +365,26 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 	// Per the offer/answer model all received codecs should be
 	// supported! It seems that some applications put more codecs
 	// in the answer though.
-	bool codec_found = false;
+	list<t_audio_codec>::iterator codec_found_it = offer_codecs.end();
 
 	for (list<t_audio_codec>::const_iterator i = recvd_codecs.begin();
 	     i != recvd_codecs.end(); i++)
 	{
-		if (!codec_found &&
-		    find(offer_codecs.begin(), offer_codecs.end(), *i) !=
-				offer_codecs.end())
+		list<t_audio_codec>::iterator tmp_it;
+		if ((codec_found_it == offer_codecs.end() ||
+		     !user_config->get_out_obey_far_end_codec_pref()) &&
+		    (tmp_it = std::find(offer_codecs.begin(), codec_found_it, *i)) !=
+				codec_found_it)
 		{
+			codec_found_it = tmp_it;
 			use_codec = *i;
-			codec_found = true;
 		} else if (*i == CODEC_TELEPHONE_EVENT) {
 			// telephone-event payload is supported
 			send_dtmf_pt = send_ac2payload[*i];
 		}
 	}
 
-	if (!codec_found) {
+	if (codec_found_it == offer_codecs.end()) {
 		// None of the answered codecs is supported
 		warn_code = W_305_INCOMPATIBLE_MEDIA_FORMAT;
 		warn_text = "None of the codecs is supported";
@@ -539,6 +544,9 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 void t_session::start_rtp(void) {
 	t_audio_codec codec;
 	
+	// If a session is killed, it may not be started again.
+	if (is_killed) return;
+	
 	// If a session is on-hold then do not start RTP.
 	if (is_on_hold) return;
 
@@ -653,18 +661,19 @@ void t_session::start_rtp(void) {
 		case DTMF_AUTO:
 		case DTMF_INBAND:
 			get_line()->ci_set_dtmf_supported(true, true);
+			ui->cb_dtmf_supported(get_line()->get_line_number());
 			break;
 		case DTMF_RFC2833:
 			get_line()->ci_set_dtmf_supported(false);
+			ui->cb_dtmf_not_supported(get_line()->get_line_number());
 			break;
 		case DTMF_INFO:
 			get_line()->ci_set_dtmf_supported(true, false, true);
+			ui->cb_dtmf_supported(get_line()->get_line_number());
 			break;
 		default:
 			assert(false);
 		}
-		
-		ui->cb_line_state_changed();
 	}
 
 	audio_rtp_session->run();
@@ -675,10 +684,15 @@ void t_session::stop_rtp(void) {
 		MEMMAN_DELETE(audio_rtp_session);
 		delete audio_rtp_session;
 		audio_rtp_session = NULL;
-	}
 	
-	get_line()->ci_set_dtmf_supported(false);
-	ui->cb_line_state_changed();
+		get_line()->ci_set_dtmf_supported(false);
+		ui->cb_line_state_changed();
+	}
+}
+
+void t_session::kill_rtp(void) {
+	stop_rtp();
+	is_killed = true;
 }
 
 t_audio_session *t_session::get_audio_session(void) const {

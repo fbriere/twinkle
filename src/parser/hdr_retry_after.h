@@ -40,9 +40,7 @@ public:
 	void set_comment(const string &c);
 	void set_duration(unsigned long d);
 	void add_param(const t_parameter &p);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

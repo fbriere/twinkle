@@ -59,6 +59,8 @@ extern t_phone		*phone;
 // AUDIO fields
 #define FLD_CODECS			"codecs"
 #define FLD_PTIME			"ptime"
+#define FLD_OUT_FAR_END_CODEC_PREF	"out_far_end_codec_pref"
+#define FLD_IN_FAR_END_CODEC_PREF	"in_far_end_codec_pref"
 #define FLD_SPEEX_NB_PAYLOAD_TYPE	"speex_nb_payload_type"
 #define FLD_SPEEX_WB_PAYLOAD_TYPE	"speex_wb_payload_type"
 #define FLD_SPEEX_UWB_PAYLOAD_TYPE	"speex_uwb_payload_type"
@@ -75,6 +77,7 @@ extern t_phone		*phone;
 #define FLD_G726_24_PAYLOAD_TYPE	"g726_24_payload_type"
 #define FLD_G726_32_PAYLOAD_TYPE	"g726_32_payload_type"
 #define FLD_G726_40_PAYLOAD_TYPE	"g726_40_payload_type"
+#define FLD_G726_PACKING		"g726_packing"
 #define FLD_DTMF_TRANSPORT		"dtmf_transport"
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
 #define FLD_DTMF_DURATION		"dtmf_duration"
@@ -94,11 +97,14 @@ extern t_phone		*phone;
 #define FLD_ASK_USER_TO_REDIRECT	"ask_user_to_redirect"
 #define FLD_MAX_REDIRECTIONS		"max_redirections"
 #define FLD_EXT_100REL			"ext_100rel"
+#define FLD_EXT_REPLACES		"ext_replaces"
 #define FLD_REFEREE_HOLD		"referee_hold"
 #define FLD_REFERRER_HOLD		"referrer_hold"
 #define FLD_ALLOW_REFER			"allow_refer"
 #define FLD_ASK_USER_TO_REFER		"ask_user_to_refer"
 #define FLD_AUTO_REFRESH_REFER_SUB	"auto_refresh_refer_sub"
+#define FLD_ATTENDED_REFER_TO_AOR	"attended_refer_to_aor"
+#define FLD_SEND_P_PREFERRED_ID		"send_p_preferred_id"
 
 // NAT fields
 #define FLD_NAT_PUBLIC_IP		"nat_public_ip"
@@ -136,6 +142,14 @@ extern t_phone		*phone;
 #define FLD_ZRTP_GOCLEAR_WARNING	"zrtp_goclear_warning"
 #define FLD_ZRTP_SDP			"zrtp_sdp"
 #define FLD_ZRTP_SEND_IF_SUPPORTED	"zrtp_send_if_supported"
+
+// MWI
+#define FLD_MWI_SOLLICITED		"mwi_sollicited"
+#define FLD_MWI_USER			"mwi_user"
+#define FLD_MWI_SERVER			"mwi_server"
+#define FLD_MWI_VIA_PROXY		"mwi_via_proxy"
+#define FLD_MWI_SUBSCRIPTION_TIME	"mwi_subscription_time"
+#define FLD_MWI_VM_ADDRESS		"mwi_vm_address"
 
 /////////////////////////
 // class t_user
@@ -204,6 +218,21 @@ string t_user::dtmf_transport2str(t_dtmf_transport d) const {
 	}
 }
 
+t_g726_packing t_user::str2g726_packing(const string &s) const {
+	if (s == "rfc3551") return G726_PACK_RFC3551;
+	if (s == "aal2") return G726_PACK_AAL2;
+	return G726_PACK_AAL2;
+}
+
+string t_user::g726_packing2str(t_g726_packing packing) const {
+	switch (packing) {
+	case G726_PACK_RFC3551:	return "rfc3551";
+	case G726_PACK_AAL2:	return "aal2";
+	default:
+		assert(false);
+	}
+}
+
 string t_user::expand_filename(const string &filename) {
 	string f;
 
@@ -221,7 +250,7 @@ string t_user::expand_filename(const string &filename) {
 }
 
 bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
-	list<string> l = split_escaped(value, ',');
+	vector<string> l = split_escaped(value, ',');
 	
 	if (l.size() != 2) {
 		// Invalid conversion rule
@@ -229,8 +258,8 @@ bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
 	}
 	
 	try {
-		c.re.assign(l.front());
-		c.fmt = l.back();
+		c.re.assign(l[0]);
+		c.fmt = l[1];
 	} catch (boost::bad_expression) {
 		// Invalid regular expression
 		log_file->write_header("t_user::parse_num_conversion", 
@@ -242,6 +271,23 @@ bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
 		log_file->write_endl();
 		log_file->write_footer();
 		
+		return false;
+	}
+	
+	return true;
+}
+
+bool t_user::set_server_value(t_url &server, const string &scheme, const string &value) {
+	string s = scheme + ":" + value;
+	server.set_url(s);
+
+	if (!server.is_valid() || server.get_user() != "")
+	{
+		string err_msg = "Invalid server value: ";
+		err_msg += value;
+		log_file->write_report(err_msg, "t_user::set_server_value",
+			LOG_NORMAL, LOG_WARNING);
+		server.set_url("");
 		return false;
 	}
 	
@@ -271,6 +317,8 @@ t_user::t_user() {
 	codecs.push_back(CODEC_G711_ULAW);
 	codecs.push_back(CODEC_GSM);
 	ptime = 20;
+	out_obey_far_end_codec_pref = true;
+	in_obey_far_end_codec_pref = true;
 	hold_variant = HOLD_RFC3264;
 	use_nat_public_ip = false;
 	use_stun = false;
@@ -288,6 +336,7 @@ t_user::t_user() {
 	timer_noanswer = 30;
 	timer_nat_keepalive = DUR_NAT_KEEPALIVE;
 	ext_100rel = EXT_SUPPORTED;
+	ext_replaces = true;
 	speex_nb_payload_type = 97;
 	speex_wb_payload_type = 98;
 	speex_uwb_payload_type = 99;
@@ -304,6 +353,7 @@ t_user::t_user() {
 	g726_24_payload_type = 103;
 	g726_32_payload_type = 104;
 	g726_40_payload_type = 105;
+	g726_packing = G726_PACK_RFC3551;
 	dtmf_transport = DTMF_AUTO;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
@@ -318,6 +368,8 @@ t_user::t_user() {
 	allow_refer = true;
 	ask_user_to_refer = true;
 	auto_refresh_refer_sub = false;
+	attended_refer_to_aor = false;
+	send_p_preferred_id = false;
 	ringtone_file.clear();
 	ringback_file.clear();
 	script_incoming_call.clear();
@@ -333,6 +385,11 @@ t_user::t_user() {
 	zrtp_goclear_warning = true;
 	zrtp_sdp = true;
 	zrtp_send_if_supported = false;
+	mwi_sollicited = false;
+	mwi_user.clear();
+	mwi_via_proxy = true;
+	mwi_subscription_time = 3600;
+	mwi_vm_address.clear();
 }
 
 t_user::t_user(const t_user &u) {
@@ -356,6 +413,8 @@ t_user::t_user(const t_user &u) {
 	register_at_startup = u.register_at_startup;
 	codecs = u.codecs;
 	ptime = u.ptime;
+	out_obey_far_end_codec_pref = u.out_obey_far_end_codec_pref;
+	in_obey_far_end_codec_pref = u.in_obey_far_end_codec_pref;
 	speex_nb_payload_type = u.speex_nb_payload_type;
 	speex_wb_payload_type = u.speex_wb_payload_type;
 	speex_uwb_payload_type = u.speex_uwb_payload_type;
@@ -372,6 +431,7 @@ t_user::t_user(const t_user &u) {
 	g726_24_payload_type = u.g726_24_payload_type;
 	g726_32_payload_type = u.g726_32_payload_type;
 	g726_40_payload_type = u.g726_40_payload_type;
+	g726_packing = u.g726_packing;
 	dtmf_transport = u.dtmf_transport;
 	dtmf_payload_type = u.dtmf_payload_type;
 	dtmf_duration = u.dtmf_duration;
@@ -389,11 +449,14 @@ t_user::t_user(const t_user &u) {
 	ask_user_to_redirect = u.ask_user_to_redirect;
 	max_redirections = u.max_redirections;
 	ext_100rel = u.ext_100rel;
+	ext_replaces = u.ext_replaces;
 	referee_hold = u.referee_hold;
 	referrer_hold = u.referrer_hold;
 	allow_refer = u.allow_refer;
 	ask_user_to_refer = u.ask_user_to_refer;
 	auto_refresh_refer_sub = u.auto_refresh_refer_sub;
+	attended_refer_to_aor = u.attended_refer_to_aor;
+	send_p_preferred_id = u.send_p_preferred_id;
 	use_nat_public_ip = u.use_nat_public_ip;
 	nat_public_ip = u.nat_public_ip;
 	use_stun = u.use_stun;
@@ -419,6 +482,12 @@ t_user::t_user(const t_user &u) {
 	zrtp_goclear_warning = u.zrtp_goclear_warning;
 	zrtp_sdp = u.zrtp_sdp;
 	zrtp_send_if_supported = u.zrtp_send_if_supported;
+	mwi_sollicited = u.mwi_sollicited;
+	mwi_user = u.mwi_user;
+	mwi_server = u.mwi_server;
+	mwi_via_proxy = u.mwi_via_proxy;
+	mwi_subscription_time = u.mwi_subscription_time;
+	mwi_vm_address = u.mwi_vm_address;
 	
 	u.mtx_user.unlock();
 }
@@ -445,7 +514,9 @@ string t_user::get_domain(void) const {
 	return result;
 }
 
-string t_user::get_display(void) const {
+string t_user::get_display(bool anonymous) const {
+	if (anonymous) return ANONYMOUS_DISPLAY;
+
 	string result;
 	mtx_user.lock();
 	result = display;
@@ -561,6 +632,22 @@ unsigned short t_user::get_ptime(void) const {
 	unsigned short result;
 	mtx_user.lock();
 	result = ptime;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_out_obey_far_end_codec_pref(void) const {
+	bool result;
+	mtx_user.lock();
+	result = out_obey_far_end_codec_pref;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_in_obey_far_end_codec_pref(void) const {
+	bool result;
+	mtx_user.lock();
+	result = in_obey_far_end_codec_pref;
 	mtx_user.unlock();
 	return result;
 }
@@ -689,6 +776,14 @@ unsigned short t_user::get_g726_40_payload_type(void) const {
 	unsigned short result;
 	mtx_user.lock();
 	result = g726_40_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+t_g726_packing t_user::get_g726_packing(void) const {
+	t_g726_packing result;
+	mtx_user.lock();
+	result = g726_packing;
 	mtx_user.unlock();
 	return result;
 }
@@ -829,6 +924,14 @@ t_ext_support t_user::get_ext_100rel(void) const {
 	return result;
 }
 
+bool t_user::get_ext_replaces(void) const {
+	bool result;
+	mtx_user.lock();
+	result = ext_replaces;
+	mtx_user.unlock();
+	return result;
+}
+
 bool t_user::get_referee_hold(void) const {
 	bool result;
 	mtx_user.lock();
@@ -865,6 +968,22 @@ bool t_user::get_auto_refresh_refer_sub(void) const {
 	bool result;
 	mtx_user.lock();
 	result = auto_refresh_refer_sub;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_attended_refer_to_aor(void) const {
+	bool result;
+	mtx_user.lock();
+	result = attended_refer_to_aor;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_send_p_preferred_id(void) const {
+	bool result;
+	mtx_user.lock();
+	result = send_p_preferred_id;
 	mtx_user.unlock();
 	return result;
 }
@@ -1069,6 +1188,54 @@ bool t_user::get_zrtp_send_if_supported(void) const {
 	return result;
 }
 
+bool t_user::get_mwi_sollicited(void) const {
+	bool result;
+	mtx_user.lock();
+	result = mwi_sollicited;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_mwi_user(void) const {
+	string result;
+	mtx_user.lock();
+	result = mwi_user;
+	mtx_user.unlock();
+	return result;
+}
+
+t_url t_user::get_mwi_server(void) const {
+	t_url result;
+	mtx_user.lock();
+	result = mwi_server;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_mwi_via_proxy(void) const {
+	bool result;
+	mtx_user.lock();
+	result = mwi_via_proxy;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned long t_user::get_mwi_subscription_time(void) const {
+	unsigned long result;
+	mtx_user.lock();
+	result = mwi_subscription_time;
+	mtx_user.unlock();
+	return result;
+}
+
+string t_user::get_mwi_vm_address(void) const {
+	string result;
+	mtx_user.lock();
+	result = mwi_vm_address;
+	mtx_user.unlock();
+	return result;
+}
+
 	
 void t_user::set_name(const string &_name) {
 	mtx_user.lock();
@@ -1172,6 +1339,18 @@ void t_user::set_ptime(unsigned short _ptime) {
 	mtx_user.unlock();
 }
 
+void t_user::set_out_obey_far_end_codec_pref(bool b) {
+	mtx_user.lock();
+	out_obey_far_end_codec_pref = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_in_obey_far_end_codec_pref(bool b) {
+	mtx_user.lock();
+	in_obey_far_end_codec_pref = b;
+	mtx_user.unlock();
+}
+
 void t_user::set_speex_nb_payload_type(unsigned short payload_type) {
 	mtx_user.lock();
 	speex_nb_payload_type = payload_type;
@@ -1265,6 +1444,12 @@ void t_user::set_g726_32_payload_type(unsigned short payload_type) {
 void t_user::set_g726_40_payload_type(unsigned short payload_type) {
 	mtx_user.lock();
 	g726_40_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_g726_packing(t_g726_packing packing) {
+	mtx_user.lock();
+	g726_packing = packing;
 	mtx_user.unlock();
 }
 
@@ -1370,6 +1555,12 @@ void t_user::set_ext_100rel(t_ext_support ext_support) {
 	mtx_user.unlock();
 }
 
+void t_user::set_ext_replaces(bool b) {
+	mtx_user.lock();
+	ext_replaces = b;
+	mtx_user.unlock();
+}
+
 void t_user::set_referee_hold(bool b) {
 	mtx_user.lock();
 	referee_hold = b;
@@ -1397,6 +1588,18 @@ void t_user::set_ask_user_to_refer(bool b) {
 void t_user::set_auto_refresh_refer_sub(bool b) {
 	mtx_user.lock();
 	auto_refresh_refer_sub = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_attended_refer_to_aor(bool b) {
+	mtx_user.lock();
+	attended_refer_to_aor = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_send_p_preferred_id(bool b) {
+	mtx_user.lock();
+	send_p_preferred_id = b;
 	mtx_user.unlock();
 }
 
@@ -1550,6 +1753,42 @@ void t_user::set_zrtp_send_if_supported(bool b) {
 	mtx_user.unlock();
 }
 
+void t_user::set_mwi_sollicited(bool b) {
+	mtx_user.lock();
+	mwi_sollicited = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_mwi_user(const string &user) {
+	mtx_user.lock();
+	mwi_user = user;
+	mtx_user.unlock();
+}
+
+void t_user::set_mwi_server(const t_url &url) {
+	mtx_user.lock();
+	mwi_server = url;
+	mtx_user.unlock();
+}
+
+void t_user::set_mwi_via_proxy(bool b) {
+	mtx_user.lock();
+	mwi_via_proxy = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_mwi_subscription_time(unsigned long t) {
+	mtx_user.lock();
+	mwi_subscription_time = t;
+	mtx_user.unlock();
+}
+
+void t_user::set_mwi_vm_address(const string &address) {
+	mtx_user.lock();
+	mwi_vm_address = address;
+	mtx_user.unlock();
+}
+
 bool t_user::read_config(const string &filename, string &error_msg) {
 	string f;
 	string msg;
@@ -1605,7 +1844,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		// Skip comment lines
 		if (line[0] == '#') continue;
 
-		list<string> l = split_on_first(line, '=');
+		vector<string> l = split_on_first(line, '=');
 		if (l.size() != 2) {
 			error_msg = "Syntax error in file ";
 			error_msg += f;
@@ -1617,8 +1856,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			return false;
 		}
 
-		string parameter = trim(l.front());
-		string value = trim(l.back());
+		string parameter = trim(l[0]);
+		string value = trim(l[1]);
 		
 		if (parameter == FLD_NAME) {
 			name = value;
@@ -1634,45 +1873,13 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			registration_time_in_contact = yesno2bool(value);
 		} else if (parameter == FLD_REGISTRAR) {
 			if (value.size() == 0) continue;
-			string s = string(USER_SCHEME) + ":" + value;
-			registrar.set_url(s);
-
-			// RFC 3261 10.2
-			// Registrar URI should not contain user info
-			if (!registrar.is_valid() ||
-			    registrar.get_user() != "")
-			{
-				error_msg = "Syntax error in file ";
-				error_msg += f;
-				error_msg += "\n";
-				error_msg += "Invalid value for registrar: ";
-				error_msg += value;
-				log_file->write_report(error_msg, "t_user::read_config",
-					LOG_NORMAL, LOG_CRITICAL);
-				mtx_user.unlock();
-				return false;
-			}
-			use_registrar = true;
+			use_registrar = set_server_value(registrar, USER_SCHEME, value); 
 		} else if (parameter == FLD_REGISTER_AT_STARTUP) {
 			register_at_startup = yesno2bool(value);
 		} else if (parameter == FLD_OUTBOUND_PROXY) {
 			if (value.size() == 0) continue;
-			string s = string(USER_SCHEME) + ":" + value;
-			outbound_proxy.set_url(s);
-			if (!outbound_proxy.is_valid() ||
-			    outbound_proxy.get_user() != "")
-			{
-				error_msg = "Syntax error in file ";
-				error_msg += f;
-				error_msg += "\n";
-				error_msg += "Invalid value for outbound proxy: ";
-				error_msg += value;
-				log_file->write_report(error_msg, "t_user::read_config",
-					LOG_NORMAL, LOG_CRITICAL);
-				mtx_user.unlock();
-				return false;
-			}
-			use_outbound_proxy = true;
+			use_outbound_proxy = set_server_value(outbound_proxy,
+					USER_SCHEME, value);
 		} else if (parameter == FLD_ALL_REQUESTS_TO_PROXY) {
 			all_requests_to_proxy = yesno2bool(value);
 		} else if (parameter == FLD_NON_RESOLVABLE_TO_PROXY) {
@@ -1684,9 +1891,9 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		} else if (parameter == FLD_AUTH_PASS) {
 			auth_pass = value;
 		} else if (parameter == FLD_CODECS) {
-			list<string> l = split(value, ',');
+			vector<string> l = split(value, ',');
 			if (l.size() > 0) codecs.clear();
-			for (list<string>::iterator i = l.begin();
+			for (vector<string>::iterator i = l.begin();
 			     i != l.end(); i++)
 			{
 				string codec = trim(*i);
@@ -1729,6 +1936,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			}
 		} else if (parameter == FLD_PTIME) {
 			ptime = atoi(value.c_str());
+		} else if (parameter == FLD_OUT_FAR_END_CODEC_PREF) {
+			out_obey_far_end_codec_pref = yesno2bool(value);
+		} else if (parameter == FLD_IN_FAR_END_CODEC_PREF) {
+			in_obey_far_end_codec_pref = yesno2bool(value);
 		} else if (parameter == FLD_HOLD_VARIANT) {
 			if (value == "rfc2543") {
 				hold_variant = HOLD_RFC2543;
@@ -1769,28 +1980,17 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			ask_user_to_refer = yesno2bool(value);
 		} else if (parameter == FLD_AUTO_REFRESH_REFER_SUB) {
 			auto_refresh_refer_sub = yesno2bool(value);
+		} else if (parameter == FLD_ATTENDED_REFER_TO_AOR) {
+			attended_refer_to_aor = yesno2bool(value);
+		} else if (parameter == FLD_SEND_P_PREFERRED_ID) {
+			send_p_preferred_id = yesno2bool(value);
 		} else if (parameter == FLD_NAT_PUBLIC_IP) {
 			if (value.size() == 0) continue;
 			use_nat_public_ip = true;
 			nat_public_ip = value;
 		} else if (parameter == FLD_STUN_SERVER) {
 			if (value.size() == 0) continue;
-			string s = "stun:" + value;
-			stun_server.set_url(s);
-			if (!stun_server.is_valid() ||
-			    stun_server.get_user() != "")
-			{
-				error_msg = "Syntax error in file ";
-				error_msg += f;
-				error_msg += "\n";
-				error_msg += "Invalid value for STUN server: ";
-				error_msg += value;
-				log_file->write_report(error_msg, "t_user::read_config",
-					LOG_NORMAL, LOG_CRITICAL);
-				mtx_user.unlock();
-				return false;
-			}
-			use_stun = true;
+			use_stun = set_server_value(stun_server, "stun", value);
 		} else if (parameter == FLD_TIMER_NOANSWER) {
 			timer_noanswer = atoi(value.c_str());
 		} else if (parameter == FLD_TIMER_NAT_KEEPALIVE) {
@@ -1808,6 +2008,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				mtx_user.unlock();
 				return false;
 			}
+		} else if (parameter == FLD_EXT_REPLACES) {
+			ext_replaces = yesno2bool(value);
 		} else if (parameter == FLD_COMPACT_HEADERS) {
 			compact_headers = yesno2bool(value);
 		} else if (parameter == FLD_ENCODE_MULTI_VALUES_AS_LIST) {
@@ -1866,6 +2068,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			g726_32_payload_type = atoi(value.c_str());
 		} else if (parameter == FLD_G726_40_PAYLOAD_TYPE) {
 			g726_40_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_G726_PACKING) {
+			g726_packing = str2g726_packing(value);
 		} else if (parameter == FLD_DTMF_TRANSPORT) {
 			dtmf_transport = str2dtmf_transport(value);	
 		} else if (parameter == FLD_DTMF_PAYLOAD_TYPE) {
@@ -1917,6 +2121,18 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			zrtp_sdp = yesno2bool(value);
 		} else if (parameter == FLD_ZRTP_SEND_IF_SUPPORTED) {
 			zrtp_send_if_supported = yesno2bool(value);
+		} else if (parameter == FLD_MWI_SOLLICITED) {
+			mwi_sollicited = yesno2bool(value);
+		} else if (parameter == FLD_MWI_USER) {
+			mwi_user = value;
+		} else if (parameter == FLD_MWI_SERVER) {
+			(void)set_server_value(mwi_server, USER_SCHEME, value);
+		} else if (parameter == FLD_MWI_VIA_PROXY) {
+			mwi_via_proxy = yesno2bool(value);
+		} else if (parameter == FLD_MWI_SUBSCRIPTION_TIME) {
+			mwi_subscription_time = atol(value.c_str());
+		} else if (parameter == FLD_MWI_VM_ADDRESS) {
+			mwi_vm_address = value;
 		} else {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
@@ -2071,6 +2287,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	}
 	config << endl;
 	config << FLD_PTIME << '=' << ptime << endl;
+	config << FLD_OUT_FAR_END_CODEC_PREF << '=' << bool2yesno(out_obey_far_end_codec_pref) << endl;
+	config << FLD_IN_FAR_END_CODEC_PREF << '=' << bool2yesno(in_obey_far_end_codec_pref) << endl;
 	config << FLD_SPEEX_NB_PAYLOAD_TYPE << '=' << speex_nb_payload_type << endl;
 	config << FLD_SPEEX_WB_PAYLOAD_TYPE << '=' << speex_wb_payload_type << endl;
 	config << FLD_SPEEX_UWB_PAYLOAD_TYPE << '=' << speex_uwb_payload_type << endl;
@@ -2088,6 +2306,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_G726_24_PAYLOAD_TYPE << '=' << g726_24_payload_type << endl;
 	config << FLD_G726_32_PAYLOAD_TYPE << '=' << g726_32_payload_type << endl;
 	config << FLD_G726_40_PAYLOAD_TYPE << '=' << g726_40_payload_type << endl;
+	config << FLD_G726_PACKING << '=' << g726_packing2str(g726_packing) << endl;
 	config << FLD_DTMF_TRANSPORT << '=' << dtmf_transport2str(dtmf_transport) << endl;
 	config << FLD_DTMF_PAYLOAD_TYPE << '=' << dtmf_payload_type << endl;
 	config << FLD_DTMF_DURATION << '=' << dtmf_duration << endl;
@@ -2127,6 +2346,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(ask_user_to_redirect) << endl;
 	config << FLD_MAX_REDIRECTIONS << '=' << max_redirections << endl;
 	config << FLD_EXT_100REL << '=' << ext_support2str(ext_100rel) << endl;
+	config << FLD_EXT_REPLACES << '=' << bool2yesno(ext_replaces) << endl;
 	config << FLD_REFEREE_HOLD << '=' << bool2yesno(referee_hold) << endl;
 	config << FLD_REFERRER_HOLD << '=' << bool2yesno(referrer_hold) << endl;
 	config << FLD_ALLOW_REFER << '=' << bool2yesno(allow_refer) << endl;
@@ -2134,6 +2354,10 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(ask_user_to_refer) << endl;
 	config << FLD_AUTO_REFRESH_REFER_SUB << '=';
 	config << bool2yesno(auto_refresh_refer_sub) << endl;
+	config << FLD_ATTENDED_REFER_TO_AOR << '=';
+	config << bool2yesno(attended_refer_to_aor) << endl;
+	config << FLD_SEND_P_PREFERRED_ID << '=';
+	config << bool2yesno(send_p_preferred_id) << endl;
 	config << endl;
 
 	// Write NAT settings
@@ -2150,7 +2374,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		config << FLD_STUN_SERVER << '=' << endl;
 	}
 	config << endl;
-config << FLD_G726_16_PAYLOAD_TYPE << '=' << g726_16_payload_type << endl;
+
 	// Write TIMER settings
 	config << "# TIMERS\n";
 	config << FLD_TIMER_NOANSWER << '=' << timer_noanswer << endl;
@@ -2206,6 +2430,20 @@ config << FLD_G726_16_PAYLOAD_TYPE << '=' << g726_16_payload_type << endl;
 	config << FLD_ZRTP_GOCLEAR_WARNING << '=' << bool2yesno(zrtp_goclear_warning) << endl;
 	config << FLD_ZRTP_SDP << '=' << bool2yesno(zrtp_sdp) << endl;
 	config << FLD_ZRTP_SEND_IF_SUPPORTED << '=' << bool2yesno(zrtp_send_if_supported) << endl;
+	config << endl;
+	
+	// Write MWI settings
+	config << "# MWI\n";
+	config << FLD_MWI_SOLLICITED << '=' << bool2yesno(mwi_sollicited) << endl;
+	config << FLD_MWI_USER << '=' << mwi_user << endl;
+	if (mwi_server.is_valid()) {
+		config << FLD_MWI_SERVER << '=' << mwi_server.encode_noscheme() << endl;
+	} else {
+		config << FLD_MWI_SERVER << '=' << endl;
+	}
+	config << FLD_MWI_VIA_PROXY << '=' << bool2yesno(mwi_via_proxy) << endl;
+	config << FLD_MWI_SUBSCRIPTION_TIME << '=' << mwi_subscription_time << endl;
+	config << FLD_MWI_VM_ADDRESS << '=' << mwi_vm_address << endl;
 
 	// Check if writing succeeded
 	if (!config.good()) {
@@ -2338,6 +2576,10 @@ bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 	{
 		if (*i == EXT_100REL) {
 			if (ext_100rel != EXT_DISABLED) continue;
+		} else if (*i == EXT_REPLACES) {
+			if (ext_replaces) continue;
+		} else if (*i == EXT_NOREFERSUB) {
+			continue;
 		}
 
 		// Extension is not supported
@@ -2349,15 +2591,19 @@ bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 	return all_supported;
 }
 
-string t_user::create_user_contact(void) {
+string t_user::create_user_contact(bool anonymous) {
 	string s;
 	
 	mtx_user.lock();
 
 	s = USER_SCHEME;
 	s += ':';
-	s += get_contact_name();
-	s += '@';
+	
+	if (!anonymous) {
+		s += t_url::escape_user_value(get_contact_name());
+		s += '@';
+	}
+	
 	s += USER_HOST(this);
 
 	if (PUBLIC_SIP_UDP_PORT(this) != get_default_port(USER_SCHEME)) {
@@ -2365,7 +2611,8 @@ string t_user::create_user_contact(void) {
 		s += int2str(PUBLIC_SIP_UDP_PORT(this));
 	}
 
-	if (numerical_user_is_phone && looks_like_phone(name, special_phone_symbols))
+	if (!anonymous && 
+	    numerical_user_is_phone && looks_like_phone(name, special_phone_symbols))
 	{
 		// RFC 3261 19.1.1
 		// If the URI contains a telephone number it SHOULD contain
@@ -2377,14 +2624,15 @@ string t_user::create_user_contact(void) {
 	return s;
 }
 
-string t_user::create_user_uri(void) {
-	string s;
+string t_user::create_user_uri(bool anonymous) {
+	if (anonymous) return ANONYMOUS_URI;
 	
+	string s;
 	mtx_user.lock();
 
 	s = USER_SCHEME;
 	s += ':';
-	s += name;
+	s += t_url::escape_user_value(name);
 	s += '@';
 	s += domain;
 
@@ -2444,4 +2692,11 @@ string t_user::convert_number(const string &number, const list<t_number_conversi
 
 string t_user::convert_number(const string &number) const {
 	return convert_number(number, number_conversions);
+}
+
+t_url t_user::get_mwi_uri(void) const {
+	t_url u(mwi_server);
+	u.set_user(mwi_user);
+	
+	return u;
 }

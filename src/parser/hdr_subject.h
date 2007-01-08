@@ -31,9 +31,7 @@ public:
 
 	t_hdr_subject();
 	void set_subject(const string &s);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

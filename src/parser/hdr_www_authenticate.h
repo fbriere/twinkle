@@ -35,9 +35,7 @@ public:
 	t_hdr_www_authenticate();
 
 	void set_challenge(const t_challenge &c);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

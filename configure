@@ -1820,7 +1820,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION=0.9
+ VERSION="1.0beta"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -1952,7 +1952,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "October 1 2006"
+#define VERSION_DATE "December 29 2006"
 _ACEOF
 
 ac_ext=c
@@ -16309,6 +16309,77 @@ else
 
 fi
 
+# Check for libbbind or libresolv. libbind is preferred as libresolv gives
+# GLIBC_PRIVATE on Fedora.
+echo "$as_me:$LINENO: checking for main in -lbind" >&5
+echo $ECHO_N "checking for main in -lbind... $ECHO_C" >&6
+if test "${ac_cv_lib_bind_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbind  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_bind_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_bind_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_bind_main" >&5
+echo "${ECHO_T}$ac_cv_lib_bind_main" >&6
+if test $ac_cv_lib_bind_main = yes; then
+
+	LIBS="-lbind $LIBS"
+	echo "LIBS += -lbind" >> $QT_INCL_PRO
+else
+
+	LIBS="-lresolv $LIBS"
+	echo "LIBS += -lresolv" >> $QT_INCL_PRO
+fi
+
+
 # Check if sndfile library is available
 if test "${ac_cv_header_sndfile_h+set}" = set; then
   echo "$as_me:$LINENO: checking for sndfile.h" >&5
@@ -17449,7 +17520,7 @@ else
 	have_zrtp="no"
 fi
 
-# Check if boost is available
+# Check if boost regex is available
 if test "${ac_cv_header_boost_regex_h+set}" = set; then
   echo "$as_me:$LINENO: checking for boost/regex.h" >&5
 echo $ECHO_N "checking for boost/regex.h... $ECHO_C" >&6
@@ -17596,7 +17667,6 @@ echo "$as_me: error: boost/regex.h missing (boost-devel package)" >&2;}
 fi
 
 
-
 echo "$as_me:$LINENO: checking for main in -lboost_regex" >&5
 echo $ECHO_N "checking for main in -lboost_regex... $ECHO_C" >&6
 if test "${ac_cv_lib_boost_regex_main+set}" = set; then
@@ -17656,16 +17726,79 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_boost_regex_main" >&5
 echo "${ECHO_T}$ac_cv_lib_boost_regex_main" >&6
 if test $ac_cv_lib_boost_regex_main = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBBOOST_REGEX 1
+
+	LIBS="-lboost_regex $LIBS"
+	echo "LIBS += -lboost_regex" >> $QT_INCL_PRO
+else
+
+	echo "$as_me:$LINENO: checking for main in -lboost_regex-gcc" >&5
+echo $ECHO_N "checking for main in -lboost_regex-gcc... $ECHO_C" >&6
+if test "${ac_cv_lib_boost_regex_gcc_main+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lboost_regex-gcc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
 _ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
 
-  LIBS="-lboost_regex $LIBS"
 
+int
+main ()
+{
+main ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_boost_regex_gcc_main=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_boost_regex_gcc_main=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_boost_regex_gcc_main" >&5
+echo "${ECHO_T}$ac_cv_lib_boost_regex_gcc_main" >&6
+if test $ac_cv_lib_boost_regex_gcc_main = yes; then
+
+		LIBS="-lboost_regex-gcc $LIBS"
+		echo "LIBS += -lboost_regex-gcc" >> $QT_INCL_PRO
 else
   { { echo "$as_me:$LINENO: error: libboost_regex library is missing (boost package)." >&5
 echo "$as_me: error: libboost_regex library is missing (boost package)." >&2;}
    { (exit 1); exit 1; }; }
+fi
+
 fi
 
 
@@ -17679,7 +17812,7 @@ echo "distdir:" >> src/gui/Makefile
 PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
 
 
-                                                                                                              ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile twinkle.spec"
+                                                                                                                                  ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile src/gui/lang/Makefile src/mwi/Makefile twinkle.spec"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -18260,6 +18393,8 @@ do
   "src/sockets/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/sockets/Makefile" ;;
   "src/stun/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/stun/Makefile" ;;
   "src/threads/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/threads/Makefile" ;;
+  "src/gui/lang/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/gui/lang/Makefile" ;;
+  "src/mwi/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/mwi/Makefile" ;;
   "twinkle.spec" ) CONFIG_FILES="$CONFIG_FILES twinkle.spec" ;;
   "depfiles" ) CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
   "src/twinkle_config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS src/twinkle_config.h" ;;

@@ -69,6 +69,7 @@ public:
 	string		contact;	// Redirect destination for redirect action
 	string		caller_name;	// Name of caller (can be used to override display name)
 	string		ringtone;	// Wav file for ring tone
+	string		display_msg;	// Message to show on display
 	
 	t_script_result();
 	static t_action str2action(const string action_string);

@@ -25,6 +25,7 @@
 #include "call_history.h"
 #include "log.h"
 #include "sys_settings.h"
+#include "translator.h"
 #include "userintf.h"
 #include "util.h"
 
@@ -182,6 +183,19 @@ void t_call_record::end_call(bool far_end) {
 string t_call_record::get_rel_cause(void) const {
 	switch (rel_cause) {
 	case CS_LOCAL_USER:
+		return TRANSLATE2("CoreCallHistory", "local user");
+	case CS_REMOTE_USER:
+		return TRANSLATE2("CoreCallHistory", "remote user");
+	case CS_FAILURE:
+		return TRANSLATE2("CoreCallHistory", "failure");
+	}
+	
+	return TRANSLATE2("CoreCallHistory", "unknown");
+}
+
+string t_call_record::get_rel_cause_internal(void) const {
+	switch (rel_cause) {
+	case CS_LOCAL_USER:
 		return "local user";
 	case CS_REMOTE_USER:
 		return "remote user";
@@ -193,6 +207,17 @@ string t_call_record::get_rel_cause(void) const {
 }
 
 string t_call_record::get_direction(void) const {
+	switch (direction) {
+	case DIR_IN:
+		return TRANSLATE2("CoreCallHistory", "in");
+	case DIR_OUT:
+		return TRANSLATE2("CoreCallHistory", "out");
+	}
+	
+	return TRANSLATE2("CoreCallHistory", "unknown");
+}
+
+string t_call_record::get_direction_internal(void) const {
 	switch (direction) {
 	case DIR_IN:
 		return "in";
@@ -241,7 +266,7 @@ string t_call_record::create_file_record(void) const {
 	record += REC_SEPERATOR;
 	record += ulong2str(time_end);
 	record += REC_SEPERATOR;
-	record += get_direction();
+	record += get_direction_internal();
 	record += REC_SEPERATOR;
 	record += escape(from_display, REC_SEPERATOR);
 	record += REC_SEPERATOR;
@@ -265,7 +290,7 @@ string t_call_record::create_file_record(void) const {
 	record += REC_SEPERATOR;
 	record += escape(subject, REC_SEPERATOR);
 	record += REC_SEPERATOR;
-	record += get_rel_cause();
+	record += get_rel_cause_internal();
 	record += REC_SEPERATOR;
 	record += int2str(invite_resp_code);
 	record += REC_SEPERATOR;
@@ -279,15 +304,10 @@ string t_call_record::create_file_record(void) const {
 }
 
 bool t_call_record::populate_from_file_record(const string &record) {
-	list<string> l = split_escaped(record, REC_SEPERATOR);
-	vector<string> v;
+	vector<string> v = split_escaped(record, REC_SEPERATOR);
 	
 	// Check number of fields
-	if (l.size() != 20) return false;
-	
-	for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
-		v.push_back(*i);
-	}
+	if (v.size() != 20) return false;
 	
 	time_start = strtoul(v[0].c_str(), NULL, 10);
 	time_answer = strtoul(v[1].c_str(), NULL, 10);
@@ -426,8 +446,8 @@ bool t_call_history::read_history(string &error_msg) {
 	// Open call history file
 	ifstream ch(filename.c_str());
 	if (!ch) {
-		error_msg = "Cannot open file for reading: ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file for reading: %1");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_ch.unlock();
 		return false;
 	}
@@ -441,8 +461,8 @@ bool t_call_history::read_history(string &error_msg) {
 
 		// Check if read operation succeeded
 		if (!ch.good() && !ch.eof()) {
-			error_msg = "File system error while reading file ";
-			error_msg += filename;
+			error_msg = TRANSLATE("File system error while reading file %1 .");
+			error_msg = replace_first(error_msg, "%1", filename);
 			mtx_ch.unlock();
 			return false;
 		}
@@ -480,8 +500,8 @@ bool t_call_history::write_history(string &error_msg) const {
 	// Open file
 	ofstream ch(filename.c_str());
 	if (!ch) {
-		error_msg = "Cannot open file for writing: ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file for writing: %1");
+		error_msg = replace_first(error_msg, "%1", filename);
 		self->mtx_ch.unlock();
 		return false;
 	}
@@ -505,8 +525,8 @@ bool t_call_history::write_history(string &error_msg) const {
 	self->mtx_ch.unlock();
 	 
 	if (!ch.good()) {
-		error_msg = "File system error while writing file ";
-		error_msg += filename;
+		error_msg = TRANSLATE("File system error while writing file %1 .");
+		error_msg = replace_first(error_msg, "%1", filename);
 		return false;
 	}
 	

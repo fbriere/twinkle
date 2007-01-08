@@ -4,15 +4,13 @@
   
 # Add here any variable or target overrides you need
 
-
 export QTDIR=/usr/share/qt3
-  
-DEBVERSION:=$(shell head -n 1 debian/changelog \
-		    | sed -e 's/^[^(]*(\([^)]*\)).*/\1/')
-UPVERSION:=$(shell echo $(DEBVERSION) | sed -e 's/^.*://' -e 's/-[0-9.]*$$//' -e 's/.dfsg$$//')
 
-FILENAME := twinkle_$(UPVERSION).orig.tar.gz
-URL := http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-$(UPVERSION).tar.gz
+UPFILENAME = $(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.bz2
+URL2 = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
+
+FILENAME = $(DEB_SOURCE_PACKAGE)_$(DEB_UPSTREAM_VERSION).orig.tar.gz
+URL := http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-1.0beta.tar.gz
 
 -include /usr/share/cdbs/1/class/autotools.mk
 -include /usr/share/cdbs/1/rules/debhelper.mk
@@ -27,8 +25,13 @@ install/twinkle::
 	cp sip.protocol $(CURDIR)/debian/twinkle/usr/share/services
 
 print-version:
-	@@echo "Debian version:          $(DEBVERSION)"
-	@@echo "Upstream version:        $(UPVERSION)"
+	@@echo DEB_SOURCE_PACKAGE: $(DEB_SOURCE_PACKAGE)
+	@@echo DEB_VERSION: $(DEB_VERSION)
+	@@echo DEB_NO_EPOCH_VERSION: $(DEB_NOEPOCH_VERSION)
+	@@echo DEB_UPSTREAM_VERSION: $(DEB_UPSTREAM_VERSION)
+	@@echo FILENAME: $(FILENAME)
+	@@echo URL: $(URL)
+	@@echo URL2: $(URL2)
 
 get-orig-source:
 	@@dh_testdir

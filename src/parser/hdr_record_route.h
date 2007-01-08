@@ -47,10 +47,8 @@ public:
 	t_hdr_record_route();
 	void add_route(const t_route &r);
 	string encode(void) const;
-	string encode_list(void) const;
 	string encode_multi_header(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

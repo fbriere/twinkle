@@ -84,6 +84,11 @@ private:
 	t_audio_device		dev_ringtone;
 	t_audio_device		dev_speaker;
 	t_audio_device		dev_mic;
+	
+	// Indicates if audio devices should be validated before
+	// usage.
+	bool			validate_audio_dev;
+	
 	bool			au_reduce_noise_mic;
 	int			alsa_play_period_size;
 	int			alsa_capture_period_size;
@@ -167,6 +172,7 @@ private:
 	string		redial_display;
 	string		redial_subject;
 	string		redial_profile; // profile used to make the call
+	bool		redial_hide_user; // Did the user request hiding?
 	
 	// History of latest dialed addresses
 	list<string>	dial_history;
@@ -175,6 +181,9 @@ private:
 	bool		show_display;
 	bool		compact_line_status;
 	
+	// One time warnings
+	bool		warn_hide_user; // Warn use that provider may not support hiding.
+	
 public:
 	t_sys_settings();
 	
@@ -182,6 +191,7 @@ public:
 	t_audio_device get_dev_ringtone(void) const;
 	t_audio_device get_dev_speaker(void) const;
 	t_audio_device get_dev_mic(void) const;
+	bool get_validate_audio_dev(void) const;
 	bool get_au_reduce_noise_mic(void) const;
 	int get_alsa_play_period_size(void) const;
 	int get_alsa_capture_period_size(void) const;
@@ -217,14 +227,17 @@ public:
 	string get_redial_display(void) const;
 	string get_redial_subject(void) const;
 	string get_redial_profile(void) const;
+	bool get_redial_hide_user(void) const;
 	list<string> get_dial_history(void) const;
 	bool get_show_display(void) const;
 	bool get_compact_line_status(void) const;
+	bool get_warn_hide_user(void) const;
 	
 	// Setters
 	void set_dev_ringtone(const t_audio_device &dev);
 	void set_dev_speaker(const t_audio_device &dev);
 	void set_dev_mic(const t_audio_device &dev);
+	void set_validate_audio_dev(bool b);
 	void set_au_reduce_noise_mic(bool b);
 	void set_alsa_play_period_size(int size);
 	void set_alsa_capture_period_size(int size);
@@ -260,12 +273,17 @@ public:
 	void set_redial_display(const string &display);
 	void set_redial_subject(const string &subject);
 	void set_redial_profile(const string &profile);
+	void set_redial_hide_user(bool b);
 	void set_dial_history(const list<string> &history);
 	void set_show_display(bool b);
 	void set_compact_line_status(bool b);
+	void set_warn_hide_user(bool b);
 	
 	// Return "about" text
 	string about(bool html) const;
+	
+	// Return product release date in locale format
+	string get_product_date(void) const;
 	
 	// Return a string of options that are built, e.g. ALSA, KDE
 	string get_options_built(void) const;
@@ -280,6 +298,9 @@ public:
 
 	// Get the share directory
 	string get_dir_share(void) const;
+	
+	// Get the directory containing language translation files
+	string get_dir_lang(void) const;
 	
 	// Get the user directory
 	string get_dir_user(void) const;
@@ -297,20 +318,25 @@ public:
 	bool write_config(string &error_msg);
 	
 	// Get all OSS devices
-	list<t_audio_device> get_oss_devices(void) const;
+	list<t_audio_device> get_oss_devices(bool playback) const;
 	
 #ifdef HAVE_LIBASOUND
 	// Get all ALSA devices
-	list<t_audio_device> get_alsa_devices(void) const;
+	list<t_audio_device> get_alsa_devices(bool playback) const;
 #endif
 	
 	// Get all audio devices
-	list<t_audio_device> get_audio_devices(void) const;
+	list<t_audio_device> get_audio_devices(bool playback) const;
 	
 	// Check if two OSS devices are equal
 	bool equal_audio_dev(const t_audio_device &dev1, const t_audio_device &dev2) const;
 	
 	static t_audio_device audio_device(string device = "");
+	
+	// Check validate the audio devices flagged as true.
+	// If audio validation is turned off then always true is returned.
+	bool exec_audio_validation(bool ringtone, bool speaker, bool mic, 
+		string &error_msg) const;
 	
 	// Get the active value of the SIP UDP port
 	// Once the SIP UDP port is retrieved from the system settings, it

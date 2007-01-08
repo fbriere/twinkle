@@ -19,7 +19,7 @@
 #include "hdr_proxy_authorization.h"
 #include "definitions.h"
 
-t_hdr_proxy_authorization::t_hdr_proxy_authorization() : t_header() {}
+t_hdr_proxy_authorization::t_hdr_proxy_authorization() : t_header("Proxy-Authorization") {}
 
 void t_hdr_proxy_authorization::add_credentials(const t_credentials &c) {
 	populated = true;
@@ -36,7 +36,8 @@ string t_hdr_proxy_authorization::encode(void) const {
 	for (list<t_credentials>::const_iterator i = credentials_list.begin();
 	     i != credentials_list.end(); i++)
 	{
-		s += "Proxy-Authorization: ";
+		s += header_name;
+		s += ": ";
 		s += i->encode();
 		s += CRLF;
 	}
@@ -56,15 +57,6 @@ string t_hdr_proxy_authorization::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_proxy_authorization::encode_env(void) const {
-	string s;
-	
-	s = "SIP_PROXY_AUTHORIZATION=";
-	s += encode_value();
-	
 	return s;
 }
 

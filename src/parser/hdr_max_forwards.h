@@ -33,9 +33,7 @@ public:
 	t_hdr_max_forwards();
 	void set_max_forwards(int m);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

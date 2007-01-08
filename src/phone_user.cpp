@@ -23,8 +23,33 @@
 #include "audits/memman.h"
 
 extern t_phone 		*phone;
+extern t_event_queue	*evq_timekeeper;
 extern t_event_queue	*evq_sender_udp;
 extern string		user_host;
+
+void t_phone_user::cleanup_mwi_dialog(void) {
+	if (mwi_dialog && mwi_dialog->get_subscription_state() == SS_TERMINATED) {
+		string reason_termination = mwi_dialog->get_reason_termination();
+		bool may_resubscribe = mwi_dialog->get_may_resubscribe();
+		unsigned long dur_resubscribe = mwi_dialog->get_resubscribe_after();
+		
+		MEMMAN_DELETE(mwi_dialog);
+		delete mwi_dialog;
+		mwi_dialog = NULL;	
+		
+		if (mwi_auto_resubscribe) {
+			if (may_resubscribe) {
+				if (dur_resubscribe > 0) {
+					start_resubscribe_mwi_timer(dur_resubscribe * 1000);
+				} else {
+					subscribe_mwi(DUR_MWI(user_config));
+				}
+			} else if (reason_termination.empty()) {
+				start_resubscribe_mwi_timer(DUR_MWI_FAILURE * 1000);
+			}
+		}
+	}
+}
 
 t_phone_user::t_phone_user(const t_user &profile) {
 	user_config = profile.copy();
@@ -56,6 +81,11 @@ t_phone_user::t_phone_user(const t_user &profile) {
 	// Timers
 	id_registration = 0;
 	id_nat_keepalive = 0;
+	id_resubscribe_mwi = 0;
+	
+	// MWI
+	mwi_dialog = NULL;
+	mwi_auto_resubscribe = false;
 }
 
 t_phone_user::~t_phone_user() {
@@ -83,6 +113,11 @@ t_phone_user::~t_phone_user() {
 	if (r_stun) {
 		MEMMAN_DELETE(r_stun);
 		delete r_stun;
+	}
+	
+	if (mwi_dialog) {
+		MEMMAN_DELETE(mwi_dialog);
+		delete mwi_dialog;
 	}
 	
 	MEMMAN_DELETE(service);
@@ -133,8 +168,8 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
 			t_url(string(USER_SCHEME) + ":" + user_config->get_domain()));
 
 	// To
-	req->hdr_to.set_uri(user_config->create_user_uri());
-	req->hdr_to.set_display(user_config->get_display());
+	req->hdr_to.set_uri(user_config->create_user_uri(false));
+	req->hdr_to.set_display(user_config->get_display(false));
 
 	//Call-ID
 	req->hdr_call_id.set_call_id(register_call_id);
@@ -148,7 +183,7 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
 
         switch (register_type) {
         case REG_REGISTER:
-                contact.uri.set_url(user_config->create_user_contact());
+                contact.uri.set_url(user_config->create_user_contact(false));
                 if (expires > 0) {
 			if (user_config->get_registration_time_in_contact()) {
 				contact.set_expires(expires);
@@ -159,7 +194,7 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
                 req->hdr_contact.add_contact(contact);
                 break;
         case REG_DEREGISTER:
-                contact.uri.set_url(user_config->create_user_contact());
+                contact.uri.set_url(user_config->create_user_contact(false));
  		if (user_config->get_registration_time_in_contact()) {
 			contact.set_expires(0);
 		} else {
@@ -261,7 +296,7 @@ void t_phone_user::options(const t_url &to_uri, const string &to_display) {
 	delete req;
 }
 
-void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
+void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid) {
 	t_client_request **current_cr;
 	t_request *req;
 	bool is_register = false;
@@ -277,6 +312,10 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 		is_register = true;
 	} else if (r_options && r_options->get_tuid() == tuid) {
 		current_cr = &r_options;
+	} else if (mwi_dialog && mwi_dialog->match_response(r, tuid)) {
+		mwi_dialog->recvd_response(r, tuid, tid);
+		cleanup_mwi_dialog();
+		return;
 	} else {
 		// Response does not match any pending request.
 		return;
@@ -306,8 +345,8 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 		}			
 	}
 
-	// Redirect request if there is another destination
-	if (user_config->get_allow_redirection()) {
+	// Redirect failed request if there is another destination
+	if (r->get_class() > R_2XX && user_config->get_allow_redirection()) {
 		// If the response is a 3XX response then add redirection
 		// contacts
 		if (r->get_class() == R_3XX  &&
@@ -394,7 +433,7 @@ void t_phone_user::resend_request(t_request *req, bool is_register, t_client_req
 	// Create a new via-header. Otherwise the
 	// request will be seen as a retransmission
 	req->hdr_via.via_list.clear();
-	t_via via(USER_HOST(user_config), sys_config->get_sip_udp_port());
+	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
 	req->hdr_via.add_via(via);
 
 	cr->renew(0);
@@ -420,11 +459,11 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
 	
 	if (r->msgHdr.msgType == BindErrorResponseMsg && r->hasErrorCode) {
 		// STUN request failed.
-                ui->cb_stun_failed(r->errorCode.errorClass * 100 +
+                ui->cb_stun_failed(user_config, r->errorCode.errorClass * 100 +
                 	r->errorCode.number, r->errorCode.reason);
 	} else {	
 		// No satisfying STUN response was received.
- 	       ui->cb_stun_failed();
+ 	       ui->cb_stun_failed(user_config);
 	}
 	
         MEMMAN_DELETE(r_stun);
@@ -459,7 +498,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 // Stop registration timer if one was running
                 phone->stop_timer(PTMR_REGISTRATION, this);
 
-                c = r->hdr_contact.find_contact(user_config->create_user_contact());
+                c = r->hdr_contact.find_contact(user_config->create_user_contact(false));
                 if (!c) {               	
 	               	if (!user_config->get_allow_missing_contact_reg()) {
 				is_registered = false;
@@ -521,6 +560,16 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 			// no need to send a NAT keep alive packet now.
 			phone->start_timer(PTMR_NAT_KEEPALIVE, this);
 		}
+		
+		// Registration succeeded. If sollicited MWI is provisioned
+		// and no MWI subscription is established yet, then subscribe
+		// to MWI.
+		// TODO: if the SUBSCRIBE does not go to the same IP address
+		//       as the REGISTER, then a new STUN request should be
+		//       done.
+		if (user_config->get_mwi_sollicited() && !mwi_auto_resubscribe) {
+			subscribe_mwi(DUR_MWI(user_config));
+		}
 
                 break;
         case R_4XX:
@@ -530,6 +579,9 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 if (r->code == R_423_INTERVAL_TOO_BRIEF) {
                         if (!r->hdr_min_expires.is_populated()) {
                                 // Violation of RFC 3261 10.3 item 7
+				log_file->write_report("Expires header missing from 423 response.",
+					"t_phone_user::handle_response_register",
+					LOG_NORMAL, LOG_WARNING);
                                 ui->cb_invalid_reg_resp(user_config, r,
                                         "Min-Expires header missing.");
                                 return;
@@ -543,6 +595,8 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                                 s += "time (";
                                 s += ulong2str(registration_time);
                                 s += ")";
+                                log_file->write_report(s, "t_phone_user::handle_response_register",
+                                	LOG_NORMAL, LOG_WARNING);
                                 ui->cb_invalid_reg_resp(user_config, r, s);
                                 return;
                         }
@@ -622,6 +676,128 @@ void t_phone_user::handle_response_options(t_response *r) {
 	ui->cb_options_response(r);
 }
 
+void t_phone_user::subscribe_mwi(unsigned long expires) {
+	mwi_auto_resubscribe = true;
+	
+	if (mwi_dialog) {
+		// This situation may occur, when an unsubscription is still
+		// in progress. The subscibe will be retried after the unsubscription
+		// is finished. Note that mwi_auto_resubscribe has been set to true
+		// to trigger an automatic subscription.
+		log_file->write_header("t_phone_user::subscribe_mwi", LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("MWI dialog already exists.\n");
+		log_file->write_raw("Subscription state: ");
+		log_file->write_raw(t_subscription_state2str(mwi_dialog->get_subscription_state()));
+		log_file->write_endl();
+		log_file->write_footer();
+
+		return;
+	}
+	
+	mwi_dialog = new t_mwi_dialog(this);
+	MEMMAN_NEW(mwi_dialog);
+	
+	// RFC 3842 4.1
+	// The example flow shows:
+	// Request-URI = mail_user@mailbox_server
+	// To = user@domain
+	mwi_dialog->subscribe(expires, user_config->get_mwi_uri(),
+		user_config->create_user_uri(false), user_config->get_display(false));
+	cleanup_mwi_dialog();
+}
+
+void t_phone_user::unsubscribe_mwi(void) {
+	mwi_auto_resubscribe = false;
+	stop_resubscribe_mwi_timer();
+	mwi.set_status(t_mwi::MWI_UNKNOWN);
+	
+	if (mwi_dialog) {
+		mwi_dialog->unsubscribe();
+		cleanup_mwi_dialog();
+	}
+	
+	ui->cb_update_mwi();
+}
+
+bool t_phone_user::is_mwi_subscribed(void) const {
+	if (mwi_dialog) {
+		return mwi_dialog->get_subscription_state() == SS_ESTABLISHED;
+	}
+	
+	return false;
+}
+
+bool t_phone_user::is_mwi_terminated(void) const {
+	return mwi_dialog == NULL;
+}
+
+void t_phone_user::handle_mwi_unsollicited(t_request *r, t_tid tid) {
+	if (user_config->get_mwi_sollicited()) {
+		// Unsollicited MWI is not supported
+		t_response *resp = r->create_response(R_403_FORBIDDEN);
+		phone->send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+	
+	if (r->body && r->body->get_type() == BODY_SIMPLE_MSG_SUM) {
+		t_simple_msg_sum_body *body = dynamic_cast<t_simple_msg_sum_body *>(r->body);
+		mwi.set_msg_waiting(body->get_msg_waiting());
+		
+		t_msg_summary summary;
+		if (body->get_msg_summary(MSG_CONTEXT_VOICE, summary)) {
+			mwi.set_voice_msg_summary(summary);
+		}
+		
+		mwi.set_status(t_mwi::MWI_KNOWN);
+	}
+	
+	t_response *resp = r->create_response(R_200_OK);
+	phone->send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+	
+	ui->cb_update_mwi();
+}
+
+void t_phone_user::recvd_notify(t_request *r, t_tid tid) {
+	bool partial_match = false;
+	
+	if (r->hdr_to.tag.empty()) {
+		// Unsollicited NOTIFY
+		handle_mwi_unsollicited(r, tid);
+		return;
+	}
+	
+	if (mwi_dialog && mwi_dialog->match_request(r, partial_match)) {
+		// Sollicited NOTIFY
+		mwi_dialog->recvd_request(r, 0, tid);
+		cleanup_mwi_dialog();
+		return;
+	}
+	
+	// A NOTIFY may be received before a 2XX on SUBSCRIBE.
+	// In this case the NOTIFY will establish the dialog.
+	if (partial_match && mwi_dialog->get_remote_tag().empty()) {
+		mwi_dialog->recvd_request(r, 0, tid);
+		cleanup_mwi_dialog();
+		return;
+	}
+	
+	// RFC 3265 4.4.9
+	// A SUBSCRIBE request may have forked. So multiple NOTIFY's
+	// can be received. Twinkle simply rejects additional NOTIFY's with
+	// a 481. This should terminate the forked dialog, such that only
+	// on dialog will remain.
+	t_response *resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	phone->send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+	
+	ui->cb_update_mwi();
+}
+
 void t_phone_user::send_nat_keepalive(void) {
 	if (register_ipaddr == 0 || register_port == 0) {
 		log_file->write_report(
@@ -660,17 +836,61 @@ void t_phone_user::timeout(t_phone_timer timer) {
 	}
 }
 
+void t_phone_user::timeout_sub(t_subscribe_timer timer, t_object_id id_timer) 
+{
+	switch (timer) {
+	case STMR_SUBSCRIPTION:
+		if (mwi_dialog && mwi_dialog->match_timer(timer, id_timer)) {
+			mwi_dialog->timeout(timer);
+		} else if (id_timer == id_resubscribe_mwi) {
+			// Try to subscribe to MWI
+			id_resubscribe_mwi = 0;
+			subscribe_mwi(DUR_MWI(user_config));
+		}
+		break;
+	default:
+		assert(false);
+	}
+}
+
+bool t_phone_user::match_subscribe_timer(t_subscribe_timer timer, t_object_id id_timer) const 
+{
+	if (mwi_dialog) {
+		return (mwi_dialog->match_timer(timer, id_timer));
+	}
+	
+	return id_timer == id_resubscribe_mwi;
+}
+
+void t_phone_user::start_resubscribe_mwi_timer(unsigned long duration) {
+	t_tmr_subscribe	*t;
+	t = new t_tmr_subscribe(duration, STMR_SUBSCRIPTION, 0, 0, SIP_EVENT_MSG_SUMMARY, "");
+	MEMMAN_NEW(t);
+	id_resubscribe_mwi = t->get_object_id();
+	
+	evq_timekeeper->push_start_timer(t);
+	MEMMAN_DELETE(t);
+	delete t;
+}
+
+void t_phone_user::stop_resubscribe_mwi_timer(void) {
+	if (id_resubscribe_mwi != 0) {
+		evq_timekeeper->push_stop_timer(id_resubscribe_mwi);
+		id_resubscribe_mwi = 0;
+	}
+}
+
 t_request *t_phone_user::create_request(t_method m, const t_url &request_uri) const {
 	t_request *req = new t_request(m);
 	MEMMAN_NEW(req);
 
 	// Via
-	t_via via(USER_HOST(user_config), sys_config->get_sip_udp_port());
+	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
 	req->hdr_via.add_via(via);
 
 	// From
-	req->hdr_from.set_uri(user_config->create_user_uri());
-	req->hdr_from.set_display(user_config->get_display());
+	req->hdr_from.set_uri(user_config->create_user_uri(false));
+	req->hdr_from.set_display(user_config->get_display(false));
 	req->hdr_from.set_tag(NEW_TAG);
 
 	// Max-Forwards header (mandatory)
@@ -717,7 +937,7 @@ t_response *t_phone_user::create_options_response(t_request *r,
 	SET_HDR_ACCEPT(resp->hdr_accept);
 	SET_HDR_ACCEPT_ENCODING(resp->hdr_accept_encoding);
 	SET_HDR_ACCEPT_LANGUAGE(resp->hdr_accept_language);
-	SET_HDR_SUPPORTED(resp->hdr_supported);
+	SET_HDR_SUPPORTED(resp->hdr_supported, user_config);
 
 	if (user_config->get_ext_100rel() != EXT_DISABLED) {
 		resp->hdr_supported.add_feature(EXT_100REL);
@@ -756,6 +976,8 @@ bool t_phone_user::match(t_response *r, t_tuid tuid) const {
 		return true;
 	} else if (r_options && r_options->get_tuid() == tuid) {
 		return true;
+	} else if (mwi_dialog && mwi_dialog->match_response(r, tuid)) {
+		return true;
 	} else {
 		// Response does not match any pending request.
 		return false;
@@ -763,10 +985,25 @@ bool t_phone_user::match(t_response *r, t_tuid tuid) const {
 }
 
 bool t_phone_user::match(t_request *r) const {
-	if (r->uri.get_user() == user_config->get_contact_name()) {
+	if (!r->hdr_to.tag.empty()) {
+		// Match in-dialog requests
+		if (mwi_dialog) {
+			bool partial_match = false;
+			if (mwi_dialog->match_request(r, partial_match)) return true;
+			if (partial_match) return true;
+		} else {
+			return false;
+		}
+	}
+
+	// Match on contact URI
+	if (r->uri.get_user() == user_config->get_contact_name() &&
+	    r->uri.get_host() == USER_HOST(user_config))
+	{
 		return true;
 	}
 	
+	// Match on user URI
 	if (r->uri.get_user() == user_config->get_name() &&
 	    r->uri.get_host() == user_config->get_domain())
 	{
@@ -824,6 +1061,15 @@ void t_phone_user::deactivate(void) {
 	// Stop timers
 	if (id_registration) phone->stop_timer(PTMR_REGISTRATION, this);
 	if (id_nat_keepalive) phone->stop_timer(PTMR_NAT_KEEPALIVE, this);
+	if (id_resubscribe_mwi) stop_resubscribe_mwi_timer();
 
+	// Clear MWI
+	if (mwi_dialog) {
+		MEMMAN_DELETE(mwi_dialog);
+		delete mwi_dialog;
+		mwi_dialog = NULL;
+	}
+	mwi.set_status(t_mwi::MWI_UNKNOWN);
+	
 	active = false;
 }

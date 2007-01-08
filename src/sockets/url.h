@@ -21,6 +21,7 @@
 
 #include <list>
 #include <string>
+#include "parser/header.h"
 
 using namespace std;
 
@@ -84,10 +85,25 @@ private:
 	// Parse uri parameters and headers. Returns false if parsing
 	// fails.
 	bool parse_params_headers(const string &s);
+	
+public:
+	// Escape reserved symbols in a user value
+	static string escape_user_value(const string &user_value);
+	
+	// Escape reserved symbols in a password value
+	static string escape_passwd_value(const string &passwd_value);
+	
+	// Escape reserved symbols in a header name or value
+	static string escape_hnv(const string &hnv);
 
 public:
 	t_url();
 	t_url(const string &s);
+	
+	// Return a copy of the URI without headers.
+	// If the URI does not contain any headers, then the copy is
+	// identical to the URI.
+	t_url copy_without_headers(void) const;
 
 	void set_url(const string &s);
 
@@ -134,15 +150,23 @@ public:
 	string get_headers(void) const;
 	
 	void set_user(const string &u);
+	
+	// Add a header to the URI
+	// The encoded header will be concatenated to the headers field
+	void add_header(const t_header &hdr);
+	
+	// Remove headers from the URI
+	void clear_headers(void);
 
 	bool is_valid(void) const;
 
 	// Check if 2 sip or sips url's are equivalent
 	bool sip_match(const t_url &u) const;
 	bool operator==(const t_url &u) const;
+	bool operator!=(const t_url &u) const;
 	
 	// Check if the user-host part of 2 url's are equal.
-	// If the user-part if a phone number, then only compare
+	// If the user-part is a phone number, then only compare
 	// the user parts.
 	bool user_host_match(const t_url &u, bool looks_like_phone, 
 		const string &special_symbols) const;
@@ -163,6 +187,9 @@ public:
 
 	// Return string encoding of url without scheme information
 	string encode_noscheme(void) const;
+	
+	// Return string encoding of url without parameters/headers
+	string encode_no_params_hdrs(bool escape = true) const;
 };
 
 // Display name and url combined

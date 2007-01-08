@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include "log.h"
 #include "sys_settings.h"
+#include "translator.h"
 #include "userintf.h"
 #include "user.h"
 #include "util.h"
@@ -70,8 +71,8 @@ t_log::t_log() {
 	log_stream = new ofstream(log_filename.c_str());
 	if (!*log_stream) {
 		log_disabled = true;
-		string err = "Failed to create log file ";
-		err += log_filename;
+		string err = TRANSLATE("Failed to create log file %1 .");
+		err = replace_first(err, "%1", log_filename);
 		err += "\nLogging is now disabled.";
 		if (ui) ui->cb_show_msg(err, MSG_WARNING);
 		return;
@@ -317,7 +318,7 @@ void t_log::write_raw(long raw) {
 void t_log::write_bool(bool raw) {
 	if (log_disabled || log_report_disabled) return;
 	
-	*log_stream << raw;
+	*log_stream << (raw ? "yes" : "no");
 }
 
 void t_log::write_endl(void) {

@@ -20,7 +20,7 @@
 #include "hdr_rseq.h"
 #include "util.h"
 
-t_hdr_rseq::t_hdr_rseq() : t_header() {
+t_hdr_rseq::t_hdr_rseq() : t_header("RSeq") {
 	resp_nr = 0;
 }
 
@@ -29,30 +29,10 @@ void t_hdr_rseq::set_resp_nr(unsigned long l) {
 	resp_nr = l;
 }
 
-string t_hdr_rseq::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "RSeq: ";
-	s += encode_value();
-	s += CRLF;
-	return s;
-}
-
 string t_hdr_rseq::encode_value(void) const {
 	if (!populated) return "";
 
 	return ulong2str(resp_nr);
-}
-
-string t_hdr_rseq::encode_env(void) const {
-	string s;
-	
-	s = "SIP_RSEQ=";
-	s += encode_value();
-	
-	return s;
 }
 
 bool t_hdr_rseq::operator==(const t_hdr_rseq &h) const {

@@ -20,7 +20,7 @@
 #include "hdr_cseq.h"
 #include "util.h"
 
-t_hdr_cseq::t_hdr_cseq() : t_header() {
+t_hdr_cseq::t_hdr_cseq() : t_header("CSeq") {
 	seqnr = 0;
 	method = INVITE;
 }
@@ -44,18 +44,6 @@ void t_hdr_cseq::set_method(const string &s) {
 	}
 }
 
-string t_hdr_cseq::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "CSeq: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_cseq::encode_value(void) const {
 	string s;
 
@@ -64,15 +52,6 @@ string t_hdr_cseq::encode_value(void) const {
 	s = ulong2str(seqnr) + ' ';
 	s += method2str(method, unknown_method);
 
-	return s;
-}
-
-string t_hdr_cseq::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CSEQ=";
-	s += encode_value();
-	
 	return s;
 }
 

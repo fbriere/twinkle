@@ -31,7 +31,8 @@ enum t_body_type {
 	BODY_OPAQUE,
 	BODY_SDP,
 	BODY_SIPFRAG,
-	BODY_DTMF_RELAY
+	BODY_DTMF_RELAY,
+	BODY_SIMPLE_MSG_SUM
 };
 
 // Base class for SIP bodies

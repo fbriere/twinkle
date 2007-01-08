@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>532</width>
-            <height>129</height>
+            <height>251</height>
         </rect>
     </property>
     <property name="caption">
@@ -68,6 +68,64 @@
                 </widget>
             </hbox>
         </widget>
+        <widget class="QButtonGroup">
+            <property name="name">
+                <cstring>typeButtonGroup2</cstring>
+            </property>
+            <property name="title">
+                <string>Type of transfer</string>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QRadioButton">
+                    <property name="name">
+                        <cstring>basicRadioButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Blind transfer</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+B</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Transfer the call to a third party without contacting that third party yourself.</string>
+                    </property>
+                </widget>
+                <widget class="QRadioButton">
+                    <property name="name">
+                        <cstring>consultRadioButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>T&amp;ransfer with consultation</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+R</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Before transferring the call to a third party, first consult the party yourself.</string>
+                    </property>
+                </widget>
+                <widget class="QRadioButton">
+                    <property name="name">
+                        <cstring>otherLineRadioButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Transfer to other &amp;line</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+L</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Connect the remote party on the active line with the remote party on the other line.</string>
+                    </property>
+                </widget>
+            </vbox>
+        </widget>
         <spacer>
             <property name="name">
                 <cstring>spacer24</cstring>
@@ -81,7 +139,7 @@
             <property name="sizeHint">
                 <size>
                     <width>20</width>
-                    <height>16</height>
+                    <height>20</height>
                 </size>
             </property>
         </spacer>
@@ -155,30 +213,47 @@
         <receiver>TransferForm</receiver>
         <slot>showAddressBook()</slot>
     </connection>
+    <connection>
+        <sender>otherLineRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>TransferForm</receiver>
+        <slot>setOtherLineAddress(bool)</slot>
+    </connection>
 </connections>
 <includes>
+    <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in declaration">qstring.h</include>
     <include location="local" impldecl="in declaration">sockets/url.h</include>
     <include location="local" impldecl="in declaration">getaddressform.h</include>
     <include location="local" impldecl="in declaration">user.h</include>
-    <include location="local" impldecl="in implementation">gui.h</include>
-    <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in declaration">protocol.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
     <include location="local" impldecl="in implementation">transferform.ui.h</include>
 </includes>
+<forwards>
+    <forward>extern t_phone *phone</forward>
+</forwards>
 <variables>
-    <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">int consult_line;</variable>
     <variable access="private">t_user *user_config;</variable>
+    <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">QString previousAddress;</variable>
 </variables>
 <signals>
-    <signal>destination(const t_display_url&amp;)</signal>
+    <signal>destination(const t_display_url&amp;, t_transfer_type)</signal>
 </signals>
 <slots>
-    <slot>show( t_user * user, const string &amp; dest )</slot>
+    <slot>initTransferOptions()</slot>
+    <slot>show( t_user * user )</slot>
+    <slot>show( t_user * user, const string &amp; dest, t_transfer_type transfer_type )</slot>
+    <slot>hide()</slot>
     <slot>reject()</slot>
     <slot>validate()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>
     <slot>showAddressBook()</slot>
     <slot>selectedAddress( const QString &amp; address )</slot>
+    <slot>setOtherLineAddress( bool on )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

@@ -2,6 +2,9 @@
 # That Makefile builts the executable. 
 # So here the executable is defined as a script such that it will
 # only be installed and not built.
+
+pkglangdir = $(pkgdatadir)/lang
+
 bin_SCRIPTS = src/gui/twinkle
 noinst_SCRIPTS = twinkle.desktop
 

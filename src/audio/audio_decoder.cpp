@@ -376,6 +376,8 @@ t_g726_audio_decoder::t_g726_audio_decoder(t_bit_rate bit_rate, uint16 default_p
 		assert(false);
 	}
 	
+	_packing = user_config->get_g726_packing();
+	
 	g72x_init_state(&_state);
 }
 
@@ -390,8 +392,14 @@ uint16 t_g726_audio_decoder::decode_16(uint8 *payload, uint16 payload_size,
 
 	for (int i = 0; i < payload_size; i++) {
 		for (int j = 0; j < 4; j++) {
+			uint8 w;
+			if (_packing == G726_PACK_RFC3551) {
+				w = (payload[i] >> (j*2)) & 0x3;
+			} else {
+				w = (payload[i] >> ((3-j)*2)) & 0x3;
+			}
 			pcm_buf[4*i+j] = g723_16_decoder(
-				(payload[i] >> (j*2)) & 0x3, AUDIO_ENCODING_LINEAR, &_state);
+				w, AUDIO_ENCODING_LINEAR, &_state);
 		}
 	}
 	
@@ -410,8 +418,14 @@ uint16 t_g726_audio_decoder::decode_24(uint8 *payload, uint16 payload_size,
 			    static_cast<uint32>(payload[i]);
 			     
 		for (int j = 0; j < 8; j++) {
+			uint8 w;
+			if (_packing == G726_PACK_RFC3551) {
+				w = (v >> (j*3)) & 0x7;
+			} else {
+				w = (v >> ((7-j)*3)) & 0x7;
+			}
 			pcm_buf[8*(i/3)+j] = g723_24_decoder(
-				(v >> (j*3)) & 0x7, AUDIO_ENCODING_LINEAR, &_state);
+				w, AUDIO_ENCODING_LINEAR, &_state);
 		}
 	}
 
@@ -425,8 +439,14 @@ uint16 t_g726_audio_decoder::decode_32(uint8 *payload, uint16 payload_size,
 
 	for (int i = 0; i < payload_size; i++) {
 		for (int j = 0; j < 2; j++) {
+			uint8 w;
+			if (_packing == G726_PACK_RFC3551) {
+				w = (payload[i] >> (j*4)) & 0xf;
+			} else {
+				w = (payload[i] >> ((1-j)*4)) & 0xf;
+			}
 			pcm_buf[2*i+j] = g721_decoder(
-				(payload[i] >> (j*4)) & 0xf, AUDIO_ENCODING_LINEAR, &_state);
+				w, AUDIO_ENCODING_LINEAR, &_state);
 		}
 	}
 	
@@ -447,8 +467,14 @@ uint16 t_g726_audio_decoder::decode_40(uint8 *payload, uint16 payload_size,
 			    static_cast<uint64>(payload[i]);
 			     
 		for (int j = 0; j < 8; j++) {
+			uint8 w;
+			if (_packing == G726_PACK_RFC3551) {
+				w = (v >> (j*5)) & 0x1f;
+			} else {
+				w = (v >> ((7-j)*5)) & 0x1f;
+			}
 			pcm_buf[8*(i/5)+j] = g723_40_decoder(
-				(v >> (j*5)) & 0x1f, AUDIO_ENCODING_LINEAR, &_state);
+				w, AUDIO_ENCODING_LINEAR, &_state);
 		}
 	}
 

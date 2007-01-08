@@ -123,17 +123,17 @@ bool t_sip_body_dtmf_relay::parse(const string &s) {
 	duration = 250;
 	
 	bool valid = false;
-	list<string> lines = split(s, CRLF);
+	vector<string> lines = split_linebreak(s);
 	
-	for (list<string>::iterator i = lines.begin(); i != lines.end(); i++) {
+	for (vector<string>::iterator i = lines.begin(); i != lines.end(); i++) {
 		string line = trim(*i);
 		if (line.empty()) continue;
 		
-		list<string> l = split_on_first(line, '=');
+		vector<string> l = split_on_first(line, '=');
 		if (l.size() != 2) continue;
 		
-		string parameter = tolower(trim(l.front()));
-		string value = tolower(trim(l.back()));
+		string parameter = tolower(trim(l[0]));
+		string value = tolower(trim(l[1]));
 		
 		if (value.empty()) continue;
 		

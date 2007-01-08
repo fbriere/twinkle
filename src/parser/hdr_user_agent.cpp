@@ -20,7 +20,7 @@
 #include "hdr_user_agent.h"
 #include "util.h"
 
-t_hdr_user_agent::t_hdr_user_agent() : t_header() {};
+t_hdr_user_agent::t_hdr_user_agent() : t_header("User-Agent") {};
 
 void t_hdr_user_agent::add_server(const t_server &s) {
 	populated = true;
@@ -40,29 +40,8 @@ string t_hdr_user_agent::get_ua_info(void) const {
 	return s;	
 }
 
-string t_hdr_user_agent::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "User-Agent: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_user_agent::encode_value(void) const {
 	if (!populated) return "";
 
 	return get_ua_info();
-}
-
-string t_hdr_user_agent::encode_env(void) const {
-	string s;
-	
-	s = "SIP_USER_AGENT=";
-	s += encode_value();
-	
-	return s;
 }

@@ -576,7 +576,7 @@ string t_sdp::get_codec_description(t_sdp_media_type media_type,
 	for (list<t_sdp_attr *>::const_iterator i = attrs.begin();
 	     i != attrs.end(); i++)
 	{
-		list<string> l = split_ws((*i)->value);
+		vector<string> l = split_ws((*i)->value);
 		if (atoi(l.front().c_str()) == codec) {
 			return l.back();
 		}
@@ -588,7 +588,7 @@ string t_sdp::get_codec_description(t_sdp_media_type media_type,
 t_audio_codec t_sdp::get_rtpmap_codec(const string &rtpmap) const {
 	if (rtpmap.empty()) return CODEC_NULL;
 	
-	list<string> rtpmap_elems = split(rtpmap, '/');
+	vector<string> rtpmap_elems = split(rtpmap, '/');
 	if (rtpmap_elems.size() < 2) {
 		// RFC 2327	
 		// The rtpmap should at least contain the encoding name
@@ -596,9 +596,8 @@ t_audio_codec t_sdp::get_rtpmap_codec(const string &rtpmap) const {
 		return CODEC_UNSUPPORTED;
 	}
 		
-	string codec_name = trim(rtpmap_elems.front());
-	rtpmap_elems.pop_front();
-	int sample_rate = atoi(trim(rtpmap_elems.front()).c_str());
+	string codec_name = trim(rtpmap_elems[0]);
+	int sample_rate = atoi(trim(rtpmap_elems[1]).c_str());
 	
 	if (cmp_nocase(codec_name, SDP_AC_NAME_G711_ULAW) == 0 && sample_rate == 8000) {
 		return CODEC_G711_ULAW;
@@ -671,7 +670,7 @@ string t_sdp::get_fmtp(t_sdp_media_type media_type, unsigned short codec) const 
 	for (list<t_sdp_attr *>::const_iterator i = attrs.begin();
 	     i != attrs.end(); i++)
 	{
-		list<string> l = split_ws((*i)->value);
+		vector<string> l = split_ws((*i)->value);
 		if (atoi(l.front().c_str()) == codec) {
 			return l.back();
 		}

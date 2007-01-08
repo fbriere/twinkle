@@ -21,13 +21,17 @@
 
 #include <list>
 #include <string>
+#include <vector>
+#include <sys/time.h>
 #include "auth.h"
 #include "call_history.h"
 #include "dialog.h"
+#include "id_object.h"
 #include "phone_user.h"
 #include "protocol.h"
 #include "service.h"
 #include "transaction_layer.h"
+#include "mwi/mwi.h"
 #include "sockets/url.h"
 #include "parser/request.h"
 #include "parser/response.h"
@@ -35,7 +39,10 @@
 // Number of phone lines
 // One line is used by Twinkle internally to park the call towards a
 // referrer while the refer is in progress.
-#define NUM_LINES	3	// Total numbers of phone lines
+// Besides the lines for making calls, ephemeral lines will be created
+// for parking calls that are being released. By parking a releasing
+// call, the line visible to the user is free for making new calls.
+#define NUM_CALL_LINES	3	// Total numbers of phone lines for making calls
 #define NUM_USER_LINES	2	// #lines usable for the user
 
 #define LINENO_REFERRER	2	// Internal lineno for referrer
@@ -75,6 +82,29 @@ enum t_line_substate {
 	LSSUB_RELEASING			// call is being released (BYE sent)
 };
 
+class t_transfer_data {
+private:
+	// The received REFER request
+	t_request	*refer_request;
+	
+	// Line number on which REFER was received
+	unsigned short	lineno;
+	
+	// Indicates if triggered INVITE must be anonymous
+	bool		hide_user;
+	
+	t_user		*user_config;
+	
+public:
+	t_transfer_data(t_request *r, unsigned short _lineno, bool _hide_user, t_user *user);
+	~t_transfer_data();
+	
+	t_request *get_refer_request(void) const;
+	unsigned short get_lineno(void) const;
+	bool get_hide_user(void) const;
+	t_user *get_user(void) const;
+};
+
 class t_phone : public t_transaction_layer {
 private:
 	// Indicates if the phone is active, accepting calls.
@@ -84,7 +114,9 @@ private:
 	list<t_phone_user *>	phone_users;
 
 	// Phone lines
-	t_line			*lines[NUM_LINES];
+	// The first NUM_CALL_LINES are for making phone calls.
+	// The tail of the vector is for releasing lines in the background.
+	vector<t_line *>	lines;
 
 	// Operations like invite, end_call work on the active line
 	unsigned short		active_line;
@@ -93,10 +125,35 @@ private:
 	bool			is_3way;	// indicates an acitive 3-way
 	t_line			*line1_3way;	// first line in 3-way conf
 	t_line			*line2_3way;	// second line in 3-way conf
+	
+	// Call transfer data. When a REFER comes in, the user has
+	// to give permission before the triggered INVITE can be sent.
+	// While the user interface presents the question to the user,
+	// the data related to the incoming REFER is stored here.
+	t_transfer_data		*incoming_refer_data;
+	
+	// Time of startup
+	time_t			startup_time;
+	
+	// Line release operations
+	// Move a line to the background so it will be released in the
+	// background.
+	void move_line_to_background(unsigned short lineno);
+	
+	// Move all call lines that are in releasing state to the
+	// background.
+	void move_releasing_lines_to_background(void);
+	
+	// Destroy lines in the background that are idle.
+	void cleanup_dead_lines(void);
+	
+	// If a line was part of a 3way, then remove it from the
+	// 3way conference data.
+	void cleanup_3way_state(unsigned short lineno);
 
 	// Actions
 	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
-		const string &subject);
+		const string &subject, bool anonymous);
 	void answer(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void reject(void);
@@ -116,6 +173,17 @@ private:
 
 	// Transfer a call (send REFER to far-end)
 	void refer(const t_url &uri, const string &display);
+	
+	// Call transfer with consultation (attended)
+	// Transfer the far-end on line lineno_from to the far-end of lineno_to.
+	void refer(unsigned short lineno_from, unsigned short lineno_to);
+	void refer_attended(unsigned short lineno_from, unsigned short lineno_to);
+	void refer_consultation(unsigned short lineno_from, unsigned short lineno_to);
+	
+	// Setup a consultation call for transferring the call on the active
+	// line. The active line is put on-hold and the consultation call is
+	// made on an idle line.
+	void setup_consultation_call(const t_url &uri, const string &display);
 
 	// Make line l active. If the current line is busy, then that call
 	// will be put on-hold. If line l has a call on-hold, then that
@@ -128,11 +196,11 @@ private:
 	void set_active_line(unsigned short l);
 
 	// Handle responses for out-of-dialog requests
-	void handle_response_out_of_dialog(t_response *r, t_tuid tuid);
+	void handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
 	
 	// Find active phone user
-	t_phone_user *find_phone_user(const string &profile_name);
+	t_phone_user *find_phone_user(const string &profile_name) const;
 	
 	// Match an incoming message to a phone user
 	t_phone_user *match_phone_user(t_response *r, t_tuid tuid, bool active_only = false);
@@ -147,27 +215,40 @@ protected:
 	void recvd_client_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_server_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_global_error(t_response *r, t_tuid tuid, t_tid tid);
+	void post_process_response(t_response *r, t_tuid tuid, t_tid tid);
 
 	void recvd_invite(t_request *r, t_tid tid);
+	void recvd_initial_invite(t_request *r, t_tid tid);
+	void recvd_re_invite(t_request *r, t_tid tid);
 	void recvd_ack(t_request *r, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_bye(t_request *r, t_tid tid);
 	void recvd_options(t_request *r, t_tid tid);
+	void recvd_options_out_dialog(t_request *r, t_tid tid);
+	void recvd_options_in_dialog(t_request *r, t_tid tid);
 	void recvd_register(t_request *r, t_tid tid);
 	void recvd_prack(t_request *r, t_tid tid);
 	void recvd_subscribe(t_request *r, t_tid tid);
 	void recvd_notify(t_request *r, t_tid tid);
 	void recvd_refer(t_request *r, t_tid tid);
 	void recvd_info(t_request *r, t_tid tid);
+	void post_process_request(t_request *r, t_tid cancel_tid, t_tid target_tid);
 
 	void failure(t_failure failure, t_tid tid);
 	
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
+	
+	void recvd_refer_permission(bool permission);
 
 public:
 	t_phone();
 	virtual ~t_phone();
 	
+	// Get line based on object id
+	// Returns NULL if there is no such line.
+	t_line *get_line_by_id(t_object_id id) const;
+	
+	// Get line based on line number
 	t_line *get_line(unsigned short lineno) const;
 
 	// Get busy/idle state of the phone
@@ -177,6 +258,16 @@ public:
 	
 	// Returns true if all lines are in the LSSUB_IDLE state
 	bool all_lines_idle(void) const;
+	
+	// Get an idle user line.
+	// If no line is idle, then false is returned.
+	bool get_idle_line(unsigned short &lineno) const;
+	
+	// Report a line timer timeout
+	void line_timeout(t_object_id id, t_line_timer timer, t_object_id did);
+	void line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
+		const string &event_type, const string &event_id);
+	void subscription_timeout(t_subscribe_timer timer, t_object_id id_timer);
 
 	// Actions to be called by the user interface.
 	// These methods first lock the phone, then call the corresponding
@@ -185,21 +276,24 @@ public:
 	// and dialog objects to avoid deadlocks.
 	void pub_invite(t_user *user,
 		const t_url &to_uri, const string &to_display,
-		const string &subject);
+		const string &subject, bool anonymous);
 	void pub_answer(void);
 	void pub_reject(void);
 	void pub_reject(unsigned short line);
 	void pub_redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void pub_end_call(void);
 	void pub_registration(t_user *user, t_register_type register_type,
-						int unsigned long = 0);
+						unsigned long expires = 0);
 	void pub_options(t_user *user, 
 			const t_url &to_uri, const string &to_display = "");
 	void pub_options(void);
 	bool pub_hold(void);
 	void pub_retrieve(void);
 	void pub_refer(const t_url &uri, const string &display);
+	void pub_refer(unsigned short lineno_from, unsigned short lineno_to);
+	void pub_setup_consultation_call(const t_url &uri, const string &display);
 	void mute(bool enable);
+	
 	void pub_activate_line(unsigned short l);
 	void pub_send_dtmf(char digit, bool inband, bool info);
 	
@@ -218,10 +312,16 @@ public:
 
 	// Seize the line.
 	// Returns false if seizure failed.
-	bool pub_seize(void);
-
+	bool pub_seize(void); // active line
+	bool pub_seize(unsigned short line);
+	
 	// Unseize the line
-	void pub_unseize(void);
+	void pub_unseize(void); // active line
+	void pub_unseize(unsigned short line);
+	
+	// MWI
+	void pub_subscribe_mwi(t_user *user, unsigned long expires);
+	void pub_unsubscribe_mwi(t_user *user);
 
 	void timeout(t_phone_timer timer, unsigned short id_timer);
 
@@ -240,21 +340,29 @@ public:
 	t_line_substate get_line_substate(unsigned short lineno) const;
 	bool is_line_on_hold(unsigned short lineno) const;
 	bool is_line_muted(unsigned short lineno) const;
+	bool is_line_transfer_consult(unsigned short lineno, 
+		unsigned short &transfer_from_line) const;
+	bool line_to_be_transferred(unsigned short lineno, 
+		unsigned short &transfer_to_line) const;
 	bool is_line_encrypted(unsigned short lineno) const;
 	bool is_line_auto_answered(unsigned short lineno) const;
 	t_refer_state get_line_refer_state(unsigned short lineno) const;
 	t_user *get_line_user(unsigned short lineno);
 	bool has_line_media(unsigned short lineno) const;
+	bool is_mwi_subscribed(t_user *user) const;
+	bool is_mwi_terminated(t_user *user) const;
+	t_mwi get_mwi(t_user *user) const;
+	
+	// Get remote uri/display of the active call on a line.
+	// If there is no call, then an empty uri/display is returned.
+	t_url get_remote_uri(unsigned short lineno) const;
+	string get_remote_display(unsigned short lineno) const;
 
 	// Return if a line is part of a 3-way conference
 	bool part_of_3way(unsigned short lineno);
 
 	// Get the peer line in a 3-way conference
 	t_line *get_3way_peer_line(unsigned short lineno);
-
-	// This method is called by the line object when the line becomes idle.
-	// The phone object can then cleanup any line related data, eg. 3-way data
-	void line_cleared(unsigned short lineno);
 
 	// Notify progress of a reference. r is the response to the INVITE
 	// caused by a REFER. referee_lineno is the line number of the line
@@ -269,6 +377,9 @@ public:
 	
 	// Get ring tone for a line
 	string get_ringtone(unsigned short lineno) const;
+	
+	// Get the startup time of the phone
+	time_t get_startup_time(void) const;
 
 	// Initialize the RTP port values for all lines.
 	void init_rtp_ports(void);

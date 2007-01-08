@@ -20,23 +20,11 @@
 #include "hdr_content_language.h"
 #include "util.h"
 
-t_hdr_content_language::t_hdr_content_language() : t_header() {};
+t_hdr_content_language::t_hdr_content_language() : t_header("Content-Language") {};
 
 void t_hdr_content_language::add_language(const t_language &language) {
 	populated = true;
 	language_list.push_back(language);
-}
-
-string t_hdr_content_language::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Content-Language: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_content_language::encode_value(void) const {
@@ -51,14 +39,5 @@ string t_hdr_content_language::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_content_language::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CONTENT_LANGUAGE=";
-	s += encode_value();
-	
 	return s;
 }

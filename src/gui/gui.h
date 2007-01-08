@@ -61,7 +61,6 @@ void setDisabledIcon(QToolButton *toolButton, const QString &icon);
 class t_gui : public t_userintf {
 private:
 	MphoneForm	*mainWindow;
-	QApplication	*qApplication;
 	
 	// Progress dialog for FW/NAT discovery progress bar
 	QProgressDialog	*natDiscoveryProgressDialog;
@@ -88,10 +87,6 @@ private:
 	// Set the line information field pointers to the fields for 'line'
 	void setLineFields(int line);
 	
-	// Clear the contents of the line information fields. After clearing
-	// the field pointers point to the fields for 'line'
-	void clearLineFields(int line);
-	
 	// Set text inf from, to and subject fields
 	void displayTo(const QString &s);
 	void displayFrom(const QString &s);
@@ -106,7 +101,8 @@ private:
 protected:
 	// The do_* methods perform the commands parsed by the exec_* methods.
 	virtual bool do_invite(const string &destination, const string &display, 
-			const string &subject, bool immediate);
+			const string &subject, bool immediate,
+			bool anonymous);
 	virtual void do_redial(void);
 	virtual void do_answer(void);
 	virtual void do_answerbye(void);
@@ -119,7 +115,8 @@ protected:
 	virtual void do_bye(void);
 	virtual void do_hold(void);
 	virtual void do_retrieve(void);
-	virtual bool do_refer(const string &destination, bool immediate);
+	virtual bool do_refer(const string &destination, t_transfer_type transfer_type,
+		bool immediate);
 	virtual void do_conference(void);
 	virtual void do_mute(bool show_status, bool toggle, bool enable);
 	virtual void do_dtmf(const string &digits);
@@ -156,6 +153,10 @@ public:
 	// Select a user configuration file. Returns false if selection failed.
 	bool select_user_config(list<string> &config_files);
 	
+	// Clear the contents of the line information fields. After clearing
+	// the field pointers point to the fields for 'line'
+	void clearLineFields(int line);
+	
 	// Call back functions
 	void cb_incoming_call(t_user *user_config, int line, const t_request *r);
 	void cb_call_cancelled(int line);
@@ -172,7 +173,7 @@ public:
 	void cb_call_answered(t_user *user_config, int line, const t_response *r);
 	void cb_call_failed(t_user *user_config, int line, const t_response *r);
 	void cb_stun_failed_call_ended(int line);
-	void cb_call_ended(int line, const t_response *r);
+	void cb_call_ended(int line);
 	void cb_call_established(int line);
 	void cb_options_response(const t_response *r);
 	void cb_reinvite_success(int line, const t_response *r);
@@ -212,9 +213,12 @@ public:
 	// The reference failed. Call to referrer is retrieved.
 	void cb_retrieve_referrer(t_user *user_config, int line);
 	
+	// A consulation call for a call transfer is being setup.
+	void t_gui::cb_consultation_call_setup(t_user *user_config, int line);
+	
 	// STUN errors
-	void cb_stun_failed(int err_code, const string &err_reason);
-	void cb_stun_failed(void);
+	void cb_stun_failed(t_user *user_config, int err_code, const string &err_reason);
+	void cb_stun_failed(t_user *user_config);
 	
 	// Interactive call back functions
 	bool cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &destination,
@@ -223,7 +227,9 @@ public:
 			const string &display, t_method method);
 	bool cb_ask_credentials(t_user *user_config, const string &realm, string &username,
 			string &password);
-	bool cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
+	
+	// Ask questions asynchronously.
+	void cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 			const string &refer_to_display,
 			const t_url &referred_by_uri,
 			const string &referred_by_display);
@@ -232,6 +238,11 @@ public:
 	// the user has to acknowledge the error before processing continues.
 	void cb_show_msg(const string &msg, t_msg_priority prio = MSG_INFO);
 	void cb_show_msg(QWidget *parent, const string &msg, t_msg_priority prio = MSG_INFO);
+	
+	// Ask a yes/no question to the user.
+	// Returns true for yes and false for no.
+	bool cb_ask_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	bool cb_ask_msg(QWidget *parent, const string &msg, t_msg_priority prio = MSG_INFO);
 	
 	// Display an error message.
 	void cb_display_msg(const string &msg, t_msg_priority prio = MSG_INFO);
@@ -256,6 +267,11 @@ public:
 	void cb_zrtp_sas_confirmed(int line);
 	void cb_zrtp_sas_confirmation_reset(int line);
 	
+	// MWI
+	void cb_update_mwi(void);
+	void cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure);
+	void cb_mwi_terminated(t_user *user_config, const string &reason);
+	
 	// Execute external commands
 	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
@@ -269,13 +285,15 @@ public:
 	void action_show_registrations(list<t_user *> user_list);
 	void action_invite(t_user *user_config, 
 			   const t_url &destination, const string &display, 
-			   const string &subject);
+			   const string &subject, bool anonymous);
 	void action_answer(void);
 	void action_bye(void);
 	void action_reject(void);
 	void action_reject(unsigned short line);
 	void action_redirect(const list<t_display_url> &contacts);
 	void action_refer(const t_url &destination, const string &display);
+	void action_refer(unsigned short line_from, unsigned short line_to);
+	void action_setup_consultation_call(const t_url &destination, const string &display);
 	void action_hold(void);
 	void action_retrieve(void);
 	void action_conference(void);

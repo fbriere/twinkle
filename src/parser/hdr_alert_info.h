@@ -47,9 +47,7 @@ public:
 	// Add a paramter to the list of alert parameters
 	void add_param(const t_alert_param &p);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

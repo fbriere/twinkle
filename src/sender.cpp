@@ -21,6 +21,7 @@
 #include "events.h"
 #include "log.h"
 #include "sender.h"
+#include "translator.h"
 #include "userintf.h"
 #include "util.h"
 #include "sockets/socket.h"
@@ -63,6 +64,8 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		log_msg += ":";
 		log_msg += int2str(icmp.port);
 		log_msg += "\nSocket error: ";
+		log_msg += int2str(err);
+		log_msg += " ";
 		log_msg += strerror(err);
 		log_file->write_report(log_msg, "::hanlde_socket_err", LOG_NORMAL);
 	
@@ -85,18 +88,27 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		// Sometimes the error is already present on the socket, but the ICMP
 		// message is not yet queued.
 		log_msg = "Failed to send to SIP UDP socket.\n";
+		log_msg += "Error code: ";
+		log_msg += int2str(err);
+		log_msg += "\n";
 		log_msg += strerror(err);
 		log_file->write_report(log_msg, "::handle_socket_err");
 		
 		num_non_icmp_errors++;
+		
+		/*
+		 * non-ICMP errors occur when a destination on the same
+		 * subnet cannot be reached. So this code seems to be
+		 * harmful.
 		if (num_non_icmp_errors > 100) {
 			log_msg = "Excessive number of socket errors.";
 			log_file->write_report(log_msg, "::handle_socket_err", 
 				LOG_NORMAL, LOG_CRITICAL);
-			return false;
+			log_msg = TRANSLATE("Excessive number of socket errors.");
 			ui->cb_show_msg(log_msg, MSG_CRITICAL);
 			exit(1);
 		}
+		*/
 	}
 	
 	return true;
@@ -200,11 +212,9 @@ static void send_nat_keepalive(t_event *event) {
 
 void *sender_udp(void *arg) {
 	t_event 	*event;
-	t_event_network	*e;
 
-	//t_socket_udp sock;
-
-	while (true) {
+	bool quit = false;
+	while (!quit) {
 		event = evq_sender_udp->pop();
 		
 		switch(event->get_type()) {
@@ -217,10 +227,12 @@ void *sender_udp(void *arg) {
 		case EV_NAT_KEEPALIVE:
 			send_nat_keepalive(event);
 			break;
+		case EV_QUIT:
+			quit = true;
+			break;
 		default:
 			assert(false);
 		}
-
 
 		MEMMAN_DELETE(event);
 		delete event;

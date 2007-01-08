@@ -2,7 +2,7 @@
 ** ui.h extension file, included from the uic-generated form implementation.
 **
 ** If you wish to add, delete or rename functions or slots use
-** Qt Designer which will update this file, pres:erving your code. Create an
+** Qt Designer which will update this file, pres:erving your code. Ceate an
 ** init() function in place of a constructor, and a destroy() function in
 ** place of a destructor.
 *****************************************************************************/
@@ -63,6 +63,9 @@ void MphoneForm::init()
 	connect(hideLineTimer1, SIGNAL(timeout()), timer1TextLabel, SLOT(hide()));
 	connect(hideLineTimer2, SIGNAL(timeout()), timer2TextLabel, SLOT(hide()));
 	
+	// Attach the MWI flash slot to the MWI flash timer
+	connect(&tmrFlashMWI, SIGNAL(timeout()), this, SLOT(flashMWI()));
+	
 	// Set toolbar icons for disabled options.
 	setDisabledIcon(callInvite, "invite-disabled.png");
 	setDisabledIcon(callAnswer, "answer-disabled.png");
@@ -79,10 +82,6 @@ void MphoneForm::init()
 	// Set tool button icons for disabled options
 	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
-#ifndef HAVE_KDE
-	addressToolButton->setEnabled(false);
-#endif
-	
 	// Some text labels on the main window are implemented as QLineEdit
 	// objects as these do not automatically resize when a text set with setText
 	// does not fit. The background of a QLineEdit is static however, it does not
@@ -94,6 +93,10 @@ void MphoneForm::init()
 	from2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	to2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	subject2Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	
+	// A QComboBox accepts a new line through copy/paste.
+	QRegExp rxNoNewLine("[^\\n\\r]*");
+	callComboBox->setValidator(new QRegExpValidator(rxNoNewLine, this));
 	
 	if (sys_config->get_gui_use_systray()) {
 		// Create system tray icon
@@ -231,30 +234,30 @@ QString MphoneForm::lineSubstate2str( int line) {
 	
 	switch(phone->get_line_substate(line)) {
 	case LSSUB_IDLE:	
-		return "idle";
+		return tr("idle");
 	case LSSUB_SEIZED:
-		return "dialing";
+		return tr("dialing");
 	case LSSUB_OUTGOING_PROGRESS:
 		reason = call_info.last_provisional_reason.c_str();
 		if (reason == "") {
-			return "attempting call, please wait";
+			return tr("attempting call, please wait");
 		}
 		return reason;
 	case LSSUB_INCOMING_PROGRESS:
-		return "<font color=red>incoming call</font>";
+		return QString("<font color=red>") + tr("incoming call") + "</font>";
 	case LSSUB_ANSWERING:
-		return "establishing call, please wait";
+		return tr("establishing call, please wait");
 	case LSSUB_ESTABLISHED:
 		if (phone->has_line_media(line)) {
-			return "established";
+			return tr("established");
 		} else {
-			return "established (waiting for media)";
+			return tr("established (waiting for media)");
 		}
 		break;
 	case LSSUB_RELEASING:
-		return "releasing call, please wait";
+		return tr("releasing call, please wait");
 	default:
-		return "unknown state";
+		return tr("unknown state");
 	}
 }
 
@@ -269,6 +272,7 @@ void MphoneForm::closeEvent( QCloseEvent *e )
 
 void MphoneForm::fileExit()
 {
+	hide();
 	QApplication::exit(0);
 }
 
@@ -416,7 +420,7 @@ void MphoneForm::updateLineEncryptionState(int line)
 		string srtp_cipher_mode = as->get_srtp_cipher_mode();
 		
 		QToolTip::remove(cryptLabel);
-		QString toolTip = "Voice is encrypted (";
+		QString toolTip = tr("Voice is encrypted") + " (";
 		toolTip.append(srtp_cipher_mode.c_str()).append(")");
 		
 		if (!zrtp_sas.empty()) {
@@ -432,12 +436,12 @@ void MphoneForm::updateLineEncryptionState(int line)
 		}
 			
 		if (!zrtp_sas_confirmed) {
-			toolTip.append("\nClick to confirm SAS.");
+			toolTip.append("\n").append(tr("Click to confirm SAS."));
 			cryptLabel->setFrameStyle(QFrame::Panel | QFrame::Raised);
 			cryptLabel->setPixmap(
 				QPixmap::fromMimeSource("encrypted.png"));
 		} else {
-			toolTip.append("\nClick to clear SAS verification.");
+			toolTip.append("\n").append(tr("Click to clear SAS verification."));
 			cryptLabel->setFrameStyle(QFrame::NoFrame);
 			cryptLabel->setPixmap(
 				QPixmap::fromMimeSource("encrypted_verified.png"));
@@ -458,7 +462,10 @@ void MphoneForm::updateLineStatus(int line)
 	bool in_conference; // indicates if a line is in a conference
 	bool is_muted; // indicates is a line is muted
 	t_refer_state refer_state; // indicates if a call transfer is in progress
+	bool is_transfer_consult; // indicates if the call is a consultation
+	bool to_be_transferred; // indicates if the line is to be transferred after consultation
 	t_call_info call_info;
+	unsigned short dummy;
 	
 	QLabel *statLabel, *holdLabel, *muteLabel, *confLabel, *referLabel, *statusTextLabel;
 	
@@ -498,8 +505,22 @@ void MphoneForm::updateLineStatus(int line)
 		muteLabel->hide();
 	}
 	refer_state = phone->get_line_refer_state(line);
-	if (refer_state != REFST_NULL) {
+	is_transfer_consult = phone->is_line_transfer_consult(line, dummy);
+	to_be_transferred = phone->line_to_be_transferred(line, dummy);
+	if (refer_state != REFST_NULL || is_transfer_consult || to_be_transferred) {
+		QString toolTip;
+		QToolTip::remove(referLabel);
 		referLabel->show();
+		if (is_transfer_consult) {
+			referLabel->setPixmap(
+				QPixmap::fromMimeSource("consult-xfer.png"));
+			toolTip = tr("Transfer consultation");
+		} else {
+			referLabel->setPixmap(
+				QPixmap::fromMimeSource("cf.png"));
+			toolTip = tr("Transferring call");
+		}
+		QToolTip::add(referLabel, toolTip);
 	} else {
 		referLabel->hide();
 	}
@@ -510,6 +531,7 @@ void MphoneForm::updateLineStatus(int line)
 	line_substate = phone->get_line_substate(line);
 	switch (line_substate) {
 	case LSSUB_IDLE:
+		((t_gui *)ui)->clearLineFields(line);
 		statLabel->hide();
 		break;
 	case LSSUB_SEIZED:
@@ -557,8 +579,11 @@ void MphoneForm::updateState()
 	bool in_conference; // indicates if a line is in a conference
 	bool is_muted; // indicates is a line is muted
 	t_refer_state refer_state; // indicates if a call transfer is in progress
+	bool is_transfer_consult; // indicates if the call is a consultation
+	bool to_be_transferred; // indicates if the line is to be transferred after consultation
 	bool has_media; // indicates if a media stream is present
 	t_call_info call_info;
+	unsigned short dummy;
 	
 	// Update status of line 1
 	updateLineStatus(0);
@@ -574,6 +599,8 @@ void MphoneForm::updateState()
 	in_conference = phone->part_of_3way(line);
 	is_muted = phone->is_line_muted(line);
 	refer_state = phone->get_line_refer_state(line);
+	is_transfer_consult = phone->is_line_transfer_consult(line, dummy);
+	to_be_transferred = phone->line_to_be_transferred(line, dummy);
 	has_media = phone->has_line_media(line);
 	other_line = (line == 0 ? 1 : 0);
 	call_info = phone->get_call_info(line);
@@ -652,8 +679,10 @@ void MphoneForm::updateState()
 			callConference->setEnabled(false);
 			callDTMF->setEnabled(false);
 		} else {
-			callTransfer->setEnabled(has_media && call_info.refer_supported &&
-						 refer_state == REFST_NULL);
+			callTransfer->setEnabled(has_media && 
+						 call_info.refer_supported &&
+						 refer_state == REFST_NULL &&
+						 !to_be_transferred);
 			callHold->setEnabled(has_media);
 			callDTMF->setEnabled(call_info.dtmf_supported);
 			
@@ -714,6 +743,9 @@ void MphoneForm::updateState()
 	// Set mute action in correct state
 	callMute->setOn(is_muted);
 	
+	// Set transfer action in correct state
+	callTransfer->setOn(is_transfer_consult);
+	
 	// Hide redirect form if it is still visible, but not applicable anymore
 	if (!callRedirect->isEnabled() && redirectForm && 
 	    redirectForm->isVisible()) 
@@ -740,23 +772,28 @@ void MphoneForm::updateState()
 	string last_display;
 	string last_subject;
 	t_user *last_user;
+	bool hide_user;
 	if (callRedial->isEnabled() && 
-	    ui->get_last_call_info(last_url, last_display, last_subject, &last_user))
+	    ui->get_last_call_info(last_url, last_display, last_subject, &last_user, hide_user))
 	{
-		QString s = "User: ";
+		QString s = tr("User:").append(" ");
 		s += last_user->get_profile_name().c_str();
-		s += "\nCall: ";
+		s.append("\n").append(tr("Call:")).append(" ");
 		s += ui->format_sip_address(last_user,
 					last_display, last_url).c_str();
 
 		if (!last_subject.empty()) {
-			s += "\nSubject: ";
+			s.append("\n").append(tr("Subject:")).append(" ");
 			s += last_subject.c_str();
+		}
+		
+		if (hide_user) {
+			s.append("\n").append(tr("Hide identity"));
 		}
 		
 		callRedial->setToolTip(s);
 	} else {
-		callRedial->setToolTip("Repeat last call");
+		callRedial->setToolTip(tr("Repeat last call"));
 	}
 	
 	updateSysTrayStatus();
@@ -767,25 +804,33 @@ void MphoneForm::updateRegStatus()
 {
 	int num_registered = 0;
 	int num_failed = 0;
-	QString toolTip = "Registration status:\n";
+	QString toolTip = "<b>";
+	toolTip.append(tr("Registration status:"));
+	toolTip.append("</b>");
+	toolTip.append("<table><tr>");
 	
 	// Count number of succesful and failed registrations.
 	// Determine tool tip showing registration details for all users.
 	list<t_user *>user_list = phone->ref_users();
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		toolTip.append("<tr><td>");
+		toolTip.append((*i)->get_profile_name().c_str());
+		toolTip.append("</td><td>");
 		if (phone->get_is_registered(*i)) {
 			num_registered++;
-			toolTip.append((*i)->get_profile_name().c_str());
-			toolTip.append(" - Registered\n");
+			toolTip.append(tr("Registered"));
 		} else if (phone->get_last_reg_failed(*i)) {
 			num_failed++;
-			toolTip.append((*i)->get_profile_name().c_str());
-			toolTip.append(" - Failed\n");
+			toolTip.append(tr("Failed"));
 		} else {
-			toolTip.append((*i)->get_profile_name().c_str());
-			toolTip.append(" - Not registered\n");
+			toolTip.append(tr("Not registered").replace(' ', "&nbsp;"));
 		}
+		toolTip.append("</td></tr>");
 	}
+	toolTip.append("</table><br>");
+	toolTip.append("<i>");
+	toolTip.append(tr("Click to show registrations.").replace(' ', "&nbsp;"));
+	toolTip.append("</i>");
 	
 	// Set registration status
 	if (num_registered == user_list.size()) {
@@ -812,8 +857,155 @@ void MphoneForm::updateRegStatus()
 	if (num_registered > 0 || num_failed > 0) {
 		QToolTip::add(statRegLabel, toolTip);
 	} else {
-		QToolTip::add(statRegLabel, "No users are registered.");
+		QToolTip::add(statRegLabel, tr("No users are registered."));
 	}
+	
+	updateSysTrayStatus();
+}
+
+// Create a status message based on the number of waiting messages.
+// On return, msg_waiting will indicate if the MWI indicator should show
+// waiting messages.
+QString MphoneForm::getMWIStatus(const t_mwi &mwi, bool &msg_waiting) const
+{
+	QString status;
+	msg_waiting = false;
+	t_msg_summary summary = mwi.get_voice_msg_summary();
+		
+	if (summary.newmsgs > 0 && summary.oldmsgs > 0) {
+		if (summary.oldmsgs == 1) {
+			status = tr("%1 new, 1 old message").
+				 arg(summary.newmsgs);
+		} else {
+			status = tr("%1 new, %2 old messages").
+				 arg(summary.newmsgs).
+				 arg(summary.oldmsgs);
+		}
+		msg_waiting = true;
+	} else if (summary.newmsgs > 0 && summary.oldmsgs == 0) {
+		if (summary.newmsgs == 1) {
+			status = tr("1 new message");
+		} else {
+			status = tr("%1 new messages").
+				 arg(summary.newmsgs);
+		}
+		msg_waiting = true;
+	} else if (summary.oldmsgs > 0) {
+		if (summary.oldmsgs == 1) {
+			status = tr("1 old message");
+		} else {
+			status = tr("%1 old messages").
+				 arg(summary.oldmsgs);
+		}
+	} else {
+		if (mwi.get_msg_waiting()) {
+			status = tr("Messages waiting");
+			msg_waiting = true;
+		} else {
+			status = tr("No messages");
+		}
+	}
+
+	return status.replace(' ', "&nbsp;");
+}
+
+// Flash the MWI icon
+void MphoneForm::flashMWI()
+{
+	if (mwiFlashStatus) {
+		mwiFlashStatus = false;
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+				"mwi_none16.png"));
+	} else {
+		mwiFlashStatus = true;
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+				"mwi_new16.png"));
+	}
+}
+
+// Update MWI
+void MphoneForm::updateMwi()
+{
+	bool mwi_known = false;
+	bool mwi_new_msgs = false;
+	bool mwi_failure = false;
+
+	// Determine tool tip
+	QString toolTip = tr("<b>Voice mail status:</b>").append("\n");
+	toolTip.append("<table>");
+	list<t_user *>user_list = phone->ref_users();
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		toolTip.append("<tr><td>");
+		toolTip.append((*i)->get_profile_name().c_str());
+		t_mwi mwi = phone->get_mwi(*i);
+		toolTip.append("</td><td>");
+		if (phone->is_mwi_subscribed(*i)) {
+			if (mwi.get_status() == t_mwi::MWI_KNOWN) {
+				bool new_msgs;
+				QString status = getMWIStatus(mwi, new_msgs);
+				toolTip.append(status);
+				mwi_known = true;
+				mwi_new_msgs |= new_msgs;
+			} else if (mwi.get_status() == t_mwi::MWI_FAILED) {
+				toolTip.append(tr("Failure"));
+				mwi_failure = true;
+			} else {
+				toolTip.append(tr("Unknown"));
+			}
+		} else {
+			if ((*i)->get_mwi_sollicited()) {
+				if (mwi.get_status() == t_mwi::MWI_FAILED) {
+					toolTip.append(tr("Failure"));
+					mwi_failure = true;
+				} else {
+					toolTip.append(tr("Unknown"));
+				}
+			} else {
+				// Unsollicited MWI				
+				if (mwi.get_status() == t_mwi::MWI_KNOWN) {
+					bool new_msgs;
+					QString status = getMWIStatus(mwi, new_msgs);
+					toolTip.append(status);
+					mwi_known = true;
+					mwi_new_msgs |= new_msgs;
+				} else {
+					toolTip.append(tr("Unknown"));
+				}
+			}
+		}
+		toolTip.append("</td></tr>");
+	}
+	
+	toolTip.append("</table><br>");
+	toolTip.append("<i>");
+	toolTip.append(tr("Click to access voice mail.").replace(' ', "&nbsp;"));
+	toolTip.append("</i>");
+	
+	// Set MWI icon
+	if (mwi_new_msgs) {
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+			"mwi_new16.png"));
+		mwiFlashStatus = true;
+		
+		// Start the flash MWI timer to flash the indicator
+		tmrFlashMWI.start(1000);
+	} else if (mwi_failure) {
+		tmrFlashMWI.stop();
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+			"mwi_failure16.png"));
+	} else if (mwi_known) {
+		tmrFlashMWI.stop();
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+			"mwi_none16.png"));
+	} else {
+		tmrFlashMWI.stop();
+		statMWILabel->setPixmap(QPixmap::fromMimeSource(
+			"mwi_none16_dis.png"));
+	}
+	
+	// Set tool tip
+	QToolTip::remove(statMWILabel);
+	QToolTip::add(statMWILabel, toolTip);
 	
 	updateSysTrayStatus();
 }
@@ -824,9 +1016,15 @@ void MphoneForm::updateServicesStatus()
 	int num_dnd = 0;
 	int num_cf = 0;
 	int num_auto_answer = 0;
-	QString tipDnd = "Do not disturb active for:\n";
-	QString tipCf = "Redirection active for:\n";
-	QString tipAa = "Auto answer active for:\n";
+	QString tipDnd = "<b>";
+	tipDnd += tr("Do not disturb active for:").replace(' ', "&nbsp;");
+	tipDnd += "</b>\n<table>";
+	QString tipCf = "<b>";
+	tipCf += tr("Redirection active for:").replace(' ', "&nbsp;");
+	tipCf +=  "</b>\n<table>";
+	QString tipAa = "<b>";
+	tipAa += tr("Auto answer active for:").replace(' ', "&nbsp;");
+	tipAa += "</b>\n<table>";
 	
 	// Calculate number of services active.
 	// Determine tool tips with detailed service status for all users.
@@ -834,20 +1032,34 @@ void MphoneForm::updateServicesStatus()
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
 		if (phone->ref_service(*i)->is_dnd_active()) {
 			num_dnd++;
+			tipDnd.append("<tr><td>");
 			tipDnd.append((*i)->get_profile_name().c_str());
-			tipDnd.append("\n");
+			tipDnd.append("</td></tr>");
 		}
 		if (phone->ref_service(*i)->is_cf_active()) {
 			num_cf++;
+			tipCf.append("<tr><td>");
 			tipCf.append((*i)->get_profile_name().c_str());
-			tipCf.append("\n");
+			tipCf.append("</td></tr>");
 		}
 		if (phone->ref_service(*i)->is_auto_answer_active()) {
 			num_auto_answer++;
+			tipAa.append("<tr><td>");
 			tipAa.append((*i)->get_profile_name().c_str());
-			tipAa.append("\n");
+			tipAa.append("</td></tr>");
 		}
 	}
+	
+	QString footer = "<i>";
+	footer += tr("Click to activate/deactivate").replace(' ', "&nbsp;");
+	footer += "</i>";
+	
+	tipDnd.append("</table><br>");
+	tipDnd.append(footer);
+	tipCf.append("</table><br>");
+	tipCf.append(footer);
+	tipAa.append("</table><br>");
+	tipAa.append(footer);
 	
 	// Set service status
 	if (num_dnd == user_list.size()) {
@@ -890,22 +1102,37 @@ void MphoneForm::updateServicesStatus()
 	QToolTip::remove(statCfLabel);
 	QToolTip::remove(statAaLabel);
 
+	QString clickToActivate("<i>");
+	clickToActivate += tr("Click to activate").replace(' ', "&nbsp;");
+	clickToActivate += "</i>";
 	if (num_dnd > 0) {
 		QToolTip::add(statDndLabel, tipDnd);
 	} else {
-		QToolTip::add(statDndLabel, "Do not disturb is not active.");
+		QString status("<p>");
+		status += tr("Do not disturb is not active.").replace(' ', "&nbsp;");
+		status += "</p>";
+		status += clickToActivate;
+		QToolTip::add(statDndLabel, status);
 	}		
 	
 	if (num_cf > 0) {
 		QToolTip::add(statCfLabel, tipCf);
 	} else {
-		QToolTip::add(statCfLabel, "Redirection is not active.");
+		QString status("<p>");
+		status += tr("Redirection is not active.").replace(' ', "&nbsp;");
+		status += "</p>";
+		status += clickToActivate;
+		QToolTip::add(statCfLabel, status);
 	}
 	
 	if (num_auto_answer > 0) {
 		QToolTip::add(statAaLabel, tipAa);
 	} else {
-		QToolTip::add(statAaLabel, "Auto answer is not active.");
+		QString status("<p>");
+		status += tr("Auto answer is not active.").replace(' ', "&nbsp;");
+		status += "</p>";
+		status += clickToActivate;
+		QToolTip::add(statAaLabel, status);
 	}
 	
 	updateSysTrayStatus();
@@ -915,21 +1142,29 @@ void MphoneForm::updateMissedCallStatus(int num_missed_calls)
 {
 	QToolTip::remove(statMissedLabel);
 	
+	QString clickDetails("<i>");
+	clickDetails += tr("Click to see call history for details.").replace(' ', "&nbsp;");
+	clickDetails += "</i>";
 	if (num_missed_calls == 0) {
 		statMissedLabel->setPixmap(QPixmap::fromMimeSource("missed-disabled.png"));
-		QToolTip::add(statMissedLabel, "You have no missed calls.");
+		QString status("<p>");
+		status += tr("You have no missed calls.").replace(' ', "&nbsp;");
+		status += "</p>";
+		status += clickDetails;
+		QToolTip::add(statMissedLabel, status);
 	} else {
 		statMissedLabel->setPixmap(
 			QPixmap::fromMimeSource("missed.png"));
 		
-		QString tip = "You missed ";
-		tip.append(QString().setNum(num_missed_calls));
+		QString tip("<p>");
 		if (num_missed_calls == 1) {
-			tip.append(" call.\n");
+			tip += tr("You missed 1 call.").replace(' ', "&nbsp;");
 		} else {
-			tip.append(" calls.\n");
+			tip += tr("You missed %1 calls.").arg(num_missed_calls).
+			       replace(' ', "&nbsp;");
 		}
-		tip.append("Click to see call history for details.");
+		tip += "</p>";
+		tip += clickDetails;
 		QToolTip::add(statMissedLabel, tip);
 	}
 	
@@ -945,6 +1180,7 @@ void MphoneForm::updateSysTrayStatus()
 	bool auto_answer_active = false;
 	bool multi_services = false;
 	int num_services;
+	bool msg_waiting = false;
 	
 	if (!sysTray) return;
 	
@@ -957,18 +1193,17 @@ void MphoneForm::updateSysTrayStatus()
 	switch(line_substate) {
 	case LSSUB_IDLE:
 	case LSSUB_SEIZED:
-		// If there are missed calls, then show the missed call icon
-		if (call_history->get_num_missed_calls() > 0) {
-			icon_name = "sys_missed";
-			break;
-		}
-		
-		// If a service is active, then show the service icon
+		// Determine MWI and service status
 		user_list = phone->ref_users();
 		for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
-			if (phone->ref_service(*i)->multiple_services_active()) {
+			t_mwi mwi = phone->get_mwi(*i);
+			if (mwi.get_status() == t_mwi::MWI_KNOWN &&
+			    mwi.get_msg_waiting() &&
+			    mwi.get_voice_msg_summary().newmsgs > 0)
+			{
+				msg_waiting = true;
+			} else if (phone->ref_service(*i)->multiple_services_active()) {
 				multi_services = true;
-				break;
 			} else {
 				if (phone->ref_service(*i)->is_dnd_active())  {
 					dnd_active = true;
@@ -982,6 +1217,19 @@ void MphoneForm::updateSysTrayStatus()
 			}
 		}
 		
+		// If there are messages waiting, then show MWI icon
+		if (msg_waiting) {
+			icon_name = "sys_mwi";
+			break;
+		}
+		
+		// If there are missed calls, then show the missed call icon
+		if (call_history->get_num_missed_calls() > 0) {
+			icon_name = "sys_missed";
+			break;
+		}
+		
+		// If a service is active, then show the service icon
 		num_services = (dnd_active ? 1 : 0) + (cf_active ? 1 : 0) + 
 			       (auto_answer_active ? 1 : 0);
 		
@@ -1162,7 +1410,7 @@ void MphoneForm::phoneShowRegistrations()
 
 // Show the semi-modal invite window
 void MphoneForm::phoneInvite(t_user * user_config, 
-		const QString &dest, const QString &subject)
+		const QString &dest, const QString &subject, bool anonymous)
 {
 	// Seize the line, so no incoming call can take the line
 	if (!((t_gui *)ui)->action_seize()) return;
@@ -1180,37 +1428,39 @@ void MphoneForm::phoneInvite(t_user * user_config,
 		
 		connect(inviteForm, 
 			SIGNAL(destination(t_user *, const QString &, const t_url &, 
-					   const QString &)),
+					   const QString &, bool)),
 			this, 
 			SLOT(do_phoneInvite(t_user *, const QString &, 
-				    const t_url &, const QString &)));
+				    const t_url &, const QString &, bool)));
 		
 		connect(inviteForm, SIGNAL(raw_destination(const QString &)), 
 			this, SLOT(addToCallComboBox(const QString &)));
 	}
 	
-	inviteForm->show(user_config, dest, subject);
+	inviteForm->show(user_config, dest, subject, anonymous);
 	updateState();
 }
 
-void MphoneForm::phoneInvite(const QString &dest, const QString &subject)
+void MphoneForm::phoneInvite(const QString &dest, const QString &subject, bool anonymous)
 {
 	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
-	phoneInvite(user, dest, subject);
+	phoneInvite(user, dest, subject, anonymous);
 }
 
 void MphoneForm::phoneInvite()
 {
 	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
-	phoneInvite(user, "", "");
+	phoneInvite(user, "", "", false);
 }
 
 // Execute the invite action. This slot is connected to the destination
 // signal of the invite window.
 void MphoneForm::do_phoneInvite(t_user *user_config, const QString &display, 
-			const t_url &destination, const QString &subject)
+			const t_url &destination, const QString &subject,
+			bool anonymous)
 {
-	((t_gui *)ui)->action_invite(user_config, destination, display.ascii(), subject.ascii());
+	((t_gui *)ui)->action_invite(user_config, destination, display.ascii(), subject.ascii(),
+				     anonymous);
 	updateState();
 }
 
@@ -1220,9 +1470,10 @@ void MphoneForm::phoneRedial(void)
 	t_url url;
 	string display, subject;
 	t_user *user_config;
+	bool hide_user;
 	
-	if (!ui->get_last_call_info(url, display, subject, &user_config)) return;
-	((t_gui *)ui)->action_invite(user_config, url, display, subject);
+	if (!ui->get_last_call_info(url, display, subject, &user_config, hide_user)) return;
+	((t_gui *)ui)->action_invite(user_config, url, display, subject, hide_user);
 	updateState();
 }
 
@@ -1310,7 +1561,7 @@ void MphoneForm::do_phoneRedirect(const list<t_display_url> &destinations)
 }
 
 // Show the semi-modal call transfer window
-void MphoneForm::phoneTransfer(const string &dest)
+void MphoneForm::phoneTransfer(const string &dest, t_transfer_type transfer_type)
 {
 	int active_line = phone->get_active_line();
 	t_user *user_config = phone->get_line_user(active_line);
@@ -1327,23 +1578,84 @@ void MphoneForm::phoneTransfer(const string &dest)
 	
 	transferForm = new TransferForm(this, "transfer", true);
 	MEMMAN_NEW(transferForm);
-	connect(transferForm, SIGNAL(destination(const t_display_url &)),
-		this, SLOT(do_phoneTransfer(const t_display_url &)));
+	connect(transferForm, SIGNAL(destination(const t_display_url &, t_transfer_type)),
+		this, SLOT(do_phoneTransfer(const t_display_url &, t_transfer_type)));
 	
-	transferForm->show(user_config, dest);
+	if (dest.empty() && transfer_type == TRANSFER_BASIC) {
+		// Let form pick a default transfer type based on the current
+		// call status.
+		transferForm->show(user_config);
+	} else {
+		// Set passed destination and transfer type in form
+		transferForm->show(user_config, dest, transfer_type);
+	}
 	updateState();
 }
 
 void MphoneForm::phoneTransfer()
 {
-	phoneTransfer("");
+	unsigned short active_line = phone->get_active_line();
+	unsigned short dummy;
+	
+	if (phone->is_line_transfer_consult(active_line, dummy)) {
+		do_phoneTransferLine();
+	} else {
+		phoneTransfer("", TRANSFER_BASIC);
+	}
 }
 
 // Execute the transfer action. This slot is connected to the destination
 // signal of the transfer window.
-void MphoneForm::do_phoneTransfer(const t_display_url &destination)
+void MphoneForm::do_phoneTransfer(const t_display_url &destination, 
+				  t_transfer_type transfer_type)
 {
-	((t_gui *)ui)->action_refer(destination.url, destination.display);
+	unsigned short active_line;
+	unsigned short other_line;
+		
+	switch (transfer_type) {
+	case TRANSFER_BASIC:
+		((t_gui *)ui)->action_refer(destination.url, destination.display);
+		break;
+	case TRANSFER_CONSULT:
+		((t_gui *)ui)->action_setup_consultation_call(
+				destination.url, destination.display);
+		break;
+	case TRANSFER_OTHER_LINE:
+		active_line = phone->get_active_line();
+		other_line = (active_line == 0 ? 1 : 0);
+		
+		if (phone->get_line_substate(other_line) == LSSUB_ESTABLISHED) {
+			((t_gui *)ui)->action_refer(active_line, other_line);
+		} else {
+			// The other line was released while the user was entering
+			// the refer-target.
+			t_user *user_config = phone->get_line_user(active_line);
+			if (user_config->get_referrer_hold()) {
+				phoneHold(false);
+			}
+		}
+		break;
+	default:
+		assert(false);
+	}
+	
+	updateState();
+}
+
+// Transfer the remote party on the held line to the remote party on the
+// active line.
+void MphoneForm::do_phoneTransferLine()
+{
+	unsigned short active_line = phone->get_active_line();
+	unsigned short line_to_be_transferred;
+	
+	if (!phone->is_line_transfer_consult(active_line, line_to_be_transferred)) {
+		// Somehow the line is not a consultation call.
+		updateState();
+		return;
+	}
+	
+	((t_gui *)ui)->action_refer(line_to_be_transferred, active_line);
 	updateState();
 }
 
@@ -1647,6 +1959,18 @@ void MphoneForm::editUserProfile()
 			SIGNAL(stunServerChanged(t_user *)),
 			this,
 			SLOT(updateStunSettings(t_user *)));
+		
+		// MWI settings change triggers an unsubscribe
+		connect(userProfileForm,
+			SIGNAL(mwiChangeUnsubscribe(t_user *)),
+			this,
+			SLOT(unsubscribeMWI(t_user *)));
+		
+		// MWI settings change triggers a subscribe
+		connect(userProfileForm,
+			SIGNAL(mwiChangeSubscribe(t_user *)),
+			this,
+			SLOT(subscribeMWI(t_user *)));
 	}
 	
 	userProfileForm->show(phone->ref_users(), 
@@ -1700,6 +2024,11 @@ void MphoneForm::newUsers(const list<string> &profiles)
 			      (*i)->get_filename().c_str()) == profiles.end())
 		{
 			// User is not selected anymore.
+			// Unsubscribe MWI
+			if (phone->is_mwi_subscribed(*i)) {
+				phone->pub_unsubscribe_mwi(*i);
+			}
+			
 			// Deregister user
 			if (phone->get_is_registered(*i)) {
 				phone->pub_registration(*i, REG_DEREGISTER);
@@ -1727,7 +2056,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 	}
 	
 	// Add new phone users
-	QProgressDialog progress("Starting user profiles...", "Abort", add_profile_list.size(), this,
+	QProgressDialog progress(tr("Starting user profiles..."), "Abort", add_profile_list.size(), this,
 				 "starting user profiles", true);
 	progress.setCaption(PRODUCT_NAME);
 	progress.setMinimumDuration(200);
@@ -1770,10 +2099,20 @@ void MphoneForm::newUsers(const list<string> &profiles)
 					phone->pub_registration(&user_config,
 						REG_REGISTER,
 						DUR_REGISTRATION(&user_config));
+				} else {
+					// No registration needed, subscribe to
+					// MWI now.
+					if (user_config.get_mwi_sollicited()) {
+						phone->pub_subscribe_mwi(
+							&user_config,
+							DUR_MWI(&user_config));
+					}
 				}
+				
+				// MWI subscription will be done after registration
+				// succeeded.
 			} else {
-				error_msg = "The following profiles are both for user ";
-				error_msg += user_config.get_name();
+				error_msg = tr("The following profiles are both for user %1").arg(user_config.get_name().c_str()).ascii();
 				error_msg += '@';
 				error_msg += user_config.get_domain();
 				error_msg += ":\n\n";
@@ -1781,8 +2120,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 				error_msg += "\n";
 				error_msg += dup_user->get_profile_name();
 				error_msg += "\n\n";
-				error_msg += "You can only run multiple profiles ";
-				error_msg += "for different users.";
+				error_msg += tr("You can only run multiple profiles for different users.");
 				
 				log_file->write_report(error_msg,
 					"MphoneForm::newUsers", 
@@ -1802,6 +2140,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 	
 	updateUserComboBox();
 	updateRegStatus();
+	updateMwi();
 	updateServicesStatus();
 	updateSysTrayStatus();
 	updateMenuStatus();
@@ -1835,8 +2174,8 @@ void MphoneForm::updateUserComboBox()
 void MphoneForm::updateSipUdpPort()
 {
 	((t_gui *)ui)->cb_show_msg(sysSettingsForm,
-			"You have changed the SIP UDP port. This setting will only become "\
-			"active when you restart Twinkle.",
+			tr("You have changed the SIP UDP port. This setting will only become "\
+			"active when you restart Twinkle.").ascii(),
 			MSG_INFO);
 }
 
@@ -1864,6 +2203,16 @@ void MphoneForm::updateAuthCache(t_user *user_config, const string &realm)
 	phone->remove_cached_credentials(user_config, realm);
 }
 
+void MphoneForm::unsubscribeMWI(t_user *user_config)
+{
+	phone->pub_unsubscribe_mwi(user_config);
+}
+
+void MphoneForm::subscribeMWI(t_user *user_config)
+{
+	phone->pub_subscribe_mwi(user_config, DUR_MWI(user_config));
+}
+
 void MphoneForm::viewLog()
 {
 	if (!logViewForm) {
@@ -1887,8 +2236,8 @@ void MphoneForm::viewHistory()
 	}
 	
 	connect(historyForm, 
-		SIGNAL(call(t_user *, const QString &, const QString &)), this,  
-		SLOT(phoneInvite(t_user *, const QString &, const QString &)));
+		SIGNAL(call(t_user *, const QString &, const QString &, bool)), this,  
+		SLOT(phoneInvite(t_user *, const QString &, const QString &, bool)));
 	
 	historyForm->show();
 }
@@ -1921,7 +2270,7 @@ void MphoneForm::quickCall()
 		addToCallComboBox(destination);
 		if (inviteForm) inviteForm->addToInviteComboBox(destination);
 		callComboBox->setFocus();
-		do_phoneInvite(from_user, display.c_str(), dest, "");
+		do_phoneInvite(from_user, display.c_str(), dest, "", false);
 	}
 }
 
@@ -1978,10 +2327,7 @@ void MphoneForm::enableCallOptions(bool enable)
 	callInvite->setEnabled(enable);
 	callPushButton->setEnabled(enable);
 	callComboBox->setEnabled(enable);
-	
-#ifdef HAVE_KDE
 	addressToolButton->setEnabled(enable);
-#endif
 	
 	// Set focus on callComboBox
 	if (enable) {
@@ -2109,6 +2455,8 @@ void MphoneForm::processLeftMouseButtonRelease(QMouseEvent *e)
 		}
 	} else if (statCfLabel->hasMouse()) {
 		srvRedirect();
+	} else if (statMWILabel->hasMouse()) {
+		popupMenuVoiceMail(e->globalPos());
 	} else if (statMissedLabel->hasMouse()) {
 		// Open the history form, when the user clicks on the 
 		// missed calls indication.
@@ -2139,6 +2487,81 @@ void MphoneForm::processCryptLabelClick(int line)
 		phoneResetZrtpSasConfirmation(line);
 	} else {
 		phoneConfirmZrtpSas(line);
+	}
+}
+
+// Show popup menu to access voice mail
+void MphoneForm::popupMenuVoiceMail(const QPoint &pos)
+{
+	QPopupMenu menu(this);
+	QIconSet vmIcon(QPixmap::fromMimeSource("mwi_none16.png"));
+	vmIcon.setPixmap(QPixmap::fromMimeSource("mwi_none16_dis.png"),
+		       QIconSet::Automatic, QIconSet::Disabled);
+	
+	list<t_user *>user_list = phone->ref_users();
+	map<int, t_user *> vm;
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); ++i) {
+		QString address = (*i)->get_mwi_vm_address().c_str();
+		QString entry		= (*i)->get_profile_name().c_str();
+		entry += " - ";		
+		if (address.isEmpty()) {
+			entry += tr("not provisioned");
+		} else {
+			entry += address;
+		}		
+		
+		int id = menu.insertItem(vmIcon, entry);
+		if (address.isEmpty()) {
+			menu.setItemEnabled(id, false);
+		}
+		
+		vm.insert(make_pair(id, *i));
+	}
+	
+	int selected;
+	
+	// If multiple profiles are active, then show the popup menu.
+	// If one profile is active, then call voice mail immediately.
+	if (user_list.size() > 1) {
+		selected = menu.exec(pos);
+		if (selected == -1) return;
+	} else {
+		if (vm.begin()->second->get_mwi_vm_address().empty()) {
+			ui->cb_show_msg(
+				tr("You must provision your voice mail address in your "
+				   "user profile, before you can access it.").ascii(), 
+				MSG_INFO);
+			return;
+		}
+		selected = vm.begin()->first;
+	}
+	
+	// Call can only be made if line is idle
+	int line = phone->get_active_line();
+	if (phone->get_line_state(line) == LS_BUSY) {
+		ui->cb_show_msg(tr("The line is busy. Cannot access voice mail.").ascii(), 
+				MSG_WARNING);
+		return;
+	}
+	
+	t_user *selectedUser = vm[selected];
+	string display, dest_str;
+	ui->expand_destination(selectedUser, 
+		       selectedUser->get_mwi_vm_address(), 
+		       display, dest_str);
+	t_url dest(dest_str);
+	
+	if (dest.is_valid()) {
+		QString destination = selectedUser->get_mwi_vm_address().c_str();
+		addToCallComboBox(destination);
+		if (inviteForm) inviteForm->addToInviteComboBox(destination);
+		callComboBox->setFocus();
+		do_phoneInvite(selectedUser, display.c_str(), dest, "", false);
+	} else {
+		QString msg(tr("The voice mail address %1 is an invalid address. "
+			       "Please provision a valid address in your user profile."));
+		ui->cb_show_msg(msg.arg(selectedUser->get_mwi_vm_address().c_str()).ascii(),
+				MSG_CRITICAL);
 	}
 }
 

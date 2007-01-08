@@ -23,6 +23,7 @@
 #include <string>
 #include "events.h"
 #include "phone.h"
+#include "protocol.h"
 #include "parser/request.h"
 #include "parser/response.h"
 #include "audio/tone_gen.h"
@@ -128,10 +129,11 @@ protected:
 	string		last_called_display;
 	string		last_called_subject;
 	string		last_called_profile; // profile used to make the call
+	bool		last_called_hide_user;
 	
 	// The do_* methods perform the commands parsed by the exec_* methods.
 	virtual bool do_invite(const string &destination, const string &display, 
-			const string &subject, bool immediate);
+			const string &subject, bool immediate, bool anonymous);
 	virtual void do_redial(void);
 	virtual void do_answer(void);
 	virtual void do_answerbye(void);
@@ -144,7 +146,8 @@ protected:
 	virtual void do_bye(void);
 	virtual void do_hold(void);
 	virtual void do_retrieve(void);
-	virtual bool do_refer(const string &destination, bool immediate);
+	virtual bool do_refer(const string &destination, t_transfer_type transfer_type, 
+		bool immediate);
 	virtual void do_conference(void);
 	virtual void do_mute(bool show_status, bool toggle, bool enable);
 	virtual void do_dtmf(const string &digits);
@@ -232,7 +235,7 @@ public:
         virtual void cb_call_answered(t_user *user_config, int line, const t_response *r);
         virtual void cb_call_failed(t_user *user_config, int line, const t_response *r);
         virtual void cb_stun_failed_call_ended(int line);
-        virtual void cb_call_ended(int line, const t_response *r);
+        virtual void cb_call_ended(int line);
         virtual void cb_call_established(int line);
         virtual void cb_options_response(const t_response *r);
         virtual void cb_reinvite_success(int line, const t_response *r);
@@ -282,9 +285,12 @@ public:
 	// The reference failed. Call to referrer is retrieved.
 	virtual void cb_retrieve_referrer(t_user *user_config, int line);
 	
+	// A consulation call for a call transfer is being setup.
+	virtual void cb_consultation_call_setup(t_user *user_config, int line);
+	
 	// STUN errors
-	virtual void cb_stun_failed(int err_code, const string &err_reason);
-	virtual void cb_stun_failed(void);
+	virtual void cb_stun_failed(t_user *user_config, int err_code, const string &err_reason);
+	virtual void cb_stun_failed(t_user *user_config);
 
 	// Interactive call back functions
 	virtual bool cb_ask_user_to_redirect_invite(t_user *user_config, 
@@ -293,15 +299,24 @@ public:
 			const t_url &destination, const string &display, t_method method);
 	virtual bool cb_ask_credentials(t_user *user_config, 
 			const string &realm, string &username, string &password);
-	virtual bool cb_ask_user_to_refer(t_user *user_config, 
+			
+	// Ask questions asynchronously.
+	virtual void cb_ask_user_to_refer(t_user *user_config, 
 			const t_url &refer_to_uri,
 			const string &refer_to_display,
 			const t_url &referred_by_uri,
 			const string &referred_by_display);
+			
+	// Send the answer for refer permission to the transaction layer.
+	void send_refer_permission(bool permission);
 
 	// Show an error message to the user. Depending on the interface mode
 	// the user has to acknowledge the error before processing continues.
 	virtual void cb_show_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	
+	// Ask a yes/no question to the user.
+	// Returns true for yes and false for no.
+	virtual bool cb_ask_msg(const string &msg, t_msg_priority prio = MSG_INFO);
 
 	// Display an error message.
 	virtual void cb_display_msg(const string &msg,
@@ -329,12 +344,18 @@ public:
 	virtual void cb_async_zrtp_confirm_go_clear(int line);
 	virtual void cb_zrtp_sas_confirmed(int line);
 	virtual void cb_zrtp_sas_confirmation_reset(int line);
+	
+	// MWI
+	virtual void cb_update_mwi(void);
+	virtual void cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure);
+	virtual void cb_mwi_terminated(t_user *user_config, const string &reason);
 
 	// Get last call information
 	// Returns true if last call information is valid
 	// Returns false is there is no valid last call information
 	virtual bool get_last_call_info(t_url &url, string &display,
-				string &subject, t_user **user_config) const;
+				string &subject, t_user **user_config,
+				bool &hide_user) const;
 	virtual bool can_redial(void) const;
 	
 	// Execute external commands

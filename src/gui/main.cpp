@@ -24,15 +24,21 @@
 #endif
 
 #include <qapplication.h>
+#include <qtranslator.h>
 #include <qmime.h>
 #include <qprogressdialog.h>
+#include <qtextcodec.h>
+
 #include "mphoneform.h"
+
 #include <iostream>
 #include <string>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <unistd.h>
+
+#include "address_book.h"
 #include "call_history.h"
 #include "cmd_socket.h"
 #include "events.h"
@@ -45,11 +51,12 @@
 #include "util.h"
 #include "phone.h"
 #include "gui.h"
+#include "qt_translator.h"
 #include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
 #include "audits/memman.h"
-#include "qtextcodec.h"
+
 
 using namespace std;
 
@@ -65,6 +72,9 @@ t_init_rand::t_init_rand() { srand(time(NULL)); }
 
 // Initialize random generator
 t_init_rand init_rand;
+
+// Language translator for the core of Twinkle
+t_translator *translator = NULL;
 
 // Indicates if application is ending (because user pressed Quit)
 bool end_app;
@@ -126,6 +136,9 @@ t_sys_settings		*sys_config;
 // Call history
 t_call_history		*call_history;
 
+// Local address book
+t_address_book		*ab_local;
+
 // SIP URI to be called passed via the --call command line parameter
 QString			callto_destination;
 
@@ -139,6 +152,11 @@ bool			cmd_immediate_mode;
 // --call or --cmd
 QString			cmd_set_profile;
 
+// If a port number is passed by the user on the command line, then
+// that port number overrides the port from the system settings.
+unsigned short		g_override_sip_udp_port = 0;
+unsigned short		g_override_rtp_port = 0;
+
 // Thread id of main thread
 pthread_t		thread_id_main;
 
@@ -146,8 +164,11 @@ pthread_t		thread_id_main;
 bool			threading_is_LinuxThreads;
 
 
-void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config_files) {
+void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_file,
+		     list<string> &config_files) 
+{
 	cli_mode = false;
+	override_lock_file = false;
 	config_files.clear();
 
 	for (int i = 1; i < argc; i++) {
@@ -167,9 +188,21 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << "\t\tare the .cfg files in your .twinkle directory.\n";
 			cout << "\t\tYou may specify multiple profiles separated by spaces.\n";
 			cout << endl;
+			cout << " --force";
+			cout << "\tIf a lock file is detected at startup, then override it\n";
+			cout << "\t\tand startup.\n";
+			cout << endl;
 			cout << " -i <IP addr>";
 			cout << "\tIf you have multiple IP addresses on your computer,\n";
 			cout << "\t\tthen you can supply the IP address to use here.\n";
+			cout << endl;
+			cout << " --sip-port <port>\n";
+			cout << "\t\tPort for SIP UDP signalling.\n";
+			cout << "\t\tThis port overrides the port from the system settings.\n";
+			cout << endl;
+			cout << " --rtp-port <port>\n";
+			cout << "\t\tPort for RTP.\n";
+			cout << "\t\tThis port overrides the port from the system settings.\n";
 			cout << endl;
 			cout << " --nic <NIC>";
 			cout << "\tIf you have multiple NICs on your computer,\n";
@@ -253,6 +286,8 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				cout << "Config file name missing for option '-f'.\n";
 				exit(0);
 			}
+		} else if (strcmp(argv[i], "--force") == 0) {
+			override_lock_file = true;
 		} else if (strcmp(argv[i], "-i") == 0) {
 			if (i < argc - 1) {
 				i++;
@@ -269,6 +304,22 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				cout << "IP address missing for option '-i'.\n";
 				exit(0);
 			}
+		} else if (strcmp(argv[i], "--sip-port") == 0) {
+			if (i < argc - 1) {
+				i++;
+				g_override_sip_udp_port = atoi(argv[i]);
+			} else {
+				cout << argv[0] << ": ";
+				cout << "Port missing for option '--sip-port'\n";
+			}
+		} else if (strcmp(argv[i], "--rtp-port") == 0) {
+			if (i < argc - 1) {
+				i++;
+				g_override_rtp_port = atoi(argv[i]);
+			} else {
+				cout << argv[0] << ": ";
+				cout << "Port missing for option '--rtp-port'\n";
+			}	
 		} else if (strcmp(argv[i], "--nic") == 0) {
 			if (i < argc - 1) {
 				i++;
@@ -347,7 +398,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			exit(0);
 		} else {
 			cout << argv[0] << ": ";
-			cout << "Uknown option '" << argv[i] << "'." << endl;
+			cout << "Unknown option '" << argv[i] << "'." << endl;
 			cout << argv[0] << ": ";
 			cout << "Use --help to get a list of available command line options.\n";
 			exit(0);
@@ -363,7 +414,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 	return;
 }
 
-bool open_sip_socket(void) {
+bool open_sip_socket(bool cli_mode) {
 	// Open socket for SIP signaling
 	try {
 		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port(true));
@@ -373,9 +424,15 @@ bool open_sip_socket(void) {
 		} else {
 			log_file->write_report("ICMP processing disabled.", "::main");
 		}
-	} catch (int err) {
-		string msg("Failed to create a UDP socket (SIP) on port ");
-		msg += int2str(sys_config->get_sip_udp_port());
+	} catch (int err) {		
+		string msg;
+		if (cli_mode) {
+			msg = QString("Failed to create a UDP socket (SIP) on port %1")
+			   .arg(sys_config->get_sip_udp_port()).ascii();
+		} else {
+			msg = qApp->translate("GUI", "Failed to create a UDP socket (SIP) on port %1")
+			   .arg(sys_config->get_sip_udp_port()).ascii();
+		}
 		msg += "\n";
 		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
 		msg += strerror(err);
@@ -387,10 +444,68 @@ bool open_sip_socket(void) {
 	return true;
 }
 
+QApplication *create_user_interface(bool cli_mode, char **argv, QTranslator *qtranslator) {
+	QApplication *qa = NULL;
+	
+	if (cli_mode) {
+		// CLI mode
+		ui = new t_userintf(phone);
+		MEMMAN_NEW(ui);
+	} else {
+		// GUI mode
+		
+#ifdef HAVE_KDE
+		// Store the defualt mime source factory for the embedded icons.
+		// This is created by Qt. The KApplication constructor seems to destroy
+		// this default.
+		QMimeSourceFactory *factory_qt = QMimeSourceFactory::takeDefaultFactory();
+		
+		// Initialize the KApplication
+		KCmdLineArgs::init(1, argv, "twinkle", PRODUCT_NAME, "Soft phone",
+				   PRODUCT_VERSION);
+		qa = new KApplication();
+		MEMMAN_NEW(qa);
+		
+		// Store the KDE mime source factory
+		QMimeSourceFactory *factory_kde = QMimeSourceFactory::takeDefaultFactory();
+		
+		// Make the Qt factory the default to make the embedded icons work.
+		QMimeSourceFactory::setDefaultFactory(factory_qt);
+		
+		// Add the KDE factory
+		QMimeSourceFactory::addFactory(factory_kde);
+#else
+		int tmp = 1;
+		qa = new QApplication(tmp, argv);
+		MEMMAN_NEW(qa);
+#endif
+		QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
+		QTextCodec::setCodecForTr(QTextCodec::codecForName("utf8"));
+		
+		// Install Qt translator
+		// Do not report to memman as the translator will be deleted
+		// automatically when the QApplication is deleted.
+		qtranslator = new QTranslator(0);
+		qtranslator->load(QString("twinkle_") + QTextCodec::locale(), 
+			QString(sys_config->get_dir_lang().c_str()));
+		qa->installTranslator(qtranslator);
+		
+		// Create translator for translation of strings from the core
+		translator = new t_qt_translator(qa);
+		MEMMAN_NEW(translator);
+
+		ui = new t_gui(phone);
+		MEMMAN_NEW(ui);
+	}
+	
+	return qa;
+}
+
 int main( int argc, char ** argv )
 {
 	string error_msg;
 	bool cli_mode;
+	bool override_lock_file;
 	list<string> config_files;
 	
 	// Initialize globals
@@ -402,12 +517,9 @@ int main( int argc, char ** argv )
 	
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
-	
-#ifdef HAVE_KDE
-	KApplication *qa = NULL;
-#else
+
 	QApplication *qa = NULL;
-#endif
+	QTranslator *qtranslator = NULL;
 	
 	// Store id of main thread
 	thread_id_main = t_thread::self();
@@ -434,7 +546,7 @@ int main( int argc, char ** argv )
 	MEMMAN_NEW(sys_config);
 	
 	// Parse command line arguments
-	parse_main_args(argc, argv, cli_mode, config_files);
+	parse_main_args(argc, argv, cli_mode, override_lock_file, config_files);
 	
 	// Checking the environment and creating the lock is done at
 	// this early stage to improve performance of the --call parameter.
@@ -484,8 +596,10 @@ int main( int argc, char ** argv )
 	}
 	
 	// Read system configuration
-	if (!sys_config->read_config(error_msg)) {
-		cerr << PRODUCT_NAME << ": " << error_msg << endl;
+	bool sys_config_read = sys_config->read_config(error_msg);
+	qa = create_user_interface(cli_mode, argv, qtranslator);
+	if (!sys_config_read) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
 	}
 	
@@ -508,56 +622,47 @@ int main( int argc, char ** argv )
 			user_host = ip;
 		}
 	}
-
-	// Create user interface
-	if (cli_mode) {
-		// CLI mode
-		ui = new t_userintf(phone);
-		MEMMAN_NEW(ui);
-	} else {
-		// GUI mode
-		
-#ifdef HAVE_KDE
-		// Store the defualt mime source factory for the embedded icons.
-		// This is created by Qt. The KApplication constructor seems to destroy
-		// this default.
-		QMimeSourceFactory *factory_qt = QMimeSourceFactory::takeDefaultFactory();
-		
-		// Initialize the KApplication
-		KCmdLineArgs::init(1, argv, "twinkle", PRODUCT_NAME, "Soft phone",
-				   PRODUCT_VERSION);
-		qa = new KApplication();
-		MEMMAN_NEW(qa);
-		
-		// Store the KDE mime source factory
-		QMimeSourceFactory *factory_kde = QMimeSourceFactory::takeDefaultFactory();
-		
-		// Make the Qt factory the default to make the embedded icons work.
-		QMimeSourceFactory::setDefaultFactory(factory_qt);
-		
-		// Add the KDE factory
-		QMimeSourceFactory::addFactory(factory_kde);
-#else
-		int tmp = 1;
-		qa = new QApplication(tmp, argv);
-		MEMMAN_NEW(qa);
-#endif
-		QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
-
-		ui = new t_gui(phone);
-		MEMMAN_NEW(ui);
-	}
 	
 	if (!env_check_ok) {
 		// Environment is not good
+		// Call the check_environment once more to get proper translation
+		// of the error message. The previous check was done before
+		// the QApplication was created.
+		(void)sys_config->check_environment(env_error_msg);
 		ui->cb_show_msg(env_error_msg, MSG_CRITICAL);
 		exit(1);
 	}
 	
 	// Show error if lock file could not be created
 	if (!lock_created) {	
-		ui->cb_show_msg(lock_error_msg, MSG_CRITICAL);
-		exit(1);
+		string msg;
+		// Call create lock file once more to get proper translation of
+		// error message.
+		if (!sys_config->create_lock_file(msg, already_running)) {
+			if (already_running) {
+				if (!cli_mode) {
+					msg += "\n\n";
+					msg += qApp->translate("GUI",
+						"Override lock file and start anyway?").ascii();
+				}
+				if (override_lock_file || ui->cb_ask_msg(msg, MSG_WARNING)) {
+					sys_config->delete_lock_file();
+					if (!sys_config->create_lock_file(msg, 
+						already_running))
+					{
+						ui->cb_show_msg(msg, MSG_CRITICAL);
+						exit(1);
+					}
+				} else {
+					exit(1);
+				}
+			} else {
+				ui->cb_show_msg(msg, MSG_CRITICAL);
+				exit(1);
+			}
+		}
+		// If for some obscure reason the lock file could be
+		// created this time, then continue.
 	}
 	
 	// Create log file
@@ -596,8 +701,11 @@ int main( int argc, char ** argv )
 				{
 					profile_selected = true;
 				} else {
-					error_msg = "The following profiles are both for user ";
-					error_msg += user_config.get_name();
+					if (cli_mode) {
+						error_msg = QString("The following profiles are both for user %1").arg(user_config.get_name().c_str()).ascii();
+					} else {
+						error_msg = qApp->translate("GUI", "The following profiles are both for user %1").arg(user_config.get_name().c_str()).ascii();
+					}
 					error_msg += '@';
 					error_msg += user_config.get_domain();
 					error_msg += ":\n\n";
@@ -605,8 +713,11 @@ int main( int argc, char ** argv )
 					error_msg += "\n";
 					error_msg += dup_user->get_profile_name();
 					error_msg += "\n\n";
-					error_msg += "You can only run multiple profiles ";
-					error_msg += "for different users.";
+					if (cli_mode) {
+						error_msg += QString("You can only run multiple profiles for different users.").ascii();
+					} else {
+						error_msg += qApp->translate("GUI", "You can only run multiple profiles for different users.").ascii();
+					}
 					ui->cb_show_msg(error_msg, MSG_CRITICAL);
 					profile_selected = false;
 					break;
@@ -618,7 +729,7 @@ int main( int argc, char ** argv )
 			}
 		}
 		
-		if (profile_selected && !open_sip_socket()) {
+		if (profile_selected && !open_sip_socket(cli_mode)) {
 			// Opening SIP socket failed. Let user pick a user profile
 			// again, so he can make changes in settings to fix the error.
 			profile_selected = false;
@@ -642,6 +753,16 @@ int main( int argc, char ** argv )
 	// Read call history
 	if (!call_history->read_history(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
+	}
+	
+	// Create local address book
+	ab_local = new t_address_book();
+	MEMMAN_NEW(ab_local);
+	
+	// Read local address book
+	if (!ab_local->read_address_book(error_msg)) {
+		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
+		ui->cb_show_msg(error_msg, MSG_WARNING);
 	}
 	
 	// Pick network interface
@@ -790,6 +911,11 @@ int main( int argc, char ** argv )
 		sys_config->delete_lock_file();
 		exit(1);
 	}
+	
+	// Validate sound devices
+	if (!sys_config->exec_audio_validation(true, true, true, error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_WARNING);
+	}
 
 	// Start UI event loop (CLI/QApplication/KApplication)
 	try {
@@ -813,14 +939,20 @@ int main( int argc, char ** argv )
 	end_app = true;
 	
 	// Terminate threads
+	// Kill the threads getting receiving input from the outside world first,
+	// so no new inputs come in during termination.
 	if (thr_listen_cmd) {
 		thr_listen_cmd->cancel();
 		thr_listen_cmd->join();
 	}
 	
-	thr_phone_uas->cancel();
+	thr_listen_udp->cancel();
+	thr_listen_udp->join();
+	
+	evq_trans_layer->push_quit();
 	thr_phone_uas->join();
-	thr_trans_mgr->cancel();
+	
+	evq_trans_mgr->push_quit();
 	thr_trans_mgr->join();
 	try {
 		thr_sig_catcher->cancel();
@@ -834,11 +966,10 @@ int main( int argc, char ** argv )
 		thr_alarm_catcher->join();
 	}
 	
-	thr_timekeeper->cancel();
+	evq_timekeeper->push_quit();
 	thr_timekeeper->join();
-	thr_listen_udp->cancel();
-	thr_listen_udp->join();
-	thr_sender_udp->cancel();
+	
+	evq_sender_udp->push_quit();
 	thr_sender_udp->join();
 	
 	if (thr_listen_cmd) {
@@ -865,6 +996,8 @@ int main( int argc, char ** argv )
 	MEMMAN_DELETE(thr_sender_udp);
 	delete thr_sender_udp;
 
+	MEMMAN_DELETE(ab_local);
+	delete ab_local;
 	MEMMAN_DELETE(call_history);
 	delete call_history;
 
@@ -896,9 +1029,20 @@ int main( int argc, char ** argv )
 	MEMMAN_DELETE(evq_timekeeper);
 	delete evq_timekeeper;
 	
+	if (translator) {
+		MEMMAN_DELETE(translator);
+		delete translator;
+		translator = NULL;
+	}
+	
+	if (qtranslator) {
+		MEMMAN_DELETE(qtranslator);
+		delete(qtranslator);
+	}
+	
 	if (qa) {
 		MEMMAN_DELETE(qa);
-		delete(qa);
+		delete qa;
 	}
 
 	// Report memory leaks
@@ -908,7 +1052,7 @@ int main( int argc, char ** argv )
 	MEMMAN_DELETE(log_file);
 	MEMMAN_DELETE(memman);
 	MEMMAN_REPORT;
-
+	
 	delete log_file;
 	delete memman;
 	
