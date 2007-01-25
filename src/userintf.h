@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -365,6 +365,7 @@ public:
 	// The command should be executed immediately.
 	virtual void cmd_call(const string &destination, bool immediate);
 	virtual void cmd_quit(void);
+	void cmd_quit_async(void);
 	virtual void cmd_cli(const string &command, bool immeidate);
 	
 	// Lookup a URL in the address book

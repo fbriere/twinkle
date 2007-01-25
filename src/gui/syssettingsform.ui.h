@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ void SysSettingsForm::populate()
 	settingsWidgetStack->raiseWidget(pageGeneral);
 	
 	// Set focus on first field
-	ringtoneComboBox->setFocus();
+	categoryListBox->setFocus();
 	
 	// Audio settings
 	list_audio_playback_dev = sys_config->get_audio_devices(true);

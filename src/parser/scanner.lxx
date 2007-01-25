@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ using namespace std;
 %option stack
 
 DIGIT		[0-9]
+HEXDIG		[0-9a-fA-F]
 ALPHA		[a-zA-Z]
 CAPITALS	[A-Z]
 ALNUM		[a-zA-Z0-9]
@@ -51,6 +52,8 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 %x C_NEW
 %x C_AUTH_SCHEME
 %x C_RPAREN
+%x C_IPV6ADDR
+%x C_PARAMVAL
 
 %%
 	switch (t_parser::context) {
@@ -64,6 +67,8 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 	case t_parser::X_COMMENT:	BEGIN(C_COMMENT); break;
 	case t_parser::X_NEW:		BEGIN(C_NEW); break;
 	case t_parser::X_AUTH_SCHEME:	BEGIN(C_AUTH_SCHEME); break;
+	case t_parser::X_IPV6ADDR:	BEGIN(C_IPV6ADDR); break;
+	case t_parser::X_PARAMVAL:	BEGIN(C_PARAMVAL); break;
 	default:			BEGIN(INITIAL);
 	}
 
@@ -301,3 +306,24 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 <C_AUTH_SCHEME>.		{ return T_ERROR; }
 <C_AUTH_SCHEME>\r\n		{ return T_CRLF; }
 <C_AUTH_SCHEME>\n		{ return T_CRLF; }
+
+	/* IPv6 address
+	 * NOTE: the validity of the format is not checked here.
+	 */
+<C_IPV6ADDR>({HEXDIG}|[:\.])+	{ yylval.yyt_str = new string(yytext);
+				  MEMMAN_NEW(yylval.yyt_str);
+				  return T_IPV6ADDR; }
+<C_IPV6ADDR>[[:blank:]]	/* Skip white space */
+<C_IPV6ADDR>.		{ return T_ERROR; }
+<C_IPV6ADDR>\r\n	{ return T_CRLF; }
+<C_IPV6ADDR>\n		{ return T_CRLF; }
+
+	/* Parameter values may contain an IPv6 address or reference. */
+<C_PARAMVAL>({TOKEN_SYM}|[:\[\]])+ { yylval.yyt_str = new string(yytext);
+				     MEMMAN_NEW(yylval.yyt_str);
+				     return T_PARAMVAL; }
+<C_PARAMVAL>\"		{ yy_push_state(C_QSTRING); }
+<C_PARAMVAL>[[:blank:]]	/* Skip white space */
+<C_PARAMVAL>.		{ return T_ERROR; }
+<C_PARAMVAL>\r\n	{ return T_CRLF; }
+<C_PARAMVAL>\n		{ return T_CRLF; }

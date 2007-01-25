@@ -5,13 +5,15 @@ Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>
 Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>= 1.4.2), libccrtp-dev (>= 1.5.0), help2man, libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev, automake1.9, cdbs, kdelibs-bin, kdelibs4-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libxml2-dev, libgsm1-dev, libsndfile1-dev, libxpm-dev, libspeex-dev, libboost-regex-dev, libzrtpcpp-dev
 Standards-Version: 3.6.1
+XS-Vcs-Svn: svn://svn.debian.org/pkg-voip/
+XS-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/
 
 Package: twinkle
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Suggests: kaddressbook
 Description: Voice over Internet Protocol (VoIP) SIP Phone
- Softphone for making telephone calls using SIP over an IP network.
+ Soft-phone for making telephone calls using SIP over an IP network.
  .
  Twinkle supports direct IP phone to IP phone communication or a network
  using a SIP proxy to route your calls.
@@ -21,6 +23,8 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
  provider might offer. 
  .
   2 call appearances (lines)
+  Multiple active call identities
+  Custom ring tones
   Call Waiting
   Call Hold
   3-way conference calling
@@ -31,13 +35,45 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Call redirection no answer
   Reject call redirection request
   Blind call transfer
+  Call transfer with consultation (attended call transfer) (new)
   Reject call transfer request
   Call reject
+  Repeat last call
   Do not disturb
-  Auto answer 
-  Send DTMF digits (RFC 2833) to navigate IVR systems
+  Auto answer
+  Message Waiting Indication (new)
+  Voice mail speed dial (new)
+  User definable scripts triggered on call events
+   E.g. to implement selective call reject or distinctive ringing 
+  RFC 2833 DTMF events
+  In-band DTMF
+  Out-of-band DTMF (SIP INFO)
   STUN support for NAT traversal
   Send NAT keep alive packets when using STUN
   NAT traversal through static provisioning
+  Missed call indication
+  History of call detail records for incoming, outgoing, successful and missed
+  DNS SRV support
+  Automatic fail-over to an alternate server if a server is unavailable
+  Other programs can originate a call via Twinkle, e.g. call from address book
+  System tray icon
+  System tray menu to originate and answer calls while Twinkle stays hidden
+  User definable number conversion rules
+  Simple address book (new)
+ .
+ Audio codecs
+  G.711 A-law (64 kbps payload, 8 kHz sampling rate)
+  G.711 u-law (64 kbps payload, 8 kHz sampling rate)
+  GSM (13 kbps payload, 8 kHz sampling rate)
+  Speex narrow band (15.2 kbps payload, 8 kHz sampling rate)
+  Speex wide band (28 kbps payload, 16 kHz sampling rate)
+  Speex ultra wide band (36 kbps payload, 32 kHz sampling rate)
+  G.726 (16, 24, 32 or 40 kbps payload, 8 kHz sampling rate)
+ .
+ KDE goodies
+  Balloon pop-up from system tray when a call comes in
+  Interface to KAddressBook: dial phone numbers from your address book
+  Display names from KAddressBook on incoming calls
+  Display photos from KAddressBook on incoming calls
  .
  Website: http://www.twinklephone.com

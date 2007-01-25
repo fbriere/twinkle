@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -626,7 +626,7 @@ void t_gui::run(void) {
 	s.append(' ').append(PRODUCT_VERSION).append(", ");
 	s.append(sys_config->get_product_date().c_str());
 	mainWindow->display(s);
-	s = "Copyright (C) 2005-2006  ";
+	s = "Copyright (C) 2005-2007  ";
 	s.append(PRODUCT_AUTHOR);
 	mainWindow->display(s);
 	
@@ -1345,7 +1345,8 @@ void t_gui::cb_deregister_failed(t_user *user_config, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = qApp->translate("GUI", "%1, de-registration failed: %1 %2")
+	s = qApp->translate("GUI", "%1, de-registration failed: %2 %3")
+	    .arg(user_config->get_profile_name().c_str())
 	    .arg(r->code)
 	    .arg(r->reason.c_str());
 	mainWindow->display(s);
@@ -2037,7 +2038,7 @@ void t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 					    referred_by_uri).c_str()));
 		s.append("<br>");
 	} else {
-		s.append(qApp->translate("GUI", "Request to transfer received call."));
+		s.append(qApp->translate("GUI", "Request to transfer call received."));
 		s.append("<br>");
 	}
 	s.append("<br>");

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@
 #define CTXT_COMMENT	(t_parser::enter_ctx_comment())
 #define CTXT_NEW	(t_parser::context = t_parser::X_NEW)
 #define CTXT_AUTH_SCHEME (t_parser::context = t_parser::X_AUTH_SCHEME)
+#define CTXT_IPV6ADDR	(t_parser::context = t_parser::X_IPV6ADDR)
+#define CTXT_PARAMVAL	(t_parser::context = t_parser::X_PARAMVAL)
 
 #define PARSE_ERROR(h)	{ t_parser::add_header_error(h); CTXT_INITIAL; }
 
@@ -67,6 +69,8 @@ enum t_context {
 	X_NEW,		// Start of a new SIP message to distinguish
 			// request from responses
 	X_AUTH_SCHEME,	// Authorization scheme context
+	X_IPV6ADDR,	// IPv6 address context
+	X_PARAMVAL,	// Generic parameter value context
 };
 
 	// Parser options

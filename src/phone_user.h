@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,6 +70,19 @@ private:
 	// STUN data
 	unsigned long		stun_public_ip_sip; // Public IP for SIP
 	unsigned short		stun_public_port_sip; // Public port for SIP
+	bool			stun_binding_inuse_registration;
+	bool			stun_binding_inuse_mwi;
+	
+	// A STUN request can be triggered by the following events:
+	//
+	// * Registration
+	// * MWI subscription.
+	//
+	// These events should take place after the STUN transaction has
+	// finished. The following indicators indicate which events should
+	// take place.
+	bool			register_after_stun;
+	bool			mwi_subscribe_after_stun;
 	
 	// Authorizor
 	t_auth			authorizor;
@@ -96,11 +109,23 @@ private:
 
 	void handle_response_options(t_response *r);
 	
+	// Send STUN request
+	void send_stun_request(void);
+	
 	// Send a NAT keep alive packet
 	void send_nat_keepalive(void);
 	
 	// Handle MWI dialog termination
 	void cleanup_mwi_dialog(void);
+	
+	// Cleanup STUN data if not in use anymore
+	void cleanup_stun_data(void);
+	
+	// Stop sending NAT keep alives when not necessary anymore
+	void cleanup_nat_keepalive(void);
+	
+	// Cleanup registration data for STUN and NAT keep alive
+	void cleanup_registration_data(void);
 	
 public:
 	// Timers
@@ -135,7 +160,7 @@ public:
 	void options(const t_url &to_uri, const string &to_display = "");
 	
 	// MWI
-	void subscribe_mwi(unsigned long expires);
+	void subscribe_mwi(void);
 	void unsubscribe_mwi(void);
 	
 	// Returns true is an MWI subscription is established

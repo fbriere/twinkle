@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "address_book.h"
 #include "events.h"
 #include "line.h"
+#include "log.h"
 #include "sys_settings.h"
 #include "translator.h"
 #include "userintf.h"
@@ -1747,6 +1748,8 @@ t_userintf::~t_userintf() {
 	if (thr_process_events) {
 		evq_ui_events.push_quit();
 		thr_process_events->join();
+		log_file->write_report("thr_process_events stopped.", 
+			"t_userintf::~t_userintf", LOG_NORMAL, LOG_DEBUG);
 		MEMMAN_DELETE(thr_process_events);
 		delete thr_process_events;
 	}
@@ -1932,7 +1935,7 @@ void t_userintf::run(void) {
 
 	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
 	cout << endl;
-	cout << "Copyright (C) 2005-2006  " << PRODUCT_AUTHOR << endl;
+	cout << "Copyright (C) 2005-2007  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
 	
 	cout << "Users:";
@@ -3194,6 +3197,12 @@ void t_userintf::cmd_call(const string &destination, bool immediate) {
 
 void t_userintf::cmd_quit(void) {
 	exec_command("quit");
+}
+
+void t_userintf::cmd_quit_async(void) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_QUIT);
+	MEMMAN_NEW(event);
+	evq_ui_events.push(event);
 }
 
 void t_userintf::cmd_cli(const string &command, bool immediate) {

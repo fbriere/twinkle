@@ -1,3 +1,16 @@
+twinkle (1:1.0-1) unstable; urgency=low
+
+  * New upstream release
+    - binNMU required (Closes: #402509)
+    - Via headers containing ipv6 addresses are dropped (Closes: #398849)
+  * Update debian/rules URL location
+  * Delete debian/patches/extra-qualifications.patch included upstream
+  * Update debian/control package Description
+  * Update debian/twinkle.1 manpage for 1.0 release
+  * lintian cleanup: extended-description-line-too-long
+
+ -- Mark Purcell <msp@debian.org>  Thu, 25 Jan 2007 22:32:22 +0000
+
 twinkle (1:1.0~beta-1) unstable; urgency=low
 
   * New upstream release

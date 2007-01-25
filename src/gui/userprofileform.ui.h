@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1326,6 +1326,10 @@ void UserProfileForm::changeMWIType(int idxMWIType) {
 		// Set defaults
 		if (mwiUserLineEdit->text().isEmpty()) {
 			mwiUserLineEdit->setText(usernameLineEdit->text());
+		}
+		if (mwiServerLineEdit->text().isEmpty()) {
+			mwiServerLineEdit->setText(domainLineEdit->text());
+			mwiViaProxyCheckBox->setChecked(useProxyCheckBox->isChecked());
 		}
 	} else {
 		mwiSollicitedGroupBox->setEnabled(false);

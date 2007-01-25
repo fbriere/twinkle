@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -737,7 +737,10 @@ int main( int argc, char ** argv )
 		
 		// In CLI mode the user cannot select another profile.
 		if (!profile_selected) {
-			if (cli_mode) exit(1);
+			if (cli_mode) {
+				sys_config->delete_lock_file();
+				exit(1);
+			}
 		}
 		
 		config_files.clear();
@@ -784,6 +787,7 @@ int main( int argc, char ** argv )
 		
 		if (ui->cb_nat_discovery_cancelled()) {
 			log_file->write_report("User aborted NAT discovery.", "::main");
+			sys_config->delete_lock_file();
 			exit(1);
 		}
 		
@@ -836,8 +840,8 @@ int main( int argc, char ** argv )
 		log_file->write_report(log_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 	
-	// A dedicated thread will catch the SIGALRM signal, therefore
-	// all threads must block SIGALRM. Block SIGALRM now, then all
+	// Dedicated thread will catch SIGALRM, SIGINT, SIGTERM, SIGCHLD signals, 
+	// therefore all threads must block these signals. Block now, then all
 	// created threads will inherit the signal mask.
 	// In LinuxThreads the sigwait does not work very well, so
 	// in LinuxThreads a signal handler is used instead.
@@ -845,17 +849,19 @@ int main( int argc, char ** argv )
 		sigset_t sigset;
 		sigemptyset(&sigset);
 		sigaddset(&sigset, SIGALRM);
+		sigaddset(&sigset, SIGINT);
+		sigaddset(&sigset, SIGTERM);
+		sigaddset(&sigset, SIGCHLD);
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
+	} else {
+		if (!phone->set_sighandler()) {
+			string msg = "Failed to register signal handler.";
+			log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
+			ui->cb_show_msg(msg, MSG_CRITICAL);
+			sys_config->delete_lock_file();
+			exit(1);
+		}
 	}
-	
-	// Block signals as those will be caught by the
-	// signal catcher thread
-	sigset_t sigset;
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGTERM);
-	sigaddset(&sigset, SIGCHLD);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
 				 
 	// Create threads
 	t_thread *thr_sender_udp;
@@ -880,16 +886,15 @@ int main( int argc, char ** argv )
 		thr_timekeeper = new t_thread(timekeeper_main, NULL);
 		MEMMAN_NEW(thr_timekeeper);
 		
-		// Alarm catcher thread
 		if (!threading_is_LinuxThreads) {
+			// Alarm catcher thread
 			thr_alarm_catcher = new t_thread(timekeeper_sigwait, NULL);
-				
-		MEMMAN_NEW(thr_alarm_catcher);
+			MEMMAN_NEW(thr_alarm_catcher);
+
+			// Signal catcher thread
+			thr_sig_catcher = new t_thread(phone_sigwait, NULL);
+			MEMMAN_NEW(thr_sig_catcher);
 		}
-		
-		// Signal catcher thread
-		thr_sig_catcher = new t_thread(phone_sigwait, NULL);
-		MEMMAN_NEW(thr_sig_catcher);
 
 		// Transaction manager thread
 		thr_trans_mgr = new t_thread(transaction_mgr_main, NULL);
@@ -944,33 +949,43 @@ int main( int argc, char ** argv )
 	if (thr_listen_cmd) {
 		thr_listen_cmd->cancel();
 		thr_listen_cmd->join();
+		log_file->write_report("thr_listen_cmd stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	}
 	
 	thr_listen_udp->cancel();
 	thr_listen_udp->join();
+	log_file->write_report("thr_listen_udp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
 	evq_trans_layer->push_quit();
 	thr_phone_uas->join();
+	log_file->write_report("thr_phone_uas stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
 	evq_trans_mgr->push_quit();
 	thr_trans_mgr->join();
-	try {
-		thr_sig_catcher->cancel();
-	} catch (int) {
-		// Thread terminated already by itself
-	}
-	thr_sig_catcher->join();
 	
 	if (!threading_is_LinuxThreads) {
+		try {
+			thr_sig_catcher->cancel();
+		} catch (int) {
+			// Thread terminated already by itself
+		}
+		thr_sig_catcher->join();
+		log_file->write_report("thr_sig_catcher stopped.", "::main", 
+				       LOG_NORMAL, LOG_DEBUG);
+		
 		thr_alarm_catcher->cancel();
 		thr_alarm_catcher->join();
+		log_file->write_report("thr_alarm_catcher stopped.", "::main", 
+				       LOG_NORMAL, LOG_DEBUG);
 	}
 	
 	evq_timekeeper->push_quit();
 	thr_timekeeper->join();
+	log_file->write_report("thr_timekeeper stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
 	evq_sender_udp->push_quit();
 	thr_sender_udp->join();
+	log_file->write_report("thr_sender_udp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
 	if (thr_listen_cmd) {
 		MEMMAN_DELETE(thr_listen_cmd);
@@ -983,10 +998,10 @@ int main( int argc, char ** argv )
 	delete thr_trans_mgr;
 	MEMMAN_DELETE(thr_timekeeper);
 	delete thr_timekeeper;
-	MEMMAN_DELETE(thr_sig_catcher);
-	delete thr_sig_catcher;
 	
 	if (!threading_is_LinuxThreads) {
+		MEMMAN_DELETE(thr_sig_catcher);
+		delete thr_sig_catcher;
 		MEMMAN_DELETE(thr_alarm_catcher);
 		delete thr_alarm_catcher;
 	}

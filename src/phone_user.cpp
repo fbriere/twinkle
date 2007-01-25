@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,20 +35,50 @@ void t_phone_user::cleanup_mwi_dialog(void) {
 		
 		MEMMAN_DELETE(mwi_dialog);
 		delete mwi_dialog;
-		mwi_dialog = NULL;	
+		mwi_dialog = NULL;
+		stun_binding_inuse_mwi = false;
+		cleanup_stun_data();
+		cleanup_nat_keepalive();
 		
 		if (mwi_auto_resubscribe) {
 			if (may_resubscribe) {
 				if (dur_resubscribe > 0) {
 					start_resubscribe_mwi_timer(dur_resubscribe * 1000);
 				} else {
-					subscribe_mwi(DUR_MWI(user_config));
+					subscribe_mwi();
 				}
 			} else if (reason_termination.empty()) {
 				start_resubscribe_mwi_timer(DUR_MWI_FAILURE * 1000);
 			}
 		}
 	}
+}
+
+void t_phone_user::cleanup_stun_data(void) {
+	if (!use_stun) return;
+	
+	if (!stun_binding_inuse_registration &&
+	    !stun_binding_inuse_mwi)
+	{
+		stun_public_ip_sip = 0;
+		stun_public_port_sip = 0;
+	}
+}
+
+void t_phone_user::cleanup_nat_keepalive(void) {
+	if (register_ipaddr == 0 && register_port == 0 &&
+	    !mwi_dialog)
+	{
+		if (id_nat_keepalive) phone->stop_timer(PTMR_NAT_KEEPALIVE, this);
+	}
+}
+
+void t_phone_user::cleanup_registration_data(void) {
+	register_ipaddr = 0;
+	register_port = 0;
+	stun_binding_inuse_registration = false;
+	cleanup_stun_data();
+	cleanup_nat_keepalive();
 }
 
 t_phone_user::t_phone_user(const t_user &profile) {
@@ -75,6 +105,10 @@ t_phone_user::t_phone_user(const t_user &profile) {
 	// Initialize STUN data
 	stun_public_ip_sip = 0L;
 	stun_public_port_sip = 0;
+	stun_binding_inuse_registration = false;
+	stun_binding_inuse_mwi = false;
+	register_after_stun = false;
+	mwi_subscribe_after_stun = false;
 	use_stun = false;
 	use_nat_keepalive = false;
 	
@@ -133,22 +167,17 @@ t_user *t_phone_user::get_user_profile(void) {
 void t_phone_user::registration(t_register_type register_type, bool re_register,
 		unsigned long expires)
 {
-	// If STUN is enabled, then do a STUN query before registering if not
-	// done so already.
-	if (register_type == REG_REGISTER && use_stun &&
-	    stun_public_ip_sip == 0)
-	{
-		if (r_stun) return;
-	
-		StunMessage req;
-		StunAtrString username;
-		username.sizeValue = 0;
-		stunBuildReqSimple(&req, username, false, false);
-		r_stun = new t_client_request(user_config, &req, 0);
-		MEMMAN_NEW(r_stun);
-		phone->send_request(user_config, &req, r_stun->get_tuid());
-		registration_time = expires;
-		return;
+	// If STUN is enabled, then do a STUN query before registering to
+	// determine the public IP address.
+	if (register_type == REG_REGISTER && use_stun) {
+		if (stun_public_ip_sip == 0) {
+			send_stun_request();
+			register_after_stun = true;
+			registration_time = expires;
+			return;
+		}
+		
+		stun_binding_inuse_registration = true;
 	}
 
 	// Stop registration timer for non-query request
@@ -453,7 +482,17 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
                 MEMMAN_DELETE(r_stun);
                 delete r_stun;
                 r_stun = NULL;
-                registration(REG_REGISTER, false, registration_time);
+                
+                if (register_after_stun) {
+                	register_after_stun = false;
+                	registration(REG_REGISTER, false, registration_time);
+                }
+                
+                if (mwi_subscribe_after_stun) {
+                	mwi_subscribe_after_stun = false;
+                	subscribe_mwi();
+                }
+                
                 return;
 	}
 	
@@ -470,12 +509,21 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
         delete r_stun;
         r_stun = NULL;
 	
-        // Try registration later.
-	bool first_failure = !last_reg_failed;
-        last_reg_failed = true;
-        is_registered = false;
-	ui->cb_register_stun_failed(user_config, first_failure);
-        phone->start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000, this);
+        if (register_after_stun) {
+		// Retry registration later.
+		bool first_failure = !last_reg_failed;
+		last_reg_failed = true;
+		is_registered = false;
+		ui->cb_register_stun_failed(user_config, first_failure);
+		phone->start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000, this);
+		register_after_stun = false;
+        }
+        
+        if (mwi_subscribe_after_stun) {
+        	// Retry MWI subscription later
+        	start_resubscribe_mwi_timer(DUR_MWI_FAILURE * 1000);
+        	mwi_subscribe_after_stun = false;
+        }
 }
 
 void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
@@ -510,6 +558,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 				
 				ui->cb_invalid_reg_resp(user_config,
 					r, "Contact header missing.");
+				cleanup_registration_data();
 				return;
                         }
                 }
@@ -533,6 +582,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 				
 				ui->cb_invalid_reg_resp(user_config,
 					r, "Expires parameter/header mising.");
+				cleanup_registration_data();
 				return;
                         }
                         
@@ -564,11 +614,8 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 		// Registration succeeded. If sollicited MWI is provisioned
 		// and no MWI subscription is established yet, then subscribe
 		// to MWI.
-		// TODO: if the SUBSCRIBE does not go to the same IP address
-		//       as the REGISTER, then a new STUN request should be
-		//       done.
 		if (user_config->get_mwi_sollicited() && !mwi_auto_resubscribe) {
-			subscribe_mwi(DUR_MWI(user_config));
+			subscribe_mwi();
 		}
 
                 break;
@@ -584,6 +631,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 					LOG_NORMAL, LOG_WARNING);
                                 ui->cb_invalid_reg_resp(user_config, r,
                                         "Min-Expires header missing.");
+				cleanup_registration_data();
                                 return;
                         }
 
@@ -598,12 +646,15 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                                 log_file->write_report(s, "t_phone_user::handle_response_register",
                                 	LOG_NORMAL, LOG_WARNING);
                                 ui->cb_invalid_reg_resp(user_config, r, s);
+				cleanup_registration_data();
                                 return;
                         }
 
                         // Automatic re-register with Min-Expires time
                         registration_time = r->hdr_min_expires.time;
                         re_register = true;
+                        // No need to cleanup STUN data as a new REGISTER will be
+                        // sent immediately.
                         return;
                 }
 
@@ -619,6 +670,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 			last_reg_failed = true;
 			ui->cb_register_failed(user_config, r, true);			
 	
+			cleanup_registration_data();
 			return;
 		}
 
@@ -630,16 +682,8 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 authorizor.remove_from_cache(""); // Clear credentials cache
 		ui->cb_register_failed(user_config, r, first_failure);
                 phone->start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000, this);
-                
-		// Clear STUN information
-		if (use_stun) {
-			stun_public_ip_sip = 0L;
-			stun_public_port_sip = 0;
-		}
-		
-		if (use_nat_keepalive) {
-			phone->stop_timer(PTMR_NAT_KEEPALIVE, this);
-		}
+
+		cleanup_registration_data();
         }
 }
 
@@ -653,15 +697,7 @@ void t_phone_user::handle_response_deregister(t_response *r) {
 		ui->cb_deregister_failed(user_config, r);
 	}
 	
-	// Clear STUN information
-	if (use_stun) {
-		stun_public_ip_sip = 0L;
-		stun_public_port_sip = 0;
-	}
-	
-	if (use_nat_keepalive) {
-		phone->stop_timer(PTMR_NAT_KEEPALIVE, this);
-	}
+	cleanup_registration_data();
 }
 
 void t_phone_user::handle_response_query_register(t_response *r) {
@@ -676,7 +712,7 @@ void t_phone_user::handle_response_options(t_response *r) {
 	ui->cb_options_response(r);
 }
 
-void t_phone_user::subscribe_mwi(unsigned long expires) {
+void t_phone_user::subscribe_mwi(void) {
 	mwi_auto_resubscribe = true;
 	
 	if (mwi_dialog) {
@@ -694,6 +730,18 @@ void t_phone_user::subscribe_mwi(unsigned long expires) {
 		return;
 	}
 	
+	// If STUN is enabled, then do a STUN query before registering to
+	// determine the public IP address.
+	if (use_stun) {
+		if (stun_public_ip_sip == 0)
+		{
+			send_stun_request();
+			mwi_subscribe_after_stun = true;
+			return;
+		}
+		stun_binding_inuse_mwi = true;
+	}
+	
 	mwi_dialog = new t_mwi_dialog(this);
 	MEMMAN_NEW(mwi_dialog);
 	
@@ -701,8 +749,18 @@ void t_phone_user::subscribe_mwi(unsigned long expires) {
 	// The example flow shows:
 	// Request-URI = mail_user@mailbox_server
 	// To = user@domain
-	mwi_dialog->subscribe(expires, user_config->get_mwi_uri(),
+	mwi_dialog->subscribe(DUR_MWI(user_config), user_config->get_mwi_uri(),
 		user_config->create_user_uri(false), user_config->get_display(false));
+		
+	// Start sending NAT keepalive packets when STUN is used
+	// (or in case of symmetric firewall)
+	if (use_nat_keepalive && id_nat_keepalive == 0) {
+		// Just start the NAT keepalive timer. The SUBSCRIBE
+		// message will create the NAT binding. So there is
+		// no need to send a NAT keep alive packet now.
+		phone->start_timer(PTMR_NAT_KEEPALIVE, this);
+	}
+		
 	cleanup_mwi_dialog();
 }
 
@@ -798,15 +856,41 @@ void t_phone_user::recvd_notify(t_request *r, t_tid tid) {
 	ui->cb_update_mwi();
 }
 
-void t_phone_user::send_nat_keepalive(void) {
-	if (register_ipaddr == 0 || register_port == 0) {
-		log_file->write_report(
-			"Cannot resolve destination for NAT keepalive packet.",
-			"t_phone_user::send_nat_keepalive", LOG_NORMAL, LOG_CRITICAL);
+void t_phone_user::send_stun_request(void) {
+	if (r_stun) {
+		log_file->write_report("STUN request already in progress.",
+			"t_phone_user::send_stun_request", LOG_NORMAL, LOG_DEBUG);
 		return;
 	}
-		
-	evq_sender_udp->push_nat_keepalive(register_ipaddr, register_port);
+
+	StunMessage req;
+	StunAtrString username;
+	username.sizeValue = 0;
+	stunBuildReqSimple(&req, username, false, false);
+	r_stun = new t_client_request(user_config, &req, 0);
+	MEMMAN_NEW(r_stun);
+	phone->send_request(user_config, &req, r_stun->get_tuid());
+	return;
+}
+
+// NOTE: The term "NAT keep alive" does not cover all uses. The keep alives will
+//       also be sent when there is a symmetric firewall without NAT.
+void t_phone_user::send_nat_keepalive(void) {
+	// Send keep-alive to registrar/proxy
+	if (register_ipaddr != 0 && register_port != 0) {
+		evq_sender_udp->push_nat_keepalive(register_ipaddr, register_port);
+	}
+	
+	// Send keep-alive to MWI mailbox if different from registrar/proxy
+	if (mwi_dialog) {
+		unsigned long mwi_ipaddr = mwi_dialog->get_remote_ipaddr();
+		unsigned short mwi_port = mwi_dialog->get_remote_port();
+		if (mwi_ipaddr != 0 && mwi_port != 0 &&
+		    mwi_ipaddr != register_ipaddr && mwi_port != register_port)
+		{
+			evq_sender_udp->push_nat_keepalive(mwi_ipaddr, mwi_port);
+		}
+	}
 }
 
 void t_phone_user::timeout(t_phone_timer timer) {
@@ -845,7 +929,7 @@ void t_phone_user::timeout_sub(t_subscribe_timer timer, t_object_id id_timer)
 		} else if (id_timer == id_resubscribe_mwi) {
 			// Try to subscribe to MWI
 			id_resubscribe_mwi = 0;
-			subscribe_mwi(DUR_MWI(user_config));
+			subscribe_mwi();
 		}
 		break;
 	default:
@@ -1070,6 +1154,12 @@ void t_phone_user::deactivate(void) {
 		mwi_dialog = NULL;
 	}
 	mwi.set_status(t_mwi::MWI_UNKNOWN);
+	
+	// Clear STUN
+	stun_binding_inuse_registration = false;
+	stun_binding_inuse_mwi = false;
+	cleanup_registration_data();
+	cleanup_stun_data();
 	
 	active = false;
 }

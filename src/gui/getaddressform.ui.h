@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,7 +57,8 @@ void GetAddressForm::init()
 	
 	sipOnlyCheckBox->setChecked(sys_config->get_ab_show_sip_only());
 #else
-	tabKABC->hide();
+	addressTabWidget->setTabEnabled(tabKABC, false);
+	addressTabWidget->setCurrentPage(TAB_LOCAL);
 #endif
 	loadLocalAddresses();
 }
@@ -78,9 +79,9 @@ void GetAddressForm::reload()
 
 void GetAddressForm::show()
 {
-#ifdef HAVE_KDE
 	QDialog::show();
 	
+#ifdef HAVE_KDE
 	if (addressListView->childCount() == 0) {
 		if (localListView->childCount() == 0) {
 			QMessageBox::information(this, PRODUCT_NAME, tr(

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -214,7 +214,7 @@ public:
 	void cb_retrieve_referrer(t_user *user_config, int line);
 	
 	// A consulation call for a call transfer is being setup.
-	void t_gui::cb_consultation_call_setup(t_user *user_config, int line);
+	void cb_consultation_call_setup(t_user *user_config, int line);
 	
 	// STUN errors
 	void cb_stun_failed(t_user *user_config, int err_code, const string &err_reason);

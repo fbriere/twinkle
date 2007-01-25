@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -267,6 +267,8 @@ void *listen_udp(void *arg) {
 		// Parse SIP headers
 		try {
 			msg = t_parser::parse(datagram);
+			msg->src_ipaddr = src_addr;
+			msg->src_port = src_port;
 		}
 		catch (int) {
 			// Discard malformed SIP messages.

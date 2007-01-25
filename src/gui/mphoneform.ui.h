@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -776,25 +776,36 @@ void MphoneForm::updateState()
 	if (callRedial->isEnabled() && 
 	    ui->get_last_call_info(last_url, last_display, last_subject, &last_user, hide_user))
 	{
-		QString s = tr("User:").append(" ");
+		QString s = "<b>";
+		s += tr("Repeat last call");
+		s += "</b><br>";
+		s += "<table>";
+		
+		s += "<tr><td>";
+		s += tr("User:").append("</td><td>");
 		s += last_user->get_profile_name().c_str();
-		s.append("\n").append(tr("Call:")).append(" ");
+		s.append("</td></tr><tr><td>").append(tr("Call:")).append("</td><td>");
 		s += ui->format_sip_address(last_user,
 					last_display, last_url).c_str();
+		s += "</td></tr>";
 
 		if (!last_subject.empty()) {
-			s.append("\n").append(tr("Subject:")).append(" ");
+			s.append("<tr><td>").append(tr("Subject:")).append("</td><td>");
 			s += last_subject.c_str();
+			s += "</td></tr>";
 		}
 		
 		if (hide_user) {
-			s.append("\n").append(tr("Hide identity"));
+			s.append("<tr><td colspan=2>").append(tr("Hide identity"));
+			s += "</td></tr>";
 		}
 		
+		s += "</table>";
 		callRedial->setToolTip(s);
 	} else {
 		callRedial->setToolTip(tr("Repeat last call"));
 	}
+	callRedial->setStatusTip(tr("Repeat last call"));
 	
 	updateSysTrayStatus();
 }
@@ -806,8 +817,8 @@ void MphoneForm::updateRegStatus()
 	int num_failed = 0;
 	QString toolTip = "<b>";
 	toolTip.append(tr("Registration status:"));
-	toolTip.append("</b>");
-	toolTip.append("<table><tr>");
+	toolTip.append("</b><br>");
+	toolTip.append("<table>");
 	
 	// Count number of succesful and failed registrations.
 	// Determine tool tip showing registration details for all users.
@@ -932,7 +943,7 @@ void MphoneForm::updateMwi()
 
 	// Determine tool tip
 	QString toolTip = tr("<b>Voice mail status:</b>").append("\n");
-	toolTip.append("<table>");
+	toolTip.append("<br><table>");
 	list<t_user *>user_list = phone->ref_users();
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
 		toolTip.append("<tr><td>");
@@ -1018,13 +1029,13 @@ void MphoneForm::updateServicesStatus()
 	int num_auto_answer = 0;
 	QString tipDnd = "<b>";
 	tipDnd += tr("Do not disturb active for:").replace(' ', "&nbsp;");
-	tipDnd += "</b>\n<table>";
+	tipDnd += "</b><br>\n<table>";
 	QString tipCf = "<b>";
 	tipCf += tr("Redirection active for:").replace(' ', "&nbsp;");
-	tipCf +=  "</b>\n<table>";
+	tipCf +=  "</b><br>\n<table>";
 	QString tipAa = "<b>";
 	tipAa += tr("Auto answer active for:").replace(' ', "&nbsp;");
-	tipAa += "</b>\n<table>";
+	tipAa += "</b><br>\n<table>";
 	
 	// Calculate number of services active.
 	// Determine tool tips with detailed service status for all users.
@@ -2103,9 +2114,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 					// No registration needed, subscribe to
 					// MWI now.
 					if (user_config.get_mwi_sollicited()) {
-						phone->pub_subscribe_mwi(
-							&user_config,
-							DUR_MWI(&user_config));
+						phone->pub_subscribe_mwi(&user_config);
 					}
 				}
 				
@@ -2210,7 +2219,7 @@ void MphoneForm::unsubscribeMWI(t_user *user_config)
 
 void MphoneForm::subscribeMWI(t_user *user_config)
 {
-	phone->pub_subscribe_mwi(user_config, DUR_MWI(user_config));
+	phone->pub_subscribe_mwi(user_config);
 }
 
 void MphoneForm::viewLog()

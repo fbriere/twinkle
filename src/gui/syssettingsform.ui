@@ -1574,7 +1574,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
                             <string>Alt+L</string>
                         </property>
                         <property name="whatsThis" stdset="0">
-                            <string>On an incoming call, Twinkle will try to find the name the name belonging to the incoming SIP address in your address book. This name will be displayed.</string>
+                            <string>On an incoming call, Twinkle will try to find the name belonging to the incoming SIP address in your address book. This name will be displayed.</string>
                         </property>
                     </widget>
                     <widget class="QCheckBox">

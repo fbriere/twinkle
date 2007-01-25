@@ -1565,7 +1565,7 @@ If you disable this option, then the first codec from the active codecs that is 
                                                         <number>127</number>
                                                     </property>
                                                     <property name="minValue">
-                                                        <number>96</number>
+                                                        <number>0</number>
                                                     </property>
                                                     <property name="whatsThis" stdset="0">
                                                         <string>The dynamic type value (96 or higher) to be used for G.726 32 kbps.</string>
@@ -1667,7 +1667,7 @@ If you disable this option, then the first codec from the active codecs that is 
                                                         <string>Codeword &amp;packing order:</string>
                                                     </property>
                                                     <property name="buddy" stdset="0">
-                                                        <cstring>g726PackingComboBox</cstring>
+                                                        <cstring>g726PackComboBox</cstring>
                                                     </property>
                                                 </widget>
                                                 <widget class="QComboBox">
@@ -2286,7 +2286,10 @@ Send DTMF out-of-band via a SIP INFO request.
                                                 <cstring>useDomainInContactCheckBox</cstring>
                                             </property>
                                             <property name="text">
-                                                <string>Use domain name to create a unique contact header value</string>
+                                                <string>Use domain &amp;name to create a unique contact header value</string>
+                                            </property>
+                                            <property name="accel">
+                                                <string>Alt+N</string>
                                             </property>
                                             <property name="whatsThis" stdset="0">
                                                 <string>&lt;p&gt;

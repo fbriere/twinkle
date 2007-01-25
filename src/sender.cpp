@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <ctime>
 #include "events.h"
 #include "log.h"
 #include "sender.h"
@@ -29,6 +30,8 @@
 #include "parser/sip_message.h"
 #include "audits/memman.h"
 #include "stun/stun.h"
+
+#define MAX_TRANSMIT_RETRIES	3
 
 extern t_socket_udp *sip_socket;
 extern t_event_queue *evq_sender_udp;
@@ -77,7 +80,7 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		
 		// If the ICMP error comes from the same destination as the
 		// destination of the packet that failed to be sent, then the
-		// packet should be discarded as it can most likely not b
+		// packet should be discarded as it can most likely not be
 		// delivered and would cause an infinite loop of ICMP errors
 		// otherwise.
 		if (icmp.ipaddr == dst_addr && icmp.port == dst_port) {
@@ -133,7 +136,8 @@ static void send_sip_udp(t_event *event) {
 	log_file->write_footer();
 		
 	bool msg_sent = false;
-	while (!msg_sent) {
+	int transmit_count = 0;
+	while (!msg_sent && transmit_count++ <= MAX_TRANSMIT_RETRIES) {
 		try {
 			sip_socket->sendto(e->dst_addr, e->dst_port, m.c_str(), m.size());
 			num_non_icmp_errors = 0;
@@ -142,6 +146,14 @@ static void send_sip_udp(t_event *event) {
 			if (!handle_socket_err(err, e->dst_addr, e->dst_port)) {
 				// Discard packet.
 				msg_sent = true;
+			} else {
+				if (transmit_count <= MAX_TRANSMIT_RETRIES) {
+					// Sleep 100 ms
+					struct timespec sleeptimer;
+					sleeptimer.tv_sec = 0;
+					sleeptimer.tv_nsec = 100000000;
+					nanosleep(&sleeptimer, NULL);
+				}
 			}
 		}
 	}
@@ -171,7 +183,8 @@ static void send_stun(t_event *event) {
 		STUN_MAX_MESSAGE_SIZE, stun_pass, false);
 
 	bool msg_sent = false;
-	while (!msg_sent) {	
+	int transmit_count = 0;
+	while (!msg_sent && transmit_count++ <= MAX_TRANSMIT_RETRIES) {	
 		try {
 			sip_socket->sendto(e->dst_addr, e->dst_port, m, msg_size);
 			num_non_icmp_errors = 0;
@@ -180,6 +193,14 @@ static void send_stun(t_event *event) {
 			if (!handle_socket_err(err, e->dst_addr, e->dst_port)) {
 				// Discard packet.
 				msg_sent = true;
+			} else {
+				if (transmit_count <= MAX_TRANSMIT_RETRIES) {
+					// Sleep 100 ms
+					struct timespec sleeptimer;
+					sleeptimer.tv_sec = 0;
+					sleeptimer.tv_nsec = 100000000;
+					nanosleep(&sleeptimer, NULL);
+				}
 			}
 		}
 	}
@@ -196,7 +217,8 @@ static void send_nat_keepalive(t_event *event) {
 	char m[2] = { '\r', '\n' };
 	
 	bool msg_sent = false;
-	while (!msg_sent) {
+	int transmit_count = 0;
+	while (!msg_sent && transmit_count++ <= MAX_TRANSMIT_RETRIES) {
 		try {
 			sip_socket->sendto(e->dst_addr, e->dst_port, m, 2);
 			num_non_icmp_errors = 0;
@@ -205,6 +227,14 @@ static void send_nat_keepalive(t_event *event) {
 			if (!handle_socket_err(err, e->dst_addr, e->dst_port)) {
 				// Discard packet.
 				msg_sent = true;
+			} else {
+				if (transmit_count <= MAX_TRANSMIT_RETRIES) {
+					// Sleep 100 ms
+					struct timespec sleeptimer;
+					sleeptimer.tv_sec = 0;
+					sleeptimer.tv_nsec = 100000000;
+					nanosleep(&sleeptimer, NULL);
+				}
 			}
 		}
 	}

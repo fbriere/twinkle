@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -389,12 +389,11 @@ void t_audio_tx::run(void) {
 	struct timeval debug_timer, debug_timer_prev;
 	int last_seqnum = -1; // seqnum of last received RTP packet
 	
-	// RTP packets with multiple SSRCs may be received. Twinkle locks
-	// down on the first SSRC containing a supported codec. Other SSRCs
-	// will be ignored.
-	uint32 ssrc_locked = 0;
-	bool ssrc_locked_down = false;
-	SyncSource *locked_sync_source;
+	// RTP packets with multiple SSRCs may be received. Each SSRC
+	// represents an audio stream. Twinkle will only play 1 audio stream.
+	// On a reception of a new SSRC, Twinkle will switch over to play the
+	// new stream. This supports devices that change SSRC during a call.
+	uint32 ssrc_current = 0;
 	
 	bool recvd_dtmf = false; // indicates if last RTP packets is a DTMF event
 
@@ -478,28 +477,36 @@ void t_audio_tx::run(void) {
 			recvd_codec = it_codec->second;
 		}
 		
-		// Lock down on first SSRC containing a supported codec.
-		if (!ssrc_locked_down) {
+		// Switch over to new SSRC
+		if (last_seqnum == -1 || ssrc_current != adu->getSource().getID()) {
 			if (recvd_codec != CODEC_NULL) {
-				ssrc_locked = adu->getSource().getID();
-				ssrc_locked_down = true;
+				ssrc_current = adu->getSource().getID();
+				
+				// An SSRC defines a sequence number space. So a new
+				// SSRC starts with a new random sequence number
+				last_seqnum = -1;
 				
 				log_file->write_header("t_audio_tx::run", 
 					LOG_NORMAL);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
-				log_file->write_raw(": SSRC locked down to ");
-				log_file->write_raw(ssrc_locked);
+				log_file->write_raw(": play SSRC ");
+				log_file->write_raw(ssrc_current);
 				log_file->write_endl();
 				log_file->write_footer();
 			} else {
-				// First SSRC received had an unsupported codec
+				// SSRC received had an unsupported codec
 				// Discard.
+				// KLUDGE: for now this supports a scenario where a
+				// far-end starts ZRTP negotiation by sending CN
+				// packets with a separate SSRC while ZRTP is disabled
+				// in Twinkle. Twinkle will then receive the CN packets
+				// and discard them here as CN is an unsupported codec.
 				log_file->write_header("t_audio_tx::run", 
-					LOG_NORMAL);
+					LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
-				log_file->write_raw(": First SSRC received (");
+				log_file->write_raw(": SSRC received (");
 				log_file->write_raw(adu->getSource().getID());
 				log_file->write_raw(") has unsupported codec ");
 				log_file->write_raw(ui->format_codec(codec));
@@ -510,22 +517,6 @@ void t_audio_tx::run(void) {
 				delete adu;
 				continue;
 			}
-		}
-		
-		// Discard SSRC's different from the locked down SSRC
-		if (ssrc_locked != adu->getSource().getID()) {
-			log_file->write_header("t_audio_tx::run", 
-				LOG_NORMAL, LOG_DEBUG);
-			log_file->write_raw("Audio tx line ");
-			log_file->write_raw(get_line()->get_line_number()+1);
-			log_file->write_raw(": Discard SSRC ");
-			log_file->write_raw(adu->getSource().getID());
-			log_file->write_endl();
-			log_file->write_footer();
-		
-			MEMMAN_DELETE(const_cast<ost::AppDataUnit*>(adu));
-			delete adu;
-			continue;
 		}
 		
 		map<t_audio_codec, t_audio_decoder *>::const_iterator it_decoder;

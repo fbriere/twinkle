@@ -7,10 +7,9 @@
 export QTDIR=/usr/share/qt3
 
 UPFILENAME = $(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.bz2
-URL2 = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
+URL = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
 
 FILENAME = $(DEB_SOURCE_PACKAGE)_$(DEB_UPSTREAM_VERSION).orig.tar.gz
-URL := http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-1.0beta.tar.gz
 
 -include /usr/share/cdbs/1/class/autotools.mk
 -include /usr/share/cdbs/1/rules/debhelper.mk

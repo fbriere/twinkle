@@ -1592,8 +1592,17 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <property name="name">
             <cstring>callToolbar</cstring>
         </property>
-        <property name="horizontallyStretchable">
+        <property name="resizeEnabled">
             <bool>false</bool>
+        </property>
+        <property name="movingEnabled">
+            <bool>true</bool>
+        </property>
+        <property name="horizontallyStretchable">
+            <bool>true</bool>
+        </property>
+        <property name="verticallyStretchable">
+            <bool>true</bool>
         </property>
         <property name="label">
             <string>Call Toolbar</string>
@@ -1655,10 +1664,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Call</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Call...</string>
-            <comment>Menu item in Call menu</comment>
+            <comment>call menu text</comment>
         </property>
         <property name="toolTip">
             <string>Call someone</string>
@@ -1676,9 +1686,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Answer</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Answer</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Answer incoming call</string>
@@ -1696,9 +1708,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Bye</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Bye</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Release call</string>
@@ -1716,9 +1730,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Reject</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Reject</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Reject incoming call</string>
@@ -1739,9 +1755,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Hold</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Hold</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Put a call on hold, or retrieve a held call</string>
@@ -1756,9 +1774,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Redirect</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>R&amp;edirect...</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Redirect incoming call without answering</string>
@@ -1773,9 +1793,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Dtmf</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Dtmf...</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Open keypad to enter digits for voice menu's</string>
@@ -1835,6 +1857,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="menuText">
             <string>&amp;Terminal capabilities...</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Request terminal capabilities from someone</string>
@@ -1880,9 +1903,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Redial</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
-            <string>Redial</string>
+            <string>&amp;Redial</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Repeat last call</string>
@@ -1928,9 +1953,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Conf</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Conference</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Join two calls in a 3-way conference</string>
@@ -1948,9 +1975,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Mute</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>&amp;Mute</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Mute a call</string>
@@ -1968,9 +1997,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="text">
             <string>Xfer</string>
+            <comment>toolbar text</comment>
         </property>
         <property name="menuText">
             <string>Trans&amp;fer...</string>
+            <comment>menu text</comment>
         </property>
         <property name="toolTip">
             <string>Transfer call</string>

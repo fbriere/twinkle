@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -254,7 +254,7 @@ public:
 	// permission. This response is received on the dialog that received
 	// the REFER before.
 	// The request (r) is the REFER request that was received.
-	void t_line::recvd_refer_permission(bool permission, t_request *r);
+	void recvd_refer_permission(bool permission, t_request *r);
 	
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 
