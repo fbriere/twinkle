@@ -1,3 +1,11 @@
+twinkle (1:1.0-3) unstable; urgency=low
+
+  * Rebuild for libccrtp-dev > 1.5.1 [libccrtp soname]
+    - twinkle depends on libccrtp1-1.5-0 which is not in sid (Closes:
+    #418843)
+
+ -- Mark Purcell <msp@debian.org>  Thu, 12 Apr 2007 21:43:17 +0100
+
 twinkle (1:1.0-2) unstable; urgency=low
 
   * Add upstream patches; audiocheck, conf & incoming
