@@ -16,25 +16,51 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// Twinkle listens on a local socket for external commands.
-// Currently only a call command can be given
-
-#define CMD_SOCKNAME	".cmdsock"
+/**
+ * @file
+ * Twinkle listens on a local socket for external commands.
+ */
 
 #ifndef _H_CMD_SOCKET
 #define _H_CMD_SOCKET
 
 #include <string>
 
+/** Name of the local socket. */
+#define CMD_SOCKNAME	".cmdsock"
+
 using namespace std;
 
-// Create the local socket and listen for commands
+namespace cmdsocket {
+
+/**
+ * Listen on local socket for commands.
+ * @param arg A local socket (@ref t_socket_local)
+ */
 void *listen_cmd(void *arg);
 
-// Send a command to the local socket
+/**
+ * Send call command to the local socket.
+ * @param destination The SIP destination to call.
+ * @param immediate Indicates if the call should be made immediately
+ * without asking the user for confirmation.
+ */
 void cmd_call(const string &destination, bool immediate);
 
-// Send a CLI command to the local socket
+/**
+ * Send a CLI command to the local socket.
+ * @param  cli_command The CLI command to send.
+ * @param immediate Indicates if the call should be made immediately
+ * without asking the user for confirmation.
+ */
 void cmd_cli(const string &cli_command, bool immediate);
+
+/** Send show command to the local socket. */
+void cmd_show(void);
+
+/** Send hide command to the local socket. */
+void cmd_hide(void);
+
+}
 
 #endif

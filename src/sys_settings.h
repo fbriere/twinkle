@@ -140,6 +140,9 @@ private:
 	// settings while Twinkle is running.
 	unsigned short	config_sip_udp_port;
 	
+	/** SIP UDP port overridden by the command options. */
+	unsigned short	override_sip_udp_port;
+	
 	// rtp_port is the base port for RTP streams. Each phone line
 	// uses has its own RTP port number.
 	// line x has RTP port = rtp_port + x * 2 and
@@ -155,7 +158,10 @@ private:
 	//
 	// NOTE: during a call transfer, line 2 will be swapped with another
 	//       line, so the ports swap accordingly.
-	unsigned short		rtp_port;
+	unsigned short	rtp_port;
+	
+	/** RTP port overridden by the command options. */
+	unsigned short	override_rtp_port; 
 	
 	// Ring tone settings
 	bool		play_ringtone;
@@ -263,7 +269,9 @@ public:
 	void set_start_user_nic(const string &dev);
 	void set_start_hidden(bool b);
 	void set_config_sip_udp_port(unsigned short port);
+	void set_override_sip_udp_port(unsigned short port);
 	void set_rtp_port(unsigned short port);
+	void set_override_rtp_port(unsigned short port);
 	void set_play_ringtone(bool b);
 	void set_ringtone_file(const string &file);
 	void set_play_ringback(bool b);

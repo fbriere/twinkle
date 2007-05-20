@@ -25,7 +25,7 @@
     </property>
     <property name="minimumSize">
         <size>
-            <width>571</width>
+            <width>570</width>
             <height>643</height>
         </size>
     </property>
@@ -107,6 +107,9 @@
                         <widget class="QToolButton">
                             <property name="name">
                                 <cstring>addressToolButton</cstring>
+                            </property>
+                            <property name="focusPolicy">
+                                <enum>TabFocus</enum>
                             </property>
                             <property name="text">
                                 <string></string>
@@ -283,7 +286,7 @@
                                         <pixmap>mwi_none16.png</pixmap>
                                     </property>
                                     <property name="whatsThis" stdset="0">
-                                        <string>Auto answer indication.</string>
+                                        <string>Message waiting indication.</string>
                                     </property>
                                 </widget>
                                 <widget class="QLabel">
@@ -866,6 +869,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <blue>238</blue>
                                         </color>
                                     </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
+                                    </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
                                     </property>
@@ -898,6 +904,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <blue>238</blue>
                                         </color>
                                     </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
+                                    </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
                                     </property>
@@ -926,6 +935,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <green>234</green>
                                             <blue>238</blue>
                                         </color>
+                                    </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
                                     </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
@@ -1421,6 +1433,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <blue>238</blue>
                                         </color>
                                     </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
+                                    </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
                                     </property>
@@ -1450,6 +1465,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <blue>238</blue>
                                         </color>
                                     </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
+                                    </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
                                     </property>
@@ -1478,6 +1496,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             <green>234</green>
                                             <blue>238</blue>
                                         </color>
+                                    </property>
+                                    <property name="focusPolicy">
+                                        <enum>NoFocus</enum>
                                     </property>
                                     <property name="frameShape">
                                         <enum>NoFrame</enum>
@@ -1573,6 +1594,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <action name="serviceDnd"/>
         <action name="serviceRedirection"/>
         <action name="serviceAutoAnswer"/>
+        <action name="servicesVoice_mailAction"/>
     </item>
     <item text="&amp;View" name="View">
         <action name="viewCall_HistoryAction"/>
@@ -2201,6 +2223,26 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <string>Display</string>
         </property>
     </action>
+    <action>
+        <property name="name">
+            <cstring>servicesVoice_mailAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>mwi_none16.png</iconset>
+        </property>
+        <property name="text">
+            <string>Voice mail</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Voice mail</string>
+        </property>
+        <property name="toolTip">
+            <string>Access voice mail</string>
+        </property>
+        <property name="accel">
+            <string>F11</string>
+        </property>
+    </action>
 </actions>
 <connections>
     <connection>
@@ -2401,13 +2443,21 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <receiver>MphoneForm</receiver>
         <slot>phoneTransfer()</slot>
     </connection>
+    <connection>
+        <sender>servicesVoice_mailAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>popupMenuVoiceMail()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>callComboBox</tabstop>
+    <tabstop>addressToolButton</tabstop>
     <tabstop>callPushButton</tabstop>
-    <tabstop>userComboBox</tabstop>
     <tabstop>displayTextEdit</tabstop>
     <tabstop>line1RadioButton</tabstop>
+    <tabstop>line2RadioButton</tabstop>
+    <tabstop>userComboBox</tabstop>
     <tabstop>from1Label</tabstop>
     <tabstop>subject1Label</tabstop>
     <tabstop>to1Label</tabstop>
@@ -2580,6 +2630,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>processRightMouseButtonRelease( QMouseEvent * e )</slot>
     <slot>processCryptLabelClick( int line )</slot>
     <slot>popupMenuVoiceMail( const QPoint &amp; pos )</slot>
+    <slot>popupMenuVoiceMail( void )</slot>
     <slot>showDisplay( bool on )</slot>
     <slot>showCompactLineStatus( bool on )</slot>
 </slots>

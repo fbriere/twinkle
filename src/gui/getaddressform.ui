@@ -420,6 +420,18 @@
         <slot>editLocalAddress()</slot>
     </connection>
 </connections>
+<tabstops>
+    <tabstop>addressListView</tabstop>
+    <tabstop>sipOnlyCheckBox</tabstop>
+    <tabstop>reloadPushButton</tabstop>
+    <tabstop>addressTabWidget</tabstop>
+    <tabstop>localListView</tabstop>
+    <tabstop>addPushButton</tabstop>
+    <tabstop>deletePushButton</tabstop>
+    <tabstop>editPushButton</tabstop>
+    <tabstop>okPushButton</tabstop>
+    <tabstop>cancelPushButton</tabstop>
+</tabstops>
 <includes>
     <include location="local" impldecl="in declaration">user.h</include>
     <include location="local" impldecl="in implementation">qlistview.h</include>

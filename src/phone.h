@@ -210,6 +210,13 @@ private:
 	t_phone_user *match_phone_user(t_response *r, t_tuid tuid, bool active_only = false);
 	t_phone_user *match_phone_user(t_request *r, bool active_only = false);
 	t_phone_user *match_phone_user(StunMessage *r, t_tuid tuid, bool active_only = false);
+	
+	/**
+	 * Hunt for an idle line to hande an incoming call.
+	 * @return The number of the line to handle the call (starting at 0).
+	 * @return -1 if there is no line to handle the call.
+	 */
+	int hunt_line(void);
 
 protected:
 	// Events
@@ -414,8 +421,8 @@ public:
 	t_service *ref_service(t_user *user);
 	
 	// Get IP address and port for SIP
-	string get_ip_sip(t_user *user);
-	unsigned short get_public_port_sip(t_user *user);
+	string get_ip_sip(const t_user *user) const;
+	unsigned short get_public_port_sip(const t_user *user) const;
 	
 	// Indicates if STUN is used
 	bool use_stun(t_user *user);

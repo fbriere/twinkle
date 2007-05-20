@@ -3494,22 +3494,34 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
                                 <property name="name">
                                     <cstring>openRingbackToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select ring back tone file.</string>
                                 </property>
                             </widget>
                             <widget class="QToolButton" row="0" column="2">
                                 <property name="name">
                                     <cstring>openRingtoneToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select ring tone file.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="1" column="0">
@@ -3646,33 +3658,51 @@ The values of all SIP headers of the outgoing SIP BYE request are passed in envi
                                 <property name="name">
                                     <cstring>openInCallFailedToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QToolButton" row="0" column="2">
                                 <property name="name">
                                     <cstring>openIncomingCallScriptToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QToolButton" row="4" column="2">
                                 <property name="name">
                                     <cstring>openOutCallAnsweredToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLineEdit" row="2" column="1">
@@ -3695,11 +3725,17 @@ The values of all SIP headers of the outgoing SIP failure response are passed in
                                 <property name="name">
                                     <cstring>openInCallAnsweredToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLineEdit" row="7" column="1">
@@ -3722,11 +3758,17 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
                                 <property name="name">
                                     <cstring>openOutCallToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLineEdit" row="0" column="1">
@@ -3835,11 +3877,17 @@ The values of all SIP headers of the outgoing 200 OK are passed in environment v
                                 <property name="name">
                                     <cstring>openOutCallFailedToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLineEdit" row="5" column="1">
@@ -3911,11 +3959,17 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
                                 <property name="name">
                                     <cstring>openLocalReleaseToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="7" column="0">
@@ -3944,11 +3998,17 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
                                 <property name="name">
                                     <cstring>openRemoteReleaseToolButton</cstring>
                                 </property>
+                                <property name="focusPolicy">
+                                    <enum>TabFocus</enum>
+                                </property>
                                 <property name="text">
                                     <string></string>
                                 </property>
                                 <property name="iconSet">
                                     <iconset>fileopen.png</iconset>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select script file.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="3" column="0">

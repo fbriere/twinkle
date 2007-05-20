@@ -1,3 +1,45 @@
+19 may 2007 - 1.01
+==================
+- Check on user profiles having the same contact name at startup.
+- When comparing an incoming INVITE request-URI with the contact-name,
+  ignore the host part to avoid NAT problems.
+- A call to voice mail will not be attached to the "redial" button.
+- Added voice mail entry to services and systray menu.
+- New command line options: --show, --hide
+- TWINKLE_LINE environment variable in scripts. This variable contains
+  the line number (starting at 1) associated with a trigger.
+- Preload KAddressbook at startup.
+- Allow multiple occurrences of the display_msg parameter in the incoming call
+  script to create multi-line messages.
+- Handle SIP forking and early media interaction
+
+Bug fixes
+---------
+- Fix conference call
+- If lock file still exists when you start Twinkle, Twinkle asks
+  if it should start anyway. When you click 'yes', Twinkle does not start.
+- Audio validation opened soundcard in stereo instead of mono
+- When quitting Twinkle while the call history window is open, a segfault occurs
+- When an incoming call is rejected when only unsupported codecs are offered,
+  it does not show as a missed call in the call history.
+- Segfault when the remote party establishes an early media session without
+  sending a to-tag in the 1XX response (some Cisco devices).
+- in_call_failed trigger was not called when the call failed before ringing.
+- Escape double quote with backslash in display name.
+- On some system Twinkle occasionally crashed at startup with the following
+  error: Xlib: unexpected async reply
+
+Build Changes
+-------------
+- Remove AC_CHECK_HEADERS([]) from configure.in
+- Configure checks for lrelease.
+
+Other
+-----
+- Very small part of the comments has been formatted now for automatic
+  documentation generation with doxygen.
+
+
 22 jan 2007 - 1.0
 =================
 - Local address book

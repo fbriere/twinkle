@@ -1081,9 +1081,12 @@ bool t_phone_user::match(t_request *r) const {
 	}
 
 	// Match on contact URI
-	if (r->uri.get_user() == user_config->get_contact_name() &&
-	    r->uri.get_host() == USER_HOST(user_config))
-	{
+	// NOTE: the host-part is not matched with the IP address to avoid
+	//       NAT traversal problems. Some providers, using hosted NAT
+	//       traversal, send an INVITE to username@<public_ip>. Twinkle
+	//       only knows the <private_ip> in this case though. This is a
+	//       fault on the provider side.
+	if (r->uri.get_user() == user_config->get_contact_name()) {
 		return true;
 	}
 	

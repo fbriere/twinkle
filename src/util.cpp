@@ -478,6 +478,19 @@ vector<string> split_ws(const string &s, bool quote_sensitive) {
         return l;
 }
 
+string join_strings(const vector<string> &v, const string &separator) {
+	string text;
+	for (vector<string>::const_iterator it = v.begin(); it != v.end(); ++it)
+	{
+		if (it != v.begin()) {
+			text += separator;
+		}
+		text += *it;
+	}
+	
+	return text;
+}
+
 string unquote(const string &s) {
         if (s.size() <= 1) return s;
 

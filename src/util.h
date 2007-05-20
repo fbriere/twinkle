@@ -132,6 +132,15 @@ vector<string> split_escaped(const string &s, char c);
 // not be used to split the string.
 vector<string> split_ws(const string &s, bool quote_sensitive = false);
 
+/**
+ * Join a vector of strings into one string.
+ * @param v Vector of strings.
+ * @param separator String to be inserted between the strings to join.
+ * @return A string containing the concatenarion of all strings in v.
+ *         The invidual strings are separated by separator.
+ */
+string join_strings(const vector<string> &v, const string &separator);
+
 // Remove surrounding quotes of a string if present.
 string unquote(const string &s);
 

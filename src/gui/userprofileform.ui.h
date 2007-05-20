@@ -1311,10 +1311,9 @@ void UserProfileForm::testConversion() {
 				number.ascii(), special_phone_symbols.ascii()).c_str();
 	}
 	
-	QString msg = number;
-	msg += " converts to ";
-	msg += current_profile->convert_number(
-			number.ascii(), get_number_conversions()).c_str();
+	QString msg = tr("%1 converts to %2")
+		      .arg(number)
+		      .arg(current_profile->convert_number(number.ascii(), get_number_conversions()).c_str());
 	
 	((t_gui *)ui)->cb_show_msg(this,  msg.ascii(), MSG_INFO);
 }

@@ -1,3 +1,15 @@
+twinkle (1:1.0.1-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/patches deleted as included upstream:
+    - audiocheck.patch
+    - conf.patch
+    - incoming.patch
+  * Rebuild with Depends: libzrtpcpp-0.9-0 (>= 0.9-4)
+    - Crashes when making/receiving a call (Closes: #420138)
+
+ -- Mark Purcell <msp@debian.org>  Sun, 20 May 2007 16:55:03 +0100
+
 twinkle (1:1.0-3) unstable; urgency=low
 
   * Rebuild for libccrtp-dev > 1.5.1 [libccrtp soname]

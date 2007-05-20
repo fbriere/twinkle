@@ -1,0 +1,16 @@
+diff -Nur twinkle-1.0.1/configure.in twinkle-1.0.1.new/configure.in
+--- twinkle-1.0.1/configure.in	2007-05-19 15:48:45.000000000 +0100
++++ twinkle-1.0.1.new/configure.in	2007-05-20 13:26:08.000000000 +0100
+@@ -225,7 +225,11 @@
+ 	AC_CHECK_LIB(boost_regex-gcc, main, [
+ 		LIBS="-lboost_regex-gcc $LIBS"
+ 		echo "LIBS += -lboost_regex-gcc" >> $QT_INCL_PRO],
+-		[AC_MSG_ERROR([libboost_regex library is missing (boost package).])])])
++		[
++		AC_CHECK_LIB(boost_regex-mt, main, [
++			LIBS="-lboost_regex-mt $LIBS"
++			echo "LIBS += -lboost_regex-mt" >> $QT_INCL_PRO],
++			[AC_MSG_ERROR([libboost_regex library is missing (boost package).])])])])
+ 
+ 	
+ $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro

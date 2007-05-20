@@ -61,6 +61,9 @@ private:
 	void find_address(t_user *user_config, const t_url &u);
 	
 public:
+	// Preload KAddressbook
+	static void preload(void);
+	
 	static t_address_finder *get_instance(void);
 	
 	// Find a name given a URL

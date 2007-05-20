@@ -16,9 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// RFC 3265
-// Generic subscription dialog state for subscribers and notifiers
-// For each event type this class should be subclassed.
+/**
+ * @file
+ * Subscription dialog.
+ */
 
 #ifndef _SUBSCRIPTION_DIALOG_H
 #define _SUBSCRIPTION_DIALOG_H
@@ -29,83 +30,143 @@
 // Forward declaration
 class t_phone_user;
 
+/**
+ * RFC 3265
+ * Generic subscription dialog state for subscribers and notifiers.
+ * For each event type this class should be subclassed.
+ */
 class t_subscription_dialog : public t_abstract_dialog {
 protected:
-	// The subscription belonging to this dialog. Subclasses must
-	// create the proper subscription.
+	/**
+	 * The subscription belonging to this dialog. Subclasses must
+	 * create the proper subscription.
+	 */
 	t_subscription		*subscription;
 	
-	// The phone user owning this dialog
+	/** The phone user owning this dialog. */
 	t_phone_user		*phone_user;
 	
-	// This class must be subclassed. The subclass must provide
-	// a public constructor.
+	/**
+	 * Constructor. This class must be subclassed. The subclass must provide
+	 * a public constructor.
+	 */
 	t_subscription_dialog(t_phone_user *_phone_user);
 
-	// Send a request
 	virtual void send_request(t_request *r, t_tuid tuid);
 	
-	// Process a received SUBSCRIBE request
+	/**
+	 * Process a received SUBSCRIBE request.
+	 * @param r The request.
+	 * @param tuid Transaction user id.
+	 * @param tid Transaction id.
+	 */
 	virtual void process_subscribe(t_request *r, t_tuid tuid, t_tid tid);
 	
-	// Process a received NOTIFY request
+	/**
+	 * Process a received NOTIFY request.
+	 * @param r The request.
+	 * @param tuid Transaction user id.
+	 * @param tid Transaction id.
+	 */
 	virtual void process_notify(t_request *r, t_tuid tuid, t_tid tid);
 	
-	// Process the response to the initial SUBSCRIBE.
-	// Returns true, if no further processing is needed. This happens, when a
-	// 423 Interval too brief response is received. Then this method sends a
-	// new SUBSCRIBE.
+	/**
+	 * Process the response to the initial SUBSCRIBE.
+	 * @param r The response.
+	 * @param tuid Transaction user id.
+	 * @param tid Transaction id.
+	 * @return true, if no further processing is needed. This happens, when a
+	 * 423 Interval too brief response is received. Then this method sends a
+	 * new SUBSCRIBE.
+	 * @return false, subcalss must do further processing.
+	 */
 	virtual bool process_initial_subscribe_response(t_response *r, t_tuid tuid, t_tid tid);
 
 public:
+	/** Destructor. */
 	virtual ~t_subscription_dialog();
 	
-	// Create a request using the stored state information
 	virtual t_request *create_request(t_method m);
 	
 	virtual t_subscription_dialog *copy(void) = 0;
 	
-	// Resend mid-dialog request with an authorization header containing
-	// credentials for the challenge in the response. The response
-	// must be a 401 or 407.
-	// Returns false if credentials could not be determined.
 	virtual bool resend_request_auth(t_response *resp);
 
-	// Redirect mid-dialog request to the next destination
-	// Returns false if there is no next destination.
 	virtual bool redirect_request(t_response *resp);
 	
-	// Failover request to the next destination from DNS lookup.
-	// Returns false if there is no next destination.
 	virtual bool failover_request(t_response *resp);
 
-	// Handle received events
 	virtual void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
+	
 	virtual void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 	
-	// Match request with dialog and subscription
-	// Returns true if the request matches
-	// Returns false if the request does not match. In this case the request
-	// may match partially, i.e. the from-tag matches, but the to-tag does not.
-	// In case of a partial match, partial is set to true.
+	/**
+	 * Match request with dialog and subscription.
+	 * @param r The request.
+	 * @param partial Indicates if there is a partial match on return.
+	 * @return true, if the request matches.
+	 * @return false, if the request does not match. In this case the request
+	 * may match partially, i.e. the from-tag matches, but the to-tag does not.
+	 * In case of a partial match, partial is set to true.
+	 */
 	virtual bool match_request(t_request *r, bool &partial);
 	
-	// Get the state of the subscription
+	/**
+	 * Get the state of the subscription.
+	 * @return The subscription state.
+	 */
 	t_subscription_state get_subscription_state(void) const;
+	
+	/**
+	 * Get the reason for termination of the subscription.
+	 * @return The termination reason.
+	 */
 	string get_reason_termination(void) const;
+	
+	/**
+	 * Get the time after which a resubscription may be tried.
+	 * @return The time in seconds.
+	 */
 	unsigned long get_resubscribe_after(void) const;
+	
+	/**
+	 * Check if a resubscription may be tried.
+	 * @return true, if a resubscription may be tried.
+	 * @return false, otherwise.
+	 */
 	bool get_may_resubscribe(void) const;
 	
-	// Process timeouts
-	// The return value indicates if processing is finished.
+	/**
+	 * Process timeout.
+	 * @param timer The timer that expired.
+	 * @return true, if processing is finished.
+	 * @return false, if subsclass needs to do further processing.
+	 */
 	virtual bool timeout(t_subscribe_timer timer);
 	
-	// Match a timer id with a running timer
+	/**
+	 * Match a timer id with a running timer.
+	 * @param timer The running timer.
+	 * @param id_time The timer id.
+	 * @return true, if timer id matches with timer.
+	 * @return false, otherwise.
+	 */
 	virtual bool match_timer(t_subscribe_timer timer, t_object_id id_timer) const;
 	
+	/**
+	 * Subscribe to an event (send SUBSCRIBE).
+	 * @param epxires The subscription interval in seconds.
+	 * @param req_uri The request-URI for the SUBSCRIBE.
+	 * @param to_uri The URI for the To header in the SUBSCRIBE.
+	 * @param to_display The display name for the To header in the SUBSCRIBE.
+	 */
 	virtual void subscribe(unsigned long expires, const t_url &req_uri, 
 			const t_url &to_uri, const string &to_display);
+			
+	/** Unsubscribe to an event (send SUBSCRIBE). */
 	virtual void unsubscribe(void);
+	
+	/** Refresh subscription. */
 	virtual void refresh_subscribe(void);
 };
 

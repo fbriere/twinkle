@@ -66,7 +66,7 @@ t_audio_io* t_audio_io::open(const t_audio_device& dev, bool playback, bool capt
 }
 
 bool t_audio_io::validate(const t_audio_device& dev, bool playback, bool capture) {
-	t_audio_io *aio = open(dev, playback, capture, false, 2, SAMPLEFORMAT_S16, 8000, true);
+	t_audio_io *aio = open(dev, playback, capture, false, 1, SAMPLEFORMAT_S16, 8000, true);
 	
 	if (aio) {
 		MEMMAN_DELETE(aio);

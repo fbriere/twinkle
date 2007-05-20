@@ -275,6 +275,8 @@ public:
 	// Execute external commands
 	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
+	void cmd_show(void);
+	void cmd_hide(void);
 	
 	// Lookup a URL in the address book
 	string get_name_from_abook(t_user *user_config, const t_url &u);

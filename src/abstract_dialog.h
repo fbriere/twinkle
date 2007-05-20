@@ -16,6 +16,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * Abstract class for all types of SIP dialogs.
+ */
+
 #ifndef _ABSTRACT_DIALOG_H
 #define _ABSTRACT_DIALOG_H
 
@@ -32,142 +37,313 @@
 
 using namespace std;
 
+/**
+ * Abstract class for all types of SIP dialogs.
+ * Concrete classes for all SIP dialogs inherit from this class.
+ */
 class t_abstract_dialog : public t_id_object {
 protected:	
-	// User profile of user for which this dialog is created.
-	// This is a pointer to the user_config owned by a phone user.
-	// So this pointer should never be deleted.
+	/** 
+	 * User profile of user for which this dialog is created.
+	 * This is a pointer to the user profile owned by a phone user.
+	 * So this pointer should never be deleted.
+	 */
 	t_user			*user_config;
 
-	// Dialog state information
-	string		call_id;
-	bool		call_id_owner;	// indicates if call_id generated locally
-	string		local_tag;
-	string		remote_tag;
-	unsigned long	local_seqnr;	// last local seqnr issued
-	unsigned long	remote_seqnr;	// last remote seqnr received
+	string		call_id;	/**< SIP call id. */
+	bool		call_id_owner;	/**< Indicates if the call id is generated locally. */
+	string		local_tag;	/**< Local tag value. */
+	string		remote_tag;	/**< Remote tag value. */
+	unsigned long	local_seqnr;	/**< Last local sequence number issued. */
+	unsigned long	remote_seqnr;	/**< Last remote sequence number received. */
 
-	// RFC 3261 allows the CSeq sequence to be 0. So there is no
-	// invalid sequence number. The remote_seqnr_set indicates if
-	// the remote_seqnr is set by the far-end.
+	/**
+	 * The remote_seqnr_set indicates if the remote_seqnr is set by the far-end.
+	 * RFC 3261 allows the CSeq sequence number to be 0. So there is no
+	 * invalid sequence number.
+	 */
 	bool		remote_seqnr_set;
 	
-	t_url		local_uri;
-	string		local_display;
-	t_url		remote_uri;
-	string		remote_display;
+	t_url		local_uri;		/**< URI of the local party (From/To headers). */
+	string		local_display;		/**< Display name of the local party. */
+	t_url		remote_uri;		/**< URI of the remote party (From/To headers). */
+	string		remote_display;		/**< Display name of the remote party. */
+	 
+	/** URI of the remote target (Contact header). This is the destination for a request. */
 	t_url		remote_target_uri;
-	string		remote_target_display;
-	list<t_route>	route_set;
-	unsigned long	local_resp_nr;	// last local response nr issued
-	unsigned long	remote_resp_nr;	// last remote response nr received
-	set<string>	remote_extensions; // extensions supported by remote end
+	string		remote_target_display;	/**< Display name of the remote target. */
 	
-	// The IP address and port from which the last message was
-	// received.
+	list<t_route>	route_set;		/**< The route set. */
+	unsigned long	local_resp_nr;		/**< Last local response number (for 100rel) issued. */
+	unsigned long	remote_resp_nr;		/**< Last remote response number (for 100rel) received. */
+	set<string>	remote_extensions;      /**< SIP extensions supported by the remote party. */
+	
+	/** The IP address from which the last SIP message was received. */
 	unsigned long	remote_ipaddr;
+	
+	/** The port from which the last SIP message was received. */
 	unsigned short	remote_port;
 
-	// Remove a client request. Pass one of the client request
-	// pointers to this member. The reference count of the
-	// request will be decremented. If it becomes zero, then
-	// the request object is deleted.
-	// In all cases the pointer will be set to NULL.
+	/**
+	 * Remove a client request. Pass one of the client request
+	 * pointers to this member. The reference count of the
+	 * request will be decremented. If it becomes zero, then
+	 * the request object is deleted.
+	 * In all cases the passed pointer will be set to NULL.
+	 * @param cr The client request.
+	 */
 	void remove_client_request(t_client_request **cr);
 
-	// Create route set based on a response.
+	/**
+	 * Create route set from the Record-Route header of a response.
+	 * If the response does not have a Record-Route header, then the route
+	 * set is cleared.
+	 * @param r The response.
+	 */
 	void create_route_set(t_response *r);
 
-	// Create remote target uri and display based on a response.
+	/**
+	 * Create remote target uri and display from the Contact header of a response.
+	 * @param r The response.
+	 */
 	void create_remote_target(t_response *r);
 	
-	// Send a request
+	/**
+	 * Send a request within the dialog.
+	 * Sending a request will create a SIP transaction.
+	 * @param r The request.
+	 * @param tuid The transaction user id to be assigend to the transaction.
+	 */
 	virtual void send_request(t_request *r, t_tuid tuid) = 0;
 
-	// Resend an existing client request.
-	// A new Via and CSeq header will be put in the request.
+	/**
+	 * Resend an existing client request.
+	 * A new Via and CSeq header will be put in the request.
+	 * Resending is different from retransmitting. Requests are automatically
+	 * retransmitted by the transaction layer. Resending creates a new SIP
+	 * transaction. Resending is f.i. done when a request must be redirected.
+	 * @param cr The client request.
+	 */
 	virtual void resend_request(t_client_request *cr);
 	
-	// Resend mid-dialog request with an authorization header containing
-	// credentials for the challenge in the response. The response
-	// must be a 401 or 407.
-	// Returns false if credentials could not be determined.
+	/**
+	 * Resend mid-dialog request with an authorization header containing
+	 * credentials for the challenge in the response. 
+	 * @param cr The request.
+	 * @param resp The 401 or 407 response.
+	 * @return true, if resending succeeded.
+	 * @return false, if credentials could not be determined.
+	 *
+	 * @pre The response must be a 401 or 407.
+	 */
 	bool resend_request_auth(t_client_request *cr, t_response *resp);
 	
-	// Redirect mid-dialog request to the next destination
-	// @param contact contains the contact to which the request is sent.
-	// Returns false if there is no next destination.
+	/**
+	 * Redirect mid-dialog request to the next destination.
+	 * There are multiple reasons for redirection:
+	 *  - A 3XX response was received.
+	 *  - The request failed with a non-3XX response. A next contact should be tried.
+	 *
+	 * @param cr The request.
+	 * @param resp The failure response that was received on the request. 
+	 * @param contact Contains on succesful return the contact to which the request is sent.
+	 * @return true, if the request is sent to a next destination.
+	 * @return false, if no next destination exists.
+	 */
 	bool redirect_request(t_client_request *cr, t_response *resp,
 			t_contact_param &contact);
 	
-	// Failover request to the next destination from DNS lookup.
-	// Returns false if there is no next destination.
+	/**
+	 * Failover request to the next destination from DNS lookup.
+	 * @param cr The request.
+	 * @return true, if the request is sent to a next destination.
+	 * @return false, if no next destination exists.
+	 */
 	bool failover_request(t_client_request *cr);
 
 public:
+	/**
+	 * Constructor.
+	 * @param user User profile of the user for which the dialog must be created.
+	 */
 	t_abstract_dialog(t_user *user);
+	
+	/**
+	 * Destructor.
+	 */
 	virtual ~t_abstract_dialog();
 
-	// Create a request using the stored state information
+	/**
+	 * Create a request using the stored dialog state information.
+	 * @param m Request method.
+	 * @return The request.
+	 */
 	virtual t_request *create_request(t_method m);
 
+	/**
+	 * Copy a dialog.
+	 * @return A copy of the dialog.
+	 */
 	virtual t_abstract_dialog *copy(void) = 0;
 	
+	/**
+	 * Get a pointer to the user profile of the user for whom this dialog
+	 * was created.
+	 * @return The user profile.
+	 */
 	t_user *get_user(void) const;
 
-	// Resend mid-dialog request with an authorization header containing
-	// credentials for the challenge in the response. The response
-	// must be a 401 or 407.
-	// Returns false if credentials could not be determined.
+	/**
+	 * Resend mid-dialog request with an authorization header containing
+	 * credentials for the challenge in the response.
+	 * @param resp The 401 or 407 response to the request that must be resent.
+	 * @return true, if resending succeeded.
+	 * @return false, if credentials could not be determined.
+	 *
+	 * @pre The response must be a 401 or 407.
+	 */
 	virtual bool resend_request_auth(t_response *resp) = 0;
 
-	// Redirect mid-dialog request to the next destination
-	// Returns false if there is no next destination.
+	/**
+	 * Redirect mid-dialog request to the next destination.
+	 * @param resp The response to the request that must be resent.
+	 * @return true, if the request is sent to a next destination.
+	 * @return false, if no next destination exists.
+	 */
 	virtual bool redirect_request(t_response *resp) = 0;
 	
-	// Failover request to the next destination from DNS lookup.
-	// Returns false if there is no next destination.
+	/**
+	 * Failover request to the next destination from DNS lookup.
+	 * @param resp The response to the request that must be resent.
+	 * @return true, if the request is sent to a next destination.
+	 * @return false, if no next destination exists.
+	 */
 	virtual bool failover_request(t_response *resp) = 0;
 
-	// Handle received events
+	/**
+	 * Process a received response.
+	 * @param r The received response.
+	 * @param tuid The transaction user id of the transaction for the response.
+	 * @param tid The transaction id of the transaction for the response.
+	 */
 	virtual void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
+	
+	/**
+	 * Process a received request.
+	 * @param r The received request.
+	 * @param tuid The transaction user id of the transaction for the request.
+	 * @param tid The transaction id of the transaction for the request.
+	 */
 	virtual void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 
-	// Match response with dialog
+	/**
+	 * Match a response with the dialog.
+	 * @param r The response.
+	 * @param tuid The transaction user id of the transaction for the response.
+	 * @return true, if the response matches the dialog.
+	 * @return false, otherwise.
+	 */
 	virtual bool match_response(t_response *r, t_tuid tuid);
 
-	// Match request with dialog
+	/**
+	 * Match a request with the dialog.
+	 * @param r The request.
+	 * @return true, if the request matches the dialog.
+	 * @return false, otherwise.
+	 */
 	virtual bool match_request(t_request *r);
 	
-	// Partially match request with dialog, i.e. do not match remote tag
+	/**
+	 * Partially match a request with the dialog, i.e. do not match remote tag.
+	 * @param r The request.
+	 * @return true, if the request partially matches the dialog.
+	 * @return false, otherwise.
+	 */
 	virtual bool match_partial_request(t_request *r);
 	
-	// Match call-id and tags with dialog
+	/**
+	 * Match call-id and tags with the dialog.
+	 * @param _call_id SIP call-id.
+	 * @param to_tag SIP to-tag.
+	 * @param from_tag SIP from-tag.
+	 * @return true, if call-id and tags match the dialog.
+	 * @return false, otherwise.
+	 */
 	virtual bool match(const string &_call_id, const string &to_tag, 
 		const string &from_tag) const;
 	
-	// Get the target uri/display
+	/**
+	 * Get the URI of the remote target.
+	 * @return remote target URI.
+	 * @see remote_target_uri
+	 */
 	t_url get_remote_target_uri(void) const;
+	
+	/**
+	 * Get the display name of the remote target.
+	 * @return display name of remote target.
+	 * @see remote_target_display
+	 */
 	string get_remote_target_display(void) const;
 	
-	// Get the remote uri/display
+	/**
+	 * Get the URI of the remote party.
+	 * @return URI of remote party.
+	 * @see remote_uri
+	 */
 	t_url get_remote_uri(void) const;
+	
+	/**
+	 * Get the display name of the remote party.
+	 * @return display name of the remote party.
+	 * @see remote_display
+	 */
 	string get_remote_display(void) const;
 	
-	// Get the remote IP address and port
+	/**
+	 * Get the IP address from which the last SIP message was received.
+	 * @return IP address.
+	 */
 	unsigned long get_remote_ipaddr(void) const;
+	
+	/**
+	 * Get the port from which the last SIP message was received.
+	 * @return port.
+	 */
 	unsigned short get_remote_port(void) const;
 	
-	// Get call-id and tags
+	/**
+	 * Get the SIP call id.
+	 * @return SIP call id.
+	 */
 	string get_call_id(void) const;
+	
+	/**
+	 * Get the local tag.
+	 * @return local tag.
+	 */
 	string get_local_tag(void) const;
+	
+	/**
+	 * Get the remote tag.
+	 * @return remote tag.
+	 */
 	string get_remote_tag(void) const;
 	
-	// Returns true if remote end supports the extension
+	/**
+	 * Check if the remote party supports a particular SIP exentsion.
+	 * @param extension Name of the SIP extension.
+	 * @return true, if remote party supports the extension.
+	 * @return false, otherwise.
+	 */
 	virtual bool remote_extension_supported(const string &extension) const;
 
-	// Returns true if we are the owner of the call id, i.e. the
-	// value is generated locally.
+	/**
+	 * Check if this dialog is the owner of the call id.
+	 * @return true, if this dialog is the owner.
+	 * @return false, otherwise.
+	 * @see call_id_owner
+	 */
 	bool is_call_id_owner(void) const;
 };
 

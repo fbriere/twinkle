@@ -75,6 +75,7 @@ libtwinkle_a_SOURCES =\
 	protocol.h\
         redirect.h\
         sender.h\
+	sequence_number.h\
         service.h\
         session.h\
 	sub_refer.h\

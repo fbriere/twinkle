@@ -16,7 +16,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// Object for storing a request together with its TU id and transaction id.
+/** @file
+ * Bind request with TU and transaction
+ */
 
 #ifndef _CLIENT_REQUEST_H
 #define _CLIENT_REQUEST_H
@@ -31,50 +33,94 @@
 
 using namespace std;
 
+/** Object for storing a request together with its Transaction User id and transaction id. */
 class t_client_request {
 private:
-	static t_mutex	mtx_next_tuid; // protect updates on next_tuid
-	static t_tuid	next_tuid;
+	static t_mutex	mtx_next_tuid; 	/**< Protect updates on @ref next_tuid */
+	static t_tuid	next_tuid;     	/**< Next transaction user id to handout. */
 
 	// A client request is either a SIP or a STUN request
-	t_request	*request;
-	StunMessage	*stun_request;
+	t_request	*request;	/**< SIP request. */
+	StunMessage	*stun_request;	/**< STUN request. */
 	
-	t_tuid		tuid;
-	t_tid		tid;
+	t_tuid		tuid;		/**< Transaction user id. */
+	t_tid		tid;		/**< Transaction id. */
 
-	// Number of references to this object (#dialogs)
+	/** Number of references to this object (#dialogs). */
 	int		ref_count;
 
 public:
-	// Redirector for 3XX redirections
+	/** Redirector for 3XX redirections. */
 	t_redirector	redirector;
 
-	// A copy of the request is stored in the client_request object
+	/**
+	 * Constructor.
+	 * A copy of the request is stored in the client_request object.
+	 * @param user The user profile of the user sending the request.
+	 * @param r SIP request.
+	 * @param _tid Transaction id.
+	 */
 	t_client_request(t_user *user, t_request *r, const t_tid _tid);
+	
+	/**
+	 * Constructor.
+	 * A copy of the request is stored in the client_request object.
+	 * @param user The user profile of the user sending the request.
+	 * @param r STUN request.
+	 * @param _tid Transaction id.
+	 */	
 	t_client_request(t_user *user, StunMessage *r, const t_tid _tid);
+	
+	/** Destructor. */
 	~t_client_request();
 
+	/**
+	 * Create a copy of the client request.
+	 * @return Copy of the client request.
+	 * @note: The request inside the client request is copied.
+	 */
 	t_client_request *copy(void);
 
-	// Returns the request pointer
+	/**
+	 * Get a pointer to the SIP request.
+	 * @return Pointer to the SIP request.
+	 */
 	t_request *get_request(void) const;
+	
+	/**
+	 * Get a pointer to the STUN request.
+	 * @return Pointer to the STUN request.
+	 */
 	StunMessage *get_stun_request(void) const;
 
+	/** Get the transaction user id. */
 	t_tuid get_tuid(void) const;
+	
+	/** Get the transaction id. */
 	t_tid get_tid(void) const;
+	
+	/** Set the transaction id. */
 	void set_tid(t_tid _tid);
 
-	// Create a new tuid and set tid
+	/** 
+	 * Create a new tuid and set tid.
+	 * @param _tid The new tid to set.
+	 */
 	void renew(t_tid _tid);
 
-	// Get the reference count
+	/** Get the reference count. */
 	int get_ref_count(void) const;
 
-	// Increment reference count. Returns the value after increment.
+	/**
+	 * Increment reference count. 
+	 * @return The reference count after increment.
+	 */
 	int inc_ref_count(void);
 
-	// Decrement reference count. Returns the value after decrement.
+	/**
+	 * Decrement reference count. 
+	 * @returns The reference count after decrement.
+	 */
 	int dec_ref_count(void);
 };
 

@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ilbc-cpp,
 	AC_HELP_STRING([--enable-ilbc-cpp], [your ilbc library is built for C++ instead of C]),
 	[ac_cv_ilbc_cpp=$enableval], [ac_cv_ilbc_cpp=no])
 
-AM_INIT_AUTOMAKE(twinkle,"1.0")
-AC_DEFINE(VERSION_DATE,["January 22 2007"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,"1.0.1")
+AC_DEFINE(VERSION_DATE,["May 19 2007"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -38,7 +38,6 @@ AC_PROG_YACC
 AC_C_BIGENDIAN
 AC_LANG(C++)
 
-AC_CHECK_HEADERS([])
 AC_CHECK_HEADERS([linux/types.h])
 AC_CHECK_HEADERS([linux/errqueue.h],[],[],[
 	#if HAVE_LINUX_TYPES_H
@@ -98,6 +97,13 @@ fi
 
 # Without this macro, compiling on non-kde systems does not work
 AC_PATH_QT
+
+# Check if lrelease is available
+AC_CHECK_PROG(have_lrelease, lrelease, yes, no)
+if test "x$have_lrelease" = "xno"
+then
+	AC_MSG_ERROR([lrelease is missing (qt3-devel-tools package)])
+fi
 
 # Create a Qt include project file for platform dependend variables
 # This file will be included by the project file in the gui directory

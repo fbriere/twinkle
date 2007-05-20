@@ -105,9 +105,6 @@
 #define FLD_COMPACT_LINE_STATUS	"compact_line_status"
 #define FLD_WARN_HIDE_USER	"warn_hide_user"
 
-extern unsigned short g_override_sip_udp_port;
-extern unsigned short g_override_rtp_port;
-
 /////////////////////////
 // class t_audio_device
 /////////////////////////
@@ -207,7 +204,9 @@ t_sys_settings::t_sys_settings() {
 	
 	config_sip_udp_port = 5060;
 	active_sip_udp_port = 0;
+	override_sip_udp_port = 0;
 	rtp_port = 8000;
+	override_rtp_port = 0;
 	
 	play_ringtone = true;
 	ringtone_file.clear();
@@ -462,8 +461,8 @@ unsigned short t_sys_settings::get_config_sip_udp_port(void) const {
 unsigned short t_sys_settings::get_rtp_port(void) const {
 	unsigned short result;
 	mtx_sys.lock();
-	if (g_override_rtp_port > 0) {
-		result = g_override_rtp_port;
+	if (override_rtp_port > 0) {
+		result = override_rtp_port;
 	} else {
 		result = rtp_port;
 	}
@@ -759,9 +758,21 @@ void t_sys_settings::set_config_sip_udp_port(unsigned short port) {
 	mtx_sys.unlock();
 }
 
+void t_sys_settings::set_override_sip_udp_port(unsigned short port) {
+	mtx_sys.lock();
+	override_sip_udp_port = port;
+	mtx_sys.unlock();
+}
+
 void t_sys_settings::set_rtp_port(unsigned short port) {
 	mtx_sys.lock();
 	rtp_port = port;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_override_rtp_port(unsigned short port) {
+	mtx_sys.lock();
+	override_rtp_port = port;
 	mtx_sys.unlock();
 }
 
@@ -1694,10 +1705,10 @@ unsigned short t_sys_settings::get_sip_udp_port(bool force_active) {
 	// The configured port becomes the active port after first
 	// usage of the port.
 	if (!active_sip_udp_port || force_active) {
-		if (g_override_sip_udp_port > 0) {
+		if (override_sip_udp_port > 0) {
 			// The port provided on the command line overrides
 			// the configured port.
-			active_sip_udp_port = g_override_sip_udp_port;
+			active_sip_udp_port = override_sip_udp_port;
 		} else {
 			active_sip_udp_port = config_sip_udp_port;
 		}

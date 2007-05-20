@@ -16,12 +16,18 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * Exceptions.
+ */
+ 
 #ifndef _EXCEPTIONS_H
 #define _EXCEPTIONS_H
 
+/** Exception tupe. */
 enum t_exception {
-	X_DIALOG_ALREADY_ESTABLISHED,
-	X_WRONG_STATE
+	X_DIALOG_ALREADY_ESTABLISHED,	/**< Dialog is already established. */
+	X_WRONG_STATE			/**< State machine is in wrong state. */
 };
 
 #endif

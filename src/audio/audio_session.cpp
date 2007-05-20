@@ -26,6 +26,7 @@
 #include "line.h"
 #include "log.h"
 #include "sys_settings.h"
+#include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
@@ -73,7 +74,8 @@ bool t_audio_session::open_dsp_full_duplex(void) {
 	speaker = t_audio_io::open(sys_config->get_dev_speaker(), true, true, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
-		string msg("Failed to open sound card: ");
+		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
+		msg += ": ";
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
@@ -100,7 +102,8 @@ bool t_audio_session::open_dsp_speaker(void) {
 	speaker = t_audio_io::open(sys_config->get_dev_speaker(), true, false, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
-		string msg("Failed to open sound card: ");
+		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
+		msg += ": ";
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
 			LOG_NORMAL, LOG_CRITICAL);
@@ -121,7 +124,8 @@ bool t_audio_session::open_dsp_mic(void) {
 	mic = t_audio_io::open(sys_config->get_dev_mic(), false, true, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!mic) {
-		string msg("Failed to open sound card: ");
+		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
+		msg += ": ";
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
 			LOG_NORMAL, LOG_CRITICAL);
@@ -222,8 +226,8 @@ t_audio_session::t_audio_session(t_session *_session,
 		// If the RTPSession constructor throws an exception, no
 		// object is created, so clear the pointer.
 		rtp_session = NULL;
-		string msg("Failed to create a UDP socket (RTP) on port ");
-		msg += int2str(_recv_port);
+		string msg(TRANSLATE2("CoreAudio", "Failed to create a UDP socket (RTP) on port %1"));
+		msg = replace_first(msg, "%1", int2str(_recv_port));
 		log_file->write_report(msg, "t_audio_session::t_audio_session",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_show_msg(msg, MSG_CRITICAL);
@@ -397,6 +401,12 @@ t_audio_session::~t_audio_session() {
 	}
 }
 
+void t_audio_session::set_session(t_session *_session) {
+	mtx_session.lock();
+	session = _session;
+	mtx_session.unlock();
+}
+
 void t_audio_session::run(void) {
 	_audio_session = this;
 
@@ -428,7 +438,7 @@ void t_audio_session::run(void) {
 			thr_audio_rx->detach();
 		} catch (int) {
 			audio_rx->set_running(false);
-			string msg("Failed to create audio_rx thread.");
+			string msg(TRANSLATE2("CoreAudio", "Failed to create audio receiver thread."));
 			log_file->write_report(msg, "t_audio_session::run",
 				LOG_NORMAL, LOG_CRITICAL);
 			ui->cb_show_msg(msg, MSG_CRITICAL);
@@ -448,7 +458,7 @@ void t_audio_session::run(void) {
 			thr_audio_tx->detach();
 		} catch (int) {
 			audio_tx->set_running(false);
-			string msg("Failed to create audio_tx thread.");
+			string msg(TRANSLATE2("CoreAudio", "Failed to create audio transmitter thread."));
 			log_file->write_report(msg, "t_audio_session::run",
 				LOG_NORMAL, LOG_CRITICAL);
 			ui->cb_show_msg(msg, MSG_CRITICAL);
@@ -470,7 +480,12 @@ void t_audio_session::send_dtmf(char digit, bool inband) {
 }
 
 t_line *t_audio_session::get_line(void) const {
-	return session->get_line();
+	t_line *line;
+	mtx_session.lock();
+	line = session->get_line();
+	mtx_session.unlock();
+	
+	return line;
 }
 
 void t_audio_session::start_3way(void) {

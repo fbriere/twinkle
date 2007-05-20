@@ -229,7 +229,7 @@ string t_call_record::get_direction_internal(void) const {
 }
 
 bool t_call_record::set_rel_cause(const string &cause) {
-	// NOTE: caller and callee are caused used before version 0.7
+	// NOTE: caller and callee were used before version 0.7
 	// They are still checked here for backward compatibility
 
 	if (cause == "caller" || cause == "local user") {

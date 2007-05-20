@@ -410,6 +410,14 @@ public:
 	// Indicate if the line must be seized after releasing
 	void set_keep_seized(bool seize);
 	bool get_keep_seized(void) const;
+	
+	/**
+	 * Get a dialog that has an active session (RTP stream).
+	 * @return The dialog that has an active session.
+	 * @return NULL, if there is no dialog with an active session.
+	 * @note There can be at most 1 dialog with an active session.
+	 */
+	t_dialog *get_dialog_with_active_session(void) const;
 };
 
 #endif

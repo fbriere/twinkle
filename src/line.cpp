@@ -2175,3 +2175,31 @@ void t_line::set_keep_seized(bool seize) {
 bool t_line::get_keep_seized(void) const {
 	return keep_seized;
 }
+
+t_dialog *t_line::get_dialog_with_active_session(void) const {
+	if (open_dialog && open_dialog->has_active_session()) {
+		return open_dialog;
+	}
+	
+	if (active_dialog && active_dialog->has_active_session()) {
+		return active_dialog;
+	}
+	
+	for (list<t_dialog *>::const_iterator it = pending_dialogs.begin();
+	     it != pending_dialogs.end(); ++it)
+	{
+		if ((*it)->has_active_session()) {
+			return *it;
+		}
+	}
+	
+	for (list<t_dialog *>::const_iterator it = dying_dialogs.begin();
+	     it != dying_dialogs.end(); ++it)
+	{
+		if ((*it)->has_active_session()) {
+			return *it;
+		}
+	}
+	
+	return NULL;
+}

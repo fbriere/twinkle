@@ -17,6 +17,7 @@
 */
 
 #include "identity.h"
+#include "util.h"
 
 t_identity::t_identity() : display(), uri() {}
 
@@ -37,7 +38,7 @@ string t_identity::encode(void) const {
 
 	if (display.size() > 0) {
 		s += '"';
-		s += display;
+		s += escape(display, '"');
 		s += '"';
 		s += ' ';
 	}
