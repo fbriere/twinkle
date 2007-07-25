@@ -404,6 +404,9 @@ protected:
 	
 	/** Process incoming INFO. */
 	void process_info(t_request *r, t_tuid tuid, t_tid tid);
+	
+	/** Process incoming MESSAGE. */
+	void process_message(t_request *r, t_tuid tuid, t_tid tid);
 	//@}
 
 	/** @name Process timeouts */

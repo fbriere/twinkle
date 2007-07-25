@@ -140,7 +140,7 @@ void t_tone_gen::play(void) {
 		SAMPLEFORMAT_S16, wav_info.samplerate, false);
 	if (!aio) {
 		string msg("Failed to open sound card: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		ui->cb_display_msg(msg, MSG_WARNING);

@@ -73,6 +73,8 @@ public:
 	// Get type of body
 	virtual t_body_type get_type(void) const;
 	
+	virtual t_media get_media(void) const;
+	
 	// Add a message summary
 	void add_msg_summary(const string &context, const t_msg_summary summary);
 	

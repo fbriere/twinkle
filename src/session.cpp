@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include "line.h"
+#include "log.h"
 #include "phone.h"
 #include "phone_user.h"
 #include "session.h"
@@ -143,7 +144,7 @@ t_session::~t_session() {
 	stop_rtp();
 }
 
-t_session *t_session::create_new_version(void) {
+t_session *t_session::create_new_version(void) const {
 	t_session *s = new t_session(*this);
 	MEMMAN_NEW(s);
 	s->src_sdp_version = int2str(atoi(src_sdp_version.c_str()) + 1);
@@ -163,7 +164,7 @@ t_session *t_session::create_new_version(void) {
 	return s;
 }
 
-t_session *t_session::create_call_hold(void) {
+t_session *t_session::create_call_hold(void) const {
 	t_session *s = create_new_version();
 
 	if (user_config->get_hold_variant() == HOLD_RFC2543) {
@@ -189,7 +190,7 @@ t_session *t_session::create_call_hold(void) {
 	return s;
 }
 
-t_session *t_session::create_call_retrieve(void) {
+t_session *t_session::create_call_retrieve(void) const {
 	t_session *s = create_new_version();
 
 	if (user_config->get_hold_variant() == HOLD_RFC2543) {
@@ -209,9 +210,10 @@ t_session *t_session::create_call_retrieve(void) {
 	return s;
 }
 
-t_session *t_session::create_clean_copy(void) {
+t_session *t_session::create_clean_copy(void) const {
 	t_session *s = new t_session(*this);
 	MEMMAN_NEW(s);
+	s->src_sdp_version = int2str(atoi(src_sdp_version.c_str()) + 1);
 	s->dst_sdp_version = "";
 	s->dst_sdp_id = "";
 	s->dst_rtp_host = "";
@@ -220,6 +222,7 @@ t_session *t_session::create_clean_copy(void) {
 	s->recvd_offer = false;
 	s->recvd_answer = false;
 	s->sent_offer = false;
+	s->direction = SDP_SENDRECV;
 
 	// Do not copy the RTP session
 	s->set_audio_session(NULL);
@@ -545,19 +548,38 @@ void t_session::start_rtp(void) {
 	t_audio_codec codec;
 	
 	// If a session is killed, it may not be started again.
-	if (is_killed) return;
+	if (is_killed) {
+		log_file->write_report("Cannot start. The session is killed already.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
+		return;
+	}
 	
 	// If a session is on-hold then do not start RTP.
-	if (is_on_hold) return;
+	if (is_on_hold) {
+		log_file->write_report("Cannot start. The session is on hold.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
+		return;
+	}
 
-	if (receive_host.empty()) return;
-	if (dst_rtp_host.empty()) return;
+	if (receive_host.empty()) {
+		log_file->write_report("Cannot start. receive_host is empty.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
+		return;
+	}
+	
+	if (dst_rtp_host.empty()) {
+		log_file->write_report("Cannot start. dst_rtp_host is empty.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
+		return;
+	}
 
 	// Local and remote hold
 	if (((receive_host == "0.0.0.0" || receive_port == 0) &&
 	     (dst_rtp_host == "0.0.0.0" || dst_rtp_port == 0)) ||
  	    direction == SDP_INACTIVE)
 	{
+		log_file->write_report("Cannot start. Local and remote on hold.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
 		return;
 	}
 
@@ -586,6 +608,8 @@ void t_session::start_rtp(void) {
 	    direction == SDP_RECVONLY)
 	{
 		// Local hold -> do not send RTP
+		log_file->write_report("Local hold. Do not send RTP.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
 		audio_rtp_session = new t_audio_session(this,
 				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, 
 				audio_ptime, recv_payload2ac, send_ac2payload,
@@ -602,6 +626,8 @@ void t_session::start_rtp(void) {
 		audio_rtp_session = new t_audio_session(this,
 				"", 0, dst_rtp_host, dst_rtp_port, codec, ptime);
 		*/
+		log_file->write_report("Do not start. Remote hold.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
 		return;
 	} else {
 		// Bi-directional audio
@@ -615,6 +641,8 @@ void t_session::start_rtp(void) {
 
 	// Check if the created audio session is valid.
 	if (!audio_rtp_session->is_valid()) {
+		log_file->write_report("Audio session is invalid.",
+			"t_session::start_rtp", LOG_NORMAL, LOG_CRITICAL);
 		MEMMAN_DELETE(audio_rtp_session);
 		delete audio_rtp_session;
 		audio_rtp_session = NULL;

@@ -21,6 +21,7 @@
 #include "events.h"
 #include "transaction_layer.h"
 #include "userintf.h"
+#include "util.h"
 #include "audits/memman.h"
 
 extern t_event_queue	*evq_trans_mgr;
@@ -89,6 +90,24 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 		unlock();
 		return;
 	}
+	
+	// RFC 3261 8.2.3
+	// Return a 415 response if content encoding is not supported
+	if (r->body && r->hdr_content_encoding.is_populated()) {
+		for (list<t_coding>::iterator it = r->hdr_content_encoding.coding_list.begin();
+		     it != r->hdr_content_encoding.coding_list.end(); ++it)
+		{
+			if (!CONTENT_ENCODING_SUPPORTED(it->content_coding)) {
+				resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
+				SET_HDR_ACCEPT_ENCODING(resp->hdr_accept_encoding);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				unlock();
+				return;
+			}		
+		}
+	}
 
 	// Check if URI scheme is supported
 	if (r->uri.get_scheme() != "sip") {
@@ -133,6 +152,9 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 		break;
 	case INFO:
 		recvd_info(r, tid);
+		break;
+	case MESSAGE:
+		recvd_message(r, tid);
 		break;
 	default:
 		resp = r->create_response(R_501_NOT_IMPLEMENTED);
@@ -181,6 +203,7 @@ void t_transaction_layer::send_response(t_response *r, t_tuid tuid,
 void t_transaction_layer::run(void) {
 	t_event			*event;
 	t_event_user		*ev_user;
+	t_event_timeout		*ev_timeout;
 	t_event_failure		*ev_failure;
 	t_event_stun_response	*ev_stun_resp;
 	t_event_async_response	*ev_async_resp;
@@ -215,6 +238,10 @@ void t_transaction_layer::run(void) {
 				break;
 			}
 
+			break;
+		case EV_TIMEOUT:
+			ev_timeout = dynamic_cast<t_event_timeout *>(event);
+			handle_event_timeout(ev_timeout);
 			break;
 		case EV_FAILURE:
 			ev_failure = (t_event_failure *)event;

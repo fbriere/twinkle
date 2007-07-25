@@ -582,9 +582,16 @@ void t_phone::start_set_timer(t_phone_timer timer, long time, t_phone_user *pu) 
 void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid) {
 	t_phone_user *pu = match_phone_user(r, tuid);
 	if (!pu) {
-		// Response does not match any pending request.
+		log_file->write_report("Response does not match any pending request.",
+			"t_phone::handle_response_out_of_dialog");
 		return;
 	}
+	
+	log_file->write_header("t_phone::handle_response_out_of_dialog", LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("Out of dialog matches phone user: ");
+	log_file->write_raw(pu->get_user_profile()->get_profile_name());
+	log_file->write_endl();
+	log_file->write_footer();
 	
 	pu->handle_response_out_of_dialog(r, tuid, tid);
 }
@@ -592,7 +599,8 @@ void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid ti
 void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
 	t_phone_user *pu = match_phone_user(r, tuid);
 	if (!pu) {
-		// Response does not match any pending request.
+		log_file->write_report("STUN response does not match any pending request.",
+			"t_phone::handle_response_out_of_dialog");
 		return;
 	}
 	
@@ -1277,25 +1285,37 @@ void t_phone::recvd_bye(t_request *r, t_tid tid) {
 }
 
 void t_phone::recvd_options(t_request *r, t_tid tid) {
+	t_response *resp;
 	if (r->hdr_to.tag =="") {
-		recvd_options_out_dialog(r, tid);
+		// Out-of-dialog OPTIONS
+		t_phone_user *pu = find_phone_user_out_dialog_request(r, tid);
+		if (pu) {
+			resp = pu->create_options_response(r);
+			send_response(resp, 0, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+		}		
 	} else {
-		recvd_options_in_dialog(r, tid);
+		// In-dialog OPTIONS
+		t_line *l = find_line_in_dialog_request(r, tid);
+		if (l) {
+			l->recvd_options(r, tid);
+		}
 	}
 }
 
-void t_phone::recvd_options_out_dialog(t_request *r, t_tid tid) {
+t_phone_user *t_phone::find_phone_user_out_dialog_request(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 	
-	// Find out for which user this OPTIONS is.
+	// Find out for which user this request is.
 	t_phone_user *pu = match_phone_user(r, true);
 	if (!pu) {
 		resp = r->create_response(R_404_NOT_FOUND);
 		send_response(resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
-		return;
+		return NULL;
 	}
 
 	// Check if the far end requires any unsupported extensions
@@ -1307,16 +1327,13 @@ void t_phone::recvd_options_out_dialog(t_request *r, t_tid tid) {
 		send_response(resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
-		return;
+		return NULL;
 	}
 	
-	resp = pu->create_options_response(r);
-	send_response(resp, 0, tid);
-	MEMMAN_DELETE(resp);
-	delete resp;
+	return pu;
 }
 
-void t_phone::recvd_options_in_dialog(t_request *r, t_tid tid) {
+t_line *t_phone::find_line_in_dialog_request(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 	
@@ -1337,11 +1354,10 @@ void t_phone::recvd_options_in_dialog(t_request *r, t_tid tid) {
 				send_response(resp, 0, tid);
 				MEMMAN_DELETE(resp);
 				delete resp;
-				return;
+				return NULL;
 			}		
-		
-			lines[i]->recvd_options(r, tid);
-			return;
+
+			return lines[i];
 		}
 	}
 
@@ -1349,6 +1365,7 @@ void t_phone::recvd_options_in_dialog(t_request *r, t_tid tid) {
 	send_response(resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
+	return NULL;
 }
 
 void t_phone::recvd_register(t_request *r, t_tid tid) {
@@ -1482,7 +1499,7 @@ void t_phone::recvd_subscribe(t_request *r, t_tid tid) {
 void t_phone::recvd_notify(t_request *r, t_tid tid) {
 	t_response *resp;
 	t_phone_user *pu;
-
+	
 	// Check support for the notified event
 	if (!SIP_EVENT_SUPPORTED(r->hdr_event.event_type)) {
 		// Non-supported event type
@@ -1494,8 +1511,9 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 		return;
 	}
 	
-	// MWI notification
-	if (r->hdr_event.event_type == SIP_EVENT_MSG_SUMMARY)
+	// MWI or presence notification
+	if (r->hdr_event.event_type == SIP_EVENT_MSG_SUMMARY ||
+	    r->hdr_event.event_type == SIP_EVENT_PRESENCE)
 	{
 		pu = match_phone_user(r, true);
 		if (pu) {
@@ -1794,6 +1812,22 @@ void t_phone::recvd_info(t_request *r, t_tid tid) {
 	delete resp;
 }
 
+void t_phone::recvd_message(t_request *r, t_tid tid) {
+	if (r->hdr_to.tag =="") {
+		// Out-of-dialog MESSAGE
+		t_phone_user *pu = find_phone_user_out_dialog_request(r, tid);
+		if (pu) {
+			pu->recvd_message(r, tid);
+		}		
+	} else {
+		// In-dialog MESSAGE
+		t_line *l = find_line_in_dialog_request(r, tid);
+		if (l) {
+			l->recvd_message(r, tid);
+		}
+	}
+}
+
 void t_phone::post_process_request(t_request *r, t_tid cancel_tid, t_tid target_tid) {
 	cleanup_dead_lines();
 	move_releasing_lines_to_background();
@@ -1815,6 +1849,122 @@ void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
 
 	// out-of-dialog STUN responses
 	handle_response_out_of_dialog(r, tuid);
+}
+
+void t_phone::handle_event_timeout(t_event_timeout *e) {
+	t_timer			*t = e->get_timer();
+	t_tmr_phone		*tmr_phone;
+	t_tmr_line		*tmr_line;
+	t_tmr_subscribe		*tmr_subscribe;
+	t_tmr_publish		*tmr_publish;
+	t_object_id		line_id;
+	
+	lock();
+	
+	switch (t->get_type()) {
+	case TMR_PHONE:
+		tmr_phone = dynamic_cast<t_tmr_phone *>(t);
+		timeout(tmr_phone->get_phone_timer(), tmr_phone->get_object_id());
+		break;
+	case TMR_LINE:
+		tmr_line = dynamic_cast<t_tmr_line *>(t);
+		line_timeout(tmr_line->get_line_id(), tmr_line->get_line_timer(), 
+			tmr_line->get_dialog_id());
+		break;
+	case TMR_SUBSCRIBE:
+		tmr_subscribe = dynamic_cast<t_tmr_subscribe *>(t);
+		line_id = tmr_subscribe->get_line_id();
+		if (line_id == 0) {
+			subscription_timeout(tmr_subscribe->get_subscribe_timer(), 
+				tmr_subscribe->get_object_id());
+		} else {	
+			line_timeout_sub(line_id, tmr_subscribe->get_subscribe_timer(),
+				tmr_subscribe->get_dialog_id(),
+				tmr_subscribe->get_sub_event_type(), 
+				tmr_subscribe->get_sub_event_id());
+		}
+		break;
+	case TMR_PUBLISH:
+		tmr_publish = dynamic_cast<t_tmr_publish *>(t);
+		publication_timeout(tmr_publish->get_publish_timer(), 
+			tmr_publish->get_object_id());
+		break;
+	default:
+		assert(false);
+		break;
+	}
+	
+	unlock();
+}
+
+void t_phone::line_timeout(t_object_id id, t_line_timer timer, t_object_id did) {
+	// If there is no line with id anymore, then the timer expires
+	// silently.
+	t_line *line = get_line_by_id(id);
+	if (line) {
+		line->timeout(timer, did);
+	}
+}
+
+void t_phone::line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
+		const string &event_type, const string &event_id)
+{
+	// If there is no line with id anymore, then the timer expires
+	// silently.
+	t_line *line = get_line_by_id(id);
+	if (line) {
+		line->timeout_sub(timer, did, event_type, event_id);
+	}
+}
+
+void t_phone::subscription_timeout(t_subscribe_timer timer, t_object_id id_timer)
+{
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+	{
+		if ((*i)->match_subscribe_timer(timer, id_timer)) {
+			(*i)->timeout_sub(timer, id_timer);
+		}
+	}
+}
+
+void t_phone::publication_timeout(t_publish_timer timer, t_object_id id_timer) {
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+	{
+		if ((*i)->match_publish_timer(timer, id_timer)) {
+			(*i)->timeout_publish(timer, id_timer);
+		}
+	}
+}
+
+void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
+	lock();
+
+	switch (timer) {
+	case PTMR_REGISTRATION:
+		for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+		{
+			if ((*i)->id_registration == id_timer) {
+				(*i)->timeout(timer);
+			}
+		}
+		break;
+	case PTMR_NAT_KEEPALIVE:
+		for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+		{
+			if ((*i)->id_nat_keepalive == id_timer) {
+				(*i)->timeout(timer);
+			}
+		}
+		break;
+	default:
+		assert(false);
+	}
+
+	unlock();
 }
 
 
@@ -2141,6 +2291,89 @@ void t_phone::pub_unsubscribe_mwi(t_user *user) {
 	unlock();
 }
 
+void t_phone::pub_subscribe_presence(t_user *user) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->subscribe_presence();
+	} else {
+		log_file->write_header("t_phone::pub_subscribe_presence", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
+void t_phone::pub_unsubscribe_presence(t_user *user) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->unsubscribe_presence();
+	} else {
+		log_file->write_header("t_phone::pub_unsubscribe_presence", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
+void t_phone::pub_publish_presence(t_user *user, t_presence_state::t_basic_state basic_state) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->publish_presence(basic_state);
+	} else {
+		log_file->write_header("t_phone::pub_publish_presence", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
+void t_phone::pub_unpublish_presence(t_user *user) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->unpublish_presence();
+	} else {
+		log_file->write_header("t_phone::pub_publish_presence", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
+void t_phone::pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
+		const string &text)
+{
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->send_message(to_uri, to_display, text);
+	} else {
+		log_file->write_header("t_phone::pub_send_message", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_endl();
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
 t_phone_state t_phone::get_state(void) const {
 	lock();
 	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
@@ -2183,76 +2416,6 @@ bool t_phone::get_idle_line(unsigned short &lineno) const {
 	
 	unlock();
 	return found_idle_line;
-}
-
-void t_phone::line_timeout(t_object_id id, t_line_timer timer, t_object_id did) {
-	lock();
-	
-	// If there is no line with id anymore, then the timer expires
-	// silently.
-	t_line *line = get_line_by_id(id);
-	if (line) {
-		line->timeout(timer, did);
-	}
-	
-	unlock();
-}
-
-void t_phone::line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
-		const string &event_type, const string &event_id)
-{
-	lock();
-	
-	// If there is no line with id anymore, then the timer expires
-	// silently.
-	t_line *line = get_line_by_id(id);
-	if (line) {
-		line->timeout_sub(timer, did, event_type, event_id);
-	}
-	
-	unlock();
-}
-
-void t_phone::subscription_timeout(t_subscribe_timer timer, t_object_id id_timer)
-{
-	lock();
-	for (list<t_phone_user *>::iterator i = phone_users.begin();
-		     i != phone_users.end(); i++)
-	{
-		if ((*i)->match_subscribe_timer(timer, id_timer)) {
-			(*i)->timeout_sub(timer, id_timer);
-		}
-	}
-	unlock();
-}
-
-void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
-	lock();
-
-	switch (timer) {
-	case PTMR_REGISTRATION:
-		for (list<t_phone_user *>::iterator i = phone_users.begin();
-		     i != phone_users.end(); i++)
-		{
-			if ((*i)->id_registration == id_timer) {
-				(*i)->timeout(timer);
-			}
-		}
-		break;
-	case PTMR_NAT_KEEPALIVE:
-		for (list<t_phone_user *>::iterator i = phone_users.begin();
-		     i != phone_users.end(); i++)
-		{
-			if ((*i)->id_nat_keepalive == id_timer) {
-				(*i)->timeout(timer);
-			}
-		}
-		break;
-	default:
-		assert(false);
-	}
-
-	unlock();
 }
 
 void t_phone::set_active_line(unsigned short l) {
@@ -2452,6 +2615,17 @@ t_mwi t_phone::get_mwi(t_user *user) const {
 	lock();
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) result = pu->mwi;
+	unlock();
+	
+	return result;
+}
+
+bool t_phone::is_presence_terminated(t_user *user) const {
+	bool result = false;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->is_presence_terminated();
 	unlock();
 	
 	return result;
@@ -2671,6 +2845,9 @@ void t_phone::init_rtp_ports(void) {
 
 bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 	lock();
+	
+	t_phone_user *existing_phone_user = NULL;
+	
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
 	     i != phone_users.end(); i++)
 	{
@@ -2679,9 +2856,10 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 		// If the profile is already added, then just activate it.
 		if (user->get_profile_name() == user_config.get_profile_name())
 		{	
-			if (!(*i)->is_active()) (*i)->activate(user_config);
-			unlock();
-			return true;
+			existing_phone_user = (*i);
+			// Continue checking to see if activating this user
+			// does not conflict with another already active user.
+			continue;
 		}
 		
 		// Check if there is already another profile for the same
@@ -2698,12 +2876,22 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 		// Check if there is already another profile having
 		// the same contact name.
 		if (user->get_contact_name() == user_config.get_contact_name() &&
-		    USER_HOST(user) == USER_HOST(&user_config))
+		    USER_HOST(user) == USER_HOST(&user_config) &&
+		    (*i)->is_active())
 		{
 			*dup_user = user;
 			unlock();
 			return false;
 		}
+	}
+	
+	// Activate existing profile
+	if (existing_phone_user) {
+		if (!existing_phone_user->is_active()) {
+			existing_phone_user->activate(user_config);
+		}
+		unlock();
+		return true;
 	}
 	
 	// Add the user
@@ -2768,7 +2956,7 @@ t_user *t_phone::ref_user_profile(const string &profile_name) {
 
 t_service *t_phone::ref_service(t_user *user) {
 	assert(user);
-	t_service *srv;
+	t_service *srv = NULL;
 	
 	lock();
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
@@ -2776,6 +2964,30 @@ t_service *t_phone::ref_service(t_user *user) {
 	unlock();
 	
 	return srv;
+}
+
+t_buddy_list *t_phone::ref_buddy_list(t_user *user) {
+	assert(user);
+	t_buddy_list *l = NULL;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) l = pu->get_buddy_list();
+	unlock();
+	
+	return l;
+}
+
+t_presence_epa *t_phone::ref_presence_epa(t_user *user) {
+	assert(user);
+	t_presence_epa *epa = NULL;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) epa = pu->get_presence_epa();
+	unlock();
+	
+	return epa;
 }
 
 string t_phone::get_ip_sip(const t_user *user) const {
@@ -2914,19 +3126,31 @@ void t_phone::init(void) {
 		if ((*i)->get_register_at_startup()) {
 			pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
 		} else {
-			// No registration will be done, so subscribe to
-			// MWI now.
-			if ((*i)->get_mwi_sollicited()) {
-				pub_subscribe_mwi(*i);
-			}
+			// No registration will be done, so initialize extensions now.
+			init_extensions(*i);
 		}
 		
-		// NOTE: subscription to MWI is done after registration
-		//       succeeded. This way STUN will have set the correct
+		// NOTE: Extension initialization is done after registration. 
+		//       This way STUN will have set the correct
 		//       IP adres (STUN is done as part of registration.)
 	}
 	
 	unlock();
+}
+
+void t_phone::init_extensions(t_user *user_config) {
+	// Subscribe to MWI
+	if (user_config->get_mwi_sollicited()) {
+		pub_subscribe_mwi(user_config);
+	}
+	
+	// Publish presence
+	if (user_config->get_pres_publish_startup()) {
+		pub_publish_presence(user_config, t_presence_state::ST_BASIC_OPEN);
+	}
+	
+	// Subscribe to presence
+	pub_subscribe_presence(user_config);
 }
 
 bool t_phone::set_sighandler(void) const {
@@ -2989,6 +3213,12 @@ void t_phone::terminate(void) {
 			pub_unsubscribe_mwi(*i);
 		}
 		
+		// Unpublish presence
+		pub_unpublish_presence(*i);
+		
+		// Unsubscribe presence
+		pub_unsubscribe_presence(*i);
+		
 		// De-register
 		if (get_is_registered(*i)) {
 			msg = (*i)->get_profile_name();
@@ -3022,6 +3252,19 @@ void t_phone::terminate(void) {
 		}
 		msg = (*i)->get_profile_name();
 		msg += ": MWI subscription terminated.";
+		log_file->write_report(msg, "t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
+	}
+	
+	// Wait for presence unsubscription
+	int presence_wait = 0;
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
+	{
+		while (!is_presence_terminated(*i) && presence_wait <= DUR_UNSUBSCRIBE_GUARD/1000) {
+			sleep(1);
+			presence_wait++;
+		}
+		msg = (*i)->get_profile_name();
+		msg += ": presence subscriptions terminated.";
 		log_file->write_report(msg, "t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 	}
 		

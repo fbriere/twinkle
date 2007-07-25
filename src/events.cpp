@@ -32,7 +32,6 @@ string event_type2str(t_event_type t) {
 	case EV_FAILURE: 	return "EV_FAILURE";
 	case EV_START_TIMER: 	return "EV_START_TIMER";
 	case EV_STOP_TIMER: 	return "EV_STOP_TIMER";
-	case EV_GET_TIMER_DUR:	return "EV_GET_TIMER_DUR";
 	case EV_ABORT_TRANS:	return "EV_ABORT_TRANS";
 	case EV_STUN_REQUEST:	return "EV_STUN_REQUEST";
 	case EV_STUN_RESPONSE:	return "EV_STUN_RESPONSE";
@@ -216,33 +215,6 @@ t_event_type t_event_stop_timer::get_type(void) const {
 
 unsigned short t_event_stop_timer::get_timer_id(void) const {
 	return timer_id;
-}
-
-///////////////////////////////////////////////////////////
-// class t_event_get_timer_dur
-///////////////////////////////////////////////////////////
-t_event_get_timer_dur::t_event_get_timer_dur(unsigned short id, t_semaphore *_sema,
-		unsigned long *dur)
-{
-	timer_id = id;
-	sema = _sema;
-	remaining_duration = dur;
-}
-
-t_event_type t_event_get_timer_dur::get_type(void) const {
-	return EV_GET_TIMER_DUR;
-}
-
-unsigned short t_event_get_timer_dur::get_timer_id(void) const {
-	return timer_id;
-}
-
-t_semaphore *t_event_get_timer_dur::get_sema(void) const {
-	return sema;
-}
-
-unsigned long *t_event_get_timer_dur::get_duration(void) const {
-	return remaining_duration;
 }
 
 ///////////////////////////////////////////////////////////
@@ -548,15 +520,6 @@ void t_event_queue::push_start_timer(t_timer *t) {
 
 void t_event_queue::push_stop_timer(unsigned short timer_id) {
 	t_event_stop_timer *event = new t_event_stop_timer(timer_id);
-	MEMMAN_NEW(event);
-	push(event);
-}
-
-void t_event_queue::push_get_timer_dur(unsigned short timer_id, t_semaphore *sema,
-		unsigned long *duration)
-{
-	t_event_get_timer_dur *event = new t_event_get_timer_dur(
-		timer_id, sema, duration);
 	MEMMAN_NEW(event);
 	push(event);
 }

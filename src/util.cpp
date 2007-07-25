@@ -21,8 +21,12 @@
 #include <cctype>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 #include <sys/time.h>
+
 #include "util.h"
+
+#include "twinkle_config.h"
 
 string month_abbrv[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", 
 			"Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -654,4 +658,26 @@ string to_printable(const string &s) {
 	}
 	
 	return result;
+}
+
+string get_error_str(int errnum) {
+#if HAVE_STRERROR_R
+	char buf[81];
+	memset(buf, 0, sizeof(buf));
+#if STRERROR_R_CHAR_P
+	string errmsg(strerror_r(errnum, buf, sizeof(buf)-1));
+#else
+	string errmsg;
+	if (strerror_r(errnum, buf, sizeof(buf)-1) == 0) {
+		errmsg = buf;
+	} else {
+		errmsg = "unknown error: ";
+		errmsg += int2str(errnum);
+	}
+#endif
+#else
+	string errmsg("strerror_r is not available: ");
+	errmsg += int2str(errnum);
+#endif
+	return errmsg;
 }

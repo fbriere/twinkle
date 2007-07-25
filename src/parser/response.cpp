@@ -56,6 +56,7 @@ t_response::t_response(int _code, string _reason) : t_sip_message() {
 		case 407: reason = REASON_407; break;
 		case 408: reason = REASON_408; break;
 		case 410: reason = REASON_410; break;
+		case 412: reason = REASON_412; break;
 		case 413: reason = REASON_413; break;
 		case 414: reason = REASON_414; break;
 		case 415: reason = REASON_415; break;

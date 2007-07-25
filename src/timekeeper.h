@@ -33,12 +33,14 @@ class t_phone;
 class t_line;
 class t_subscription;
 
+/** Timer type */
 enum t_timer_type {
-	TMR_TRANSACTION,
-	TMR_PHONE,
-	TMR_LINE,
-	TMR_SUBSCRIBE,
-	TMR_STUN_TRANSACTION
+	TMR_TRANSACTION,	/**< Transaction timer */
+	TMR_PHONE,		/**< Timer associated with the phone */
+	TMR_LINE,		/**< Timer associated with a line */
+	TMR_SUBSCRIBE,		/**< Subscription timer */
+	TMR_PUBLISH,		/**< Publication timer */
+	TMR_STUN_TRANSACTION	/**< STUN timer */
 };
 ////////////////////////////////////////////////////////////////
 // General timer.
@@ -123,6 +125,7 @@ public:
 	t_timer_type get_type(void) const;
 	t_line_timer get_line_timer(void) const;
 	t_object_id get_line_id(void) const;
+	t_object_id get_dialog_id(void) const;
 	string get_name(void) const;
 };
 
@@ -147,6 +150,26 @@ public:
 	t_timer_type get_type(void) const;
 	t_subscribe_timer get_subscribe_timer(void) const;
 	t_object_id get_line_id(void) const;
+	t_object_id get_dialog_id(void) const;
+	string get_sub_event_type(void) const;
+	string get_sub_event_id(void) const;
+	string get_name(void) const;
+};
+
+/** Publication timer */
+class t_tmr_publish : public t_timer {
+private:
+	t_publish_timer		publish_timer;	/**< Type of timer */
+	string			event_type;	/**< Event type of publication */
+
+
+public:
+	t_tmr_publish(long dur, t_publish_timer ptmr, const string &_event_type);
+
+	void expired(void);
+	t_timer *copy(void) const;
+	t_timer_type get_type(void) const;
+	t_publish_timer get_publish_timer(void) const;
 	string get_name(void) const;
 };
 
@@ -216,11 +239,6 @@ private:
 	void start_timer(t_timer *t);
 
 	void stop_timer(t_object_id id);
-
-	// Return the remaining time (milliseconds) for a timer
-	// Returns 0 if the timer is not running anymore
-	void get_timer_dur(unsigned short id, t_semaphore *sema,
-		unsigned long *duration);
 
 public:
 	// The timeout_handler must be a signal handler for SIGALRM

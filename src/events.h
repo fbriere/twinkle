@@ -47,7 +47,6 @@ enum t_event_type {
 	EV_FAILURE,		/**< Failure, eg. transport failure */
 	EV_START_TIMER,		/**< Start timer */
 	EV_STOP_TIMER,		/**< Stop timer */
-	EV_GET_TIMER_DUR,	/**< Get remaining duration of a running timer */
 	EV_ABORT_TRANS,		/**< Abort transaction */
 	EV_STUN_REQUEST,	/**< Outgoing STUN request */
 	EV_STUN_RESPONSE,	/**< Received STUN response */
@@ -299,65 +298,6 @@ public:
 	 * @return Timer id.
 	 */
 	unsigned short get_timer_id(void) const;
-};
-
-
-/**
- * Get timer duration event.
- * With this event the requester asks the time keeper to report
- * the remaining time of a running timer.
- */
-class t_event_get_timer_dur : public t_event {
-private:
-	/** The id of the timer for which the remaining time is requested. */
-	unsigned short	timer_id;
-
-	/**
-	 * Semaphore to signal that the result is available.
-	 * The semaphore is passed by the originator of the event.
-	 * The originator downs the semaphore. As soon as the
-	 * timekeeper has determined the remaining duration, it
-	 * ups the semaphore, so the originator can read the
-	 * duration.
-	 */
-	t_semaphore	*sema;
-
-	/**
-	 * Pointer to a location to store the remaining time (ms).
-	 * Pointer passed by the originator of the event. The
-	 * timekeeper will place the result here.
-	 */
-	unsigned long	*remaining_duration;
-
-public:
-	/**
-	 * Constructor.
-	 * @param id [in] Id of the timer.
-	 * @param _sema [in] The semaphore to signal readiness of the result.
-	 * @param dur [in] Pointer to location to store the remaining time.
-	 */
-	t_event_get_timer_dur(unsigned short id, t_semaphore *_sema,
-			unsigned long *dur);
-			
-	t_event_type get_type(void) const;
-	
-	/**
-	 * Get the timer id.
-	 * @return Timer id.
-	 */	
-	unsigned short get_timer_id(void) const;
-	
-	/**
-	 * Get the semaphore.
-	 * @return The semaphore.
-	 */
-	t_semaphore *get_sema(void) const;
-	
-	/**
-	 * Get the remaining duration.
-	 * @return The duration (ms).
-	 */
-	unsigned long *get_duration(void) const;
 };
 
 
@@ -714,15 +654,6 @@ public:
 	 * @param timer_id [in] Timer id of timer to stop.
 	 */
 	void push_stop_timer(unsigned short timer_id);
-
-	/**
-	 * Create a get timer duration event.
-	 * @param timer_id [in] Timer id of timer.
-	 * @param sema [in] Semaphore to signal readiness of result.
-	 * @param duration [in] Pointer to location for storing the duration.
-	 */
-	void push_get_timer_dur(unsigned short timer_id, t_semaphore *sema,
-		unsigned long *duration);
 
 	/**
 	 * Create an abort transaction event.

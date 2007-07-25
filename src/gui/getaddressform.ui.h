@@ -214,7 +214,7 @@ void GetAddressForm::addLocalAddress()
 		new AddressListViewItem(localListView, card);
 		
 		string error_msg;
-		if (!ab_local->write_address_book(error_msg)) {
+		if (!ab_local->save(error_msg)) {
 			ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		}
 	}
@@ -230,7 +230,7 @@ void GetAddressForm::deleteLocalAddress()
 			delete item;
 			
 			string error_msg;
-			if (!ab_local->write_address_book(error_msg)) {
+			if (!ab_local->save(error_msg)) {
 				ui->cb_show_msg(error_msg, MSG_CRITICAL);
 			}
 		}
@@ -251,7 +251,7 @@ void GetAddressForm::editLocalAddress()
 			item->update(newCard);
 			
 			string error_msg;
-			if (!ab_local->write_address_book(error_msg)) {
+			if (!ab_local->save(error_msg)) {
 				ui->cb_show_msg(error_msg, MSG_CRITICAL);
 			}
 		}

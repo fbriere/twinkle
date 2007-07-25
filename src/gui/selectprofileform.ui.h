@@ -431,6 +431,16 @@ void SelectProfileForm::renameProfile()
 			d.rename(oldFilename, newFilename);
 		}
 		
+		// Rename buddy list file
+		oldFilename = oldProfile;
+		oldFilename.append(BUDDY_FILE_EXT);
+		oldFullname = d.filePath(oldFilename);
+		if (QFile::exists(oldFullname)) {
+			newFilename = newProfile;
+			newFilename.append(BUDDY_FILE_EXT);
+			d.rename(oldFilename, newFilename);
+		}
+		
 		// Rename profile in list of default profiles in
 		// system settings
 		list<string> l = sys_config->get_start_user_profiles();

@@ -2,7 +2,7 @@ INCLUDES = -I $(includedir)
 
 AM_LDFLAGS = -L $(libdir)
 
-AM_CPPFLAGS = -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 
 noinst_PROGRAMS = twinkle
 
@@ -20,7 +20,11 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
         $(top_builddir)/src/mwi/libmwi.a\
+        $(top_builddir)/src/im/libim.a\
+        $(top_builddir)/src/presence/libpresence.a\
+        $(top_builddir)/src/patterns/libpatterns.a\
 	$(CCRTP_LIBS)\
+	$(XML2_LIBS)\
 	-lsndfile
 
 libtwinkle_a_SOURCES =\
@@ -32,6 +36,7 @@ libtwinkle_a_SOURCES =\
         client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
+        epa.cpp\
         events.cpp\
         id_object.cpp\
         line.cpp\
@@ -63,6 +68,7 @@ libtwinkle_a_SOURCES =\
         client_request.h\
         cmd_socket.h\
         dialog.h\
+        epa.h\
         events.h\
 	exceptions.h\
 	id_object.h\
@@ -91,4 +97,4 @@ libtwinkle_a_SOURCES =\
         userintf.h\
         util.h
 
-SUBDIRS = audio audits mwi parser sdp sockets stun threads . gui gui/lang
+SUBDIRS = audio audits im mwi parser patterns presence sdp sockets stun threads utils . gui gui/lang

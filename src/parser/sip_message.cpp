@@ -83,6 +83,8 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_route(m.hdr_route),
 		hdr_rseq(m.hdr_rseq),
 		hdr_server(m.hdr_server),
+		hdr_sip_etag(m.hdr_sip_etag),
+		hdr_sip_if_match(m.hdr_sip_if_match),
 		hdr_subject(m.hdr_subject),
 		hdr_subscription_state(m.hdr_subscription_state),
 		hdr_supported(m.hdr_supported),
@@ -226,6 +228,8 @@ string t_sip_message::encode(bool add_content_length) {
 	s += hdr_retry_after.encode();
 	s += hdr_rseq.encode();
 	s += hdr_server.encode();
+	s += hdr_sip_etag.encode();
+	s += hdr_sip_if_match.encode();
 	s += hdr_subject.encode();
 	s += hdr_subscription_state.encode();
 	s += hdr_supported.encode();
@@ -329,6 +333,8 @@ list<string> t_sip_message::encode_env(void) {
 	l.push_back(hdr_retry_after.encode_env());
 	l.push_back(hdr_rseq.encode_env());
 	l.push_back(hdr_server.encode_env());
+	l.push_back(hdr_sip_etag.encode_env());
+	l.push_back(hdr_sip_if_match.encode_env());
 	l.push_back(hdr_subject.encode_env());
 	l.push_back(hdr_subscription_state.encode_env());
 	l.push_back(hdr_supported.encode_env());
@@ -357,4 +363,19 @@ t_sip_message *t_sip_message::copy(void) const {
 	t_sip_message *m = new t_sip_message(*this);
 	MEMMAN_NEW(m);
 	return m;
+}
+
+void t_sip_message::set_body_plain_text(const string &text, const string &charset) {
+	// Content-Type header
+	t_media mime_type("text", "plain");
+	mime_type.charset = charset;
+	hdr_content_type.set_media(mime_type);
+	
+	if (body) {
+		MEMMAN_DELETE(body);
+		delete body;
+	}
+	
+	body = new t_sip_body_plain_text(text);
+	MEMMAN_NEW(body);
 }

@@ -16,7 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// Media mime type definition
+/**
+ * @file
+ * Media MIME type definition.
+ */
 
 #ifndef _MEDIA_TYPE_H
 #define _MEDIA_TYPE_H
@@ -27,24 +30,40 @@
 
 using namespace std;
 
+/** Media MIME type definition. */
 class t_media {
 public:
-	string	type;		// main type
-	string	subtype;	// subtype
-	float	q;		// quality factor
-	list<t_parameter> media_param_list; 	 // media paramters
-	list<t_parameter> accept_extension_list; // accept parameters
+	string	type;		/**< main type */
+	string	subtype;	/**< subtype */
+	string	charset;	/**< Character set */
+	float	q;		/**< quality factor */
+	list<t_parameter> media_param_list; 	 /**< media paramters */
+	list<t_parameter> accept_extension_list; /**< accept parameters */
 
+	/** Constructor */
 	t_media();
 
-	// Construct object with type = t, subtype = s;
+	/** 
+	 * Constructor. 
+	 * Construct object with a specic type and subtype.
+	 * @param t [in] type
+	 * @param s [in] subtype
+	 */
 	t_media(const string &t, const string &s);
 
-	// Method for parser to add the parsed parameter list l.
-	// l should start with optional media parameters followed
-	// by the q-paramter followed by accept parameters.
+	/**
+	 * Add a parameter list.
+	 * Method for parser to add the parsed parameter list l.
+	 * l should start with optional media parameters followed
+	 * by the q-paramter followed by accept parameters.
+	 * @param l [in] The parameter list.
+	 */
 	void add_params(const list<t_parameter> &l);
 
+	/**
+	 * Encode as string.
+	 * @return The encoded media type.
+	 */
 	string encode(void) const;
 };
 

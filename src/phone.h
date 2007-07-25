@@ -35,6 +35,7 @@
 #include "sockets/url.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "presence/presence_state.h"
 
 // Number of phone lines
 // One line is used by Twinkle internally to park the call towards a
@@ -203,9 +204,6 @@ private:
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
 	
-	// Find active phone user
-	t_phone_user *find_phone_user(const string &profile_name) const;
-	
 	// Match an incoming message to a phone user
 	t_phone_user *match_phone_user(t_response *r, t_tuid tuid, bool active_only = false);
 	t_phone_user *match_phone_user(t_request *r, bool active_only = false);
@@ -219,6 +217,28 @@ private:
 	int hunt_line(void);
 
 protected:
+	/**
+	 * Find a phone user that can handle an out-of-dialog request.
+	 * If there is no phone user that can handle the request, then this
+	 * method will send an appropriate failure response on the request.
+	 * @param r [in] The request.
+	 * @param tid [in] Transaction id of the request transaction.
+	 * @return The phone user, if there is a phone user that can handle the request.
+	 * @return NULL, otherwise.
+	 */
+	t_phone_user *find_phone_user_out_dialog_request(t_request *r, t_tid tid);
+	
+	/**
+	 * Find a line that can handle an in-dialog request.
+	 * If there is no line that can handle the request, then this
+	 * method will send an appropriate failure response on the request.
+	 * @param r [in] The request.
+	 * @param tid [in] Transaction id of the request transaction.
+	 * @return The line, if there is a line that can handle the request.
+	 * @return NULL, otherwise.
+	 */
+	t_line *find_line_in_dialog_request(t_request *r, t_tid tid);
+
 	// Events
 	void recvd_provisional(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_success(t_response *r, t_tuid tuid, t_tid tid);
@@ -235,14 +255,13 @@ protected:
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_bye(t_request *r, t_tid tid);
 	void recvd_options(t_request *r, t_tid tid);
-	void recvd_options_out_dialog(t_request *r, t_tid tid);
-	void recvd_options_in_dialog(t_request *r, t_tid tid);
 	void recvd_register(t_request *r, t_tid tid);
 	void recvd_prack(t_request *r, t_tid tid);
 	void recvd_subscribe(t_request *r, t_tid tid);
 	void recvd_notify(t_request *r, t_tid tid);
 	void recvd_refer(t_request *r, t_tid tid);
 	void recvd_info(t_request *r, t_tid tid);
+	void recvd_message(t_request *r, t_tid tid);
 	void post_process_request(t_request *r, t_tid cancel_tid, t_tid target_tid);
 
 	void failure(t_failure failure, t_tid tid);
@@ -250,6 +269,51 @@ protected:
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 	
 	void recvd_refer_permission(bool permission);
+	
+	/** @name Timeout handlers */
+	//@{
+	virtual void handle_event_timeout(t_event_timeout *e);
+	
+	/**
+	 * Process expiry of line timer.
+	 * @param id [in] Line id of the line associate with the timer.
+	 * @param timer [in] Type of line timer.
+	 * @param did [in] Dialog id if timer is for a dialog, 0 otherwise.
+	 */
+	void line_timeout(t_object_id id, t_line_timer timer, t_object_id did);
+	
+	/**
+	 * Process expiry of a line subscription timer (REFER subscription).
+	 * @param id [in] Line id of the line associate with the timer.
+	 * @param timer [in] Type of subcription timer.
+	 * @param did [in] Dialog id associated with the timer.
+	 * @param event_type [in] Event type of the subscription.
+	 * @param event_id [in] Event id of the subscription.
+	 */
+	void line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
+		const string &event_type, const string &event_id);
+		
+	/**
+	 * Process expiry of a subcription timer.
+	 * @param timer [in] Type of subcription timer.
+	 * @param id_timer [in] Timer id of expired timer.
+	 */
+	void subscription_timeout(t_subscribe_timer timer, t_object_id id_timer);
+	
+	/**
+	 * Process expiry of a publication timer.
+	 * @param timer [in] Type of publication timer.
+	 * @param id_timer [in] Timer id of expired timer.
+	 */
+	void publication_timeout(t_publish_timer timer, t_object_id id_timer);
+	
+	/**
+	 * Process expiry of phone timer.
+	 * @param timer [in] Type of phone timer.
+	 * @param id_timer [in] Timer id of expired timer.
+	 */
+	void timeout(t_phone_timer timer, unsigned short id_timer);
+	//@}
 
 public:
 	t_phone();
@@ -274,12 +338,6 @@ public:
 	// If no line is idle, then false is returned.
 	bool get_idle_line(unsigned short &lineno) const;
 	
-	// Report a line timer timeout
-	void line_timeout(t_object_id id, t_line_timer timer, t_object_id did);
-	void line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
-		const string &event_type, const string &event_id);
-	void subscription_timeout(t_subscribe_timer timer, t_object_id id_timer);
-
 	// Actions to be called by the user interface.
 	// These methods first lock the phone, then call the corresponding
 	// private method and then unlock the phone.
@@ -330,11 +388,61 @@ public:
 	void pub_unseize(void); // active line
 	void pub_unseize(unsigned short line);
 	
-	// MWI
+	/** @name MWI */
+	//@{
+	/**
+	 * Subscribe to MWI.
+	 * @param user [in] The user profile of the subscribing user.
+	 */
 	void pub_subscribe_mwi(t_user *user);
+	
+	/**
+	 * Unsubscribe to MWI.
+	 * @param user [in] The user profile of the unsubscribing user.
+	 */
 	void pub_unsubscribe_mwi(t_user *user);
-
-	void timeout(t_phone_timer timer, unsigned short id_timer);
+	//@}
+	
+	/** @name Presence */
+	//@{
+	/**
+	 * Subscribe to presence of buddies in buddy list.
+	  * @param user [in] The user profile of the subscribing user.
+	 */
+	void pub_subscribe_presence(t_user *user);
+	
+	/**
+	 * Unsubscribe to presence of buddies in buddy list.
+	 * @param user [in] The user profile of the unsubscribing user.
+	 */
+	void pub_unsubscribe_presence(t_user *user);
+	
+	/**
+	 * Publish presence state.
+	 * @param user [in] The user profile of the user publishing.
+	 * @param basic_state [in] The basic presence state to publish.
+	 */
+	void pub_publish_presence(t_user *user, t_presence_state::t_basic_state basic_state);
+	
+	/**
+	 * Unpublish presence state.
+	 * @param user [in] The user profile of the user unpublishing.
+	 */
+	void pub_unpublish_presence(t_user *user);
+	//@}
+	
+	/** @name Instant messaging */
+	//@{
+	/**
+	 * Send a text message.
+	 * @param to_uri [in] Destination URI of recipient.
+	 * @param to_display [in] Display name of recipient.
+	 * @param user [in] User profile of user sending the message.
+	 * @param text [in] The text to send.
+	 */
+	void pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
+			const string &text);
+	//@}
 
 	unsigned short get_active_line(void) const;
 
@@ -363,6 +471,13 @@ public:
 	bool is_mwi_subscribed(t_user *user) const;
 	bool is_mwi_terminated(t_user *user) const;
 	t_mwi get_mwi(t_user *user) const;
+	
+	/**
+	 * Check if all presence subscriptions for a particular user are terminated.
+	 * @param user [in] User profile of the user.
+	 * @return True if all presence susbcriptions are terminated, otherwise false.
+	 */
+	bool is_presence_terminated(t_user *user) const;
 	
 	// Get remote uri/display of the active call on a line.
 	// If there is no call, then an empty uri/display is returned.
@@ -395,30 +510,74 @@ public:
 	// Initialize the RTP port values for all lines.
 	void init_rtp_ports(void);
 	
-	// Add a phone user
-	// Returns false if there is already a phone user with the same name
-	// and domain. In this case dup_user is a pointer to the user config
-	// of that user.
-	// NOTE: if there is already a user with exactly the same user config
-	// then true is returned, but the user is not added again. The user
-	// will be activated if it was inactive though.
+	/**
+	 * Add a phone user.
+	 * @param user_config [in] User profile of the user to add.
+	 * @param dup_user [out] Profile of duplicate user.
+	 * @return false, if there is already a phone user with the same name
+	 * and domain. In this case dup_user is a pointer to the user config
+	 * of that user.
+	 * @return true, if the phone user was added succesfully.
+	 * @note if there is already a user with exactly the same user config
+	 * then true is returned, but the user is not added again. The user
+	 * will be activated if it was inactive though.
+	 */
 	bool add_phone_user(const t_user &user_config, t_user **dup_user);
 	
-	// Deactivate/delete the phone user.
+	/**
+	 * Deactivate the phone user.
+	 * @param user_config [in] User profile of the user to deactivate.
+	 */
 	void remove_phone_user(const t_user &user_config);
 
-	// Get a list of user profiles of all phone users
+	/**
+	 * Get a list of user profiles of all phone users.
+	 * @return List of user profiles.
+	 */
 	list<t_user *> ref_users(void);
 	
-	// Get the user profile of a user for which user->get_display_uri() ==
-	// display_uri.
+	/**
+	 * Get the user profile of a user for which user->get_display_uri() ==
+	 * display_uri.
+	 * @param display_uri [in] Display URI.
+	 * @return User profile.
+	 */
 	t_user *ref_user_display_uri(const string &display_uri);
 	
-	// Get the user profile matching the profile name
+	/**
+	 * Get the user profile matching the profile name.
+	 * @param profile_name [in] User profile name.
+	 * @return User profile.
+	 */
 	t_user *ref_user_profile(const string &profile_name);
 	
-	// Get service information for a phone user
+	/**
+	 * Get service information for a phone user.
+	 * @param user [in] User profile of the phone user.
+	 * @return Service object.
+	 */
 	t_service *ref_service(t_user *user);
+	
+	/**
+	 * Get the buddy list of a phone user.
+	 * @param user [in] User profile of the phone user.
+	 * @return Buddy list.
+	 */
+	t_buddy_list *ref_buddy_list(t_user *user);
+	
+	/**
+	 * Get the presence event publication agent of a phone user.
+	 * @param user [in] User profile of the phone user.
+	 * @return The presence EPA.
+	 */
+	t_presence_epa *ref_presence_epa(t_user *user);
+	
+	/**
+	 * Find active phone user
+	 * @param profile_name [in] User profile name
+	 * @return The phone user for the user profile, NULL if there is not active phone user.
+	 */
+	t_phone_user *find_phone_user(const string &profile_name) const;
 	
 	// Get IP address and port for SIP
 	string get_ip_sip(const t_user *user) const;
@@ -455,17 +614,30 @@ public:
 	// Start a timer with the time set in the time-argument.
 	void start_set_timer(t_phone_timer timer, long time, t_phone_user *pu);
 	
-	// Initialize the phone functions.
-	// Register all active users with auto register
+	/**
+	 * Initialize the phone functions.
+	 * Register all active users with auto register.
+	 * Initialize extensions for users without auto register.
+	 */
 	void init(void);
 	
-	// Set the signal handler to handler for LinuxThreads.
-	// Returns true if succesful, false otherwise.
+	/**
+	 * Initialize SIP extensions like MWI and presence.
+	 * @param user_config [in] User for which the extensions must be initialized.
+	 */
+	void init_extensions(t_user *user_config);
+	
+	/**
+	 * Set the signal handler to handler for LinuxThreads.
+	 * @return True if succesful, false otherwise.
+	 */
 	bool set_sighandler(void) const;
 	
-	// Terminate the phone functions.
-	// Release all calls, don't accept any new calls.
-	// Deregister all active users.
+	/**
+	 * Terminate the phone functions.
+	 * Release all calls, don't accept any new calls.
+	 * Deregister all active users.
+	 */
 	void terminate(void);
 };
 

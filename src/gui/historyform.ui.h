@@ -43,6 +43,20 @@ void HistoryForm::init()
 	profileCheckBox->setChecked(true);
 	
 	timeLastViewed = phone->get_startup_time();
+	
+	QIconSet inviteIcon(QPixmap::fromMimeSource("invite.png"));
+	QIconSet deleteIcon(QPixmap::fromMimeSource("editdelete.png"));
+	histPopupMenu = new QPopupMenu(this);
+	MEMMAN_NEW(histPopupMenu);
+	
+	itemCall = histPopupMenu->insertItem(inviteIcon, tr("Call..."), this, SLOT(call()));
+	histPopupMenu->insertItem(deleteIcon, tr("Delete"), this, SLOT(deleteEntry()));
+}
+
+void HistoryForm::destroy()
+{
+	MEMMAN_DELETE(histPopupMenu);
+	delete histPopupMenu;
 }
 
 void HistoryForm::loadHistory()
@@ -240,29 +254,17 @@ void HistoryForm::popupMenu(QListViewItem *item, const QPoint &pos)
 {
 	if (!item) return;
 	
-	HistoryListViewItem *histItem = (HistoryListViewItem *)item;
+	HistoryListViewItem *histItem = dynamic_cast<HistoryListViewItem *>(item);
+	if (!histItem) return;
+	
 	t_call_record cr = histItem->get_call_record();
 	
 	// An anonymous caller cannot be called
 	bool canCall = !(cr.direction == t_call_record::DIR_IN &&
 			    cr.from_uri.encode() == ANONYMOUS_URI);
 	
-	QIconSet inviteIcon(QPixmap::fromMimeSource("invite.png"));
-	QIconSet deleteIcon(QPixmap::fromMimeSource("editdelete.png"));
-	QPopupMenu menu(this);
-	
-	int itemCall = menu.insertItem(inviteIcon, tr("Call..."));
-	menu.setItemEnabled(itemCall, canCall);
-	int itemDelete = menu.insertItem(deleteIcon, tr("Delete"));
-	int selected = menu.exec(pos);
-	
-	if (selected == -1) return;
-	
-	if (selected == itemCall) {
-		call(item);
-	} else if (selected == itemDelete) {
-		call_history->delete_call_record(histItem->get_call_record().get_id());
-	}
+	histPopupMenu->setItemEnabled(itemCall, canCall);
+	histPopupMenu->popup(pos);
 }
 
 void HistoryForm::call(QListViewItem *item)
@@ -317,6 +319,15 @@ void HistoryForm::call(void)
 {
 	QListViewItem *item = historyListView->currentItem();
 	if (item) call(item);
+}
+
+void HistoryForm::deleteEntry(void)
+{
+	QListViewItem *item = historyListView->currentItem();
+	HistoryListViewItem *histItem = dynamic_cast<HistoryListViewItem *>(item);
+	if (!histItem) return;
+	
+	call_history->delete_call_record(histItem->get_call_record().get_id());
 }
 
 void HistoryForm::clearHistory()

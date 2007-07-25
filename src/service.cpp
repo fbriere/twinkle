@@ -222,11 +222,7 @@ bool t_service::read_config(string &error_msg) {
 	lock();
 	
 	string filename = user_config->get_profile_name() + SVC_FILE_EXT;
-	string f = string(DIR_HOME);
-	f += "/";
-	f += USER_DIR;
-	f += "/";
-	f += filename;
+	string f = user_config->expand_filename(filename);
 	
 	// Check if config file exists
 	if (stat(f.c_str(), &stat_buf) != 0) {
@@ -333,18 +329,14 @@ bool t_service::write_config(string &error_msg) {
 	lock();
 
 	string filename = user_config->get_profile_name() + SVC_FILE_EXT;
-	string f = string(DIR_HOME);
-	f += "/";
-	f += USER_DIR;
-	f += "/";
-	f += filename;
+	string f = user_config->expand_filename(filename);
 
 	// Make a backup of the file if we are editing an existing file, so
 	// that can be restored when writing fails.
 	string f_backup = f + '~';
 	if (stat(f.c_str(), &stat_buf) == 0) {
 		if (rename(f.c_str(), f_backup.c_str()) != 0) {
-			char *err = strerror(errno);
+			string err = get_error_str(errno);
 			error_msg = "Failed to backup ";
 			error_msg += f;
 			error_msg += " to ";

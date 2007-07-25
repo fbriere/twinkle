@@ -843,6 +843,9 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 	case INFO:
 		process_info(r, tuid, tid);
 		break;
+	case MESSAGE:
+		process_message(r, tuid, tid);
+		break;
 	default:
 		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
 		line->send_response(resp, tuid, tid);
@@ -1260,6 +1263,38 @@ void t_dialog::process_info(t_request *r, t_tuid tuid, t_tid tid) {
 	delete resp;
 	
 	ui->cb_dtmf_detected(line->get_line_number(), char2dtmf_ev(dtmf_signal));
+}
+
+void t_dialog::process_message(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	
+	log_file->write_report("Received in-dialog MESSAGE.",
+		"t_dialog::process_message", LOG_NORMAL, LOG_DEBUG);
+		
+	if (!r->body ||
+	    r->body->get_type() != BODY_PLAIN_TEXT)
+	{
+		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
+		// RFC 3261 21.4.13
+		SET_MESSAGE_HDR_ACCEPT(resp->hdr_accept);
+		phone->send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		return;
+	}
+	
+	bool accepted = ui->cb_message_request(line->get_user(), r);
+	if (accepted) {
+		resp = r->create_response(R_200_OK);
+	} else {
+		resp = r->create_response(R_486_BUSY_HERE);
+	}
+	
+	resp = r->create_response(R_200_OK);
+	line->send_response(resp, tuid, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
 }
 
 // INVITE sent. Waiting for a first non-100 response.
@@ -3014,7 +3049,7 @@ bool t_dialog::stun_bind_media(void) {
 		log_file->write_header("t_dialog::stun_bind_media", 
 			LOG_NORMAL, LOG_CRITICAL);
 		log_file->write_raw("STUN bind request for media failed.\n");
-		log_file->write_raw(strerror(err));
+		log_file->write_raw(get_error_str(err));
 		log_file->write_endl();
 		log_file->write_footer();
 		return false;

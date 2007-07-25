@@ -23,36 +23,61 @@
 #include <cc++/config.h>
 #include <string>
 
+#include "media_type.h"
+
 class t_sip_message;
 
 using namespace std;
 
+/** Body type. */
 enum t_body_type {
-	BODY_OPAQUE,
-	BODY_SDP,
-	BODY_SIPFRAG,
-	BODY_DTMF_RELAY,
-	BODY_SIMPLE_MSG_SUM
+	BODY_OPAQUE,		/**< Opaque body. */
+	BODY_SDP,		/**< SDP */
+	BODY_SIPFRAG,		/**< message/sipfrag RFC 3420 */
+	BODY_DTMF_RELAY,	/**< DTMF relay as defined by Cisco */
+	BODY_SIMPLE_MSG_SUM,	/**< Simple message summary RFC 3842 */
+	BODY_PLAIN_TEXT,	/**< Plain text for messaging */
+	BODY_HTML_TEXT,		/**< HTML text for messaging */
+	BODY_PIDF_XML		/**< pidx+xml RFC 3863 */
 };
 
-// Base class for SIP bodies
+/** Abstract base class for SIP bodies. */
 class t_sip_body {
 public:
-	// Indicates if the body content is invalid.
-	// This will be set by the body parser
+	/**
+	 * Indicates if the body content is invalid.
+	 * This will be set by the body parser.
+	 */
 	bool 	invalid;
 
+	/** Constructor. */
 	t_sip_body();
+	
 	virtual ~t_sip_body() {}
 
-	// Return text encoded body
+	/**
+	 * Encode the body.
+	 * @return Text encoded body.
+	 */
 	virtual string encode(void) const = 0;
 
-	// Create a copy of the body
+	/**
+	 * Create a copy of the body.
+	 * @return Copy of the body.
+	 */
 	virtual t_sip_body *copy(void) const = 0;
 
-	// Get type of body
+	/** 
+	 * Get type of body.
+	 * @return body type.
+	 */
 	virtual t_body_type get_type(void) const = 0;
+	
+	/**
+	 * Get content type for this type of body.
+	 * @return Content type.
+	 */
+	virtual t_media get_media(void) const = 0;
 };
 
 
@@ -65,6 +90,7 @@ public:
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;
+	t_media get_media(void) const;
 };
 
 // RFC 3420
@@ -78,6 +104,7 @@ public:
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;
+	t_media get_media(void) const;
 };
 
 // application/dtmf-relay body
@@ -91,7 +118,42 @@ public:
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;
+	t_media get_media(void) const;
 	bool parse(const string &s);
+};
+
+/** Plain text body. */
+class t_sip_body_plain_text : public t_sip_body {
+public:
+	string	text;	/**< The text */
+	
+	/**
+	 * Constructor.
+	 * @param _text [in] The body text.
+	 */
+	t_sip_body_plain_text(const string &_text);
+	
+	string encode(void) const;
+	t_sip_body *copy(void) const;
+	t_body_type get_type(void) const;
+	t_media get_media(void) const;
+};
+
+/** Html text body. */
+class t_sip_body_html_text : public t_sip_body {
+public:
+	string	text;	/**< The text */
+	
+	/**
+	 * Constructor.
+	 * @param _text [in] The body text.
+	 */
+	t_sip_body_html_text(const string &_text);
+	
+	string encode(void) const;
+	t_sip_body *copy(void) const;
+	t_body_type get_type(void) const;
+	t_media get_media(void) const;
 };
 
 #endif

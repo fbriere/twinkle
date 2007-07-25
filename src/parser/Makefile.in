@@ -77,7 +77,8 @@ am_libsipparser_a_OBJECTS = challenge.$(OBJEXT) coding.$(OBJEXT) \
 	hdr_referred_by.$(OBJEXT) hdr_replaces.$(OBJEXT) \
 	hdr_reply_to.$(OBJEXT) hdr_require.$(OBJEXT) \
 	hdr_retry_after.$(OBJEXT) hdr_route.$(OBJEXT) \
-	hdr_rseq.$(OBJEXT) hdr_server.$(OBJEXT) hdr_subject.$(OBJEXT) \
+	hdr_rseq.$(OBJEXT) hdr_server.$(OBJEXT) hdr_sip_etag.$(OBJEXT) \
+	hdr_sip_if_match.$(OBJEXT) hdr_subject.$(OBJEXT) \
 	hdr_subscription_state.$(OBJEXT) hdr_supported.$(OBJEXT) \
 	hdr_timestamp.$(OBJEXT) hdr_to.$(OBJEXT) \
 	hdr_unsupported.$(OBJEXT) hdr_user_agent.$(OBJEXT) \
@@ -242,6 +243,8 @@ USER_LDFLAGS = @USER_LDFLAGS@
 USE_THREADS = @USE_THREADS@
 VERSION = @VERSION@
 XMKMF = @XMKMF@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_LIBS = @XML2_LIBS@
 XMLLINT = @XMLLINT@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_INCLUDES = @X_INCLUDES@
@@ -411,6 +414,8 @@ libsipparser_a_SOURCES = \
         hdr_route.cpp\
         hdr_rseq.cpp\
         hdr_server.cpp\
+        hdr_sip_etag.cpp\
+        hdr_sip_if_match.cpp\
         hdr_subject.cpp\
 	hdr_subscription_state.cpp\
         hdr_supported.cpp\
@@ -482,6 +487,8 @@ libsipparser_a_SOURCES = \
         hdr_route.h\
         hdr_rseq.h\
         hdr_server.h\
+        hdr_sip_etag.h\
+        hdr_sip_if_match.h\
         hdr_subject.h\
 	hdr_subscription_state.h\
         hdr_supported.h\
@@ -604,6 +611,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_route.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_rseq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_sip_etag.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_sip_if_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_subject.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_subscription_state.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_supported.Po@am__quote@

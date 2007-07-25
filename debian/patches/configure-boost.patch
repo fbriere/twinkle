@@ -1,6 +1,6 @@
-diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
---- twinkle-1.0.1/configure	2007-05-19 15:50:36.000000000 +0100
-+++ twinkle-1.0.1.new/configure	2007-05-20 13:26:41.000000000 +0100
+diff -Nur twinkle-1.1/configure twinkle-1.1.new/configure
+--- twinkle-1.1/configure	2007-07-21 20:11:10.000000000 +0100
++++ twinkle-1.1.new/configure	2007-07-25 22:28:06.000000000 +0100
 @@ -1,6 +1,6 @@
  #! /bin/sh
  # Guess values for system-dependent variables and create Makefiles.
@@ -190,7 +190,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  YACC
  YFLAGS
  GREP
-@@ -835,6 +850,7 @@
+@@ -837,6 +852,7 @@
  CC
  CFLAGS
  LDFLAGS
@@ -198,7 +198,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  CPPFLAGS
  CXX
  CXXFLAGS
-@@ -949,10 +965,10 @@
+@@ -951,10 +967,10 @@
    -disable-* | --disable-*)
      ac_feature=`expr "x$ac_option" : 'x-*disable-\(.*\)'`
      # Reject names that are not valid shell variable names.
@@ -211,7 +211,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      eval enable_$ac_feature=no ;;
  
    -docdir | --docdir | --docdi | --doc | --do)
-@@ -968,10 +984,10 @@
+@@ -970,10 +986,10 @@
    -enable-* | --enable-*)
      ac_feature=`expr "x$ac_option" : 'x-*enable-\([^=]*\)'`
      # Reject names that are not valid shell variable names.
@@ -224,7 +224,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      eval enable_$ac_feature=\$ac_optarg ;;
  
    -exec-prefix | --exec_prefix | --exec-prefix | --exec-prefi \
-@@ -1165,19 +1181,19 @@
+@@ -1167,19 +1183,19 @@
    -with-* | --with-*)
      ac_package=`expr "x$ac_option" : 'x-*with-\([^=]*\)'`
      # Reject names that are not valid shell variable names.
@@ -248,7 +248,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      eval with_$ac_package=no ;;
  
    --x)
-@@ -1456,6 +1472,7 @@
+@@ -1458,6 +1474,7 @@
    CFLAGS      C compiler flags
    LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
                nonstandard directory <lib dir>
@@ -256,7 +256,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    CPPFLAGS    C/C++/Objective C preprocessor flags, e.g. -I<include dir> if
                you have headers in a nonstandard directory <include dir>
    CXX         C++ compiler command
-@@ -1533,7 +1550,7 @@
+@@ -1535,7 +1552,7 @@
  if $ac_init_version; then
    cat <<\_ACEOF
  configure
@@ -265,7 +265,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  Copyright (C) 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
  2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
-@@ -1547,7 +1564,7 @@
+@@ -1549,7 +1566,7 @@
  running configure, to aid debugging if configure makes a mistake.
  
  It was created by $as_me, which was
@@ -274,7 +274,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
    $ $0 $@
  
-@@ -2145,7 +2162,7 @@
+@@ -2147,7 +2164,7 @@
      # by default.
      for ac_prog in ginstall scoinst install; do
        for ac_exec_ext in '' $ac_executable_extensions; do
@@ -283,7 +283,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  	  if test $ac_prog = install &&
  	    grep dspmsg "$as_dir/$ac_prog$ac_exec_ext" >/dev/null 2>&1; then
  	    # AIX install.  It has an incompatible calling convention.
-@@ -2339,7 +2356,7 @@
+@@ -2341,7 +2358,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -292,7 +292,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_AWK="$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2474,7 +2491,7 @@
+@@ -2476,7 +2493,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -301,7 +301,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_STRIP="${ac_tool_prefix}strip"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2514,7 +2531,7 @@
+@@ -2516,7 +2533,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -310,7 +310,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_ac_ct_STRIP="strip"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2595,7 +2612,7 @@
+@@ -2597,7 +2614,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -319,7 +319,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_CC="${ac_tool_prefix}gcc"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2635,7 +2652,7 @@
+@@ -2637,7 +2654,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -328,7 +328,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_ac_ct_CC="gcc"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2692,7 +2709,7 @@
+@@ -2694,7 +2711,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -337,7 +337,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_CC="${ac_tool_prefix}cc"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2733,7 +2750,7 @@
+@@ -2735,7 +2752,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -346,7 +346,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      if test "$as_dir/$ac_word$ac_exec_ext" = "/usr/ucb/cc"; then
         ac_prog_rejected=yes
         continue
-@@ -2791,7 +2808,7 @@
+@@ -2793,7 +2810,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -355,7 +355,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_CC="$ac_tool_prefix$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2835,7 +2852,7 @@
+@@ -2837,7 +2854,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -364,7 +364,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_ac_ct_CC="$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -2976,7 +2993,7 @@
+@@ -2978,7 +2995,7 @@
  # in a Makefile.  We should not override ac_cv_exeext if it was cached,
  # so that the user can short-circuit this test for compilers unknown to
  # Autoconf.
@@ -373,7 +373,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  do
    test -f "$ac_file" || continue
    case $ac_file in
-@@ -3004,6 +3021,12 @@
+@@ -3006,6 +3023,12 @@
  test "$ac_cv_exeext" = no && ac_cv_exeext=
  
  else
@@ -386,7 +386,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    echo "$as_me: failed program was:" >&5
  sed 's/^/| /' conftest.$ac_ext >&5
  
-@@ -3015,8 +3038,6 @@
+@@ -3017,8 +3040,6 @@
  fi
  
  ac_exeext=$ac_cv_exeext
@@ -395,7 +395,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  # Check that the compiler produces executables we can run.  If not, either
  # the compiler is broken, or we cross compile.
-@@ -3194,27 +3215,10 @@
+@@ -3196,27 +3217,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -427,7 +427,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_compiler_gnu=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -3269,27 +3273,10 @@
+@@ -3271,27 +3275,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -459,7 +459,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_cc_g=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -3324,27 +3311,10 @@
+@@ -3326,27 +3313,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -491,7 +491,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -3380,27 +3350,10 @@
+@@ -3382,27 +3352,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -523,7 +523,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_cc_g=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -3516,27 +3469,10 @@
+@@ -3518,27 +3471,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -555,7 +555,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_cc_c89=$ac_arg
  else
    echo "$as_me: failed program was:" >&5
-@@ -3775,7 +3711,7 @@
+@@ -3777,7 +3713,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -564,7 +564,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_CXX="$ac_tool_prefix$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -3819,7 +3755,7 @@
+@@ -3821,7 +3757,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -573,7 +573,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_ac_ct_CXX="$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -3932,27 +3868,10 @@
+@@ -3934,27 +3870,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -605,7 +605,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_compiler_gnu=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -4007,27 +3926,10 @@
+@@ -4009,27 +3928,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -637,7 +637,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_cxx_g=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -4062,27 +3964,10 @@
+@@ -4064,27 +3966,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -669,7 +669,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -4118,27 +4003,10 @@
+@@ -4120,27 +4005,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -701,7 +701,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_cxx_g=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -4340,17 +4208,10 @@
+@@ -4342,17 +4210,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -723,7 +723,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -4384,17 +4245,10 @@
+@@ -4386,17 +4247,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -745,7 +745,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # Broken: success on invalid input.
  continue
  else
-@@ -4459,17 +4313,10 @@
+@@ -4461,17 +4315,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -767,7 +767,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -4503,17 +4350,10 @@
+@@ -4505,17 +4352,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -789,7 +789,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # Broken: success on invalid input.
  continue
  else
-@@ -4594,17 +4434,10 @@
+@@ -4596,17 +4436,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -811,7 +811,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -4638,17 +4471,10 @@
+@@ -4640,17 +4473,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -833,7 +833,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # Broken: success on invalid input.
  continue
  else
-@@ -4713,17 +4539,10 @@
+@@ -4715,17 +4541,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -855,7 +855,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    :
  else
    echo "$as_me: failed program was:" >&5
-@@ -4757,17 +4576,10 @@
+@@ -4759,17 +4578,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -877,7 +877,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # Broken: success on invalid input.
  continue
  else
-@@ -4817,7 +4629,7 @@
+@@ -4819,7 +4631,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -886,7 +886,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_RANLIB="${ac_tool_prefix}ranlib"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -4857,7 +4669,7 @@
+@@ -4859,7 +4671,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -895,7 +895,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_ac_ct_RANLIB="ranlib"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -4915,7 +4727,7 @@
+@@ -4917,7 +4729,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -904,7 +904,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_LEX="$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -4940,116 +4752,69 @@
+@@ -4942,116 +4754,69 @@
  done
  test -n "$LEX" || LEX=":"
  
@@ -1065,7 +1065,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  _ACEOF
  rm -f conftest.$ac_objext conftest$ac_exeext
  if { (ac_try="$ac_link"
-@@ -5064,85 +4829,31 @@
+@@ -5066,85 +4831,31 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1165,7 +1165,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  { echo "$as_me:$LINENO: checking whether yytext is a pointer" >&5
  echo $ECHO_N "checking whether yytext is a pointer... $ECHO_C" >&6; }
-@@ -5150,13 +4861,13 @@
+@@ -5152,13 +4863,13 @@
    echo $ECHO_N "(cached) $ECHO_C" >&6
  else
    # POSIX says lex can declare yytext either as a pointer or an array; the
@@ -1182,7 +1182,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  `cat $LEX_OUTPUT_ROOT.c`
  _ACEOF
  rm -f conftest.$ac_objext conftest$ac_exeext
-@@ -5172,27 +4883,11 @@
+@@ -5174,27 +4885,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1215,7 +1215,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_prog_lex_yytext_pointer=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -5201,10 +4896,9 @@
+@@ -5203,10 +4898,9 @@
  
  fi
  
@@ -1227,7 +1227,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_prog_lex_yytext_pointer" >&5
-@@ -5216,6 +4910,7 @@
+@@ -5218,6 +4912,7 @@
  _ACEOF
  
  fi
@@ -1235,7 +1235,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  fi
  for ac_prog in 'bison -y' byacc
-@@ -5236,7 +4931,7 @@
+@@ -5238,7 +4933,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -1244,7 +1244,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_YACC="$ac_prog"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -5283,7 +4978,7 @@
+@@ -5285,7 +4980,7 @@
    for ac_prog in grep ggrep; do
    for ac_exec_ext in '' $ac_executable_extensions; do
      ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
@@ -1253,7 +1253,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      # Check for GNU ac_path_GREP and select it if it is found.
    # Check for GNU $ac_path_GREP
  case `"$ac_path_GREP" --version 2>&1` in
-@@ -5365,7 +5060,7 @@
+@@ -5367,7 +5062,7 @@
    for ac_prog in egrep; do
    for ac_exec_ext in '' $ac_executable_extensions; do
      ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
@@ -1262,7 +1262,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      # Check for GNU ac_path_EGREP and select it if it is found.
    # Check for GNU $ac_path_EGREP
  case `"$ac_path_EGREP" --version 2>&1` in
-@@ -5461,27 +5156,10 @@
+@@ -5463,27 +5158,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1294,7 +1294,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_header_stdc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -5657,27 +5335,10 @@
+@@ -5659,27 +5337,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1326,7 +1326,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "$as_ac_Header=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -5719,7 +5380,8 @@
+@@ -5721,7 +5382,8 @@
  int
  main ()
  {
@@ -1336,7 +1336,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
   bogus endian macros
  #endif
  
-@@ -5740,27 +5402,10 @@
+@@ -5742,27 +5404,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1368,7 +1368,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # It does; now see whether it defined to BIG_ENDIAN or not.
  cat >conftest.$ac_ext <<_ACEOF
  /* confdefs.h.  */
-@@ -5795,27 +5440,10 @@
+@@ -5797,27 +5442,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1400,7 +1400,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_c_bigendian=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -5866,27 +5494,10 @@
+@@ -5868,27 +5496,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1432,7 +1432,123 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if grep BIGenDianSyS conftest.$ac_objext >/dev/null ; then
    ac_cv_c_bigendian=yes
  fi
-@@ -6035,27 +5646,10 @@
+@@ -6012,8 +5623,7 @@
+ main ()
+ {
+ #ifndef strerror_r
+-  char *p = (char *) strerror_r;
+-  return !p;
++  (void) strerror_r;
+ #endif
+ 
+   ;
+@@ -6033,27 +5643,10 @@
+   rm -f conftest.er1
+   cat conftest.err >&5
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } &&
+-	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; } &&
+-	 { ac_try='test -s conftest.$ac_objext'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; }; then
++  (exit $ac_status); } && {
++	 test -z "$ac_cxx_werror_flag" ||
++	 test ! -s conftest.err
++       } && test -s conftest.$ac_objext; then
+   ac_cv_have_decl_strerror_r=yes
+ else
+   echo "$as_me: failed program was:" >&5
+@@ -6149,27 +5742,11 @@
+   rm -f conftest.er1
+   cat conftest.err >&5
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } &&
+-	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; } &&
+-	 { ac_try='test -s conftest$ac_exeext'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; }; then
++  (exit $ac_status); } && {
++	 test -z "$ac_cxx_werror_flag" ||
++	 test ! -s conftest.err
++       } && test -s conftest$ac_exeext &&
++       $as_test_x conftest$ac_exeext; then
+   eval "$as_ac_var=yes"
+ else
+   echo "$as_me: failed program was:" >&5
+@@ -6178,7 +5755,7 @@
+ 	eval "$as_ac_var=no"
+ fi
+ 
+-rm -f core conftest.err conftest.$ac_objext \
++rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+       conftest$ac_exeext conftest.$ac_ext
+ fi
+ ac_res=`eval echo '${'$as_ac_var'}'`
+@@ -6233,27 +5810,10 @@
+   rm -f conftest.er1
+   cat conftest.err >&5
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } &&
+-	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; } &&
+-	 { ac_try='test -s conftest.$ac_objext'
+-  { (case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_try") 2>&5
+-  ac_status=$?
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; }; then
++  (exit $ac_status); } && {
++	 test -z "$ac_cxx_werror_flag" ||
++	 test ! -s conftest.err
++       } && test -s conftest.$ac_objext; then
+   ac_cv_func_strerror_r_char_p=yes
+ else
+   echo "$as_me: failed program was:" >&5
+@@ -6376,27 +5936,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1464,7 +1580,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -6091,17 +5685,10 @@
+@@ -6432,17 +5975,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1486,7 +1602,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -6195,27 +5782,10 @@
+@@ -6536,27 +6072,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1518,7 +1634,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "$as_ac_Header=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -6265,7 +5835,7 @@
+@@ -6606,7 +6125,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -1527,7 +1643,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_path_CCGNU2_CONFIG="$as_dir/$ac_word$ac_exec_ext"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -6395,7 +5965,7 @@
+@@ -6736,7 +6255,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -1536,7 +1652,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -6497,7 +6067,7 @@
+@@ -6836,7 +6355,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -1545,7 +1661,16 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -6671,27 +6241,10 @@
+@@ -6940,7 +6459,7 @@
+   IFS=$as_save_IFS
+   test -z "$as_dir" && as_dir=.
+   for ac_exec_ext in '' $ac_executable_extensions; do
+-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
++  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+     ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+     break 2
+@@ -7114,27 +6633,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1577,7 +1702,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    kde_cv_func_strlcat=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -6788,27 +6341,11 @@
+@@ -7231,27 +6733,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1610,7 +1735,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
     kde_cv_func_strlcat=yes
    kde_cv_proto_strlcat=yes
  else
-@@ -6819,7 +6356,7 @@
+@@ -7262,7 +6748,7 @@
  
  fi
  
@@ -1619,7 +1744,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$kde_safe_libs
  ac_ext=cpp
-@@ -6915,27 +6452,10 @@
+@@ -7358,27 +6844,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1651,7 +1776,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    kde_cv_func_strlcpy=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7031,27 +6551,11 @@
+@@ -7474,27 +6943,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1684,7 +1809,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
     kde_cv_func_strlcpy=yes
    kde_cv_proto_strlcpy=yes
  else
-@@ -7062,7 +6566,7 @@
+@@ -7505,7 +6958,7 @@
  
  fi
  
@@ -1693,7 +1818,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$kde_safe_libs
  ac_ext=cpp
-@@ -7135,27 +6639,11 @@
+@@ -7578,27 +7031,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1726,7 +1851,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_util_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7164,7 +6652,7 @@
+@@ -7607,7 +7044,7 @@
  	ac_cv_lib_util_main=no
  fi
  
@@ -1735,7 +1860,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7210,27 +6698,11 @@
+@@ -7653,27 +7090,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1768,7 +1893,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_compat_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7239,7 +6711,7 @@
+@@ -7682,7 +7103,7 @@
  	ac_cv_lib_compat_main=no
  fi
  
@@ -1777,7 +1902,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7292,27 +6764,11 @@
+@@ -7735,27 +7156,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1810,7 +1935,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_crypt_crypt=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7321,7 +6777,7 @@
+@@ -7764,7 +7169,7 @@
  	ac_cv_lib_crypt_crypt=no
  fi
  
@@ -1819,7 +1944,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7372,27 +6828,11 @@
+@@ -7815,27 +7220,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1852,7 +1977,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_c_crypt=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7401,7 +6841,7 @@
+@@ -7844,7 +7233,7 @@
  	ac_cv_lib_c_crypt=no
  fi
  
@@ -1861,7 +1986,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7479,27 +6919,10 @@
+@@ -7922,27 +7311,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1893,7 +2018,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
           kde_cv_socklen_t=yes
           kde_cv_socklen_t_equiv=socklen_t
-@@ -7572,27 +6995,10 @@
+@@ -8015,27 +7387,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1925,7 +2050,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
                 kde_cv_socklen_t_equiv="$t"
                 break
-@@ -7671,27 +7077,11 @@
+@@ -8114,27 +7469,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -1958,7 +2083,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_dnet_dnet_ntoa=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7700,7 +7090,7 @@
+@@ -8143,7 +7482,7 @@
  	ac_cv_lib_dnet_dnet_ntoa=no
  fi
  
@@ -1967,7 +2092,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7753,27 +7143,11 @@
+@@ -8196,27 +7535,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2000,7 +2125,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_dnet_stub_dnet_ntoa=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7782,7 +7156,7 @@
+@@ -8225,7 +7548,7 @@
  	ac_cv_lib_dnet_stub_dnet_ntoa=no
  fi
  
@@ -2009,7 +2134,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -7856,27 +7230,11 @@
+@@ -8299,27 +7622,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2042,7 +2167,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_func_inet_ntoa=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7885,7 +7243,7 @@
+@@ -8328,7 +7635,7 @@
  	ac_cv_func_inet_ntoa=no
  fi
  
@@ -2051,7 +2176,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_func_inet_ntoa" >&5
-@@ -7934,27 +7292,11 @@
+@@ -8377,27 +7684,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2084,7 +2209,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_nsl_inet_ntoa=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -7963,7 +7305,7 @@
+@@ -8406,7 +7697,7 @@
  	ac_cv_lib_nsl_inet_ntoa=no
  fi
  
@@ -2093,7 +2218,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -8037,27 +7379,11 @@
+@@ -8480,27 +7771,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2126,7 +2251,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_func_connect=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8066,7 +7392,7 @@
+@@ -8509,7 +7784,7 @@
  	ac_cv_func_connect=no
  fi
  
@@ -2135,7 +2260,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_func_connect" >&5
-@@ -8115,27 +7441,11 @@
+@@ -8558,27 +7833,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2168,7 +2293,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_socket_connect=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8144,7 +7454,7 @@
+@@ -8587,7 +7846,7 @@
  	ac_cv_lib_socket_connect=no
  fi
  
@@ -2177,7 +2302,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -8219,27 +7529,11 @@
+@@ -8662,27 +7921,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2210,7 +2335,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_func_remove=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8248,7 +7542,7 @@
+@@ -8691,7 +7934,7 @@
  	ac_cv_func_remove=no
  fi
  
@@ -2219,7 +2344,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_func_remove" >&5
-@@ -8297,27 +7591,11 @@
+@@ -8740,27 +7983,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2252,7 +2377,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_posix_remove=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8326,7 +7604,7 @@
+@@ -8769,7 +7996,7 @@
  	ac_cv_lib_posix_remove=no
  fi
  
@@ -2261,7 +2386,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -8402,27 +7680,11 @@
+@@ -8845,27 +8072,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2294,7 +2419,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_func_shmat=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8431,7 +7693,7 @@
+@@ -8874,7 +8085,7 @@
  	ac_cv_func_shmat=no
  fi
  
@@ -2303,7 +2428,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_func_shmat" >&5
-@@ -8481,27 +7743,11 @@
+@@ -8924,27 +8135,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2336,7 +2461,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_ipc_shmat=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8510,7 +7756,7 @@
+@@ -8953,7 +8148,7 @@
  	ac_cv_lib_ipc_shmat=no
  fi
  
@@ -2345,7 +2470,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -8564,27 +7810,10 @@
+@@ -9007,27 +8202,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2377,7 +2502,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8620,17 +7849,10 @@
+@@ -9063,17 +8241,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2399,7 +2524,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8730,27 +7952,10 @@
+@@ -9173,27 +8344,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2431,7 +2556,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8786,17 +7991,10 @@
+@@ -9229,17 +8383,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2453,7 +2578,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8899,27 +8097,11 @@
+@@ -9342,27 +8489,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2486,7 +2611,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_poll_poll=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -8928,7 +8110,7 @@
+@@ -9371,7 +8502,7 @@
  	ac_cv_lib_poll_poll=no
  fi
  
@@ -2495,7 +2620,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -8979,27 +8161,10 @@
+@@ -9422,27 +8553,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2527,7 +2652,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9035,17 +8200,10 @@
+@@ -9478,17 +8592,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2549,7 +2674,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9140,27 +8298,10 @@
+@@ -9583,27 +8690,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2581,7 +2706,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9196,17 +8337,10 @@
+@@ -9639,17 +8729,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2603,7 +2728,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9308,27 +8442,11 @@
+@@ -9751,27 +8834,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2636,7 +2761,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
        LIBRESOLV="-lresolv"
        { echo "$as_me:$LINENO: result: yes" >&5
-@@ -9348,7 +8466,7 @@
+@@ -9791,7 +8858,7 @@
  
  fi
  
@@ -2645,7 +2770,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
    LIBS=$kde_libs_safe
  
-@@ -9415,27 +8533,10 @@
+@@ -9858,27 +8925,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2677,7 +2802,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    kde_cv_func_res_init=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9532,27 +8633,11 @@
+@@ -9975,27 +9025,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2710,7 +2835,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
     kde_cv_func_res_init=yes
    kde_cv_proto_res_init=yes
  else
-@@ -9563,7 +8648,7 @@
+@@ -10006,7 +9040,7 @@
  
  fi
  
@@ -2719,7 +2844,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$kde_safe_libs
  ac_ext=cpp
-@@ -9646,27 +8731,11 @@
+@@ -10089,27 +9123,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2752,7 +2877,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_ucb_killpg=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9675,7 +8744,7 @@
+@@ -10118,7 +9136,7 @@
  	ac_cv_lib_ucb_killpg=no
  fi
  
@@ -2761,7 +2886,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -9734,27 +8803,11 @@
+@@ -10177,27 +9195,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2794,7 +2919,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_bsd_gethostbyname=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9763,7 +8816,7 @@
+@@ -10206,7 +9208,7 @@
  	ac_cv_lib_bsd_gethostbyname=no
  fi
  
@@ -2803,7 +2928,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -9812,27 +8865,10 @@
+@@ -10255,27 +9257,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2835,7 +2960,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_int=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -9846,16 +8882,15 @@
+@@ -10289,16 +9274,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_int" >&5
  echo "${ECHO_T}$ac_cv_type_int" >&6; }
  
@@ -2856,7 +2981,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -9865,7 +8900,7 @@
+@@ -10308,7 +9292,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -2865,7 +2990,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -9889,27 +8924,10 @@
+@@ -10332,27 +9316,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2897,7 +3022,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -9919,7 +8937,7 @@
+@@ -10362,7 +9329,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -2906,7 +3031,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -9943,27 +8961,10 @@
+@@ -10386,27 +9353,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2938,7 +3063,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -9990,7 +8991,7 @@
+@@ -10433,7 +9383,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -2947,7 +3072,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10014,27 +9015,10 @@
+@@ -10457,27 +9407,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -2979,7 +3104,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -10044,7 +9028,7 @@
+@@ -10487,7 +9420,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -2988,7 +3113,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10068,27 +9052,10 @@
+@@ -10511,27 +9444,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3020,7 +3145,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -10125,7 +9092,7 @@
+@@ -10568,7 +9484,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3029,7 +3154,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10149,27 +9116,10 @@
+@@ -10592,27 +9508,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3061,7 +3186,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -10182,11 +9132,15 @@
+@@ -10625,11 +9524,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_int=$ac_lo;;
@@ -3079,7 +3204,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -10196,7 +9150,7 @@
+@@ -10639,7 +9542,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3088,7 +3213,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -10255,21 +9209,25 @@
+@@ -10698,21 +9601,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -3118,7 +3243,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_INT $ac_cv_sizeof_int
  _ACEOF
-@@ -10311,27 +9269,10 @@
+@@ -10754,27 +9661,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3150,7 +3275,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_short=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -10345,16 +9286,15 @@
+@@ -10788,16 +9678,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_short" >&5
  echo "${ECHO_T}$ac_cv_type_short" >&6; }
  
@@ -3171,7 +3296,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -10364,7 +9304,7 @@
+@@ -10807,7 +9696,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3180,7 +3305,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10388,27 +9328,10 @@
+@@ -10831,27 +9720,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3212,7 +3337,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -10418,7 +9341,7 @@
+@@ -10861,7 +9733,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3221,7 +3346,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10442,27 +9365,10 @@
+@@ -10885,27 +9757,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3253,7 +3378,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -10489,7 +9395,7 @@
+@@ -10932,7 +9787,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3262,7 +3387,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10513,27 +9419,10 @@
+@@ -10956,27 +9811,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3294,7 +3419,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -10543,7 +9432,7 @@
+@@ -10986,7 +9824,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3303,7 +3428,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10567,27 +9456,10 @@
+@@ -11010,27 +9848,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3335,7 +3460,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -10624,7 +9496,7 @@
+@@ -11067,7 +9888,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3344,7 +3469,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10648,27 +9520,10 @@
+@@ -11091,27 +9912,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3376,7 +3501,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -10681,11 +9536,15 @@
+@@ -11124,11 +9928,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_short=$ac_lo;;
@@ -3394,7 +3519,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -10695,7 +9554,7 @@
+@@ -11138,7 +9946,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3403,7 +3528,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -10754,21 +9613,25 @@
+@@ -11197,21 +10005,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -3433,7 +3558,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_SHORT $ac_cv_sizeof_short
  _ACEOF
-@@ -10810,27 +9673,10 @@
+@@ -11253,27 +10065,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3465,7 +3590,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_long=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -10844,16 +9690,15 @@
+@@ -11287,16 +10082,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_long" >&5
  echo "${ECHO_T}$ac_cv_type_long" >&6; }
  
@@ -3486,7 +3611,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -10863,7 +9708,7 @@
+@@ -11306,7 +10100,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3495,7 +3620,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10887,27 +9732,10 @@
+@@ -11330,27 +10124,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3527,7 +3652,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -10917,7 +9745,7 @@
+@@ -11360,7 +10137,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3536,7 +3661,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -10941,27 +9769,10 @@
+@@ -11384,27 +10161,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3568,7 +3693,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -10988,7 +9799,7 @@
+@@ -11431,7 +10191,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3577,7 +3702,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11012,27 +9823,10 @@
+@@ -11455,27 +10215,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3609,7 +3734,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -11042,7 +9836,7 @@
+@@ -11485,7 +10228,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3618,7 +3743,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11066,27 +9860,10 @@
+@@ -11509,27 +10252,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3650,7 +3775,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -11123,7 +9900,7 @@
+@@ -11566,7 +10292,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3659,7 +3784,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11147,27 +9924,10 @@
+@@ -11590,27 +10316,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3691,7 +3816,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -11180,11 +9940,15 @@
+@@ -11623,11 +10332,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_long=$ac_lo;;
@@ -3709,7 +3834,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -11194,7 +9958,7 @@
+@@ -11637,7 +10350,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3718,7 +3843,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -11253,21 +10017,25 @@
+@@ -11696,21 +10409,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -3748,7 +3873,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_LONG $ac_cv_sizeof_long
  _ACEOF
-@@ -11309,27 +10077,10 @@
+@@ -11752,27 +10469,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3780,7 +3905,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_char_p=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -11343,16 +10094,15 @@
+@@ -11786,16 +10486,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_char_p" >&5
  echo "${ECHO_T}$ac_cv_type_char_p" >&6; }
  
@@ -3801,7 +3926,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -11362,7 +10112,7 @@
+@@ -11805,7 +10504,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3810,7 +3935,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11386,27 +10136,10 @@
+@@ -11829,27 +10528,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3842,7 +3967,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -11416,7 +10149,7 @@
+@@ -11859,7 +10541,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3851,7 +3976,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11440,27 +10173,10 @@
+@@ -11883,27 +10565,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3883,7 +4008,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -11487,7 +10203,7 @@
+@@ -11930,7 +10595,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3892,7 +4017,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11511,27 +10227,10 @@
+@@ -11954,27 +10619,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3924,7 +4049,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -11541,7 +10240,7 @@
+@@ -11984,7 +10632,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3933,7 +4058,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11565,27 +10264,10 @@
+@@ -12008,27 +10656,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -3965,7 +4090,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -11622,7 +10304,7 @@
+@@ -12065,7 +10696,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -3974,7 +4099,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -11646,27 +10328,10 @@
+@@ -12089,27 +10720,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4006,7 +4131,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -11679,11 +10344,15 @@
+@@ -12122,11 +10736,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_char_p=$ac_lo;;
@@ -4024,7 +4149,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -11693,7 +10362,7 @@
+@@ -12136,7 +10754,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4033,7 +4158,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -11752,21 +10421,25 @@
+@@ -12195,21 +10813,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -4063,7 +4188,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_CHAR_P $ac_cv_sizeof_char_p
  _ACEOF
-@@ -11815,27 +10488,11 @@
+@@ -12258,27 +10880,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4096,7 +4221,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_dl_dlopen=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -11844,7 +10501,7 @@
+@@ -12287,7 +10893,7 @@
  	ac_cv_lib_dl_dlopen=no
  fi
  
@@ -4105,7 +4230,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -11900,27 +10557,11 @@
+@@ -12343,27 +10949,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4138,7 +4263,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_dld_shl_unload=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -11929,7 +10570,7 @@
+@@ -12372,7 +10962,7 @@
  	ac_cv_lib_dld_shl_unload=no
  fi
  
@@ -4147,7 +4272,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -11985,27 +10626,10 @@
+@@ -12428,27 +11018,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4179,7 +4304,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_size_t=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -12019,16 +10643,15 @@
+@@ -12462,16 +11035,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_size_t" >&5
  echo "${ECHO_T}$ac_cv_type_size_t" >&6; }
  
@@ -4200,7 +4325,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -12038,7 +10661,7 @@
+@@ -12481,7 +11053,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4209,7 +4334,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12062,27 +10685,10 @@
+@@ -12505,27 +11077,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4241,7 +4366,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -12092,7 +10698,7 @@
+@@ -12535,7 +11090,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4250,7 +4375,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12116,27 +10722,10 @@
+@@ -12559,27 +11114,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4282,7 +4407,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -12163,7 +10752,7 @@
+@@ -12606,7 +11144,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4291,7 +4416,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12187,27 +10776,10 @@
+@@ -12630,27 +11168,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4323,7 +4448,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -12217,7 +10789,7 @@
+@@ -12660,7 +11181,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4332,7 +4457,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12241,27 +10813,10 @@
+@@ -12684,27 +11205,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4364,7 +4489,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -12298,7 +10853,7 @@
+@@ -12741,7 +11245,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4373,7 +4498,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12322,27 +10877,10 @@
+@@ -12765,27 +11269,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4405,7 +4530,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -12355,11 +10893,15 @@
+@@ -12798,11 +11285,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_size_t=$ac_lo;;
@@ -4423,7 +4548,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -12369,7 +10911,7 @@
+@@ -12812,7 +11303,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4432,7 +4557,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -12428,21 +10970,25 @@
+@@ -12871,21 +11362,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -4462,7 +4587,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_SIZE_T $ac_cv_sizeof_size_t
  _ACEOF
-@@ -12470,42 +11016,25 @@
+@@ -12913,42 +11408,25 @@
    return 0;
    ;
    return 0;
@@ -4518,7 +4643,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_type_unsigned_long=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -12519,16 +11048,15 @@
+@@ -12962,16 +11440,15 @@
  { echo "$as_me:$LINENO: result: $ac_cv_type_unsigned_long" >&5
  echo "${ECHO_T}$ac_cv_type_unsigned_long" >&6; }
  
@@ -4539,7 +4664,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    if test "$cross_compiling" = yes; then
    # Depending upon the size, compute the lo and hi bounds.
  cat >conftest.$ac_ext <<_ACEOF
-@@ -12538,7 +11066,7 @@
+@@ -12981,7 +11458,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4548,7 +4673,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12562,27 +11090,10 @@
+@@ -13005,27 +11482,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4580,7 +4705,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=0 ac_mid=0
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -12592,7 +11103,7 @@
+@@ -13035,7 +11495,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4589,7 +4714,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12616,27 +11127,10 @@
+@@ -13059,27 +11519,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4621,7 +4746,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -12663,7 +11157,7 @@
+@@ -13106,7 +11549,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4630,7 +4755,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12687,27 +11181,10 @@
+@@ -13130,27 +11573,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4662,7 +4787,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=-1 ac_mid=-1
    while :; do
      cat >conftest.$ac_ext <<_ACEOF
-@@ -12717,7 +11194,7 @@
+@@ -13160,7 +11586,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4671,7 +4796,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12741,27 +11218,10 @@
+@@ -13184,27 +11610,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4703,7 +4828,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_lo=$ac_mid; break
  else
    echo "$as_me: failed program was:" >&5
-@@ -12798,7 +11258,7 @@
+@@ -13241,7 +11650,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4712,7 +4837,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  int
  main ()
  {
-@@ -12822,27 +11282,10 @@
+@@ -13265,27 +11674,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4744,7 +4869,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_hi=$ac_mid
  else
    echo "$as_me: failed program was:" >&5
-@@ -12855,11 +11298,15 @@
+@@ -13298,11 +11690,15 @@
  done
  case $ac_lo in
  ?*) ac_cv_sizeof_unsigned_long=$ac_lo;;
@@ -4762,7 +4887,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  esac
  else
    cat >conftest.$ac_ext <<_ACEOF
-@@ -12869,7 +11316,7 @@
+@@ -13312,7 +11708,7 @@
  cat >>conftest.$ac_ext <<_ACEOF
  /* end confdefs.h.  */
  $ac_includes_default
@@ -4771,7 +4896,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  static long int longval () { return (long int) (sizeof (ac__type_sizeof_)); }
  static unsigned long int ulongval () { return (long int) (sizeof (ac__type_sizeof_)); }
  #include <stdio.h>
-@@ -12928,21 +11375,25 @@
+@@ -13371,21 +11767,25 @@
  sed 's/^/| /' conftest.$ac_ext >&5
  
  ( exit $ac_status )
@@ -4801,7 +4926,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  cat >>confdefs.h <<_ACEOF
  #define SIZEOF_UNSIGNED_LONG $ac_cv_sizeof_unsigned_long
  _ACEOF
-@@ -12983,27 +11434,10 @@
+@@ -13426,27 +11826,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4833,7 +4958,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    { echo "$as_me:$LINENO: result: yes" >&5
  echo "${ECHO_T}yes" >&6; }
  else
-@@ -13068,27 +11502,10 @@
+@@ -13511,27 +11894,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4865,7 +4990,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -13124,17 +11541,10 @@
+@@ -13567,17 +11933,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4887,7 +5012,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -13256,27 +11666,11 @@
+@@ -13699,27 +12058,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4920,7 +5045,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_func__NSGetEnviron=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -13285,7 +11679,7 @@
+@@ -13728,7 +12071,7 @@
  	ac_cv_func__NSGetEnviron=no
  fi
  
@@ -4929,7 +5054,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  { echo "$as_me:$LINENO: result: $ac_cv_func__NSGetEnviron" >&5
-@@ -13373,27 +11767,11 @@
+@@ -13816,27 +12159,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4962,7 +5087,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "$as_ac_var=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -13402,7 +11780,7 @@
+@@ -13845,7 +12172,7 @@
  	eval "$as_ac_var=no"
  fi
  
@@ -4971,7 +5096,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi
  ac_res=`eval echo '${'$as_ac_var'}'`
-@@ -13552,17 +11930,10 @@
+@@ -13995,17 +12322,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -4993,7 +5118,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    # We can compile using X headers with no special include directory.
  ac_x_includes=
  else
-@@ -13655,27 +12026,11 @@
+@@ -14098,27 +12418,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5026,7 +5151,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    LIBS="$ac_save_LIBS"
  # We can link X programs with no special library path.
  ac_x_libraries=
-@@ -13732,7 +12087,7 @@
+@@ -14175,7 +12479,7 @@
  done
  fi
  
@@ -5035,7 +5160,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  fi # $ac_x_libraries = NO
  
-@@ -13897,27 +12252,11 @@
+@@ -14340,27 +12644,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5068,7 +5193,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_ICE_IceConnectionNumber=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -13926,7 +12265,7 @@
+@@ -14369,7 +12657,7 @@
  	ac_cv_lib_ICE_IceConnectionNumber=no
  fi
  
@@ -5077,7 +5202,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -13987,27 +12326,11 @@
+@@ -14430,27 +12718,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5110,7 +5235,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    kde_cv_have_libXext=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -14017,7 +12340,7 @@
+@@ -14460,7 +12732,7 @@
  
  fi
  
@@ -5119,7 +5244,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  
  LDFLAGS=$kde_ldflags_safe
-@@ -14209,42 +12532,26 @@
+@@ -14652,42 +12924,26 @@
  return pthread_create ();
    ;
    return 0;
@@ -5176,7 +5301,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "$as_ac_Lib=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -14253,7 +12560,7 @@
+@@ -14696,7 +12952,7 @@
  	eval "$as_ac_Lib=no"
  fi
  
@@ -5185,7 +5310,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -14314,27 +12621,11 @@
+@@ -14757,27 +13013,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5218,7 +5343,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_pthread_pthread_create=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -14343,7 +12634,7 @@
+@@ -14786,7 +13026,7 @@
  	ac_cv_lib_pthread_pthread_create=no
  fi
  
@@ -5227,7 +5352,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -14388,27 +12679,11 @@
+@@ -14831,27 +13071,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5260,7 +5385,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
          { echo "$as_me:$LINENO: result: yes" >&5
  echo "${ECHO_T}yes" >&6; }
-@@ -14422,7 +12697,7 @@
+@@ -14865,7 +13089,7 @@
  echo "${ECHO_T}no" >&6; }
  fi
  
@@ -5269,7 +5394,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
      LIBS=$kde_safe_libs
    fi
-@@ -14484,27 +12759,11 @@
+@@ -14927,27 +13151,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5302,7 +5427,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "kde_cv_prog_cxx_$kde_cache=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -14513,7 +12772,7 @@
+@@ -14956,7 +13164,7 @@
  
  fi
  
@@ -5311,7 +5436,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
    CXXFLAGS="$save_CXXFLAGS"
    ac_ext=cpp
-@@ -14591,27 +12850,11 @@
+@@ -15034,27 +13242,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5344,7 +5469,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "kde_cv_prog_cxx_$kde_cache=yes"
  else
    echo "$as_me: failed program was:" >&5
-@@ -14620,7 +12863,7 @@
+@@ -15063,7 +13255,7 @@
  
  fi
  
@@ -5353,7 +5478,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
    CXXFLAGS="$save_CXXFLAGS"
    ac_ext=cpp
-@@ -14780,27 +13023,11 @@
+@@ -15223,27 +13415,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5386,7 +5511,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "ac_cv_lib_z='-lz'"
  else
    echo "$as_me: failed program was:" >&5
-@@ -14809,7 +13036,7 @@
+@@ -15252,7 +13428,7 @@
  	eval "ac_cv_lib_z=no"
  fi
  
@@ -5395,7 +5520,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS="$kde_save_LIBS"
  CFLAGS="$kde_save_CFLAGS"
-@@ -14892,27 +13119,11 @@
+@@ -15335,27 +13511,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5428,7 +5553,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "ac_cv_lib_png='-lpng $LIBZ -lm'"
  else
    echo "$as_me: failed program was:" >&5
-@@ -14922,7 +13133,7 @@
+@@ -15365,7 +13525,7 @@
  
  fi
  
@@ -5437,7 +5562,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS="$kde_save_LIBS"
  CFLAGS="$kde_save_CFLAGS"
-@@ -14999,27 +13210,11 @@
+@@ -15442,27 +13602,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5470,7 +5595,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "ac_cv_lib_jpeg_6b=-ljpeg6b"
  else
    echo "$as_me: failed program was:" >&5
-@@ -15028,7 +13223,7 @@
+@@ -15471,7 +13615,7 @@
  	eval "ac_cv_lib_jpeg_6b=no"
  fi
  
@@ -5479,7 +5604,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS="$ac_save_LIBS"
  CFLAGS="$ac_save_CFLAGS"
-@@ -15096,27 +13291,11 @@
+@@ -15539,27 +13683,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5512,7 +5637,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "ac_cv_lib_jpeg_normal=-ljpeg"
  else
    echo "$as_me: failed program was:" >&5
-@@ -15125,7 +13304,7 @@
+@@ -15568,7 +13696,7 @@
  	eval "ac_cv_lib_jpeg_normal=no"
  fi
  
@@ -5521,25 +5646,25 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS="$ac_save_LIBS"
  CFLAGS="$ac_save_CFLAGS"
-@@ -15159,7 +13338,7 @@
+@@ -15602,7 +13730,7 @@
  do
    for j in jpeglib.h;
    do
--    echo "configure: 15162: $i/$j" >&5
-+    echo "configure: 13341: $i/$j" >&5
+-    echo "configure: 15605: $i/$j" >&5
++    echo "configure: 13733: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        jpeg_incdir=$i
-@@ -15467,7 +13646,7 @@
+@@ -15910,7 +14038,7 @@
  do
    for j in $kde_qt_header;
    do
--    echo "configure: 15470: $i/$j" >&5
-+    echo "configure: 13649: $i/$j" >&5
+-    echo "configure: 15913: $i/$j" >&5
++    echo "configure: 14041: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        qt_incdir=$i
-@@ -16145,27 +14324,11 @@
+@@ -16588,27 +14716,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5572,7 +5697,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    eval "kde_cv_qt_jpeg=no"
  else
    echo "$as_me: failed program was:" >&5
-@@ -16174,7 +14337,7 @@
+@@ -16617,7 +14729,7 @@
  	eval "kde_cv_qt_jpeg=yes"
  fi
  
@@ -5581,7 +5706,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS="$ac_save_LIBS"
  CXXFLAGS="$ac_save_CXXFLAGS"
-@@ -16238,7 +14401,7 @@
+@@ -16681,7 +14793,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -5590,7 +5715,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_have_lrelease="yes"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -16296,7 +14459,7 @@
+@@ -16740,7 +14852,7 @@
    IFS=$as_save_IFS
    test -z "$as_dir" && as_dir=.
    for ac_exec_ext in '' $ac_executable_extensions; do
@@ -5599,7 +5724,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
      ac_cv_prog_have_kde="yes"
      echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
      break 2
-@@ -16599,27 +14762,10 @@
+@@ -17043,27 +15155,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5631,43 +5756,43 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    kde_cv_stl_works=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -16755,7 +14901,7 @@
+@@ -17199,7 +15294,7 @@
  do
    for j in $kde_check_header;
    do
--    echo "configure: 16758: $i/$j" >&5
-+    echo "configure: 14904: $i/$j" >&5
+-    echo "configure: 17202: $i/$j" >&5
++    echo "configure: 15297: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        kde_incdir=$i
-@@ -16785,7 +14931,7 @@
+@@ -17229,7 +15324,7 @@
  do
    for j in $kde_check_lib;
    do
--    echo "configure: 16788: $i/$j" >&5
-+    echo "configure: 14934: $i/$j" >&5
+-    echo "configure: 17232: $i/$j" >&5
++    echo "configure: 15327: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        kde_libdir=$i
-@@ -16803,7 +14949,7 @@
+@@ -17247,7 +15342,7 @@
  do
    for j in "kde3/plugins/designer/kdewidgets.la";
    do
--    echo "configure: 16806: $i/$j" >&5
-+    echo "configure: 14952: $i/$j" >&5
+-    echo "configure: 17250: $i/$j" >&5
++    echo "configure: 15345: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        kde_widgetdir=$i
-@@ -18303,7 +16449,7 @@
+@@ -18747,7 +16842,7 @@
  do
    for j in apps/ksgmltools2/customization/kde-chunk.xsl;
    do
--    echo "configure: 18306: $i/$j" >&5
-+    echo "configure: 16452: $i/$j" >&5
+-    echo "configure: 18750: $i/$j" >&5
++    echo "configure: 16845: $i/$j" >&5
      if test -r "$i/$j"; then
        echo "taking that" >&5
        KDE_XSL_STYLESHEET=$i
-@@ -18535,27 +16681,11 @@
+@@ -18979,27 +17074,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5700,7 +5825,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_bind_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18564,7 +16694,7 @@
+@@ -19008,7 +17087,7 @@
  	ac_cv_lib_bind_main=no
  fi
  
@@ -5709,7 +5834,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -18616,27 +16746,10 @@
+@@ -19060,27 +17139,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5741,7 +5866,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18672,17 +16785,10 @@
+@@ -19116,17 +17178,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5763,7 +5888,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18783,27 +16889,11 @@
+@@ -19227,27 +17282,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5796,7 +5921,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_sndfile_sf_open=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18812,7 +16902,7 @@
+@@ -19256,7 +17295,7 @@
  	ac_cv_lib_sndfile_sf_open=no
  fi
  
@@ -5805,7 +5930,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -18863,33 +16953,17 @@
+@@ -19307,33 +17346,17 @@
    *) ac_try_echo=$ac_try;;
  esac
  eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
@@ -5848,7 +5973,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_asound_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18898,7 +16972,7 @@
+@@ -19342,7 +17365,7 @@
  	ac_cv_lib_asound_main=no
  fi
  
@@ -5857,7 +5982,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -18940,27 +17014,10 @@
+@@ -19384,27 +17407,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5889,7 +6014,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -18996,17 +17053,10 @@
+@@ -19440,17 +17446,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5911,7 +6036,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19117,27 +17167,11 @@
+@@ -19561,27 +17560,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5944,7 +6069,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_speex_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19146,7 +17180,7 @@
+@@ -19590,7 +17573,7 @@
  	ac_cv_lib_speex_main=no
  fi
  
@@ -5953,7 +6078,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -19188,27 +17222,10 @@
+@@ -19632,27 +17615,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -5985,7 +6110,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19244,17 +17261,10 @@
+@@ -19688,17 +17654,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6007,7 +6132,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19374,27 +17384,11 @@
+@@ -19818,27 +17777,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6040,7 +6165,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_ilbc_iLBC_decode=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19403,7 +17397,7 @@
+@@ -19847,7 +17790,7 @@
  	ac_cv_lib_ilbc_iLBC_decode=no
  fi
  
@@ -6049,7 +6174,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -19445,27 +17439,10 @@
+@@ -19889,27 +17832,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6081,7 +6206,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19501,17 +17478,10 @@
+@@ -19945,17 +17871,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6103,7 +6228,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19634,27 +17604,11 @@
+@@ -20078,27 +17997,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6136,7 +6261,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_zrtpcpp_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19663,7 +17617,7 @@
+@@ -20107,7 +18010,7 @@
  	ac_cv_lib_zrtpcpp_main=no
  fi
  
@@ -6145,7 +6270,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -19705,27 +17659,10 @@
+@@ -20149,27 +18052,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6177,7 +6302,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19761,17 +17698,10 @@
+@@ -20205,17 +18091,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6199,7 +6324,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19881,27 +17811,10 @@
+@@ -20325,27 +18204,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6231,7 +6356,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_compiler=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -19937,17 +17850,10 @@
+@@ -20381,17 +18243,10 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6253,7 +6378,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_header_preproc=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -20041,27 +17947,11 @@
+@@ -20485,27 +18340,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6286,7 +6411,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_boost_regex_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -20070,7 +17960,7 @@
+@@ -20514,7 +18353,7 @@
  	ac_cv_lib_boost_regex_main=no
  fi
  
@@ -6295,7 +6420,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -20118,27 +18008,11 @@
+@@ -20562,27 +18401,11 @@
    rm -f conftest.er1
    cat conftest.err >&5
    echo "$as_me:$LINENO: \$? = $ac_status" >&5
@@ -6328,7 +6453,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    ac_cv_lib_boost_regex_gcc_main=yes
  else
    echo "$as_me: failed program was:" >&5
-@@ -20147,7 +18021,7 @@
+@@ -20591,7 +18414,7 @@
  	ac_cv_lib_boost_regex_gcc_main=no
  fi
  
@@ -6337,7 +6462,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
        conftest$ac_exeext conftest.$ac_ext
  LIBS=$ac_check_lib_save_LIBS
  fi
-@@ -20158,6 +18032,67 @@
+@@ -20602,6 +18425,67 @@
  		LIBS="-lboost_regex-gcc $LIBS"
  		echo "LIBS += -lboost_regex-gcc" >> $QT_INCL_PRO
  else
@@ -6405,7 +6530,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    { { echo "$as_me:$LINENO: error: libboost_regex library is missing (boost package)." >&5
  echo "$as_me: error: libboost_regex library is missing (boost package)." >&2;}
     { (exit 1); exit 1; }; }
-@@ -20165,6 +18100,8 @@
+@@ -20609,6 +18493,8 @@
  
  fi
  
@@ -6414,7 +6539,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  
  $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
-@@ -20333,7 +18270,8 @@
+@@ -20777,7 +18663,8 @@
  ## M4sh Initialization.  ##
  ## --------------------- ##
  
@@ -6424,7 +6549,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
    emulate sh
    NULLCMD=:
-@@ -20342,10 +18280,13 @@
+@@ -20786,10 +18673,13 @@
    alias -g '${1+"$@"}'='"$@"'
    setopt NO_GLOB_SUBST
  else
@@ -6441,7 +6566,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  
  # PATH needs CR
-@@ -20569,19 +18510,28 @@
+@@ -21013,19 +18903,28 @@
    as_mkdir_p=false
  fi
  
@@ -6481,7 +6606,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
  # Sed expression to map a string onto a valid CPP name.
  as_tr_cpp="eval sed 'y%*$as_cr_letters%P$as_cr_LETTERS%;s%[^_$as_cr_alnum]%_%g'"
-@@ -20597,7 +18547,7 @@
+@@ -21041,7 +18940,7 @@
  # values after options handling.
  ac_log="
  This file was extended by $as_me, which was
@@ -6490,7 +6615,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  
    CONFIG_FILES    = $CONFIG_FILES
    CONFIG_HEADERS  = $CONFIG_HEADERS
-@@ -20626,7 +18576,7 @@
+@@ -21070,7 +18969,7 @@
  Usage: $0 [OPTIONS] [FILE]...
  
    -h, --help       print this help, then exit
@@ -6499,7 +6624,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    -q, --quiet      do not print progress messages
    -d, --debug      don't remove temporary files
        --recheck    update $as_me by reconfiguring in the same conditions
-@@ -20650,7 +18600,7 @@
+@@ -21094,7 +18993,7 @@
  cat >>$CONFIG_STATUS <<_ACEOF
  ac_cs_version="\\
  config.status
@@ -6508,7 +6633,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
    with options \\"`echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`\\"
  
  Copyright (C) 2006 Free Software Foundation, Inc.
-@@ -20935,7 +18885,7 @@
+@@ -21383,7 +19282,7 @@
  CXXCPP!$CXXCPP$ac_delim
  RANLIB!$RANLIB$ac_delim
  LEX!$LEX$ac_delim
@@ -6517,7 +6642,7 @@ diff -Nur twinkle-1.0.1/configure twinkle-1.0.1.new/configure
  _ACEOF
  
    if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
-@@ -20977,7 +18927,7 @@
+@@ -21425,7 +19324,7 @@
  ac_delim='%!_!# '
  for ac_last_try in false false false false false :; do
    cat >conf$$subs.sed <<_ACEOF

@@ -339,6 +339,7 @@ bool t_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	if (r->hdr_subscription_state.substate == SUBSTATE_ACTIVE && pending) {
 		log_file->write_header("t_subscription::recv_notify", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("NOTIFY ends pending state.\n");
+		log_event();
 		log_file->write_footer();
 		
 		pending = false;
@@ -382,6 +383,11 @@ bool t_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	}
 
 	if (r->hdr_subscription_state.expires > 0 && state == SS_ESTABLISHED) {
+		log_file->write_header("t_subscription::recv_notify", LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("Received NOTIFY on established subscription.\n");
+		log_event();
+		log_file->write_footer();
+		
 		unsigned long dur = r->hdr_subscription_state.expires;
 		if (auto_refresh) {
 			if (!id_subscription_timeout ||
@@ -601,6 +607,9 @@ bool t_subscription::timeout(t_subscribe_timer timer) {
 				// Refresh subscription
 				refresh_subscribe();
 			} else {
+				// The cause for timeout may be temporary.
+				// Allow resubscription to overcome a transient problem.
+				may_resubscribe = true;
 				state = SS_TERMINATED;
 			}
 

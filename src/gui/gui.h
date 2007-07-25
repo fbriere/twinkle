@@ -23,6 +23,10 @@
 
 #include "phone.h"
 #include "userintf.h"
+#include "im/msg_session.h"
+
+#include "messageform.h"
+
 #include "qaction.h"
 #include "qcombobox.h"
 #include "qlabel.h"
@@ -61,6 +65,9 @@ void setDisabledIcon(QToolButton *toolButton, const QString &icon);
 class t_gui : public t_userintf {
 private:
 	MphoneForm	*mainWindow;
+	
+	// List of active instant messaging session.
+	list<im::t_msg_session *> messageSessions;
 	
 	// Progress dialog for FW/NAT discovery progress bar
 	QProgressDialog	*natDiscoveryProgressDialog;
@@ -127,6 +134,9 @@ protected:
 	virtual void do_line(int line);
 	virtual void do_user(const string &profile_name);
 	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
+	virtual bool do_message(const string &destination, const string &display,
+		const string &text);
+	virtual void do_presence(t_presence_state::t_basic_state basic_state);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
 	
@@ -272,6 +282,10 @@ public:
 	void cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure);
 	void cb_mwi_terminated(t_user *user_config, const string &reason);
 	
+	// Instant messaging
+	bool cb_message_request(t_user *user_config, t_request *r);
+	void cb_message_response(t_user *user_config, t_response *r);
+	
 	// Execute external commands
 	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
@@ -332,6 +346,18 @@ public:
 	// Get the line associated with the sys tray popup
 	unsigned short get_line_sys_tray_popup(void) const;
 #endif
+	
+	// Get the message session for a dialog between the user
+	// and the remote url. If the display name was not known
+	// to the session yet, it is set to the passed display.
+	// Returns NULL if no form exists.
+	im::t_msg_session *getMessageSession(t_user *user_config,
+				    const t_url &remote_url,
+				    const string &display) const;
+	
+	void addMessageSession(im::t_msg_session *s);
+	void removeMessageSession(im::t_msg_session *s);
+	void destroyAllMessageSessions(void);
 };
 
 #endif

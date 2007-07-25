@@ -49,6 +49,41 @@ void MphoneForm::init()
 	getAddressForm = 0;
 	sysTray = 0;
 	
+	// Popup menu for a single buddy
+	QIconSet inviteIcon(QPixmap::fromMimeSource("invite.png"));
+	QIconSet messageIcon(QPixmap::fromMimeSource("message.png"));
+	QIconSet editIcon(QPixmap::fromMimeSource("edit16.png"));
+	QIconSet deleteIcon(QPixmap::fromMimeSource("editdelete.png"));
+	buddyPopupMenu = new QPopupMenu(this);
+	MEMMAN_NEW(buddyPopupMenu);
+	buddyPopupMenu->insertItem(inviteIcon, tr("&Call..."), this, SLOT(doCallBuddy()));
+	buddyPopupMenu->insertItem(messageIcon, tr("Instant &message..."), this, SLOT(doMessageBuddy()));
+	buddyPopupMenu->insertItem(editIcon, tr("&Edit..."), this, SLOT(doEditBuddy()));
+	buddyPopupMenu->insertItem(deleteIcon, tr("&Delete"), this, SLOT(doDeleteBuddy()));
+	
+	// Change availibility sub popup menu
+	changeAvailabilityPopupMenu = new QPopupMenu(this);
+	MEMMAN_NEW(changeAvailabilityPopupMenu);
+	QIconSet availOnlineIcon(QPixmap::fromMimeSource("presence_online.png"));
+	QIconSet availOfflineIcon(QPixmap::fromMimeSource("presence_offline.png"));
+	changeAvailabilityPopupMenu->insertItem(availOfflineIcon, tr("O&ffline"), this, 
+						SLOT(doAvailabilityOffline()));
+	changeAvailabilityPopupMenu->insertItem(availOnlineIcon, tr("&Online"), this, 
+						SLOT(doAvailabilityOnline()));
+	
+	// Popup menu for a buddy list (click on profile name)
+	QIconSet changeAvailabilityIcon(QPixmap::fromMimeSource("presence_online.png"));
+	QIconSet addIcon(QPixmap::fromMimeSource("buddy.png"));
+	buddyListPopupMenu = new QPopupMenu(this);
+	MEMMAN_NEW(buddyListPopupMenu);
+	buddyListPopupMenu->insertItem(changeAvailabilityIcon, tr("&Change availability"), 
+				       changeAvailabilityPopupMenu);
+	buddyListPopupMenu->insertItem(addIcon, tr("&Add buddy..."), this, SLOT(doAddBuddy()));
+	
+	// Tool tip for buddy list
+	buddyToolTip = new BuddyListViewTip(buddyListView);
+	MEMMAN_NEW(buddyToolTip);
+	
 	// Line timers
 	lineTimer1 = 0;
 	lineTimer2 = 0;
@@ -129,6 +164,13 @@ void MphoneForm::init()
 		callRedial->addTo(menu);
 		
 		menu->insertSeparator();
+		
+		// Messaging
+		actionSendMsg->addTo(menu);
+		
+		menu->insertSeparator();
+		
+		// Line activation
 		actgrActivateLine->addTo(menu);
 		
 		menu->insertSeparator();
@@ -226,6 +268,14 @@ void MphoneForm::destroy()
 	delete hideLineTimer1;
 	MEMMAN_DELETE(hideLineTimer2);
 	delete hideLineTimer2;
+	MEMMAN_DELETE(buddyPopupMenu);
+	delete buddyPopupMenu;
+	MEMMAN_DELETE(changeAvailabilityPopupMenu);
+	delete changeAvailabilityPopupMenu;
+	MEMMAN_DELETE(buddyListPopupMenu);
+	delete buddyListPopupMenu;
+	MEMMAN_DELETE(buddyToolTip);
+	delete buddyToolTip;
 }
 
 QString MphoneForm::lineSubstate2str( int line) {
@@ -1456,12 +1506,24 @@ void MphoneForm::phoneInvite(t_user * user_config,
 void MphoneForm::phoneInvite(const QString &dest, const QString &subject, bool anonymous)
 {
 	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	if (!user) {
+		log_file->write_report("Cannot find user profile.",
+			       "MphoneForm::phoneInvite", 
+			       LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
 	phoneInvite(user, dest, subject, anonymous);
 }
 
 void MphoneForm::phoneInvite()
 {
 	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	if (!user) {
+		log_file->write_report("Cannot find user profile.",
+			       "MphoneForm::phoneInvite", 
+			       LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
 	phoneInvite(user, "", "", false);
 }
 
@@ -1715,6 +1777,12 @@ void MphoneForm::phoneTermCap(const QString &dest)
 		this, SLOT(do_phoneTermCap(t_user *, const t_url &)));
 	
 	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	if (!user) {
+		log_file->write_report("Cannot find user profile.",
+			       "MphoneForm::phoneTermcap", 
+			       LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
 	termCapForm->show(user, dest);
 }
 
@@ -1743,6 +1811,44 @@ void MphoneForm::phoneDTMF()
 void MphoneForm::sendDTMF(const QString &digits)
 {
 	((t_gui *)ui)->action_dtmf(digits.ascii());	
+}
+
+void MphoneForm::startMessageSession(void)
+{
+	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	if (!user) {
+		log_file->write_report("Cannot find user profile.",
+			       "MphoneForm::startMessageSession", 
+			       LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
+	
+	im::t_msg_session *session = new im::t_msg_session(user);
+	MEMMAN_NEW(session);
+	((t_gui  *)ui)->addMessageSession(session);
+	MessageFormView *messageFormView = new MessageFormView(NULL, session);
+	MEMMAN_NEW(messageFormView);
+	messageFormView->show();	
+}
+
+void MphoneForm::startMessageSession(t_buddy *buddy)
+{
+	t_user *user_config = buddy->get_user_profile();
+	t_url dest_url(ui->expand_destination(user_config, buddy->get_sip_address()));
+	if (!dest_url.is_valid()) return;
+	string display = buddy->get_name();
+	
+	// Find an existing session
+	im::t_msg_session *session = ((t_gui *)ui)->getMessageSession(user_config, dest_url, display);
+	if (!session) {
+		// There is no session yet, create one.
+		session = new im::t_msg_session(user_config, t_display_url(dest_url, display));
+		MEMMAN_NEW(session);
+		((t_gui *)ui)->addMessageSession(session);
+		MessageFormView *view = new MessageFormView(NULL, session);
+		MEMMAN_NEW(view);
+		view->show();
+	}
 }
 
 void MphoneForm::phoneConfirmZrtpSas(int line)
@@ -2012,6 +2118,8 @@ void MphoneForm::selectProfile()
 			this, SLOT(newUsers(const list<string> &)));
 		connect(selectProfileForm, SIGNAL(profileRenamed()),
 			this, SLOT(updateUserComboBox()));
+		connect(selectProfileForm, SIGNAL(profileRenamed()),
+			this, SLOT(populateBuddyList()));
 	}
 	
 	selectProfileForm->showForm(this);
@@ -2040,6 +2148,12 @@ void MphoneForm::newUsers(const list<string> &profiles)
 			if (phone->is_mwi_subscribed(*i)) {
 				phone->pub_unsubscribe_mwi(*i);
 			}
+			
+			// Unpublish presence of user
+			phone->pub_unpublish_presence(*i);
+			
+			// Unsubscribe presence
+			phone->pub_unsubscribe_presence(*i);
 			
 			// Deregister user
 			if (phone->get_is_registered(*i)) {
@@ -2112,15 +2226,12 @@ void MphoneForm::newUsers(const list<string> &profiles)
 						REG_REGISTER,
 						DUR_REGISTRATION(&user_config));
 				} else {
-					// No registration needed, subscribe to
-					// MWI now.
-					if (user_config.get_mwi_sollicited()) {
-						phone->pub_subscribe_mwi(&user_config);
-					}
+					// No registration needed, initialize extensions now.
+					phone->init_extensions(&user_config);
 				}
 				
-				// MWI subscription will be done after registration
-				// succeeded.
+				// Extension initialization will be done after 
+				// registration succeeded.
 			} else {
 				error_msg = tr("The following profiles are both for user %1").arg(user_config.get_name().c_str()).ascii();
 				error_msg += '@';
@@ -2148,6 +2259,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 	}
 	progress.setProgress(add_profile_list.size());
 	
+	populateBuddyList();
 	updateUserComboBox();
 	updateRegStatus();
 	updateMwi();
@@ -2269,6 +2381,12 @@ void MphoneForm::quickCall()
 	
 	t_user *from_user = phone->ref_user_profile(
 				userComboBox->currentText().ascii());
+	if (!from_user) {
+		log_file->write_report("Cannot find user profile.",
+			       "MphoneForm::quickCall", 
+			       LOG_NORMAL, LOG_CRITICAL);
+		return;
+	}
 	
 	ui->expand_destination(from_user, 
 			       callComboBox->currentText().stripWhiteSpace().ascii(), 
@@ -2598,6 +2716,18 @@ void MphoneForm::showDisplay(bool on)
 	viewDisplayAction->setOn(on);
 }
 
+void MphoneForm::showBuddyList(bool on)
+{
+	if (on) {
+		buddyListView->show();
+	} else {
+		buddyListView->hide();
+	}
+	
+	viewBuddyList = on;
+	viewBuddyListAction->setOn(on);
+}
+
 void MphoneForm::showCompactLineStatus(bool on)
 {
 	if (on) {
@@ -2651,7 +2781,153 @@ bool MphoneForm::getViewDisplay()
 	return viewDisplay;
 }
 
+bool MphoneForm::getViewBuddyList()
+{
+	return viewBuddyList;
+}
+
 bool MphoneForm::getViewCompactLineStatus()
 {
 	return viewCompactLineStatus;
+}
+
+void MphoneForm::populateBuddyList()
+{
+	buddyListView->clear();
+
+	list<t_user *> user_list = phone->ref_users();
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); ++i) {
+		t_presence_epa *epa = phone->ref_presence_epa(*i);
+		if (!epa) continue;
+		
+		BLViewUserItem *profileItem = new BLViewUserItem(buddyListView, epa);
+		t_buddy_list *buddy_list = phone->ref_buddy_list(*i);
+		
+		list<t_buddy> *buddies = buddy_list->get_records();
+		for (list<t_buddy>::iterator bit = buddies->begin(); bit != buddies->end(); ++bit) {
+			QString name = bit->get_name().c_str();
+			new BuddyListViewItem(profileItem, &(*bit));
+		}
+		
+		profileItem->setOpen(true);
+	}
+}
+
+void MphoneForm::showBuddyListPopupMenu(QListViewItem *item, const QPoint &pos)
+{
+	if (!item) return;
+	
+	BuddyListViewItem *buddyItem = dynamic_cast<BuddyListViewItem *>(item);
+	if (buddyItem) {
+		buddyPopupMenu->popup(pos);
+	} else {
+		buddyListPopupMenu->popup(pos);
+	}
+}
+
+void MphoneForm::doCallBuddy()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BuddyListViewItem *item = dynamic_cast<BuddyListViewItem *>(qitem);
+	if (!item) return;
+	
+	t_buddy *buddy = item->get_buddy();
+	t_user *user_config = buddy->get_user_profile();
+	
+	phoneInvite(user_config, buddy->get_sip_address().c_str(), "", false);
+}
+
+void MphoneForm::doMessageBuddy(QListViewItem *qitem)
+{	
+	BuddyListViewItem *item = dynamic_cast<BuddyListViewItem *>(qitem);
+	if (!item) return;
+	
+	t_buddy *buddy = item->get_buddy();
+	
+	startMessageSession(buddy);
+}
+
+void MphoneForm::doMessageBuddy()
+{
+	QListViewItem *item = buddyListView->currentItem();
+	doMessageBuddy(item);
+}
+
+void MphoneForm::doEditBuddy()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BuddyListViewItem *item = dynamic_cast<BuddyListViewItem *>(qitem);
+	if (!item) return;
+	
+	t_buddy *buddy = item->get_buddy();
+	
+	BuddyForm *form = new BuddyForm(this, "new_buddy", true, Qt::WDestructiveClose);
+	// Do not call MEMMAN as this form will be deleted automatically.	
+	form->showEdit(*buddy);
+}
+
+void MphoneForm::doDeleteBuddy()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BuddyListViewItem *item = dynamic_cast<BuddyListViewItem *>(qitem);
+	if (!item) return;
+	
+	t_buddy *buddy = item->get_buddy();
+	t_buddy_list *buddy_list = buddy->get_buddy_list();
+	
+	// Delete the list item before deleting the buddy as
+	// deleting the item will detach the item from the buddy.
+	delete item;
+		
+	if (buddy->is_presence_terminated()) {
+		buddy_list->del_buddy(*buddy);
+	} else {
+		buddy->unsubscribe_presence(true);
+	}
+		
+	string err_msg;
+	if (!buddy_list->save(err_msg)) {
+		QString msg = tr("Failed to save buddy list: %1").arg(err_msg.c_str());
+		((t_gui *)ui)->cb_show_msg(this, msg.ascii(), MSG_CRITICAL);
+	}
+}
+
+void MphoneForm::doAddBuddy()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BLViewUserItem *item = dynamic_cast<BLViewUserItem *>(qitem);
+	if (!item) return;
+	
+	t_phone_user *pu = item->get_presence_epa()->get_phone_user();
+	if (!pu) return;
+	t_buddy_list *buddy_list = pu->get_buddy_list();
+	if (!buddy_list) return;
+	
+	BuddyForm *form = new BuddyForm(this, "new_buddy", true, Qt::WDestructiveClose);
+	// Do not call MEMMAN as this form will be deleted automatically.
+	form->showNew(*buddy_list, item);
+}
+
+void MphoneForm::doAvailabilityOffline()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BLViewUserItem *item = dynamic_cast<BLViewUserItem *>(qitem);
+	if (!item) return;
+	
+	t_phone_user *pu = item->get_presence_epa()->get_phone_user();
+	if (!pu) return;
+	
+	pu->publish_presence(t_presence_state::ST_BASIC_CLOSED);
+}
+
+void MphoneForm::doAvailabilityOnline()
+{
+	QListViewItem *qitem = buddyListView->currentItem();
+	BLViewUserItem *item = dynamic_cast<BLViewUserItem *>(qitem);
+	if (!item) return;
+	
+	t_phone_user *pu = item->get_presence_epa()->get_phone_user();
+	if (!pu) return;
+	
+	pu->publish_presence(t_presence_state::ST_BASIC_OPEN);
 }

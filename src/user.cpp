@@ -151,6 +151,14 @@ extern t_phone		*phone;
 #define FLD_MWI_SUBSCRIPTION_TIME	"mwi_subscription_time"
 #define FLD_MWI_VM_ADDRESS		"mwi_vm_address"
 
+// INSTANT MESSAGE
+#define FLD_IM_MAX_SESSIONS		"im_max_sessions"
+
+// PRESENCE
+#define FLD_PRES_SUBSCRIPTION_TIME	"pres_subscription_time"
+#define FLD_PRES_PUBLICATION_TIME	"pres_publication_time"
+#define FLD_PRES_PUBLISH_STARTUP	"pres_publish_startup"
+
 /////////////////////////
 // class t_user
 /////////////////////////
@@ -395,6 +403,10 @@ t_user::t_user() {
 	mwi_via_proxy = false;
 	mwi_subscription_time = 3600;
 	mwi_vm_address.clear();
+	im_max_sessions = 10;
+	pres_subscription_time = 3600;
+	pres_publication_time = 3600;
+	pres_publish_startup = true;
 }
 
 t_user::t_user(const t_user &u) {
@@ -493,6 +505,10 @@ t_user::t_user(const t_user &u) {
 	mwi_via_proxy = u.mwi_via_proxy;
 	mwi_subscription_time = u.mwi_subscription_time;
 	mwi_vm_address = u.mwi_vm_address;
+	im_max_sessions = u.im_max_sessions;
+	pres_subscription_time = u.pres_subscription_time;
+	pres_publication_time = u.pres_publication_time;
+	pres_publish_startup = u.pres_publish_startup;
 	
 	u.mtx_user.unlock();
 }
@@ -1241,6 +1257,38 @@ string t_user::get_mwi_vm_address(void) const {
 	return result;
 }
 
+unsigned short t_user::get_im_max_sessions(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = im_max_sessions;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned long t_user::get_pres_subscription_time(void) const {
+	unsigned long result;
+	mtx_user.lock();
+	result = pres_subscription_time;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned long t_user::get_pres_publication_time(void) const {
+	unsigned long result;
+	mtx_user.lock();
+	result = pres_publication_time;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_pres_publish_startup(void) const {
+	bool result;
+	mtx_user.lock();
+	result = pres_publish_startup;
+	mtx_user.unlock();
+	return result;
+}
+
 	
 void t_user::set_name(const string &_name) {
 	mtx_user.lock();
@@ -1794,6 +1842,30 @@ void t_user::set_mwi_vm_address(const string &address) {
 	mtx_user.unlock();
 }
 
+void t_user::set_im_max_sessions(unsigned short max_sessions) {
+	mtx_user.lock();
+	im_max_sessions = max_sessions;
+	mtx_user.unlock();
+}
+
+void t_user::set_pres_subscription_time(unsigned long t) {
+	mtx_user.lock();
+	pres_subscription_time = t;
+	mtx_user.unlock();
+}
+
+void t_user::set_pres_publication_time(unsigned long t) {
+	mtx_user.lock();
+	pres_publication_time = t;
+	mtx_user.unlock();
+}
+
+void t_user::set_pres_publish_startup(bool b) {
+	mtx_user.lock();
+	pres_publish_startup = b;
+	mtx_user.unlock();
+}
+
 bool t_user::read_config(const string &filename, string &error_msg) {
 	string f;
 	string msg;
@@ -2135,6 +2207,14 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			mwi_subscription_time = atol(value.c_str());
 		} else if (parameter == FLD_MWI_VM_ADDRESS) {
 			mwi_vm_address = value;
+		} else if (parameter == FLD_IM_MAX_SESSIONS) {
+			im_max_sessions = atoi(value.c_str());
+		} else if (parameter == FLD_PRES_SUBSCRIPTION_TIME) {
+			pres_subscription_time = atol(value.c_str());
+		} else if (parameter == FLD_PRES_PUBLICATION_TIME) {
+			pres_publication_time = atol(value.c_str());
+		} else if (parameter == FLD_PRES_PUBLISH_STARTUP) {
+			pres_publish_startup = yesno2bool(value);
 		} else {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
@@ -2177,7 +2257,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	string f_backup = f + '~';
 	if (stat(f.c_str(), &stat_buf) == 0) {
 		if (rename(f.c_str(), f_backup.c_str()) != 0) {
-			char *err = strerror(errno);
+			string err = get_error_str(errno);
 			error_msg = "Failed to backup ";
 			error_msg += f;
 			error_msg += " to ";
@@ -2446,6 +2526,17 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_MWI_VIA_PROXY << '=' << bool2yesno(mwi_via_proxy) << endl;
 	config << FLD_MWI_SUBSCRIPTION_TIME << '=' << mwi_subscription_time << endl;
 	config << FLD_MWI_VM_ADDRESS << '=' << mwi_vm_address << endl;
+	config << endl;
+	
+	config << "# INSTANT MESSAGE\n";
+	config << FLD_IM_MAX_SESSIONS << '=' << im_max_sessions << endl;
+	config << endl;
+	
+	// Write presence settings
+	config << "# PRESENCE\n";
+	config << FLD_PRES_SUBSCRIPTION_TIME << '=' << pres_subscription_time << endl;
+	config << FLD_PRES_PUBLICATION_TIME << '=' << pres_publication_time << endl;
+	config << FLD_PRES_PUBLISH_STARTUP << '=' << bool2yesno(pres_publish_startup) << endl;
 
 	// Check if writing succeeded
 	if (!config.good()) {

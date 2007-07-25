@@ -1,3 +1,12 @@
+twinkle (1:1.1-1) unstable; urgency=low
+
+  * New upstream release
+  * Rework debian/patches/libgsm.patch
+  * Rework debian/patches/configure-boost.patch  to correctly detect
+    -lboost_regex-mt...
+
+ -- Mark Purcell <msp@debian.org>  Wed, 25 Jul 2007 22:50:26 +0100
+
 twinkle (1:1.0.1-1) unstable; urgency=low
 
   * New upstream release

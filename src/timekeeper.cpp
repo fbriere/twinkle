@@ -31,6 +31,7 @@
 #include "audits/memman.h"
 
 extern t_phone		*phone;
+extern t_event_queue	*evq_trans_layer;
 extern t_event_queue	*evq_trans_mgr;
 extern t_event_queue	*evq_timekeeper;
 extern t_timekeeper	*timekeeper;
@@ -133,8 +134,7 @@ t_tmr_phone::t_tmr_phone(long dur, t_phone_timer ptmr, t_phone *p) : t_timer(dur
 }
 
 void t_tmr_phone::expired(void) {
-	// Call timeout method on the phone for a timer expiry
-	the_phone->timeout(phone_timer, get_object_id());
+	evq_trans_layer->push_timeout(this);
 }
 
 t_timer *t_tmr_phone::copy(void) const {
@@ -176,8 +176,7 @@ t_tmr_line::t_tmr_line(long dur, t_line_timer ltmr, t_object_id lid,
 }
 
 void t_tmr_line::expired(void) {
-	// Call timeout method on the line for a timer expiry
-	phone->line_timeout(line_id, line_timer, dialog_id);
+	evq_trans_layer->push_timeout(this);
 }
 
 t_timer *t_tmr_line::copy(void) const {
@@ -196,6 +195,10 @@ t_line_timer t_tmr_line::get_line_timer(void) const {
 
 t_object_id t_tmr_line::get_line_id(void) const {
 	return line_id;
+}
+
+t_object_id t_tmr_line::get_dialog_id(void) const {
+	return dialog_id;
 }
 
 string t_tmr_line::get_name(void) const {
@@ -228,12 +231,7 @@ t_tmr_subscribe::t_tmr_subscribe(long dur, t_subscribe_timer stmr,
 }
 
 void t_tmr_subscribe::expired(void) {
-	// Call timeout method on the subscription for a timer expiry
-	if (line_id == 0) {
-		phone->subscription_timeout(subscribe_timer, get_object_id());
-	} else {
-		phone->line_timeout_sub(line_id, subscribe_timer, dialog_id, sub_event_type, sub_event_id);
-	}
+	evq_trans_layer->push_timeout(this);
 }
 
 t_timer *t_tmr_subscribe::copy(void) const {
@@ -254,11 +252,58 @@ t_object_id t_tmr_subscribe::get_line_id(void) const {
 	return line_id;
 }
 
+t_object_id t_tmr_subscribe::get_dialog_id(void) const {
+	return dialog_id;
+}
+
+string t_tmr_subscribe::get_sub_event_type(void) const {
+	return sub_event_type;
+}
+
+string t_tmr_subscribe::get_sub_event_id(void) const {
+	return sub_event_id;
+}
+
 string t_tmr_subscribe::get_name(void) const {
 	switch(subscribe_timer) {
 	case STMR_SUBSCRIPTION:	return "STMR_SUBSCRIPTION";
 	}
 
+	return "UNKNOWN";
+}
+
+///////////////////////////////////////////////////////////
+// class t_tmr_publish
+///////////////////////////////////////////////////////////
+t_tmr_publish::t_tmr_publish(long dur, t_publish_timer ptmr, const string &_event_type) :
+	t_timer(dur),
+	publish_timer(ptmr),
+	event_type(_event_type)
+{}
+
+void t_tmr_publish::expired(void) {
+	evq_trans_layer->push_timeout(this);
+}
+
+t_timer *t_tmr_publish::copy(void) const {
+	t_tmr_publish *t = new t_tmr_publish(*this);
+	MEMMAN_NEW(t);
+	return t;
+}
+
+t_timer_type t_tmr_publish::get_type(void) const {
+	return TMR_PUBLISH;
+}
+
+t_publish_timer t_tmr_publish::get_publish_timer(void) const {
+	return publish_timer;
+}
+
+string t_tmr_publish::get_name(void) const {
+	switch (publish_timer) {
+	case PUBLISH_TMR_PUBLICATION: return "PUBLISH_TMR_PUBLICATION";
+	}
+	
 	return "UNKNOWN";
 }
 
@@ -557,46 +602,6 @@ void t_timekeeper::stop_timer(t_object_id id) {
 	unlock();
 }
 
-void t_timekeeper::get_timer_dur(unsigned short id, t_semaphore *sema,
-		unsigned long *duration)
-{
-	struct itimerval	itimer;
-	unsigned long		remain_msec;
-
-	lock();
-
-	// The next interval option is not used
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 0;
-
-	// Get remaining duration of current running timer
-	getitimer(ITIMER_REAL, &itimer);
-	remain_msec = itimer.it_value.tv_sec * 1000 +
-		      itimer.it_value.tv_usec / 1000;
-
-	// Find the timer
-	list<t_timer *>::iterator i = timer_list.begin();
-	while (i != timer_list.end()) {
-		if (i != timer_list.begin()) {
-			remain_msec += (*i)->get_relative_duration();
-		}
-
-		if ((*i)->get_object_id() == id) break;
-
-		i++;
-	}
-
-	// Return duration to originator of get event
-	if (i == timer_list.end()) {
-		*duration = 0;
-	} else {
-		*duration = remain_msec;
-	}
-	sema->up();
-	unlock();
-	return;
-}
-
 void t_timekeeper::report_expiry(void) {
 	lock();
 	
@@ -652,13 +657,41 @@ void t_timekeeper::report_expiry(void) {
 }
 
 unsigned long t_timekeeper::get_remaining_time(t_object_id timer_id) {
-	t_semaphore sema(0);
-	unsigned long duration;
+	struct itimerval	itimer;
+	unsigned long		remain_msec = 0;
+	unsigned long		duration = 0;
 
-	evq_timekeeper->push_get_timer_dur(timer_id, &sema, &duration);
+	lock();
 
-	// Wait for result
-	sema.down();
+	// The next interval option is not used
+	itimer.it_interval.tv_sec = 0;
+	itimer.it_interval.tv_usec = 0;
+
+	// Get remaining duration of current running timer
+	getitimer(ITIMER_REAL, &itimer);
+	remain_msec = itimer.it_value.tv_sec * 1000 +
+		      itimer.it_value.tv_usec / 1000;
+
+	// Find the timer
+	list<t_timer *>::iterator i = timer_list.begin();
+	while (i != timer_list.end()) {
+		if (i != timer_list.begin()) {
+			remain_msec += (*i)->get_relative_duration();
+		}
+
+		if ((*i)->get_object_id() == timer_id) break;
+
+		i++;
+	}
+
+	// Return duration to originator of get event
+	if (i == timer_list.end()) {
+		duration = 0;
+	} else {
+		duration = remain_msec;
+	}
+
+	unlock();
 	return duration;
 }
 
@@ -676,8 +709,12 @@ void t_timekeeper::run(void) {
 	t_event			*event;
 	t_event_start_timer	*ev_start;
 	t_event_stop_timer	*ev_stop;
-	t_event_get_timer_dur	*ev_get_dur;
 	bool			timeout;
+	
+	// The timekeeper should not try to take the phone lock as
+	// it may lead to a deadlock. Make sure an assert is raised
+	// if this situation ever happens.
+	phone->add_prohibited_thread();
 
 	if (threading_is_LinuxThreads) {
 		// In LinuxThreads SIGALRM caused by the expiration of a timer
@@ -704,12 +741,6 @@ void t_timekeeper::run(void) {
 		case EV_STOP_TIMER:
 			ev_stop = (t_event_stop_timer *)event;
 			stop_timer(ev_stop->get_timer_id());
-			break;
-		case EV_GET_TIMER_DUR:
-			ev_get_dur = (t_event_get_timer_dur *)event;
-			get_timer_dur(ev_get_dur->get_timer_id(),
-				ev_get_dur->get_sema(),
-				ev_get_dur->get_duration());
 			break;
 		case EV_QUIT:
 			quit = true;

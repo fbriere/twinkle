@@ -28,6 +28,7 @@
 #include "parser/response.h"
 #include "audio/tone_gen.h"
 #include "threads/thread.h"
+#include "presence/presence_state.h"
 
 #include "twinkle_config.h"
 
@@ -109,6 +110,8 @@ private:
         bool exec_line(const list<string> command_list);
         bool exec_user(const list<string> command_list);
         bool exec_zrtp(const list<string> command_list);
+        bool exec_message(const list<string> command_list);
+        bool exec_presence(const list<string> command_list);
         bool exec_quit(const list<string> command_list);
         bool exec_help(const list<string> command_list);
 
@@ -159,6 +162,9 @@ protected:
 	virtual void do_line(int line);
 	virtual void do_user(const string &profile_name);
 	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
+	virtual bool do_message(const string &destination, const string &display,
+		const string &text);
+	virtual void do_presence(t_presence_state::t_basic_state basic_state);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
 
@@ -350,6 +356,25 @@ public:
 	virtual void cb_update_mwi(void);
 	virtual void cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure);
 	virtual void cb_mwi_terminated(t_user *user_config, const string &reason);
+	
+	/** @name Instant messaging */
+	//@{
+	/**
+	 * Incoming MESSAGE request callback.
+	 * @param user_config [in] User profile of the user receiving this MESSAGE request.
+	 * @param r [in] The MESSAGE request.
+	 * @return True if the message is accepted.
+	 * @return False if the message is rejected, i.e. maximum number of sessions reached.
+	 */
+	virtual bool cb_message_request(t_user *user_config, t_request *r);
+	
+	/**
+	 * Incoming MESSAGE response callback.
+	 * @param user_config [in] User profile of the user receiving this MESSAGE response.
+	 * @param r [in] The MESSAGE response.
+	 */
+	virtual void cb_message_response(t_user *user_config, t_response *r);
+	//@}
 
 	// Get last call information
 	// Returns true if last call information is valid

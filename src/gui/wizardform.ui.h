@@ -210,9 +210,10 @@ void WizardForm::validate()
 		}
 	}
 	
-	// Register at startup
+	// Register and publish presence at startup
 	if (serviceProviderComboBox->currentText() == tr(PROV_NONE)) {
 		user_config->set_register_at_startup(false);
+		user_config->set_pres_publish_startup(false);
 	}
 	
 	// STUN server

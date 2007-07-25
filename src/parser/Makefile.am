@@ -79,6 +79,8 @@ libsipparser_a_SOURCES =\
         hdr_route.cpp\
         hdr_rseq.cpp\
         hdr_server.cpp\
+        hdr_sip_etag.cpp\
+        hdr_sip_if_match.cpp\
         hdr_subject.cpp\
 	hdr_subscription_state.cpp\
         hdr_supported.cpp\
@@ -150,6 +152,8 @@ libsipparser_a_SOURCES =\
         hdr_route.h\
         hdr_rseq.h\
         hdr_server.h\
+        hdr_sip_etag.h\
+        hdr_sip_if_match.h\
         hdr_subject.h\
 	hdr_subscription_state.h\
         hdr_supported.h\

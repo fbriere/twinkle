@@ -58,16 +58,16 @@ libtwinkle_a_LIBADD =
 am_libtwinkle_a_OBJECTS = abstract_dialog.$(OBJEXT) \
 	address_book.$(OBJEXT) auth.$(OBJEXT) call_history.$(OBJEXT) \
 	call_script.$(OBJEXT) client_request.$(OBJEXT) \
-	cmd_socket.$(OBJEXT) dialog.$(OBJEXT) events.$(OBJEXT) \
-	id_object.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
-	log.$(OBJEXT) phone.$(OBJEXT) phone_user.$(OBJEXT) \
-	prohibit_thread.$(OBJEXT) redirect.$(OBJEXT) sender.$(OBJEXT) \
-	service.$(OBJEXT) session.$(OBJEXT) sub_refer.$(OBJEXT) \
-	subscription.$(OBJEXT) subscription_dialog.$(OBJEXT) \
-	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
-	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
-	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
-	util.$(OBJEXT)
+	cmd_socket.$(OBJEXT) dialog.$(OBJEXT) epa.$(OBJEXT) \
+	events.$(OBJEXT) id_object.$(OBJEXT) line.$(OBJEXT) \
+	listener.$(OBJEXT) log.$(OBJEXT) phone.$(OBJEXT) \
+	phone_user.$(OBJEXT) prohibit_thread.$(OBJEXT) \
+	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
+	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
+	subscription_dialog.$(OBJEXT) sys_settings.$(OBJEXT) \
+	timekeeper.$(OBJEXT) transaction.$(OBJEXT) \
+	transaction_layer.$(OBJEXT) transaction_mgr.$(OBJEXT) \
+	user.$(OBJEXT) userintf.$(OBJEXT) util.$(OBJEXT)
 libtwinkle_a_OBJECTS = $(am_libtwinkle_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_twinkle_OBJECTS = main.$(OBJEXT)
@@ -82,7 +82,11 @@ twinkle_DEPENDENCIES = libtwinkle.a \
 	$(top_builddir)/src/audio/gsm/libgsm.a \
 	$(top_builddir)/src/audits/libaudits.a \
 	$(top_builddir)/src/stun/libstun.a \
-	$(top_builddir)/src/mwi/libmwi.a $(am__DEPENDENCIES_1)
+	$(top_builddir)/src/mwi/libmwi.a \
+	$(top_builddir)/src/im/libim.a \
+	$(top_builddir)/src/presence/libpresence.a \
+	$(top_builddir)/src/patterns/libpatterns.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -238,6 +242,8 @@ USER_LDFLAGS = @USER_LDFLAGS@
 USE_THREADS = @USE_THREADS@
 VERSION = @VERSION@
 XMKMF = @XMKMF@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_LIBS = @XML2_LIBS@
 XMLLINT = @XMLLINT@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_INCLUDES = @X_INCLUDES@
@@ -336,7 +342,7 @@ xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
 INCLUDES = -I $(includedir)
 AM_LDFLAGS = -L $(libdir)
-AM_CPPFLAGS = -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 noinst_LIBRARIES = libtwinkle.a
 twinkle_SOURCES = main.cpp
 twinkle_LDADD = libtwinkle.a\
@@ -349,7 +355,11 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
         $(top_builddir)/src/mwi/libmwi.a\
+        $(top_builddir)/src/im/libim.a\
+        $(top_builddir)/src/presence/libpresence.a\
+        $(top_builddir)/src/patterns/libpatterns.a\
 	$(CCRTP_LIBS)\
+	$(XML2_LIBS)\
 	-lsndfile
 
 libtwinkle_a_SOURCES = \
@@ -361,6 +371,7 @@ libtwinkle_a_SOURCES = \
         client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
+        epa.cpp\
         events.cpp\
         id_object.cpp\
         line.cpp\
@@ -392,6 +403,7 @@ libtwinkle_a_SOURCES = \
         client_request.h\
         cmd_socket.h\
         dialog.h\
+        epa.h\
         events.h\
 	exceptions.h\
 	id_object.h\
@@ -420,7 +432,7 @@ libtwinkle_a_SOURCES = \
         userintf.h\
         util.h
 
-SUBDIRS = audio audits mwi parser sdp sockets stun threads . gui gui/lang
+SUBDIRS = audio audits im mwi parser patterns presence sdp sockets stun threads utils . gui gui/lang
 all: twinkle_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -500,6 +512,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_request.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd_socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epa.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id_object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/line.Po@am__quote@

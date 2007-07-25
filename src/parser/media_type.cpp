@@ -37,8 +37,12 @@ void t_media::add_params(const list<t_parameter> &l) {
 
 	// Add media parameters
 	while (i != l.end() && i->name != "q") {
-		media_param_list.push_back(*i);
-		i++;
+		if (i->name == "charset") {
+			charset = i->value;
+		} else {
+			media_param_list.push_back(*i);
+		}
+		++i;
 	}
 
 	// Set the quality factor
@@ -59,6 +63,10 @@ string t_media::encode(void) const {
 	string s;
 
 	s = type + '/' + subtype;
+	if (!charset.empty()) {
+		s += ";charset=";
+		s += charset;
+	}
 	s += param_list2str(media_param_list);
 	if (q != 1) s += float2str(q, ";q=%.1f");
 	s += param_list2str(accept_extension_list);

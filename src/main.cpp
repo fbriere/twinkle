@@ -263,7 +263,7 @@ main(int argc, char *argv[]) {
 	}
 	
 	// Read call history
-	if (!call_history->read_history(error_msg)) {
+	if (!call_history->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 	
@@ -272,7 +272,7 @@ main(int argc, char *argv[]) {
 	MEMMAN_NEW(ab_local);
 	
 	// Read local address book
-	if (!ab_local->read_address_book(error_msg)) {
+	if (!ab_local->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 		ui->cb_show_msg(error_msg, MSG_WARNING);
 	}
@@ -293,8 +293,7 @@ main(int argc, char *argv[]) {
 		string msg("Failed to create a UDP socket (SIP) on port ");
 		msg += int2str(sys_config->get_sip_udp_port());
 		msg += "\n";
-		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
-		msg += strerror(err);
+		msg += get_error_str(err);
 		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_show_msg(msg, MSG_CRITICAL);
 		sys_config->delete_lock_file();

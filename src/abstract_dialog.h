@@ -90,7 +90,7 @@ protected:
 	 * request will be decremented. If it becomes zero, then
 	 * the request object is deleted.
 	 * In all cases the passed pointer will be set to NULL.
-	 * @param cr The client request.
+	 * @param cr [in] The client request.
 	 */
 	void remove_client_request(t_client_request **cr);
 
@@ -98,21 +98,21 @@ protected:
 	 * Create route set from the Record-Route header of a response.
 	 * If the response does not have a Record-Route header, then the route
 	 * set is cleared.
-	 * @param r The response.
+	 * @param r [in] The response.
 	 */
 	void create_route_set(t_response *r);
 
 	/**
 	 * Create remote target uri and display from the Contact header of a response.
-	 * @param r The response.
+	 * @param r [in] The response.
 	 */
 	void create_remote_target(t_response *r);
 	
 	/**
 	 * Send a request within the dialog.
 	 * Sending a request will create a SIP transaction.
-	 * @param r The request.
-	 * @param tuid The transaction user id to be assigend to the transaction.
+	 * @param r [in] The request.
+	 * @param tuid [in] The transaction user id to be assigend to the transaction.
 	 */
 	virtual void send_request(t_request *r, t_tuid tuid) = 0;
 
@@ -122,15 +122,15 @@ protected:
 	 * Resending is different from retransmitting. Requests are automatically
 	 * retransmitted by the transaction layer. Resending creates a new SIP
 	 * transaction. Resending is f.i. done when a request must be redirected.
-	 * @param cr The client request.
+	 * @param cr [in] The client request.
 	 */
 	virtual void resend_request(t_client_request *cr);
 	
 	/**
 	 * Resend mid-dialog request with an authorization header containing
 	 * credentials for the challenge in the response. 
-	 * @param cr The request.
-	 * @param resp The 401 or 407 response.
+	 * @param cr [in] The request.
+	 * @param resp [in] The 401 or 407 response.
 	 * @return true, if resending succeeded.
 	 * @return false, if credentials could not be determined.
 	 *
@@ -144,9 +144,9 @@ protected:
 	 *  - A 3XX response was received.
 	 *  - The request failed with a non-3XX response. A next contact should be tried.
 	 *
-	 * @param cr The request.
-	 * @param resp The failure response that was received on the request. 
-	 * @param contact Contains on succesful return the contact to which the request is sent.
+	 * @param cr [in] The request.
+	 * @param resp [in] The failure response that was received on the request. 
+	 * @param contact [out] Contains on succesful return the contact to which the request is sent.
 	 * @return true, if the request is sent to a next destination.
 	 * @return false, if no next destination exists.
 	 */
@@ -155,7 +155,7 @@ protected:
 	
 	/**
 	 * Failover request to the next destination from DNS lookup.
-	 * @param cr The request.
+	 * @param cr [in] The request.
 	 * @return true, if the request is sent to a next destination.
 	 * @return false, if no next destination exists.
 	 */
@@ -164,7 +164,7 @@ protected:
 public:
 	/**
 	 * Constructor.
-	 * @param user User profile of the user for which the dialog must be created.
+	 * @param user [in] User profile of the user for which the dialog must be created.
 	 */
 	t_abstract_dialog(t_user *user);
 	
@@ -175,7 +175,7 @@ public:
 
 	/**
 	 * Create a request using the stored dialog state information.
-	 * @param m Request method.
+	 * @param m [in] Request method.
 	 * @return The request.
 	 */
 	virtual t_request *create_request(t_method m);
@@ -196,7 +196,7 @@ public:
 	/**
 	 * Resend mid-dialog request with an authorization header containing
 	 * credentials for the challenge in the response.
-	 * @param resp The 401 or 407 response to the request that must be resent.
+	 * @param resp [in] The 401 or 407 response to the request that must be resent.
 	 * @return true, if resending succeeded.
 	 * @return false, if credentials could not be determined.
 	 *
@@ -206,7 +206,7 @@ public:
 
 	/**
 	 * Redirect mid-dialog request to the next destination.
-	 * @param resp The response to the request that must be resent.
+	 * @param resp [in] The response to the request that must be resent.
 	 * @return true, if the request is sent to a next destination.
 	 * @return false, if no next destination exists.
 	 */
@@ -214,7 +214,7 @@ public:
 	
 	/**
 	 * Failover request to the next destination from DNS lookup.
-	 * @param resp The response to the request that must be resent.
+	 * @param resp [in] The response to the request that must be resent.
 	 * @return true, if the request is sent to a next destination.
 	 * @return false, if no next destination exists.
 	 */
@@ -222,24 +222,24 @@ public:
 
 	/**
 	 * Process a received response.
-	 * @param r The received response.
-	 * @param tuid The transaction user id of the transaction for the response.
-	 * @param tid The transaction id of the transaction for the response.
+	 * @param r [in] The received response.
+	 * @param tuid [in] The transaction user id of the transaction for the response.
+	 * @param tid [in] The transaction id of the transaction for the response.
 	 */
 	virtual void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
 	
 	/**
 	 * Process a received request.
-	 * @param r The received request.
-	 * @param tuid The transaction user id of the transaction for the request.
-	 * @param tid The transaction id of the transaction for the request.
+	 * @param r [in] The received request.
+	 * @param tuid [in] The transaction user id of the transaction for the request.
+	 * @param tid [in] The transaction id of the transaction for the request.
 	 */
 	virtual void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 
 	/**
 	 * Match a response with the dialog.
-	 * @param r The response.
-	 * @param tuid The transaction user id of the transaction for the response.
+	 * @param r [in] The response.
+	 * @param tuid [in] The transaction user id of the transaction for the response.
 	 * @return true, if the response matches the dialog.
 	 * @return false, otherwise.
 	 */
@@ -247,7 +247,7 @@ public:
 
 	/**
 	 * Match a request with the dialog.
-	 * @param r The request.
+	 * @param r [in] The request.
 	 * @return true, if the request matches the dialog.
 	 * @return false, otherwise.
 	 */
@@ -255,7 +255,7 @@ public:
 	
 	/**
 	 * Partially match a request with the dialog, i.e. do not match remote tag.
-	 * @param r The request.
+	 * @param r [in] The request.
 	 * @return true, if the request partially matches the dialog.
 	 * @return false, otherwise.
 	 */
@@ -263,9 +263,9 @@ public:
 	
 	/**
 	 * Match call-id and tags with the dialog.
-	 * @param _call_id SIP call-id.
-	 * @param to_tag SIP to-tag.
-	 * @param from_tag SIP from-tag.
+	 * @param _call_id [in] SIP call-id.
+	 * @param to_tag [in] SIP to-tag.
+	 * @param from_tag [in] SIP from-tag.
 	 * @return true, if call-id and tags match the dialog.
 	 * @return false, otherwise.
 	 */
@@ -332,7 +332,7 @@ public:
 	
 	/**
 	 * Check if the remote party supports a particular SIP exentsion.
-	 * @param extension Name of the SIP extension.
+	 * @param extension [in] Name of the SIP extension.
 	 * @return true, if remote party supports the extension.
 	 * @return false, otherwise.
 	 */

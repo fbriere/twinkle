@@ -29,6 +29,7 @@
 
 #define SIP_EVENT_REFER		"refer"			// RFC 3515
 #define SIP_EVENT_MSG_SUMMARY	"message-summary"	// RFC 3842
+#define SIP_EVENT_PRESENCE	"presence"		// RFC 3856
 
 using namespace std;
 

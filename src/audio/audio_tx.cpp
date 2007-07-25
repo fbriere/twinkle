@@ -26,6 +26,7 @@
 #include "log.h"
 #include "phone.h"
 #include "userintf.h"
+#include "util.h"
 #include "line.h"
 #include "sequence_number.h"
 #include "audits/memman.h"
@@ -310,7 +311,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 			status = playback_device->write(jitter_buf, jitter_buf_len);
 			if (status != jitter_buf_len) {
 				string msg("Writing to dsp failed: ");
-				msg += strerror(errno);
+				msg += get_error_str(errno);
 				log_file->write_report(msg, "t_audio_tx::play_pcm",
 					LOG_NORMAL, LOG_CRITICAL);
 			}
@@ -319,7 +320,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 			status = playback_device->write(playbuf, len);
 			if (status != len) {
 				string msg("Writing to dsp failed: ");
-				msg += strerror(errno);
+				msg += get_error_str(errno);
 				log_file->write_report(msg, "t_audio_tx::play_pcm",
 					LOG_NORMAL, LOG_CRITICAL);
 			}
@@ -374,7 +375,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	status = playback_device->write(playbuf, len);
 	if (status != len) {
 		string msg("Writing to dsp failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_audio_tx::play_pcm",
 			LOG_NORMAL, LOG_CRITICAL);
 	}

@@ -30,6 +30,7 @@
 #include "sdp/sdp_parse_ctrl.h"
 #include "stun/stun.h"
 #include "audits/memman.h"
+#include "presence/pidf_body.h"
 
 extern t_phone *phone;
 extern t_socket_udp *sip_socket;
@@ -136,6 +137,27 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 		MEMMAN_DELETE(b);
 		delete b;
 		throw -1;
+	} else if (msg->hdr_content_type.media.type == "text" &&
+	           msg->hdr_content_type.media.subtype == "plain")
+	{
+		t_sip_body_plain_text *b = new t_sip_body_plain_text(data);
+		MEMMAN_NEW(b);
+		return b;
+	} else if (msg->hdr_content_type.media.type == "text" &&
+	           msg->hdr_content_type.media.subtype == "html")
+	{
+		t_sip_body_html_text *b = new t_sip_body_html_text(data);
+		MEMMAN_NEW(b);
+		return b;
+	} else if (msg->hdr_content_type.media.type == "application" &&
+	           msg->hdr_content_type.media.subtype == "pidf+xml")
+	{
+		t_pidf_xml_body *b = new t_pidf_xml_body();
+		MEMMAN_NEW(b);
+		if (b->parse(data)) return b;
+		MEMMAN_DELETE(b);
+		delete b;
+		throw -1;
 	} else {
 		// Pass other bodies unparsed. The upper application
 		// layer will decide what to do.
@@ -182,7 +204,7 @@ void *listen_udp(void *arg) {
 				log_msg += "\nSocket error: ";
 				log_msg += int2str(err);
 				log_msg += " ";
-				log_msg += strerror(err);
+				log_msg += get_error_str(err);
 				log_file->write_report(log_msg, "::listen_udp", LOG_NORMAL);
 			
 				ev_icmp = new t_event_icmp(icmp);
@@ -198,7 +220,7 @@ void *listen_udp(void *arg) {
 				log_msg += "Error code: ";
 				log_msg += int2str(err);
 				log_msg += "\n";
-				log_msg += strerror(err);
+				log_msg += get_error_str(err);
 				log_file->write_report(log_msg, "::listen_udp");
 				
 				num_non_icmp_errors++;

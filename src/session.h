@@ -120,21 +120,38 @@ public:
 	// RTP streams
 	~t_session();
 
-	// NOTE: copies of a session do not copy the audio RTP session!
+	/** @name Clone a new session from an existing session. */
+	//@{
+	/** @note copies of a session do not copy the audio RTP session! */
 
-	// Create a session based on an existing session, i.e.
-	// same reveive user and host, same version. new id.
-	t_session *create_new_version(void);
+	/**
+	 * Create a session based on an existing session, i.e.
+	 * same receive user and host. The source SDP version of the
+	 * new session will be increased by 1.
+	 * @return The new session.
+	 */
+	t_session *create_new_version(void) const;
 
-	// Create a copy of the session. The destination paramters
-	// and recvd/offer and answer are erased in the copy.
-	t_session *create_clean_copy(void);
+	/**
+	 * Create a copy of the session. The destination paramters
+	 * and recvd/offer and answer are erased in the copy.
+	 * The source SDP version of the new session will be increased by 1.
+	 * @return The new session.
+	 */
+	t_session *create_clean_copy(void) const;
 
-	// Create a session for call-hold
-	t_session *create_call_hold(void);
+	/**
+	 * Create a session for call-hold.
+	 * @return The call-hold session.
+	 */
+	t_session *create_call_hold(void) const;
 
-	// Create a session for call-retrieve
-	t_session *create_call_retrieve(void);
+	/**
+	 * Create a session for call-retrieve.
+	 * @return The call-retrieve session.
+	 */
+	t_session *create_call_retrieve(void) const;
+	//@}
 
 	// Process incoming SDP offer. Return false if SDP is not
 	// supported. If SDP is supported then use_codec will be

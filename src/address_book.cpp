@@ -27,7 +27,7 @@
 #define ADDRESS_BOOK_FILE	"twinkle.ab";
 
 // Field seperator in call history file
-#define REC_SEPERATOR		'|'
+#define REC_SEPARATOR		'|'
 
 ////////////////////////////
 // class t_address_card
@@ -53,33 +53,27 @@ string t_address_card::get_display_name(void) const {
 	return s;
 }
 	
-string t_address_card::create_file_record(void) const {
-	string record;
+bool t_address_card::create_file_record(vector<string> &v) const {
+	v.clear();
 	
-	record += escape(name_first, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(name_infix, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(name_last, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(sip_address, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(remark, REC_SEPERATOR);
+	v.push_back(name_first);
+	v.push_back(name_infix);
+	v.push_back(name_last);
+	v.push_back(sip_address);
+	v.push_back(remark);
 	
-	return record;
+	return true;
 }
 	
-bool t_address_card::populate_from_file_record(const string &record) {
-	vector<string> v = split_escaped(record, REC_SEPERATOR);
-	
+bool t_address_card::populate_from_file_record(const vector<string> &v) {
 	// Check number of fields
 	if (v.size() != 5) return false;
 	
-	name_first = unescape(v[0]);
-	name_infix = unescape(v[1]);
-	name_last = unescape(v[2]);
-	sip_address = unescape(v[3]);
-	remark = unescape(v[4]);
+	name_first = v[0];
+	name_infix = v[1];
+	name_last = v[2];
+	sip_address = v[3];
+	remark = v[4];
 	
 	return true;
 }
@@ -110,8 +104,8 @@ void t_address_book::find_address(t_user *user_config, const t_url &u) const {
 	string normalized_user = user_config->convert_number(u.get_user());
 	u_normalized.set_user(normalized_user);
 	
-	for (list<t_address_card>::const_iterator i = address_list.begin();
-	     i != address_list.end(); i++)
+	for (list<t_address_card>::const_iterator i = records.begin();
+	     i != records.end(); i++)
 	{
 		string full_address = ui->expand_destination(user_config, i->sip_address);
 		t_url url_phone(full_address);
@@ -130,159 +124,70 @@ void t_address_book::find_address(t_user *user_config, const t_url &u) const {
 
 // Public
 
-t_address_book::t_address_book() {
-	filename = string(DIR_HOME);
-	filename += "/";
-	filename += USER_DIR;
-	filename += "/";
-	filename += ADDRESS_BOOK_FILE;
+t_address_book::t_address_book() : utils::t_record_file<t_address_card>()
+{
+	set_header("first_name|infix_name|last_name|sip_address|remark");
+	set_separator(REC_SEPARATOR);
+	
+	string s(DIR_HOME);
+	s += "/";
+	s += USER_DIR;
+	s += "/";
+	s += ADDRESS_BOOK_FILE;
+	set_filename(s);
 }
 
 void t_address_book::add_address(const t_address_card &address) {
-	mtx_ab.lock();
-	address_list.push_back(address);
-	mtx_ab.unlock();
+	mtx_records.lock();
+	records.push_back(address);
+	mtx_records.unlock();
 }
 
 bool t_address_book::del_address(const t_address_card &address) {
-	mtx_ab.lock();
+	mtx_records.lock();
 	
-	list<t_address_card>::iterator it = find(address_list.begin(), address_list.end(),
+	list<t_address_card>::iterator it = find(records.begin(), records.end(),
 			address);
 			
-	if (it == address_list.end()) {
-		mtx_ab.unlock();
+	if (it == records.end()) {
+		mtx_records.unlock();
 		return false;
 	}	
 	
-	address_list.erase(it);
+	records.erase(it);
 	
 	// Invalidate the cache for the address finder
 	last_url.set_url("");
 	
-	mtx_ab.unlock();
+	mtx_records.unlock();
 	return true;
 }
 
 bool t_address_book::update_address(const t_address_card &old_address,
 	const t_address_card &new_address)
 {
-	mtx_ab.lock();
+	mtx_records.lock();
 	
 	if (!del_address(old_address)) {
-		mtx_ab.unlock();
+		mtx_records.unlock();
 		return false;
 	}
 	
-	address_list.push_back(new_address);
+	records.push_back(new_address);
 	
-	mtx_ab.unlock();
+	mtx_records.unlock();
 	return true;
 }
 
 string t_address_book::find_name(t_user *user_config, const t_url &u) const {
-	mtx_ab.lock();
+	mtx_records.lock();
 	find_address(user_config, u);
 	string name = last_name;
-	mtx_ab.unlock();
+	mtx_records.unlock();
 	
 	return name;
 }
 
-bool t_address_book::read_address_book(string &error_msg) {
-	struct stat stat_buf;
-	
-	mtx_ab.lock();
-	
-	address_list.clear();
-	
-	// Check if address book file exists
-	if (stat(filename.c_str(), &stat_buf) != 0) {
-		// There is no call history file.
-		mtx_ab.unlock();
-		return true;
-	}
-	
-	// Open call history file
-	ifstream ab(filename.c_str());
-	if (!ab) {
-		error_msg = TRANSLATE("Cannot open file for reading: %1");
-		error_msg = replace_first(error_msg, "%1", filename);
-		mtx_ab.unlock();
-		return false;
-	}
-	
-	// Read and parse history file.
-	while (!ab.eof()) {
-		string line;
-		t_address_card card;
-		
-		getline(ab, line);
-
-		// Check if read operation succeeded
-		if (!ab.good() && !ab.eof()) {
-			error_msg = TRANSLATE("File system error while reading file %1 .");
-			error_msg = replace_first(error_msg, "%1", filename);
-			mtx_ab.unlock();
-			return false;
-		}
-
-		line = trim(line);
-
-		// Skip empty lines
-		if (line.size() == 0) continue;
-
-		// Skip comment lines
-		if (line[0] == '#') continue;
-		
-		// Add record. Skip records that cannot be parsed.
-		if (card.populate_from_file_record(line)) {
-			address_list.push_back(card);
-		}
-	}
-	
-	mtx_ab.unlock();
-	
-	return true;
-}
-
-bool t_address_book::write_address_book(string &error_msg) const {
-	struct stat stat_buf;
-	
-	mtx_ab.lock();
-	
-	// Open file
-	ofstream ab(filename.c_str());
-	if (!ab) {
-		error_msg = TRANSLATE("Cannot open file for writing: %1");
-		error_msg = replace_first(error_msg, "%1", filename);
-		mtx_ab.unlock();
-		return false;
-	}
-	
-	// Write file header
-	ab << "# first_name|infix_name|last_name|sip_address|remark";
-	ab << endl;
-	      
-	// Write records
-	for (list<t_address_card>::const_iterator i = address_list.begin();
-	     i != address_list.end(); i++)
-	{
-		ab << i->create_file_record();
-		ab << endl;
-	}
-	
-	mtx_ab.unlock();
-	 
-	if (!ab.good()) {
-		error_msg = TRANSLATE("File system error while writing file %1 .");
-		error_msg = replace_first(error_msg, "%1", filename);
-		return false;
-	}
-	
-	return true;
-}
-
 const list<t_address_card> &t_address_book::get_address_list(void) const {
-	return address_list;
+	return records;
 }

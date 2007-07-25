@@ -103,6 +103,7 @@
 #define FLD_DIAL_HISTORY	"dial_history"
 #define FLD_SHOW_DISPLAY	"show_display"
 #define FLD_COMPACT_LINE_STATUS	"compact_line_status"
+#define FLD_SHOW_BUDDY_LIST	"show_buddy_list"
 #define FLD_WARN_HIDE_USER	"warn_hide_user"
 
 /////////////////////////
@@ -222,6 +223,7 @@ t_sys_settings::t_sys_settings() {
 	dial_history.clear();
 	show_display = true;
 	compact_line_status = false;
+	show_buddy_list = true;
 	warn_hide_user = true;
 }
 
@@ -574,6 +576,14 @@ bool t_sys_settings::get_compact_line_status(void) const {
 	return result;
 }
 
+bool t_sys_settings::get_show_buddy_list(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = show_buddy_list;
+	mtx_sys.unlock();
+	return result;
+}
+
 bool t_sys_settings::get_warn_hide_user(void) const {
 	bool result;
 	mtx_sys.lock();
@@ -851,6 +861,12 @@ void t_sys_settings::set_show_display(bool b) {
 void t_sys_settings::set_compact_line_status(bool b) {
 	mtx_sys.lock();
 	compact_line_status = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_show_buddy_list(bool b) {
+	mtx_sys.lock();
+	show_buddy_list = b;
 	mtx_sys.unlock();
 }
 
@@ -1330,6 +1346,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			show_display = yesno2bool(value);
 		} else if (parameter == FLD_COMPACT_LINE_STATUS) {
 			//compact_line_status = yesno2bool(value);
+		} else if (parameter == FLD_SHOW_BUDDY_LIST) {
+			show_buddy_list = yesno2bool(value);
 		} else if (parameter == FLD_WARN_HIDE_USER) {
 			warn_hide_user = yesno2bool(value);
 		}
@@ -1351,7 +1369,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	string f_backup = filename + '~';
 	if (stat(filename.c_str(), &stat_buf) == 0) {
 		if (rename(filename.c_str(), f_backup.c_str()) != 0) {
-			char *err = strerror(errno);
+			string err = get_error_str(errno);
 			error_msg = TRANSLATE("Failed to backup %1 to %2");
 			error_msg = replace_first(error_msg, "%1", filename);
 			error_msg = replace_first(error_msg, "%2", f_backup);
@@ -1456,6 +1474,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_REDIAL_HIDE_USER << '=' << bool2yesno(redial_hide_user) << endl;
 	config << FLD_SHOW_DISPLAY << '=' << bool2yesno(show_display) << endl;
 	//config << FLD_COMPACT_LINE_STATUS << '=' << bool2yesno(compact_line_status) << endl;
+	config << FLD_SHOW_BUDDY_LIST << '=' << bool2yesno(show_buddy_list) << endl;
 	config << FLD_WARN_HIDE_USER << '=' << bool2yesno(warn_hide_user) << endl;
 	
 	for (list<string>::iterator i = dial_history.begin();

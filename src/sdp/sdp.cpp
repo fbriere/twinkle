@@ -452,6 +452,10 @@ t_body_type t_sdp::get_type(void) const {
 	return BODY_SDP;
 }
 
+t_media t_sdp::get_media(void) const {
+	return t_media("application", "sdp");
+}
+
 bool t_sdp::is_supported(int &warn_code, string &warn_text) const {
 	warn_text = "";
 

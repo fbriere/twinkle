@@ -43,6 +43,7 @@ using namespace std;
 #define QOP_AUTH	"auth"
 #define QOP_AUTH_INT	"auth-int"
 
+/** SIP request methods. */
 enum t_method {
 	INVITE,
 	ACK,
@@ -55,15 +56,25 @@ enum t_method {
 	NOTIFY,
 	REFER,
 	INFO,
+	MESSAGE,
+	PUBLISH,
 	METHOD_UNKNOWN
 };
 
-// If m is UNKNOWN then pass the name of the method in the unkown
-// argument.
+/**
+ * Convert a method to a string.
+ * @param m The method.
+ * @param unknown Method name if m is @ref METHOD_UNKNOWN.
+ * @return The name of the method.
+ */
 string method2str(const t_method &m, const string &unknown = "");
 
-// Convert a string to a method type. If the string is an unknown
-// method, the METHOD_UNKNOWN is returned.
+/**
+ * Convert a string to a method.
+ * @param s The string.
+ * @return The method having s as name. If s is an unknown name,
+ * then @ref METHOD_UNKNOWN is returned.
+ */
 t_method str2method(const string &s);
 
 #endif

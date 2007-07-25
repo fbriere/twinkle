@@ -1,7 +1,7 @@
-diff -Nur twinkle-1.0~beta/configure.in twinkle-1.0~beta.new/configure.in
---- twinkle-1.0~beta/configure.in	2006-12-29 20:16:14.000000000 +0000
-+++ twinkle-1.0~beta.new/configure.in	2007-01-08 21:07:33.000000000 +0000
-@@ -149,6 +149,17 @@
+diff -Nur twinkle-1.1/configure.in twinkle-1.1.new/configure.in
+--- twinkle-1.1/configure.in	2007-07-25 22:17:06.000000000 +0100
++++ twinkle-1.1.new/configure.in	2007-07-25 22:17:07.000000000 +0100
+@@ -161,6 +161,17 @@
  AC_CHECK_LIB(sndfile, sf_open, [], 
  	[AC_MSG_ERROR([libsndfile library is missing.])])
  
@@ -19,15 +19,59 @@ diff -Nur twinkle-1.0~beta/configure.in twinkle-1.0~beta.new/configure.in
  # Check if ALSA is available
  AC_CHECK_LIB(asound, main, [
  	AC_CHECK_HEADER(alsa/asoundlib.h, [],
-@@ -244,3 +255,4 @@
+@@ -261,3 +272,4 @@
  AC_MSG_RESULT([Speex:       $have_speex])
  AC_MSG_RESULT([iLBC:        $have_ilbc])
  AC_MSG_RESULT([ZRTP:        $have_zrtp])
 +AC_MSG_RESULT([Libgsm dynamic link:	$have_gsm])
-diff -Nur twinkle-1.0~beta/src/Makefile.am twinkle-1.0~beta.new/src/Makefile.am
---- twinkle-1.0~beta/src/Makefile.am	2006-12-29 04:24:06.000000000 +0000
-+++ twinkle-1.0~beta.new/src/Makefile.am	2007-01-08 21:07:46.000000000 +0000
-@@ -16,11 +16,11 @@
+diff -Nur twinkle-1.1/src/audio/audio_decoder.h twinkle-1.1.new/src/audio/audio_decoder.h
+--- twinkle-1.1/src/audio/audio_decoder.h	2007-01-07 07:47:33.000000000 +0000
++++ twinkle-1.1.new/src/audio/audio_decoder.h	2007-07-25 22:17:07.000000000 +0100
+@@ -25,7 +25,12 @@
+ #include "twinkle_config.h"
+ #include "audio_codecs.h"
+ #include "user.h"
++
++#ifdef HAVE_GSM
++#include <gsm/gsm.h>
++#else
+ #include "gsm/inc/gsm.h"
++#endif
+ 
+ #ifdef HAVE_SPEEX
+ #include <speex/speex.h>
+diff -Nur twinkle-1.1/src/audio/audio_encoder.h twinkle-1.1.new/src/audio/audio_encoder.h
+--- twinkle-1.1/src/audio/audio_encoder.h	2007-01-07 07:47:33.000000000 +0000
++++ twinkle-1.1.new/src/audio/audio_encoder.h	2007-07-25 22:17:07.000000000 +0100
+@@ -25,7 +25,12 @@
+ #include "twinkle_config.h"
+ #include "audio_codecs.h"
+ #include "user.h"
++
++#ifdef HAVE_GSM
++#include <gsm/gsm.h>
++#else
+ #include "gsm/inc/gsm.h"
++#endif
+ 
+ #ifdef HAVE_SPEEX
+ #include <speex/speex.h>
+diff -Nur twinkle-1.1/src/gui/twinkle.pro twinkle-1.1.new/src/gui/twinkle.pro
+--- twinkle-1.1/src/gui/twinkle.pro	2007-07-21 19:56:16.000000000 +0100
++++ twinkle-1.1.new/src/gui/twinkle.pro	2007-07-25 22:17:07.000000000 +0100
+@@ -3,7 +3,7 @@
+ 
+ CONFIG	+= qt warn_off release thread
+ 
+-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
++LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
+ 
+ DEFINES	+= QT_NO_STL
+ 
+diff -Nur twinkle-1.1/src/Makefile.am twinkle-1.1.new/src/Makefile.am
+--- twinkle-1.1/src/Makefile.am	2007-07-19 19:53:56.000000000 +0100
++++ twinkle-1.1.new/src/Makefile.am	2007-07-25 22:17:07.000000000 +0100
+@@ -16,13 +16,13 @@
          $(top_builddir)/src/sockets/libsocket.a\
          $(top_builddir)/src/threads/libthread.a\
          $(top_builddir)/src/audio/libaudio.a\
@@ -35,61 +79,19 @@ diff -Nur twinkle-1.0~beta/src/Makefile.am twinkle-1.0~beta.new/src/Makefile.am
          $(top_builddir)/src/audits/libaudits.a\
          $(top_builddir)/src/stun/libstun.a\
          $(top_builddir)/src/mwi/libmwi.a\
- 	$(CCRTP_LIBS)\
+         $(top_builddir)/src/im/libim.a\
+         $(top_builddir)/src/presence/libpresence.a\
+         $(top_builddir)/src/patterns/libpatterns.a\
 +	$(LIBS)\
+ 	$(CCRTP_LIBS)\
+ 	$(XML2_LIBS)\
  	-lsndfile
- 
- libtwinkle_a_SOURCES =\
-diff -Nur twinkle-1.0~beta/src/audio/audio_decoder.h twinkle-1.0~beta.new/src/audio/audio_decoder.h
---- twinkle-1.0~beta/src/audio/audio_decoder.h	2006-12-28 20:56:49.000000000 +0000
-+++ twinkle-1.0~beta.new/src/audio/audio_decoder.h	2007-01-08 21:07:33.000000000 +0000
-@@ -25,7 +25,12 @@
- #include "twinkle_config.h"
- #include "audio_codecs.h"
- #include "user.h"
-+
-+#ifdef HAVE_GSM
-+#include <gsm/gsm.h>
-+#else
- #include "gsm/inc/gsm.h"
-+#endif
- 
- #ifdef HAVE_SPEEX
- #include <speex/speex.h>
-diff -Nur twinkle-1.0~beta/src/audio/audio_encoder.h twinkle-1.0~beta.new/src/audio/audio_encoder.h
---- twinkle-1.0~beta/src/audio/audio_encoder.h	2006-12-28 20:56:17.000000000 +0000
-+++ twinkle-1.0~beta.new/src/audio/audio_encoder.h	2007-01-08 21:07:33.000000000 +0000
-@@ -25,7 +25,12 @@
- #include "twinkle_config.h"
- #include "audio_codecs.h"
- #include "user.h"
-+
-+#ifdef HAVE_GSM
-+#include <gsm/gsm.h>
-+#else
- #include "gsm/inc/gsm.h"
-+#endif
- 
- #ifdef HAVE_SPEEX
- #include <speex/speex.h>
-diff -Nur twinkle-1.0~beta/src/gui/twinkle.pro twinkle-1.0~beta.new/src/gui/twinkle.pro
---- twinkle-1.0~beta/src/gui/twinkle.pro	2006-12-29 04:24:24.000000000 +0000
-+++ twinkle-1.0~beta.new/src/gui/twinkle.pro	2007-01-08 21:08:02.000000000 +0000
-@@ -3,7 +3,7 @@
- 
- CONFIG	+= qt warn_off release thread
- 
--LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a -lsndfile
-+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a -lsndfile
- 
- DEFINES	+= QT_NO_STL
- 
-diff -Nur twinkle-1.0~beta/src/twinkle_config.h.in twinkle-1.0~beta.new/src/twinkle_config.h.in
---- twinkle-1.0~beta/src/twinkle_config.h.in	2006-12-29 20:18:31.000000000 +0000
-+++ twinkle-1.0~beta.new/src/twinkle_config.h.in	2007-01-08 21:07:33.000000000 +0000
-@@ -12,6 +12,9 @@
- /* Defines if your system has the crypt function */
- #undef HAVE_CRYPT
+diff -Nur twinkle-1.1/src/twinkle_config.h.in twinkle-1.1.new/src/twinkle_config.h.in
+--- twinkle-1.1/src/twinkle_config.h.in	2007-07-21 20:21:08.000000000 +0100
++++ twinkle-1.1.new/src/twinkle_config.h.in	2007-07-25 22:17:07.000000000 +0100
+@@ -16,6 +16,9 @@
+    don't. */
+ #undef HAVE_DECL_STRERROR_R
  
 +/* Define to 1 if you have the <libgsm> library. */
 +#undef HAVE_GSM

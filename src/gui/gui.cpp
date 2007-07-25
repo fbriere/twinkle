@@ -23,6 +23,7 @@
 #include <qapplication.h>
 #include "gui.h"
 #include "line.h"
+#include "log.h"
 #include "sys_settings.h"
 #include "user.h"
 #include "cmd_socket.h"
@@ -34,11 +35,13 @@
 #include "mphoneform.h"
 #include "selectnicform.h"
 #include "selectprofileform.h"
+#include "messageformview.h"
 #include "twinklesystray.h"
 #include "util.h"
 #include "address_finder.h"
 #include "yesnodialog.h"
 #include "command_args.h"
+#include "im/msg_session.h"
 
 #include "qcombobox.h"
 #include "qhbox.h"
@@ -51,6 +54,7 @@
 #include "qsize.h"
 #include "qsizepolicy.h"
 #include "qstring.h"
+#include "qtextcodec.h"
 #include "qtextedit.h"
 #include "qtoolbar.h"
 #include "qtooltip.h"
@@ -543,6 +547,28 @@ void t_gui::do_user(const string &profile_name) {
 	unlock();
 }
 
+bool t_gui::do_message(const string &destination, const string &display,
+		const string &text)
+{
+	t_user *user = phone->ref_user_profile(mainWindow->
+			userComboBox->currentText().ascii());
+	
+	t_url dest_url(expand_destination(user, destination));
+
+	if (dest_url.is_valid()) {
+		phone->pub_send_message(user, dest_url, display, text);
+	}
+	
+	return true;
+}
+
+void t_gui::do_presence(t_presence_state::t_basic_state basic_state) {
+	t_user *user = phone->ref_user_profile(mainWindow->
+			userComboBox->currentText().ascii());
+	
+	phone->pub_publish_presence(user, basic_state);
+}
+
 void t_gui::do_zrtp(t_zrtp_cmd zrtp_cmd) {
 	lock();
 	
@@ -566,6 +592,8 @@ void t_gui::do_zrtp(t_zrtp_cmd zrtp_cmd) {
 	unlock();
 }
 
+
+
 void t_gui::do_quit(void) {
 	lock();
 	mainWindow->fileExit();
@@ -586,7 +614,7 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
 	use_stdout = false;
 	lastFileBrowsePath = DIR_HOME;
 	
-	mainWindow = new MphoneForm();
+	mainWindow = new MphoneForm(0, 0, Qt::WType_TopLevel | Qt::WStyle_ContextHelp);
 #ifdef HAVE_KDE
 	sys_tray_popup = NULL;
 #endif
@@ -601,6 +629,8 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
 }
 
 t_gui::~t_gui() {
+	destroyAllMessageSessions();
+	
 	MEMMAN_DELETE(mainWindow);
 	delete mainWindow;
 }
@@ -655,6 +685,9 @@ void t_gui::run(void) {
 	// Clear line field info fields
 	clearLineFields(0);
 	clearLineFields(1);
+	
+	// Populate buddy list
+	mainWindow->populateBuddyList();
 	
 	// Set width of window to width of tool bar
 	int widthToolBar = mainWindow->callToolbar->width();
@@ -717,6 +750,7 @@ void t_gui::save_state(void) {
 	
 	sys_config->set_show_display(mainWindow->getViewDisplay());
 	sys_config->set_compact_line_status(mainWindow->getViewCompactLineStatus());
+	sys_config->set_show_buddy_list(mainWindow->getViewBuddyList());
 	
 	t_userintf::save_state();
 	
@@ -738,6 +772,7 @@ void t_gui::restore_state(void) {
 	
 	mainWindow->showDisplay(sys_config->get_show_display());
 	mainWindow->showCompactLineStatus(sys_config->get_compact_line_status());
+	mainWindow->showBuddyList(sys_config->get_show_buddy_list());
 	
 	t_userintf::restore_state();
 	
@@ -2309,6 +2344,98 @@ void t_gui::cb_mwi_terminated(t_user *user_config, const string &reason) {
 	unlock();
 }
 
+bool t_gui::cb_message_request(t_user *user_config, t_request *r) {	
+	string text;
+	im::t_text_format text_format;
+	
+	if (r->body && r->body->get_type() == BODY_PLAIN_TEXT) {
+		t_sip_body_plain_text *sb = dynamic_cast<t_sip_body_plain_text *>(r->body);
+		text = sb->text;
+		text_format = im::TXT_PLAIN;
+	} else if (r->body && r->body->get_type() == BODY_HTML_TEXT) {
+		t_sip_body_html_text *sb = dynamic_cast<t_sip_body_html_text *>(r->body);
+		text = sb->text;
+		text_format = im::TXT_HTML;
+	} else {
+		log_file->write_header("t_gui::cb_message_request",
+			LOG_NORMAL, LOG_CRITICAL);
+		log_file->write_raw("Unsupported content type: ");
+		log_file->write_raw(r->body->get_type());
+		log_file->write_endl();
+		log_file->write_footer();
+		return true;
+	}
+	
+	string charset = r->hdr_content_type.media.charset;
+	if (!charset.empty() && cmp_nocase(charset, "utf-8") != 0) {
+		// Try to decode the text
+		QTextCodec *c = QTextCodec::codecForName(charset.c_str());
+		if (c) {
+			text = c->toUnicode(text.c_str());
+		} else {
+			log_file->write_header(
+					"t_gui::cb_message_request",
+					LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Cannot decode charset: ");
+			log_file->write_raw(charset);
+			log_file->write_endl();
+			log_file->write_footer();
+		}
+	}
+	
+	lock();
+	
+	// Find an existing session
+	im::t_msg_session *session = getMessageSession(user_config, r->hdr_from.uri,
+				r->hdr_from.get_display_presentation());
+	if (!session) {
+		// There is no session yet.
+		if (messageSessions.size() >= user_config->get_im_max_sessions()) {
+			log_file->write_report(
+				"Maximum number of message sessions reached. Reject message",
+				"t_gui::cb_message_request");
+			unlock();
+			return false;
+		}
+		
+		// Create a new session.
+		session = new im::t_msg_session(user_config, t_display_url(r->hdr_from.uri, 
+				r->hdr_from.get_display_presentation()));
+		MEMMAN_NEW(session);
+		addMessageSession(session);
+		MessageFormView *view = new MessageFormView(NULL, session);
+		MEMMAN_NEW(view);
+		view->show();
+		view->raise();
+	}
+	
+	session->recv_msg(text, text_format);
+	
+	unlock();
+	return true;
+}
+
+void t_gui::cb_message_response(t_user *user_config, t_response *r) {
+	// Only report failure responses to the user
+	if (r->is_success()) return;
+	
+	lock();
+	
+	// Find session associated with the response
+	im::t_msg_session *session = getMessageSession(user_config, r->hdr_to.uri,
+				r->hdr_from.get_display_presentation());
+	
+	if (session) {
+		string s = int2str(r->code);
+		s += ' ';
+		s += r->reason;
+		session->set_error(s);
+	}
+	// If there is no session anymore, then discard the response
+	
+	unlock();
+}
+
 void t_gui::cmd_call(const string &destination, bool immediate) {
 	string subject;
 	string dst_no_headers;
@@ -2625,3 +2752,37 @@ unsigned short t_gui::get_line_sys_tray_popup(void) const {
 	return line_sys_tray_popup;
 }
 #endif
+
+im::t_msg_session *t_gui::getMessageSession(t_user *user_config, 
+			const t_url &remote_url, const string &display) const 
+{
+	for (list<im::t_msg_session *>::const_iterator it = messageSessions.begin();
+	it != messageSessions.end(); ++it)
+	{
+		if ((*it)->match(user_config, remote_url)) {
+			(*it)->set_display_if_empty(display);
+			return *it;
+		}
+	}
+	
+	return NULL;
+}
+	
+void t_gui::addMessageSession(im::t_msg_session *s) {
+	messageSessions.push_back(s);
+}
+
+void t_gui::removeMessageSession(im::t_msg_session *s) {
+	messageSessions.remove(s);
+}
+
+void t_gui::destroyAllMessageSessions(void) {
+	for (list<im::t_msg_session *>::iterator it = messageSessions.begin();
+	it != messageSessions.end(); ++it)
+	{
+		MEMMAN_DELETE(*it);
+		delete *it;
+	}
+	
+	messageSessions.clear();
+}

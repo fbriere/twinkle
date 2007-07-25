@@ -20,6 +20,7 @@
 #include <cstring>
 #include <string>
 #include "sema.h"
+#include "util.h"
 
 using namespace std;
 
@@ -28,7 +29,7 @@ t_semaphore::t_semaphore(unsigned int value) {
 
 	ret = sem_init(&sem, 0, value);
 	if (ret != 0) {
-		string err = strerror(errno);
+		string err = get_error_str(errno);
 		string exception =
 			"t_semaphore::t_semaphore failed to create a semaphore.\n";
 		exception += err;
@@ -45,7 +46,7 @@ void t_semaphore::up(void) {
 
 	ret = sem_post(&sem);
 	if (ret != 0) {
-		string err = strerror(errno);
+		string err = get_error_str(errno);
 		string exception = "t_semaphore::up failed.\n";
 		exception += err;
 		throw exception;

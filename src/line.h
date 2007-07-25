@@ -227,14 +227,18 @@ public:
 	// - enable = false -> unmute
 	void mute(bool enable);
 
-	// Events
+	/** @name Handle incoming responses */
+	//@{
 	void recvd_provisional(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_success(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_redirect(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_client_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_server_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_global_error(t_response *r, t_tuid tuid, t_tid tid);
+	//@}
 
+	/** @name Handle incoming requests */
+	//@{
 	void recvd_invite(t_user *user, t_request *r, t_tid tid, const string &ringtone);
 	void recvd_ack(t_request *r, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
@@ -245,10 +249,16 @@ public:
 	void recvd_subscribe(t_request *r, t_tid tid);
 	void recvd_notify(t_request *r, t_tid tid);
 	void recvd_info(t_request *r, t_tid tid);
+	void recvd_message(t_request *r, t_tid tid);
 
-	// Returns true if refer has been accepted sofar. The refer may still
-	// be rejected by the user.
+	/**
+	 * Process REFER request.
+	 * @return true, if refer has been accepted sofar. The refer may still
+	 * be rejected by the user.
+	 * @return false, if the refer has been rejected.
+	 */
 	bool recvd_refer(t_request *r, t_tid tid);
+	//@}
 	
 	// Handle the response from the user on the question for refer
 	// permission. This response is received on the dialog that received
