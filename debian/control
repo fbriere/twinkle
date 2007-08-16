@@ -3,7 +3,7 @@ Section: comm
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>
-Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>= 1.4.2), libccrtp-dev (>= 1.5.0), help2man, libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev, automake1.9, cdbs, kdelibs-bin, kdelibs4-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libxml2-dev, libgsm1-dev, libsndfile1-dev, libxpm-dev, libspeex-dev, libboost-regex-dev, libzrtpcpp-dev
+Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>= 1.4.2), libccrtp-dev (>= 1.5.0), help2man, libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev, automake1.9, cdbs, kdelibs4-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libxml2-dev, libgsm1-dev, libsndfile1-dev, libxpm-dev, libspeex-dev, libboost-regex-dev, libzrtpcpp-dev
 Standards-Version: 3.6.1
 XS-Vcs-Svn: svn://svn.debian.org/pkg-voip/
 XS-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/

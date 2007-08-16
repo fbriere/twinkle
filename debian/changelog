@@ -1,3 +1,10 @@
+twinkle (1:1.1-2) unstable; urgency=low
+
+  * Remove obsolete Build-Depends: kdelibs-bin
+  * Rebuild for libboost transition
+
+ -- Mark Purcell <msp@debian.org>  Thu, 16 Aug 2007 18:12:05 +0100
+
 twinkle (1:1.1-1) unstable; urgency=low
 
   * New upstream release
