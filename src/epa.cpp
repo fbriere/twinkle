@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 
 extern t_phone *phone;
 extern t_event_queue	*evq_timekeeper;
+extern string local_hostname;
 
 /////////////
 // PRIVATE

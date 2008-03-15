@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -165,7 +165,8 @@ void t_userintf::expand_destination(t_user *user_config,
 	subject.clear();
 	if (!headers.empty()) {
 		try {
-			t_sip_message *m = t_parser::parse_headers(headers);
+			list<string> parse_errors;
+			t_sip_message *m = t_parser::parse_headers(headers, parse_errors);
 			if (m->hdr_subject.is_populated()) {
 				subject = m->hdr_subject.subject;
 			}
@@ -1983,21 +1984,32 @@ string t_userintf::format_sip_address(t_user *user_config, const string &display
 
 	s = display;
 	if (display != "") s += " <";
+	
+	string number;
+	if (uri.get_scheme() == "tel") {
+		number = uri.get_host();
+	} else {
+		number = uri.get_user();
+	}
 
 	if (user_config->get_display_useronly_phone() &&
 	    uri.is_phone(user_config->get_numerical_user_is_phone(),
 	    			user_config->get_special_phone_symbols()))
 	{
 		// Display telephone number only
-		s += user_config->convert_number(uri.get_user());
+		s += user_config->convert_number(number);
 	} else {
 		// Display full URI
 		// Convert the username according to the number conversion
 		// rules.
 		t_url u(uri);
-		string username = user_config->convert_number(u.get_user());
-		if (username != u.get_user()) {
-			u.set_user(username);
+		string username = user_config->convert_number(number);
+		if (username != number) {
+			if (uri.get_scheme() == "tel") {
+				u.set_host(username);
+			} else {
+				u.set_user(username);
+			}
 		}
 		s += u.encode_no_params_hdrs(false);
 	}
@@ -2060,7 +2072,7 @@ void t_userintf::run(void) {
 
 	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
 	cout << endl;
-	cout << "Copyright (C) 2005-2007  " << PRODUCT_AUTHOR << endl;
+	cout << "Copyright (C) 2005-2008  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
 	
 	cout << "Users:";

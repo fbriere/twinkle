@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -719,8 +719,12 @@ void t_line::end_call(void) {
 }
 
 void t_line::send_dtmf(char digit, bool inband, bool info) {
-	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
-		active_dialog->send_dtmf(digit, inband, info);
+	// DTMF may be sent on an early media session, so find
+	// a dialog that has an RTP session. There can be at most 1.
+	t_dialog *d = get_dialog_with_active_session();
+
+	if (d) {
+		d->send_dtmf(digit, inband, info);
 		cleanup();
 		return;
 	}
@@ -1861,9 +1865,9 @@ void t_line::process_invite_retrans(void) {
 	if (active_dialog) active_dialog->process_invite_retrans();
 }
 
-string t_line::create_user_contact(void) const {
+string t_line::create_user_contact(const string &auto_ip) const {
 	assert(user_config);
-	return user_config->create_user_contact(hide_user);
+	return user_config->create_user_contact(hide_user, auto_ip);
 }
 
 string t_line::create_user_uri(void) const {

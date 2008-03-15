@@ -62,6 +62,7 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot access the microphone (%1)."))
 
 // listener.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Excessive number of socket errors."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot receive incoming TCP connections."))
 
 // phone.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Call transfer - %1"))

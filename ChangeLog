@@ -1,5 +1,44 @@
-16 july 2007 - 1.1alpha2
-========================
+8 march 2008 - 1.2
+==================
+- SIP over TCP
+- Automatic selection of IP address.
+  * On a multi-homed machine you do not have to select an IP address/NIC
+    anymore.
+- Support for sending a q-value in a registration contact.
+- Send DTMF on an early media stream.
+- Choose auth over auth-int qop when server supports both for authentication.
+  This avoids problems with SIP ALGs.
+- Support tel-URI in From and To headers in incoming SIP messages.
+- Print a log rotation message at end of log when a log file is full.
+- Remove 20 character limit on profile names.
+- Reject an incoming MESSAGE with 603 if max. sessions == 0
+- Delivery notification when a 202 response is received on a MESSAGE.
+
+Bug fixes
+---------
+- When you deactivate a profile that has MWI active, but MWI subscription failed,
+  and subsequently activate this profile again, then Twinkle does not subscribe to
+  MWI.
+- The max redirection value was always set to 1.
+- Leading space in the body of a SIP message causes a parse failure
+- Twinkle crashes with SIGABRT when it receives an INVITE with
+  a CSeq header that contains an invalid method.
+- Latest release of lrelease corrupted translation files.
+- Twinkle crashes on 'twinkle --cmd line'
+- If an MWI NOTIFY does not contain a voice msg summary, twinkle
+  shows a random number for the amount of messages waiting.
+- Depending on the locale Twinkle encoded a q-value with a comma
+  instead of a dot as decimal point.
+
+Build changes
+-------------
+- Modifications for gcc 4.3.
+- Remove fast sequence of open/close calls for ALSA to avoid
+  problems with bluez.
+
+
+21 july 2007 - 1.1
+==================
 - French translation
 - Presence
 - Instant messaging

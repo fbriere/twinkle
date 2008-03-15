@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// RFC 3842
-// simple-message-summary body
+/**
+ * @file
+ * RFC 3842 simple-message-summary body
+ */
 
 #ifndef SIMPLE_MSG_SUM_BODY_HH
 #define SIMPLE_MSG_SUM_BODY_HH
@@ -38,15 +40,24 @@
 
 using namespace std;
 
+/** Message summary counters */
 struct t_msg_summary {
 	uint32		newmsgs;
 	uint32		newmsgs_urgent;
 	uint32		oldmsgs;
 	uint32		oldmsgs_urgent;
+
+	t_msg_summary();
 	
-	// Parse a text representation of a message summary.
-	// Returns false if parsing fails.
+	/**
+	 * Parse a text representation of a message summary.
+	 * @param s [in] The text to parse.
+	 * @return false if parsing fails, true if it succeeds.
+	 */
 	bool parse(const string &s);
+
+	/** Set all counters to zero */
+	void clear(void);
 };
 
 typedef string t_msg_context;

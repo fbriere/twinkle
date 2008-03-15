@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,36 +64,53 @@ void MessageFormView::update(void) {
 	t_user *user_config = _msgSession->get_user();
 	t_display_url to_url = _msgSession->get_remote_party();
 	
+	if (!_msgSession->is_msg_in_flight() && !msgLineEdit->isEnabled()) {
+		msgLineEdit->clear();
+		msgLineEdit->setEnabled(true);
+		msgLineEdit->setFocus();
+	} else if (_msgSession->is_msg_in_flight() && msgLineEdit->isEnabled()) {
+		msgLineEdit->setText(tr("sending message"));
+		msgLineEdit->setEnabled(false);
+	}
+	
+	msgLineEdit->setEnabled(!_msgSession->is_msg_in_flight());
+	
 	if (_msgSession->error_received()) {
 		string error_msg = _msgSession->take_error();
 		displayError(error_msg.c_str());
-		ui->unlock();
-		return;
 	}
 	
-	im::t_msg m;
-	try {
-		m = _msgSession->get_last_message();
-	} catch (empty_list_exception) {
-		ui->unlock();
-		return;
+	if (_msgSession->delivery_notification_received()) {
+		string notification = _msgSession->take_delivery_notification();
+		displayDeliveryNotification(notification.c_str());
 	}
 	
-	QString name;
-	if (m.direction == im::MSG_DIR_IN) {
-		name = to_url.display.c_str();
-		if (name.isEmpty()) {
-			name = to_url.url.get_user().c_str();
+	if (_msgSession->is_new_message_added()) {
+		im::t_msg m;
+		try {
+			m = _msgSession->get_last_message();
+		} catch (empty_list_exception) {
+			ui->unlock();
+			return;
 		}
-	} else {
-		name = user_config->get_display(false).c_str();
-		if (name.isEmpty()) {
-			name = user_config->get_name().c_str();
+		
+		QString name;
+		if (m.direction == im::MSG_DIR_IN) {
+			name = to_url.display.c_str();
+			if (name.isEmpty()) {
+				name = to_url.url.get_user().c_str();
+			}
+		} else {
+			name = user_config->get_display(false).c_str();
+			if (name.isEmpty()) {
+				name = user_config->get_name().c_str();
+			}
 		}
+		
+		addMessage(name, m.message.c_str(), m.direction == im::MSG_DIR_IN,
+			   m.format == im::TXT_HTML);
 	}
 	
-	addMessage(name, m.message.c_str(), m.direction == im::MSG_DIR_IN,
-		   m.format == im::TXT_HTML);
 	ui->unlock();
 }
 

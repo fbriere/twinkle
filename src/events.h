@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #define _EVENTS_H
 
 #include <queue>
+#include "protocol.h"
 #include "timekeeper.h"
 #include "stun/stun.h"
 #include "audio/audio_codecs.h"
@@ -91,7 +92,8 @@ public:
 	unsigned int	src_addr; /**< Source IP address of the SIP message (host order). */
 	unsigned short	src_port; /**< Source port of the SIP message (host order). */
 	unsigned int	dst_addr; /**< Destination IP address of the SIP message (host order). */
-	unsigned short	dst_port; /**< Destiantion port of the SIP message (host order). */
+	unsigned short	dst_port; /**< Destination port of the SIP message (host order). */
+	string		transport; /**< Transport protocol */
 
 	/**
 	 * Constructor.
@@ -211,20 +213,23 @@ public:
 	t_timer *get_timer(void) const;
 };
 
-
-/** Types of failures. */
-enum t_failure {
-	FAIL_TIMEOUT,	/**< Transaction timed out */
-	FAIL_TRANSPORT	/**< Transport failure */
-};
-
 /**
  * Failure events.
  */
 class t_event_failure : public t_event {
 private:
 	t_failure	failure;	/**< Type of failure. */
+	
+	/**
+	 * Indicates if the tid value is populated. If the tid value is not
+	 * populated, then the branch and cseq_method are populated.
+	 */
+	bool		tid_populated;
+	
 	unsigned short	tid;		/**< Id of transaction that failed. */
+	
+	string		branch;		/**< Branch parameter of SIP message that failed. */
+	t_method	cseq_method;	/**< CSeq method of SIP message that failed. */
 public:
 	/**
 	 * Constructor.
@@ -232,6 +237,9 @@ public:
 	 * @param _tid [in] Transaction id.
 	 */
 	t_event_failure(t_failure f, unsigned short _tid);
+	
+	/** Constructor */
+	t_event_failure(t_failure f, const string &_branch, const t_method &_cseq_method);
 	
 	t_event_type get_type(void) const;
 	
@@ -246,6 +254,15 @@ public:
 	 * @return Transaction id.
 	 */
 	unsigned short get_tid(void) const;
+	
+	/** Get branch parameter. */
+	string get_branch(void) const;
+	
+	/** Get CSeq method. */
+	t_method get_cseq_method(void) const;
+	
+	/** Check if tid is populated. */
+	bool is_tid_populated(void) const;
 };
 
 
@@ -587,8 +604,7 @@ public:
 	 * @param ipaddr [in] Destination address of the message (host order).
 	 * @param port [in] Port of the message (host order).
 	 */
-	void push_network(t_sip_message *m, unsigned long ipaddr,
-		unsigned short port);
+	void push_network(t_sip_message *m, const t_ip_port &ip_port);
 
 	/**
 	 * Create a user event and push it into the queue.
@@ -642,6 +658,14 @@ public:
 	 * @param tid [in] Transaction id of failed transaction.
 	 */
 	void push_failure(t_failure f, unsigned short tid);
+	
+	/**
+	 * Create failure event and push it into the queue.
+	 * @param f [in] Type of failure.
+	 * @param branch [in] Branch parameter of failed transaction.
+	 * @param cseq_method [in] CSeq method of failed transaction.
+	 */
+	void push_failure(t_failure f, const string &branch, const t_method &cseq_method);
 
 	/**
 	 * Create a start timer event.

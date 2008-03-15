@@ -1,3 +1,19 @@
+twinkle (1:1.2-1) unstable; urgency=low
+
+  [ Kilian Krause ]
+  * Fix menu entry Apps -> Applications
+  * Add Homepage field as added in dpkg-dev 1.14.6.
+
+  [ Mikael Magnusson ]
+  * New upstream release (Closes: #465187)
+  * Add myself to Uploaders.
+  * Update debian/control package Description.
+  * Update patches/libgsm.patch. (Partly merged by upstream.)
+  * Rename patches/configure-boost.patch to
+    patches/z99-configure-boost.patch (fixes patch order), and update.
+
+ -- Mikael Magnusson <mikma@users.sourceforge.net>  Sat, 15 Mar 2008 18:43:10 +0100
+
 twinkle (1:1.1-2) unstable; urgency=low
 
   * Remove obsolete Build-Depends: kdelibs-bin

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,5 +64,11 @@ void t_mwi::set_msg_waiting(bool _msg_waiting) {
 void t_mwi::set_voice_msg_summary(const t_msg_summary &summary) {
 	mtx_mwi.lock();
 	voice_msg_summary = summary;
+	mtx_mwi.unlock();
+}
+
+void t_mwi::clear_voice_msg_summary(void) {
+	mtx_mwi.lock();
+	voice_msg_summary.clear();
 	mtx_mwi.unlock();
 }

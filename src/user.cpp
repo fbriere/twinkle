@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include "userintf.h"
 #include "util.h"
 #include "protocol.h"
+#include "sys_settings.h"
 #include "audits/memman.h"
 #include "sdp/sdp.h"
 #include "parser/parse_ctrl.h"
@@ -55,6 +56,8 @@ extern t_phone		*phone;
 #define FLD_REGISTRAR			"registrar"
 #define FLD_REGISTRATION_TIME		"registration_time"
 #define FLD_REGISTER_AT_STARTUP		"register_at_startup"
+#define FLD_REG_ADD_QVALUE		"reg_add_qvalue"
+#define FLD_REG_QVALUE			"reg_qvalue"
 
 // AUDIO fields
 #define FLD_CODECS			"codecs"
@@ -106,7 +109,9 @@ extern t_phone		*phone;
 #define FLD_ATTENDED_REFER_TO_AOR	"attended_refer_to_aor"
 #define FLD_SEND_P_PREFERRED_ID		"send_p_preferred_id"
 
-// NAT fields
+// Transport/NAT fields
+#define FLD_SIP_TRANSPORT		"sip_transport"
+#define FLD_SIP_TRANSPORT_UDP_THRESHOLD	"sip_transport_udp_threshold"
 #define FLD_NAT_PUBLIC_IP		"nat_public_ip"
 #define FLD_STUN_SERVER			"stun_server"
 
@@ -241,6 +246,23 @@ string t_user::g726_packing2str(t_g726_packing packing) const {
 	}
 }
 
+t_sip_transport t_user::str2sip_transport(const string &s) const {
+	if (s == "udp") return SIP_TRANS_UDP;
+	if (s == "tcp") return SIP_TRANS_TCP;
+	if (s == "auto") return SIP_TRANS_AUTO;
+	return SIP_TRANS_AUTO;
+}
+
+string t_user::sip_transport2str(t_sip_transport transport) const {
+	switch (transport) {
+	case SIP_TRANS_UDP:	return "udp";
+	case SIP_TRANS_TCP:	return "tcp";
+	case SIP_TRANS_AUTO:	return "auto";
+	default:
+		assert(false);
+	}
+}
+
 string t_user::expand_filename(const string &filename) {
 	string f;
 
@@ -336,6 +358,8 @@ t_user::t_user() {
 	use_nat_public_ip = false;
 	use_stun = false;
 	register_at_startup = true;
+	reg_add_qvalue = false;
+	reg_qvalue = 1.0;
 	check_max_forwards = false;
 	allow_missing_contact_reg = true;
 	compact_headers = false;
@@ -383,6 +407,8 @@ t_user::t_user() {
 	auto_refresh_refer_sub = false;
 	attended_refer_to_aor = false;
 	send_p_preferred_id = false;
+	sip_transport = SIP_TRANS_AUTO;
+	sip_transport_udp_threshold = 1300; // RFC 3261 18.1.1
 	ringtone_file.clear();
 	ringback_file.clear();
 	script_incoming_call.clear();
@@ -425,6 +451,8 @@ t_user::t_user(const t_user &u) {
 	all_requests_to_proxy = u.all_requests_to_proxy;
 	non_resolvable_to_proxy = u.non_resolvable_to_proxy;
 	use_registrar = u.use_registrar;
+	reg_add_qvalue = u.reg_add_qvalue;
+	reg_qvalue = u.reg_qvalue;
 	registrar = u.registrar;
 	registration_time = u.registration_time;
 	register_at_startup = u.register_at_startup;
@@ -474,6 +502,8 @@ t_user::t_user(const t_user &u) {
 	auto_refresh_refer_sub = u.auto_refresh_refer_sub;
 	attended_refer_to_aor = u.attended_refer_to_aor;
 	send_p_preferred_id = u.send_p_preferred_id;
+	sip_transport = u.sip_transport;
+	sip_transport_udp_threshold = u.sip_transport_udp_threshold;
 	use_nat_public_ip = u.use_nat_public_ip;
 	nat_public_ip = u.nat_public_ip;
 	use_stun = u.use_stun;
@@ -637,6 +667,22 @@ bool t_user::get_register_at_startup(void) const {
 	bool result;
 	mtx_user.lock();
 	result = register_at_startup;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_reg_add_qvalue(void) const {
+	bool result;
+	mtx_user.lock();
+	result = reg_add_qvalue;
+	mtx_user.unlock();
+	return result;
+}
+
+float t_user::get_reg_qvalue(void) const {
+	float result;
+	mtx_user.lock();
+	result = reg_qvalue;
 	mtx_user.unlock();
 	return result;
 }
@@ -930,7 +976,7 @@ bool t_user::get_ask_user_to_redirect(void) const {
 }
 
 unsigned short t_user::get_max_redirections(void) const {
-	bool result;
+	unsigned short result;
 	mtx_user.lock();
 	result = max_redirections;
 	mtx_user.unlock();
@@ -1007,6 +1053,16 @@ bool t_user::get_send_p_preferred_id(void) const {
 	result = send_p_preferred_id;
 	mtx_user.unlock();
 	return result;
+}
+
+t_sip_transport t_user::get_sip_transport(void) const {
+	t_mutex_guard guard(mtx_user);
+	return sip_transport;
+}
+
+unsigned short t_user::get_sip_transport_udp_threshold(void) const {
+	t_mutex_guard guard(mtx_user);
+	return sip_transport_udp_threshold;
 }
 
 bool t_user::get_use_nat_public_ip(void) const {
@@ -1380,6 +1436,18 @@ void t_user::set_register_at_startup(bool b) {
 	mtx_user.unlock();
 }
 
+void t_user::set_reg_add_qvalue(bool b) {
+	mtx_user.lock();
+	reg_add_qvalue = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_reg_qvalue(float q) {
+	mtx_user.lock();
+	reg_qvalue = q;
+	mtx_user.unlock();
+}
+
 void t_user::set_codecs(const list<t_audio_codec> &_codecs) {
 	mtx_user.lock();
 	codecs = _codecs;
@@ -1654,6 +1722,16 @@ void t_user::set_send_p_preferred_id(bool b) {
 	mtx_user.lock();
 	send_p_preferred_id = b;
 	mtx_user.unlock();
+}
+
+void t_user::set_sip_transport(t_sip_transport transport) {
+	t_mutex_guard guard(mtx_user);
+	sip_transport = transport;
+}
+
+void t_user::set_sip_transport_udp_threshold(unsigned short threshold) {
+	t_mutex_guard guard(mtx_user);
+	sip_transport_udp_threshold = threshold;
 }
 
 void t_user::set_use_nat_public_ip(bool b) {
@@ -1952,6 +2030,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			use_registrar = set_server_value(registrar, USER_SCHEME, value); 
 		} else if (parameter == FLD_REGISTER_AT_STARTUP) {
 			register_at_startup = yesno2bool(value);
+		} else if (parameter == FLD_REG_ADD_QVALUE) {
+			reg_add_qvalue = yesno2bool(value);
+		} else if (parameter == FLD_REG_QVALUE) {
+			reg_qvalue = atof(value.c_str());
 		} else if (parameter == FLD_OUTBOUND_PROXY) {
 			use_outbound_proxy = set_server_value(outbound_proxy,
 					USER_SCHEME, value);
@@ -2059,6 +2141,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			attended_refer_to_aor = yesno2bool(value);
 		} else if (parameter == FLD_SEND_P_PREFERRED_ID) {
 			send_p_preferred_id = yesno2bool(value);
+		} else if (parameter == FLD_SIP_TRANSPORT) {
+			sip_transport = str2sip_transport(value);
+		} else if (parameter == FLD_SIP_TRANSPORT_UDP_THRESHOLD) {
+			sip_transport_udp_threshold = atoi(value.c_str());
 		} else if (parameter == FLD_NAT_PUBLIC_IP) {
 			if (value.size() == 0) continue;
 			use_nat_public_ip = true;
@@ -2320,6 +2406,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_REGISTER_AT_STARTUP << '=';
 	config << bool2yesno(register_at_startup) << endl;
 	config << FLD_REGISTRATION_TIME << '=' << registration_time << endl;
+	config << FLD_REG_ADD_QVALUE << '=' << bool2yesno(reg_add_qvalue) << endl;
+	config << FLD_REG_QVALUE << '=' << reg_qvalue << endl;
 	config << endl;
 
 	// Write AUDIO settings
@@ -2442,8 +2530,10 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(send_p_preferred_id) << endl;
 	config << endl;
 
-	// Write NAT settings
-	config << "# NAT\n";
+	// Write Transport/NAT settings
+	config << "# Transport/NAT\n";
+	config << FLD_SIP_TRANSPORT << '=' << sip_transport2str(sip_transport) << endl;
+	config << FLD_SIP_TRANSPORT_UDP_THRESHOLD << '=' << sip_transport_udp_threshold << endl;
 	if (use_nat_public_ip) {
 		config << FLD_NAT_PUBLIC_IP << '=' << nat_public_ip << endl;
 	} else {
@@ -2684,7 +2774,7 @@ bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 	return all_supported;
 }
 
-string t_user::create_user_contact(bool anonymous) {
+string t_user::create_user_contact(bool anonymous, const string &auto_ip) {
 	string s;
 	
 	mtx_user.lock();
@@ -2697,11 +2787,26 @@ string t_user::create_user_contact(bool anonymous) {
 		s += '@';
 	}
 	
-	s += USER_HOST(this);
+	s += USER_HOST(this, auto_ip);
 
-	if (PUBLIC_SIP_UDP_PORT(this) != get_default_port(USER_SCHEME)) {
+	if (PUBLIC_SIP_PORT(this) != get_default_port(USER_SCHEME)) {
 		s += ':';
-		s += int2str(PUBLIC_SIP_UDP_PORT(this));
+		s += int2str(PUBLIC_SIP_PORT(this));
+	}
+	
+	if (phone->use_stun(this)) {
+		// The port discovered via STUN can only be used for UDP.
+		s += ";transport=udp";
+	} else {
+		// Add transport parameter if a single transport is provisioned only.
+		switch (sip_transport) {
+		case SIP_TRANS_UDP:
+			s += ";transport=udp";
+			break;
+		case SIP_TRANS_TCP:
+			s += ";transport=tcp";
+			break;
+		}
 	}
 
 	if (!anonymous && 

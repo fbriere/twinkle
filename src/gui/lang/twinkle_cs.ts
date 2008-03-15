@@ -413,7 +413,7 @@
     <name>GUI</name>
     <message>
         <source>Failed to create a UDP socket (SIP) on port %1</source>
-        <translation>Chyba při otevírání UDP socketu (SIP) na portu %1</translation>
+        <translation type="obsolete">Chyba při otevírání UDP socketu (SIP) na portu %1</translation>
     </message>
     <message>
         <source>The following profiles are both for user %1</source>
@@ -775,6 +775,14 @@ Pokud se připojíte k nějaké síti později, musíte Twinkle spustit znovu. T
     <message>
         <source>Use domain name to create a unique contact header</source>
         <translation>Použijte doménové jméno k vytvoření jedinečné kontaktní hlavičky</translation>
+    </message>
+    <message>
+        <source>Failed to create a %1 socket (SIP) on port %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accepted by network</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1311,6 +1319,17 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>Delivery failure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delivery notification</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MessageFormView</name>
+    <message>
+        <source>sending message</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2794,7 +2813,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</source>
-        <translation>Při použítí ALSA rozhraní není doporučeno mít nastaveno pro mikrofon &quot;standardní zařízení&quot;. Může to být příčinou špatné kvality zvuku.</translation>
+        <translation type="obsolete">Při použítí ALSA rozhraní není doporučeno mít nastaveno pro mikrofon &quot;standardní zařízení&quot;. Může to být příčinou špatné kvality zvuku.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
@@ -2949,19 +2968,19 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
     </message>
     <message>
         <source>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple and static IP addresses.</source>
-        <translation>Zde uvedená IP adresa bude automaticky vybrána při příštím startu programu. To má smysl jen pokud má tento počítač vícero síťových připojení a jen jedno je s přístupem do internetu.</translation>
+        <translation type="obsolete">Zde uvedená IP adresa bude automaticky vybrána při příštím startu programu. To má smysl jen pokud má tento počítač vícero síťových připojení a jen jedno je s přístupem do internetu.</translation>
     </message>
     <message>
         <source>Default &amp;IP address:</source>
-        <translation>Standardní &amp;IP adresa:</translation>
+        <translation type="obsolete">Standardní &amp;IP adresa:</translation>
     </message>
     <message>
         <source>Next time you start Twinkle, the IP address of this network interface be automatically selected. This is only useful when your computer has multiple network devices.</source>
-        <translation>Pokud má tento počítač vícero síťových připojení, je zde možné uvést, které má být zvoleno. Při příštím startu programu již na toto nebude dotazováno.</translation>
+        <translation type="obsolete">Pokud má tento počítač vícero síťových připojení, je zde možné uvést, které má být zvoleno. Při příštím startu programu již na toto nebude dotazováno.</translation>
     </message>
     <message>
         <source>Default &amp;network interface:</source>
-        <translation>Standardní síťové &amp;rozhraní:</translation>
+        <translation type="obsolete">Standardní síťové &amp;rozhraní:</translation>
     </message>
     <message>
         <source>S&amp;tartup hidden in system tray</source>
@@ -3037,7 +3056,7 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
     </message>
     <message>
         <source>The UDP port used for sending and receiving SIP messages.</source>
-        <translation>UDP Port pro SIP Protokoll. Standardně je to 5060. Nicméně váš VoIP provider může vyžadovat jiný port.</translation>
+        <translation type="obsolete">UDP Port pro SIP Protokoll. Standardně je to 5060. Nicméně váš VoIP provider může vyžadovat jiný port.</translation>
     </message>
     <message>
         <source>&amp;RTP port:</source>
@@ -3049,7 +3068,7 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
     </message>
     <message>
         <source>&amp;SIP UDP port:</source>
-        <translation>&amp;SIP UDP port:</translation>
+        <translation type="obsolete">&amp;SIP UDP port:</translation>
     </message>
     <message>
         <source>Ring tone</source>
@@ -3247,6 +3266,30 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     <message>
         <source>Select ring back tone file.</source>
         <translation>Výběr souboru pro vyzváněcí tón u protistrany.</translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-65535) in bytes of an incoming SIP message over UDP.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;SIP port:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;TCP):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The UDP/TCP port used for sending and receiving SIP messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;UDP):</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-4294967295) in bytes of an incoming SIP message over TCP.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3601,6 +3644,10 @@ nasměrované na lokální porty na vašem počítači.</translation>
         <source>Cannot open ALSA driver for PCM capture</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Cannot receive incoming TCP connections.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UserProfileForm</name>
@@ -3634,7 +3681,7 @@ nasměrované na lokální porty na vašem počítači.</translation>
     </message>
     <message>
         <source>NAT</source>
-        <translation>NAT (překlad adres)</translation>
+        <translation type="obsolete">NAT (překlad adres)</translation>
     </message>
     <message>
         <source>Address format</source>
@@ -4467,7 +4514,7 @@ Pokud si tuto volbu vyberete, musíte rovněž na vašem NAT zařízení nasměr
     </message>
     <message>
         <source>Use &amp;STUN</source>
-        <translation>Použít &amp;STUN</translation>
+        <translation type="obsolete">Použít &amp;STUN</translation>
     </message>
     <message>
         <source>Choose this option when your SIP provider offers a STUN server for NAT traversal.</source>
@@ -5345,6 +5392,58 @@ Asterisk podporuje &quot;unsollicited message waiting indication&quot;.
     </message>
     <message>
         <source>Refresh rate of presence subscriptions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transport/NAT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add q-value to registration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>SIP transport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UDP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TCP</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transport mode for SIP. In auto mode, the size of a message determines which transport protocol is used. Messages larger than the UDP threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>T&amp;ransport protocol:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UDP t&amp;hreshold:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> bytes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use &amp;STUN (does not work for incoming TCP)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

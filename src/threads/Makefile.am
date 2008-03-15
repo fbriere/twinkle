@@ -1,4 +1,4 @@
-INCLUDES = -I $(includedir)
+AM_CPPFLAGS = -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libthread.a
 

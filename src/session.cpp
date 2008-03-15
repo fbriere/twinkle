@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "audits/memman.h"
 
 extern string user_host;
+extern string local_hostname;
 extern t_phone *phone;
 
 ///////////
@@ -418,8 +419,20 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 		MEMMAN_DELETE(m->body);
 		delete m->body;
 	}
+	
+	// Determine the IP address to receive the media streams
+	if (receive_host == AUTO_IP4_ADDRESS) {
+		unsigned local_ip = m->get_local_ip();
+		if (local_ip == 0) {
+			log_file->write_report("Cannot determine local IP address.",
+				"t_session::create_sdp_offer", LOG_NORMAL, LOG_CRITICAL);
+		} else {
+			receive_host = USER_HOST(user_config, h_ip2str(local_ip));
+			retrieve_host = receive_host;
+		}
+	}
 
-	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, USER_HOST(user_config),
+	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, receive_host, 
 			receive_host, receive_port, offer_codecs, recv_dtmf_pt,
 			recv_ac2payload);
 	MEMMAN_NEW(m->body);
@@ -470,11 +483,23 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	sent_offer = true;
 }
 
-void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
+void t_session::create_sdp_answer(t_sip_message *m, const string &user) {
 	// Delete old body if present
 	if (m->body) {
 		MEMMAN_DELETE(m->body);
 		delete m->body;
+	}
+	
+	// Determine the IP address to receive the media streams
+	if (receive_host == AUTO_IP4_ADDRESS) {
+		unsigned local_ip = m->get_local_ip();
+		if (local_ip == 0) {
+			log_file->write_report("Cannot determine local IP address.",
+				"t_session::create_sdp_answer", LOG_NORMAL, LOG_CRITICAL);
+		} else {
+			receive_host = USER_HOST(user_config, h_ip2str(local_ip));
+			retrieve_host = receive_host;
+		}
 	}
 
 	list<t_audio_codec> answer_codecs;
@@ -485,7 +510,7 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 	// the same order. Media can be rejected by setting the port to 0.
 	// Only the first audio stream is accepted, all other media streams
 	// will be rejected.
-	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, USER_HOST(user_config),
+	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, receive_host,
 				receive_host);
 	MEMMAN_NEW(m->body);
 	bool audio_answered = false;
@@ -611,7 +636,7 @@ void t_session::start_rtp(void) {
 		log_file->write_report("Local hold. Do not send RTP.",
 			"t_session::start_rtp", LOG_NORMAL, LOG_DEBUG);
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, 
+				"0.0.0.0", get_line()->get_rtp_port(), "", 0, use_codec, 
 				audio_ptime, recv_payload2ac, send_ac2payload,
 				encrypt_audio);
 		MEMMAN_NEW(audio_rtp_session);
@@ -632,7 +657,7 @@ void t_session::start_rtp(void) {
 	} else {
 		// Bi-directional audio
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, get_line()->get_rtp_port(),
+				"0.0.0.0", get_line()->get_rtp_port(),
 				dst_rtp_host, dst_rtp_port, use_codec, audio_ptime,
 				recv_payload2ac, send_ac2payload,
 				encrypt_audio);

@@ -1,6 +1,6 @@
-AM_CPPFLAGS = -DSASR -DNeedFunctionPrototypes=1
-
-INCLUDES = -I $(top_builddir)/src/audio/gsm/inc
+AM_CPPFLAGS = \
+	-I$(srcdir)/inc \
+	-DSASR -DNeedFunctionPrototypes=1
 
 noinst_LIBRARIES = libgsm.a
 

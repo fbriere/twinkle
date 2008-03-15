@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #define _PARSE_CTRL_H
 
 #include "sip_message.h"
+#include "threads/mutex.h"
 
 #define MSG		t_parser::msg
 
@@ -45,6 +46,9 @@
 // process and it stores the results from the parser.
 class t_parser {
 private:
+	/** Mutex to synchronize parse operations */
+	static t_mutex	mtx_parser;
+
 	// Level for nested comments
 	static int comment_level;
 
@@ -87,12 +91,24 @@ enum t_context {
 	static t_context	context;    // Scan context
 	static t_sip_message	*msg;       // Message that has been parsed
 
-	// Parse string s. Throw int exception when parsing fails.
-	static t_sip_message *parse(const string &s);
+	/** 
+	 * Parse a string representing a SIP message.
+	 * @param s [in] String to parse.
+	 * @param parse_errors_ [out] List of non-fatal parse errors.
+	 * @return The parsed SIP message.
+	 * @throw int exception when parsing fails.
+	 */
+	static t_sip_message *parse(const string &s, list<string> &parse_errors_);
 	
-	// Parse a string of headers (hdr1=val1;hdr=val2;...)
-	// The resulting SIP message is a SIP request with a fake request line
-	static t_sip_message *parse_headers(const string &s);
+	/**
+	 * Parse a string of headers (hdr1=val1;hdr=val2;...)
+	 * The resulting SIP message is a SIP request with a fake request line.
+	 * @param s [in] String to parse.
+	 * @param parse_errors_ [out] List of non-fatal parse errors.
+	 * @return The parsed SIP message.
+	 * @throw int exception when parsing fails.
+	 */
+	static t_sip_message *parse_headers(const string &s, list<string> &parse_errors_);
 
 	static void enter_ctx_comment(void);
 
@@ -103,9 +119,6 @@ enum t_context {
 
 	// Add parsing error for a header to the list of parse errors
 	static void add_header_error(const string &header_name);
-
-	// Retrieve the list of parse errors
-	static list<string> get_parse_errors(void);
 };
 
 // Error that can be thrown as exception

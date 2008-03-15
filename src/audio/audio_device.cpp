@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -419,9 +419,8 @@ bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blo
 	log_file->write_report(msg, "t_alsa_io::open", LOG_NORMAL, LOG_CRITICAL); msg = TRANSLATE("Opening ALSA driver failed") + ": " + msg; \
 	ui->cb_display_msg(msg, MSG_CRITICAL); if(pcm_ptr) snd_pcm_close(pcm_ptr); return false;
 	
-	mode = SND_PCM_NONBLOCK;
+	if (!blocking) mode = SND_PCM_NONBLOCK;
 	
-open_again:
 	int err = snd_pcm_open(&pcm_ptr, dev, playback ? SND_PCM_STREAM_PLAYBACK :
 			SND_PCM_STREAM_CAPTURE, mode);
 	if (err < 0) {
@@ -447,21 +446,6 @@ open_again:
 	log_file->write_raw(ptr2str(pcm_ptr));
 	log_file->write_endl();
 	log_file->write_footer();
-	
-	if (blocking && mode & SND_PCM_NONBLOCK) {
-		log_file->write_header("t_alsa_io::open", LOG_NORMAL, LOG_DEBUG);
-		log_file->write_raw("snd_pcm_close, handle = ");
-		log_file->write_raw(ptr2str(pcm_ptr));
-		log_file->write_endl();
-		log_file->write_footer();
-		
-		// Do not call snd_pcm_hw_free here. There is no hardware to release
-		// yet. On ALSA 1.0.9 it is fine to call snd_pcm_hw_free here. But
-		// ALSA 1.0.6 gives an assert.
-		snd_pcm_close(pcm_ptr);
-		mode &= ~SND_PCM_NONBLOCK;
-		goto open_again;
-	}
 	
 	snd_pcm_hw_params_t *hw_params;
 	snd_pcm_sw_params_t *sw_params;

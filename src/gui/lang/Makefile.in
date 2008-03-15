@@ -98,6 +98,7 @@ EXTLIBS = @EXTLIBS@
 FRAMEWORK_COREAUDIO = @FRAMEWORK_COREAUDIO@
 GNULIBS = @GNULIBS@
 GREP = @GREP@
+GSM_LIBS = @GSM_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -155,6 +156,7 @@ LIB_SMB = @LIB_SMB@
 LIB_X11 = @LIB_X11@
 LIB_XEXT = @LIB_XEXT@
 LIB_XRENDER = @LIB_XRENDER@
+LRELEASEOPTION = @LRELEASEOPTION@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MAKEKDEWIDGETS = @MAKEKDEWIDGETS@
@@ -168,7 +170,6 @@ PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
-PARSER_CXXFLAGS = @PARSER_CXXFLAGS@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
@@ -289,9 +290,22 @@ xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
 pkglangdir = $(pkgdatadir)/lang
-pkglang_DATA = twinkle_nl.qm twinkle_de.qm twinkle_cs.qm twinkle_fr.qm
+pkglang_DATA = \
+	twinkle_nl.qm \
+	twinkle_de.qm \
+	twinkle_cs.qm \
+	twinkle_fr.qm \
+	twinkle_ru.qm
+
 CLEANFILES = $(pkglang_DATA)
-EXTRA_DIST = twinkle_nl.ts twinkle_de.ts twinkle_cs.ts twinkle_fr.ts
+EXTRA_DIST = \
+	twinkle_nl.ts \
+	twinkle_de.ts \
+	twinkle_cs.ts \
+	twinkle_fr.ts \
+	twinkle_ru.ts \
+	twinkle_xx.ts
+
 all: all-am
 
 .SUFFIXES:
@@ -464,17 +478,20 @@ uninstall-am: uninstall-info-am uninstall-pkglangDATA
 	uninstall-am uninstall-info-am uninstall-pkglangDATA
 
 
-twinkle_nl.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_nl.ts
+twinkle_nl.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_nl.ts -qm $@
 
-twinkle_de.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_de.ts
+twinkle_de.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_de.ts -qm $@
 
-twinkle_cs.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_cs.ts
+twinkle_cs.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_cs.ts -qm $@
 
-twinkle_fr.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_fr.ts
+twinkle_fr.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_fr.ts -qm $@
+
+twinkle_ru.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_ru.ts -qm $@
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

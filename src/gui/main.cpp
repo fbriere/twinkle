@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@
 #include "gui.h"
 #include "qt_translator.h"
 #include "command_args.h"
+#include "sockets/connection_table.h"
 #include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
@@ -87,8 +88,17 @@ t_memman 		*memman;
 // IP address on which the phone is running
 string user_host;
 
-// SIP socket for sending and receiving signaling
+// Local host name
+string local_hostname;
+
+// SIP UDP socket for sending and receiving signaling
 t_socket_udp *sip_socket;
+
+// SIP TCP socket for sending and receiving signaling
+t_socket_tcp *sip_socket_tcp;
+
+// SIP connection table for connection oriented transport
+t_connection_table *connection_table;
 
 // Event queue that is handled by the transaction manager thread
 // The following threads write to this queue
@@ -102,7 +112,7 @@ t_event_queue		*evq_trans_mgr;
 // - phone UAS
 // - phone UAC
 // - transaction manager
-t_event_queue		*evq_sender_udp;
+t_event_queue		*evq_sender;
 
 // Event queue that is handled by the transaction layer thread
 // The following threads write to this queue
@@ -179,22 +189,28 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			cout << "\tIf a lock file is detected at startup, then override it\n";
 			cout << "\t\tand startup.\n";
 			cout << endl;
+#if 0
+			// DEPRECATED
 			cout << " -i <IP addr>";
 			cout << "\tIf you have multiple IP addresses on your computer,\n";
 			cout << "\t\tthen you can supply the IP address to use here.\n";
 			cout << endl;
+#endif
 			cout << " --sip-port <port>\n";
-			cout << "\t\tPort for SIP UDP signalling.\n";
+			cout << "\t\tPort for SIP signalling.\n";
 			cout << "\t\tThis port overrides the port from the system settings.\n";
 			cout << endl;
 			cout << " --rtp-port <port>\n";
 			cout << "\t\tPort for RTP.\n";
 			cout << "\t\tThis port overrides the port from the system settings.\n";
 			cout << endl;
+#if 0
+			// DEPRECATED
 			cout << " --nic <NIC>";
 			cout << "\tIf you have multiple NICs on your computer,\n";
 			cout << "\t\tthen you can supply the NIC name to use here (e.g. eth0).\n";
 			cout << endl;
+#endif
 			cout << " --call <address>\n";
 			cout << "\t\tInstruct Twinkle to call the address.\n";
 			cout << "\t\tWhen Twinkle is already running, this will instruct the running\n";
@@ -283,6 +299,8 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			}
 		} else if (strcmp(argv[i], "--force") == 0) {
 			override_lock_file = true;
+#if 0
+		// DEPRECATED
 		} else if (strcmp(argv[i], "-i") == 0) {
 			if (i < argc - 1) {
 				i++;
@@ -299,10 +317,11 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 				cout << "IP address missing for option '-i'.\n";
 				exit(0);
 			}
+#endif
 		} else if (strcmp(argv[i], "--sip-port") == 0) {
 			if (i < argc - 1) {
 				i++;
-				g_cmd_args.override_sip_udp_port = atoi(argv[i]);
+				g_cmd_args.override_sip_port = atoi(argv[i]);
 			} else {
 				cout << argv[0] << ": ";
 				cout << "Port missing for option '--sip-port'\n";
@@ -315,6 +334,8 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 				cout << argv[0] << ": ";
 				cout << "Port missing for option '--rtp-port'\n";
 			}	
+#if 0
+		// DEPRECATED
 		} else if (strcmp(argv[i], "--nic") == 0) {
 			if (i < argc - 1) {
 				i++;
@@ -334,6 +355,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 				cout << "NIC name missing for option '-d'.\n";
 				exit(0);
 			}
+#endif
 		} else if (strcmp(argv[i], "--call") == 0) {
 			if (i < argc - 1) {
 				i++;
@@ -416,23 +438,32 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 }
 
 bool open_sip_socket(bool cli_mode) {
+	QString sock_type;
+	
 	// Open socket for SIP signaling
 	try {
-		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port(true));
+		sock_type = "UDP";
+		sip_socket = new t_socket_udp(sys_config->get_sip_port(true));
 		MEMMAN_NEW(sip_socket);
 		if (sip_socket->enable_icmp()) {
 			log_file->write_report("ICMP processing enabled.", "::main");
 		} else {
 			log_file->write_report("ICMP processing disabled.", "::main");
 		}
+		
+		sock_type = "TCP";
+		sip_socket_tcp = new t_socket_tcp(sys_config->get_sip_port());
+		MEMMAN_NEW(sip_socket_tcp);	
 	} catch (int err) {		
 		string msg;
 		if (cli_mode) {
-			msg = QString("Failed to create a UDP socket (SIP) on port %1")
-			   .arg(sys_config->get_sip_udp_port()).ascii();
+			msg = QString("Failed to create a %1 socket (SIP) on port %2")
+			   .arg(sock_type)
+			   .arg(sys_config->get_sip_port()).ascii();
 		} else {
-			msg = qApp->translate("GUI", "Failed to create a UDP socket (SIP) on port %1")
-			   .arg(sys_config->get_sip_udp_port()).ascii();
+			msg = qApp->translate("GUI", "Failed to create a %1 socket (SIP) on port %2")
+			   .arg(sock_type)
+			   .arg(sys_config->get_sip_port()).ascii();
 		}
 		msg += "\n";
 		msg += get_error_str(err);
@@ -522,10 +553,12 @@ int main( int argc, char ** argv )
 	
 	memman = new t_memman();
 	MEMMAN_NEW(memman);
+	connection_table = new t_connection_table();
+	MEMMAN_NEW(connection_table);
 	evq_trans_mgr = new t_event_queue();
 	MEMMAN_NEW(evq_trans_mgr);
-	evq_sender_udp = new t_event_queue();
-	MEMMAN_NEW(evq_sender_udp);
+	evq_sender = new t_event_queue();
+	MEMMAN_NEW(evq_sender);
 	evq_trans_layer = new t_event_queue();
 	MEMMAN_NEW(evq_trans_layer);
 	evq_timekeeper = new t_event_queue();
@@ -543,7 +576,7 @@ int main( int argc, char ** argv )
 	
 	// Parse command line arguments
 	parse_main_args(argc, argv, cli_mode, override_lock_file, config_files);
-	sys_config->set_override_sip_udp_port(g_cmd_args.override_sip_udp_port);
+	sys_config->set_override_sip_port(g_cmd_args.override_sip_port);
 	sys_config->set_override_rtp_port(g_cmd_args.override_rtp_port);
 	
 	// Checking the environment and creating the lock is done at
@@ -629,6 +662,8 @@ int main( int argc, char ** argv )
 			config_files.push_back(config_file.ascii());
 		}
 	}
+#if 0
+	// DEPRECATED
 	if (user_host.empty()) {
 		string ip;
 		if (exists_interface(sys_config->get_start_user_host())) {
@@ -637,6 +672,9 @@ int main( int argc, char ** argv )
 			user_host = ip;
 		}
 	}
+#endif
+	user_host = AUTO_IP4_ADDRESS;
+	local_hostname = get_local_hostname();
 	
 	if (!env_check_ok) {
 		// Environment is not good
@@ -794,6 +832,8 @@ int main( int argc, char ** argv )
 		t_address_finder::preload();
 	}
 	
+#if 0
+	// DEPRECATED
 	// Pick network interface
 	if (user_host.empty()) {
 		user_host = ui->select_network_intf();
@@ -802,6 +842,7 @@ int main( int argc, char ** argv )
 			exit(1);
 		}
 	}
+#endif
 	
 	// Discover NAT type if STUN is enabled
 	list<t_user *> user_list = phone->ref_users();
@@ -888,10 +929,18 @@ int main( int argc, char ** argv )
 			exit(1);
 		}
 	}
+	
+	// Ignore SIGPIPE so read from broken sockets will not cause
+	// the process to terminate.
+	(void)signal(SIGPIPE, SIG_IGN);
 				 
 	// Create threads
-	t_thread *thr_sender_udp;
+	t_thread *thr_sender;
+	t_thread *thr_tcp_sender;
 	t_thread *thr_listen_udp;
+	t_thread *thr_listen_data_tcp;
+	t_thread *thr_listen_conn_tcp;
+	t_thread *thr_conn_timeout_handler;
 	t_thread *thr_timekeeper;
 	t_thread *thr_alarm_catcher;
 	t_thread *thr_sig_catcher;
@@ -900,13 +949,29 @@ int main( int argc, char ** argv )
 	t_thread *thr_listen_cmd = NULL;
 	
 	try {
-		// UDP sender thread
-		thr_sender_udp = new t_thread(sender_udp, NULL);
-		MEMMAN_NEW(thr_sender_udp);
+		// SIP sender thread
+		thr_sender = new t_thread(sender_loop, NULL);
+		MEMMAN_NEW(thr_sender);
+		
+		// SIP TCP sender thread
+		thr_tcp_sender = new t_thread(tcp_sender_loop, NULL);
+		MEMMAN_NEW(thr_tcp_sender);
 
 		// UDP listener thread
 		thr_listen_udp = new t_thread(listen_udp, NULL);
 		MEMMAN_NEW(thr_listen_udp);
+		
+		// TCP data listener thread
+		thr_listen_data_tcp = new t_thread(listen_for_data_tcp, NULL);
+		MEMMAN_NEW(thr_listen_data_tcp);
+		
+		// TCP connection listener thread
+		thr_listen_conn_tcp = new t_thread(listen_for_conn_requests_tcp, NULL);
+		MEMMAN_NEW(thr_listen_conn_tcp);
+		
+		// Connection timeout handler thread
+		thr_conn_timeout_handler = new t_thread(connection_timeout_main, NULL);
+		MEMMAN_NEW(thr_conn_timeout_handler);
 
 		// Timekeeper thread
 		thr_timekeeper = new t_thread(timekeeper_main, NULL);
@@ -982,6 +1047,19 @@ int main( int argc, char ** argv )
 	thr_listen_udp->join();
 	log_file->write_report("thr_listen_udp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
+	thr_listen_conn_tcp->cancel();
+	thr_listen_conn_tcp->join();
+	log_file->write_report("thr_listen_conn_tcp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
+	
+	connection_table->cancel_select();
+	thr_listen_data_tcp->join();
+	log_file->write_report("thr_listen_data_tcp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
+	thr_conn_timeout_handler->join();
+	log_file->write_report("thr_conn_timeout_handler stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
+	
+	thr_tcp_sender->join();
+	log_file->write_report("thr_tcp_sender stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
+	
 	evq_trans_layer->push_quit();
 	thr_phone_uas->join();
 	log_file->write_report("thr_phone_uas stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
@@ -1009,9 +1087,9 @@ int main( int argc, char ** argv )
 	thr_timekeeper->join();
 	log_file->write_report("thr_timekeeper stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
-	evq_sender_udp->push_quit();
-	thr_sender_udp->join();
-	log_file->write_report("thr_sender_udp stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
+	evq_sender->push_quit();
+	thr_sender->join();
+	log_file->write_report("thr_sender stopped.", "::main", LOG_NORMAL, LOG_DEBUG);
 	
 	if (thr_listen_cmd) {
 		MEMMAN_DELETE(thr_listen_cmd);
@@ -1024,6 +1102,8 @@ int main( int argc, char ** argv )
 	delete thr_trans_mgr;
 	MEMMAN_DELETE(thr_timekeeper);
 	delete thr_timekeeper;
+	MEMMAN_DELETE(thr_conn_timeout_handler);
+	delete thr_conn_timeout_handler;
 	
 	if (!threading_is_LinuxThreads) {
 		MEMMAN_DELETE(thr_sig_catcher);
@@ -1034,8 +1114,15 @@ int main( int argc, char ** argv )
 	
 	MEMMAN_DELETE(thr_listen_udp);
 	delete thr_listen_udp;
-	MEMMAN_DELETE(thr_sender_udp);
-	delete thr_sender_udp;
+	MEMMAN_DELETE(thr_sender);
+	delete thr_sender;
+	MEMMAN_DELETE(thr_tcp_sender);
+	delete thr_tcp_sender;
+	
+	MEMMAN_DELETE(thr_listen_data_tcp);
+	delete thr_listen_data_tcp;
+	MEMMAN_DELETE(thr_listen_conn_tcp);
+	delete thr_listen_conn_tcp;
 
 	MEMMAN_DELETE(ab_local);
 	delete ab_local;
@@ -1047,6 +1134,10 @@ int main( int argc, char ** argv )
 	delete ui;
 	ui = NULL;
 	
+	MEMMAN_DELETE(connection_table);
+	delete connection_table;
+	MEMMAN_DELETE(sip_socket_tcp);
+	delete sip_socket_tcp;
 	MEMMAN_DELETE(sip_socket);
 	delete sip_socket;
 	
@@ -1064,8 +1155,8 @@ int main( int argc, char ** argv )
 	delete timekeeper;
 	MEMMAN_DELETE(evq_trans_mgr);
 	delete evq_trans_mgr;
-	MEMMAN_DELETE(evq_sender_udp);
-	delete evq_sender_udp;
+	MEMMAN_DELETE(evq_sender);
+	delete evq_sender;
 	MEMMAN_DELETE(evq_trans_layer);
 	delete evq_trans_layer;
 	MEMMAN_DELETE(evq_timekeeper);

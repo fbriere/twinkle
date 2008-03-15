@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include "util.h"
 #include "audits/memman.h"
 
-extern t_event_queue		*evq_sender_udp;
+extern t_event_queue		*evq_sender;
 extern t_event_queue		*evq_trans_layer;
 extern t_transaction_mgr	*transaction_mgr;
 
@@ -142,15 +142,13 @@ t_response *t_transaction::create_response(int code, string reason) {
 // Client transaction
 ///////////////////////////////////////////////////////////
 
-t_trans_client::t_trans_client(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid) :
-	t_transaction(r, _tuid)
+t_trans_client::t_trans_client(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid) :
+	t_transaction(r, _tuid),
+	dst_ip_port(ip_port)
 {
-	dst_ipaddr = ipaddr;
-	dst_port = port;
-
 	// Send request
-	evq_sender_udp->push_network(r, ipaddr, port);
+	evq_sender->push_network(r, dst_ip_port);
 }
 
 // RFC 3261 17.1.3, 8.2.6.2
@@ -191,7 +189,14 @@ bool t_trans_client::match(t_response *r) const {
 // happen as the destination will be unreachable for all those transactions.
 // If it happens a transaction gets aborted.
 bool t_trans_client::match(const t_icmp_msg &icmp) const {
-	return (dst_ipaddr == icmp.ipaddr && dst_port == icmp.port);
+	return (dst_ip_port.ipaddr == icmp.ipaddr && dst_ip_port.port == icmp.port);
+}
+
+bool t_trans_client::match(const string &branch, const t_method &cseq_method) const {
+	t_via	&req_top_via = request->hdr_via.via_list.front();
+	
+	return (req_top_via.branch == branch &&
+	        request->hdr_cseq.method == cseq_method);
 }
 
 void t_trans_client::process_provisional(t_response *r) {
@@ -224,7 +229,13 @@ void t_tc_invite::start_timer_B(void) {
 }
 
 void t_tc_invite::start_timer_D(void) {
-	timer_D = transaction_mgr->start_timer(DURATION_D, TIMER_D, id);
+	// RFC 3261 17.1.1.2
+	// For reliable transport timer D must be set to zero seconds.
+	if (dst_ip_port.transport == "udp") {
+		timer_D = transaction_mgr->start_timer(DURATION_D, TIMER_D, id);
+	} else {
+		timer_D = transaction_mgr->start_timer(0, TIMER_D, id);
+	}
 }
 
 void t_tc_invite::stop_timer_A(void) {
@@ -248,9 +259,9 @@ void t_tc_invite::stop_timer_D(void) {
 	}
 }
 
-t_tc_invite::t_tc_invite(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid) :
-	t_trans_client(r, ipaddr, port, _tuid)
+t_tc_invite::t_tc_invite(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid) :
+	t_trans_client(r, ip_port, _tuid)
 {
 	assert(r->method == INVITE);
 
@@ -258,8 +269,14 @@ t_tc_invite::t_tc_invite(t_request *r, unsigned long ipaddr,
 	duration_A = DURATION_A;
 	state = TS_CALLING;
 
-	start_timer_A();
+	// RFC 3261 17.1.1.2
+	// Start timer A for unreliable transports.
+	if (ip_port.transport == "udp") start_timer_A();
+	
+	// RFC 3261 17.1.1.2
+	// Start timer B for all transports
 	start_timer_B();
+	
 	timer_D = 0;
 }
 
@@ -296,9 +313,8 @@ void t_tc_invite::process_provisional(t_response *r) {
 
 void t_tc_invite::process_final(t_response *r) {
 	assert(r->is_final());
-	
-	unsigned long ipaddr;
-	unsigned short port;
+
+	t_ip_port ip_port;
 
 	switch (state) {
 	case TS_CALLING:
@@ -343,12 +359,11 @@ void t_tc_invite::process_final(t_response *r) {
 			// RFC 3263 4
 			// ACK for non-2xx SIP responses to INVITE MUST be sent t
 			// to the same host.
-			request->get_current_destination(ipaddr, port);
-			ack->set_destination(ipaddr, port);			
+			request->get_current_destination(ip_port);
+			ack->set_destination(ip_port);			
 
 			// Send ACK
-			evq_sender_udp->push_network(ack, dst_ipaddr,
-				dst_port);
+			evq_sender->push_network(ack, dst_ip_port);
 
 			start_timer_D();
 			state = TS_COMPLETED;
@@ -365,7 +380,7 @@ void t_tc_invite::process_final(t_response *r) {
 		}
 
 		// Retransmit ACK
-		evq_sender_udp->push_network(ack, dst_ipaddr, dst_port);
+		evq_sender->push_network(ack, dst_ip_port);
 		break;
 	default:
 		break;
@@ -373,6 +388,11 @@ void t_tc_invite::process_final(t_response *r) {
 }
 
 void t_tc_invite::process_icmp(const t_icmp_msg &icmp) {
+	log_file->write_report("ICMP error received.", "t_tc_invite::process_icmp");
+	process_failure(FAIL_TRANSPORT);
+}
+
+void t_tc_invite::process_failure(t_failure failure) {
 	t_response *r;
 
 	switch(state) {
@@ -380,14 +400,32 @@ void t_tc_invite::process_icmp(const t_icmp_msg &icmp) {
 		stop_timer_A();
 		stop_timer_B();
 		
-		// An ICMP error indicates a kind of network problem.
-		// So the server is not available. Generate an internal
-		// 503 Service Unavailable repsponse to notify the TU.
-		r = create_response(R_503_SERVICE_UNAVAILABLE);
+		switch (failure) {
+		case FAIL_TRANSPORT:
+			// A transport failure indicates a kind of network problem.
+			// So the server is not available. Generate an internal
+			// 503 Service Unavailable repsponse to notify the TU.
+			r = create_response(R_503_SERVICE_UNAVAILABLE);
+			break;
+		case FAIL_TIMEOUT:
+			r = create_response(R_408_REQUEST_TIMEOUT);
+			break;
+		default:
+			log_file->write_header("t_tc_invite::process_failure",
+				LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Unknown type of failure: ");
+			log_file->write_raw((int)failure);
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			r = create_response(R_400_BAD_REQUEST);
+			break;
+		}
+			
 
-		log_file->write_header("t_tc_invite::process_icmp",
+		log_file->write_header("t_tc_invite::process_failure",
 			LOG_NORMAL, LOG_INFO);
-		log_file->write_raw("ICMP error received.\n\n");
+		log_file->write_raw("Transaction failed.\n\n");
 		log_file->write_raw("Send internal:\n");
 		log_file->write_raw(r->encode());
 		log_file->write_footer();
@@ -399,7 +437,7 @@ void t_tc_invite::process_icmp(const t_icmp_msg &icmp) {
 		break;
 	default:
 		// In other states a response has been received already,
-		// so this ICMP error seems to be a mismatch. Discard.
+		// so this failure seems to be a mismatch. Discard.
 		break;
 	}
 }
@@ -414,8 +452,7 @@ void t_tc_invite::timeout(t_sip_timer t) {
 		switch (t) {
 		case TIMER_A:
 			// Resend request
-			evq_sender_udp->push_network(request, dst_ipaddr,
-				dst_port);
+			evq_sender->push_network(request, dst_ip_port);
 			start_timer_A();
 			break;
 		case TIMER_B:
@@ -505,7 +542,13 @@ void t_tc_non_invite::start_timer_F(void) {
 }
 
 void t_tc_non_invite::start_timer_K(void) {
-	timer_K = transaction_mgr->start_timer(DURATION_K, TIMER_K, id);
+	// RFC 3261 17.1.2.2
+	// For reliable transports set timer K to zero seconds.
+	if (dst_ip_port.transport == "udp") {
+		timer_K = transaction_mgr->start_timer(DURATION_K, TIMER_K, id);
+	} else {
+		timer_K = transaction_mgr->start_timer(0, TIMER_K, id);
+	}
 }
 
 void t_tc_non_invite::stop_timer_E(void) {
@@ -529,16 +572,23 @@ void t_tc_non_invite::stop_timer_K(void) {
 	}
 }
 
-t_tc_non_invite::t_tc_non_invite(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid) :
-	t_trans_client(r, ipaddr, port, _tuid)
+t_tc_non_invite::t_tc_non_invite(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid) :
+	t_trans_client(r, ip_port, _tuid)
 {
 	assert(r->method != INVITE);
 
 	state = TS_TRYING;
 	duration_E = DURATION_E;
-	start_timer_E();
+	
+	// RFC 3261 17.1.2.2
+	// Start timer E for unreliable transports.
+	if (ip_port.transport == "udp") start_timer_E();
+	
+	// RFC 3261 17.1.2.2
+	// Start timer F for all transports.
 	start_timer_F();
+	
 	timer_K = 0;
 }
 
@@ -590,6 +640,11 @@ void t_tc_non_invite::process_final(t_response *r) {
 }
 
 void t_tc_non_invite::process_icmp(const t_icmp_msg &icmp) {
+	log_file->write_report("ICMP error received.", "t_tc_non_invite::process_icmp");
+	process_failure(FAIL_TRANSPORT);
+}
+
+void t_tc_non_invite::process_failure(t_failure failure) {
 	t_response *r;
 
 	switch(state) {
@@ -597,14 +652,32 @@ void t_tc_non_invite::process_icmp(const t_icmp_msg &icmp) {
 		stop_timer_E();
 		stop_timer_F();
 		
-		// An ICMP error indicates a kind of network problem.
-		// So the server is not available. Generate an internal
-		// 503 Service Unavailable repsponse to notify the TU.
-		r = create_response(R_503_SERVICE_UNAVAILABLE);
+		switch (failure) {
+		case FAIL_TRANSPORT:
+			// A transport failure indicates a kind of network problem.
+			// So the server is not available. Generate an internal
+			// 503 Service Unavailable repsponse to notify the TU.
+			r = create_response(R_503_SERVICE_UNAVAILABLE);
+			break;
+		case FAIL_TIMEOUT:
+			r = create_response(R_408_REQUEST_TIMEOUT);
+			break;
+		default:
+			log_file->write_header("t_tc_non_invite::process_failure",
+				LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Unknown type of failure: ");
+			log_file->write_raw((int)failure);
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			r = create_response(R_400_BAD_REQUEST);
+			break;
+		}
+			
 
-		log_file->write_header("t_tc_non_invite::process_icmp",
+		log_file->write_header("t_tc_non_invite::process_failure",
 			LOG_NORMAL, LOG_INFO);
-		log_file->write_raw("ICMP error received.\n\n");
+		log_file->write_raw("Transaction failed.\n\n");
 		log_file->write_raw("Send internal:\n");
 		log_file->write_raw(r->encode());
 		log_file->write_footer();
@@ -616,11 +689,10 @@ void t_tc_non_invite::process_icmp(const t_icmp_msg &icmp) {
 		break;
 	default:
 		// In other states a response has been received already,
-		// so this ICMP error seems to be a mismatch. Discard.
+		// so this failure seems to be a mismatch. Discard.
 		break;
 	}
 }
-
 
 void t_tc_non_invite::timeout(t_sip_timer t) {
 	t_response *r;
@@ -633,8 +705,7 @@ void t_tc_non_invite::timeout(t_sip_timer t) {
 		switch (t) {
 		case TIMER_E:
 			// Resend request
-			evq_sender_udp->push_network(request, dst_ipaddr,
-				dst_port);
+			evq_sender->push_network(request, dst_ip_port);
 			start_timer_E();
 			break;
 		case TIMER_F:
@@ -732,8 +803,7 @@ t_trans_server::t_trans_server(t_request *r, unsigned short _tuid) :
 }
 
 void t_trans_server::process_provisional(t_response *r) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 	
 	if (r->code == R_100_TRYING && resp_100_trying_sent) {
 		// Send 100 Trying only once
@@ -741,15 +811,15 @@ void t_trans_server::process_provisional(t_response *r) {
 	}
 
 	t_transaction::process_provisional(r);
-	r->hdr_via.get_response_dst(ipaddr, port);
-	if (ipaddr == 0) {
+	r->get_destination(ip_port);
+	if (ip_port.ipaddr == 0) {
 		// The response cannot be sent.
 		state = TS_TERMINATED;
 		// Report failure to TU
 		evq_trans_layer->push_failure(FAIL_TRANSPORT, id);
 	} else {
 		// Send response
-		evq_sender_udp->push_network(r, ipaddr, port);
+		evq_sender->push_network(r, ip_port);
 		
 		if (r->code == R_100_TRYING) {
 			resp_100_trying_sent = true;
@@ -758,20 +828,19 @@ void t_trans_server::process_provisional(t_response *r) {
 }
 
 void t_trans_server::process_final(t_response *r) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 
 	t_transaction::process_final(r);
-	r->hdr_via.get_response_dst(ipaddr, port);
+	r->get_destination(ip_port);
 
-	if (ipaddr == 0) {
+	if (ip_port.ipaddr == 0) {
 		// The response cannot be sent.
 		state = TS_TERMINATED;
 		// Report failure to TU
 		evq_trans_layer->push_failure(FAIL_TRANSPORT, id);
 	} else {
 		// Send response
-		evq_sender_udp->push_network(r, ipaddr, port);
+		evq_sender->push_network(r, ip_port);
 	}
 }
 
@@ -895,7 +964,14 @@ void t_ts_invite::start_timer_H(void) {
 }
 
 void t_ts_invite::start_timer_I(void) {
-	timer_I = transaction_mgr->start_timer(DURATION_I, TIMER_I, id);
+	// RFC 17.2.1
+	// Set timer I to T4 seconds for unreliable transports and to 0 for
+	// reliable transports.
+	if (request->src_ip_port.transport == "udp") {
+		timer_I = transaction_mgr->start_timer(DURATION_I, TIMER_I, id);
+	} else {
+		timer_I = transaction_mgr->start_timer(0, TIMER_I, id);
+	}
 }
 
 void t_ts_invite::stop_timer_G(void) {
@@ -966,8 +1042,16 @@ void t_ts_invite::process_final(t_response *r) {
 		if (r->is_success()) {
 			state = TS_TERMINATED;
 		} else {
-			start_timer_G();
+			// RFC 3261 17.2.1
+			// Start timer G for unreliable transports.
+			if (request->src_ip_port.transport == "udp") {
+				start_timer_G();
+			}
+			
+			// RFC 3261 17.2.1
+			// Start timer H for all transports
 			start_timer_H();
+			
 			state = TS_COMPLETED;
 		}
 		break;
@@ -978,8 +1062,7 @@ void t_ts_invite::process_final(t_response *r) {
 }
 
 void t_ts_invite::process_retransmission(void) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 
 	switch (state) {
 	case TS_PROCEEDING:
@@ -987,8 +1070,8 @@ void t_ts_invite::process_retransmission(void) {
 		t_trans_server::process_retransmission();
 		if (provisional.size() > 0) {
 			t_response *r = provisional.back();
-			r->hdr_via.get_response_dst(ipaddr, port);
-			if (ipaddr == 0) {
+			r->get_destination(ip_port);
+			if (ip_port.ipaddr == 0) {
 				// The response cannot be sent.
 				state = TS_TERMINATED;
 				// Report failure to TU
@@ -996,22 +1079,22 @@ void t_ts_invite::process_retransmission(void) {
 						FAIL_TRANSPORT, id);
 			} else {
 				// Send response
-				evq_sender_udp->push_network(r, ipaddr, port);
+				evq_sender->push_network(r, ip_port);
 			}
 		}
 		break;
 	case TS_COMPLETED:
 		// Retransmit the final response
 		t_trans_server::process_retransmission();
-		final->hdr_via.get_response_dst(ipaddr, port);
-		if (ipaddr == 0) {
+		final->get_destination(ip_port);
+		if (ip_port.ipaddr == 0) {
 			// The response cannot be sent.
 			state = TS_TERMINATED;
 			// Report failure to TU
 			evq_trans_layer->push_failure(FAIL_TRANSPORT, id);
 		} else {
 			// Send response
-			evq_sender_udp->push_network(final, ipaddr, port);
+			evq_sender->push_network(final, ip_port);
 		}
 		break;
 	default:
@@ -1022,8 +1105,7 @@ void t_ts_invite::process_retransmission(void) {
 }
 
 void t_ts_invite::timeout(t_sip_timer t) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 
 	assert(t == TIMER_G || t == TIMER_I || t == TIMER_H);
 
@@ -1034,8 +1116,8 @@ void t_ts_invite::timeout(t_sip_timer t) {
 			timer_G = 0;
 
 			// Retransmit the final response
-			final->hdr_via.get_response_dst(ipaddr, port);
-			if (ipaddr == 0) {
+			final->get_destination(ip_port);
+			if (ip_port.ipaddr == 0) {
 				// The response cannot be sent.
 				stop_timer_H();
 				state = TS_TERMINATED;
@@ -1044,8 +1126,7 @@ void t_ts_invite::timeout(t_sip_timer t) {
 						FAIL_TRANSPORT, id);
 			} else {
 				// Send response
-				evq_sender_udp->push_network(final,
-						ipaddr, port);
+				evq_sender->push_network(final, ip_port);
 				start_timer_G();
 			}
 			break;
@@ -1103,7 +1184,14 @@ void t_ts_invite::acknowledge(t_request *ack_request) {
 ///////////////////////////////////////////////////////////
 
 void t_ts_non_invite::start_timer_J(void) {
-	timer_J = transaction_mgr->start_timer(DURATION_J, TIMER_J, id);
+	// RFC 3261 17.2.2
+	// For unreliable transports set timer J to 64*T1, for reliable
+	// transports set it to 0.
+	if (request->src_ip_port.transport == "udp") {
+		timer_J = transaction_mgr->start_timer(DURATION_J, TIMER_J, id);
+	} else {
+		timer_J = transaction_mgr->start_timer(0, TIMER_J, id);
+	}
 }
 
 void t_ts_non_invite::stop_timer_J(void) {
@@ -1159,8 +1247,7 @@ void t_ts_non_invite::process_final(t_response *r) {
 }
 
 void t_ts_non_invite::process_retransmission(void) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port	ip_port;
 	t_response 	*r;
 
 	switch (state) {
@@ -1168,22 +1255,22 @@ void t_ts_non_invite::process_retransmission(void) {
 		// Retransmit the latest provisional response
 		t_trans_server::process_retransmission();
 		r = provisional.back();
-		r->hdr_via.get_response_dst(ipaddr, port);
-		if (ipaddr == 0) {
+		r->get_destination(ip_port);
+		if (ip_port.ipaddr == 0) {
 			// The response cannot be sent.
 			state = TS_TERMINATED;
 			// Report failure to TU
 			evq_trans_layer->push_failure(FAIL_TRANSPORT, id);
 		} else {
 			// Send response
-			evq_sender_udp->push_network(r, ipaddr, port);
+			evq_sender->push_network(r, ip_port);
 		}
 		break;
 	case TS_COMPLETED:
 		// Retransmit the final response
 		t_trans_server::process_retransmission();
-		final->hdr_via.get_response_dst(ipaddr, port);
-		if (ipaddr == 0) {
+		final->get_destination(ip_port);
+		if (ip_port.ipaddr == 0) {
 			// The response cannot be sent.
 			stop_timer_J();
 			state = TS_TERMINATED;
@@ -1191,7 +1278,7 @@ void t_ts_non_invite::process_retransmission(void) {
 			evq_trans_layer->push_failure(FAIL_TRANSPORT, id);
 		} else {
 			// Send response
-			evq_sender_udp->push_network(final, ipaddr, port);
+			evq_sender->push_network(final, ip_port);
 		}
 		break;
 	default:

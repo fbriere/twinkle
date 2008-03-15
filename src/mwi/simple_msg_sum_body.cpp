@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,13 @@
 #include "protocol.h"
 #include "util.h"
 #include "audits/memman.h"
+
+t_msg_summary::t_msg_summary() :
+	newmsgs(0),
+	newmsgs_urgent(0),
+	oldmsgs(0),
+	oldmsgs_urgent(0)
+{}
 
 bool t_msg_summary::parse(const string &s) {
 	newmsgs = 0;
@@ -54,6 +61,13 @@ bool t_msg_summary::parse(const string &s) {
 	}
 	
 	return false;	
+}
+
+void t_msg_summary::clear(void) {
+	newmsgs = 0;
+	newmsgs_urgent = 0;
+	oldmsgs = 0;
+	oldmsgs_urgent = 0;
 }
 
 bool t_simple_msg_sum_body::is_context(const string &s) {

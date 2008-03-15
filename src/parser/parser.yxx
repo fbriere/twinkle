@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -802,7 +802,7 @@ contact_param:	  contact_addr parameters {
 			list<t_parameter>::const_iterator i;
 			for (i = $2->begin(); i != $2->end(); i++) {
 				if (i->name == "q") {
-					$$->q = atof(i->value.c_str());
+					$$->set_qvalue(atof(i->value.c_str()));
 				} else if (i->name == "expires") {
 					$$->set_expires(strtoul(
 						i->value.c_str(), NULL, 10));

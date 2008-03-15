@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -175,6 +175,9 @@ class t_response : public t_sip_message {
 public:
 	int		code;
 	string		reason;
+	
+	/** The source address of the request generating this response. */
+	t_ip_port	src_ip_port_request;
 
 	t_response();
 	t_response(const t_response &r);
@@ -198,6 +201,14 @@ public:
 	// Returns true if the response is a 401/407 with
 	// the proper authenticate header.
 	bool must_authenticate(void) const;
+	
+	/**
+	 * Get the destination address for sending the response.
+	 * @param ip_port [out] The destination address.
+	 */
+	void get_destination(t_ip_port &ip_port) const;
+	
+	virtual void calc_local_ip(void);
 };
 
 #endif

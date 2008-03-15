@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ t_event_network::t_event_network(t_sip_message *m) : t_event() {
 	src_port = 0;
 	dst_addr = 0;
 	dst_port = 0;
+	transport.clear();
 }
 
 t_event_network::~t_event_network() {
@@ -170,10 +171,18 @@ t_timer *t_event_timeout::get_timer(void) const {
 ///////////////////////////////////////////////////////////
 // class t_event_failure
 ///////////////////////////////////////////////////////////
-t_event_failure::t_event_failure(t_failure f, unsigned short _tid) {
-	failure = f;
-	tid = _tid;
-}
+t_event_failure::t_event_failure(t_failure f, unsigned short _tid) :
+	failure(f),
+	tid_populated(true),
+	tid(_tid)
+{}
+
+t_event_failure::t_event_failure(t_failure f, const string &_branch, const t_method &_cseq_method) :
+		failure(f),
+		tid_populated(false),
+		branch(_branch),
+		cseq_method(_cseq_method)
+{}
 
 t_event_type t_event_failure::get_type(void) const {
 	return EV_FAILURE;
@@ -185,6 +194,18 @@ t_failure t_event_failure::get_failure(void) const {
 
 unsigned short t_event_failure::get_tid(void) const {
 	return tid;
+}
+
+string t_event_failure::get_branch(void) const {
+	return branch;
+}
+
+t_method t_event_failure::get_cseq_method(void) const {
+	return cseq_method;
+}
+
+bool t_event_failure::is_tid_populated(void) const {
+	return tid_populated;
 }
 
 ///////////////////////////////////////////////////////////
@@ -462,13 +483,12 @@ void t_event_queue::push_quit(void) {
 	push(event);
 }
 
-void t_event_queue::push_network(t_sip_message *m, unsigned long ipaddr,
-		unsigned short port)
-{
+void t_event_queue::push_network(t_sip_message *m, const t_ip_port &ip_port) {
 	t_event_network	*event = new t_event_network(m);
 	MEMMAN_NEW(event);
-	event->dst_addr = ipaddr;
-	event->dst_port = port;
+	event->dst_addr = ip_port.ipaddr;
+	event->dst_port = ip_port.port;
+	event->transport = ip_port.transport;
 	push(event);
 }
 
@@ -508,6 +528,12 @@ void t_event_queue::push_timeout(t_timer *t) {
 
 void t_event_queue::push_failure(t_failure f, unsigned short tid) {
 	t_event_failure *event = new t_event_failure(f, tid);
+	MEMMAN_NEW(event);
+	push(event);
+}
+
+void t_event_queue::push_failure(t_failure f, const string &branch, const t_method &cseq_method) {
+	t_event_failure *event = new t_event_failure(f, branch, cseq_method);
 	MEMMAN_NEW(event);
 	push(event);
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include "audits/memman.h"
 
 extern t_phone *phone;
+extern string local_hostname;
 
 t_subscription_dialog::t_subscription_dialog(t_phone_user *_phone_user) :
 		t_abstract_dialog(_phone_user->get_user_profile()),
@@ -155,7 +156,8 @@ t_request *t_subscription_dialog::create_request(t_method m) {
 	case NOTIFY:
 		// RFC 3265 7.1, RFC 3515 2.2
 		// Contact header is mandatory
-		contact.uri.set_url(user_config->create_user_contact(false));
+		contact.uri.set_url(user_config->create_user_contact(false,
+				h_ip2str(r->get_local_ip())));
 		r->hdr_contact.add_contact(contact);
 		break;
 	default:

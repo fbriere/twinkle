@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,8 +77,8 @@ private:
 	// Full file name for config file
 	string		filename;
 	
-	// The SIP UDP port that is currently used
-	unsigned short	active_sip_udp_port;
+	/** The SIP port that is currently used */
+	unsigned short	active_sip_port;
 	
 	// Sound devices
 	t_audio_device		dev_ringtone;
@@ -129,39 +129,55 @@ private:
 	
 	// Startup settings
 	list<string>	start_user_profiles;
+	
+#if 0
+	// DEPRECATED
 	string		start_user_host;
 	string		start_user_nic;
+#endif
+
 	bool		start_hidden;
 	
-	// Network settings
-	// Port for sending and receiving SIP messages. This is the value
-	// written in the system settings file. This value can differ from
-	// active_sip_udp_port value if the user changed the system
-	// settings while Twinkle is running.
-	unsigned short	config_sip_udp_port;
+	/** @name Network settings */
+	//@{
+	/** Port for sending and receiving SIP messages. This is the value
+	 * written in the system settings file. This value can differ from
+	 * active_sip_port value if the user changed the system
+	 * settings while Twinkle is running.
+	 */
+	unsigned short	config_sip_port;
 	
 	/** SIP UDP port overridden by the command options. */
-	unsigned short	override_sip_udp_port;
+	unsigned short	override_sip_port;
 	
-	// rtp_port is the base port for RTP streams. Each phone line
-	// uses has its own RTP port number.
-	// line x has RTP port = rtp_port + x * 2 and
-	//           RTCP port = rtp_port + x * 2 + 1
-	// Where x starts at 0
-	//
-	// NOTE: for call transfer scenario, line 2 (3rd line) is used
-	//       which is not a line that is visible to the user. The user
-	//       only sees 2 lines for its use. By having a dedicated port
-	//       for line 2, the  RTP stream for a referred call uses another
-	//       port than the RTP stream for an original call, preventing
-	//       the RTP streams for these calls to become mixed.
-	//
-	// NOTE: during a call transfer, line 2 will be swapped with another
-	//       line, so the ports swap accordingly.
+	/** Port for RTP.
+	 * rtp_port is the base port for RTP streams. Each phone line
+	 * uses has its own RTP port number.
+	 * line x has RTP port = rtp_port + x * 2 and
+	 *           RTCP port = rtp_port + x * 2 + 1
+	 * Where x starts at 0
+	 *
+	 * NOTE: for call transfer scenario, line 2 (3rd line) is used
+	 *       which is not a line that is visible to the user. The user
+	 *       only sees 2 lines for its use. By having a dedicated port
+	 *       for line 2, the  RTP stream for a referred call uses another
+	 *       port than the RTP stream for an original call, preventing
+	 *       the RTP streams for these calls to become mixed.
+	 *
+	 * NOTE: during a call transfer, line 2 will be swapped with another
+	 *       line, so the ports swap accordingly.
+	 */
 	unsigned short	rtp_port;
 	
 	/** RTP port overridden by the command options. */
 	unsigned short	override_rtp_port; 
+	
+	/** Maximum size of a SIP message received over UDP. */
+	unsigned short	sip_max_udp_size;
+	
+	/** Maximum size of a SIP message received over TCP. */
+	unsigned long	sip_max_tcp_size;
+	//@}
 	
 	// Ring tone settings
 	bool		play_ringtone;
@@ -222,11 +238,16 @@ public:
 	bool get_call_waiting(void) const;
 	bool get_hangup_both_3way(void) const;
 	list<string> get_start_user_profiles(void) const;
+#if 0
+	// DEPRECATED
 	string get_start_user_host(void) const;
 	string get_start_user_nic(void) const;
+#endif
 	bool get_start_hidden(void) const;
-	unsigned short get_config_sip_udp_port(void) const;
+	unsigned short get_config_sip_port(void) const;
 	unsigned short get_rtp_port(void) const;
+	unsigned short get_sip_max_udp_size(void) const;
+	unsigned long get_sip_max_tcp_size(void) const;
 	bool get_play_ringtone(void) const;
 	string get_ringtone_file(void) const;
 	bool get_play_ringback(void) const;
@@ -269,13 +290,18 @@ public:
 	void set_call_waiting(bool b);
 	void set_hangup_both_3way(bool b);
 	void set_start_user_profiles(const list<string> &profiles);
+#if 0
+	// DEPRECATED
 	void set_start_user_host(const string &host);
 	void set_start_user_nic(const string &dev);
+#endif
 	void set_start_hidden(bool b);
-	void set_config_sip_udp_port(unsigned short port);
-	void set_override_sip_udp_port(unsigned short port);
+	void set_config_sip_port(unsigned short port);
+	void set_override_sip_port(unsigned short port);
 	void set_rtp_port(unsigned short port);
 	void set_override_rtp_port(unsigned short port);
+	void set_sip_max_udp_size(unsigned short size);
+	void set_sip_max_tcp_size(unsigned long size);
 	void set_play_ringtone(bool b);
 	void set_ringtone_file(const string &file);
 	void set_play_ringback(bool b);
@@ -353,12 +379,12 @@ public:
 	
 	// Get the active value of the SIP UDP port
 	// Once the SIP UDP port is retrieved from the system settings, it
-	// is stored as the active port. A next call to get_sip_udp_port
+	// is stored as the active port. A next call to get_sip_port
 	// returns the active port, even when the SIP UDP port in the settings
 	// has changed.
 	// If force_active == true, then always the SIP UDP port is returned
 	// and made active
-	unsigned short get_sip_udp_port(bool force_active = false);
+	unsigned short get_sip_port(bool force_active = false);
 };
 
 extern t_sys_settings *sys_config;

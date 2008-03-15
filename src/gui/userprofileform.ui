@@ -112,7 +112,7 @@
             </item>
             <item>
                 <property name="text">
-                    <string>NAT</string>
+                    <string>Transport/NAT</string>
                 </property>
                 <property name="pixmap">
                     <pixmap>yast_babelfish.png</pixmap>
@@ -624,6 +624,52 @@ This field is mandatory.</string>
                                     <string>Indicates if Twinkle should automatically register when you run this user profile. You should disable this when you want to do direct IP phone to IP phone communication without a SIP proxy.</string>
                                 </property>
                             </widget>
+                            <widget class="QLayoutWidget" row="3" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>layout37</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QCheckBox">
+                                        <property name="name">
+                                            <cstring>regAddQvalueCheckBox</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Add q-value to registration</string>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit">
+                                        <property name="name">
+                                            <cstring>regQvalueLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer48</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>210</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </hbox>
+                            </widget>
                         </grid>
                     </widget>
                     <widget class="QGroupBox">
@@ -719,7 +765,7 @@ This field is mandatory.</string>
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>60</height>
+                                <height>100</height>
                             </size>
                         </property>
                     </spacer>
@@ -2742,24 +2788,136 @@ This format is what most SIP phones use.
                             <enum>Box</enum>
                         </property>
                         <property name="text">
-                            <string>NAT</string>
+                            <string>Transport/NAT</string>
                         </property>
                         <property name="indent">
                             <number>10</number>
                         </property>
                     </widget>
-                    <widget class="QButtonGroup">
+                    <widget class="QGroupBox">
                         <property name="name">
-                            <cstring>natTraversalButtonGroup</cstring>
+                            <cstring>transportGroupBox</cstring>
                         </property>
                         <property name="title">
-                            <string>NAT traversal</string>
+                            <string>SIP transport</string>
                         </property>
                         <grid>
                             <property name="name">
                                 <cstring>unnamed</cstring>
                             </property>
-                            <widget class="QRadioButton" row="0" column="0" rowspan="1" colspan="2">
+                            <widget class="QComboBox" row="0" column="1" rowspan="1" colspan="2">
+                                <item>
+                                    <property name="text">
+                                        <string>Auto</string>
+                                    </property>
+                                </item>
+                                <item>
+                                    <property name="text">
+                                        <string>UDP</string>
+                                    </property>
+                                </item>
+                                <item>
+                                    <property name="text">
+                                        <string>TCP</string>
+                                    </property>
+                                </item>
+                                <property name="name">
+                                    <cstring>sipTransportComboBox</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Transport mode for SIP. In auto mode, the size of a message determines which transport protocol is used. Messages larger than the UDP threshold are sent via TCP. Smaller messages are sent via UDP.</string>
+                                </property>
+                            </widget>
+                            <spacer row="0" column="3">
+                                <property name="name">
+                                    <cstring>spacer46</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>151</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>sipTransportTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>T&amp;ransport protocol:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>sipTransportComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>udpThresholdTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>UDP t&amp;hreshold:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>udpThresholdSpinBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QSpinBox" row="1" column="1">
+                                <property name="name">
+                                    <cstring>udpThresholdSpinBox</cstring>
+                                </property>
+                                <property name="suffix">
+                                    <string> bytes</string>
+                                </property>
+                                <property name="maxValue">
+                                    <number>65535</number>
+                                </property>
+                                <property name="lineStep">
+                                    <number>100</number>
+                                </property>
+                                <property name="value">
+                                    <number>1300</number>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</string>
+                                </property>
+                            </widget>
+                            <spacer row="1" column="2" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>spacer47</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>81</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                        </grid>
+                    </widget>
+                    <widget class="QButtonGroup">
+                        <property name="name">
+                            <cstring>natTraversalButtonGroup_</cstring>
+                        </property>
+                        <property name="title">
+                            <string>NAT traversal</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QRadioButton">
                                 <property name="name">
                                     <cstring>natNoneRadioButton</cstring>
                                 </property>
@@ -2773,7 +2931,7 @@ This format is what most SIP phones use.
                                     <string>Choose this option when there is no NAT device between you and your SIP proxy or when your SIP provider offers hosted NAT traversal.</string>
                                 </property>
                             </widget>
-                            <widget class="QRadioButton" row="1" column="0" rowspan="1" colspan="2">
+                            <widget class="QRadioButton">
                                 <property name="name">
                                     <cstring>natStaticRadioButton</cstring>
                                 </property>
@@ -2788,12 +2946,44 @@ This format is what most SIP phones use.
 When you choose this option you have to create static address mappings in your NAT device as well. You have to map the RTP ports on the public IP address to the same ports on the private IP address of your PC.</string>
                                 </property>
                             </widget>
-                            <widget class="QRadioButton" row="3" column="0">
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout32</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>publicIPTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;Public IP address:</string>
+                                        </property>
+                                        <property name="indent">
+                                            <number>21</number>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>publicIPLineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit">
+                                        <property name="name">
+                                            <cstring>publicIPLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The public IP address of your NAT.</string>
+                                        </property>
+                                    </widget>
+                                </hbox>
+                            </widget>
+                            <widget class="QRadioButton">
                                 <property name="name">
                                     <cstring>natStunRadioButton</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Use &amp;STUN</string>
+                                    <string>Use &amp;STUN (does not work for incoming TCP)</string>
                                 </property>
                                 <property name="accel">
                                     <string>Alt+S</string>
@@ -2802,51 +2992,39 @@ When you choose this option you have to create static address mappings in your N
                                     <string>Choose this option when your SIP provider offers a STUN server for NAT traversal.</string>
                                 </property>
                             </widget>
-                            <widget class="QLabel" row="4" column="0">
+                            <widget class="QLayoutWidget">
                                 <property name="name">
-                                    <cstring>stunServerTextLabel</cstring>
+                                    <cstring>layout33</cstring>
                                 </property>
-                                <property name="text">
-                                    <string>S&amp;TUN server:</string>
-                                </property>
-                                <property name="indent">
-                                    <number>21</number>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>stunServerLineEdit</cstring>
-                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLabel">
+                                        <property name="name">
+                                            <cstring>stunServerTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>S&amp;TUN server:</string>
+                                        </property>
+                                        <property name="indent">
+                                            <number>21</number>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>stunServerLineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit">
+                                        <property name="name">
+                                            <cstring>stunServerLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The hostname, domain name or IP address of the STUN server.</string>
+                                        </property>
+                                    </widget>
+                                </hbox>
                             </widget>
-                            <widget class="QLineEdit" row="4" column="1">
-                                <property name="name">
-                                    <cstring>stunServerLineEdit</cstring>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>The hostname, domain name or IP address of the STUN server.</string>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="2" column="0">
-                                <property name="name">
-                                    <cstring>publicIPTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Public IP address:</string>
-                                </property>
-                                <property name="indent">
-                                    <number>21</number>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>publicIPLineEdit</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QLineEdit" row="2" column="1">
-                                <property name="name">
-                                    <cstring>publicIPLineEdit</cstring>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>The public IP address of your NAT.</string>
-                                </property>
-                            </widget>
-                        </grid>
+                        </vbox>
                     </widget>
                     <spacer>
                         <property name="name">
@@ -2861,7 +3039,7 @@ When you choose this option you have to create static address mappings in your N
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>180</height>
+                                <height>140</height>
                             </size>
                         </property>
                     </spacer>
@@ -5060,6 +5238,18 @@ Sollicited message waiting indication as specified by RFC 3842.
         <receiver>UserProfileForm</receiver>
         <slot>changeMWIType(int)</slot>
     </connection>
+    <connection>
+        <sender>regAddQvalueCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>regQvalueLineEdit</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>sipTransportComboBox</sender>
+        <signal>activated(int)</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>changeSipTransportProtocol(int)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>displayLineEdit</tabstop>
@@ -5072,6 +5262,8 @@ Sollicited message waiting indication as specified by RFC 3842.
     <tabstop>registrarLineEdit</tabstop>
     <tabstop>expirySpinBox</tabstop>
     <tabstop>regAtStartupCheckBox</tabstop>
+    <tabstop>regAddQvalueCheckBox</tabstop>
+    <tabstop>regQvalueLineEdit</tabstop>
     <tabstop>useProxyCheckBox</tabstop>
     <tabstop>proxyLineEdit</tabstop>
     <tabstop>allRequestsCheckBox</tabstop>
@@ -5082,6 +5274,10 @@ Sollicited message waiting indication as specified by RFC 3842.
     <tabstop>mwiServerLineEdit</tabstop>
     <tabstop>mwiViaProxyCheckBox</tabstop>
     <tabstop>mwiDurationSpinBox</tabstop>
+    <tabstop>imMaxSessionsSpinBox</tabstop>
+    <tabstop>presPublishCheckBox</tabstop>
+    <tabstop>presPublishTimeSpinBox</tabstop>
+    <tabstop>presSubscribeTimeSpinBox</tabstop>
     <tabstop>rtpAudioTabWidget</tabstop>
     <tabstop>availCodecListBox</tabstop>
     <tabstop>addCodecPushButton</tabstop>
@@ -5133,6 +5329,8 @@ Sollicited message waiting indication as specified by RFC 3842.
     <tabstop>refreshReferSubCheckBox</tabstop>
     <tabstop>referAorCheckBox</tabstop>
     <tabstop>pPreferredIdCheckBox</tabstop>
+    <tabstop>sipTransportComboBox</tabstop>
+    <tabstop>udpThresholdSpinBox</tabstop>
     <tabstop>natNoneRadioButton</tabstop>
     <tabstop>natStaticRadioButton</tabstop>
     <tabstop>publicIPLineEdit</tabstop>
@@ -5154,6 +5352,8 @@ Sollicited message waiting indication as specified by RFC 3842.
     <tabstop>tmrNatKeepaliveSpinBox</tabstop>
     <tabstop>ringtoneLineEdit</tabstop>
     <tabstop>ringbackLineEdit</tabstop>
+    <tabstop>openRingtoneToolButton</tabstop>
+    <tabstop>openRingbackToolButton</tabstop>
     <tabstop>incomingCallScriptLineEdit</tabstop>
     <tabstop>inCallAnsweredLineEdit</tabstop>
     <tabstop>inCallFailedLineEdit</tabstop>
@@ -5162,6 +5362,14 @@ Sollicited message waiting indication as specified by RFC 3842.
     <tabstop>outCallFailedLineEdit</tabstop>
     <tabstop>localReleaseLineEdit</tabstop>
     <tabstop>remoteReleaseLineEdit</tabstop>
+    <tabstop>openIncomingCallScriptToolButton</tabstop>
+    <tabstop>openInCallAnsweredToolButton</tabstop>
+    <tabstop>openInCallFailedToolButton</tabstop>
+    <tabstop>openOutCallToolButton</tabstop>
+    <tabstop>openOutCallAnsweredToolButton</tabstop>
+    <tabstop>openOutCallFailedToolButton</tabstop>
+    <tabstop>openLocalReleaseToolButton</tabstop>
+    <tabstop>openRemoteReleaseToolButton</tabstop>
     <tabstop>zrtpEnabledCheckBox</tabstop>
     <tabstop>zrtpSendIfSupportedCheckBox</tabstop>
     <tabstop>zrtpSdpCheckBox</tabstop>
@@ -5239,6 +5447,7 @@ Sollicited message waiting indication as specified by RFC 3842.
     <slot>removeConversion()</slot>
     <slot>testConversion()</slot>
     <slot>changeMWIType( int idxMWIType )</slot>
+    <slot>changeSipTransportProtocol( int idx )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

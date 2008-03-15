@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -136,7 +136,7 @@ private:
 	// Call info
 	t_call_info		call_info;
 
-	// RTP port to be used for this line.
+	/** RTP port to be used for this line. */
 	unsigned short		rtp_port;
 	
 	// User profile of user using the line
@@ -298,7 +298,7 @@ public:
 	void process_invite_retrans(void);
 
 	// Create user uri and contact uri
-	string create_user_contact(void) const;
+	string create_user_contact(const string &auto_ip) const;
 	string create_user_uri(void) const;
 
 	// Create a response to an OPTIONS request
@@ -396,7 +396,7 @@ public:
 	// in the user profile.
 	void init_rtp_port(void);
 
-	// Get the RTP port to be used for a call on this line
+	/** Get the RTP port to be used for a call on this line. */
 	unsigned short get_rtp_port(void) const;
 	
 	// Get the user using the phone.

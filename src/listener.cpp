@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,10 +20,12 @@
 #include "events.h"
 #include "listener.h"
 #include "log.h"
+#include "sys_settings.h"
 #include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
+#include "sockets/connection_table.h"
 #include "sockets/socket.h"
 #include "parser/parse_ctrl.h"
 #include "parser/sip_message.h"
@@ -34,11 +36,16 @@
 
 extern t_phone *phone;
 extern t_socket_udp *sip_socket;
+extern t_socket_tcp *sip_socket_tcp;
+extern t_connection_table *connection_table;
 extern t_event_queue *evq_trans_mgr;
 
 // Minimal size of a message. Messages below this size will
 // be silently discarded.
 #define MIN_MESSAGE_SIZE	10
+
+// Maximum number of pending TCP connections.
+#define TCP_BACKLOG		5
 
 void recvd_stun_msg(char *datagram, int datagram_size, 
 	unsigned long src_addr, unsigned short src_port) 
@@ -91,7 +98,8 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 			// parse a sipfrag if the CRLF is not present. The SIP
 			// parser will stop after it finds the double CRLF. So
 			// a 3rd CRLF will not be detected by the parser (yuck).
-			t_sip_message *m = t_parser::parse(data + CRLF);
+			list<string> parse_errors;
+			t_sip_message *m = t_parser::parse(data + CRLF, parse_errors);
 			b = new t_sip_body_sipfrag(m);
 			MEMMAN_NEW(b);
 			MEMMAN_DELETE(m);
@@ -106,7 +114,8 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 			tmp += CRLF;
 			tmp += data;
 			tmp += CRLF;
-			t_sip_message *resp = t_parser::parse(tmp);
+			list<string> parse_errors;
+			t_sip_message *resp = t_parser::parse(tmp, parse_errors);
 
 			// Parsing succeeded. Now strip the fake header
 			t_sip_message *m = new t_sip_message(*resp);
@@ -167,14 +176,110 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 	}
 }
 
+static void process_sip_msg(t_sip_message *msg, const string &raw_headers, const string &raw_body) {
+	t_event_network	*ev_network;
+	string		log_msg;
+	
+	// SIP message received
+	log_msg = "Received from: ";
+	log_msg += msg->src_ip_port.tostring();
+	log_msg += "\n";
+	
+	// Parse body
+	if (!raw_body.empty()) {
+		// The body should only be parsed if it is complete.
+		// NOTE: The Content-length header may be absent (UDP)
+		if (!msg->hdr_content_length.is_populated() || 
+		    msg->hdr_content_length.length == raw_body.size()) 
+		{
+			try {
+				msg->body = parse_body(raw_body, msg);
+			}
+			catch (int) {
+				// Discard a SIP response if the body is malformed.
+				// For a SIP request with a malformed body, the
+				// transaction layer will give an error response.
+				if (msg->get_type() == MSG_RESPONSE) {
+					log_msg += "Invalid SIP message.\n";
+					log_msg += "Parse error in body.\n";
+					log_msg += to_printable(raw_headers);
+					log_msg += to_printable(raw_body);
+					log_file->write_report(log_msg, "::process_sip_msg", 
+						LOG_SIP, LOG_DEBUG);
+					
+					return;
+				}
+			}
+		}
+	}
+
+	log_msg += to_printable(raw_headers);
+	log_msg += to_printable(raw_body);
+	log_file->write_report(log_msg, "::process_sip_msg", LOG_SIP);
+
+	// If the message does not satisfy the mandatory
+	// requirements from RFC 3261, then discard.
+	// If the error is non-fatal, then the transaction layer
+	// will send a proper error response.
+	// If the message is an invalid response message then
+	// discard the message. The transaction layer cannot
+	// handle an invalid response as it cannot send an
+	// error message back on an answer.
+	bool fatal;
+	string reason;
+	if (!msg->is_valid(fatal, reason) &&
+		(fatal || msg->get_type() == MSG_RESPONSE))
+	{
+		log_file->write_header("::process_sip_msg", LOG_SIP);
+		log_file->write_raw("Discard invalid message.\n");
+		log_file->write_raw(reason);
+		log_file->write_endl();
+		log_file->write_footer();
+
+		return;
+	}
+
+	if (msg->get_type() == MSG_REQUEST) {
+		// RFC 3261 18.2.1
+		// When the server transport receives a request over any transport, it
+		// MUST examine the value of the "sent-by" parameter in the top Via
+		// header field value.  If the host portion of the "sent-by" parameter
+		// contains a domain name, or if it contains an IP address that differs
+		// from the packet source address, the server MUST add a "received"
+		// parameter to that Via header field value.  This parameter MUST
+		// contain the source address from which the packet was received.
+		string src_ip = h_ip2str(msg->src_ip_port.ipaddr);
+		t_via &top_via = msg->hdr_via.via_list.front();
+		if (top_via.host != src_ip) {
+			top_via.received = src_ip;
+			log_file->write_header("::process_sip_msg", LOG_SIP);
+			log_file->write_raw("Added via-parameter received=");
+			log_file->write_raw(src_ip);
+			log_file->write_endl();
+			log_file->write_footer();
+		}
+
+		// RFC 3581 4
+		// Add rport value if requested
+		if (top_via.rport_present && top_via.rport == 0) {
+			top_via.rport = msg->src_ip_port.port;
+		}
+	}
+
+	ev_network = new t_event_network(msg);
+	MEMMAN_NEW(ev_network);
+	ev_network->src_addr = msg->src_ip_port.ipaddr;
+	ev_network->src_port = msg->src_ip_port.port;
+	ev_network->transport = msg->src_ip_port.transport;
+	evq_trans_mgr->push(ev_network);
+}
+
 void *listen_udp(void *arg) {
-	char		buf[MAX_UDP_SIZE + 1];
+	char		buf[sys_config->get_sip_max_udp_size() + 1];
 	int		data_size;
-	string 		datagram;
 	unsigned long	src_addr;
 	unsigned short	src_port;
 	t_sip_message	*msg;
-	t_event_network	*ev_network;
 	t_event_icmp	*ev_icmp;
 	string::size_type	pos_body;	// position of body in msg
 	string		log_msg;
@@ -185,7 +290,7 @@ void *listen_udp(void *arg) {
 	while(true) {
 		try {
 			data_size = sip_socket->recvfrom(src_addr, src_port, buf, 
-				MAX_UDP_SIZE + 1);
+				sys_config->get_sip_max_udp_size() + 1);
 			num_non_icmp_errors = 0;
 		} catch (int err) {
 			// Check if an ICMP error has been received
@@ -258,17 +363,9 @@ void *listen_udp(void *arg) {
 			continue;
 		}
 		
-		// SIP message received
-		log_msg = "Received from: ";
-		log_msg += h_ip2str(src_addr);
-		log_msg += ":";
-		log_msg += int2str(src_port);
-		log_msg += "\n";
-		
-		// The datagram is a SIP message. A SIP message does not
-		// contain a 0, so it can be safely converted to a string
-		// as recvfrom added a trailing zero.
-		datagram = buf;
+		// A SIP message may contain a NULL character (binary body),
+		// do not handle the buffer as a C string.
+		string datagram(buf, data_size);
 
 		// Split body from header
 		string seperator = string(CRLF) + string(CRLF);
@@ -287,14 +384,17 @@ void *listen_udp(void *arg) {
 		}
 
 		// Parse SIP headers
+		string raw_headers = datagram.substr(0, pos_body);
+		list<string> parse_errors;
 		try {
-			msg = t_parser::parse(datagram);
-			msg->src_ipaddr = src_addr;
-			msg->src_port = src_port;
+			msg = t_parser::parse(raw_headers, parse_errors);
+			msg->src_ip_port.ipaddr = src_addr;
+			msg->src_ip_port.port = src_port;
+			msg->src_ip_port.transport = "udp";
 		}
 		catch (int) {
 			// Discard malformed SIP messages.
-			log_msg += "Invalid SIP message.\n";
+			log_msg = "Invalid SIP message.\n";
 			log_msg += "Fatal parse error in headers.\n\n";
 			log_msg += to_printable(datagram);
 			log_msg += "\n";
@@ -303,99 +403,173 @@ void *listen_udp(void *arg) {
 		}
 
 		// Log non-fatal parse errors.
-		list<string> l = t_parser::get_parse_errors();
-		if (!l.empty()) {
+		if (!parse_errors.empty()) {
+			log_msg = "Parse errors:\n";
 			log_msg += "\n";
-			for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+			for (list<string>::iterator i = parse_errors.begin(); 
+			     i != parse_errors.end(); i++) 
+			{
 				log_msg += *i;
 				log_msg += "\n";
 			}
 			log_msg += "\n";
+			log_file->write_report(log_msg, "::listen_udp", LOG_SIP, LOG_DEBUG);
 		}
 
-		// Parse body
+		// Get raw body
+		string raw_body;
 		if (pos_body != string::npos) {
-			try {
-				string raw_body = datagram.substr(pos_body);
-				msg->body = parse_body(raw_body, msg);
-			}
-			catch (int) {
-				// Discard a SIP response if the body is malformed.
-				// For a SIP request with a malformed body, the
-				// transaction layer will give an error response.
-				if (msg->get_type() == MSG_RESPONSE) {
-					log_msg += "Invalid SIP message.\n";
-					log_msg += "Parse error in body.\n";
-					log_msg += to_printable(datagram);
-					log_msg += "\n";
-					log_file->write_report(log_msg, "::listen_udp", LOG_SIP, LOG_DEBUG);
-					MEMMAN_DELETE(msg);
-					delete msg;
-					continue;
-				}
-			}
+			raw_body = datagram.substr(pos_body);
 		}
-
-		log_msg += datagram;
-		log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
-
-		// If the message does not satisfy the mandatory
-		// requirements from RFC 3261, then discard.
-		// If the error is non-fatal, then the transaction layer
-		// will send a proper error response.
-		// If the message is an invalid response message then
-		// discard the message. The transaction layer cannot
-		// handle an invalid response as it cannot send an
-		// error message back on an answer.
-		bool fatal;
-		string reason;
-		if (!msg->is_valid(fatal, reason) &&
-		   (fatal || msg->get_type() == MSG_RESPONSE))
-		{
-			log_file->write_header("::listen_udp", LOG_SIP);
-			log_file->write_raw("Discard invalid message.\n");
-			log_file->write_raw(reason);
-			log_file->write_endl();
-			log_file->write_footer();
-			MEMMAN_DELETE(msg);
-			delete msg;
-			continue;
-		}
-
-		if (msg->get_type() == MSG_REQUEST) {
-			// RFC 3261 18.2.1
-			// When the server transport receives a request over any transport, it
-			// MUST examine the value of the "sent-by" parameter in the top Via
-			// header field value.  If the host portion of the "sent-by" parameter
-			// contains a domain name, or if it contains an IP address that differs
-			// from the packet source address, the server MUST add a "received"
-			// parameter to that Via header field value.  This parameter MUST
-			// contain the source address from which the packet was received.
-			string src_ip = h_ip2str(src_addr);
-			t_via &top_via = msg->hdr_via.via_list.front();
-			if (top_via.host != src_ip) {
-				top_via.received = src_ip;
-				log_file->write_header("::listen_udp", LOG_SIP);
-				log_file->write_raw("Added via-parameter received=");
-				log_file->write_raw(h_ip2str(src_addr));
-				log_file->write_endl();
-				log_file->write_footer();
-			}
-
-			// RFC 3581 4
-			// Add rport value if requested
-			if (top_via.rport_present && top_via.rport == 0) {
-				top_via.rport = src_port;
-			}
-		}
-
-		ev_network = new t_event_network(msg);
-		MEMMAN_NEW(ev_network);
-		ev_network->src_addr = src_addr;
-		ev_network->src_port = src_port;
-		evq_trans_mgr->push(ev_network);
+		
+		process_sip_msg(msg, raw_headers, raw_body);
 
 		MEMMAN_DELETE(msg);
 		delete msg;
 	}
+	
+	log_file->write_report("UDP listener terminated.", "::listen_udp");
+}
+
+void *listen_for_data_tcp(void *arg) {
+	string log_msg;
+	list<t_connection *> readable_connections;
+	
+	while(true) {
+		readable_connections.clear();
+		readable_connections = connection_table->select_read(NULL);
+		
+		if (readable_connections.empty()) {
+			// Another thread cancelled the select command.
+			// Stop listening.
+			break;
+		}
+		
+		// NOTE: The connection table is now locked.
+		
+		for (list<t_connection *>::iterator it = readable_connections.begin();
+			it != readable_connections.end(); ++it)
+		{
+			string raw_headers;
+			string raw_body;
+			unsigned long remote_addr;
+			unsigned short remote_port;
+			
+			(*it)->get_remote_address(remote_addr, remote_port);
+			
+			try {
+				bool connection_closed;
+				(*it)->read(connection_closed);
+				
+				if (connection_closed) {
+					log_msg = "Connection to ";
+					log_msg += h_ip2str(remote_addr);
+					log_msg += ":";
+					log_msg += int2str(remote_port);
+					log_msg += " closed.";
+					log_file->write_report(log_msg, "::listen_for_data_tcp", LOG_SIP, LOG_DEBUG);
+				
+					connection_table->remove_connection(*it);
+					MEMMAN_DELETE(*it);
+					delete *it;
+					continue;
+				}
+			} catch (int err) {
+				if (err == EAGAIN || err == EINTR) {
+					continue;
+				}
+				
+				log_msg = "Got error on socket to ";
+				log_msg += h_ip2str(remote_addr);
+				log_msg += ":";
+				log_msg += int2str(remote_port);
+				log_msg += " - ";
+				log_msg += get_error_str(err);
+				log_file->write_report(log_msg, "::listen_for_data_tcp", LOG_SIP, LOG_WARNING);
+				
+				// Connection is broken. Remove it.
+				connection_table->remove_connection(*it);
+				MEMMAN_DELETE(*it);
+				delete *it;
+				
+				continue;
+			}
+			
+			// Multiple messages may have been read in one action.
+			// Get all SIP messages from the connection.
+			while (true)
+			{
+				bool error = false;
+				bool msg_too_large = false;
+				t_sip_message *msg = (*it)->get_sip_msg(raw_headers, raw_body, error,
+						msg_too_large);
+				
+				if (error) {
+					// The data on the connection could not be interpreted.
+					// Close the connection to a faulty remote end.
+					connection_table->remove_connection(*it);
+					MEMMAN_DELETE(*it);
+					delete *it;
+					
+					break;
+				}
+				
+				if (msg_too_large) {
+					// Close the connection. The message was too long, we don't want
+					// to receive more data. Now we have an incomplete message,
+					// but as we most likely have all headers we can still
+					// send an error response, so the message is processed.
+					connection_table->remove_connection(*it);
+					MEMMAN_DELETE(*it);
+					delete *it;
+				}
+				
+				if (!msg) {
+					// There are no complete messages on the connection.
+					// Stop reading from this connection.
+					break;
+				}
+				
+				process_sip_msg(msg, raw_headers, raw_body);
+				
+				MEMMAN_DELETE(msg);
+				delete msg;
+			}
+		}
+		
+		connection_table->unlock();
+	}
+	
+	log_file->write_report("TCP data listener terminated.", "::listen_for_data_tcp");
+}
+
+void *listen_for_conn_requests_tcp(void *arg) {
+	unsigned long dst_addr;
+	unsigned short dst_port;
+	string log_msg;
+
+	while (true) {
+		try {
+			sip_socket_tcp->listen(TCP_BACKLOG);
+			t_socket_tcp *tcp = sip_socket_tcp->accept(dst_addr, dst_port);
+			t_connection *conn = new t_connection(tcp);
+			MEMMAN_NEW(conn);
+			connection_table->add_connection(conn);
+		} catch (int err) {
+			if (err == EAGAIN || err == EINTR) continue;
+			
+			log_file->write_header("::listen_for_conn_requests_tcp", LOG_SIP, LOG_CRITICAL);
+			log_file->write_raw("Error on accept on TCP socket: ");
+			log_file->write_raw(get_error_str(err));
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			log_msg = TRANSLATE("Cannot receive incoming TCP connections.");
+			ui->cb_show_msg(log_msg, MSG_CRITICAL);
+			
+			break;
+		}
+	}
+	
+	log_file->write_report("TCP connection listener terminated.", "::listen_for_conn_requests_tcp");
 }

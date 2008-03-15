@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
 
 #include <errno.h>
 #include <pthread.h>
+
+/**
+ * @file
+ * Mutex operations
+ */
 
 class t_mutex {
 protected:
@@ -50,6 +55,32 @@ class t_recursive_mutex : public t_mutex {
 public:
 	t_recursive_mutex();
 	~t_recursive_mutex();
+};
+
+
+/** 
+ * Guard pattern for a mutex .
+ * The constructor of a guard locks a mutex and the destructor
+ * unlocks it. This way a guard object can be created at entrance
+ * of a function. Then at exit, the mutex is automically unlocked
+ * as the guard object goes out of scope.
+ */
+class t_mutex_guard {
+private:
+	/** The guarding mutex. */
+	t_mutex		&mutex_;
+	
+public:
+	/**
+	 * The constructor will lock the mutex.
+	 * @param mutex [in] Mutex to lock.
+	 */
+	t_mutex_guard(t_mutex &mutex);
+	
+	/**
+	 * The destructor will unlock the mutex.
+	 */
+	~t_mutex_guard();
 };
 
 #endif

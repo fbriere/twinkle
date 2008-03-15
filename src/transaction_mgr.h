@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ private:
 	// Find existing transactions. Return NULL if not found
 	t_trans_client *find_trans_client(t_response *r) const;
 	t_trans_client *find_trans_client(t_tid tid) const;
+	t_trans_client *find_trans_client(const string &branch, const t_method &cseq_method) const;
 	t_trans_client *find_trans_client(const t_icmp_msg &icmp) const;
 	t_trans_server *find_trans_server(t_request *r) const;
 	t_trans_server *find_trans_server(t_tid tid) const;
@@ -72,6 +73,7 @@ private:
 	void handle_event_stun_request(t_event_stun_request *e);
 	void handle_event_stun_response(t_event_stun_response *e);
 	void handle_event_icmp(t_event_icmp *e);
+	void handle_event_failure(t_event_failure *e);
 
 public:
 	~t_transaction_mgr();

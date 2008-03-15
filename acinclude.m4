@@ -11610,3 +11610,21 @@ AC_DEFUN([PKG_CHECK_MODULES], [
 ])
 
 
+dnl lrelease fix see https://bugzilla.novell.com/show_bug.cgi?id=327023
+
+# Check for lrelease compress flag
+AC_DEFUN([ms_CHECK_LRELEASE],
+[
+AC_MSG_CHECKING([LRELEASE OPTIONS])
+
+if lrelease -compress /dev/null -qm /dev/null 1>/dev/null 2>&1
+then
+AC_MSG_RESULT([compress])
+LRELEASEOPTION="-compress"
+else
+AC_MSG_RESULT([nocompress])
+LRELEASEOPTION=""
+fi
+
+AC_SUBST([LRELEASEOPTION])
+])

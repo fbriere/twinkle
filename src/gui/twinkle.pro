@@ -3,7 +3,7 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
 
 DEFINES	+= QT_NO_STL
 
@@ -211,7 +211,9 @@ IMAGES	= images/filenew \
 TRANSLATIONS	= lang/twinkle_nl.ts \
 	lang/twinkle_de.ts \
 	lang/twinkle_cs.ts \
-	lang/twinkle_fr.ts
+	lang/twinkle_fr.ts \
+	lang/twinkle_ru.ts \
+	lang/twinkle_xx.ts
 
 unix {
   UI_DIR = .ui

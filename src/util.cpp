@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,9 @@
 */
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <locale>
 #include <cassert>
 #include <cctype>
 #include <cstdlib>
@@ -61,11 +64,17 @@ string random_hexstr(int length) {
 	return s;
 }
 
-string float2str(float f, const char *format) {
-	char buf[128];
-
-	snprintf(buf, 128, format, f);
-	return string(buf);
+string float2str(float f, int precision) {
+	ostringstream s;
+	
+	// Force the locale to POSIX, such that a dot is used for
+	// the decimal point.
+	s.imbue(locale("POSIX"));
+	s.setf(ios::fixed,ios::floatfield);
+	s.precision(precision);
+	s << f;
+	
+	return s.str();
 }
 
 string int2str(int i, const char *format) {

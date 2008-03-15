@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,11 +78,8 @@ protected:
 	unsigned long	remote_resp_nr;		/**< Last remote response number (for 100rel) received. */
 	set<string>	remote_extensions;      /**< SIP extensions supported by the remote party. */
 	
-	/** The IP address from which the last SIP message was received. */
-	unsigned long	remote_ipaddr;
-	
-	/** The port from which the last SIP message was received. */
-	unsigned short	remote_port;
+	/** The IP transport/address/port from which the last SIP message was received. */
+	t_ip_port	remote_ip_port;
 
 	/**
 	 * Remove a client request. Pass one of the client request
@@ -301,16 +298,10 @@ public:
 	string get_remote_display(void) const;
 	
 	/**
-	 * Get the IP address from which the last SIP message was received.
-	 * @return IP address.
+	 * Get the IP transport/address/port from which the last SIP message was received.
+	 * @return transport/address/port
 	 */
-	unsigned long get_remote_ipaddr(void) const;
-	
-	/**
-	 * Get the port from which the last SIP message was received.
-	 * @return port.
-	 */
-	unsigned short get_remote_port(void) const;
+	t_ip_port get_remote_ip_port(void) const;
 	
 	/**
 	 * Get the SIP call id.

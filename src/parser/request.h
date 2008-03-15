@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,13 @@ private:
 	// list.
 	list<t_ip_port>		destinations;
 	
+	/**
+	 * Add destinations for a give URI based on transport settings.
+	 * @param user_profile [in] User profile
+	 * @param dst_uri [in] The URI to resolve.
+	 */
+	void add_destinations(const t_user &user_profile, const t_url &dst_uri);
+	
 	// Calculate credentials based on the challenge
 	// Returns false if challenge is not supported; in this case
 	// fail_reason contains the reason for failure.
@@ -81,9 +88,8 @@ public:
 	void calc_destinations(const t_user &user_profile);
 
 	// Get destination to send this request to.
-	void get_destination(unsigned long &ipaddr, unsigned short &port,
-		const t_user &user_profile);
-	void get_current_destination(unsigned long &ipaddr, unsigned short &port);
+	void get_destination(t_ip_port &ip_port, const t_user &user_profile);
+	void get_current_destination(t_ip_port &ip_port);
 		
 	// Move to next destination. This method should only be called after
 	// calc_destination() was called.
@@ -91,7 +97,7 @@ public:
 	bool next_destination(void);
 	
 	// Set a single destination to send this request to.
-	void set_destination(unsigned long ipaddr, unsigned short port);
+	void set_destination(const t_ip_port &ip_port);
 
 	// Create authorization credentials based on the challenge
 	// Returns false if challenge is not supported and fail_reason
@@ -105,6 +111,8 @@ public:
 	bool proxy_authorize(const t_challenge &chlg, const string &username,
 	       const string &passwd, unsigned long nc,
 	       const string &cnonce, t_credentials &cr, string &fail_reason);
+	       
+	virtual void calc_local_ip(void);
 };
 
 #endif

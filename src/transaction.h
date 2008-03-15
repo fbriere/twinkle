@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -121,28 +121,58 @@ public:
 /////////////////////////////////////////////////////////////
 class t_trans_client : public t_transaction {
 protected:
-	unsigned long	dst_ipaddr;	// destination addr for request
-	unsigned short	dst_port;	// destination port for request
+	/** Destination for request. */
+	t_ip_port	dst_ip_port;
 
 public:
-	// Create transaction and send request to ipaddr:port
-	t_trans_client(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid);
+	/**
+	 * Create transaction and send request to destination.
+	 * @param r [in] Request creating the transaction.
+	 * @param ip_port [in] Destination of the request.
+	 * @param _tuid [in] Transaction user id assigned to this transaction.
+	 */
+	t_trans_client(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid);
 
-	// Returns true if the response matches the transaction
+	/**
+	 * Match a response with a transaction.
+	 * @param r [in] The response to match.
+	 * @return true if the response matches the transaction.
+	 */
 	bool match(t_response *r) const;
 	
-	// Returns true if the ICMP error matches the transaction
+	/**
+	 * @param icmp [in] ICMP message to match.
+	 * @return true if the ICMP error matches the transaction
+	 */
 	bool match(const t_icmp_msg &icmp) const;
+	
+	/**
+	 * Match transaction with a branch and CSeq method value.
+	 * @param branch [in] Branch to match.
+	 * @param cseq_method [in] CSeq method to match.
+	 * @return true if transaction matches, otherwise false.
+	 */
+	bool match(const string &branch, const t_method &cseq_method) const;
 	
 	virtual void process_provisional(t_response *r);
 	
-	// Process ICMP errors
+	/** 
+	 * Process ICMP errors.
+	 * @param icmp [in] ICMP message.
+	 */
 	virtual void process_icmp(const t_icmp_msg &icmp) = 0;
+	
+	/**
+	 * Process failures.
+	 * @param failure [in] Type of failure.
+	 */
+	virtual void process_failure(t_failure failure) = 0;
 
-	// Abort a transaction.
-	// This will send a 408 response internally to finish the
-	// transaction.
+	/**
+	 * Abort a transaction.
+	 * This will send a 408 response internally to finish the transaction.
+	 */
 	virtual void abort(void) = 0;
 };
 
@@ -170,10 +200,10 @@ private:
 public:
 	t_request		*ack;	// ACK request
 
-	// Create transaction and send request to ipaddr:port
+	// Create transaction and send request to destination
 	// Start timer A and timer B
-	t_tc_invite(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid);
+	t_tc_invite(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid);
 
 	virtual ~t_tc_invite();
 
@@ -187,6 +217,8 @@ public:
 	void process_final(t_response *r);
 	
 	void process_icmp(const t_icmp_msg &icmp);
+	
+	void process_failure(t_failure failure);
 
 	void timeout(t_sip_timer t);
 
@@ -214,10 +246,10 @@ private:
 	void stop_timer_K(void);
 
 public:
-	// Create transaction and send request to ipaddr:port
+	// Create transaction and send request to destination
 	// Stop timer E and timer F
-	t_tc_non_invite(t_request *r, unsigned long ipaddr,
-		unsigned short port, unsigned short _tuid);
+	t_tc_non_invite(t_request *r, const t_ip_port &ip_port,
+		unsigned short _tuid);
 
 	virtual ~t_tc_non_invite();
 
@@ -229,6 +261,8 @@ public:
 	void process_final(t_response *r);
 	
 	void process_icmp(const t_icmp_msg &icmp);
+	
+	void process_failure(t_failure failure);
 
 	void timeout(t_sip_timer t);
 

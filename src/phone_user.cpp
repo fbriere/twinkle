@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,8 +25,9 @@
 
 extern t_phone 		*phone;
 extern t_event_queue	*evq_timekeeper;
-extern t_event_queue	*evq_sender_udp;
+extern t_event_queue	*evq_sender;
 extern string		user_host;
+extern string		local_hostname;
 
 void t_phone_user::cleanup_mwi_dialog(void) {
 	if (mwi_dialog && mwi_dialog->get_subscription_state() == SS_TERMINATED) {
@@ -67,7 +68,7 @@ void t_phone_user::cleanup_stun_data(void) {
 }
 
 void t_phone_user::cleanup_nat_keepalive(void) {
-	if (register_ipaddr == 0 && register_port == 0 &&
+	if (register_ip_port.ipaddr == 0 && register_ip_port.port == 0 &&
 	    !mwi_dialog)
 	{
 		if (id_nat_keepalive) phone->stop_timer(PTMR_NAT_KEEPALIVE, this);
@@ -75,8 +76,8 @@ void t_phone_user::cleanup_nat_keepalive(void) {
 }
 
 void t_phone_user::cleanup_registration_data(void) {
-	register_ipaddr = 0;
-	register_port = 0;
+	register_ip_port.ipaddr = 0;
+	register_ip_port.port = 0;
 	stun_binding_inuse_registration = false;
 	cleanup_stun_data();
 	cleanup_nat_keepalive();
@@ -123,8 +124,8 @@ t_phone_user::t_phone_user(const t_user &profile)
 	// Call-ID cannot be set here as user_host is not determined yet.
 	register_seqnr = NEW_SEQNR;
 	is_registered = false;
-	register_ipaddr = 0L;
-	register_port = 0;
+	register_ip_port.ipaddr = 0L;
+	register_ip_port.port = 0;
 	last_reg_failed = false;
 	
 	// Initialize STUN data
@@ -263,7 +264,11 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
 
         switch (register_type) {
         case REG_REGISTER:
-                contact.uri.set_url(user_config->create_user_contact(false));
+        	// URI
+                contact.uri.set_url(user_config->create_user_contact(false,
+                		h_ip2str(req->get_local_ip())));
+                
+                // Expires
                 if (expires > 0) {
 			if (user_config->get_registration_time_in_contact()) {
 				contact.set_expires(expires);
@@ -271,10 +276,17 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
 				req->hdr_expires.set_time(expires);
 			}
 		}
+		
+		// q-value
+		if (user_config->get_reg_add_qvalue()) {
+			contact.set_qvalue(user_config->get_reg_qvalue());
+		}
+
                 req->hdr_contact.add_contact(contact);
                 break;
         case REG_DEREGISTER:
-                contact.uri.set_url(user_config->create_user_contact(false));
+                contact.uri.set_url(user_config->create_user_contact(false,
+                		h_ip2str(req->get_local_ip())));
  		if (user_config->get_registration_time_in_contact()) {
 			contact.set_expires(0);
 		} else {
@@ -546,8 +558,9 @@ void t_phone_user::resend_request(t_request *req, bool is_register, t_client_req
 
 	// Create a new via-header. Otherwise the
 	// request will be seen as a retransmission
+	unsigned long local_ip = req->get_local_ip();
 	req->hdr_via.via_list.clear();
-	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
+	t_via via(USER_HOST(user_config, h_ip2str(local_ip)), PUBLIC_SIP_PORT(user_config));
 	req->hdr_via.add_via(via);
 
 	cr->renew(0);
@@ -632,7 +645,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 	// Store the destination IP address/port of the REGISTER message.
 	// To this destination the NAT keep alive packets will be sent.
 	t_request *req = r_register->get_request();
-	req->get_destination(register_ipaddr, register_port, *user_config);
+	req->get_destination(register_ip_port, *user_config);
 
         switch(r->get_class()) {
         case R_2XX:
@@ -641,7 +654,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 // Stop registration timer if one was running
                 phone->stop_timer(PTMR_REGISTRATION, this);
 
-                c = r->hdr_contact.find_contact(user_config->create_user_contact(false));
+                c = r->hdr_contact.find_contact(req->hdr_contact.contact_list.front().uri);
                 if (!c) {               	
 	               	if (!user_config->get_allow_missing_contact_reg()) {
 				is_registered = false;
@@ -655,6 +668,11 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 					r, "Contact header missing.");
 				cleanup_registration_data();
 				return;
+                        } else {
+                        	log_file->write_report(
+                        		"Cannot find matching contact header.",
+                        		"t_phone_user::handle_response_register",
+                        		LOG_NORMAL, LOG_DEBUG);
                         }
                 }
 
@@ -1012,7 +1030,11 @@ void t_phone_user::recvd_message(t_request *r, t_tid tid) {
 	if (accepted) {
 		resp = r->create_response(R_200_OK);
 	} else {
-		resp = r->create_response(R_486_BUSY_HERE);
+		if (user_config->get_im_max_sessions() == 0) {
+			resp = r->create_response(R_603_DECLINE);
+		} else {
+			resp = r->create_response(R_486_BUSY_HERE);
+		}
 	}
 	
 	phone->send_response(resp, 0, tid);
@@ -1083,18 +1105,20 @@ void t_phone_user::send_stun_request(void) {
 //       also be sent when there is a symmetric firewall without NAT.
 void t_phone_user::send_nat_keepalive(void) {
 	// Send keep-alive to registrar/proxy
-	if (register_ipaddr != 0 && register_port != 0) {
-		evq_sender_udp->push_nat_keepalive(register_ipaddr, register_port);
+	if (register_ip_port.ipaddr != 0 && register_ip_port.port != 0 &&
+	    register_ip_port.transport == "udp") 
+	{
+		evq_sender->push_nat_keepalive(register_ip_port.ipaddr, register_ip_port.port);
 	}
 	
 	// Send keep-alive to MWI mailbox if different from registrar/proxy
 	if (mwi_dialog) {
-		unsigned long mwi_ipaddr = mwi_dialog->get_remote_ipaddr();
-		unsigned short mwi_port = mwi_dialog->get_remote_port();
-		if (mwi_ipaddr != 0 && mwi_port != 0 &&
-		    mwi_ipaddr != register_ipaddr && mwi_port != register_port)
+		t_ip_port mwi_ip_port = mwi_dialog->get_remote_ip_port();
+		    
+		if (!mwi_ip_port.is_null() && mwi_ip_port != register_ip_port &&
+		    mwi_ip_port.transport == "udp")
 		{
-			evq_sender_udp->push_nat_keepalive(mwi_ipaddr, mwi_port);
+			evq_sender->push_nat_keepalive(mwi_ip_port.ipaddr, mwi_ip_port.port);
 		}
 	}
 }
@@ -1204,10 +1228,6 @@ t_request *t_phone_user::create_request(t_method m, const t_url &request_uri) co
 	t_request *req = new t_request(m);
 	MEMMAN_NEW(req);
 
-	// Via
-	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
-	req->hdr_via.add_via(via);
-
 	// From
 	req->hdr_from.set_uri(user_config->create_user_uri(false));
 	req->hdr_from.set_display(user_config->get_display(false));
@@ -1224,6 +1244,15 @@ t_request *t_phone_user::create_request(t_method m, const t_url &request_uri) co
 	// if failover is needed.
 	req->uri = request_uri;
 	req->calc_destinations(*user_config);
+	
+        // The Via header can only be created after the destinations
+        // are calculated, because the destination deterimines which
+        // local IP address should be used.
+	
+	// Via
+	unsigned long local_ip = req->get_local_ip();
+	t_via via(USER_HOST(user_config, h_ip2str(local_ip)), PUBLIC_SIP_PORT(user_config));
+	req->hdr_via.add_via(via);
 
 	return req;
 }
@@ -1276,15 +1305,16 @@ bool t_phone_user::get_last_reg_failed(void) const {
 	return last_reg_failed;
 }
 
-string t_phone_user::get_ip_sip(void) const {
+string t_phone_user::get_ip_sip(const string &auto_ip) const {
 	if (stun_public_ip_sip) return h_ip2str(stun_public_ip_sip);
 	if (user_config->get_use_nat_public_ip()) return user_config->get_nat_public_ip();
+	if (LOCAL_IP == AUTO_IP4_ADDRESS) return auto_ip;
 	return LOCAL_IP;
 }
 
 unsigned short t_phone_user::get_public_port_sip(void) const {
 	if (stun_public_port_sip) return stun_public_port_sip;
-	return sys_config->get_sip_udp_port();
+	return sys_config->get_sip_port();
 }
 
 bool t_phone_user::match(t_response *r, t_tuid tuid) const {
@@ -1382,8 +1412,8 @@ void t_phone_user::activate(const t_user &user) {
 	// Initialize registration data
 	register_seqnr = NEW_SEQNR;
 	is_registered = false;
-	register_ipaddr = 0L;
-	register_port = 0;
+	register_ip_port.ipaddr = 0L;
+	register_ip_port.port = 0;
 	last_reg_failed = false;
 	
 	// Initialize STUN data
@@ -1408,6 +1438,7 @@ void t_phone_user::deactivate(void) {
 		mwi_dialog = NULL;
 	}
 	mwi.set_status(t_mwi::MWI_UNKNOWN);
+	mwi_auto_resubscribe = false;
 	
 	// Clear presence state
 	// presence_epa->clear();

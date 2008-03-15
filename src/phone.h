@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -579,8 +579,20 @@ public:
 	 */
 	t_phone_user *find_phone_user(const string &profile_name) const;
 	
-	// Get IP address and port for SIP
-	string get_ip_sip(const t_user *user) const;
+	/**
+	 * Get local IP address for SIP.
+	 * @param user [in] The user profile of the user for whom to get the IP address.
+	 * @param auto_ip [in] IP address to use if no IP address has been determined through
+	 *                     some NAT procedure.
+	 * @return The IP address.
+	 */
+	string get_ip_sip(const t_user *user, const string &auto_ip) const;
+	
+	/**
+	 * Get local port for SIP.
+	 * @param user [in] User profile for user for whom to get the port.
+	 * @return SIP port.
+	 */ 
 	unsigned short get_public_port_sip(const t_user *user) const;
 	
 	// Indicates if STUN is used

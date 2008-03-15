@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,14 +41,20 @@ t_msg::t_msg(const string &msg, t_direction dir, t_text_format fmt) :
 
 t_msg_session::t_msg_session(t_user *u) :
 	user_config(u),
-	error_recvd(false)
+	new_message_added(false),
+	error_recvd(false),
+	delivery_notification_recvd(false),
+	msg_in_flight(false)
 {
 }
 
 t_msg_session::t_msg_session(t_user *u, t_display_url _remote_party) :
 	user_config(u),
+	new_message_added(false),
 	remote_party(_remote_party),
-	error_recvd(false)
+	error_recvd(false),
+	delivery_notification_recvd(false),
+	msg_in_flight(false)
 {
 }
 
@@ -69,10 +75,15 @@ void t_msg_session::set_remote_party(const t_display_url &du) {
 }
 
 t_msg t_msg_session::get_last_message(void) {
+	new_message_added = false;
 	if (messages.empty()) {
 		throw empty_list_exception();
 	}
 	return messages.back();
+}
+
+bool t_msg_session::is_new_message_added(void) const {
+	return new_message_added;
 }
 
 void t_msg_session::set_display_if_empty(const string &display) {
@@ -87,12 +98,15 @@ const list<t_msg> &t_msg_session::get_messages(void) const {
 
 void t_msg_session::recv_msg(const string &message, t_text_format format) {
 	messages.push_back(t_msg(message, im::MSG_DIR_IN, format));
+	new_message_added = true;
 	notify();
 }
 
 void t_msg_session::send_msg(const string &message, t_text_format format) {
 	messages.push_back(t_msg(message, im::MSG_DIR_OUT, format));
+	new_message_added = true;
 	phone->pub_send_message(user_config, remote_party.url, remote_party.display, message);
+	msg_in_flight = true;
 	notify();
 }
 
@@ -112,6 +126,31 @@ string t_msg_session::take_error(void) {
 	return error_msg;
 }
 
+void t_msg_session::set_delivery_notification(const string &notification) {
+	delivery_notification = notification;
+	delivery_notification_recvd = true;
+	notify();
+}
+
+bool t_msg_session::delivery_notification_received(void) const {
+	return delivery_notification_recvd;
+}
+
+string t_msg_session::take_delivery_notification(void) {
+	if (!delivery_notification_recvd) return "";
+	delivery_notification_recvd = false;
+	return delivery_notification;
+}
+
 bool t_msg_session::match(t_user *user, t_url _remote_party) {
 	return user == user_config && _remote_party == remote_party.url;
+}
+
+void t_msg_session::set_msg_in_flight(bool in_flight) {
+	msg_in_flight = in_flight;
+	notify();
+}
+
+bool t_msg_session::is_msg_in_flight(void) const {
+	return msg_in_flight;
 }

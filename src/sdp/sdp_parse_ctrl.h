@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #define _SDP_PARSE_CTRL_H
 
 #include "sdp.h"
+#include "threads/mutex.h"
 
 #define SDP		t_sdp_parser::sdp
 
@@ -33,6 +34,9 @@
 // The t_sdp_parser controls the direction of the scanner/parser
 // process and it stores the results from the parser.
 class t_sdp_parser {
+private:
+	/** Mutex to synchronize parse operations */
+	static t_mutex	mtx_parser;
 public:
 enum t_context {
 	X_INITIAL,	// Initial context

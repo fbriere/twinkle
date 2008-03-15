@@ -11,8 +11,8 @@ BuildRoot:	%{_tmppath}/making_of_%{name}_%{version}
 Packager:
 URL:		http://www.twinklephone.com
 Requires:	alsa
-Requires:	commoncpp2 >= 1.4.0 
-Requires:	ccrtp >= 1.5.0
+Requires:	commoncpp2 >= 1.6.0 
+Requires:	ccrtp >= 1.6.0
 Requires:	libzrtpcpp >= 0.9.0
 Requires:	kdelibs3 >= 3.2.0
 Requires:	libsndfile

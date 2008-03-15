@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,9 @@
 #include <string>
 #include "audio/audio_codecs.h"
 #include "parser/sip_body.h"
+
+/** User name to be put in o= line of SDP */
+#define SDP_O_USER		"twinkle"
 
 // Audio codec formats
 #define SDP_FORMAT_G711_ULAW	0
@@ -251,6 +254,13 @@ public:
 	// streams having a non-zero port value for the give media type.
 	// Returns NULL if no such media stream can be found.
 	const t_sdp_media *get_first_media(t_sdp_media_type media_type) const;
+	
+	/**
+	 * Check if all local IP address are correctly filled in. This
+	 * check is an integrity check to help debugging the auto IP
+	 * discover feature.
+	 */
+	virtual bool local_ip_check(void) const;
 };
 
 #endif

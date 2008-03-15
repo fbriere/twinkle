@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,8 +33,7 @@ extern t_transaction_mgr	*transaction_mgr;
 t_trans_client *t_transaction_mgr::find_trans_client(t_response *r) const {
 	map<t_tid, t_trans_client *>::const_iterator i;
 
-	for (i = map_trans_client.begin(); i != map_trans_client.end();
-			i++)
+	for (i = map_trans_client.begin(); i != map_trans_client.end(); ++i)
 	{
 		if (i->second->match(r)) return i->second;
 	}
@@ -50,11 +49,21 @@ t_trans_client *t_transaction_mgr::find_trans_client(t_tid tid) const {
 	return i->second;
 }
 
+t_trans_client *t_transaction_mgr::find_trans_client(const string &branch, const t_method &cseq_method) const {
+	map<t_tid, t_trans_client *>::const_iterator i;
+
+	for (i = map_trans_client.begin(); i != map_trans_client.end(); ++i)
+	{
+		if (i->second->match(branch, cseq_method)) return i->second;
+	}
+
+	return NULL;
+}
+
 t_trans_client *t_transaction_mgr::find_trans_client(const t_icmp_msg &icmp) const {
 	map<t_tid, t_trans_client *>::const_iterator i;
 
-	for (i = map_trans_client.begin(); i != map_trans_client.end();
-			i++)
+	for (i = map_trans_client.begin(); i != map_trans_client.end(); ++i)
 	{
 		if (i->second->match(icmp)) return i->second;
 	}
@@ -85,8 +94,7 @@ t_trans_server *t_transaction_mgr::find_trans_server(t_tid tid) const {
 t_stun_transaction *t_transaction_mgr::find_stun_trans(StunMessage *r) const {
 	map<t_tid, t_stun_transaction *>::const_iterator i;
 
-	for (i = map_stun_trans.begin(); i != map_stun_trans.end();
-			i++)
+	for (i = map_stun_trans.begin(); i != map_stun_trans.end(); ++i)
 	{
 		if (i->second->match(r)) return i->second;
 	}
@@ -105,8 +113,7 @@ t_stun_transaction *t_transaction_mgr::find_stun_trans(t_tid tid) const {
 t_stun_transaction *t_transaction_mgr::find_stun_trans(const t_icmp_msg &icmp) const {
 	map<t_tid, t_stun_transaction *>::const_iterator i;
 
-	for (i = map_stun_trans.begin(); i != map_stun_trans.end();
-			i++)
+	for (i = map_stun_trans.begin(); i != map_stun_trans.end(); ++i)
 	{
 		if (i->second->match(icmp)) return i->second;
 	}
@@ -117,8 +124,7 @@ t_stun_transaction *t_transaction_mgr::find_stun_trans(const t_icmp_msg &icmp) c
 t_trans_server *t_transaction_mgr::find_cancel_target(t_request *r) const {
 	map<t_tid, t_trans_server *>::const_iterator i;
 
-	for (i = map_trans_server.begin(); i != map_trans_server.end();
-			i++)
+	for (i = map_trans_server.begin(); i != map_trans_server.end(); ++i)
 	{
 		if (i->second->match_cancel(r)) return i->second;
 	}
@@ -129,13 +135,12 @@ t_trans_server *t_transaction_mgr::find_cancel_target(t_request *r) const {
 t_tc_invite *t_transaction_mgr::create_tc_invite(t_user *user_config, t_request *r,
 		unsigned short tuid)
 {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port	ip_port;
 
-	r->get_destination(ipaddr, port, *user_config);
-	if (ipaddr == 0 || port == 0) return NULL;
+	r->get_destination(ip_port, *user_config);
+	if (ip_port.ipaddr == 0 || ip_port.port == 0) return NULL;
 
-	t_tc_invite *t = new t_tc_invite(r, ipaddr, port, tuid);
+	t_tc_invite *t = new t_tc_invite(r, ip_port, tuid);
 	MEMMAN_NEW(t);
 	map_trans_client[t->get_id()] = (t_trans_client *)t;
 	return t;
@@ -144,13 +149,12 @@ t_tc_invite *t_transaction_mgr::create_tc_invite(t_user *user_config, t_request 
 t_tc_non_invite *t_transaction_mgr::create_tc_non_invite(t_user *user_config, t_request *r,
 		unsigned short tuid)
 {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port	ip_port;
 
-	r->get_destination(ipaddr, port, *user_config);
-	if (ipaddr == 0 || port == 0) return NULL;
+	r->get_destination(ip_port, *user_config);
+	if (ip_port.ipaddr == 0 || ip_port.port == 0) return NULL;
 
-	t_tc_non_invite *t = new t_tc_non_invite(r, ipaddr, port, tuid);
+	t_tc_non_invite *t = new t_tc_non_invite(r, ip_port, tuid);
 	MEMMAN_NEW(t);
 	map_trans_client[t->get_id()] = (t_trans_client *)t;
 	return t;
@@ -617,6 +621,25 @@ void t_transaction_mgr::handle_event_icmp(t_event_icmp *e) {
 	}
 }
 
+void t_transaction_mgr::handle_event_failure(t_event_failure *e) {
+	// Only a client transaction can handle failure events.	
+	t_trans_client *tc;
+	
+	if (e->is_tid_populated()) {
+		tc = find_trans_client(e->get_tid());
+	} else {
+		tc = find_trans_client(e->get_branch(), e->get_cseq_method());
+	}
+	
+	if (tc) {
+		tc->process_failure(e->get_failure());
+		
+		if (tc->get_state() == TS_TERMINATED) {
+			delete_trans_client(tc);
+		}
+	}
+}
+
 t_object_id t_transaction_mgr::start_timer(long dur, t_sip_timer tmr,
 			unsigned short tid)
 {
@@ -654,6 +677,7 @@ void t_transaction_mgr::run(void) {
 	t_event_stun_request	*ev_stun_request;
 	t_event_stun_response	*ev_stun_response;
 	t_event_icmp		*ev_icmp;
+	t_event_failure		*ev_failure;
 
 	bool quit = false;
 	while (!quit) {
@@ -661,32 +685,36 @@ void t_transaction_mgr::run(void) {
 
 		switch (event->get_type()) {
 		case EV_NETWORK:
-			ev_network = (t_event_network *)event;
+			ev_network = dynamic_cast<t_event_network *>(event);
 			handle_event_network(ev_network);
 			break;
 		case EV_USER:
-			ev_user = (t_event_user *)event;
+			ev_user = dynamic_cast<t_event_user *>(event);
 			handle_event_user(ev_user);
 			break;
 		case EV_TIMEOUT:
-			ev_timeout = (t_event_timeout *)event;
+			ev_timeout = dynamic_cast<t_event_timeout *>(event);
 			handle_event_timeout(ev_timeout);
 			break;
 		case EV_ABORT_TRANS:
-			ev_abort = (t_event_abort_trans *)event;
+			ev_abort = dynamic_cast<t_event_abort_trans *>(event);
 			handle_event_abort(ev_abort);
 			break;
 		case EV_STUN_REQUEST:
-			ev_stun_request = (t_event_stun_request *)event;
+			ev_stun_request = dynamic_cast<t_event_stun_request *>(event);
 			handle_event_stun_request(ev_stun_request);
 			break;
 		case EV_STUN_RESPONSE:
-			ev_stun_response = (t_event_stun_response *)event;
+			ev_stun_response = dynamic_cast<t_event_stun_response *>(event);
 			handle_event_stun_response(ev_stun_response);
 			break;
 		case EV_ICMP:
-			ev_icmp = (t_event_icmp *)event;
+			ev_icmp = dynamic_cast<t_event_icmp *>(event);
 			handle_event_icmp(ev_icmp);
+			break;
+		case EV_FAILURE:
+			ev_failure = dynamic_cast<t_event_failure *>(event);
+			handle_event_failure(ev_failure);
 			break;
 		case EV_QUIT:
 			quit = true;

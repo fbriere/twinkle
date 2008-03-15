@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
+#include "sockets/connection_table.h"
 #include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
@@ -67,8 +68,17 @@ t_translator *translator = NULL;
 // IP address on which the phone is running
 string user_host;
 
-// SIP socket for sending and receiving signaling
+// Local host name
+string local_hostname;
+
+// SIP UDP socket for sending and receiving signaling
 t_socket_udp *sip_socket;
+
+// SIP TCP socket for sending and receiving signaling
+t_socket_tcp *sip_socket_tcp;
+
+// SIP connection table for connection oriented transport
+t_connection_table *connection_table;
 
 // Event queue that is handled by the transaction manager thread
 // The following threads write to this queue
@@ -77,12 +87,12 @@ t_socket_udp *sip_socket;
 // - timekeeper
 t_event_queue		*evq_trans_mgr;
 
-// Event queue that is handled by the UDP sender thread
+// Event queue that is handled by the sender thread
 // The following threads write to this queue:
 // - phone UAS
 // - phone UAC
 // - transaction manager
-t_event_queue		*evq_sender_udp;
+t_event_queue		*evq_sender;
 
 // Event queue that is handled by the transaction layer thread
 // The following threads write to this queue
@@ -123,7 +133,7 @@ t_address_book		*ab_local;
 
 // If a port number is passed by the user on the command line, then
 // that port number overrides the port from the system settings.
-unsigned short		g_override_sip_udp_port = 0;
+unsigned short		g_override_sip_port = 0;
 unsigned short		g_override_rtp_port = 0;
 
 // Indicates if LinuxThreads or NPTL is active.
@@ -139,10 +149,12 @@ main(int argc, char *argv[]) {
 	MEMMAN_NEW(memman);
 	translator = new t_translator();
 	MEMMAN_NEW(translator);
+	connection_table = new t_connection_table();
+	MEMMAN_NEW(connection_table);
 	evq_trans_mgr = new t_event_queue();
 	MEMMAN_NEW(evq_trans_mgr);
-	evq_sender_udp = new t_event_queue();
-	MEMMAN_NEW(evq_sender_udp);
+	evq_sender = new t_event_queue();
+	MEMMAN_NEW(evq_sender);
 	evq_trans_layer = new t_event_queue();
 	MEMMAN_NEW(evq_trans_layer);
 	evq_timekeeper = new t_event_queue();
@@ -183,6 +195,8 @@ main(int argc, char *argv[]) {
 		config_files.push_back(config_file);
 	}
 
+#if 0
+	// DEPRECATED
 	if (user_host.empty()) {
                 string ip;
 		if (exists_interface(sys_config->get_start_user_host())) {
@@ -192,6 +206,9 @@ main(int argc, char *argv[]) {
 			user_host = ip;
 		}
 	}
+#endif
+	user_host = AUTO_IP4_ADDRESS;
+	local_hostname = get_local_hostname();
 
 	// Create a lock file to guarantee that the application
 	// runs only once.
@@ -280,9 +297,9 @@ main(int argc, char *argv[]) {
 	// Initialize RTP port settings.
 	phone->init_rtp_ports();
 
-	// Open socket for SIP signaling
+	// Open UDP socket for SIP signaling
 	try {
-		sip_socket = new t_socket_udp(sys_config->get_sip_udp_port());
+		sip_socket = new t_socket_udp(sys_config->get_sip_port());
 		MEMMAN_NEW(sip_socket);
 		if (sip_socket->enable_icmp()) {
 			log_file->write_report("ICMP processing enabled.", "::main");
@@ -291,7 +308,7 @@ main(int argc, char *argv[]) {
 		}
 	} catch (int err) {
 		string msg("Failed to create a UDP socket (SIP) on port ");
-		msg += int2str(sys_config->get_sip_udp_port());
+		msg += int2str(sys_config->get_sip_port());
 		msg += "\n";
 		msg += get_error_str(err);
 		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
@@ -300,6 +317,23 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 	
+	// Open TCP socket for SIP signaling
+	try {
+		sip_socket_tcp = new t_socket_tcp(sys_config->get_sip_port());
+		MEMMAN_NEW(sip_socket_tcp);		
+	} catch (int err) {
+		string msg("Failed to create a TCP socket (SIP) on port ");
+		msg += int2str(sys_config->get_sip_port());
+		msg += "\n";
+		msg += get_error_str(err);
+		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_show_msg(msg, MSG_CRITICAL);
+		sys_config->delete_lock_file();
+		exit(1);
+	}
+	
+#if 0
+	// DEPRECATED
 	// Pick network interface
 	if (user_host.empty()) {
 		user_host = ui->select_network_intf();
@@ -308,6 +342,7 @@ main(int argc, char *argv[]) {
 			exit(1);
 		}
 	}
+#endif
 	
 	// Discover NAT type if STUN is enabled
 	list<string> msg_list;
@@ -342,9 +377,17 @@ main(int argc, char *argv[]) {
 		}
 	}
 
+	// Ignore SIGPIPE so read from broken sockets will not cause
+	// the process to terminate.
+	(void)signal(SIGPIPE, SIG_IGN);
+
 	// Create threads
-	t_thread *thr_sender_udp;
+	t_thread *thr_sender;
+	t_thread *thr_tcp_sender;
 	t_thread *thr_listen_udp;
+	t_thread *thr_listen_data_tcp;
+	t_thread *thr_listen_conn_tcp;
+	t_thread *thr_conn_timeout_handler;
 	t_thread *thr_timekeeper;
 	t_thread *thr_alarm_catcher;
 	t_thread *thr_sig_catcher;
@@ -352,13 +395,29 @@ main(int argc, char *argv[]) {
 	t_thread *thr_phone_uas;
 
 	try {
-		// UDP sender thread
-		thr_sender_udp = new t_thread(sender_udp, NULL);
-		MEMMAN_NEW(thr_sender_udp);
+		// SIP sender thread
+		thr_sender = new t_thread(sender_loop, NULL);
+		MEMMAN_NEW(thr_sender);
+		
+		// SIP TCP sender thread
+		thr_tcp_sender = new t_thread(tcp_sender_loop, NULL);
+		MEMMAN_NEW(thr_tcp_sender);
 
 		// UDP listener thread
 		thr_listen_udp = new t_thread(listen_udp, NULL);
 		MEMMAN_NEW(thr_listen_udp);
+		
+		// TCP data listener thread
+		thr_listen_data_tcp = new t_thread(listen_for_data_tcp, NULL);
+		MEMMAN_NEW(thr_listen_data_tcp);
+		
+		// TCP connection listener thread
+		thr_listen_conn_tcp = new t_thread(listen_for_conn_requests_tcp, NULL);
+		MEMMAN_NEW(thr_listen_conn_tcp);
+		
+		// Connection timeout handler thread
+		thr_conn_timeout_handler = new t_thread(connection_timeout_main, NULL);
+		MEMMAN_NEW(thr_conn_timeout_handler);
 
 		// Timekeeper thread
 		thr_timekeeper = new t_thread(timekeeper_main, NULL);
@@ -418,7 +477,15 @@ main(int argc, char *argv[]) {
 	// so no new inputs come in during termination.
 	thr_listen_udp->cancel();
 	thr_listen_udp->join();
-
+	
+	thr_listen_conn_tcp->cancel();
+	thr_listen_conn_tcp->join();
+	
+	connection_table->cancel_select();
+	thr_listen_data_tcp->join();
+	thr_conn_timeout_handler->join();
+	thr_tcp_sender->join();
+	
 	evq_trans_layer->push_quit();
 	thr_phone_uas->join();
 	
@@ -440,8 +507,8 @@ main(int argc, char *argv[]) {
 	evq_timekeeper->push_quit();
 	thr_timekeeper->join();
 	
-	evq_sender_udp->push_quit();
-	thr_sender_udp->join();
+	evq_sender->push_quit();
+	thr_sender->join();
 
 	MEMMAN_DELETE(thr_phone_uas);
 	delete thr_phone_uas;
@@ -449,6 +516,8 @@ main(int argc, char *argv[]) {
 	delete thr_trans_mgr;
 	MEMMAN_DELETE(thr_timekeeper);
 	delete thr_timekeeper;
+	MEMMAN_DELETE(thr_conn_timeout_handler);
+	delete thr_conn_timeout_handler;
 
 	if (!threading_is_LinuxThreads) {
 		MEMMAN_DELETE(thr_sig_catcher);
@@ -459,8 +528,16 @@ main(int argc, char *argv[]) {
 
 	MEMMAN_DELETE(thr_listen_udp);
 	delete thr_listen_udp;
-	MEMMAN_DELETE(thr_sender_udp);
-	delete thr_sender_udp;
+	MEMMAN_DELETE(thr_sender);
+	delete thr_sender;
+	MEMMAN_DELETE(thr_tcp_sender);
+	delete thr_tcp_sender;
+	
+	
+	MEMMAN_DELETE(thr_listen_data_tcp);
+	delete thr_listen_data_tcp;
+	MEMMAN_DELETE(thr_listen_conn_tcp);
+	delete thr_listen_conn_tcp;
 
 	MEMMAN_DELETE(ab_local);
 	delete ab_local;
@@ -470,7 +547,11 @@ main(int argc, char *argv[]) {
 	MEMMAN_DELETE(ui);
 	delete ui;
 	ui = NULL;
-
+	
+	MEMMAN_DELETE(connection_table);
+	delete connection_table;
+	MEMMAN_DELETE(sip_socket_tcp);
+	delete sip_socket_tcp;
 	MEMMAN_DELETE(sip_socket);
 	delete sip_socket;
 
@@ -482,8 +563,8 @@ main(int argc, char *argv[]) {
 	delete timekeeper;
 	MEMMAN_DELETE(evq_trans_mgr);
 	delete evq_trans_mgr;
-	MEMMAN_DELETE(evq_sender_udp);
-	delete evq_sender_udp;
+	MEMMAN_DELETE(evq_sender);
+	delete evq_sender;
 	MEMMAN_DELETE(evq_trans_layer);
 	delete evq_trans_layer;
 	MEMMAN_DELETE(evq_timekeeper);

@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -156,9 +156,6 @@ void MessageForm::sendMessage() {
 	}
 	
 	_msgSession->send_msg(msgLineEdit->text().ascii(), im::TXT_PLAIN);
-	
-	msgLineEdit->clear();
-	msgLineEdit->setFocus();
 }
 
 void MessageForm::addMessage(const QString &name, const QString &msg, bool incoming,
@@ -186,6 +183,18 @@ void MessageForm::displayError(const QString &errorMsg)
 	s += tr("Delivery failure").ascii();
 	s += ": </b>";
 	s += QStyleSheet::escape(errorMsg);
+	s += "</font>";
+	
+	conversationTextEdit->append(s);
+}
+
+void MessageForm::displayDeliveryNotification(const QString &notification)
+{
+	QString s = "<font color =\"darkgreen\">";
+	s += "<b>";
+	s += tr("Delivery notification").ascii();
+	s += ": </b>";
+	s += QStyleSheet::escape(notification);
 	s += "</font>";
 	
 	conversationTextEdit->append(s);

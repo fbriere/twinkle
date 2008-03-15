@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 */
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <netdb.h>
 #include <sys/types.h>
@@ -24,10 +25,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "dnssrv.h"
+#include "log.h"
+#include "socket.h"
 #include "url.h"
 #include "util.h"
 
-// TODO: handle hex charactest (eg. %20x) correctly.
+using namespace std;
 
 unsigned short get_default_port(const string &protocol) {
 	if (protocol == "mailto")	return 25;
@@ -63,6 +66,78 @@ list<unsigned long> gethostbyname_all(const string &name) {
 	return l;
 }
 
+string get_local_hostname(void) {
+	char name[256];
+	int rc = gethostname(name, 256);
+	
+	if (rc < 0) {
+		return "localhost";
+	}
+	
+	struct hostent *h = gethostbyname(name);
+	
+	if (h == NULL) {
+		return "localhost";
+	}
+	
+	return h->h_name;
+}
+
+unsigned long get_src_ip4_address_for_dst(unsigned long dst_ip4) {
+	string log_msg;
+	struct sockaddr_in addr;
+	int ret;
+	
+	// Create UDP socket
+	int sd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sd < 0) {
+		string err = get_error_str(errno);
+		log_msg = "Cannot create socket: ";
+		log_msg += err;
+		log_file->write_report(log_msg, "::get_src_ip4_address_for_dst",
+			LOG_NORMAL, LOG_CRITICAL);
+		return 0;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(dst_ip4);
+	addr.sin_port = htons(5060);
+
+	// Connect to the destination. Note that no network traffic
+	// is sent out as this is a UDP socket. The routing engine
+	// will set the correct source address however.
+	ret = connect(sd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) {
+		string err = get_error_str(errno);
+		log_msg = "Cannot connect socket: ";
+		log_msg += err;
+		log_file->write_report(log_msg, "::get_src_ip4_address_for_dst",
+			LOG_NORMAL, LOG_CRITICAL);
+			
+		close(sd);
+		return 0;
+	}
+
+	// Get source address of socket
+	memset(&addr, 0, sizeof(addr));
+	socklen_t len_addr = sizeof(addr);
+	ret = getsockname(sd, (struct sockaddr *)&addr, &len_addr);
+	if (ret < 0) {
+		string err = get_error_str(errno);
+		log_msg = "Cannot get sockname: ";
+		log_msg += err;
+		log_file->write_report(log_msg, "::get_src_ip4_address_for_dst",
+			LOG_NORMAL, LOG_CRITICAL);
+			
+		close(sd);
+		return 0;
+	}
+
+	close(sd);
+	return ntohl(addr.sin_addr.s_addr);
+}
+
 string display_and_url2str(const string &display, const string &url) {
 	string s;
 	
@@ -83,7 +158,41 @@ string display_and_url2str(const string &display, const string &url) {
 // t_ip_port
 
 t_ip_port::t_ip_port(unsigned long _ipaddr, unsigned short _port) :
-	ipaddr(_ipaddr), port(_port) {}
+	transport("udp"), ipaddr(_ipaddr), port(_port) {}
+	
+t_ip_port::t_ip_port(const string &proto, unsigned long _ipaddr, unsigned short _port) :
+	transport(proto), ipaddr(_ipaddr), port(_port) {}
+
+void t_ip_port::clear(void) {
+	transport.clear();
+	ipaddr = 0;
+	port = 0;
+}
+
+bool t_ip_port::is_null(void) const {
+	return (ipaddr == 0 && port == 0);
+}
+
+bool t_ip_port::operator==(const t_ip_port &other) const {
+	return (transport == other.transport &&
+	        ipaddr == other.ipaddr &&
+	        port == other.port);
+}
+
+bool t_ip_port::operator!=(const t_ip_port &other) const {
+	return !operator==(other);
+}
+
+string t_ip_port::tostring(void) const {
+	string s;
+	s = transport;
+	s += ":";
+	s += h_ip2str(ipaddr);
+	s += ":";
+	s += int2str(port);
+	
+	return s;
+}
 
 // Private
 
@@ -441,7 +550,7 @@ list<t_ip_port> t_url::get_h_ip_srv(const string &transport) const {
 				for (list<unsigned long>::iterator j = ipaddr_list.begin();
 				     j != ipaddr_list.end(); j++)
 				{
-					ip_list.push_back(t_ip_port(*j, i->port));
+					ip_list.push_back(t_ip_port(transport, *j, i->port));
 				}
 			}
 			
@@ -455,7 +564,7 @@ list<t_ip_port> t_url::get_h_ip_srv(const string &transport) const {
 	for (list<unsigned long>::iterator j = ipaddr_list.begin();
 		j != ipaddr_list.end(); j++)
 	{
-		ip_list.push_back(t_ip_port(*j, get_hport()));
+		ip_list.push_back(t_ip_port(transport, *j, get_hport()));
 	}
 	
 	return ip_list;
@@ -496,6 +605,11 @@ string t_url::get_headers(void) const {
 void t_url::set_user(const string &u) {
 	modified = true;
 	user = u;
+}
+
+void t_url::set_host(const string &h) {
+	modified = true;
+	host = h;
 }
 
 void t_url::add_header(const t_header &hdr) {
@@ -543,11 +657,12 @@ bool t_url::sip_match(const t_url &u) const {
 	if (port != u.get_port()) return false;
 
 	// Compare parameters
-	if (transport != "" || u.get_transport() != "" &&
+	if (transport != "" && u.get_transport() != "" &&
 	    cmp_nocase(transport, u.get_transport()) != 0)
 	{
 		return false;
 	}
+
 	if (maddr != u.get_maddr()) return false;
 	if (cmp_nocase(user_param, u.get_user_param()) != 0) return false;
 	if (cmp_nocase(method, u.get_method()) != 0) return false;
@@ -596,6 +711,8 @@ bool t_url::user_looks_like_phone(const string &special_symbols) const {
 }
 
 bool t_url::is_phone(bool looks_like_phone, const string &special_symbols) const {
+	if (scheme == "tel") return true;
+
 	// RFC 3261 19.1.1
 	if (user_param == "phone") return true;
 	return (looks_like_phone && user_looks_like_phone(special_symbols));
@@ -612,14 +729,18 @@ string t_url::encode(void) const {
 		
 		s = scheme;
 		s += ':';
-		s += escape_user_value(user);
 		
-		if (!password.empty()) {
-			s += ':';
-			s += escape_passwd_value(password);
+		if (!user.empty()) {
+			s += escape_user_value(user);
+		
+			if (!password.empty()) {
+				s += ':';
+				s += escape_passwd_value(password);
+			}
+			
+			s += '@';
 		}
 		
-		s += '@';
 		s += host;
 		
 		if (port > 0) {
@@ -692,22 +813,26 @@ string t_url::encode_no_params_hdrs(bool escape) const {
 	
 	s = scheme;
 	s += ':';
-	if (escape) {
-		s += escape_user_value(user);
-	} else {
-		s += user;
-	}
 	
-	if (!password.empty()) {
-		s += ':';
+	if (!user.empty()) {
 		if (escape) {
-			s += escape_passwd_value(password);
+			s += escape_user_value(user);
 		} else {
-			s += password;
+			s += user;
 		}
+		
+		if (!password.empty()) {
+			s += ':';
+			if (escape) {
+				s += escape_passwd_value(password);
+			} else {
+				s += password;
+			}
+		}
+		
+		s += '@';
 	}
 	
-	s += '@';
 	s += host;
 	
 	if (port > 0) {

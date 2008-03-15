@@ -1,18 +1,33 @@
 pkglangdir = $(pkgdatadir)/lang
 
-pkglang_DATA = twinkle_nl.qm twinkle_de.qm twinkle_cs.qm twinkle_fr.qm
+pkglang_DATA = \
+	twinkle_nl.qm \
+	twinkle_de.qm \
+	twinkle_cs.qm \
+	twinkle_fr.qm \
+	twinkle_ru.qm
+
 CLEANFILES = $(pkglang_DATA)
 
-EXTRA_DIST = twinkle_nl.ts twinkle_de.ts twinkle_cs.ts twinkle_fr.ts
+EXTRA_DIST = \
+	twinkle_nl.ts \
+	twinkle_de.ts \
+	twinkle_cs.ts \
+	twinkle_fr.ts \
+	twinkle_ru.ts \
+	twinkle_xx.ts
 
-twinkle_nl.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_nl.ts
+twinkle_nl.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_nl.ts -qm $@
 
-twinkle_de.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_de.ts
+twinkle_de.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_de.ts -qm $@
 
-twinkle_cs.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_cs.ts
+twinkle_cs.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_cs.ts -qm $@
 
-twinkle_fr.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
-	lrelease twinkle_fr.ts
+twinkle_fr.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_fr.ts -qm $@
+
+twinkle_ru.qm: $(top_builddir)/src/gui/twinkle $(top_srcdir)/src/gui/twinkle.pro
+	lrelease $(LRELEASEOPTION) $(srcdir)/twinkle_ru.ts -qm $@

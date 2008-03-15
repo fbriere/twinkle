@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,9 +40,12 @@ string t_hdr_timestamp::encode_value(void) const {
 
 	if (!populated) return s;
 
-	s += float2str(timestamp, "%.3f");
+	s += float2str(timestamp, 3);
 
-	if (delay != 0) s += float2str(delay, " %.3f");
+	if (delay != 0) {
+		s += " ";
+		s += float2str(delay, 3);
+	}
 
 	return s;
 }

@@ -1,9 +1,38 @@
-diff -Nur twinkle-1.1/configure.in twinkle-1.1.new/configure.in
---- twinkle-1.1/configure.in	2007-07-25 22:17:06.000000000 +0100
-+++ twinkle-1.1.new/configure.in	2007-07-25 22:17:07.000000000 +0100
-@@ -161,6 +161,17 @@
- AC_CHECK_LIB(sndfile, sf_open, [], 
- 	[AC_MSG_ERROR([libsndfile library is missing.])])
+diff -Nur twinkle-1.2/configure.in twinkle-1.2.new/configure.in
+--- twinkle-1.2/configure.in	2008-03-15 22:37:24.000000000 +0100
++++ twinkle-1.2.new/configure.in	2008-03-15 22:37:25.000000000 +0100
+@@ -188,22 +188,33 @@
+ 
+ # This check does not work on all platforms
+ # Check if libgsm is available
+-# AC_CHECK_LIB(gsm, sf_open, [
+-#	AC_CHECK_HEADER(gsm.h, [],
+-#		[AC_MSG_ERROR([gsm header files missing (gsm.h)])])
+-#	AC_DEFINE(HAVE_GSM, 1, [Define to 1 if you have the <libgsm> library.])
+-#	GSM_LIBS="-lgsm"
+-#	echo "LIBS += -lgsm" >> $QT_INCL_PRO
+-#	have_gsm="yes" ], [
+-#	have_gsm="no"
+-#	GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+-#	echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO ])
+-have_gsm="no"
+-GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+-echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO
++AC_CHECK_LIB(gsm, sf_open, [
++	AC_CHECK_HEADER(gsm.h, [],
++		[AC_MSG_ERROR([gsm header files missing (gsm.h)])])
++	AC_DEFINE(HAVE_GSM, 1, [Define to 1 if you have the <libgsm> library.])
++	GSM_LIBS="-lgsm"
++	echo "LIBS += -lgsm" >> $QT_INCL_PRO
++	have_gsm="yes" ], [
++	have_gsm="no"
++	GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
++	echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO ])
++#have_gsm="no"
++#GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
++#echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO
+ 
+ AC_SUBST(GSM_LIBS)
  
 +# Check if libgsm is available
 +AC_CHECK_LIB(gsm, sf_open, [
@@ -19,76 +48,14 @@ diff -Nur twinkle-1.1/configure.in twinkle-1.1.new/configure.in
  # Check if ALSA is available
  AC_CHECK_LIB(asound, main, [
  	AC_CHECK_HEADER(alsa/asoundlib.h, [],
-@@ -261,3 +272,4 @@
+@@ -319,3 +330,4 @@
  AC_MSG_RESULT([Speex:       $have_speex])
  AC_MSG_RESULT([iLBC:        $have_ilbc])
  AC_MSG_RESULT([ZRTP:        $have_zrtp])
 +AC_MSG_RESULT([Libgsm dynamic link:	$have_gsm])
-diff -Nur twinkle-1.1/src/audio/audio_decoder.h twinkle-1.1.new/src/audio/audio_decoder.h
---- twinkle-1.1/src/audio/audio_decoder.h	2007-01-07 07:47:33.000000000 +0000
-+++ twinkle-1.1.new/src/audio/audio_decoder.h	2007-07-25 22:17:07.000000000 +0100
-@@ -25,7 +25,12 @@
- #include "twinkle_config.h"
- #include "audio_codecs.h"
- #include "user.h"
-+
-+#ifdef HAVE_GSM
-+#include <gsm/gsm.h>
-+#else
- #include "gsm/inc/gsm.h"
-+#endif
- 
- #ifdef HAVE_SPEEX
- #include <speex/speex.h>
-diff -Nur twinkle-1.1/src/audio/audio_encoder.h twinkle-1.1.new/src/audio/audio_encoder.h
---- twinkle-1.1/src/audio/audio_encoder.h	2007-01-07 07:47:33.000000000 +0000
-+++ twinkle-1.1.new/src/audio/audio_encoder.h	2007-07-25 22:17:07.000000000 +0100
-@@ -25,7 +25,12 @@
- #include "twinkle_config.h"
- #include "audio_codecs.h"
- #include "user.h"
-+
-+#ifdef HAVE_GSM
-+#include <gsm/gsm.h>
-+#else
- #include "gsm/inc/gsm.h"
-+#endif
- 
- #ifdef HAVE_SPEEX
- #include <speex/speex.h>
-diff -Nur twinkle-1.1/src/gui/twinkle.pro twinkle-1.1.new/src/gui/twinkle.pro
---- twinkle-1.1/src/gui/twinkle.pro	2007-07-21 19:56:16.000000000 +0100
-+++ twinkle-1.1.new/src/gui/twinkle.pro	2007-07-25 22:17:07.000000000 +0100
-@@ -3,7 +3,7 @@
- 
- CONFIG	+= qt warn_off release thread
- 
--LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
-+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
- 
- DEFINES	+= QT_NO_STL
- 
-diff -Nur twinkle-1.1/src/Makefile.am twinkle-1.1.new/src/Makefile.am
---- twinkle-1.1/src/Makefile.am	2007-07-19 19:53:56.000000000 +0100
-+++ twinkle-1.1.new/src/Makefile.am	2007-07-25 22:17:07.000000000 +0100
-@@ -16,13 +16,13 @@
-         $(top_builddir)/src/sockets/libsocket.a\
-         $(top_builddir)/src/threads/libthread.a\
-         $(top_builddir)/src/audio/libaudio.a\
--        $(top_builddir)/src/audio/gsm/libgsm.a\
-         $(top_builddir)/src/audits/libaudits.a\
-         $(top_builddir)/src/stun/libstun.a\
-         $(top_builddir)/src/mwi/libmwi.a\
-         $(top_builddir)/src/im/libim.a\
-         $(top_builddir)/src/presence/libpresence.a\
-         $(top_builddir)/src/patterns/libpatterns.a\
-+	$(LIBS)\
- 	$(CCRTP_LIBS)\
- 	$(XML2_LIBS)\
- 	-lsndfile
-diff -Nur twinkle-1.1/src/twinkle_config.h.in twinkle-1.1.new/src/twinkle_config.h.in
---- twinkle-1.1/src/twinkle_config.h.in	2007-07-21 20:21:08.000000000 +0100
-+++ twinkle-1.1.new/src/twinkle_config.h.in	2007-07-25 22:17:07.000000000 +0100
+diff -Nur twinkle-1.2/src/twinkle_config.h.in twinkle-1.2.new/src/twinkle_config.h.in
+--- twinkle-1.2/src/twinkle_config.h.in	2008-03-09 09:33:02.000000000 +0100
++++ twinkle-1.2.new/src/twinkle_config.h.in	2008-03-15 22:37:25.000000000 +0100
 @@ -16,6 +16,9 @@
     don't. */
  #undef HAVE_DECL_STRERROR_R

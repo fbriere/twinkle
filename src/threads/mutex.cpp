@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -76,3 +76,15 @@ void t_mutex::unlock(void) {
 t_recursive_mutex::t_recursive_mutex() : t_mutex(true) {}
 
 t_recursive_mutex::~t_recursive_mutex() {}
+
+///////////////////////////
+// t_guard_mutex
+///////////////////////////
+
+t_mutex_guard::t_mutex_guard(t_mutex &mutex) : mutex_(mutex) {
+	mutex_.lock();
+}
+
+t_mutex_guard::~t_mutex_guard() {
+	mutex_.unlock();
+}

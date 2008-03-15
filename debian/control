@@ -2,11 +2,12 @@ Source: twinkle
 Section: comm
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
-Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>
+Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>, Mikael Magnusson <mikma@users.sourceforge.net>
 Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>= 1.4.2), libccrtp-dev (>= 1.5.0), help2man, libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev, automake1.9, cdbs, kdelibs4-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libxml2-dev, libgsm1-dev, libsndfile1-dev, libxpm-dev, libspeex-dev, libboost-regex-dev, libzrtpcpp-dev
 Standards-Version: 3.6.1
-XS-Vcs-Svn: svn://svn.debian.org/pkg-voip/
-XS-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/
+Homepage: http://www.twinklephone.com/
+Vcs-Svn: svn://svn.debian.org/pkg-voip/twinkle/trunk/
+Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/twinkle/?op=log
 
 Package: twinkle
 Architecture: any
@@ -41,8 +42,8 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Repeat last call
   Do not disturb
   Auto answer
-  Message Waiting Indication (new)
-  Voice mail speed dial (new)
+  Message Waiting Indication
+  Voice mail speed dial
   User definable scripts triggered on call events
    E.g. to implement selective call reject or distinctive ringing 
   RFC 2833 DTMF events
@@ -59,7 +60,8 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   System tray icon
   System tray menu to originate and answer calls while Twinkle stays hidden
   User definable number conversion rules
-  Simple address book (new)
+  Simple address book
+  Support for UDP and TCP (new) as transport for SIP
  .
  Audio codecs
   G.711 A-law (64 kbps payload, 8 kHz sampling rate)
@@ -75,5 +77,3 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Interface to KAddressBook: dial phone numbers from your address book
   Display names from KAddressBook on incoming calls
   Display photos from KAddressBook on incoming calls
- .
- Website: http://www.twinklephone.com

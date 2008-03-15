@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -94,45 +94,64 @@ string t_via::encode(void) const {
 	return s;
 }
 
-void t_via::get_response_dst(unsigned long &ipaddr, unsigned short &prt)
-{
+void t_via::get_response_dst(t_ip_port &ip_port) const {
 	struct hostent *h;
 	
 	string url_str("sip:");
 
 	// RFC 3261 18.2.2
 	// Determine the address to send a repsonse to
-	if (maddr.size() > 0) {
-		url_str += maddr;
-	} else if (received.size() > 0) {
-		// NOTE: the received-parameter will be added by the
-		// UDP listener if needed.
-		url_str += received;
-	} else {
-		url_str += host;
-	}
-
-	// RFC 3581 4
-	if (rport_present && rport > 0) {
-		// NOTE: the rport value will be added by the UDP listener
-		// if the rport parameter without value was present.
-		url_str += ':';
-		url_str += int2str(rport);
-	} else if (port != 0) {
-		url_str += ':';
-		url_str += int2str(port);
-	}
+	// NOTE: the received-parameter will be added by the listener if needed.
 	
-	// If there was no maddr parameter, then the URL will always point to
-	// an IP address; either the host was an IP address or a received parameter
-	// containing an IP address was added (see RFC 3261 18.2.1)
-	// If there was an maddr, then the URL can be a domain that could have
-	// multiple SRV records. RFC 3263 section 5 does not specify what to do in
-	// this case. So just send the response to the first destination.
-	t_url u(url_str);
-	list<t_ip_port> ip_list = u.get_h_ip_srv("udp");
-	ipaddr = ip_list.front().ipaddr;
-	prt = ip_list.front().port;
+	if (tolower(transport) == "tcp") {
+		// NOTE: The response must be sent over the connection on which
+		// the request was received. The address returned here is an
+		// alternative if that connection is closed already.
+		if (received.size() > 0) {
+			url_str += received;
+		} else {
+			url_str += host;
+		}
+			
+		url_str += ":";
+		
+		// NOTE: The rport parameter is not processed here as it only
+		// applies to unreliable transports (RFC 3581 4)
+		url_str += int2str(port);
+		
+		t_url u(url_str);
+		list<t_ip_port> ip_list = u.get_h_ip_srv("tcp");
+		ip_port = ip_list.front();
+	} else {
+		if (maddr.size() > 0) {
+			url_str += maddr;
+		} else if (received.size() > 0) {
+			url_str += received;
+		} else {
+			url_str += host;
+		}
+	
+		// RFC 3581 4
+		if (rport_present && rport > 0) {
+			// NOTE: the rport value will be added by the UDP listener
+			// if the rport parameter without value was present.
+			url_str += ':';
+			url_str += int2str(rport);
+		} else if (port != 0) {
+			url_str += ':';
+			url_str += int2str(port);
+		}
+		
+		// If there was no maddr parameter, then the URL will always point to
+		// an IP address; either the host was an IP address or a received parameter
+		// containing an IP address was added (see RFC 3261 18.2.1)
+		// If there was an maddr, then the URL can be a domain that could have
+		// multiple SRV records. RFC 3263 section 5 does not specify what to do in
+		// this case. So just send the response to the first destination.
+		t_url u(url_str);
+		list<t_ip_port> ip_list = u.get_h_ip_srv("udp");
+		ip_port = ip_list.front();
+	}
 }
 
 bool t_via::rfc3261_compliant(void) const {
@@ -184,14 +203,11 @@ string t_hdr_via::encode_value(void) const {
 	return s;
 }
 
-void t_hdr_via::get_response_dst(unsigned long &ipaddr,
-		unsigned short &prt)
-{
+void t_hdr_via::get_response_dst(t_ip_port &ip_port) const {
 	if (!populated) {
-		ipaddr = 0;
-		prt = 0;
+		ip_port.clear();
 		return;
 	}
 
-	via_list.front().get_response_dst(ipaddr, prt);
+	via_list.front().get_response_dst(ip_port);
 }

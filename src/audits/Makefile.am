@@ -1,4 +1,5 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src
 
 noinst_LIBRARIES = libaudits.a
 

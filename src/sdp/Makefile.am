@@ -1,4 +1,5 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src
 
 AM_YFLAGS = -p yysdp -d
 AM_LFLAGS = -Pyysdp -olex.yy.c -i

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,6 +78,13 @@ public:
 	 * @return Content type.
 	 */
 	virtual t_media get_media(void) const = 0;
+	
+	/**
+	 * Check if all local IP address are correctly filled in. This
+	 * check is an integrity check to help debugging the auto IP
+	 * discover feature.
+	 */
+	virtual bool local_ip_check(void) const;
 };
 
 

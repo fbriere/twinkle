@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,10 +62,6 @@ t_request *t_abstract_dialog::create_request(t_method m) {
 	r->hdr_cseq.set_method(m);
 	r->hdr_cseq.set_seqnr(++local_seqnr);
 
-	// Via header
-	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
-	r->hdr_via.add_via(via);
-
 	// Set Max-Forwards header
 	r->hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
 
@@ -113,6 +109,15 @@ t_request *t_abstract_dialog::create_request(t_method m) {
         // of the request. The destination set should be set in the copy
         // kept by the dialog.
         r->calc_destinations(*user_config);
+        
+        // The Via header can only be created after the destinations
+        // are calculated, because the destination deterimines which
+        // local IP address should be used.
+        
+        // Via header
+        unsigned long local_ip = r->get_local_ip();
+	t_via via(USER_HOST(user_config, h_ip2str(local_ip)), PUBLIC_SIP_PORT(user_config));
+	r->hdr_via.add_via(via);
 
 	return r;
 }
@@ -146,8 +151,9 @@ void t_abstract_dialog::resend_request(t_client_request *cr) {
 
 	// Create a new via-header. Otherwise the
 	// request will be seen as a retransmission
+	unsigned long local_ip = req->get_local_ip();
 	req->hdr_via.via_list.clear();
-	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
+	t_via via(USER_HOST(user_config, h_ip2str(local_ip)), PUBLIC_SIP_PORT(user_config));
 	req->hdr_via.add_via(via);
 
 	cr->renew(0);
@@ -239,8 +245,7 @@ t_abstract_dialog::t_abstract_dialog(t_user *user) :
 	local_resp_nr = 0;
 	remote_resp_nr = 0;
 	
-	remote_ipaddr = 0;
-	remote_port = 0;
+	remote_ip_port.clear();
 	
 	log_file->write_header("t_abstract_dialog::t_abstract_dialog", LOG_NORMAL, LOG_DEBUG);
 	log_file->write_raw("Created dialog, id=");
@@ -264,18 +269,16 @@ t_user *t_abstract_dialog::get_user(void) const {
 void t_abstract_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 	// The source address and port of a message may be 0 when the
 	// message was sent internally.
-	if (r->src_ipaddr != 0 && r->src_port != 0) {
-		remote_ipaddr = r->src_ipaddr;
-		remote_port = r->src_port;
+	if (!r->src_ip_port.is_null()) {
+		remote_ip_port = r->src_ip_port;
 	}
 }
 
 void t_abstract_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 	// The source address and port of a message may be 0 when the
 	// message was sent internally.
-	if (r->src_ipaddr != 0 && r->src_port != 0) {
-		remote_ipaddr = r->src_ipaddr;
-		remote_port = r->src_port;
+	if (!r->src_ip_port.is_null()) {
+		remote_ip_port = r->src_ip_port;
 	}
 }
 
@@ -318,12 +321,8 @@ string t_abstract_dialog::get_remote_display(void) const {
 	return remote_display;
 }
 
-unsigned long t_abstract_dialog::get_remote_ipaddr(void) const {
-	return remote_ipaddr;
-}
-
-unsigned short t_abstract_dialog::get_remote_port(void) const {
-	return remote_port;
+t_ip_port t_abstract_dialog::get_remote_ip_port(void) const {
+	return remote_ip_port;
 }
 
 string t_abstract_dialog::get_call_id(void) const {

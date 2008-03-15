@@ -1,4 +1,5 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src
 
 noinst_LIBRARIES = libsocket.a
 
@@ -13,10 +14,14 @@ noinst_LIBRARIES = libsocket.a
 #	-lresolv
 
 libsocket_a_SOURCES =\
+	connection.cpp\
+	connection_table.cpp\
 	dnssrv.cpp\
         interfaces.cpp\
         socket.cpp\
         url.cpp\
+        connection.h\
+        connection_table.h\
         dnssrv.h\
         interfaces.h\
         socket.h\

@@ -1,4 +1,4 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = $(CCRTP_CFLAGS) -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libim.a
 
