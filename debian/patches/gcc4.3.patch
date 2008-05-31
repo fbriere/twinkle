@@ -1,0 +1,72 @@
+diff -Nur -x '*.orig' -x '*~' twinkle-1.2/src/audio/twinkle_zrtp_ui.cpp twinkle-1.2.new/src/audio/twinkle_zrtp_ui.cpp
+--- twinkle-1.2/src/audio/twinkle_zrtp_ui.cpp	2008-02-27 08:10:50.000000000 +1100
++++ twinkle-1.2.new/src/audio/twinkle_zrtp_ui.cpp	2008-05-31 11:30:59.000000000 +1000
+@@ -32,7 +32,7 @@
+ extern t_phone *phone;
+ 
+ TwinkleZrtpUI::TwinkleZrtpUI(ZrtpQueue* queue, t_audio_session* session) :
+-            ZrtpUserCallback(queue), audioSession(session) 
++            ZrtpUserCallback(), audioSession(session) 
+ {}
+ 
+ void TwinkleZrtpUI::secureOn(std::string cipher) {
+@@ -96,7 +96,7 @@
+ 	ui->cb_async_zrtp_confirm_go_clear(lineno);
+ }
+ 
+-void TwinkleZrtpUI::showMessage(MessageSeverity sev, std::string message) {
++void TwinkleZrtpUI::showMessage(GnuZrtpCodes::MessageSeverity sev, std::string message) {
+ 	t_line *line = audioSession->get_line();
+ 	int lineno = line->get_line_number();
+ 	
+@@ -106,11 +106,11 @@
+ 	msg += message;
+ 	
+ 	switch (sev) {
+-	case Info:
++	case GnuZrtpCodes::Info:
+ 		log_file->write_report(msg, "TwinkleZrtpUI::showMessage", LOG_NORMAL,
+ 			LOG_INFO);
+ 		break;
+-	case Warning:
++	case GnuZrtpCodes::Warning:
+ 		log_file->write_report(msg, "TwinkleZrtpUI::showMessage", LOG_NORMAL,
+ 			LOG_WARNING);
+ 		break;
+@@ -120,7 +120,7 @@
+ 	}
+ }
+ 
+-void TwinkleZrtpUI::zrtpNegotiationFailed(MessageSeverity severity, std::string msg) {
++void TwinkleZrtpUI::zrtpNegotiationFailed(GnuZrtpCodes::MessageSeverity severity, std::string msg) {
+ 	t_line *line = audioSession->get_line();
+ 	int lineno = line->get_line_number();
+ 	
+@@ -130,11 +130,11 @@
+ 	m += msg;
+ 	
+ 	switch (severity) {
+-	case Info:
++	case GnuZrtpCodes::Info:
+ 		log_file->write_report(m, "TwinkleZrtpUI::zrtpNegotiationFailed", LOG_NORMAL,
+ 			LOG_INFO);
+ 		break;
+-	case Warning:
++	case GnuZrtpCodes::Warning:
+ 		log_file->write_report(m, "TwinkleZrtpUI::zrtpNegotiationFailed", LOG_NORMAL,
+ 			LOG_WARNING);
+ 		break;
+diff -Nur -x '*.orig' -x '*~' twinkle-1.2/src/audio/twinkle_zrtp_ui.h twinkle-1.2.new/src/audio/twinkle_zrtp_ui.h
+--- twinkle-1.2/src/audio/twinkle_zrtp_ui.h	2008-02-27 08:10:48.000000000 +1100
++++ twinkle-1.2.new/src/audio/twinkle_zrtp_ui.h	2008-05-31 11:30:20.000000000 +1000
+@@ -44,8 +44,8 @@
+         virtual void secureOff();
+         virtual void showSAS(std::string sas); 
+         virtual void confirmGoClear();
+-        virtual void showMessage(MessageSeverity sev, std::string message);
+-        virtual void zrtpNegotiationFailed(MessageSeverity severity, std::string msg);
++        virtual void showMessage(GnuZrtpCodes::MessageSeverity sev, std::string message);
++        virtual void zrtpNegotiationFailed(GnuZrtpCodes::MessageSeverity severity, std::string msg);
+         virtual void zrtpNotSuppOther();
+ 
+     private:

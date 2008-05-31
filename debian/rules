@@ -1,18 +1,13 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses cdbs.  Originaly written by Robert Millan.
-# This file is public domain.
-  
-# Add here any variable or target overrides you need
 
 export QTDIR=/usr/share/qt3
 
 URL = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
-
 FILENAME = $(DEB_SOURCE_PACKAGE)_$(DEB_UPSTREAM_VERSION).orig.tar.gz
 
--include /usr/share/cdbs/1/class/autotools.mk
--include /usr/share/cdbs/1/rules/debhelper.mk
--include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/class/autotools.mk
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc
 
@@ -22,17 +17,11 @@ install/twinkle::
 	cp twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications
 	cp sip.protocol $(CURDIR)/debian/twinkle/usr/share/services
 
-print-version:
-	@@echo DEB_VERSION: $(DEB_VERSION)
-	@@echo DEB_UPSTREAM_VERSION: $(DEB_UPSTREAM_VERSION)
-	@@echo FILENAME: $(FILENAME)
-	@@echo URL: $(URL)
-
 get-orig-source:
 	@@dh_testdir
 	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
 	@@echo Downloading $(FILENAME) from $(URL) ...
-	@@wget -N -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
+	@@wget  -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
 
 help2man:
 	help2man twinkle -N -n 'Voice over Internet Protocol (VoIP) SIP Phone' -o debian/twinkle.1

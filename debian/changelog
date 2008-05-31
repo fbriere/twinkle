@@ -1,3 +1,14 @@
+twinkle (1:1.2-2) unstable; urgency=low
+
+  * Provide gcc4.3.patch to fix build issues
+    - FTBFS: twinkle_zrtp_ui.h:47: error: 'MessageSeverity' has not been
+    declared (Closes: #479874)
+  * Fixup menu entry. Thks Rodrigo Campos
+    - switch to new debian menu policy (Closes: #475424)
+  * Update debian/twinkle.1 manpage for 1.2 version
+
+ -- Mark Purcell <msp@debian.org>  Sat, 31 May 2008 12:38:57 +1000
+
 twinkle (1:1.2-1) unstable; urgency=low
 
   [ Kilian Krause ]
