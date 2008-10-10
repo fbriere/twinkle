@@ -11,12 +11,6 @@ include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc
 
-DEB_INSTALL_MANPAGES_twinkle = debian/twinkle.1
-
-install/twinkle::
-	cp twinkle.desktop $(CURDIR)/debian/twinkle/usr/share/applications
-	cp sip.protocol $(CURDIR)/debian/twinkle/usr/share/services
-
 get-orig-source:
 	@@dh_testdir
 	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs

@@ -1,0 +1,9 @@
+diff -Nur -x '*.orig' -x '*~' twinkle-1.2/twinkle.desktop.in twinkle-1.2.new/twinkle.desktop.in
+--- twinkle-1.2/twinkle.desktop.in	2007-07-24 03:54:16.000000000 +1000
++++ twinkle-1.2.new/twinkle.desktop.in	2008-10-10 23:45:40.000000000 +1100
+@@ -1,5 +1,4 @@
+ [Desktop Entry]
+-Encoding=UTF-8
+ Name=Twinkle
+ GenericName=A SIP softphone
+ Comment=A SIP softphone

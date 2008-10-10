@@ -1,0 +1,11 @@
+If you know that the bug you want to report is in the "upstream"
+code then please file directly with the twinkle users group:
+   http://groups.yahoo.com/group/twinklephone/
+
+If you feel that the bug is one that other Debian users should
+know about then you are welcome to file a report in the Debian BTS
+as well.  Please keep in mind, however, that managing bug reports
+is part of the maintainers' workload.
+
+As a minimum could I ask you to Cc: the usergroup twinklephone@yahoogroups.com
+for upstream issues so they are aware of any issues we have.

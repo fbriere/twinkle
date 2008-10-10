@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>, Mikael Magnusson <mikma@users.sourceforge.net>
 Build-Depends: debhelper (>= 4.0.0), autotools-dev, libcommoncpp2-dev (>= 1.4.2), libccrtp-dev (>= 1.5.0), help2man, libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev, automake1.9, cdbs, kdelibs4-dev, libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386], libxml2-dev, libgsm1-dev, libsndfile1-dev, libxpm-dev, libspeex-dev, libboost-regex-dev, libzrtpcpp-dev
-Standards-Version: 3.6.1
+Standards-Version: 3.8.0
 Homepage: http://www.twinklephone.com/
 Vcs-Svn: svn://svn.debian.org/pkg-voip/twinkle/trunk/
 Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/twinkle/?op=log
@@ -21,7 +21,7 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
  .
  In addition to making basic voice calls Twinkle provides you the
  following features regardless of the services that your VoIP service
- provider might offer. 
+ provider might offer.
  .
   2 call appearances (lines)
   Multiple active call identities
@@ -45,7 +45,7 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Message Waiting Indication
   Voice mail speed dial
   User definable scripts triggered on call events
-   E.g. to implement selective call reject or distinctive ringing 
+   E.g. to implement selective call reject or distinctive ringing
   RFC 2833 DTMF events
   In-band DTMF
   Out-of-band DTMF (SIP INFO)

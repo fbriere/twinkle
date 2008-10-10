@@ -1,3 +1,21 @@
+twinkle (1:1.2-3) unstable; urgency=low
+
+  [ Patrick Matthäi ]
+  * Bump Standards-Version to 3.8.0.
+  * Converted menu images to xpm and use them at twinkle.menu.
+    Thanks lintian.
+
+  [ Mark Purcell ]
+  * Update debian.install: twinkle.desktop & sip.protocol
+  * Update twinkle.desktop fixes
+    - linitan:desktop-entry-contains-encoding-key
+  * Add bug/presubj directing users to upstream user group
+  * Add debian/twinkle.manpages
+  * Update debian/menu - menu-icon-too-big. Icons in the Debian menu
+    system should be at most 32x32
+
+ -- Mark Purcell <msp@debian.org>  Sat, 11 Oct 2008 10:05:06 +1100
+
 twinkle (1:1.2-2) unstable; urgency=low
 
   * Provide gcc4.3.patch to fix build issues
