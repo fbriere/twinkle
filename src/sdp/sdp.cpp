@@ -64,7 +64,6 @@ t_sdp_addr_type str2sdp_addr_type(string s) {
 
 string sdp_transport2str(t_sdp_transport t) {
 	switch(t) {
-	case SDP_TRANS_NULL:	return "NULL";
 	case SDP_TRANS_RTP:	return "RTP/AVP";
 	case SDP_TRANS_UDP:	return "udp";
 	default:
@@ -76,8 +75,8 @@ t_sdp_transport str2sdp_transport(string s) {
 	if (s == "RTP/AVP") return SDP_TRANS_RTP;
 	if (s == "udp") return SDP_TRANS_UDP;
 
-	// Other transports are not recognized and are mapped to NULL.
-	return SDP_TRANS_NULL;
+	// Other transports are not recognized and are mapped to other.
+	return SDP_TRANS_OTHER;
 }
 
 t_sdp_media_type str2sdp_media_type(string s) {
@@ -255,7 +254,6 @@ string t_sdp_attr::encode(void) const {
 
 t_sdp_media::t_sdp_media() {
 	port = 0;
-	transport = SDP_TRANS_NULL;
 	format_dtmf = 0;
 }
 
@@ -266,7 +264,7 @@ t_sdp_media::t_sdp_media(t_sdp_media_type _media_type,
 {
 	media_type = sdp_media_type2str(_media_type);
 	port = _port;
-	transport = SDP_TRANS_RTP;
+	transport = sdp_transport2str(SDP_TRANS_RTP);
 	format_dtmf = _format_dtmf;
 
 	for (list<t_audio_codec>::const_iterator i = _formats.begin();
@@ -289,22 +287,35 @@ string t_sdp_media::encode(void) const {
 	s = "m=";
 	s += media_type;
 	s += ' ' + int2str(port);
-	s += ' ' + sdp_transport2str(transport);
+	s += ' ' + transport;
 
+	// Encode media formats. Note that only one of the format lists
+	// will be populated depending on the media type.
+	
+	// Numeric formats.
 	for (list<unsigned short>::const_iterator i = formats.begin();
-	     i != formats.end(); i++)
+	     i != formats.end(); ++i)
 	{
 		s += ' ' + int2str(*i);
+	}
+	
+	// Alpha numeric formats.
+	for (list<string>::const_iterator i = alpha_num_formats.begin();
+	     i != alpha_num_formats.end(); ++i)
+	{
+		s += ' ' + *i;
 	}
 
 	s += CRLF;
 
+	// Connection information.
 	if (connection.network_type != SDP_NTWK_NULL) {
 		s += connection.encode();
 	}
 
+	// Attributes.
 	for (list<t_sdp_attr>::const_iterator i = attributes.begin();
-	     i != attributes.end(); i++)
+	     i != attributes.end(); ++i)
 	{
 		s += i->encode();
 	}
@@ -374,33 +385,37 @@ t_sdp_media_type t_sdp_media::get_media_type(void) const {
 	return str2sdp_media_type(media_type);
 }
 
+t_sdp_transport t_sdp_media::get_transport(void) const {
+	return str2sdp_transport(transport);
+}
+
 ///////////////////////////////////
 // class t_sdp
 ///////////////////////////////////
 
-t_sdp::t_sdp() : t_sip_body() {
-	version = 0;
-}
+t_sdp::t_sdp() : t_sip_body(), version(0) 
+{}
 
 t_sdp::t_sdp(const string &user, const string &sess_id, const string &sess_version, 
 	     const string &user_host, const string &media_host, unsigned short media_port,
 	     const list<t_audio_codec> &formats, unsigned short format_dtmf,
 	     const map<t_audio_codec, unsigned short> &ac2format) :
+	     	t_sip_body(),
+	     	version(0),
 		origin(user, sess_id, sess_version, user_host),
 		connection(media_host)
 {
-	version = 0;
 	media.push_back(t_sdp_media(SDP_AUDIO, media_port, formats, format_dtmf,
 				ac2format));
 }
 
 t_sdp::t_sdp(const string &user, const string &sess_id, const string &sess_version, 
 		const string &user_host, const string &media_host) :
+			t_sip_body(),
+			version(0),
 			origin(user, sess_id, sess_version, user_host),
 			connection(media_host)
-{
-	version = 0;
-}
+{}
 
 void t_sdp::add_media(const t_sdp_media &m) {
 	media.push_back(m);
@@ -514,7 +529,7 @@ bool t_sdp::is_supported(int &warn_code, string &warn_text) const {
 		return false;
 	}
 
-	if (m->transport != SDP_TRANS_RTP) {
+	if (m->get_transport() != SDP_TRANS_RTP) {
 		warn_code = W_302_INCOMPATIBLE_TRANS_PROT;
 		return false;
 	}

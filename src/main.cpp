@@ -39,9 +39,11 @@
 #include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
+#include "utils/mime_database.h"
 #include "audits/memman.h"
 
 using namespace std;
+using namespace utils;
 
 // Class to initialize the random generator before objects of
 // other classes are created. Initializing just from the main function
@@ -130,6 +132,9 @@ t_call_history		*call_history;
 
 // Local address book
 t_address_book		*ab_local;
+
+// Mime database
+t_mime_database		*mime_database;
 
 // If a port number is passed by the user on the command line, then
 // that port number overrides the port from the system settings.
@@ -292,6 +297,13 @@ main(int argc, char *argv[]) {
 	if (!ab_local->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 		ui->cb_show_msg(error_msg, MSG_WARNING);
+	}
+	
+	// Create mime database
+	mime_database = new t_mime_database();
+	MEMMAN_NEW(mime_database);
+	if (!mime_database->load(error_msg)) {
+		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 
 	// Initialize RTP port settings.
@@ -509,6 +521,8 @@ main(int argc, char *argv[]) {
 	
 	evq_sender->push_quit();
 	thr_sender->join();
+	
+	sys_config->remove_all_tmp_files();
 
 	MEMMAN_DELETE(thr_phone_uas);
 	delete thr_phone_uas;
@@ -539,6 +553,8 @@ main(int argc, char *argv[]) {
 	MEMMAN_DELETE(thr_listen_conn_tcp);
 	delete thr_listen_conn_tcp;
 
+	MEMMAN_DELETE(mime_database);
+	delete mime_database;
 	MEMMAN_DELETE(ab_local);
 	delete ab_local;
 	MEMMAN_DELETE(call_history);

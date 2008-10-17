@@ -849,7 +849,16 @@ display_name:	  /* empty */ { $$ = new string(); MEMMAN_NEW($$); }
 
 hdr_content_disp: T_TOKEN parameters {
 			MSG->hdr_content_disp.set_type(tolower(*$1));
-			MSG->hdr_content_disp.set_params(*$2);
+			
+			list<t_parameter>::const_iterator i;
+			for (i = $2->begin(); i != $2->end(); i++) {
+				if (i->name == "filename") {
+					MSG->hdr_content_disp.set_filename(i->value);
+				} else {
+					MSG->hdr_content_disp.add_param(*i);
+				}
+			}
+
 			MEMMAN_DELETE($1); delete $1;
 			MEMMAN_DELETE($2); delete $2; }
 ;

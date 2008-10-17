@@ -64,27 +64,51 @@ void MessageFormView::update(void) {
 	t_user *user_config = _msgSession->get_user();
 	t_display_url to_url = _msgSession->get_remote_party();
 	
+	// Update msgLineEdit field based on msg-in-flight indication
 	if (!_msgSession->is_msg_in_flight() && !msgLineEdit->isEnabled()) {
 		msgLineEdit->clear();
-		msgLineEdit->setEnabled(true);
 		msgLineEdit->setFocus();
+		
+		// When the user edits the message, the composition indication
+		// will be set to active.
+		connect(msgLineEdit, SIGNAL(textChanged(const QString &)),
+			this, SLOT(setLocalComposingIndicationActive()));
 	} else if (_msgSession->is_msg_in_flight() && msgLineEdit->isEnabled()) {
+		// Disable the triggering of the composition indication while a message
+		// is being sent.
+		disconnect(msgLineEdit, SIGNAL(textChanged(const QString &)),
+			   this, SLOT(setLocalComposingIndicationActive()));
 		msgLineEdit->setText(tr("sending message"));
-		msgLineEdit->setEnabled(false);
 	}
 	
 	msgLineEdit->setEnabled(!_msgSession->is_msg_in_flight());
+	sendFileAction->setEnabled(!_msgSession->is_msg_in_flight());
 	
+	// Display error
 	if (_msgSession->error_received()) {
 		string error_msg = _msgSession->take_error();
 		displayError(error_msg.c_str());
 	}
 	
+	// Display delivery notification
 	if (_msgSession->delivery_notification_received()) {
 		string notification = _msgSession->take_delivery_notification();
 		displayDeliveryNotification(notification.c_str());
 	}
 	
+	// Display message composing indication
+	if (_msgSession->get_remote_composing_state() == im::COMPOSING_STATE_ACTIVE) {
+		QString name = to_url.display.c_str();
+		if (name.isEmpty()) {
+			name = to_url.url.get_user().c_str();
+		}
+		
+		setComposingIndication(name);
+	} else {
+		clearComposingIndication();
+	}
+	
+	// Display message
 	if (_msgSession->is_new_message_added()) {
 		im::t_msg m;
 		try {
@@ -107,8 +131,7 @@ void MessageFormView::update(void) {
 			}
 		}
 		
-		addMessage(name, m.message.c_str(), m.direction == im::MSG_DIR_IN,
-			   m.format == im::TXT_HTML);
+		addMessage(m, name);
 	}
 	
 	ui->unlock();

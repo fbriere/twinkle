@@ -150,15 +150,14 @@ typedef union YYSTYPE
 	string			*yysdpt_str;
 	t_sdp_ntwk_type		yysdpt_ntwk_type;
 	t_sdp_addr_type		yysdpt_addr_type;
-	t_sdp_transport		yysdpt_transport;
 	t_sdp_connection	*yysdpt_connection;
 	list<t_sdp_attr>	*yysdpt_attributes;
 	t_sdp_attr		*yysdpt_attribute;
 	t_sdp_media		*yysdpt_media;
-	list<unsigned short>	*yysdpt_num_list;
+	list<string>		*yysdpt_token_list;
 }
 /* Line 193 of yacc.c.  */
-#line 162 "sdp_parser.cxx"
+#line 161 "sdp_parser.cxx"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -171,7 +170,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 175 "sdp_parser.cxx"
+#line 174 "sdp_parser.cxx"
 
 #ifdef short
 # undef short
@@ -471,7 +470,7 @@ static const yytype_uint16 yyrline[] =
        0,   105,   105,   117,   125,   125,   125,   130,   130,   130,
      144,   159,   170,   171,   170,   176,   181,   182,   192,   197,
      198,   203,   207,   211,   211,   211,   218,   219,   225,   225,
-     225,   245,   253,   268,   269,   276,   277,   280,   280,   280
+     225,   261,   263,   271,   272,   279,   280,   283,   283,   283
 };
 #endif
 
@@ -1111,49 +1110,54 @@ yydestruct (yymsg, yytype, yyvaluep)
   switch (yytype)
     {
       case 4: /* "T_TOKEN" */
-#line 81 "sdp_parser.yxx"
+#line 80 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_str)); delete (yyvaluep->yysdpt_str); };
-#line 1117 "sdp_parser.cxx"
+#line 1116 "sdp_parser.cxx"
 	break;
       case 5: /* "T_SAFE" */
-#line 82 "sdp_parser.yxx"
+#line 81 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_str)); delete (yyvaluep->yysdpt_str); };
-#line 1122 "sdp_parser.cxx"
+#line 1121 "sdp_parser.cxx"
 	break;
       case 6: /* "T_LINE" */
-#line 83 "sdp_parser.yxx"
+#line 82 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_str)); delete (yyvaluep->yysdpt_str); };
-#line 1127 "sdp_parser.cxx"
+#line 1126 "sdp_parser.cxx"
 	break;
       case 32: /* "connection" */
-#line 95 "sdp_parser.yxx"
+#line 94 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_connection)); delete (yyvaluep->yysdpt_connection); };
-#line 1132 "sdp_parser.cxx"
+#line 1131 "sdp_parser.cxx"
 	break;
       case 34: /* "attributes" */
-#line 96 "sdp_parser.yxx"
+#line 95 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_attributes)); delete (yyvaluep->yysdpt_attributes); };
-#line 1137 "sdp_parser.cxx"
+#line 1136 "sdp_parser.cxx"
 	break;
       case 35: /* "attribute" */
-#line 97 "sdp_parser.yxx"
+#line 96 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_attribute)); delete (yyvaluep->yysdpt_attribute); };
-#line 1142 "sdp_parser.cxx"
+#line 1141 "sdp_parser.cxx"
 	break;
       case 36: /* "attribute2" */
-#line 98 "sdp_parser.yxx"
+#line 97 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_attribute)); delete (yyvaluep->yysdpt_attribute); };
-#line 1147 "sdp_parser.cxx"
+#line 1146 "sdp_parser.cxx"
 	break;
       case 40: /* "media" */
-#line 99 "sdp_parser.yxx"
+#line 98 "sdp_parser.yxx"
 	{ MEMMAN_DELETE((yyvaluep->yysdpt_media)); delete (yyvaluep->yysdpt_media); };
-#line 1152 "sdp_parser.cxx"
+#line 1151 "sdp_parser.cxx"
+	break;
+      case 43: /* "transport" */
+#line 99 "sdp_parser.yxx"
+	{ MEMMAN_DELETE((yyvaluep->yysdpt_str)); delete (yyvaluep->yysdpt_str); };
+#line 1156 "sdp_parser.cxx"
 	break;
       case 44: /* "formats" */
 #line 100 "sdp_parser.yxx"
-	{ MEMMAN_DELETE((yyvaluep->yysdpt_num_list)); delete (yyvaluep->yysdpt_num_list); };
-#line 1157 "sdp_parser.cxx"
+	{ MEMMAN_DELETE((yyvaluep->yysdpt_token_list)); delete (yyvaluep->yysdpt_token_list); };
+#line 1161 "sdp_parser.cxx"
 	break;
 
       default:
@@ -1670,74 +1674,79 @@ yyreduce:
 			
 			(yyval.yysdpt_media)->media_type = tolower(*(yyvsp[(2) - (12)].yysdpt_str));
 			(yyval.yysdpt_media)->port = (yyvsp[(4) - (12)].yysdpt_int);
-			(yyval.yysdpt_media)->transport = (yyvsp[(6) - (12)].yysdpt_transport);
-			(yyval.yysdpt_media)->formats = *(yyvsp[(7) - (12)].yysdpt_num_list);
+			(yyval.yysdpt_media)->transport = *(yyvsp[(6) - (12)].yysdpt_str);
+			
+			/* The format depends on the media type */
+			switch((yyval.yysdpt_media)->get_media_type()) {
+			case SDP_AUDIO:
+			case SDP_VIDEO:
+				/* Numeric format */
+				for (list<string>::const_iterator it = (yyvsp[(7) - (12)].yysdpt_token_list)->begin(); it != (yyvsp[(7) - (12)].yysdpt_token_list)->end(); ++it) {
+					if (is_number(*it)) (yyval.yysdpt_media)->formats.push_back(atoi(it->c_str()));
+				}
+				
+				break;
+			default:
+				/* Alpha numeric format */
+				(yyval.yysdpt_media)->alpha_num_formats = *(yyvsp[(7) - (12)].yysdpt_token_list);
+			}
+			
 			(yyval.yysdpt_media)->connection = *(yyvsp[(10) - (12)].yysdpt_connection);
 			(yyval.yysdpt_media)->attributes = *(yyvsp[(12) - (12)].yysdpt_attributes);
 			MEMMAN_DELETE((yyvsp[(2) - (12)].yysdpt_str)); delete (yyvsp[(2) - (12)].yysdpt_str);
-			MEMMAN_DELETE((yyvsp[(7) - (12)].yysdpt_num_list)); delete (yyvsp[(7) - (12)].yysdpt_num_list);
+			MEMMAN_DELETE((yyvsp[(6) - (12)].yysdpt_str)); delete (yyvsp[(6) - (12)].yysdpt_str);
+			MEMMAN_DELETE((yyvsp[(7) - (12)].yysdpt_token_list)); delete (yyvsp[(7) - (12)].yysdpt_token_list);
 			MEMMAN_DELETE((yyvsp[(10) - (12)].yysdpt_connection)); delete (yyvsp[(10) - (12)].yysdpt_connection);
 			MEMMAN_DELETE((yyvsp[(12) - (12)].yysdpt_attributes)); delete (yyvsp[(12) - (12)].yysdpt_attributes); }
     break;
 
   case 31:
-#line 245 "sdp_parser.yxx"
-    { try {
-				(yyval.yysdpt_transport) = str2sdp_transport(*(yyvsp[(1) - (1)].yysdpt_str));
-				MEMMAN_DELETE((yyvsp[(1) - (1)].yysdpt_str)); delete (yyvsp[(1) - (1)].yysdpt_str);
-			    }
-			    catch (t_sdp_syntax_error) {
-			    	MEMMAN_DELETE((yyvsp[(1) - (1)].yysdpt_str)); delete (yyvsp[(1) - (1)].yysdpt_str);
-			        YYABORT;
-			    } }
+#line 261 "sdp_parser.yxx"
+    { 
+			(yyval.yysdpt_str) = (yyvsp[(1) - (1)].yysdpt_str); }
     break;
 
   case 32:
-#line 253 "sdp_parser.yxx"
-    { try {
-				(yyval.yysdpt_transport) = str2sdp_transport(*(yyvsp[(1) - (3)].yysdpt_str) + '/' + *(yyvsp[(3) - (3)].yysdpt_str));
-				MEMMAN_DELETE((yyvsp[(1) - (3)].yysdpt_str)); delete (yyvsp[(1) - (3)].yysdpt_str);
-				MEMMAN_DELETE((yyvsp[(3) - (3)].yysdpt_str)); delete (yyvsp[(3) - (3)].yysdpt_str);
-			    }
-			    catch (t_sdp_syntax_error) {
-			    	MEMMAN_DELETE((yyvsp[(1) - (3)].yysdpt_str)); delete (yyvsp[(1) - (3)].yysdpt_str);
-				MEMMAN_DELETE((yyvsp[(3) - (3)].yysdpt_str)); delete (yyvsp[(3) - (3)].yysdpt_str);
-				(yyval.yysdpt_transport) = SDP_TRANS_NULL;
-			    } }
+#line 263 "sdp_parser.yxx"
+    {
+			(yyval.yysdpt_str) = new string(*(yyvsp[(1) - (3)].yysdpt_str) + '/' + *(yyvsp[(3) - (3)].yysdpt_str)); 
+			MEMMAN_NEW((yyval.yysdpt_str));
+			MEMMAN_DELETE((yyvsp[(1) - (3)].yysdpt_str)); delete (yyvsp[(1) - (3)].yysdpt_str); 
+			MEMMAN_DELETE((yyvsp[(3) - (3)].yysdpt_str)); delete (yyvsp[(3) - (3)].yysdpt_str); }
     break;
 
   case 33:
-#line 268 "sdp_parser.yxx"
-    { (yyval.yysdpt_num_list) = new list<unsigned short>; MEMMAN_NEW((yyval.yysdpt_num_list)); }
+#line 271 "sdp_parser.yxx"
+    { (yyval.yysdpt_token_list) = new list<string>; MEMMAN_NEW((yyval.yysdpt_token_list)); }
     break;
 
   case 34:
-#line 269 "sdp_parser.yxx"
+#line 272 "sdp_parser.yxx"
     {
-			if (is_number(*(yyvsp[(2) - (2)].yysdpt_str))) (yyval.yysdpt_num_list)->push_back(atoi((yyvsp[(2) - (2)].yysdpt_str)->c_str()));
+			(yyval.yysdpt_token_list)->push_back(*(yyvsp[(2) - (2)].yysdpt_str));
 			MEMMAN_DELETE((yyvsp[(2) - (2)].yysdpt_str));
 			delete (yyvsp[(2) - (2)].yysdpt_str); }
     break;
 
   case 37:
-#line 280 "sdp_parser.yxx"
+#line 283 "sdp_parser.yxx"
     { CTX_LINE; }
     break;
 
   case 38:
-#line 280 "sdp_parser.yxx"
+#line 283 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
   case 39:
-#line 281 "sdp_parser.yxx"
+#line 284 "sdp_parser.yxx"
     {
 		  	MEMMAN_DELETE((yyvsp[(3) - (5)].yysdpt_str)); delete (yyvsp[(3) - (5)].yysdpt_str); }
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1741 "sdp_parser.cxx"
+#line 1750 "sdp_parser.cxx"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1951,7 +1960,7 @@ yyreturn:
 }
 
 
-#line 285 "sdp_parser.yxx"
+#line 288 "sdp_parser.yxx"
 
 
 void

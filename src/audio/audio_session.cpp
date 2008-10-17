@@ -201,7 +201,7 @@ t_audio_session::t_audio_session(t_session *_session,
 		
 			if (user_config->get_zrtp_enabled()) {
 				// Create the ZRTP call back interface
-				TwinkleZrtpUI* twui = new TwinkleZrtpUI(zque, this);
+				TwinkleZrtpUI* twui = new TwinkleZrtpUI(this);
 				
 				// The ZrtpQueue keeps track of the twui - the destructor of 
 				// ZrtpQueue (aka t_twinkle_rtp_session) deletes this object, 

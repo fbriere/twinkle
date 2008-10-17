@@ -250,6 +250,8 @@ X_PRE_LIBS = @X_PRE_LIBS@
 X_RPATH = @X_RPATH@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
+ZRTP_CFLAGS = @ZRTP_CFLAGS@
+ZRTP_LIBS = @ZRTP_LIBS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 all_includes = @all_includes@
@@ -338,9 +340,7 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/src
-
+AM_CPPFLAGS = $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 # bison flags
 AM_YFLAGS = -d

@@ -260,7 +260,10 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// if there is still enough sound in the buffer of the DSP to be
 	// played. If not, then play out the sound from the 3rd party only.
 	if (only_3rd_party) {
+		/* Does not work on all ALSA implementations.
 		if (playback_device->get_buffer_space(false) < soundcard_buf_size - len) {
+		*/
+		if (!playback_device->play_buffer_underrun()) {
 			// There is still sound in the DSP buffers to be
 			// played, so let's wait. Maybe in the next cycle
 			// an RTP packet from the far-end will be received.
@@ -334,8 +337,12 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// If buffer on soundcard is empty, then the jitter buffer needs
 	// to be refilled. This should only occur when no RTP packets
 	// have been received for a while (silence suppression or packet loss)
+	/*
+	 * This code does not work on all ALSA implementations, e.g. ALSA via pulse audio
 	int bufferspace = playback_device->get_buffer_space(false);
 	if (bufferspace == soundcard_buf_size && len <= JITTER_BUF_SIZE(sc_sample_rate)) {
+	*/
+	if (playback_device->play_buffer_underrun()) {
 		memcpy(jitter_buf, playbuf, len);
 		jitter_buf_len = len;
 		load_jitter_buf = true;

@@ -114,10 +114,12 @@ extern t_phone		*phone;
 #define FLD_SIP_TRANSPORT_UDP_THRESHOLD	"sip_transport_udp_threshold"
 #define FLD_NAT_PUBLIC_IP		"nat_public_ip"
 #define FLD_STUN_SERVER			"stun_server"
+#define FLD_PERSISTENT_TCP		"persistent_tcp"
 
 // TIMER fields
 #define FLD_TIMER_NOANSWER		"timer_noanswer"
 #define FLD_TIMER_NAT_KEEPALIVE		"timer_nat_keepalive"
+#define FLD_TIMER_TCP_PING		"timer_tcp_ping"
 
 // ADDRESS FORMAT fields
 #define FLD_DISPLAY_USERONLY_PHONE	"display_useronly_phone"
@@ -158,6 +160,7 @@ extern t_phone		*phone;
 
 // INSTANT MESSAGE
 #define FLD_IM_MAX_SESSIONS		"im_max_sessions"
+#define FLD_IM_SEND_ISCOMPOSING		"im_send_iscomposing"
 
 // PRESENCE
 #define FLD_PRES_SUBSCRIPTION_TIME	"pres_subscription_time"
@@ -357,6 +360,7 @@ t_user::t_user() {
 	hold_variant = HOLD_RFC3264;
 	use_nat_public_ip = false;
 	use_stun = false;
+	persistent_tcp = true;
 	register_at_startup = true;
 	reg_add_qvalue = false;
 	reg_qvalue = 1.0;
@@ -372,6 +376,7 @@ t_user::t_user() {
 	max_redirections = 5;
 	timer_noanswer = 30;
 	timer_nat_keepalive = DUR_NAT_KEEPALIVE;
+	timer_tcp_ping = DUR_TCP_PING;
 	ext_100rel = EXT_SUPPORTED;
 	ext_replaces = true;
 	speex_nb_payload_type = 97;
@@ -430,6 +435,7 @@ t_user::t_user() {
 	mwi_subscription_time = 3600;
 	mwi_vm_address.clear();
 	im_max_sessions = 10;
+	im_send_iscomposing = true;
 	pres_subscription_time = 3600;
 	pres_publication_time = 3600;
 	pres_publish_startup = true;
@@ -508,8 +514,10 @@ t_user::t_user(const t_user &u) {
 	nat_public_ip = u.nat_public_ip;
 	use_stun = u.use_stun;
 	stun_server = u.stun_server;
+	persistent_tcp = u.persistent_tcp;
 	timer_noanswer = u.timer_noanswer;
 	timer_nat_keepalive = u.timer_nat_keepalive; 
+	timer_tcp_ping = u.timer_tcp_ping;
 	display_useronly_phone = u.display_useronly_phone;
 	numerical_user_is_phone = u.numerical_user_is_phone;
 	remove_special_phone_symbols = u.remove_special_phone_symbols;
@@ -536,6 +544,7 @@ t_user::t_user(const t_user &u) {
 	mwi_subscription_time = u.mwi_subscription_time;
 	mwi_vm_address = u.mwi_vm_address;
 	im_max_sessions = u.im_max_sessions;
+	im_send_iscomposing = u.im_send_iscomposing;
 	pres_subscription_time = u.pres_subscription_time;
 	pres_publication_time = u.pres_publication_time;
 	pres_publish_startup = u.pres_publish_startup;
@@ -1097,6 +1106,11 @@ t_url t_user::get_stun_server(void) const {
 	return result;
 }
 
+bool t_user::get_persistent_tcp(void) const {
+	t_mutex_guard guard(mtx_user);
+	return persistent_tcp;
+}
+
 unsigned short t_user::get_timer_noanswer(void) const {
 	unsigned short result;
 	mtx_user.lock();
@@ -1105,12 +1119,17 @@ unsigned short t_user::get_timer_noanswer(void) const {
 	return result;
 }
 
-unsigned long t_user::get_timer_nat_keepalive(void) const {
+unsigned short t_user::get_timer_nat_keepalive(void) const {
 	unsigned short result;
 	mtx_user.lock();
 	result = timer_nat_keepalive;
 	mtx_user.unlock();
 	return result;
+}
+
+unsigned short t_user::get_timer_tcp_ping(void) const {
+	t_mutex_guard guard(mtx_user);
+	return timer_tcp_ping;
 }
  
 bool t_user::get_display_useronly_phone(void) const {
@@ -1319,6 +1338,11 @@ unsigned short t_user::get_im_max_sessions(void) const {
 	result = im_max_sessions;
 	mtx_user.unlock();
 	return result;
+}
+
+bool t_user::get_im_send_iscomposing(void) const {
+	t_mutex_guard guard(mtx_user);
+	return im_send_iscomposing;
 }
 
 unsigned long t_user::get_pres_subscription_time(void) const {
@@ -1758,6 +1782,11 @@ void t_user::set_stun_server(const t_url &url) {
 	mtx_user.unlock();
 }
 
+void t_user::set_persistent_tcp(bool b) {
+	t_mutex_guard guard(mtx_user);
+	persistent_tcp = b;
+}
+
 void t_user::set_timer_noanswer(unsigned short timer) {
 	mtx_user.lock();
 	timer_noanswer = timer;
@@ -1768,6 +1797,11 @@ void t_user::set_timer_nat_keepalive(unsigned short timer) {
 	mtx_user.lock();
 	timer_nat_keepalive = timer;
 	mtx_user.unlock();
+}
+
+void t_user::set_timer_tcp_ping(unsigned short timer) {
+	t_mutex_guard guard(mtx_user);
+	timer_tcp_ping = timer;
 }
 
 void t_user::set_display_useronly_phone(bool b) {
@@ -1924,6 +1958,11 @@ void t_user::set_im_max_sessions(unsigned short max_sessions) {
 	mtx_user.lock();
 	im_max_sessions = max_sessions;
 	mtx_user.unlock();
+}
+
+void t_user::set_im_send_iscomposing(bool b) {
+	t_mutex_guard guard(mtx_user);
+	im_send_iscomposing = b;
 }
 
 void t_user::set_pres_subscription_time(unsigned long t) {
@@ -2151,10 +2190,14 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			nat_public_ip = value;
 		} else if (parameter == FLD_STUN_SERVER) {
 			use_stun = set_server_value(stun_server, "stun", value);
+		} else if (parameter == FLD_PERSISTENT_TCP) {
+			persistent_tcp = yesno2bool(value);
 		} else if (parameter == FLD_TIMER_NOANSWER) {
 			timer_noanswer = atoi(value.c_str());
 		} else if (parameter == FLD_TIMER_NAT_KEEPALIVE) {
 			timer_nat_keepalive = atoi(value.c_str());
+		} else if (parameter == FLD_TIMER_TCP_PING) {
+			timer_tcp_ping = atoi(value.c_str());
 		} else if (parameter == FLD_EXT_100REL) {
 			ext_100rel = str2ext_support(value);
 			if (ext_100rel == EXT_INVALID) {
@@ -2295,6 +2338,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			mwi_vm_address = value;
 		} else if (parameter == FLD_IM_MAX_SESSIONS) {
 			im_max_sessions = atoi(value.c_str());
+		} else if (parameter == FLD_IM_SEND_ISCOMPOSING) {
+			im_send_iscomposing = yesno2bool(value);
 		} else if (parameter == FLD_PRES_SUBSCRIPTION_TIME) {
 			pres_subscription_time = atol(value.c_str());
 		} else if (parameter == FLD_PRES_PUBLICATION_TIME) {
@@ -2545,12 +2590,14 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	} else {
 		config << FLD_STUN_SERVER << '=' << endl;
 	}
+	config << FLD_PERSISTENT_TCP << '=' << bool2yesno(persistent_tcp) << endl;
 	config << endl;
 
 	// Write TIMER settings
 	config << "# TIMERS\n";
 	config << FLD_TIMER_NOANSWER << '=' << timer_noanswer << endl;
 	config << FLD_TIMER_NAT_KEEPALIVE << '=' << timer_nat_keepalive << endl;
+	config << FLD_TIMER_TCP_PING << '=' << timer_tcp_ping << endl;
 	config << endl;
 
 	// Write ADDRESS FORMAT settings
@@ -2620,6 +2667,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	
 	config << "# INSTANT MESSAGE\n";
 	config << FLD_IM_MAX_SESSIONS << '=' << im_max_sessions << endl;
+	config << FLD_IM_SEND_ISCOMPOSING << '=' << bool2yesno(im_send_iscomposing) << endl;
 	config << endl;
 	
 	// Write presence settings

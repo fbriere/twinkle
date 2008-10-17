@@ -22,7 +22,11 @@
 #include "twinkle_config.h"
 #include "parser/hdr_supported.h"
 
+/** Carriage Return Line Feed */
 #define CRLF		"\r\n"
+
+/** TCP PING packet to be sent on a TCP connection. */
+#define TCP_PING_PACKET	CRLF CRLF
 
 // Name and version of the softphone
 #define PRODUCT_NAME	"Twinkle"
@@ -113,6 +117,7 @@ enum t_sip_timer {
 enum t_phone_timer {
 	PTMR_REGISTRATION,	/**< Registration (failure) timeout */
 	PTMR_NAT_KEEPALIVE,	/**< NAT binding refresh timeout for STUN */
+	PTMR_TCP_PING,		/**< TCP ping interval */
 };
 
 /** UA (line) timers */
@@ -144,26 +149,39 @@ enum t_stun_timer {
 };
 
 
-// No answer timer (ms)
+/** No answer timer (ms) */
 #define DUR_NO_ANSWER(u)	((u)->get_timer_noanswer() * 1000)
 
-// Registration timers (s)
-// Registration duration (seconds)
+/** @name Registration timers */
+//@{
+/** Registration duration (seconds) */
 #define DUR_REGISTRATION(u)	((u)->get_registration_time())
-#define RE_REGISTER_DELTA	5   // Re-register 5 seconds before expiry
-#define DUR_REG_FAILURE         30  // Re-registration interval after reg. failure
 
-// NAT keepalive timer (s) default value
+/**< Re-register 5 seconds before expiry **/
+#define RE_REGISTER_DELTA	5
+
+/** Re-registration interval after reg. failure */
+#define DUR_REG_FAILURE         30
+//@}
+
+/** NAT keepalive timer (s) default value */
 #define DUR_NAT_KEEPALIVE	30
 
-// re-INVITE guard timer (ms). This timer guards against the situation
-// where a UAC has sent a re-INVITE, received a 1XX but never receives
-// a final response. No timer for this is defined in RFC 3261
+/** Default TCP ping interval (s) */
+#define DUR_TCP_PING		30
+
+/**
+ * re-INVITE guard timer (ms). This timer guards against the situation
+ * where a UAC has sent a re-INVITE, received a 1XX but never receives
+ * a final response. No timer for this is defined in RFC 3261
+ */
 #define DUR_RE_INVITE_GUARD	10000
 
-// Guard for situation where CANCEL has been 
-// responded to, but 487 on INVITE is never eceived.
-// This situation is not defined by RFC 3261
+/**
+ * Guard for situation where CANCEL has been 
+ * responded to, but 487 on INVITE is never eceived.
+ * This situation is not defined by RFC 3261
+ */
 #define DUR_CANCEL_GUARD	(64 * DURATION_T1)
 
 // MWI timers (s)
@@ -283,24 +301,53 @@ enum t_stun_timer {
 // Set Accept header with accepted body types
 #define SET_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
 				  "sdp")); }
+				  
+/** 
+ * Check if the content type of an instant message is supported 
+ * @param h [in] A SIP message.
+ */
+#define MESSAGE_CONTENT_TYPE_SUPPORTED(h)\
+				((h).hdr_content_type.media.type == "application" ||\
+				 (h).hdr_content_type.media.type == "audio" ||\
+				 (h).hdr_content_type.media.type == "image" ||\
+				 (h).hdr_content_type.media.type == "text" ||\
+				 (h).hdr_content_type.media.type == "video")
 				 
-/** Set Accept header with accepted body types for messaging. */
-#define SET_MESSAGE_HDR_ACCEPT(h)	{ (h).add_media(t_media("text", "plain"));\
-					  (h).add_media(t_media("text", "html")); }
+/** 
+ * Set Accept header with accepted body types for instant messaging. 
+ * @param h [inout] A SIP message.
+ */
+#define SET_MESSAGE_HDR_ACCEPT(h)	{ (h).add_media(t_media("application/*"));\
+					  (h).add_media(t_media("audio/*"));\
+					  (h).add_media(t_media("image/*"));\
+					  (h).add_media(t_media("text/*"));\
+					  (h).add_media(t_media("video/*")); }
 
-/** Set Accept header with accepted body types for presence. */
+/** 
+ * Set Accept header with accepted body types for presence.
+ * @param h [inout] A SIP message.
+ */
 #define SET_PRESENCE_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
 				  "pidf+xml")); }
 				  
-/** Set Accept header with accepted body types for MWI. */
+/** 
+ * Set Accept header with accepted body types for MWI. 
+ * @param h [inout] A SIP message.
+ */
 #define SET_MWI_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
 				  "simple-message-summary")); }
 
-/** Set Accept-Encoding header with accepted encodings. */
+/** 
+ * Set Accept-Encoding header with accepted encodings. 
+ * @param h [inout] A SIP message.
+ */
 #define SET_HDR_ACCEPT_ENCODING(h)\
 				{ (h).add_coding(t_coding("identity")); }
 				
-/** Check if content encoding is supported */
+/** 
+ * Check if content encoding is supported 
+ * @param h [inout] A SIP message.
+ */
 #define CONTENT_ENCODING_SUPPORTED(ce)\
 				(cmp_nocase(ce, "identity") == 0)
 

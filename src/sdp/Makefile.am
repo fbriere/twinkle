@@ -1,5 +1,6 @@
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/src
+	-I$(top_srcdir)/src\
+	$(XML2_CFLAGS)
 
 AM_YFLAGS = -p yysdp -d
 AM_LFLAGS = -Pyysdp -olex.yy.c -i

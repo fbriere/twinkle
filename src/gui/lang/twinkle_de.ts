@@ -783,6 +783,10 @@
         <source>Accepted by network</source>
         <translation>Akzeptiert durch Netzwerk</translation>
     </message>
+    <message>
+        <source>Failed to save message attachment: %1</source>
+        <translation>Fehler beim Speichern des Nachrichtenanhangs: &quot;%1&quot;</translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1298,7 +1302,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>The exchanged messages.</source>
-        <translation>Die gesendeten und empfangenen Nachrichten. Gesendete schwarz, empfangene blau.</translation>
+        <translation type="obsolete">Die gesendeten und empfangenen Nachrichten. Gesendete schwarz, empfangene blau.</translation>
     </message>
     <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
@@ -1323,6 +1327,46 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Delivery notification</source>
         <translation>Übertragungsbestätigung</translation>
+    </message>
+    <message>
+        <source>Instant message toolbar</source>
+        <translation>Instant Message Werkzeugleiste</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Sende Datei...</translation>
+    </message>
+    <message>
+        <source>Send file</source>
+        <translation>Sende Datei</translation>
+    </message>
+    <message>
+        <source>image size is scaled down in preview</source>
+        <translation>Bild in Vorschau verkleinert</translation>
+    </message>
+    <message>
+        <source>Open with %1...</source>
+        <translation>Öffnen mit %1...</translation>
+    </message>
+    <message>
+        <source>Open with...</source>
+        <translation>Öffnen mit...</translation>
+    </message>
+    <message>
+        <source>Save attachment as...</source>
+        <translation>Anhang speichern unter...</translation>
+    </message>
+    <message>
+        <source>File already exists. Do you want to overwrite this file?</source>
+        <translation>Datei dieses Namens existiert bereits! Löschen und durch neue Datei ersetzen?</translation>
+    </message>
+    <message>
+        <source>Failed to save attachment.</source>
+        <translation>Fehler beim Speichern des Anhangs.</translation>
+    </message>
+    <message>
+        <source>%1 is typing a message.</source>
+        <translation>%1 schreibt gerade eine Nachricht.</translation>
     </message>
 </context>
 <context>
@@ -2624,6 +2668,49 @@ Please select a profile.</source>
     </message>
 </context>
 <context>
+    <name>SendFileForm</name>
+    <message>
+        <source>Twinkle - Send File</source>
+        <translation>Twinkle - Sende Datei</translation>
+    </message>
+    <message>
+        <source>Select file to send.</source>
+        <translation>Dateiauswahl für Senden.</translation>
+    </message>
+    <message>
+        <source>&amp;File:</source>
+        <translation>&amp;Datei:</translation>
+    </message>
+    <message>
+        <source>&amp;Subject:</source>
+        <translation>&amp;Betreff:</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation>Alt+O</translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>Abbruch (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation>Alt+C</translation>
+    </message>
+    <message>
+        <source>File does not exist.</source>
+        <translation>Datei existiert nicht.</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Sende Datei...</translation>
+    </message>
+</context>
+<context>
     <name>SrvRedirectForm</name>
     <message>
         <source>Twinkle - Call Redirection</source>
@@ -3494,7 +3581,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Translated to english by &lt;your name&gt;</source>
-        <translation>Deutsche Übersetzung: ©20080308-0105 Reisenweber tech+it-consult&lt;br&gt;
+        <translation>Deutsche Übersetzung: ©left 20080810-0830 Reisenweber tech+it-consult&lt;br&gt;
 joerg.twinklephone(AT)gmx.de</translation>
     </message>
     <message>
@@ -3656,6 +3743,18 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
     <message>
         <source>Cannot receive incoming TCP connections.</source>
         <translation>Kann eingehende TCP-Verbindungen nicht annehmen.</translation>
+    </message>
+    <message>
+        <source>Failed to create file %1</source>
+        <translation>Fehler beim Anlegen  der Datei &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>Failed to write data to file %1</source>
+        <translation>Fehler beim Schreiben in Datei &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>Failed to send message.</source>
+        <translation>Fehler beim Senden der Nachricht.</translation>
     </message>
 </context>
 <context>
@@ -5456,6 +5555,22 @@ Sie können diese Einstellung auf 0 setzen, wenn Sie keine ankommenden Instant M
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
         <translation>&amp;STUN benutzen (wirkungslos für eingehende TCP-Verbindungen)</translation>
+    </message>
+    <message>
+        <source>P&amp;ersistent TCP connection</source>
+        <translation>TCP-V&amp;erbindung aufrecht erhalten</translation>
+    </message>
+    <message>
+        <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
+        <translation>Wenn aktiviert: Twinkle hält die TCP-Verbindung aufrecht, die bei der Registrierung verwendet wurde. So kann der SIP-Proxy diese Verbindung weiterhin benutzen, um ankommende Anfragen an Twinkle weiterzuleiten. Durch Senden von &quot;Application ping Paketen&quot; wird ständig überprüft, ob die Verbindung weiterhin besteht.</translation>
+    </message>
+    <message>
+        <source>&amp;Send composing indications when typing a message.</source>
+        <translation>&amp;Sende &quot;compositing indication&quot; beim Schreiben einer Nachricht.</translation>
+    </message>
+    <message>
+        <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
+        <translation>Wenn aktiviert, sendet Twinkle eine &quot;compositing indication&quot; wenn Sie eine Nachricht tippen. So kann der Empfänger erkennen, dass Sie gerade dabei sind, eine Nachricht zu verfassen.</translation>
     </message>
 </context>
 <context>

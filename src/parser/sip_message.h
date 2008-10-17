@@ -86,8 +86,8 @@
 #include "sip_body.h"
 
 // Macro's to access the body of a message, eg msg.sdp_body
-#define sdp_body	((t_sdp *)body)
-#define opaque_body	((t_sip_body_opaque)*body)
+#define SDP_BODY	((t_sdp *)body)
+#define OPAQUE_BODY	((t_sip_body_opaque)*body)
 
 using namespace std;
 
@@ -228,6 +228,14 @@ public:
 	 * @post If a body was already present then it is deleted.
 	 */
 	void set_body_plain_text(const string &text, const string &charset);
+	
+	/**
+	 * Set a body with the contents of a file.
+	 * @param filename [in] The name of the file.
+	 * @param media [in] The mime type of the contents.
+	 * @return True of body is set, false if file could not be read.
+	 */
+	bool set_body_from_file(const string &filename, const t_media &media);
 	
 	/**
 	 * Get the size of an encoded SIP message.

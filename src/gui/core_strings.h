@@ -12,10 +12,6 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Warning:"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Failed to create log file %1 ."))
 
 // call_history.cpp
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for reading: %1"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while reading file %1 ."))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for writing: %1"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while writing file %1 ."))
 _ZAP(QT_TRANSLATE_NOOP("CoreCallHistory", "local user"))
 _ZAP(QT_TRANSLATE_NOOP("CoreCallHistory", "remote user"))
 _ZAP(QT_TRANSLATE_NOOP("CoreCallHistory", "failure"))
@@ -44,6 +40,9 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file %1 ."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "%1 is not set to your home directory."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Directory %1 (%2) does not exist."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot create directory %1 ."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot create directory %1 ."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Failed to create file %1"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Failed to write data to file %1"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Lock file %1 already exist, but cannot be opened."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "%1 is already running.\nLock file %2 already exists."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot create %1 ."))
@@ -86,6 +85,10 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot set sound card sample rate to %1")
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Opening ALSA driver failed"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM playback"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM capture"))
+
+// msg_session.cpp
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Failed to send message."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Failed to send message."))
 
 // stun_transaction.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot resolve STUN server: %1"))

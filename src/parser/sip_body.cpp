@@ -19,7 +19,9 @@
 #include "sip_body.h"
 
 #include <list>
+#include <cassert>
 #include <cstdlib>
+#include "log.h"
 #include "protocol.h"
 #include "sip_message.h"
 #include "util.h"
@@ -38,13 +40,100 @@ bool t_sip_body::local_ip_check(void) const {
 	return true;
 }
 
+size_t t_sip_body::get_encoded_size(void) const {
+	return encode().size();
+}
+
+////////////////////////////////////
+// class t_sip_xml_body
+////////////////////////////////////
+
+void t_sip_body_xml::create_xml_doc(const string &xml_version, const string &charset) {
+	clear_xml_doc();
+	
+	// XML doc
+	xml_doc = xmlNewDoc(BAD_CAST xml_version.c_str());
+	MEMMAN_NEW(xml_doc);
+	xml_doc->encoding = xmlCharStrdup(charset.c_str());
+}
+
+void t_sip_body_xml::clear_xml_doc(void) {
+	if (xml_doc) {
+		MEMMAN_DELETE(xml_doc);
+		xmlFreeDoc(xml_doc);
+		xml_doc = NULL;
+	}
+}
+
+void t_sip_body_xml::copy_xml_doc(t_sip_body_xml *to_body) const {
+	if (to_body->xml_doc) {
+		to_body->clear_xml_doc();
+	}
+	
+	if (xml_doc) {
+		to_body->xml_doc = xmlCopyDoc(xml_doc, 1);
+		if (!to_body->xml_doc) {
+			log_file->write_report("Failed to copy xml document.",
+				"t_sip_body_xml::copy",
+				LOG_NORMAL, LOG_CRITICAL);
+		} else {
+			MEMMAN_NEW(to_body->xml_doc);
+		}
+	}
+}
+
+t_sip_body_xml::t_sip_body_xml() : t_sip_body(),
+	xml_doc(NULL)
+{}
+
+t_sip_body_xml::~t_sip_body_xml() {
+	clear_xml_doc();
+}
+
+string t_sip_body_xml::encode(void) const {
+	if (!xml_doc) {
+		t_sip_body_xml *self = const_cast<t_sip_body_xml *>(this);
+		self->create_xml_doc();
+	}
+	assert(xml_doc);
+	
+	xmlChar *buf;
+	int buf_size;
+	
+	xmlDocDumpMemory(xml_doc, &buf, &buf_size);
+	string result((char*)buf);
+	xmlFree(buf);
+	
+	return result;
+}
+
+bool t_sip_body_xml::parse(const string &s) {
+	assert(xml_doc == NULL);
+
+	xml_doc = xmlReadMemory(s.c_str(), s.size(), "noname.xml", NULL, 
+		XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
+	if (!xml_doc) {
+		log_file->write_report("Failed to parse xml document.",
+			"t_sip_body_xml::parse",
+			LOG_NORMAL, LOG_WARNING);
+	} else {
+		MEMMAN_NEW(xml_doc);
+	}
+	
+	return (xml_doc != NULL);
+}
+
 ////////////////////////////////////
 // class t_sip_body_opaque
 ////////////////////////////////////
 
-t_sip_body_opaque::t_sip_body_opaque(string s) : t_sip_body() {
-	opaque = s;
-}
+t_sip_body_opaque::t_sip_body_opaque() : t_sip_body()
+{}
+
+t_sip_body_opaque::t_sip_body_opaque(string s) : 
+	t_sip_body(),
+	opaque(s)
+{}
 
 string t_sip_body_opaque::encode(void) const {
 	return opaque;
@@ -62,6 +151,10 @@ t_body_type t_sip_body_opaque::get_type(void) const {
 
 t_media t_sip_body_opaque::get_media(void) const {
 	return t_media("application", "octet-stream");
+}
+
+size_t t_sip_body_opaque::get_encoded_size(void) const {
+	return opaque.size();
 }
 
 ////////////////////////////////////
@@ -170,6 +263,10 @@ bool t_sip_body_dtmf_relay::parse(const string &s) {
 // class t_sip_body_plain_text
 ////////////////////////////////////
 
+t_sip_body_plain_text::t_sip_body_plain_text() :
+	t_sip_body()
+{}
+
 t_sip_body_plain_text::t_sip_body_plain_text(const string &_text) :
 	t_sip_body(),
 	text(_text)
@@ -191,6 +288,10 @@ t_body_type t_sip_body_plain_text::get_type(void) const {
 
 t_media t_sip_body_plain_text::get_media(void) const {
 	return t_media("text", "plain");
+}
+
+size_t t_sip_body_plain_text::get_encoded_size(void) const {
+	return text.size();
 }
 
 ////////////////////////////////////
@@ -218,4 +319,8 @@ t_body_type t_sip_body_html_text::get_type(void) const {
 
 t_media t_sip_body_html_text::get_media(void) const {
 	return t_media("text", "html");
+}
+
+size_t t_sip_body_html_text::get_encoded_size(void) const {
+	return text.size();
 }

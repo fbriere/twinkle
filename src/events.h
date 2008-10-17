@@ -31,6 +31,7 @@
 #include "audio/audio_codecs.h"
 #include "parser/sip_message.h"
 #include "sockets/socket.h"
+#include "sockets/url.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
 
@@ -55,6 +56,8 @@ enum t_event_type {
 	EV_ICMP,		/**< ICMP error */
 	EV_UI,			/**< User interface event */
 	EV_ASYNC_RESPONSE,	/**< Response on an asynchronous question */
+	EV_BROKEN_CONNECTION,	/**< Persitent connection to SIP proxy broken */
+	EV_TCP_PING,		/**< Send a TCP ping (double CRLF) */
 };
 
 /** Abstract parent class for all events */
@@ -562,6 +565,56 @@ public:
 	bool get_bool_response(void) const;
 };
 
+/**
+ * Broken connection event.
+ * A persistent connection to a SIP proxy is broken. With this event
+ * the transport layer signals the transaction layer that a connection
+ * is broken.
+ */
+class t_event_broken_connection : public t_event {
+private:
+	/** The user URI (AoR) that the connection was associated with. */
+	t_url		user_uri_;
+	
+public:
+	/** Constructor */
+	t_event_broken_connection(const t_url &url);
+	
+	t_event_type get_type(void) const;
+	
+	/**
+	 * Get the user URI.
+	 * @return The user URI.
+	 */
+	t_url get_user_uri(void) const;
+};
+
+/**
+ * TCP ping event.
+ * Send a TCP ping (double CRLF).
+ */
+class t_event_tcp_ping : public t_event {
+private:
+	/** The user URI (AoR) for which the ping must be sent. */
+	t_url		user_uri_;
+	
+	unsigned int	dst_addr_;	/**< Destination address for ping (host order) */
+	unsigned short	dst_port_;	/**< Destination port (host order) */
+	
+public:
+	/** Constructor */
+	t_event_tcp_ping(const t_url &url, unsigned int dst_addr, unsigned short dst_port);
+	
+	t_event_type get_type(void) const;
+	
+	/** @name Getters */
+	//@{
+	t_url get_user_uri(void) const;
+	unsigned int get_dst_addr(void) const;
+	unsigned short get_dst_port(void) const;
+	//@}
+};
+
 
 /**
  * Event queue.
@@ -728,6 +781,20 @@ public:
 	 * @param permission [in] Permission allowed?.
 	 */
 	void push_refer_permission_response(bool permission);
+	
+	/**
+	 * Create a broken connection event.
+	 * @param user_uri [in] The user URI (AoR) associated with the connection.
+	 */
+	void push_broken_connection(const t_url &user_uri);
+	
+	/**
+	 * Create a TCP ping event.
+	 * @param user_uri [in] The user URI (AoR) for which the TCP ping must be sent.
+	 * @param dst_addr [in] The destination IPv4 address for the ping.
+	 * @param dst_port [in] The destination TCP port for the ping.
+	 */
+	void push_tcp_ping(const t_url &user_uri, unsigned int dst_addr, unsigned short dst_port);
 
 	/**
 	 * Pop an event from the queue. 

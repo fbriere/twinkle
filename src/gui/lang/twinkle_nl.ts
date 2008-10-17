@@ -783,6 +783,10 @@
         <source>Accepted by network</source>
         <translation>Geaccepteerd door netwerk</translation>
     </message>
+    <message>
+        <source>Failed to save message attachment: %1</source>
+        <translation>Opslaan van bijlage %1 mislukt</translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1300,7 +1304,7 @@ Met deze optie verzoekt u uw SIP provider om uw identiteit verborgen te houden v
     </message>
     <message>
         <source>The exchanged messages.</source>
-        <translation>De uitgewisselde berichten.</translation>
+        <translation type="obsolete">De uitgewisselde berichten.</translation>
     </message>
     <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
@@ -1325,6 +1329,46 @@ Met deze optie verzoekt u uw SIP provider om uw identiteit verborgen te houden v
     <message>
         <source>Delivery notification</source>
         <translation>Aflevernotificatie</translation>
+    </message>
+    <message>
+        <source>Instant message toolbar</source>
+        <translation>Instant berichten</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Zend bestand...</translation>
+    </message>
+    <message>
+        <source>Send file</source>
+        <translation>Zend bestand</translation>
+    </message>
+    <message>
+        <source>image size is scaled down in preview</source>
+        <translation>plaatje is verkleind voor preview</translation>
+    </message>
+    <message>
+        <source>Open with %1...</source>
+        <translation>Openen met %1...</translation>
+    </message>
+    <message>
+        <source>Open with...</source>
+        <translation>Openen met...</translation>
+    </message>
+    <message>
+        <source>Save attachment as...</source>
+        <translation>Bijlage opslaan als...</translation>
+    </message>
+    <message>
+        <source>File already exists. Do you want to overwrite this file?</source>
+        <translation>Bestand bestaat al. Wilt u dit bestand overschrijven?</translation>
+    </message>
+    <message>
+        <source>Failed to save attachment.</source>
+        <translation>Opslaan bijlage mislukt.</translation>
+    </message>
+    <message>
+        <source>%1 is typing a message.</source>
+        <translation>%1 schrijft een bericht.</translation>
     </message>
 </context>
 <context>
@@ -2617,6 +2661,49 @@ Kies eerst een gebruikersprofiel.</translation>
     </message>
 </context>
 <context>
+    <name>SendFileForm</name>
+    <message>
+        <source>Twinkle - Send File</source>
+        <translation>Twinkle - Zend bestand</translation>
+    </message>
+    <message>
+        <source>Select file to send.</source>
+        <translation>Kies het bestand dat u wilt zenden.</translation>
+    </message>
+    <message>
+        <source>&amp;File:</source>
+        <translation>&amp;Bestand:</translation>
+    </message>
+    <message>
+        <source>&amp;Subject:</source>
+        <translation>O&amp;nderwerp:</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>Ann&amp;uleren</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File does not exist.</source>
+        <translation>Bestand bestaat niet.</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Zend bestand...</translation>
+    </message>
+</context>
+<context>
     <name>SrvRedirectForm</name>
     <message>
         <source>Twinkle - Call Redirection</source>
@@ -3652,6 +3739,18 @@ en creëer de volgende statische UDP mapping in uw NAT.</translation>
     <message>
         <source>Cannot receive incoming TCP connections.</source>
         <translation>Kan geen inkomende TCP verbindingen ontvangen.</translation>
+    </message>
+    <message>
+        <source>Failed to create file %1</source>
+        <translation>Creëren van bestand %1 mislukt</translation>
+    </message>
+    <message>
+        <source>Failed to write data to file %1</source>
+        <translation>Schrijven naar bestand %1 mislukt</translation>
+    </message>
+    <message>
+        <source>Failed to send message.</source>
+        <translation>Zenden bericht mislukt.</translation>
     </message>
 </context>
 <context>
@@ -5432,6 +5531,22 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
         <translation>&amp;STUN (werkt niet voor inkomend TCP verkeer)</translation>
+    </message>
+    <message>
+        <source>P&amp;ersistent TCP connection</source>
+        <translation>P&amp;ersistente TCP verbinding</translation>
+    </message>
+    <message>
+        <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
+        <translation>De TCP verbinding die opgezet wordt tijdens registratie blijft open, zodat de SIP proxy deze verbinding kan gebruiken om binnenkomende verzoeken te sturen. Ping pakketten worden gestuurd om te testen of de verbinding nog bestaat.</translation>
+    </message>
+    <message>
+        <source>&amp;Send composing indications when typing a message.</source>
+        <translation>&amp;Zend indicaties als u een bericht aan het schrijven bent.</translation>
+    </message>
+    <message>
+        <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
+        <translation>Twinkle stuurt een compositie indicatie als u een bericht aan het schrijven bent. De ontvanger van uw bericht kan dan zien dat u bezig bent met schrijven.</translation>
     </message>
 </context>
 <context>

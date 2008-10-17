@@ -85,8 +85,8 @@ twinkle_DEPENDENCIES = libtwinkle.a \
 	$(top_builddir)/src/im/libim.a \
 	$(top_builddir)/src/presence/libpresence.a \
 	$(top_builddir)/src/patterns/libpatterns.a \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(top_builddir)/src/utils/libutils.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -253,6 +253,8 @@ X_PRE_LIBS = @X_PRE_LIBS@
 X_RPATH = @X_RPATH@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
+ZRTP_CFLAGS = @ZRTP_CFLAGS@
+ZRTP_LIBS = @ZRTP_LIBS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 all_includes = @all_includes@
@@ -357,10 +359,12 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/im/libim.a\
         $(top_builddir)/src/presence/libpresence.a\
         $(top_builddir)/src/patterns/libpatterns.a\
+        $(top_builddir)/src/utils/libutils.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
-	-lsndfile
+	-lsndfile\
+	-lmagic
 
 libtwinkle_a_SOURCES = \
 	abstract_dialog.cpp\

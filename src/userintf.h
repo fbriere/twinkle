@@ -28,6 +28,7 @@
 #include "parser/response.h"
 #include "audio/tone_gen.h"
 #include "threads/thread.h"
+#include "im/msg_session.h"
 #include "presence/presence_state.h"
 
 #include "twinkle_config.h"
@@ -163,7 +164,7 @@ protected:
 	virtual void do_user(const string &profile_name);
 	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
 	virtual bool do_message(const string &destination, const string &display,
-		const string &text);
+		const im::t_msg &msg);
 	virtual void do_presence(t_presence_state::t_basic_state basic_state);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
@@ -372,8 +373,26 @@ public:
 	 * Incoming MESSAGE response callback.
 	 * @param user_config [in] User profile of the user receiving this MESSAGE response.
 	 * @param r [in] The MESSAGE response.
+	 * @param req [in] The MESSAGE request for which the response is received.
 	 */
-	virtual void cb_message_response(t_user *user_config, t_response *r);
+	virtual void cb_message_response(t_user *user_config, t_response *r, t_request *req);
+	
+	/**
+	 * Incoming MESSAGE request with composing indication callback.
+	 * @param user_config [in] User profile of the user receiving this MESSAGE response.
+	 * @param r [in] The MESSAGE request containing the composing indication.
+	 * @param state [in] The message composing state.
+	 * @param refresh [in] The refresh interval in seconds when state is active.
+	 */
+	virtual void cb_im_iscomposing_request(t_user *user_config, t_request *r,
+			im::t_composing_state state, time_t refresh);
+		
+	/** 
+	 * Indication that the far-end does not support message composing indications.
+	 * @param user_config [in] User profile of the user receiving this MESSAGE response.
+	 * @param r [in] The MESSAGE response on the composing indication.
+	 */
+	virtual void cb_im_iscomposing_not_supported(t_user *user_config, t_response *r);
 	//@}
 
 	// Get last call information

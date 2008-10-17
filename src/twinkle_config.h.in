@@ -34,6 +34,9 @@
 /* Define if you have libjpeg */
 #undef HAVE_LIBJPEG
 
+/* Define to 1 if you have the `magic' library (-lmagic). */
+#undef HAVE_LIBMAGIC
+
 /* Define if you have libpng */
 #undef HAVE_LIBPNG
 

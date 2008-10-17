@@ -1,5 +1,4 @@
-AM_CPPFLAGS = \
-	-I$(top_srcdir)/src
+AM_CPPFLAGS = $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 # bison flags
 AM_YFLAGS = -d

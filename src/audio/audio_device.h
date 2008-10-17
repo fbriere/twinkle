@@ -44,6 +44,10 @@ public:
 	virtual int get_buffer_space(bool is_recording_buffer) = 0;
 	// Returns the size of the hardware buffer
 	virtual int get_buffer_size(bool is_recording_buffer) = 0;
+	
+	/** Check if a play buffer underrun occurred. */
+	virtual bool play_buffer_underrun(void) = 0;
+	
 	virtual int read(unsigned char* buf, int len) = 0;
 	virtual int write(const unsigned char* buf, int len) = 0;
 	virtual int get_sample_rate(void) const;
@@ -73,6 +77,7 @@ public:
 	void flush(bool playback_buffer, bool recording_buffer);
 	int get_buffer_space(bool is_recording_buffer);
 	int get_buffer_size(bool is_recording_buffer);
+	bool play_buffer_underrun(void);
 	int read(unsigned char* buf, int len);
 	int write(const unsigned char* buf, int len);
 protected:
@@ -93,6 +98,7 @@ public:
 	void flush(bool playback_buffer, bool recording_buffer);
 	int get_buffer_space(bool is_recording_buffer);
 	int get_buffer_size(bool is_recording_buffer);
+	bool play_buffer_underrun(void);
 	int read(unsigned char* buf, int len);
 	int write(const unsigned char* buf, int len);
 protected:

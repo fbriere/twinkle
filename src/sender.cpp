@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 #include "events.h"
 #include "log.h"
+#include "phone.h"
 #include "sender.h"
 #include "translator.h"
 #include "userintf.h"
@@ -40,10 +41,17 @@
 
 #define MAX_TRANSMIT_RETRIES	3
 
+// Maximum size of a message to be sent over an existing connection.
+// For larger message always a new connection is opened to avoid
+// head of line blocking.
+#define MAX_REUSE_CONN_SIZE	10240
+
 extern t_socket_udp *sip_socket;
 extern t_connection_table *connection_table;
 extern t_event_queue *evq_sender;
 extern t_event_queue *evq_trans_mgr;
+extern t_event_queue *evq_trans_layer;
+extern t_phone *phone;
 
 // Number of consecutive non-icmp errors received
 static int num_non_icmp_errors = 0;
@@ -191,7 +199,7 @@ static void send_sip_tcp(t_event *event) {
 		sip_msg->hdr_via.via_list.front().transport = "TCP";
 	}
 	
-	t_connection *conn = connection_table->get_connection(dst_addr, dst_port);
+	t_connection *conn = NULL;
 	
 	// If a connection exists then re-use this connection. Otherwise a new connection
 	// must be opened.
@@ -199,6 +207,16 @@ static void send_sip_tcp(t_event *event) {
 	// must be opened.
 	// For a response a connection to the sent-by address and port in the Via header
 	// must be opened.
+	
+	if (sip_msg->get_encoded_size() <= MAX_REUSE_CONN_SIZE) {
+		// Re-use a connection only for small messages. Large messages cause
+		// head of line blocking.
+		conn = connection_table->get_connection(dst_addr, dst_port);
+	} else {
+		log_file->write_report(
+			"Open new connection for large message.",
+			"::send_sip_tcp", LOG_SIP, LOG_DEBUG);
+	}
 	
 	if (!conn) {
 		if (sip_msg->get_type() == MSG_RESPONSE) {
@@ -243,10 +261,44 @@ static void send_sip_tcp(t_event *event) {
 		conn = new t_connection(tcp);
 		MEMMAN_NEW(conn);
 		
+		// For large messages always a new connection is established.
+		// No other messages should be sent via this connection to avoid
+		// head of line blocking.
+		if (sip_msg->get_encoded_size() > MAX_REUSE_CONN_SIZE) {
+			conn->set_reuse(false);
+		}
+		
 		new_connection = true;
 	}
 		
 	// NOTE: if an existing connection was found, the connection table is now locked.
+	
+	// If persistent TCP connections are required, then
+	// 1) If the SIP message is a registration request, then add the URI from the To-header 
+	//    to the registered URI set of the connection.
+	// 2) If the SIP message is a de-registration request then remove the URI from the
+	//    To-header from the registered URI set of the connection.
+	if (sip_msg->get_type() == MSG_REQUEST) {
+		t_request *req = dynamic_cast<t_request *>(sip_msg);
+		if (req->method == REGISTER) 
+		{
+			t_phone_user *pu = phone->find_phone_user(req->hdr_to.uri);
+			if (pu) {
+				t_user *user_config = pu->get_user_profile();
+				assert(user_config);
+				
+				if (user_config->get_persistent_tcp()) {
+					conn->update_registered_uri_set(req);
+				}
+			} else {
+				log_file->write_header("::send_sip_tcp", LOG_NORMAL, LOG_WARNING);
+				log_file->write_raw("Cannot find phone user for ");
+				log_file->write_raw(req->hdr_to.uri.encode());
+				log_file->write_endl();
+				log_file->write_footer();
+			}
+		}
+	}
 
 	string m = sip_msg->encode();
 	log_file->write_header("::send_sip_tcp", LOG_SIP);
@@ -316,10 +368,8 @@ static void send_stun(t_event *event) {
 }
 
 static void send_nat_keepalive(t_event *event) {
-	t_event_nat_keepalive 	*e;
-	
-	e = (t_event_nat_keepalive *)event;
-
+	t_event_nat_keepalive *e = dynamic_cast<t_event_nat_keepalive *>(event);
+	assert(e);
 	assert(e->dst_addr != 0);
 	assert(e->dst_port != 0);	
 	
@@ -347,6 +397,35 @@ static void send_nat_keepalive(t_event *event) {
 			}
 		}
 	}
+}
+
+static void send_tcp_ping(t_event *event) {
+	string log_msg;
+	
+	t_event_tcp_ping *e = dynamic_cast<t_event_tcp_ping *>(event);
+	assert(e);
+	
+	t_connection *conn = connection_table->get_connection(
+			e->get_dst_addr(), e->get_dst_port());
+			
+	if (!conn) {
+		// There is no connection to send the ping.
+		log_msg = "Connection to ";
+		log_msg += h_ip2str(e->get_dst_addr());
+		log_msg += ":";
+		log_msg += int2str(e->get_dst_port());
+		log_msg += " is gone.";
+		log_file->write_report(log_msg, "::send_tcp_ping", LOG_SIP, LOG_WARNING);
+					
+		// Signal the transaction layer that the connection is gone.
+		evq_trans_layer->push_broken_connection(e->get_user_uri());
+		
+		return;
+	}
+	
+	conn->async_send(TCP_PING_PACKET, strlen(TCP_PING_PACKET));
+	
+	connection_table->unlock();
 }
 
 void *tcp_sender_loop(void *arg) {
@@ -388,7 +467,17 @@ void *tcp_sender_loop(void *arg) {
 				log_msg += get_error_str(err);
 				log_file->write_report(log_msg, "::tcp_sender_loop", LOG_SIP, LOG_WARNING);
 				
-				// Connection is broken. Remove it.
+				// Connection is broken. 
+				// Signal the transaction layer that the connection is broken for
+				// all associated registered URI's.
+				const list<t_url> &uris = (*it)->get_registered_uri_set();
+				for (list<t_url>::const_iterator it_uri = uris.begin(); 
+				     it_uri != uris.end(); ++it_uri)
+				{
+					evq_trans_layer->push_broken_connection(*it_uri);
+				}
+				
+				// Remove the broken connection.
 				connection_table->remove_connection(*it);
 				MEMMAN_DELETE(*it);
 				delete *it;
@@ -453,6 +542,9 @@ void *sender_loop(void *arg) {
 			break;
 		case EV_NAT_KEEPALIVE:
 			send_nat_keepalive(event);
+			break;
+		case EV_TCP_PING:
+			send_tcp_ping(event);
 			break;
 		case EV_QUIT:
 			quit = true;

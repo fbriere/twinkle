@@ -32,9 +32,8 @@
 #define PIDF_STATUS_BASIC_CLOSED	"closed"
 
 /** RFC 3863 pidf+xml body */
-class t_pidf_xml_body : public t_sip_body {
+class t_pidf_xml_body : public t_sip_body_xml {
 private:
-	xmlDoc		*pidf_doc;	/**< XML PIDF document */
 	string		pres_entity;		/**< Presence entity */
 	string		tuple_id;	/**< Id of tuple containing the basic status. */
 	string		basic_status;	/**< Value of basic-tag */
@@ -65,22 +64,16 @@ private:
 	 */
 	void process_pidf_basic(xmlNode *basic);
 	
+protected:
 	/**
 	 * Create a pidf document from the values stored in the attributes.
 	 */
-	void create_pidf(void);
-	
-	/** Remove the pidf document */
-	void clear_pidf(void);
+	virtual void create_xml_doc(const string &xml_version = "1.0", const string &charset = "UTF-8");
 	
 public:
 	/** Constructor */
 	t_pidf_xml_body();
 	
-	/** Destructor */
-	virtual ~t_pidf_xml_body();
-	
-	virtual string encode(void) const;
 	virtual t_sip_body *copy(void) const;
 	virtual t_body_type get_type(void) const;
 	virtual t_media get_media(void) const;
@@ -105,7 +98,7 @@ public:
 	 * @param s [in] Text to parse.
 	 * @return True if parsing and state extracting succeeded, false otherwise.
 	 */
-	bool parse(const string &s);
+	virtual bool parse(const string &s);
 };
 
 #endif

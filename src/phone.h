@@ -31,6 +31,7 @@
 #include "protocol.h"
 #include "service.h"
 #include "transaction_layer.h"
+#include "im/msg_session.h"
 #include "mwi/mwi.h"
 #include "sockets/url.h"
 #include "parser/request.h"
@@ -53,6 +54,7 @@
 #define QUIT_IDLE_WAIT	2
 
 using namespace std;
+using namespace im;
 
 // Forward declarations
 class t_dialog;
@@ -314,6 +316,8 @@ protected:
 	 */
 	void timeout(t_phone_timer timer, unsigned short id_timer);
 	//@}
+	
+	virtual void handle_broken_connection(t_event_broken_connection *e);
 
 public:
 	t_phone();
@@ -434,14 +438,28 @@ public:
 	/** @name Instant messaging */
 	//@{
 	/**
-	 * Send a text message.
+	 * Send a message.
+	 * @param user [in] User profile of user sending the message.
 	 * @param to_uri [in] Destination URI of recipient.
 	 * @param to_display [in] Display name of recipient.
-	 * @param user [in] User profile of user sending the message.
-	 * @param text [in] The text to send.
+	 * @param msg [in] Message to send.
+	 * @return True if sending succeeded, false otherwise.
 	 */
-	void pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
-			const string &text);
+	bool pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
+			const t_msg &msg);
+			
+	/**
+	 * Send a message composing state indication.
+	 * @param user [in] User profile of user sending the message.
+	 * @param to_uri [in] Destination URI of recipient.
+	 * @param to_display [in] Display name of recipient.
+	 * @param state [in] Message composing state.
+	 * @param refresh [in] The refresh interval in seconds (when state is active).
+	 * @return True if sending succeeded, false otherwise.
+	 * @note For the idle state, the value of refresh has no meaning.
+	 */
+	bool pub_send_im_iscomposing(t_user *user, const t_url &to_uri, const string &to_display,
+			const string &state, time_t refresh);
 	//@}
 
 	unsigned short get_active_line(void) const;
@@ -574,10 +592,17 @@ public:
 	
 	/**
 	 * Find active phone user
-	 * @param profile_name [in] User profile name
-	 * @return The phone user for the user profile, NULL if there is not active phone user.
+	 * @param profile_name [in] User profile name.
+	 * @return The phone user for the user profile, NULL if there is no active phone user.
 	 */
 	t_phone_user *find_phone_user(const string &profile_name) const;
+	
+	/** 
+	 * Find active phone user
+	 * @param user_uri [in] The user URI (AoR) of the user to find.
+	 * @return The phone user for the URI, NULL if there is no active phone user.
+	 */
+	t_phone_user *find_phone_user(const t_url &user_uri) const;
 	
 	/**
 	 * Get local IP address for SIP.

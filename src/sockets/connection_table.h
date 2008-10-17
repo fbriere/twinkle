@@ -123,6 +123,7 @@ public:
 	 *         connection to the destination, then NULL is returned.
 	 * @post If a connection is returned, the table is locked. The caller must
 	 *       unlock the tbale when it is finished with the connection.
+	 * @note Only re-usable connections are considered.
 	 */
 	t_connection *get_connection(unsigned long remote_addr, unsigned short remote_port);
 	
@@ -156,6 +157,7 @@ public:
 	/**
 	 * Close all idle connections.
 	 * Increment the idle time of all connections with interval.
+	 * A persistent connection with associated registered URI's will not be closed.
 	 * @param interval [in] Interval to add to idle time (ms).
 	 * @param terminated [out] Indicates if the connection table has been terminated.
 	 */

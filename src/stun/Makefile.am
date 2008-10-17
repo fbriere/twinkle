@@ -1,6 +1,7 @@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
-	$(CCRTP_CFLAGS)
+	$(CCRTP_CFLAGS)\
+	$(XML2_CFLAGS)
 
 noinst_LIBRARIES = libstun.a
 

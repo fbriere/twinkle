@@ -31,6 +31,7 @@
 #include "userintf.h"
 #include "audio/rtp_telephone_event.h"
 #include "audits/memman.h"
+#include "im/im_iscomposing_body.h"
 #include "sdp/sdp.h"
 #include "sockets/socket.h"
 #include "stun/stun_transaction.h"
@@ -245,6 +246,21 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	resp = r->create_response(R_180_RINGING);
 	resp->hdr_to.set_tag(local_tag);
 
+	// RFC 3261 13.3.1.1
+	// A provisional response creates an early dialog, so
+	// copy the Record-Route header and add a Contact
+	// header.
+
+	// Copy the Record-Route header from request to response
+	if (r->hdr_record_route.is_populated()) {
+		resp->hdr_record_route = r->hdr_record_route;
+	}
+
+	// Set Contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact(h_ip2str(resp->get_local_ip())));
+	resp->hdr_contact.add_contact(contact);
+
 	// RFC 3262 3
 	// Send 180 response reliable if needed
 	if (r->hdr_require.contains(EXT_100REL) ||
@@ -254,22 +270,6 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	{
 		resp->hdr_require.add_feature(EXT_100REL);
 		resp->hdr_rseq.set_resp_nr(++local_resp_nr);
-
-		// According to RFC 3262 4, a reliable provisional response
-		// must establish a dialog. RFC 3261 12.1.1 tells that
-		// a response that establishes a dialog must contain
-		// a contact header and copy record-route headers from
-		// the request.
-
-		// Copy the Record-Route header from request to response
-		if (r->hdr_record_route.is_populated()) {
-			resp->hdr_record_route = r->hdr_record_route;
-		}
-
-		// Set Contact header
-		t_contact_param contact;
-		contact.uri.set_url(line->create_user_contact(h_ip2str(resp->get_local_ip())));
-		resp->hdr_contact.add_contact(contact);
 
 		// RFC 3262 5
 		// Create SDP offer in first reliable response if no offer
@@ -1234,7 +1234,20 @@ void t_dialog::process_notify(t_request *r, t_tuid tuid, t_tid tid) {
 void t_dialog::process_info(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	
-	if (!r->body || r->body->get_type() != BODY_DTMF_RELAY) {
+	// RFC 2976 2.2
+	// A 200 OK response MUST be sent by a UAS for an INFO request with
+        // no message body if the INFO request was successfully received for
+        // an existing call.
+	if (!r->body) {
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		return;
+	}
+	
+	if (r->body->get_type() != BODY_DTMF_RELAY) {
 		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
 		resp->hdr_accept.add_media(t_media("application", "dtmf-relay"));
 		line->send_response(resp, tuid, tid);
@@ -1268,31 +1281,39 @@ void t_dialog::process_message(t_request *r, t_tuid tuid, t_tid tid) {
 	log_file->write_report("Received in-dialog MESSAGE.",
 		"t_dialog::process_message", LOG_NORMAL, LOG_DEBUG);
 		
-	if (!r->body ||
-	    r->body->get_type() != BODY_PLAIN_TEXT)
-	{
+	if (!r->body || !MESSAGE_CONTENT_TYPE_SUPPORTED(*r)) {
 		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
 		// RFC 3261 21.4.13
 		SET_MESSAGE_HDR_ACCEPT(resp->hdr_accept);
-		phone->send_response(resp, 0, tid);
+		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
 		return;
 	}
 	
-	bool accepted = ui->cb_message_request(line->get_user(), r);
-	if (accepted) {
+	if (r->body && r->body->get_type() == BODY_IM_ISCOMPOSING_XML) {
+		// Message composing indication
+		t_im_iscomposing_xml_body *sb = dynamic_cast<t_im_iscomposing_xml_body *>(r->body);
+		im::t_composing_state state = im::string2composing_state(sb->get_state());
+		time_t refresh = sb->get_refresh();
+		
+		ui->cb_im_iscomposing_request(line->get_user(), r, state, refresh);
 		resp = r->create_response(R_200_OK);
 	} else {
-		if (user_config->get_im_max_sessions() == 0) {
-			resp = r->create_response(R_603_DECLINE);
+		// Instant message
+		bool accepted = ui->cb_message_request(line->get_user(), r);
+		if (accepted) {
+			resp = r->create_response(R_200_OK);
 		} else {
-			resp = r->create_response(R_486_BUSY_HERE);
+			if (user_config->get_im_max_sessions() == 0) {
+				resp = r->create_response(R_603_DECLINE);
+			} else {
+				resp = r->create_response(R_486_BUSY_HERE);
+			}
 		}
 	}
 	
-	resp = r->create_response(R_200_OK);
 	line->send_response(resp, tuid, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;

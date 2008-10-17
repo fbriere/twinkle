@@ -28,6 +28,7 @@
 #include "service.h"
 #include "transaction_layer.h"
 #include "user.h"
+#include "im/msg_session.h"
 #include "mwi/mwi.h"
 #include "mwi/mwi_dialog.h"
 #include "parser/request.h"
@@ -36,6 +37,7 @@
 #include "presence/buddy.h"
 
 using namespace std;
+using namespace im;
 
 // Forward declarations
 class t_client_request;
@@ -72,11 +74,11 @@ private:
 	list<t_request *> pending_messages;
 
 	// Registration data
-	string			register_call_id;
-	unsigned long		register_seqnr; // last seqnr to issued
-	bool			is_registered;
-	unsigned long		registration_time; // expiration in seconds
-	bool			last_reg_failed; // last registration failed
+	string			register_call_id;  /**< Call-ID for REGISTER requests. */
+	unsigned long		register_seqnr;    /**< Last seqnr issued. */
+	bool			is_registered;     /**< Indicates if user is registered. */
+	unsigned long		registration_time; /**< Expiration in seconds */
+	bool			last_reg_failed;   /** Indicates if last registration failed. */
 	
 	/** Destination of last REGISTER */
 	t_ip_port		register_ip_port;
@@ -161,6 +163,9 @@ private:
 	/** Send a NAT keep alive packet. */
 	void send_nat_keepalive(void);
 	
+	/** Send a TCP ping packet. */
+	void send_tcp_ping(void);
+	
 	/** Handle MWI dialog termination. */
 	void cleanup_mwi_dialog(void);
 	
@@ -172,6 +177,7 @@ public:
 	//@{
 	unsigned short		id_registration;	/**< Registration timeout */
 	unsigned short		id_nat_keepalive;	/**< NAT keepalive interval */
+	unsigned short		id_tcp_ping;		/**< TCP ping timer */
 	unsigned short		id_resubscribe_mwi; 	/**< MWI re-subscribe after failure */
 	//@}
 	
@@ -212,6 +218,9 @@ public:
 	
 	/** Stop sending NAT keep alives when not necessary anymore. */
 	void cleanup_nat_keepalive(void);
+	
+	/** Stop sending TCP ping packets when not necessary anumore. */
+	void cleanup_tcp_ping(void);
 	
 	/** @name Getters */
 	//@{
@@ -296,9 +305,21 @@ public:
 	 * Send a text message.
 	 * @param to_uri [in] Destination URI of recipient.
 	 * @param to_display [in] Display name of recipient.
-	 * @param text [in] The text to send.
+	 * @param msg [in] The message to send.
+	 * @return True if sending succeeded, otherwise false.
 	 */
-	void send_message(const t_url &to_uri, const string &to_display, const string &text);
+	bool send_message(const t_url &to_uri, const string &to_display, const t_msg &message);
+	
+	/**
+	 * @param to_uri [in] Destination URI of recipient.
+	 * @param to_display [in] Display name of recipient.
+	 * @param state [in] Message composing state.
+	 * @param refresh [in] The refresh interval in seconds (when state is active).
+	 * @return True if sending succeeded, false otherwise.
+	 * @note For the idle state, the value of refresh has no meaning.
+	 */
+	bool send_im_iscomposing(const t_url &to_uri, const string &to_display, 
+			const string &state, time_t refresh);
 	
 	/**
 	 * Process incoming MESSAGE request.
@@ -336,6 +357,9 @@ public:
 	 */
 	void timeout_publish(t_publish_timer timer, t_object_id id_timer);
 	//@}
+	
+	/** Handle a broken persistent connection. */
+	void handle_broken_connection(void);
 	
 	/** Match subscribe timeout with a subcription
 	 * @param timer [in] Type of expired subscribe timer.

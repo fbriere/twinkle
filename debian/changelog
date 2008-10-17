@@ -1,3 +1,12 @@
+twinkle (1:1.3.2-1) experimental; urgency=low
+
+  * New upstream release
+  * Add Build-Depends: libmagic-dev
+  * Patches included upstream; gcc4.3.patch z99-configure-boost.patch
+  * Distribution experimental while we await lenny
+
+ -- Mark Purcell <msp@debian.org>  Fri, 17 Oct 2008 12:19:21 +1100
+
 twinkle (1:1.2-3) unstable; urgency=low
 
   [ Patrick Matthäi ]
