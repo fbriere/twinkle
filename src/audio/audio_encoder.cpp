@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ t_g711a_audio_encoder::t_g711a_audio_encoder(uint16 payload_id, uint16 ptime,
 	t_audio_encoder(payload_id, ptime, user_config)
 {
 	_codec = CODEC_G711_ALAW;
-	if (ptime = 0) _ptime = PTIME_G711_ALAW;
+	if (ptime == 0) _ptime = PTIME_G711_ALAW;
 	_max_payload_size = audio_sample_rate(_codec)/1000 * _ptime;
 }
 
@@ -97,7 +97,7 @@ t_g711u_audio_encoder::t_g711u_audio_encoder(uint16 payload_id, uint16 ptime,
 	t_audio_encoder(payload_id, ptime, user_config)
 {
 	_codec = CODEC_G711_ULAW;
-	if (ptime = 0) _ptime = PTIME_G711_ULAW;
+	if (ptime == 0) _ptime = PTIME_G711_ULAW;
 	_max_payload_size = audio_sample_rate(_codec)/1000 * _ptime;
 }
 
@@ -196,19 +196,24 @@ t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime,
 		assert(false);
 	}
 	
-	// VAD
-	arg = (_user_config->get_speex_vad() ? 1 : 0);
-	speex_encoder_ctl(speex_enc_state, SPEEX_SET_VAD, &arg);
+	_max_payload_size = 1500;
 	
-	// DTX
+	/*** ENCODER OPTIONS ***/
+	
+	// Discontinuos trasmission
 	arg = (_user_config->get_speex_dtx() ? 1 : 0);
 	speex_encoder_ctl(speex_enc_state, SPEEX_SET_DTX, &arg);
 		
+	// Quality
+	arg = _user_config->get_speex_quality();
+	if (_user_config->get_speex_bit_rate_type() == BIT_RATE_VBR) 
+	    speex_encoder_ctl(speex_enc_state, SPEEX_SET_VBR_QUALITY, &arg);
+	else
+	    speex_encoder_ctl(speex_enc_state, SPEEX_SET_QUALITY, &arg);
+
 	// Complexity
 	arg = _user_config->get_speex_complexity();
 	speex_encoder_ctl(speex_enc_state, SPEEX_SET_COMPLEXITY, &arg);
-	
-	_max_payload_size = 1500;
 }
 
 t_speex_audio_encoder::~t_speex_audio_encoder() {
@@ -223,11 +228,10 @@ uint16 t_speex_audio_encoder::encode(int16 *sample_buf, uint16 nsamples,
 
 	silence = false;
 	speex_bits_reset(&speex_bits);
-	if (speex_encode_int(speex_enc_state, sample_buf, &speex_bits) == 0) {
-		// Only if DTX is enabled on the speex encoder, then it will 
-		// indicate when a frame can be suppressed.
+            
+    if (speex_encode_int(speex_enc_state, sample_buf, &speex_bits) == 0) 
 		silence = true;
-	}
+
 	return speex_bits_write(&speex_bits, (char *)payload, payload_size);
 }
 #endif
@@ -299,7 +303,7 @@ t_g726_audio_encoder::t_g726_audio_encoder(uint16 payload_id, uint16 ptime,
 		assert(false);
 	}
 	
-	if (ptime = 0) _ptime = PTIME_G726;
+	if (ptime == 0) _ptime = PTIME_G726;
 	_max_payload_size = audio_sample_rate(_codec)/1000 * _ptime;
 	_packing = user_config->get_g726_packing();
 	

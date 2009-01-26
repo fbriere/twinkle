@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,8 +28,10 @@
 /** TCP PING packet to be sent on a TCP connection. */
 #define TCP_PING_PACKET	CRLF CRLF
 
-// Name and version of the softphone
+/** Product name */
 #define PRODUCT_NAME	"Twinkle"
+
+/** Product version */
 #define PRODUCT_VERSION	VERSION
 
 /**
@@ -41,8 +43,10 @@
  */
 #define AUTO_IP4_ADDRESS	"255.255.255.255"
 
-// Anonymous calling
+/** Display name for anonymous calling */
 #define ANONYMOUS_DISPLAY	"Anonymous"
+
+/** SIP-URI for anonymous calling */
 #define ANONYMOUS_URI		"sip:anonymous@anonymous.invalid"
 
 /** Types of failures. */
@@ -51,23 +55,23 @@ enum t_failure {
 	FAIL_TRANSPORT	/**< Transport failure */
 };
 
-// Call transfer types
+/** Call transfer types */
 enum t_transfer_type {
-	TRANSFER_BASIC,		// Basic transfer (blind)
-	TRANSFER_CONSULT,	// Transfer with consultation (possibly attended)
-	TRANSFER_OTHER_LINE	// Transfer call to other line
+	TRANSFER_BASIC,		/**< Basic transfer (blind) */
+	TRANSFER_CONSULT,	/**< Transfer with consultation (possibly attended) */
+	TRANSFER_OTHER_LINE	/**< Transfer call to other line */
 };
 
-// State of a call transfer at the referrer.
+/** State of a call transfer at the referrer. */
 enum t_refer_state {
-	REFST_NULL,		// No REFER in progress
-	REFST_W4RESP,		// REFER sent, waiting for response
-	REFST_W4NOTIFY,		// Response received, waiting for 1st NOTIFY
-	REFST_PENDING,		// REFER received, but not granted yet
-	REFST_ACTIVE,		// Referee granted refer
+	REFST_NULL,		/**< No REFER in progress */
+	REFST_W4RESP,		/**< REFER sent, waiting for response */
+	REFST_W4NOTIFY,		/**< Response received, waiting for 1st NOTIFY */
+	REFST_PENDING,		/**< REFER received, but not granted yet */
+	REFST_ACTIVE,		/**< Referee granted refer */
 };
 
-// Types of registration requests
+/** Types of registration requests */
 enum t_register_type {
 	REG_REGISTER,
 	REG_QUERY,
@@ -75,8 +79,10 @@ enum t_register_type {
 	REG_DEREGISTER_ALL
 };
 
-// RFC 3261 Annex A
-// SIP timers
+/**
+ * RFC 3261 Annex A
+ * SIP timers
+ */
 enum t_sip_timer {
 	TIMER_T1,
 	TIMER_T2,
@@ -272,8 +278,21 @@ enum t_stun_timer {
 /** Create a new PIDF tuple id. */
 #define NEW_PIDF_TUPLE_ID	random_token(PIDF_TUPLE_ID_LEN)
 
-// Character set encoding for outgoing text messages
+/** Character set encoding for outgoing text messages */
 #define MSG_TEXT_CHARSET	"utf-8"
+
+/** @name Definitions for akav1-md5 authentication. */
+#define AKA_RANDLEN	16
+#define AKA_AUTNLEN	16
+#define AKA_CKLEN	16
+#define AKA_IKLEN	16
+#define AKA_AKLEN	6
+#define AKA_OPLEN	16
+#define AKA_RESLEN	8
+#define AKA_SQNLEN	6
+#define AKA_RESHEXLEN	16
+#define AKA_AMFLEN	2
+#define AKA_KLEN	16
 
 // Set Allow header with methods that can be handled by the phone
 #define SET_HDR_ALLOW(h, u)	{ (h).add_method(INVITE); \

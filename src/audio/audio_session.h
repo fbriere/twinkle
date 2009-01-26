@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,10 @@
 #include "twinkle_rtp_session.h"
 #include "threads/thread.h"
 #include "threads/mutex.h"
+
+#ifdef HAVE_SPEEX
+#include <speex/speex_echo.h> 
+#endif
 
 using namespace std;
 using namespace ost;
@@ -66,6 +70,18 @@ private:
 	bool		zrtp_sas_confirmed;
 	string		srtp_cipher_mode;
 
+#ifdef HAVE_SPEEX
+	// Indicator whether to use (Speex) AEC 
+	bool do_echo_cancellation;
+
+	// Indicator whether the last operation of (Speex) AEC,
+	// speex_echo_capture or speex_echo_playback, was the speex_echo_capture
+	bool echo_captured_last;
+
+	// speex AEC state 
+	SpeexEchoState *speex_echo_state;
+#endif
+
 	// 3-way conference data
 	// Returns if this audio session is part of a 3-way conference
 	bool is_3way(void) const;
@@ -80,8 +96,10 @@ private:
 	bool open_dsp_mic(void);
 
 public:
+
 	t_audio_rx	*audio_rx;
 	t_audio_tx	*audio_tx;
+
 
 	t_audio_session(t_session *_session,
 			const string &_recv_host, unsigned short _recv_port,
@@ -146,6 +164,15 @@ public:
 	void set_zrtp_sas(const string &sas);
 	void set_zrtp_sas_confirmed(bool confirmed);
 	void set_srtp_cipher_mode(const string &cipher_mode);
+
+#ifdef HAVE_SPEEX
+	// speex acoustic echo cancellation (AEC) manipulations
+	bool get_do_echo_cancellation(void) const;
+	bool get_echo_captured_last(void);
+	void set_echo_captured_last(bool value);
+	SpeexEchoState *get_speex_echo_state(void);
+#endif
+	
 };
 
 // Main functions for rx and tx threads

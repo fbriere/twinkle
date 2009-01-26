@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ bool t_audio_io::open(const string& device, bool playback, bool capture, bool bl
 	return true;
 }
 
-t_oss_io::t_oss_io() : fd(-1), rec_buffersize(0), play_buffersize(0) {
+t_oss_io::t_oss_io() : fd(-1), play_buffersize(0), rec_buffersize(0) {
 }
 
 t_oss_io::~t_oss_io()
@@ -390,7 +390,6 @@ bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blo
 		short_latency);
 		
 	int mode = 0;
-	int status;
 	string msg;
 	
 	this->short_latency = short_latency;
@@ -735,7 +734,7 @@ int t_alsa_io::get_buffer_space(bool is_recording_buffer) {
 		// rv = rec_framesize * snd_pcm_status_get_avail_max(status);
 		
 		snd_pcm_hwsync(pcm_rec_ptr);
-		if (err = snd_pcm_delay(pcm_rec_ptr, &delay) < 0) {
+		if ((err = snd_pcm_delay(pcm_rec_ptr, &delay)) < 0) {
 			string msg = "snd_pcm_delay for capture buffer failed: ";
 			msg += snd_strerror(err);
 			log_file->write_report(msg, "t_alsa_io::get_buffer_space", 

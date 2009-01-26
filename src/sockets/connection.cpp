@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ void t_connection::write(void) {
 	if (send_buf_.empty()) return;
 	
 	ssize_t nwrite = send_buf_.size() - pos_send_buf_;
-	if (WRITE_BLOCK_SIZE < nwrite) nwrite = WRITE_BLOCK_SIZE;
+	if ((ssize_t)WRITE_BLOCK_SIZE < nwrite) nwrite = WRITE_BLOCK_SIZE;
 	ssize_t nwritten = socket_->send(send_buf_.c_str() + pos_send_buf_, nwrite);
 	pos_send_buf_ += nwritten;
 	
@@ -84,8 +84,10 @@ void t_connection::write(void) {
 }
 
 ssize_t t_connection::send(const char *data, int data_size) {
-	socket_->send(data, data_size);
+	ssize_t bytes_sent = socket_->send(data, data_size);
 	idle_time_ = 0;
+	
+	return bytes_sent;
 }
 
 void t_connection::async_send(const char *data, int data_size) {

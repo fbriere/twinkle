@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -182,12 +182,12 @@ bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 						"t_auth::authorize");
 		return false;
 	}
-
+	
 	bool auth_success;
 	string fail_reason;
 	if (!proxy) {
 		t_credentials cr;
-		auth_success = r->www_authorize(c,
+		auth_success = r->www_authorize(c, user_config,
 			username, passwd, 1, NEW_CNONCE, cr, fail_reason);
 
 		if (auth_success) {
@@ -195,7 +195,7 @@ bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 		}
 	} else {
 		t_credentials cr;
-		auth_success = r->proxy_authorize(c,
+		auth_success = r->proxy_authorize(c, user_config,
 			username, passwd, 1, NEW_CNONCE, cr, fail_reason);
 
 		if (auth_success) {

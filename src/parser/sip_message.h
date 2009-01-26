@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@
 #include "hdr_proxy_require.h"
 #include "hdr_rack.h"
 #include "hdr_record_route.h"
+#include "hdr_service_route.h"
 #include "hdr_refer_sub.h"
 #include "hdr_refer_to.h"
 #include "hdr_referred_by.h"
@@ -70,6 +71,7 @@
 #include "hdr_route.h"
 #include "hdr_rseq.h"
 #include "hdr_server.h"
+#include "hdr_service_route.h"
 #include "hdr_sip_etag.h"
 #include "hdr_sip_if_match.h"
 #include "hdr_subject.h"
@@ -163,6 +165,7 @@ public:
 	t_hdr_route		hdr_route;
 	t_hdr_rseq		hdr_rseq;
 	t_hdr_server		hdr_server;
+	t_hdr_service_route	hdr_service_route;
 	t_hdr_sip_etag		hdr_sip_etag;
 	t_hdr_sip_if_match	hdr_sip_if_match;
 	t_hdr_subject		hdr_subject;
@@ -255,6 +258,8 @@ public:
 	
 	/**
 	 * Get the local IP address for this SIP message.
+	 * The local IP address can be used as source address for sending
+	 * the message.
 	 * @return The local IP address.
 	 * @return 0, if the local IP address is not determined yet.
 	 */

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 
 #ifdef HAVE_SPEEX
 #include <speex/speex.h>
+#include <speex/speex_preprocess.h> 
 #endif
 
 #ifdef HAVE_ILBC

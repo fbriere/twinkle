@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -673,7 +673,7 @@ void t_gui::run(void) {
 	s.append(' ').append(PRODUCT_VERSION).append(", ");
 	s.append(sys_config->get_product_date().c_str());
 	mainWindow->display(s);
-	s = "Copyright (C) 2005-2008  ";
+	s = "Copyright (C) 2005-2009  ";
 	s.append(PRODUCT_AUTHOR);
 	mainWindow->display(s);
 	
@@ -2207,6 +2207,13 @@ bool t_gui::cb_ask_msg(QWidget *parent, const string &msg, t_msg_priority prio) 
 }
 
 void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
+	// If this thread may not lock the UI, then push the display message on
+	// the UI event queue. The message will be display asynchronously.
+	if (is_prohibited_thread()) {
+		cb_async_display_msg(msg, prio);
+		return;
+	}
+	
 	QString s;
 	
 	lock();
@@ -2385,7 +2392,7 @@ void t_gui::cb_mwi_terminated(t_user *user_config, const string &reason) {
 
 bool t_gui::cb_message_request(t_user *user_config, t_request *r) {	
 	string text;
-	im::t_text_format text_format;
+	im::t_text_format text_format = im::TXT_PLAIN;
 	bool attachment = false;
 	bool failed_to_save_attachment = false;
 	string attachment_error_msg;
@@ -2743,7 +2750,7 @@ void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	
 	int line = phone->get_active_line();
 	mainWindow->displayHeader();
-	s = qApp->translate("GUI", "Line %1: call redirected.");
+	s = qApp->translate("GUI", "Line %1: call redirected.").arg(line + 1);
 	mainWindow->display(s);
 }
 

@@ -337,7 +337,7 @@
     </connection>
     <connection>
         <sender>historyListView</sender>
-        <signal>rightButtonClicked(QListViewItem*,const QPoint&amp;,int)</signal>
+        <signal>rightButtonPressed(QListViewItem*,const QPoint&amp;,int)</signal>
         <receiver>HistoryForm</receiver>
         <slot>popupMenu(QListViewItem*,const QPoint&amp;)</slot>
     </connection>

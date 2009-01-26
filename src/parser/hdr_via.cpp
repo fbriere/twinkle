@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -95,8 +95,6 @@ string t_via::encode(void) const {
 }
 
 void t_via::get_response_dst(t_ip_port &ip_port) const {
-	struct hostent *h;
-	
 	string url_str("sip:");
 
 	// RFC 3261 18.2.2

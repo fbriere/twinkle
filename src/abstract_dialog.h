@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,11 +31,13 @@
 #include "client_request.h"
 #include "id_object.h"
 #include "protocol.h"
-#include "user.h"
 #include "sockets/url.h"
 #include "parser/request.h"
 
 using namespace std;
+
+// Forward declaration
+class t_phone_user;
 
 /**
  * Abstract class for all types of SIP dialogs.
@@ -44,11 +46,10 @@ using namespace std;
 class t_abstract_dialog : public t_id_object {
 protected:	
 	/** 
-	 * User profile of user for which this dialog is created.
-	 * This is a pointer to the user profile owned by a phone user.
-	 * So this pointer should never be deleted.
+	 * Phone user for which this dialog is created.
+	 * This pointer should never be deleted.
 	 */
-	t_user			*user_config;
+	t_phone_user	*phone_user;
 
 	string		call_id;	/**< SIP call id. */
 	bool		call_id_owner;	/**< Indicates if the call id is generated locally. */
@@ -161,9 +162,9 @@ protected:
 public:
 	/**
 	 * Constructor.
-	 * @param user [in] User profile of the user for which the dialog must be created.
+	 * @param pu [in] Phone user for which the dialog must be created.
 	 */
-	t_abstract_dialog(t_user *user);
+	t_abstract_dialog(t_phone_user *pu);
 	
 	/**
 	 * Destructor.

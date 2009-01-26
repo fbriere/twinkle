@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,9 +29,9 @@ using namespace utils;
 t_media::t_media() : q(1.0) {}
 
 t_media::t_media(const string &t, const string &s) :
-	q(1.0),
 	type(t),
-	subtype(s)
+	subtype(s),
+	q(1.0)
 {}
 
 t_media::t_media(const string &mime_type) : q(1.0) 

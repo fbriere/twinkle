@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -592,7 +592,7 @@ int main( int argc, char ** argv )
 	
 	// Create a lock file to guarantee that the application runs only once.
 	bool already_running;
-	bool lock_created;
+	bool lock_created = false;
 	string lock_error_msg;	
 	if (env_check_ok &&
 	    !(lock_created = sys_config->create_lock_file(lock_error_msg, already_running))) 
@@ -710,7 +710,7 @@ int main( int argc, char ** argv )
 	
 	// Check if the previous Twinkle session was stopped by a system
 	// shutdow and now gets restored.
-	if (qa->isSessionRestored()) {
+	if (qa && qa->isSessionRestored()) {
 		QString msg = "Restore session: " + qa->sessionId();
 		log_file->write_report(msg.ascii(), "::main");
 		
@@ -957,8 +957,8 @@ int main( int argc, char ** argv )
 	t_thread *thr_listen_conn_tcp;
 	t_thread *thr_conn_timeout_handler;
 	t_thread *thr_timekeeper;
-	t_thread *thr_alarm_catcher;
-	t_thread *thr_sig_catcher;
+	t_thread *thr_alarm_catcher = NULL;
+	t_thread *thr_sig_catcher = NULL;
 	t_thread *thr_trans_mgr;
 	t_thread *thr_phone_uas;
 	t_thread *thr_listen_cmd = NULL;

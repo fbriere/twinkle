@@ -1,3 +1,10 @@
+twinkle (1:1.4-1) experimental; urgency=low
+
+  * New upstream release
+  * Add Build-Depends: ccrtp >= 1.7.0
+
+ -- Mark Purcell <msp@debian.org>  Mon, 26 Jan 2009 21:47:00 +1100
+
 twinkle (1:1.3.2-1) experimental; urgency=low
 
   * New upstream release

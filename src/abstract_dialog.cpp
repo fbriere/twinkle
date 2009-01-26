@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include "abstract_dialog.h"
 #include "log.h"
 #include "phone.h"
+#include "phone_user.h"
 #include "util.h"
 #include "userintf.h"
 #include "audits/memman.h"
@@ -42,6 +43,8 @@ void t_abstract_dialog::remove_client_request(t_client_request **cr) {
 // Create a request within a dialog
 // RFC 3261 12.2.1.1
 t_request *t_abstract_dialog::create_request(t_method m) {
+	t_user *user_config = phone_user->get_user_profile();
+	
 	t_request *r = new t_request(m);
 	MEMMAN_NEW(r);
 
@@ -70,35 +73,7 @@ t_request *t_abstract_dialog::create_request(t_method m) {
 
 	// RFC 3261 12.2.1.1
 	// Request URI and Route header
-        if (route_set.empty()) {
-                r->uri = remote_target_uri;
-        } else {
-                if (route_set.front().uri.get_lr()) {
-			// Loose routing
-                        r->uri = remote_target_uri;
-                        for (list<t_route>::iterator i = route_set.begin();
-                             i != route_set.end(); i++)
-                        {
-                                r->hdr_route.add_route(*i);
-                        }
-                        r->hdr_route.route_to_first_route = true;
-                } else {
-			// Strict routing
-                        r->uri = route_set.front().uri;
-                        for (list<t_route>::iterator i = route_set.begin();
-                             i != route_set.end(); i++)
-                        {
-                                if (i != route_set.begin()) {
-                                        r->hdr_route.add_route(*i);
-                                }
-                        }
-
-                        // Add remote target uri to the route list
-                        t_route route;
-                        route.uri = remote_target_uri;
-                        r->hdr_route.add_route(route);
-                }
-        }
+	r->set_route(remote_target_uri, route_set);
         
         // Caculate destination set. A DNS request can result in multiple
         // IP address. In failover scenario's the request must be sent to
@@ -144,6 +119,7 @@ void t_abstract_dialog::create_remote_target(t_response *r) {
 }
 
 void t_abstract_dialog::resend_request(t_client_request *cr) {
+	t_user *user_config = phone_user->get_user_profile();
 	t_request *req = cr->get_request();
 
 	// A new sequence number must be assigned
@@ -161,6 +137,7 @@ void t_abstract_dialog::resend_request(t_client_request *cr) {
 }
 
 bool t_abstract_dialog::resend_request_auth(t_client_request *cr, t_response *resp) {
+	t_user *user_config = phone_user->get_user_profile();
 	t_request *req = cr->get_request();
 
 	// Add authorization header, increment CSeq and create new branch id
@@ -175,6 +152,8 @@ bool t_abstract_dialog::resend_request_auth(t_client_request *cr, t_response *re
 bool t_abstract_dialog::redirect_request(t_client_request *cr, t_response *resp,
 		t_contact_param &contact) 
 {
+	t_user *user_config = phone_user->get_user_profile();
+	
 	// If the response is a 3XX response then add redirection contacts
 	if (resp->get_class() == R_3XX  && resp->hdr_contact.is_populated()) {
 		cr->redirector.add_contacts(
@@ -231,11 +210,11 @@ bool t_abstract_dialog::failover_request(t_client_request *cr) {
 // Public
 ////////////
 
-t_abstract_dialog::t_abstract_dialog(t_user *user) :
+t_abstract_dialog::t_abstract_dialog(t_phone_user *pu) :
 	t_id_object()
 {
-	assert(user);
-	user_config = user;
+	assert(pu);
+	phone_user = pu;
 	call_id_owner = false;
 	
 	local_seqnr = 0;
@@ -263,7 +242,7 @@ t_abstract_dialog::~t_abstract_dialog() {
 }
 
 t_user *t_abstract_dialog::get_user(void) const {
-	return user_config;
+	return phone_user->get_user_profile();
 }
 
 void t_abstract_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {

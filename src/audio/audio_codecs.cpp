@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,9 +18,6 @@
 
 #include <cstdlib>
 #include "audio_codecs.h"
-
-// Upper threshold of noise (16 bits linear pcm)
-#define PCM_NOISE_THRESHOLD	50
 
 unsigned short audio_sample_rate(t_audio_codec codec) {
 	switch(codec) {
@@ -99,12 +96,4 @@ short mix_linear_pcm(short pcm1, short pcm2) {
 	}
 
 	return short(mixed_sample);
-}
-
-void pcm_reduce_noise(short *pcm_buf, int bufsize) {
-	for (int i = 0; i < bufsize; i++) {
-		if (abs(pcm_buf[i]) <= PCM_NOISE_THRESHOLD) {
-			pcm_buf[i] = 0;
-		}
-	}
 }

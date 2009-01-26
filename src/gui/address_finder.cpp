@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,8 +52,7 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 	{
 		// Normalize url using number conversion rules
 		t_url u_normalized(u);
-		string normalized_user = user_config->convert_number(u.get_user());
-		u_normalized.set_user(normalized_user);
+		u_normalized.apply_conversion_rules(user_config);
 		
 		KABC::PhoneNumber::List phoneNrs = i->phoneNumbers();
 		for (KABC::PhoneNumber::List::iterator j = phoneNrs.begin();
@@ -61,7 +60,7 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 		{
 			QString phone = (*j).number();
 			string full_address = ui->expand_destination(
-					user_config, phone.ascii());
+					user_config, phone.ascii(), u_normalized.get_scheme());
 			
 			t_url url_phone(full_address);
 			if (!url_phone.is_valid()) continue;

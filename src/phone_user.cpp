@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -403,7 +403,7 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_t
 	t_request *req;
 	bool is_register = false;
 	t_buddy *buddy;
-
+	
 	if (r_register && r_register->get_tuid() == tuid) {
 		current_cr = &r_register;
 		is_register = true;
@@ -721,6 +721,30 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 // The maximum timer that we can handle however is 2^31-1 ms
                 e = (expires > 2147483 ? 2147483 : expires);
                 phone->start_set_timer(PTMR_REGISTRATION, e * 1000, this);
+		// Save the Service-Route if present the response contains any
+
+		// RFC 3608 6
+		// Collect the service route to route later initial requests.
+		if (r->hdr_service_route.is_populated()) {
+			service_route = r->hdr_service_route.route_list;
+			log_file->write_header("t_phone_user::handle_response_register");
+			log_file->write_raw("Store service route:\n");
+			for (list<t_route>::const_iterator it = service_route.begin();
+			     it != service_route.end(); ++it)
+			{
+				log_file->write_raw(it->encode());
+				log_file->write_endl();
+			}
+			log_file->write_footer();
+		} else {
+			if (!service_route.empty())
+			{
+				log_file->write_report("Clear service route.",
+					"t_phone_user::handle_response_register");
+				service_route.clear();
+			}
+		}
+
 		first_success = !is_registered;
                 is_registered = true;
 		ui->cb_register_success(user_config, r, expires, first_success);
@@ -1396,7 +1420,15 @@ t_request *t_phone_user::create_request(t_method m, const t_url &request_uri) co
 	// Set request URI and calculate destinations. By calculating
 	// destinations now, the request can be resend to a next destination
 	// if failover is needed.
-	req->uri = request_uri;
+	if (m == REGISTER) {
+		// For a REGISTER do not use the service route for routing.
+		req->uri = request_uri;
+	} else {
+		// RFC 3608
+		// For all other requests, use the service route set for routing.
+		req->set_route(request_uri, service_route);
+	}
+
 	req->calc_destinations(*user_config);
 	
         // The Via header can only be created after the destinations
@@ -1469,6 +1501,10 @@ string t_phone_user::get_ip_sip(const string &auto_ip) const {
 unsigned short t_phone_user::get_public_port_sip(void) const {
 	if (stun_public_port_sip) return stun_public_port_sip;
 	return sys_config->get_sip_port();
+}
+
+list<t_route> t_phone_user::get_service_route(void) const {
+	return service_route;
 }
 
 bool t_phone_user::match(t_response *r, t_tuid tuid) const {

@@ -72,6 +72,9 @@
                             <property name="text">
                                 <string></string>
                             </property>
+                            <property name="accel">
+                                <string>F10</string>
+                            </property>
                             <property name="iconSet">
                                 <iconset>kontact_contacts.png</iconset>
                             </property>
@@ -291,7 +294,7 @@
     <slot>displayDeliveryNotification( const QString &amp; notification )</slot>
     <slot>setRemotePartyCaption( void )</slot>
     <slot>showAttachmentPopupMenu( const QString &amp; attachment )</slot>
-    <slot>attachmentPopupActivated( int id )</slot>
+    <slot>attachmentPopupActivated( unsigned int id )</slot>
     <slot>saveAttachment()</slot>
     <slot>chooseFileToSend()</slot>
     <slot>setComposingIndication( const QString &amp; name )</slot>

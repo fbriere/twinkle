@@ -43,8 +43,8 @@ subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/twinkle_config.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/m4/vl_lib_readline.m4 \
+	$(top_srcdir)/acinclude.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -344,7 +344,7 @@ xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
 AM_LDFLAGS = -L $(libdir)
-AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = -Wall $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 noinst_LIBRARIES = libtwinkle.a
 twinkle_SOURCES = main.cpp
 twinkle_LDADD = libtwinkle.a\
@@ -363,6 +363,7 @@ twinkle_LDADD = libtwinkle.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
+	-lreadline \
 	-lsndfile\
 	-lmagic
 

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/src
+AM_CPPFLAGS = -Wall -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libpatterns.a
 

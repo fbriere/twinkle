@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,10 +28,10 @@ using namespace std;
 
 class t_hdr_content_length : public t_header {
 public:
-	int length;
+	unsigned long length;
 
 	t_hdr_content_length();
-	void set_length(int l);
+	void set_length(unsigned long l);
 
 	string encode_value(void) const;
 };

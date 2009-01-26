@@ -1,3 +1,39 @@
+25 january 2009 - 1.4
+=====================
+- Service route discovery during registration.
+- Codec preprocessing: automatic gain control, voice activation detection,
+  noise reduction, acoustic echo cancellation (experimental).
+- Support tel-URI as destination address for a call or instant message.
+- User profile option to expand a telephone number to a tel-URI instead
+  of a sip-URI.
+- Add descending q-value to contacts in 3XX responses for the redirection 
+  services.
+- AKAv1-MD5 authentication.
+- Command line editing, history, auto-completion.
+- Ignore wrong formatted domain-parameter in digest challenge.
+- Match tel-URI in incoming call to address book.
+- Determine RTP IP address for SDP answer from RTP IP address in SDP offer.
+- Show context menu's when pressing the right mouse button instead of 
+  after clicking.
+- Swedish translation
+- Resampled ringback tone from 8287 Hz to 8000 Hz
+
+Bug fixes
+---------
+- Text line edit in the message form looses focus after sending an IM.
+- Twinkle does not escape reserved symbols when dialing.
+- Deregister all function causes a crash.
+- Twinkle crashes at startup in CLI mode.
+- Twinkle may freeze when an ALSA error is detected when starting
+  the ringback tone and the outgoing call gets answered very fast.
+- User profile editor did not allow spaces in a user name.
+
+New RFC's
+---------
+RFC 3608 - Session Initiation Protocol (SIP) Extension Header Field
+           for Service Route Discovery During Registration
+
+
 24 august 2008 - 1.3.2
 ======================
 - Fix in non-KDE version for gcc 4.3
@@ -12,6 +48,7 @@ Build fixes
 -----------
 - Fixes for gcc 4.3 (missing includes)
 - non-KDE version failed to build
+
 
 18 august 2008 - 1.3
 ====================

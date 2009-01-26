@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,58 +20,183 @@
 #include "util.h"
 #include "parse_ctrl.h"
 #include "protocol.h"
+#include "milenage.h"
 #include "audits/memman.h"
 #include <sstream>
 #include <cc++/digest.h>
 
 using namespace ost;
 
-bool t_request::authorize(const t_challenge &chlg,
-	const string &username, const string &passwd, unsigned long nc,
-	const string &cnonce, t_credentials &cr, string &fail_reason) const
+// AKAv1-MD5 algorithm specific helpers
+
+#define B64_ENC_SZ(x) (4 * ((x + 2) / 3))
+#define B64_DEC_SZ(x) (3 * ((x + 3) / 4))
+
+int b64_enc(const u8 * src, u8 * dst, int len)
 {
-	string A1, A2;
-	string qop = "";
+	static char tbl[64] = {
+		'A','B','C','D','E','F','G','H',
+		'I','J','K','L','M','N','O','P',
+		'Q','R','S','T','U','V','W','X',
+		'Y','Z','a','b','c','d','e','f',
+		'g','h','i','j','k','l','m','n',
+		'o','p','q','r','s','t','u','v',
+		'w','x','y','z','0','1','2','3',
+		'4','5','6','7','8','9','+','/'
+	};
+	u8 * dst0 = dst;
+	int i, v, div = len / 3, mod = len % 3;
 
-	// Only Digest authentication is supported
-	if (cmp_nocase(chlg.auth_scheme, AUTH_DIGEST) != 0) {
-		fail_reason = "Authentication scheme " + chlg.auth_scheme;
-		fail_reason += " not supported.";
-		return false;
+	for (i = 0; i < div * 3; i += 3) {
+		
+		v = (src[i+0] & 0xfc) >> 2;
+		*(dst++) = tbl[v];
+
+		v  = (src[i+0] & 0x03) << 4;
+		v |= (src[i+1] & 0xf0) >> 4;
+		*(dst++) = tbl[v];
+
+		v  = (src[i+1] & 0x0f) << 2;
+		v |= (src[i+2] & 0xc0) >> 6;
+		*(dst++) = tbl[v];
+		
+		v = src[i+2] & 0x3f;
+		*(dst++) = tbl[v];
 	}
 
-	const t_digest_challenge &dchlg = chlg.digest_challenge;
+	if (mod == 1) {
+		v = (src[i+0] & 0xfc) >> 2;
+		*(dst++) = tbl[v];
+		
+		v = (src[i+0] & 0x03) << 4;
+		*(dst++) = tbl[v];
 
-	// Only MD5 algorithm is supported
-	if (cmp_nocase(dchlg.algorithm, ALG_MD5) != 0) {
-		fail_reason = "Authentication algorithm " + dchlg.algorithm;
-		fail_reason += " not supported.";
-		return false;
+		*(dst++) = '=';
+		*(dst++) = '=';
+	} else if (mod == 2) {
+		v = (src[i+0] & 0xfc) >> 2;
+		*(dst++) = tbl[v];
+		
+		v  = (src[i+0] & 0x03) << 4;
+		v |= (src[i+1] & 0xf0) >> 4;
+		*(dst++) = tbl[v];
+
+		v = (src[i+1] & 0x0f) << 2;
+		*(dst++) = tbl[v];
+
+		*(dst++) = '=';
 	}
+	
+	return dst - dst0;
+}
 
-	// Determine QOP
-	// If both auth and auth-int are supported by the server, then
-	// choose auth to avoid problems with SIP ALGs. A SIP ALG rewrites
-	// the body of a message, thereby breaking auth-int authentication.
-	if (!dchlg.qop_options.empty()) {
-		const list<string>::const_iterator i = find(
-			dchlg.qop_options.begin(), dchlg.qop_options.end(),
-			QOP_AUTH_INT);
-		const list<string>::const_iterator j = find(
-			dchlg.qop_options.begin(), dchlg.qop_options.end(),
-			QOP_AUTH);
-		if (j != dchlg.qop_options.end())
-			qop = QOP_AUTH;
-		else {
-			if (i != dchlg.qop_options.end())
-				qop = QOP_AUTH_INT;
-			else {
-				fail_reason = "Non of the qop values are supported.";
-				return false;
-			}
+static int b64_val(u8 x)
+{
+	if (x >= 'A' && x <= 'Z')
+		return x - 'A';
+	else if (x >= 'a' && x <= 'z')
+		return x - 'a' + 26;
+	else if (x >= '0' && x <= '9')
+		return x - '0' + 52;
+	else if (x == '+')
+		return 62;
+	else if (x == '/')
+		return 63;
+	//else if (x == '=')
+		return -1;
+}
+
+int b64_dec(const u8 * src, u8 * dst, int len)
+{
+	u8 * dst0 = dst;
+	int i, x1, x2, x3, x4;
+
+	if (len % 4)
+		return 0;
+
+	for (i=0; i+4 < len; i += 4) {
+		x1 = b64_val(*(src++));
+		x2 = b64_val(*(src++));
+		x3 = b64_val(*(src++));
+		x4 = b64_val(*(src++));
+		
+		*(dst++) = (x1 << 2) | ((x2 & 0x30) >> 4);
+		*(dst++) = ((x2 & 0x0F) << 4) | ((x3 & 0x3C) >> 2);
+		*(dst++) = ((x3 & 0x03) << 6) | (x4 & 0x3F);
+	}
+	
+	if (len) {
+		x1 = b64_val(*(src++));
+		x2 = b64_val(*(src++));
+		x3 = b64_val(*(src++));
+		x4 = b64_val(*(src++));
+		
+		*(dst++) = (x1 << 2) | ((x2 & 0x30) >> 4);
+		if (x3 != -1) {
+			*(dst++) = ((x2 & 0x0F) << 4) | ((x3 & 0x3C) >> 2);
+			if (x4 != -1)
+				*(dst++) = ((x3 & 0x03) << 6) | (x4 & 0x3F);
 		}
 	}
 
+	return dst - dst0;
+}
+
+#define HASH_HEX_LEN	32
+#define HASH_LEN		16
+
+// authentication with AKAv1-MD5 algorithm (RFC 3310)
+
+bool t_request::authorize_akav1_md5(const t_digest_challenge &dchlg,
+	const string &username, const string &passwd, uint8 *op, uint8 *amf,
+	unsigned long nc,
+	const string &cnonce, const string &qop, string &resp, 
+	string &fail_reason) const
+{
+	u8 nonce64[B64_DEC_SZ(dchlg.nonce.size())];
+	int len = b64_dec((const u8 *)dchlg.nonce.c_str(), nonce64, dchlg.nonce.size());
+	u8 rnd[AKA_RANDLEN];
+  	u8 sqnxoraka[AKA_SQNLEN];
+	u8 sqn[AKA_SQNLEN];
+	u8 k[AKA_KLEN];
+	u8 res[AKA_RESLEN];
+	u8 ck[AKA_CKLEN];
+	u8 ik[AKA_IKLEN];
+	u8 ak[AKA_AKLEN];
+	int i;
+
+	if (len < AKA_RANDLEN+AKA_AUTNLEN) {
+		fail_reason = "nonce base64 data too short (need 32 bytes)";
+		return false;
+	}
+
+	memset(rnd, 0, AKA_RANDLEN);
+	memset(sqnxoraka, 0, AKA_SQNLEN);
+	memset(k, 0, AKA_KLEN);
+
+	memcpy(rnd, nonce64, AKA_RANDLEN);
+	memcpy(sqnxoraka, nonce64 + AKA_RANDLEN, AKA_SQNLEN);
+	memcpy(k, passwd.c_str(), passwd.size());
+
+	f2345(k, rnd, res, ck, ik, ak, op);
+	
+	for (i=0; i < AKA_SQNLEN; i++)
+    	sqn[i] = sqnxoraka[i] ^ ak[i];
+	
+	string res_str = string((char *)res, AKA_RESLEN);
+	
+	return authorize_md5(dchlg, username, res_str, nc, cnonce, qop, 
+			resp, fail_reason);
+}
+
+// authentication with MD5 algorithm
+
+bool t_request::authorize_md5(const t_digest_challenge &dchlg,
+	const string &username, const string &passwd, unsigned long nc,
+	const string &cnonce, const string &qop, string &resp, 
+	string &fail_reason) const
+{
+	string A1, A2;
 	// RFC 2617 3.2.2.2
 	A1 = username + ":" + dchlg.realm + ":" + passwd;
 
@@ -123,21 +248,86 @@ bool t_request::authorize(const t_challenge &chlg,
 		x += HA2.str();
 	}
 
-	// Create credentials
-	cr.auth_scheme = AUTH_DIGEST;
-	t_digest_response &dr = cr.digest_response;
-
 	MD5Digest digest;
 	digest << x;
 	ostringstream dresp;
 	dresp << digest;
 
-	dr.dresponse = dresp.str();
+	resp = dresp.str();
+
+	return true;
+}
+
+bool t_request::authorize(const t_challenge &chlg, t_user *user_config,
+	const string &username, const string &passwd, unsigned long nc,
+	const string &cnonce, t_credentials &cr, string &fail_reason) const
+{
+	// Only Digest authentication is supported
+	if (cmp_nocase(chlg.auth_scheme, AUTH_DIGEST) != 0) {
+		fail_reason = "Authentication scheme " + chlg.auth_scheme;
+		fail_reason += " not supported.";
+		return false;
+	}
+
+	const t_digest_challenge &dchlg = chlg.digest_challenge;
+	
+	string qop = "";
+
+	// Determine QOP
+	// If both auth and auth-int are supported by the server, then
+	// choose auth to avoid problems with SIP ALGs. A SIP ALG rewrites
+	// the body of a message, thereby breaking auth-int authentication.
+	if (!dchlg.qop_options.empty()) {
+		const list<string>::const_iterator i = find(
+			dchlg.qop_options.begin(), dchlg.qop_options.end(),
+			QOP_AUTH_INT);
+		const list<string>::const_iterator j = find(
+			dchlg.qop_options.begin(), dchlg.qop_options.end(),
+			QOP_AUTH);
+		if (j != dchlg.qop_options.end())
+			qop = QOP_AUTH;
+		else {
+			if (i != dchlg.qop_options.end())
+				qop = QOP_AUTH_INT;
+			else {
+				fail_reason = "Non of the qop values are supported.";
+				return false;
+			}
+		}
+	}
+
+	bool ret = false;
+	string resp;
+
+	if (cmp_nocase(dchlg.algorithm, ALG_MD5) == 0) {
+		ret = authorize_md5(dchlg, username, passwd, nc, cnonce, 
+				qop, resp, fail_reason);
+	} else if (cmp_nocase(dchlg.algorithm, ALG_AKAV1_MD5) == 0) {
+		uint8 aka_op[AKA_OPLEN];
+		uint8 aka_amf[AKA_AMFLEN];
+		user_config->get_auth_aka_op(aka_op);
+		user_config->get_auth_aka_amf(aka_amf);
+		
+		ret = authorize_akav1_md5(dchlg, username, passwd, aka_op, aka_amf, nc, cnonce, 
+				qop, resp, fail_reason);
+	} else {
+		fail_reason = "Authentication algorithm " + dchlg.algorithm;
+		fail_reason += " not supported.";
+		return false;
+	}
+	
+	if (!ret) return false;
+	
+	// Create credentials
+	cr.auth_scheme = AUTH_DIGEST;
+	t_digest_response &dr = cr.digest_response;
+
+	dr.dresponse = resp;
 	dr.username = username;
 	dr.realm = dchlg.realm;
 	dr.nonce = dchlg.nonce;
 	dr.digest_uri = uri;
-	dr.algorithm = ALG_MD5;
+	dr.algorithm = dchlg.algorithm;
 	dr.opaque = dchlg.opaque;
 
 	// RFC 2617 3.2.2
@@ -206,6 +396,39 @@ t_sip_message *t_request::copy(void) const {
 	t_sip_message *m =  new t_request(*this);
 	MEMMAN_NEW(m);
 	return m;
+}
+
+void t_request::set_route(const t_url &target_uri, const list<t_route> &route_set) {
+	// RFC 3261 12.2.1.1
+        if (route_set.empty()) {
+                uri = target_uri;
+        } else {
+                if (route_set.front().uri.get_lr()) {
+			// Loose routing
+                        uri = target_uri;
+                        for (list<t_route>::const_iterator i = route_set.begin();
+                             i != route_set.end(); ++i)
+                        {
+                                hdr_route.add_route(*i);
+                        }
+                        hdr_route.route_to_first_route = true;
+                } else {
+			// Strict routing
+                        uri = route_set.front().uri;
+                        for (list<t_route>::const_iterator i = route_set.begin();
+                             i != route_set.end(); ++i)
+                        {
+                                if (i != route_set.begin()) {
+                                        hdr_route.add_route(*i);
+                                }
+                        }
+
+                        // Add target uri to the route list
+                        t_route route;
+                        route.uri = target_uri;
+                        hdr_route.add_route(route);
+                }
+        }
 }
 
 t_response *t_request::create_response(int code, string reason) const
@@ -316,6 +539,8 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 			return false;
 		}
 		break;
+	default:
+		break;
 	}
 	
 	if (hdr_replaces.is_populated()) {
@@ -330,13 +555,24 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 }
 
 void t_request::add_destinations(const t_user &user_profile, const t_url &dst_uri) {
+	t_url dest;
+	if (dst_uri.get_scheme() == "tel")
+	{
+		// Send a tel-URI to the configure domain for the user.
+		dest = "sip:" + user_profile.get_domain();
+	}
+	else
+	{
+		dest = dst_uri;
+	}
+
 	if ((user_profile.get_sip_transport() == SIP_TRANS_AUTO ||
 	     user_profile.get_sip_transport() == SIP_TRANS_TCP)
 	    &&
-	    (dst_uri.get_transport().empty() ||
-	     cmp_nocase(dst_uri.get_transport(), "tcp") == 0))
+	    (dest.get_transport().empty() ||
+	     cmp_nocase(dest.get_transport(), "tcp") == 0))
 	{
-		list<t_ip_port> l = dst_uri.get_h_ip_srv("tcp");
+		list<t_ip_port> l = dest.get_h_ip_srv("tcp");
 		destinations.insert(destinations.end(), l.begin(), l.end());
 	}
 	
@@ -347,16 +583,16 @@ void t_request::add_destinations(const t_user &user_profile, const t_url &dst_ur
 	if ((user_profile.get_sip_transport() == SIP_TRANS_AUTO ||
 	    user_profile.get_sip_transport() == SIP_TRANS_UDP)
 	   &&
-	   (dst_uri.get_transport().empty() ||
-	    cmp_nocase(dst_uri.get_transport(), "udp") == 0)
+	   (dest.get_transport().empty() ||
+	    cmp_nocase(dest.get_transport(), "udp") == 0)
 	   &&
 	   (get_encoded_size() < 65536))
 	{
-		list<t_ip_port> l = dst_uri.get_h_ip_srv("udp");
+		list<t_ip_port> l = dest.get_h_ip_srv("udp");
 		destinations.insert(destinations.end(), l.begin(), l.end());
 	}
 	
-	transport_specified = !dst_uri.get_transport().empty();
+	transport_specified = !dest.get_transport().empty();
 }
 
 void t_request::calc_destinations(const t_user &user_profile) {
@@ -465,11 +701,11 @@ void t_request::set_destination(const t_ip_port &ip_port) {
 	destinations.push_back(ip_port);
 }
 
-bool t_request::www_authorize(const t_challenge &chlg, const string &username,
-	       const string &passwd, unsigned long nc,
+bool t_request::www_authorize(const t_challenge &chlg, t_user *user_config, 
+	       const string &username, const string &passwd, unsigned long nc,
 	       const string &cnonce, t_credentials &cr, string &fail_reason)
 {
-	if (!authorize(chlg, username, passwd, nc, cnonce, cr, fail_reason)) {
+	if (!authorize(chlg, user_config, username, passwd, nc, cnonce, cr, fail_reason)) {
 		return false;
 	}
 
@@ -478,11 +714,11 @@ bool t_request::www_authorize(const t_challenge &chlg, const string &username,
 	return true;
 }
 
-bool t_request::proxy_authorize(const t_challenge &chlg, const string &username,
-	       const string &passwd, unsigned long nc,
+bool t_request::proxy_authorize(const t_challenge &chlg, t_user *user_config,
+	       const string &username, const string &passwd, unsigned long nc,
 	       const string &cnonce, t_credentials &cr, string &fail_reason)
 {
-	if (!authorize(chlg, username, passwd, nc, cnonce, cr, fail_reason)) {
+	if (!authorize(chlg, user_config, username, passwd, nc, cnonce, cr, fail_reason)) {
 		return false;
 	}
 

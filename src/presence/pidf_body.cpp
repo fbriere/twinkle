@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ void t_pidf_xml_body::create_xml_doc(const string &xml_version, const string &ch
 	xmlNode *node_status = xmlNewChild(node_tuple, ns_pidf, BAD_CAST "status", NULL);
 	
 	// basic
-	xmlNode *node_basic = xmlNewChild(node_status, ns_pidf, 
+	xmlNewChild(node_status, ns_pidf, 
 		BAD_CAST "basic", BAD_CAST basic_status.c_str());
 }
 

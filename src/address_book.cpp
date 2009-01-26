@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -101,13 +101,13 @@ void t_address_book::find_address(t_user *user_config, const t_url &u) const {
 	
 	// Normalize url using number conversion rules
 	t_url u_normalized(u);
-	string normalized_user = user_config->convert_number(u.get_user());
-	u_normalized.set_user(normalized_user);
+	u_normalized.apply_conversion_rules(user_config);
 	
 	for (list<t_address_card>::const_iterator i = records.begin();
 	     i != records.end(); i++)
 	{
-		string full_address = ui->expand_destination(user_config, i->sip_address);
+		string full_address = ui->expand_destination(user_config, i->sip_address,
+					u_normalized.get_scheme());
 		t_url url_phone(full_address);
 		if (!url_phone.is_valid()) continue;
 		

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ string timer_type2str(t_timer_type t) {
 	case TMR_PHONE:		return "TMR_PHONE";
 	case TMR_LINE:		return "TMR_LINE";
 	case TMR_SUBSCRIBE:	return "TMR_SUBSCRIBE";
+	case TMR_PUBLISH:	return "TMR_PUBLISH";
+	case TMR_STUN_TRANSACTION: return "TMR_STUN_TRANSACTION";
 	}
 
 	return "UNKNOWN";
@@ -163,8 +165,9 @@ t_phone *t_tmr_phone::get_phone(void) const {
 
 string t_tmr_phone::get_name(void) const {
 	switch(phone_timer) {
-	case PTMR_REGISTRATION:	return "PTMR_REGISTRATION";
-	case PTMR_NAT_KEEPALIVE: return "PTMR_NAT_KEEPALIVE";
+	case PTMR_REGISTRATION:		return "PTMR_REGISTRATION";
+	case PTMR_NAT_KEEPALIVE: 	return "PTMR_NAT_KEEPALIVE";
+	case PTMR_TCP_PING:		return "PTMR_TCP_PING";
 	}
 
 	return "UNKNOWN";
@@ -217,6 +220,7 @@ string t_tmr_line::get_name(void) const {
 	case LTMR_100REL_TIMEOUT:	return "LTMR_100REL_TIMEOUT";
 	case LTMR_100REL_GUARD:		return "LTMR_100REL_GUARD";
 	case LTMR_CANCEL_GUARD:		return "LTMR_CANCEL_GUARD";
+	case LTMR_GLARE_RETRY:		return "LTMR_GLARE_RETRY";
 	}
 
 	return "UNKNOWN";

@@ -49,8 +49,8 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	THANKS config.guess config.sub depcomp install-sh missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/m4/vl_lib_readline.m4 \
+	$(top_srcdir)/acinclude.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -323,6 +323,7 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
+ACLOCAL_AMFLAGS = -I m4
 pkglangdir = $(pkgdatadir)/lang
 bin_SCRIPTS = src/gui/twinkle
 noinst_SCRIPTS = twinkle.desktop
@@ -334,6 +335,7 @@ pkgdata_DATA = data/ringback.wav data/ringtone.wav \
 EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
 	src/gui/twinkle.pro src/gui/images/* \
 	data/ringback.wav data/ringtone.wav data/providers.csv \
+	m4/*.m4 \
 	sip.protocol twinkle.desktop.in Doxyfile
 
 SUBDIRS = src
@@ -552,7 +554,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/. $(distdir)/data $(distdir)/src/gui $(distdir)/src/gui/images
+	$(mkdir_p) $(distdir)/. $(distdir)/data $(distdir)/m4 $(distdir)/src/gui $(distdir)/src/gui/images
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

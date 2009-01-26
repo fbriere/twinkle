@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,14 +33,14 @@ t_dtmf_player::t_dtmf_player(t_audio_rx *audio_rx, t_audio_encoder *audio_encode
 			t_user *user_config, uint8 dtmf_tone, uint32 dtmf_timestamp,
 			uint16 nsamples) :
 	_audio_rx(audio_rx),
-	_audio_encoder(audio_encoder),
 	_user_config(user_config),
-	_dtmf_current(dtmf_tone),
-	_dtmf_timestamp(dtmf_timestamp),
-	_nsamples(nsamples),
+	_audio_encoder(audio_encoder),
 	_dtmf_pause(false),
 	_dtmf_stop(false),
-	_dtmf_duration(0)
+	_dtmf_current(dtmf_tone),
+	_dtmf_timestamp(dtmf_timestamp),
+	_dtmf_duration(0),
+	_nsamples(nsamples)
 {}
 
 uint32 t_dtmf_player::get_timestamp(void) {

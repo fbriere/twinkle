@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include <iostream>
 #include "challenge.h"
 #include "definitions.h"
+#include "log.h"
 #include "util.h"
 
 t_digest_challenge::t_digest_challenge() {
@@ -123,8 +124,16 @@ bool t_digest_challenge::set_attr(const t_parameter &p) {
 		     i != l.end(); i++)
 		{
 			t_url u(*i);
-			if (!u.is_valid()) return false;
-			domain.push_back(u);
+			if (u.is_valid()) {
+				domain.push_back(u);
+			} else {
+				log_file->write_header("t_digest_challenge::set_attr",
+					LOG_SIP, LOG_WARNING);
+				log_file->write_raw("Invalid domain in digest challenge: ");
+				log_file->write_raw(*i);
+				log_file->write_endl();
+				log_file->write_footer();
+			}
 		}
 	}
 	else if (p.name == "qop") {

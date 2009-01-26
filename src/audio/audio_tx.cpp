@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -252,7 +252,7 @@ void t_audio_tx::clear_conceal_buf(void) {
 
 void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_party) {
 	int status;
-	struct timeval debug_timer, debug_timer_prev;
+	//struct timeval debug_timer, debug_timer_prev;
 
 	unsigned char *playbuf = buf;
 
@@ -380,11 +380,13 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 
 	// Write passed sound samples to DSP.
 	status = playback_device->write(playbuf, len);
+	
 	if (status != len) {
 		string msg("Writing to dsp failed: ");
 		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_audio_tx::play_pcm",
 			LOG_NORMAL, LOG_CRITICAL);
+		return;
 	}
 }
 
@@ -395,7 +397,7 @@ void t_audio_tx::set_running(bool running) {
 void t_audio_tx::run(void) {
 	const AppDataUnit* adu;
 	struct timespec sleeptimer;
-	struct timeval debug_timer, debug_timer_prev;
+	//struct timeval debug_timer, debug_timer_prev;
 	int last_seqnum = -1; // seqnum of last received RTP packet
 	
 	// RTP packets with multiple SSRCs may be received. Each SSRC
@@ -410,7 +412,7 @@ void t_audio_tx::run(void) {
 	// a crash when the thread gets destroyed before it starts running.
 	// is_running = true;
 
-	uint32 rtp_timestamp;
+	uint32 rtp_timestamp = 0;
 	
 	// This thread may not take the lock on the transaction layer to
 	// prevent dead locks
@@ -696,11 +698,12 @@ void t_audio_tx::run(void) {
 			sb = (short *)sample_buf;
 		}
 				
+				
 		// Decode the audio
 		unsigned char *payload = const_cast<uint8 *>(adu->getData());
 		short sample_size; // size in bytes
-		sample_size = 2 * map_audio_decoder[codec]->decode(payload, adu->getSize(),
-					sb, sb_size);
+		
+		sample_size = 2 * map_audio_decoder[codec]->decode(payload, adu->getSize(), sb, sb_size);
 				
 		// Resample if needed
 		if (downsample_factor > 1) {
@@ -736,12 +739,13 @@ void t_audio_tx::run(void) {
 		// Discard packet if we are lacking behind. This happens if the
 		// soundcard plays at a rate less than the requested sample rate.
 		if (rtp_session->isWaiting(&(adu->getSource()))) {
+
 			uint32 last_ts = rtp_session->getLastTimestamp(&(adu->getSource()));
 			uint32 diff;
 			
 			diff = last_ts - rtp_timestamp;
 			
-			if (diff > (JITTER_BUF_SIZE(sc_sample_rate) / AUDIO_SAMPLE_SIZE) * 8)
+			if (diff > (uint32_t)(JITTER_BUF_SIZE(sc_sample_rate) / AUDIO_SAMPLE_SIZE) * 8)
 			{
 				log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 				log_file->write_raw("Audio tx line ");
@@ -773,6 +777,18 @@ void t_audio_tx::run(void) {
 		// the play-out buffer keeps filled.
 		// If the play-out buffer gets empty you hear a
 		// crack in the sound.
+
+
+#ifdef HAVE_SPEEX		
+		// store decoded output for (optional) echo cancellation 
+		if (audio_session->get_do_echo_cancellation()) {
+		    if (audio_session->get_echo_captured_last()) {
+			speex_echo_playback(audio_session->get_speex_echo_state(), (spx_int16_t *) sb);
+			audio_session->set_echo_captured_last(false);;
+		    }
+		}
+#endif
+
 	}
 
 	phone->remove_prohibited_thread();

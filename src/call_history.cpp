@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -367,7 +367,7 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 
 	records.push_back(call_record);
 	
-	while (records.size() > sys_config->get_ch_max_size()) {
+	while (records.size() > (size_t)sys_config->get_ch_max_size()) {
 		records.pop_front();
 	}
 	

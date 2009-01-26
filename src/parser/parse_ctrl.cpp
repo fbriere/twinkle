@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ int t_parser::comment_level = 0;
 list<string> t_parser::parse_errors;
 
 string t_parser::unfold(const string &h) {
-	int i;
+	string::size_type i;
 	string s = h;
 
 	while ((i = s.find("\r\n ")) != string::npos) {

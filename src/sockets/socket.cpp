@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -272,9 +272,6 @@ string h_ip2str(unsigned long ipaddr) {
 /////////////////
 
 t_socket_tcp::t_socket_tcp() {
-	struct sockaddr_in addr;
-	int ret;
-
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sd < 0) throw errno;
 }

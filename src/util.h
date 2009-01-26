@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <string>
+#include <cc++/config.h>
 
 using namespace std;
 
@@ -74,8 +75,29 @@ string duration2str(unsigned long seconds);
 // Convert a timer in seconds to a string (h:mm:ss)
 string timer2str(unsigned long seconds);
 
-// Convert a hex string to an integer
+/** 
+ * Convert a hex string to an integer.
+ * @param h [in] A hex string.
+ * @return The integer.
+ */
 unsigned long hex2int(const string &h);
+
+/**
+ * Convert a hex string to a binary blob representing the hex value.
+ * @param h [in] A hex string.
+ * @param buf [in] A pointer to a buffer to store the binary blob.
+ * @pre The buffer must be large enough to contain the binary blob.
+ * @post buf contains the binary representation of the hex string.
+ */
+void hex2binary(const string &h, uint8 *buf);
+
+/**
+ * Convert a binary blob to a hexadecimal string.
+ * @param buf [in] Pointer to the binary blob.
+ * @param len [in] Length of the blob.
+ * @return The hexadecimal string.
+ */
+string binary2hex(uint8 *buf, unsigned long len);
 
 // Convert a string to lower case
 string tolower(const string &s);
@@ -87,6 +109,15 @@ string toupper(const string &s);
 string rtrim(const string &s);
 string ltrim(const string &s);
 string trim(const string &s);
+
+/**
+ * Pad a string on the left side till a certain length.
+ * @param s [in] The string to pad.
+ * @param c [in] The pad character.
+ * @param len [in] The length to which the string must be padded.
+ * @return The padded string.
+ */
+string padleft(const string &s, char c, unsigned long len);
 
 // Compare 2 strings case insensive, return
 // -1 --> s1 < s2
@@ -222,7 +253,7 @@ string remove_white_space(const string &s);
  * @param len [in] The length in bytes to truncate to.
  * @return The truncated string.
  */
-string dotted_truncate(const string &s, int len);
+string dotted_truncate(const string &s, string::size_type len);
 
 /**
  * Convert a string to a printable representation, i.e. change

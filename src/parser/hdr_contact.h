@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,7 +64,27 @@ public:
 	void add_contact(const t_contact_param &contact);
 	void add_contacts(const list<t_contact_param> &l);
 	void set_contacts(const list<t_contact_param> &l);
+	
+	/**
+	 * Set the contact list to a sequence of URI's with display names.
+	 * The URI's are give a descending q-value starting at 0.9
+	 * Each subsequent URI gets a q-value 0.1 less than the previous
+	 * URI. If more than 9 URI's are passed then the tail of URI's all
+	 * get a q-value of 0.1.
+	 *
+	 * @param l [in] The list of URI's to be put in the contact list.
+	 */	
 	void set_contacts(const list<t_url> &l);
+	
+	/**
+	 * Set the contact list to a sequence of URI's with display names.
+	 * The URI's are give a descending q-value starting at 0.9
+	 * Each subsequent URI gets a q-value 0.1 less than the previous
+	 * URI. If more than 9 URI's are passed then the tail of URI's all
+	 * get a q-value of 0.1.
+	 *
+	 * @param l [in] The list of URI's to be put in the contact list.
+	 */
 	void set_contacts(const list<t_display_url> &l);
 
 	// Set contact to any, eg. Contact: *

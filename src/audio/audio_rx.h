@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <queue>
 #include <string>
+
 #include "audio_codecs.h"
 #include "audio_device.h"
 #include "audio_encoder.h"
@@ -34,6 +35,11 @@
 #include "threads/sema.h"
 #include "twinkle_rtp_session.h"
 #include "twinkle_config.h"
+
+#ifdef HAVE_SPEEX
+#include <speex/speex.h>
+#include <speex/speex_preprocess.h> 
+#endif
 
 using namespace std;
 using namespace ost;
@@ -87,7 +93,7 @@ private:
 	t_audio_encoder	*audio_encoder;
 
 	// Buffer to store PCM samples for ptime ms
-	unsigned char	*sample_buf;
+	unsigned char	*input_sample_buf;
 	
 	// Indicates if NAT keep alive packets must be sent during silence
 	// suppression.
@@ -125,6 +131,11 @@ private:
 
 	// Timestamp for next RTP packet
 	unsigned long timestamp;
+
+#ifdef HAVE_SPEEX
+	// Speex preprocessor state
+	SpeexPreprocessState *speex_preprocess_state;
+#endif
 
 	// Get sound samples for 1 RTP packet from the soundcard.
 	// Returns false if the main loop has to start another cycle to get

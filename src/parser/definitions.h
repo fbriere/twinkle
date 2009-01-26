@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ using namespace std;
 
 // Authentication algorithms
 #define ALG_MD5		"MD5"
+#define ALG_AKAV1_MD5	"AKAV1-MD5"
 #define ALG_MD5_SESS	"MD5-sess"
 
 // Authentication QOP

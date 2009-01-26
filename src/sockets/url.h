@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,11 @@
 #include <list>
 #include <string>
 #include "parser/header.h"
+
+/** @name Forward declarations */
+//@{
+class t_user;
+//@}
 
 using namespace std;
 
@@ -197,7 +202,7 @@ public:
 	/**
 	 * Add a header to the URI.
 	 * The encoded header will be concatenated to the headers field.
-	 /* @param hdr [in] Header to be added.
+	 * @param hdr [in] Header to be added.
 	 */
 	void add_header(const t_header &hdr);
 	
@@ -215,9 +220,17 @@ public:
 	bool operator==(const t_url &u) const;
 	bool operator!=(const t_url &u) const;
 	
-	// Check if the user-host part of 2 url's are equal.
-	// If the user-part is a phone number, then only compare
-	// the user parts.
+	/**
+	 * Check if the user-host part of 2 url's are equal.
+	 * If the user-part is a phone number, then only compare
+	 * the user parts. If the url is a tel-url then the host
+	 * contains a telephone number for comparison.
+	 * @param u [in] Other URL to compare with.
+	 * @param looks_like_phone [in] Flag to indicate is a SIP URL
+	 *        that looks like a phone number must be treated as such.
+	 * @param special_symbols [in] Interpuction symbols in a phone number.
+	 * @return true if the URLs match, false otherwise.
+	 */
 	bool user_host_match(const t_url &u, bool looks_like_phone, 
 		const string &special_symbols) const;
 
@@ -240,6 +253,13 @@ public:
 	
 	// Return string encoding of url without parameters/headers
 	string encode_no_params_hdrs(bool escape = true) const;
+	
+	/**
+	 * Apply number conversion rules to modify the URL.
+	 * @param user_config [in] The user profile having the conversion
+	 *        rules to apply.
+	 */
+	void apply_conversion_rules(t_user *user_config);
 };
 
 // Display name and url combined

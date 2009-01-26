@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -186,15 +186,14 @@ t_speex_audio_decoder::t_speex_audio_decoder(t_mode mode, t_user *user_config) :
 		assert(false);
 	}
 	
+    int frame_size = 0;
+    speex_decoder_ctl(speex_dec_state, SPEEX_GET_FRAME_SIZE, &frame_size);
+
 	// Initialize decoder with user settings
 	int arg = (user_config->get_speex_penh() ? 1 : 0);
 	speex_decoder_ctl(speex_dec_state, SPEEX_SET_ENH, &arg);
 
-	// Determine default ptime
-	int speex_frame_size;
-	speex_decoder_ctl(speex_dec_state, SPEEX_GET_FRAME_SIZE, 
-			&speex_frame_size);
-	_default_ptime = speex_frame_size / (audio_sample_rate(_codec) / 1000);
+    _default_ptime = frame_size / (audio_sample_rate(_codec) / 1000);
 }
 
 t_speex_audio_decoder::~t_speex_audio_decoder() {
@@ -515,6 +514,8 @@ bool t_g726_audio_decoder::valid_payload_size(uint16 payload_size,
 	case BIT_RATE_40:
 		// Payload size must be multiple of 5
 		if (payload_size % 5 != 0) return false;
+		break;
+	default:
 		break;
 	}
 	

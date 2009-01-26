@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,8 @@ bool t_mime_db_record::populate_from_file_record(const vector<string> &v) {
 	
 	mimetype = v[0];
 	file_glob = v[1];
+	
+	return true;
 }
 
 //////////////////////////

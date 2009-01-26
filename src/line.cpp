@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -227,7 +227,7 @@ void t_line::cleanup(void) {
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
-		user_config = NULL;
+		phone_user = NULL;
 		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
 	}
@@ -265,7 +265,7 @@ void t_line::cleanup_open_pending(void) {
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
-		user_config = NULL;
+		phone_user = NULL;
 		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
 	}
@@ -313,7 +313,7 @@ void t_line::cleanup_forced(void) {
 	call_info.clear();
 	call_history->add_call_record(call_hist_record);
 	call_hist_record.renew();
-	user_config = NULL;
+	phone_user = NULL;
 	user_defined_ringtone.clear();
 	ui->cb_line_state_changed();
 }
@@ -358,7 +358,7 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) :
 	line_number = _line_number;
 	id_invite_comp = 0;
 	id_no_answer = 0;
-	user_config = NULL;
+	phone_user = NULL;
 	user_defined_ringtone.clear();
 	keep_seized = false;
 }
@@ -409,6 +409,8 @@ void t_line::start_timer(t_line_timer timer, t_object_id did) {
 	t_tmr_line	*t;
 	t_dialog	*dialog = get_dialog(did);
 	unsigned long	dur;
+	
+	assert(phone_user);
 
 	switch(timer) {
 	case LTMR_ACK_TIMEOUT:
@@ -441,7 +443,8 @@ void t_line::start_timer(t_line_timer timer, t_object_id did) {
 		id_invite_comp = t->get_object_id();
 		break;
 	case LTMR_NO_ANSWER:
-		t = new t_tmr_line(DUR_NO_ANSWER(user_config), timer, get_object_id(), did);
+		t = new t_tmr_line(DUR_NO_ANSWER(phone_user->get_user_profile()), 
+				timer, get_object_id(), did);
 		MEMMAN_NEW(t);
 		id_no_answer = t->get_object_id();
 		break;
@@ -555,19 +558,19 @@ void t_line::stop_timer(t_line_timer timer, t_object_id did) {
 	*id = 0;
 }
 
-void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
+void t_line::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject, bool anonymous)
 {
-	invite(user, to_uri, to_display, subject, t_hdr_referred_by(), 
+	invite(pu, to_uri, to_display, subject, t_hdr_referred_by(), 
 			t_hdr_replaces(), t_hdr_require(), anonymous);
 }
 
-void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
+void t_line::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by,
 		const t_hdr_replaces &hdr_replaces,
 		const t_hdr_require &hdr_require, bool anonymous)
 {
-	assert(user);
+	assert(pu);
 	
 	// Ignore if line is not idle
 	if (state != LS_IDLE) {
@@ -583,7 +586,8 @@ void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 		return;
 	}
 	
-	user_config = user;
+	phone_user = pu;
+	t_user *user_config = pu->get_user_profile();
 
 	call_info.from_uri = create_user_uri(); // NOTE: hide_user is not set yet
 	call_info.from_display = user_config->get_display(false);
@@ -914,7 +918,8 @@ void t_line::recvd_success(t_response *r, t_tuid tuid, t_tid tid) {
 void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
 	
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 
 	if (active_dialog) {
 		// If an active dialog exists then non-2XX should
@@ -1028,7 +1033,8 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
 	
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 
 	if (active_dialog) {
 		// If an active dialog exists then non-2XX should
@@ -1232,7 +1238,8 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
 
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 	
 	if (active_dialog) {
 		// If an active dialog exists then non-2XX should
@@ -1402,8 +1409,8 @@ void t_line::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 	recvd_redirect(r, tuid, tid);
 }
 
-void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &ringtone) {
-	t_response *resp;
+void t_line::recvd_invite(t_phone_user *pu, t_request *r, t_tid tid, const string &ringtone) {
+	t_user *user_config = NULL;
 	
 	switch (state) {
 	case LS_IDLE:
@@ -1429,8 +1436,9 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &r
 		}
 		*/
 		
-		assert(user);
-		user_config = user;
+		assert(pu);
+		phone_user = pu;
+		user_config = phone_user->get_user_profile();
 		user_defined_ringtone = ringtone;
 		
 		call_info.from_uri = r->hdr_from.uri;
@@ -1716,7 +1724,8 @@ void t_line::timeout(t_line_timer timer, t_object_id did) {
 					"t_line::timeout");
 		
 		if (active_dialog) {
-			assert(user_config);
+			assert(phone_user);
+			t_user *user_config = phone_user->get_user_profile();
 			t_service *srv = phone->ref_service(user_config);
 			if (srv->get_cf_active(CF_NOANSWER, cf_dest)) {
 				log_file->write_report("Call redirection no answer",
@@ -1866,18 +1875,21 @@ void t_line::process_invite_retrans(void) {
 }
 
 string t_line::create_user_contact(const string &auto_ip) const {
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 	return user_config->create_user_contact(hide_user, auto_ip);
 }
 
 string t_line::create_user_uri(void) const {
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 	return user_config->create_user_uri(hide_user);
 }
 
 t_response *t_line::create_options_response(t_request *r, bool in_dialog) const
 {
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 	return phone->create_options_response(user_config, r, in_dialog);
 }
 
@@ -1889,7 +1901,8 @@ void t_line::send_response(t_response *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_line::send_request(t_request *r, t_tuid tuid) {
-	assert(user_config);
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
 	phone->send_request(user_config, r, tuid);
 }
 
@@ -2088,10 +2101,23 @@ unsigned short t_line::get_rtp_port(void) const {
 }
 
 t_user *t_line::get_user(void) const {
+	t_user *user_config = NULL;
+	
+	if (phone_user) {
+		user_config = phone_user->get_user_profile();
+	}
+	
 	return user_config;
 }
 
+t_phone_user *t_line::get_phone_user(void) const {
+	return phone_user;
+}
+
 string t_line::get_ringtone(void) const {
+	assert(phone_user);
+	t_user *user_config = phone_user->get_user_profile();
+	
 	if (!user_defined_ringtone.empty()) {
 		// Ring tone returned by incoming call script
 		return user_defined_ringtone;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #define _QT_TRANSLATOR_H
 
 #include <qapplication.h>
-#include "translator.h";
+#include "translator.h"
 
 // This class provides the translation service from Qt to the
 // core of Twinkle.

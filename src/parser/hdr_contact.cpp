@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -88,18 +88,23 @@ void t_hdr_contact::set_contacts(const list<t_contact_param> &l) {
 
 void t_hdr_contact::set_contacts(const list<t_url> &l) {
 	t_contact_param c;
+	float q = 0.9;
 
 	populated = true;
 
 	contact_list.clear();
 	for (list<t_url>::const_iterator i = l.begin(); i != l.end(); i++) {
 		c.uri = *i;
+		c.set_qvalue(q);
 		contact_list.push_back(c);
+		q = q - 0.1;
+		if (q < 0.1) q = 0.1;
 	}
 }
 
 void t_hdr_contact::set_contacts(const list<t_display_url> &l) {
 	t_contact_param c;
+	float q = 0.9;
 
 	populated = true;
 
@@ -107,7 +112,10 @@ void t_hdr_contact::set_contacts(const list<t_display_url> &l) {
 	for (list<t_display_url>::const_iterator i = l.begin(); i != l.end(); i++) {
 		c.uri = i->url;
 		c.display = i->display;
+		c.set_qvalue(q);
 		contact_list.push_back(c);
+		q = q - 0.1;
+		if (q < 0.1) q = 0.1;
 	}
 }
 

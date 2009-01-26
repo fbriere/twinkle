@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,7 +57,6 @@ using namespace utils;
 #define FLD_DEV_SPEAKER		"dev_speaker"
 #define FLD_DEV_MIC		"dev_mic"
 #define FLD_VALIDATE_AUDIO_DEV	"validate_audio_dev"
-#define FLD_AU_REDUCE_NOISE_MIC	"au_reduce_noise_mic"
 #define FLD_ALSA_PLAY_PERIOD_SIZE	"alsa_play_period_size"
 #define FLD_ALSA_CAPTURE_PERIOD_SIZE	"alsa_capture_period_size"
 #define FLD_OSS_FRAGMENT_SIZE	"oss_fragment_size"
@@ -226,12 +225,17 @@ t_sys_settings::t_sys_settings() {
 	filename += "/";
 	filename += SYS_CONFIG_FILE;
 	
-	// OSS Default settings
+	// Audio device default settings
+#ifdef HAVE_LIBASOUND
+	dev_ringtone = audio_device(DEV_ALSA_DFLT);
+	dev_speaker = audio_device(DEV_ALSA_DFLT);
+	dev_mic = audio_device(DEV_ALSA_DFLT);
+#else
 	dev_ringtone = audio_device();
 	dev_speaker = audio_device();
 	dev_mic = audio_device();
+#endif
 	validate_audio_dev = true;
-	au_reduce_noise_mic = true;
 	alsa_play_period_size = 128;
 	alsa_capture_period_size = 32;
 	oss_fragment_size = 128;
@@ -319,14 +323,6 @@ bool t_sys_settings::get_validate_audio_dev(void) const {
 	bool result;
 	mtx_sys.lock();
 	result = validate_audio_dev;
-	mtx_sys.unlock();
-	return result;	
-}
-
-bool t_sys_settings::get_au_reduce_noise_mic(void) const {
-	bool result;
-	mtx_sys.lock();
-	result = au_reduce_noise_mic;
 	mtx_sys.unlock();
 	return result;	
 }
@@ -701,12 +697,6 @@ void t_sys_settings::set_validate_audio_dev(bool b) {
 	mtx_sys.unlock();
 }
 
-void t_sys_settings::set_au_reduce_noise_mic(bool b) {
-	mtx_sys.lock();
-	au_reduce_noise_mic = b;
-	mtx_sys.unlock();
-}
-
 void t_sys_settings::set_alsa_play_period_size(int size) {
 	mtx_sys.lock();
 	alsa_play_period_size = size;
@@ -995,7 +985,7 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "Copyright (C) 2005-2008  ";
+	s += "Copyright (C) 2005-2009  ";
 	s += PRODUCT_AUTHOR;
 	if (html) s += "<BR>";
 	s += "\n";
@@ -1017,16 +1007,29 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
+	s += "* Werner Dittmann (ZRTP/SRTP)\n";
+	if (html) s += "<BR>";
+	
+	s += "* Bogdan Harjoc (AKAv1-MD5, Service-Route)\n";
+	if (html) s += "<BR>";
+	
+	s += "* Roman Imankulov (command line editing)\n";
+	if (html) s += "<BR>";
+	
 	if (html) {
-		s += "* ALSA - Rickard Petz&auml;ll";
-		s += "<BR>";
+		s += "* Ondrej Mori&scaron; (codec preprocessing)<BR>\n";
 	} else {
-		s += "* ALSA - Rickard Petzall";
+		s += "* Ondrej Moris (codec preprocessing)\n";
 	}
+	
+	if (html) {
+		s += "* Rickard Petz&auml;ll (ALSA)<BR>\n";
+	} else {
+		s += "* Rickard Petzall (ALSA)\n";
+	}
+	
+	if (html) s += "<BR>";
 	s += "\n";
-	s += "* ZRTP/SRTP - Werner Dittmann";
-	if (html) s += "<BR><BR>";
-	s += "\n\n";
 
 	s += TRANSLATE("This software contains the following software from 3rd parties:");		
 	if (html) s += "<BR>";
@@ -1251,6 +1254,14 @@ string t_sys_settings::get_dir_user(void) const {
 	string dir = DIR_HOME;
 	dir += "/";
 	dir += DIR_USER;
+	
+	return dir;
+}
+
+string t_sys_settings::get_history_file(void) const {
+	string dir = get_dir_user();
+	dir += "/";
+	dir += FILE_CLI_HISTORY;
 	
 	return dir;
 }
@@ -1532,8 +1543,6 @@ bool t_sys_settings::read_config(string &error_msg) {
 			dev_mic = audio_device(value);
 		} else if (parameter == FLD_VALIDATE_AUDIO_DEV) {
 			validate_audio_dev = yesno2bool(value);
-		} else if (parameter == FLD_AU_REDUCE_NOISE_MIC) {
-			au_reduce_noise_mic = yesno2bool(value);
 		} else if (parameter == FLD_ALSA_PLAY_PERIOD_SIZE) {
 			alsa_play_period_size = atoi(value.c_str());
 		} else if (parameter == FLD_ALSA_CAPTURE_PERIOD_SIZE) {
@@ -1676,7 +1685,6 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_DEV_SPEAKER << '=' << dev_speaker.get_settings_value() << endl;
 	config << FLD_DEV_MIC << '=' << dev_mic.get_settings_value() << endl;
 	config << FLD_VALIDATE_AUDIO_DEV << '=' << bool2yesno(validate_audio_dev) << endl;
-	config << FLD_AU_REDUCE_NOISE_MIC << '=' << bool2yesno(au_reduce_noise_mic) << endl;
 	config << FLD_ALSA_PLAY_PERIOD_SIZE << '=' << alsa_play_period_size << endl;
 	config << FLD_ALSA_CAPTURE_PERIOD_SIZE << '=' << alsa_capture_period_size << endl;
 	config << FLD_OSS_FRAGMENT_SIZE << '=' << oss_fragment_size << endl;

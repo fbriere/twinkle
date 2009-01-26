@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>596</width>
-            <height>311</height>
+            <height>321</height>
         </rect>
     </property>
     <property name="caption">
@@ -360,7 +360,7 @@ This field is mandatory.</string>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
-    <function returnType="int">show( t_user * user )</function>
+    <function>show( t_user * user )</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

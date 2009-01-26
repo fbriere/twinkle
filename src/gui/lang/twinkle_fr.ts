@@ -2901,17 +2901,17 @@ Merci de sélectionner un profil.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
-        <translation>Réduire le &amp;bruit du microphone</translation>
+        <translation type="obsolete">Réduire le &amp;bruit du microphone</translation>
     </message>
     <message>
         <source>Alt+N</source>
-        <translation>Alt+B</translation>
+        <translation type="obsolete">Alt+B</translation>
     </message>
     <message>
         <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
 
 The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</source>
-        <translation>L&apos;enregistrement par l&apos;intermédiaire d&apos;un microphone peut contenir du bruit. Ceci peut être génant pour le correspondant. Cette option supprime ce bruit.
+        <translation type="obsolete">L&apos;enregistrement par l&apos;intermédiaire d&apos;un microphone peut contenir du bruit. Ceci peut être génant pour le correspondant. Cette option supprime ce bruit.
 L&apos;algoritme de réduction de bruit est très simple. Le son est enregistré en échantillons PCM 16 bits linéaires signés. Tous les échantillons entre -50 et 50 sont ramenés à zéro.</translation>
     </message>
     <message>
@@ -4113,24 +4113,16 @@ Ce champ est obligatoire.</translation>
         <translation>Type des données pour la bande &amp;Ultra-Large:</translation>
     </message>
     <message>
-        <source>&amp;VAD</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>Alt+V</source>
         <translation></translation>
     </message>
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
-        <translation>En la sélectionnant, la détection de la parole (ie: voice activity detection ou VAD) détecte si le son encodé est de la voix ou du silence (bruit de fond). VAD est toujours implicitement activé en encodage VBR, cette option est donc uniquement utilisable pour les opérations non-VBR. Dans ce cas, Speex detecte les passages sans paroles et les encode avec juste le nombre de bits nécessaire pour reproduire le bruit de fond. Ceci est appelé la &quot;génération de bruit pour le confort&quot; (comfort noise generation CNG).</translation>
+        <translation type="obsolete">En la sélectionnant, la détection de la parole (ie: voice activity detection ou VAD) détecte si le son encodé est de la voix ou du silence (bruit de fond). VAD est toujours implicitement activé en encodage VBR, cette option est donc uniquement utilisable pour les opérations non-VBR. Dans ce cas, Speex detecte les passages sans paroles et les encode avec juste le nombre de bits nécessaire pour reproduire le bruit de fond. Ceci est appelé la &quot;génération de bruit pour le confort&quot; (comfort noise generation CNG).</translation>
     </message>
     <message>
         <source>&amp;Wide band payload type:</source>
         <translation>Type des données pour la bande &amp;Large:</translation>
-    </message>
-    <message>
-        <source>V&amp;BR</source>
-        <translation></translation>
     </message>
     <message>
         <source>Alt+B</source>
@@ -4147,14 +4139,6 @@ Ce champ est obligatoire.</translation>
     <message>
         <source>Co&amp;mplexity:</source>
         <translation>Co&amp;mplexité:</translation>
-    </message>
-    <message>
-        <source>DT&amp;X</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>Alt+X</source>
-        <translation></translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
@@ -5524,7 +5508,7 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
     </message>
     <message>
         <source> bytes</source>
-        <translation>octets</translation>
+        <translation type="obsolete">octets</translation>
     </message>
     <message>
         <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
@@ -5549,6 +5533,98 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
     <message>
         <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
         <translation>Twinkle envoie une indication composite quand vous écrivez un message. Ainsi, l&apos;interlocuteur peut voir que vous êtes en train d&apos;écrire un message.</translation>
+    </message>
+    <message>
+        <source>AKA AM&amp;F:</source>
+        <translation>AKA AM&amp;F:</translation>
+    </message>
+    <message>
+        <source>A&amp;KA OP:</source>
+        <translation>A&amp;KA OP:</translation>
+    </message>
+    <message>
+        <source>Authentication management field for AKAv1-MD5 authentication.</source>
+        <translation>Champ de gestion de l&apos;authentification en AKAv1-MD5.</translation>
+    </message>
+    <message>
+        <source>Operator variant key for AKAv1-MD5 authentication.</source>
+        <translation>Clé de l&apos;opérateur en AKAv1-MD5.</translation>
+    </message>
+    <message>
+        <source>Prepr&amp;ocessing</source>
+        <translation>Préinterprétati&amp;on</translation>
+    </message>
+    <message>
+        <source>Preprocessing (improves quality at remote end)</source>
+        <translation>La préinterpretation améliore la qualité distante</translation>
+    </message>
+    <message>
+        <source>&amp;Automatic gain control</source>
+        <translation>Contrôle &amp;automatique du gain</translation>
+    </message>
+    <message>
+        <source>Automatic gain control (AGC) is a feature that deals with the fact that the recording volume may vary by a large amount between different setups. The AGC provides a way to adjust a signal to a reference volume. This is useful because it removes the need for manual adjustment of the microphone gain. A secondary advantage is that by setting the microphone gain to a conservative (low) level, it is easier to avoid clipping.</source>
+        <translation>Le contrôle automatique du gain (AGC) tient compte de la possible variation importante du volume d&apos;enregistrement entre deux paramètres. L&apos;AGC permet d&apos;ajuste le volume de référence. Ceci est très pratique car il supprime la nécessité d&apos;ajuster le gain du microphone manuellement. Un autre avantage est de permettre de régler le gain du microphone à un niveau assez bas pour éviter les coupures.</translation>
+    </message>
+    <message>
+        <source>Automatic gain control &amp;level:</source>
+        <translation>&amp;Niveau du contrôle automtaique du gain:</translation>
+    </message>
+    <message>
+        <source>Automatic gain control level represents percentual value of automatic gain setting of a microphone. Recommended value is about 25%.</source>
+        <translation>Ce niveau représente un pourcentage du gain du microphone. La valeur recommandée est 25%.</translation>
+    </message>
+    <message>
+        <source>&amp;Voice activity detection</source>
+        <translation>Détection de l&apos;activité de la &amp;voix</translation>
+    </message>
+    <message>
+        <source>When enabled, voice activity detection detects whether the input signal represents a speech or a silence/background noise.</source>
+        <translation>La détection de l&apos;activité détecte si le signal d&apos;entrée est de la parole ou du silence/bruit de fond et ne transmet pas ce bruit.</translation>
+    </message>
+    <message>
+        <source>&amp;Noise reduction</source>
+        <translation>Réduction du &amp;bruit</translation>
+    </message>
+    <message>
+        <source>The noise reduction can be used to reduce the amount of background noise present in the input signal. This provides higher quality speech.</source>
+        <translation>La réduction du bruit peut être utilisée pour réduire le niveau de bruit de fond dans le signal d&apos;entrée. Ceci améliore la qualité du son.</translation>
+    </message>
+    <message>
+        <source>Acoustic &amp;Echo Cancellation</source>
+        <translation>Suppression de l&apos;&amp;Echo</translation>
+    </message>
+    <message>
+        <source>In any VoIP communication, if a speech from the remote end is played in the local loudspeaker, then it propagates in the room and is captured by the microphone. If the audio captured from the microphone is sent directly to the remote end, then the remote user hears an echo of his voice. An acoustic echo cancellation is designed to remove the acoustic echo before it is sent to the remote end. It is important to understand that the echo canceller is meant to improve the quality on the remote end.</source>
+        <translation>Dans toute communication VOIP, si le son venant du correspondant est sur amplificateur, il est enregistré par le microphone. Si le son enregistré par le micropohne est directement envoyé au correspondant, alors il entend sa voix en écho. La suppression de l&apos;écho est consue pour supprimer cet écho avant qu&apos;il ne soit transmis. Il est important de comprendre que la suppression de l&apos;écho est consue pour améliorer la qualite du son pour le correspondant.</translation>
+    </message>
+    <message>
+        <source>Variable &amp;bit-rate</source>
+        <translation>Taux de compression varia&amp;ble</translation>
+    </message>
+    <message>
+        <source>Discontinuous &amp;Transmission</source>
+        <translation>&amp;Transmission discontinue</translation>
+    </message>
+    <message>
+        <source>&amp;Quality:</source>
+        <translation>&amp;Qualité:</translation>
+    </message>
+    <message>
+        <source>Speex is a lossy codec, which means that it achives compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</source>
+        <translation>Speex est un codec à perte, ce qui signifie qu&apos;il assure la compression au dépend de la fidélité au son d&apos;entrée. A la différence de quelques autres codecs, il est possible de contrôler l&apos;équilibre entre qualité et compression. Le pocessus d&apos;encodage Speex est contrôlé la plupart du temps par un paramêtre de qualité entre 0 et 10.</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>octets</translation>
+    </message>
+    <message>
+        <source>Use tel-URI for telephone &amp;number</source>
+        <translation>Utiliser tel-URI comme &amp;numéro de téléphone</translation>
+    </message>
+    <message>
+        <source>Expand a dialed telephone number to a tel-URI instead of a sip-URI.</source>
+        <translation>Transcrit un numéro de téléphone entré en tel-URI et non en sip-URI.</translation>
     </message>
 </context>
 <context>

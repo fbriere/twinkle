@@ -130,16 +130,16 @@
     </message>
     <message>
         <source>Login required for realm:</source>
-        <translation type="unfinished"></translation>
+        <translation>Имя требуемое для области:</translation>
     </message>
     <message>
         <source>realm</source>
         <comment>No need to translate</comment>
-        <translation type="unfinished"></translation>
+        <translation>область</translation>
     </message>
     <message>
         <source>The realm for which you need to authenticate.</source>
-        <translation type="unfinished"></translation>
+        <translation>Область для которой нужна авторизация.</translation>
     </message>
 </context>
 <context>
@@ -507,15 +507,15 @@
     </message>
     <message>
         <source>Response on terminal capability request: %1 %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Ответ на запрос органичений терминала: %1 %2</translation>
     </message>
     <message>
         <source>Terminal capabilities of %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Ограничения терминала от %1</translation>
     </message>
     <message>
         <source>Accepted body types:</source>
-        <translation type="unfinished"></translation>
+        <translation>Разрешённые типы содержимого:</translation>
     </message>
     <message>
         <source>unknown</source>
@@ -599,7 +599,7 @@
     </message>
     <message>
         <source>invalid DTMF telephone event (%1)</source>
-        <translation>не правильное телефонное DTMF событие (%1)</translation>
+        <translation>неправильное телефонное DTMF событие (%1)</translation>
     </message>
     <message>
         <source>Line %1: send DTMF %2</source>
@@ -623,7 +623,7 @@
     </message>
     <message>
         <source>Reason: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Причина: %1</translation>
     </message>
     <message>
         <source>Progress: %1 %2</source>
@@ -643,7 +643,7 @@
     </message>
     <message>
         <source>No further notifications will be received.</source>
-        <translation type="unfinished"></translation>
+        <translation>Никакие дальнейшие уведомления не будут получены.</translation>
     </message>
     <message>
         <source>Line %1: transferring call to %2</source>
@@ -735,7 +735,7 @@
     </message>
     <message>
         <source>Click the padlock to confirm a correct SAS.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нажмите на замок для подтвердения корректности SAS.</translation>
     </message>
     <message>
         <source>The remote user on line %1 disabled the encryption.</source>
@@ -780,6 +780,10 @@
     <message>
         <source>Failed to start conference.</source>
         <translation>Ошибка запуска конференции.</translation>
+    </message>
+    <message>
+        <source>Failed to save message attachment: %1</source>
+        <translation>Ошибка сохранения вложения сообщения: %1</translation>
     </message>
 </context>
 <context>
@@ -1297,7 +1301,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>The exchanged messages.</source>
-        <translation>Сообщения, которыми вы обменялись.</translation>
+        <translation type="obsolete">Сообщения, которыми вы обменялись.</translation>
     </message>
     <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
@@ -1322,6 +1326,46 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Delivery notification</source>
         <translation>Сообщение доставки</translation>
+    </message>
+    <message>
+        <source>Instant message toolbar</source>
+        <translation>Панель мгновенных сообщений</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Отправить файл...</translation>
+    </message>
+    <message>
+        <source>Send file</source>
+        <translation>Отправить файл</translation>
+    </message>
+    <message>
+        <source>image size is scaled down in preview</source>
+        <translation>размер картинки уменьшен для просмотра</translation>
+    </message>
+    <message>
+        <source>Open with %1...</source>
+        <translation>Открыть в %1...</translation>
+    </message>
+    <message>
+        <source>Open with...</source>
+        <translation>Открыть в...</translation>
+    </message>
+    <message>
+        <source>Save attachment as...</source>
+        <translation>Сохранить вложение как...</translation>
+    </message>
+    <message>
+        <source>File already exists. Do you want to overwrite this file?</source>
+        <translation>Файл уже существует. Перезаписать данный файл?</translation>
+    </message>
+    <message>
+        <source>Failed to save attachment.</source>
+        <translation>Ошибка сохранения вложения.</translation>
+    </message>
+    <message>
+        <source>%1 is typing a message.</source>
+        <translation>%1 пишет сообщение.</translation>
     </message>
 </context>
 <context>
@@ -1475,11 +1519,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>sas</source>
         <comment>No need to translate</comment>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Short authentication string</source>
-        <translation type="unfinished"></translation>
+        <translation>Короткая строка авторизации</translation>
     </message>
     <message>
         <source>g711a/g711a</source>
@@ -1593,7 +1637,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Call</source>
         <comment>toolbar text</comment>
-        <translation>Звонить</translation>
+        <translation>Звон</translation>
     </message>
     <message>
         <source>&amp;Call...</source>
@@ -1611,7 +1655,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Answer</source>
         <comment>toolbar text</comment>
-        <translation>Ответить</translation>
+        <translation>Ответ</translation>
     </message>
     <message>
         <source>&amp;Answer</source>
@@ -1629,7 +1673,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Bye</source>
         <comment>toolbar text</comment>
-        <translation>Завершить</translation>
+        <translation>Заверш</translation>
     </message>
     <message>
         <source>&amp;Bye</source>
@@ -1647,7 +1691,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Reject</source>
         <comment>toolbar text</comment>
-        <translation>Отклонить</translation>
+        <translation>Отклон</translation>
     </message>
     <message>
         <source>&amp;Reject</source>
@@ -1665,7 +1709,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Hold</source>
         <comment>toolbar text</comment>
-        <translation>Удержать</translation>
+        <translation>Удерж</translation>
     </message>
     <message>
         <source>&amp;Hold</source>
@@ -1679,7 +1723,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Redirect</source>
         <comment>toolbar text</comment>
-        <translation>Перенаправить</translation>
+        <translation>Направ</translation>
     </message>
     <message>
         <source>R&amp;edirect...</source>
@@ -1734,16 +1778,16 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Terminal capabilities</source>
-        <translation type="unfinished"></translation>
+        <translation>Ограничения терминала</translation>
     </message>
     <message>
         <source>&amp;Terminal capabilities...</source>
         <comment>menu text</comment>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Ограничения терминала...</translation>
     </message>
     <message>
         <source>Request terminal capabilities from someone</source>
-        <translation type="unfinished"></translation>
+        <translation>Запрос органичений терминала от кого-либо</translation>
     </message>
     <message>
         <source>Do not disturb</source>
@@ -1764,7 +1808,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Redial</source>
         <comment>toolbar text</comment>
-        <translation>Повтор</translation>
+        <translation>Повт</translation>
     </message>
     <message>
         <source>&amp;Redial</source>
@@ -1812,12 +1856,12 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Mute</source>
         <comment>toolbar text</comment>
-        <translation type="unfinished"></translation>
+        <translation>Вык.Зв</translation>
     </message>
     <message>
         <source>&amp;Mute</source>
         <comment>menu text</comment>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Выключить звук</translation>
     </message>
     <message>
         <source>Mute a call</source>
@@ -1826,7 +1870,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Xfer</source>
         <comment>toolbar text</comment>
-        <translation type="unfinished"></translation>
+        <translation>Перекл</translation>
     </message>
     <message>
         <source>Trans&amp;fer...</source>
@@ -1939,7 +1983,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Msg</source>
-        <translation type="unfinished"></translation>
+        <translation>Чат</translation>
     </message>
     <message>
         <source>Instant &amp;message...</source>
@@ -2031,7 +2075,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Transfer consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>Передача  с разговором</translation>
     </message>
     <message>
         <source>User:</source>
@@ -2039,7 +2083,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Call:</source>
-        <translation type="unfinished"></translation>
+        <translation>Звонок:</translation>
     </message>
     <message>
         <source>Hide identity</source>
@@ -2206,23 +2250,23 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <name>NumberConversionForm</name>
     <message>
         <source>Twinkle - Number conversion</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Преобразователь номеров</translation>
     </message>
     <message>
         <source>&amp;Match expression:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Совпадение:</translation>
     </message>
     <message>
         <source>&amp;Replace:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Замена:</translation>
     </message>
     <message>
         <source>Perl style format string for the replacement number.</source>
-        <translation type="unfinished"></translation>
+        <translation>Perl стиль формата строки для замены номера.</translation>
     </message>
     <message>
         <source>Perl style regular expression matching the number format you want to modify.</source>
-        <translation type="unfinished"></translation>
+        <translation>Perl стиль регулярного выражения совпадения формата номера который вы хотите изменить.</translation>
     </message>
     <message>
         <source>&amp;OK</source>
@@ -2230,27 +2274,27 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Отмена</translation>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Match expression may not be empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>Совпадающее выражение не может быть пустым.</translation>
     </message>
     <message>
         <source>Replace value may not be empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>Заменяющее значение не может быть пустым.</translation>
     </message>
     <message>
         <source>Invalid regular expression.</source>
-        <translation type="unfinished"></translation>
+        <translation>Неправильное регулярное выражение.</translation>
     </message>
 </context>
 <context>
@@ -2605,6 +2649,49 @@ Please select a profile.</source>
     </message>
 </context>
 <context>
+    <name>SendFileForm</name>
+    <message>
+        <source>Twinkle - Send File</source>
+        <translation>Twinkle - Отправить файл</translation>
+    </message>
+    <message>
+        <source>Select file to send.</source>
+        <translation>Выберите файл для отправки.</translation>
+    </message>
+    <message>
+        <source>&amp;File:</source>
+        <translation>&amp;Файл:</translation>
+    </message>
+    <message>
+        <source>&amp;Subject:</source>
+        <translation>&amp;Тема:</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;Отправить</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>&amp;Отмена</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File does not exist.</source>
+        <translation>Файл не существует.</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Отправить файл...</translation>
+    </message>
+</context>
+<context>
     <name>SrvRedirectForm</name>
     <message>
         <source>Twinkle - Call Redirection</source>
@@ -2628,7 +2715,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>&amp;Unconditional</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Безусловная</translation>
     </message>
     <message>
         <source>&amp;Redirect all calls</source>
@@ -2640,7 +2727,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Activate the unconditional redirection service.</source>
-        <translation type="unfinished"></translation>
+        <translation>Активировать сервис безусловой переадресации.</translation>
     </message>
     <message>
         <source>Redirect to</source>
@@ -2834,17 +2921,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
-        <translation>Подавлять &amp;эхо от микрофона</translation>
-    </message>
-    <message>
-        <source>Alt+N</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
-
-The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">Подавлять &amp;эхо от микрофона</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -2900,11 +2977,11 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
     </message>
     <message>
         <source>The maximum size of a log file in MB. When the log file exceeds this size, a backup of the log file is created and the current log file is zapped. Only one backup log file will be kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>Максимальный размер файла журнала в МБ. Когда журнал достигает этого размера, создаётся архивная копия и текущий журнал удаляется. Остаётся только архивная копия.</translation>
     </message>
     <message>
         <source>MB</source>
-        <translation type="unfinished"></translation>
+        <translation>МБ</translation>
     </message>
     <message>
         <source>Log &amp;debug reports</source>
@@ -3132,11 +3209,11 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
     </message>
     <message>
         <source>Ring back tone</source>
-        <translation type="unfinished"></translation>
+        <translation>Гудок вызова</translation>
     </message>
     <message>
         <source>P&amp;lay ring back tone when network does not play ring back tone</source>
-        <translation type="unfinished"></translation>
+        <translation>И&amp;грать гудок когда сеть не играет вызывного сигнала</translation>
     </message>
     <message>
         <source>Alt+L</source>
@@ -3149,31 +3226,31 @@ Play ring back tone while you are waiting for the far-end to answer your call.
 &lt;p&gt;
 Depending on your SIP provider the network might provide ring back tone or an announcement.
 &lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>D&amp;efault ring back tone</source>
-        <translation type="unfinished"></translation>
+        <translation>С&amp;тандартный гудок вызова</translation>
     </message>
     <message>
         <source>Play the default ring back tone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Играть стандартный гудок при исходящем вызове.</translation>
     </message>
     <message>
         <source>Cu&amp;stom ring back tone</source>
-        <translation type="unfinished"></translation>
+        <translation>С&amp;вой гудок вызова</translation>
     </message>
     <message>
         <source>Play a custom ring back tone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Играть свой гудок вызова.</translation>
     </message>
     <message>
         <source>Specify the file name of a .wav file that you want to be played as ring back tone.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Определите файл из .wav  файлов, который будет проигрываться как гудок вызова</translation>
     </message>
     <message>
         <source>Select ring back tone file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите файл гудка вызова.</translation>
     </message>
     <message>
         <source>&amp;Lookup name for incoming call</source>
@@ -3206,12 +3283,12 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default IP address combo</comment>
-        <translation type="unfinished"></translation>
+        <translation>нету</translation>
     </message>
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default network interface combo</comment>
-        <translation type="unfinished"></translation>
+        <translation>нету</translation>
     </message>
     <message>
         <source>Either choose a default IP address or a default network interface.</source>
@@ -3229,11 +3306,11 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>Ring back tones</source>
         <comment>Description of .wav files in file dialog</comment>
-        <translation type="unfinished"></translation>
+        <translation>Гудок вызова</translation>
     </message>
     <message>
         <source>Choose ring back tone</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите гудок вызова</translation>
     </message>
 </context>
 <context>
@@ -3251,7 +3328,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <name>TermCapForm</name>
     <message>
         <source>Twinkle - Terminal Capabilities</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Ограничения клиента</translation>
     </message>
     <message>
         <source>&amp;From:</source>
@@ -3259,11 +3336,11 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Get terminal capabilities of</source>
-        <translation type="unfinished"></translation>
+        <translation>Получить ограничения клиента от</translation>
     </message>
     <message>
         <source>&amp;To:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Откуда:</translation>
     </message>
     <message>
         <source>The address that you want to query for capabilities (OPTION request). This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</source>
@@ -3298,11 +3375,11 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>&amp;To:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Кому:</translation>
     </message>
     <message>
         <source>The address of the person you want to transfer the call to. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</source>
-        <translation type="unfinished"></translation>
+        <translation>Адрес абонента которому вы хотите перевести звонок. Это может быть полный адрес вида  &lt;b&gt;sip:example@example.com&lt;/b&gt; , только пользовательская часть или номер телефона из полного адреса. Когда вы не указываете полный адрес, Twinkle дополняет адрес используя имя домена из вашего профиля пользователя.</translation>
     </message>
     <message>
         <source>Address book</source>
@@ -3318,7 +3395,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>&amp;Blind transfer</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Слепой перевод</translation>
     </message>
     <message>
         <source>Alt+B</source>
@@ -3326,11 +3403,11 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Transfer the call to a third party without contacting that third party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Передача звонка другому абоненту без разговора с ним. </translation>
     </message>
     <message>
         <source>T&amp;ransfer with consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>П&amp;ередача  с разговором</translation>
     </message>
     <message>
         <source>Alt+R</source>
@@ -3338,7 +3415,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Before transferring the call to a third party, first consult the party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Перед передачей звонка другому абоненту вы можете предварительно переговорить с ним.</translation>
     </message>
     <message>
         <source>Transfer to other &amp;line</source>
@@ -3397,7 +3474,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Excessive number of socket errors.</source>
-        <translation type="unfinished"></translation>
+        <translation>Большое число ошибок сокета.</translation>
     </message>
     <message>
         <source>Built with support for:</source>
@@ -3461,7 +3538,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Lock file %1 already exist, but cannot be opened.</source>
-        <translation type="unfinished">Файл блокировки %1 уже существует и не может быть открыт.</translation>
+        <translation>Файл блокировки %1 уже существует и не может быть открыт.</translation>
     </message>
     <message>
         <source>%1 is already running.
@@ -3587,6 +3664,18 @@ and create the following static bindings (UDP) in your NAT.</source>
     <message>
         <source>NAT type discovery via STUN failed.</source>
         <translation>Ошибка определения типа NAT через STUN.</translation>
+    </message>
+    <message>
+        <source>Failed to create file %1</source>
+        <translation>Ошибка создания файла %1</translation>
+    </message>
+    <message>
+        <source>Failed to write data to file %1</source>
+        <translation>Ошибка записи данных в файл %1</translation>
+    </message>
+    <message>
+        <source>Failed to send message.</source>
+        <translation>Ошибка отправки сообщения.</translation>
     </message>
 </context>
 <context>
@@ -3733,11 +3822,11 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>&amp;Realm:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Область:</translation>
     </message>
     <message>
         <source>Authentication &amp;name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Аутентификационное &amp;имя:</translation>
     </message>
     <message>
         <source>&amp;Password:</source>
@@ -3745,7 +3834,7 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>The realm for authentication. This value must be provided by your SIP provider. If you leave this field empty, then Twinkle will try the user name and password for any realm that it will be challenged with.</source>
-        <translation type="unfinished"></translation>
+        <translation>Область аутентификации. Значение должно быть предоставлено вашим SIP провайдером. Если вы оставите это поле пустым , то Twinkle будет использовать имя пользователя и пароль для любой области которая требует авторизации.</translation>
     </message>
     <message>
         <source>Your SIP authentication name. Quite often this is the same as your SIP user name. It can be a different name though.</source>
@@ -3757,23 +3846,23 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>Registrar</source>
-        <translation type="unfinished"></translation>
+        <translation>Регистратор</translation>
     </message>
     <message>
         <source>&amp;Registrar:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Регистратор:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your registrar. If you use an outbound proxy that is the same as your registrar, then you may leave this field empty and only fill in the address of the outbound proxy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Имя компьютера, доменное имя или IP адрес вашего регистратора. Если вы используете исходящий прокси совпадающий с вашим регистратором, вы можете оставить его пустым.</translation>
     </message>
     <message>
         <source>&amp;Expiry:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Устаревание:</translation>
     </message>
     <message>
         <source>The registration expiry time that Twinkle will request.</source>
-        <translation type="unfinished"></translation>
+        <translation>Время устаревание регистрации, после которого Twinkle перепошлёт запрос заново.</translation>
     </message>
     <message>
         <source>seconds</source>
@@ -3797,7 +3886,7 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</source>
-        <translation type="unfinished"></translation>
+        <translation>Q-значение указывает приоритет вашего зарегистриванного устройства. Если кроме Twinkle вы регистрируете эту учётную запись на другом SIP  устройстве. Сеть может определять по этому значению какому устройству перенаправить вызов в первую очередь.</translation>
     </message>
     <message>
         <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
@@ -3821,7 +3910,7 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>Outbound &amp;proxy:</source>
-        <translation>Исходящий &amp;Прокси:</translation>
+        <translation>Исходящий &amp;прокси:</translation>
     </message>
     <message>
         <source>&amp;Send in-dialog requests to proxy</source>
@@ -3921,7 +4010,7 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>The preferred payload size for the G.711 and G.726 codecs.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Приоритетный payload размер для G.711 и G.726 кодеков.</translation>
     </message>
     <message>
         <source>ms</source>
@@ -3959,7 +4048,7 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>&amp;iLBC</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>iLBC</source>
@@ -3967,7 +4056,7 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>i&amp;LBC payload type:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">i&amp;LBC payload тип:</translation>
     </message>
     <message>
         <source>iLBC &amp;payload size (ms):</source>
@@ -3987,15 +4076,15 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>The preferred payload size for iLBC.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Приоритетный payload размер для iLBC.</translation>
     </message>
     <message>
         <source>&amp;Speex</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Speex</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Perceptual &amp;enhancement</source>
@@ -4014,23 +4103,11 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&amp;VAD</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Alt+V</source>
         <translation></translation>
     </message>
     <message>
-        <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>&amp;Wide band payload type:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>V&amp;BR</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4048,14 +4125,6 @@ If you disable this option, then the first codec from the active codecs that is 
     <message>
         <source>Co&amp;mplexity:</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>DT&amp;X</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alt+X</source>
-        <translation></translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
@@ -4127,11 +4196,11 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>DT&amp;MF</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>DTMF</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>The dynamic type value (96 or higher) to be used for DTMF events (RFC 2833).</source>
@@ -4139,7 +4208,7 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>DTMF vo&amp;lume:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">DTMF ур&amp;овень:</translation>
     </message>
     <message>
         <source>The power level of the DTMF tone in dB.</source>
@@ -4147,11 +4216,11 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>The pause after a DTMF tone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Пауза после DTMF тона.</translation>
     </message>
     <message>
         <source>DTMF &amp;duration:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">DTMF &amp;длинна:</translation>
     </message>
     <message>
         <source>DTMF payload &amp;type:</source>
@@ -4159,27 +4228,27 @@ If you disable this option, then the first codec from the active codecs that is 
     </message>
     <message>
         <source>DTMF &amp;pause:</source>
-        <translation type="unfinished"></translation>
+        <translation>DTMF &amp;паузы:</translation>
     </message>
     <message>
         <source>dB</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">дБ</translation>
     </message>
     <message>
         <source>Duration of a DTMF tone.</source>
-        <translation type="unfinished"></translation>
+        <translation>Продолжительность посылки DTMF тона.</translation>
     </message>
     <message>
         <source>DTMF t&amp;ransport:</source>
-        <translation type="unfinished"></translation>
+        <translation>DTMF т&amp;ранспорт:</translation>
     </message>
     <message>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation>Авто</translation>
     </message>
     <message>
         <source>RFC 2833</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Inband</source>
@@ -4217,11 +4286,11 @@ Send DTMF out-of-band via a SIP INFO request.
     </message>
     <message>
         <source>RFC 2543</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>RFC 3264</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Indicates if RFC 2543 (set media IP address in SDP to 0.0.0.0) or RFC 3264 (use direction attributes in SDP) is used to put a call on-hold.</source>
@@ -4505,10 +4574,6 @@ This format is what most SIP phones use.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source> bytes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4543,11 +4608,11 @@ When you choose this option you have to create static address mappings in your N
     </message>
     <message>
         <source>S&amp;TUN server:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">S&amp;TUN сервер:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of the STUN server.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Имя сервера, доменное имя или IP адрес STUN сервера.</translation>
     </message>
     <message>
         <source>&amp;Public IP address:</source>
@@ -4649,7 +4714,7 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
     </message>
     <message>
         <source>&amp;Add</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Добавить</translation>
     </message>
     <message>
         <source>Add a number conversion rule.</source>
@@ -4705,15 +4770,15 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
     </message>
     <message>
         <source>Select ring back tone file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите файл гудка вызова.</translation>
     </message>
     <message>
         <source>Select ring tone file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите файл вызывного сигнала.</translation>
     </message>
     <message>
         <source>Ring &amp;back tone:</source>
-        <translation type="unfinished"></translation>
+        <translation>Гудок &amp;вызова:</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4735,7 +4800,7 @@ This ring tone overrides the ring tone settings in the system settings.
     </message>
     <message>
         <source>&amp;Ring tone:</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&amp;Сигнал вызова: </translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4989,15 +5054,15 @@ Sollicited message waiting indication as specified by RFC 3842.
     </message>
     <message>
         <source>Subscription &amp;duration:</source>
-        <translation type="unfinished"></translation>
+        <translation>Продолжительность &amp;подписки:</translation>
     </message>
     <message>
         <source>Mailbox &amp;user name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Почтовый &amp;ящик:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your voice mailbox server.</source>
-        <translation type="unfinished"></translation>
+        <translation>Имя сервера, доменное имя или IP адрес вашего сервера голосовой почты.</translation>
     </message>
     <message>
         <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
@@ -5009,11 +5074,11 @@ Sollicited message waiting indication as specified by RFC 3842.
     </message>
     <message>
         <source>Mailbox &amp;server:</source>
-        <translation type="unfinished"></translation>
+        <translation>Почтовый &amp;сервер:</translation>
     </message>
     <message>
         <source>Via outbound &amp;proxy</source>
-        <translation type="unfinished"></translation>
+        <translation>Через исходящий &amp;прокси</translation>
     </message>
     <message>
         <source>Check this option if Twinkle should send SIP messages to the mailbox server via the outbound proxy.</source>
@@ -5079,15 +5144,15 @@ This could be the hostname or IP address of your PC if you want direct PC to PC 
     </message>
     <message>
         <source>Invalid user name.</source>
-        <translation>Не правильное имя пользователя.</translation>
+        <translation type="unfinished">Неправильное имя пользователя.</translation>
     </message>
     <message>
         <source>Invalid value for registrar.</source>
-        <translation type="unfinished"></translation>
+        <translation>Неправильное значение для регистратора.</translation>
     </message>
     <message>
         <source>Invalid value for outbound proxy.</source>
-        <translation>Не правильное значение для исходящего прокси.</translation>
+        <translation type="unfinished">Неправильное значение для исходящего прокси.</translation>
     </message>
     <message>
         <source>You must fill in a mailbox user name.</source>
@@ -5111,21 +5176,21 @@ This could be the hostname or IP address of your PC if you want direct PC to PC 
     </message>
     <message>
         <source>Invalid value for STUN server.</source>
-        <translation>Не правильное значение для STUN сервера.</translation>
+        <translation type="unfinished">Неправильное значение для STUN сервера.</translation>
     </message>
     <message>
         <source>Ring tones</source>
         <comment>Description of .wav files in file dialog</comment>
-        <translation type="unfinished"></translation>
+        <translation>Вызывные сигналы</translation>
     </message>
     <message>
         <source>Choose ring tone</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите вызывной сигнал</translation>
     </message>
     <message>
         <source>Ring back tones</source>
         <comment>Description of .wav files in file dialog</comment>
-        <translation type="unfinished"></translation>
+        <translation>Гудок вызова</translation>
     </message>
     <message>
         <source>All files</source>
@@ -5165,7 +5230,115 @@ This could be the hostname or IP address of your PC if you want direct PC to PC 
     </message>
     <message>
         <source>%1 converts to %2</source>
+        <translation>%1 конвертирован в %2</translation>
+    </message>
+    <message>
+        <source>AKA AM&amp;F:</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A&amp;KA OP:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authentication management field for AKAv1-MD5 authentication.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Operator variant key for AKAv1-MD5 authentication.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prepr&amp;ocessing</source>
+        <translation>Пред&amp;обработка</translation>
+    </message>
+    <message>
+        <source>Preprocessing (improves quality at remote end)</source>
+        <translation>Предварительная обработка (улучшает качество звука на удалённой стороне)</translation>
+    </message>
+    <message>
+        <source>&amp;Automatic gain control</source>
+        <translation>&amp;Автоматический контроль усиления</translation>
+    </message>
+    <message>
+        <source>Automatic gain control (AGC) is a feature that deals with the fact that the recording volume may vary by a large amount between different setups. The AGC provides a way to adjust a signal to a reference volume. This is useful because it removes the need for manual adjustment of the microphone gain. A secondary advantage is that by setting the microphone gain to a conservative (low) level, it is easier to avoid clipping.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatic gain control &amp;level:</source>
+        <translation>Автоматический контроль уровня &amp;усиления:</translation>
+    </message>
+    <message>
+        <source>Automatic gain control level represents percentual value of automatic gain setting of a microphone. Recommended value is about 25%.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Voice activity detection</source>
+        <translation>&amp;Определение голосовой активности</translation>
+    </message>
+    <message>
+        <source>When enabled, voice activity detection detects whether the input signal represents a speech or a silence/background noise.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Noise reduction</source>
+        <translation>&amp;Понижение шума</translation>
+    </message>
+    <message>
+        <source>The noise reduction can be used to reduce the amount of background noise present in the input signal. This provides higher quality speech.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Acoustic &amp;Echo Cancellation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In any VoIP communication, if a speech from the remote end is played in the local loudspeaker, then it propagates in the room and is captured by the microphone. If the audio captured from the microphone is sent directly to the remote end, then the remote user hears an echo of his voice. An acoustic echo cancellation is designed to remove the acoustic echo before it is sent to the remote end. It is important to understand that the echo canceller is meant to improve the quality on the remote end.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Variable &amp;bit-rate</source>
+        <translation>Переменный &amp;битрейт</translation>
+    </message>
+    <message>
+        <source>Discontinuous &amp;Transmission</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Quality:</source>
+        <translation>&amp;Качество:</translation>
+    </message>
+    <message>
+        <source>Speex is a lossy codec, which means that it achives compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>байт</translation>
+    </message>
+    <message>
+        <source>P&amp;ersistent TCP connection</source>
+        <translation>П&amp;остоянные TCP соединения</translation>
+    </message>
+    <message>
+        <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use tel-URI for telephone &amp;number</source>
+        <translation type="unfinished">Использовать tel-URI для телефонного &amp;номера</translation>
+    </message>
+    <message>
+        <source>Expand a dialed telephone number to a tel-URI instead of a sip-URI.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Send composing indications when typing a message.</source>
+        <translation>&amp;Посылать оповещение о наборе тескта при вводе сообщения.</translation>
+    </message>
+    <message>
+        <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
+        <translation>Twinkle посылает оповещения при наборе сообщения. Получатель будет видеть когда вы печатате.</translation>
     </message>
 </context>
 <context>
@@ -5288,11 +5461,11 @@ This could be the hostname or IP address of your PC if you want direct PC to PC 
     </message>
     <message>
         <source>Invalid value for SIP proxy.</source>
-        <translation>Не правильное значение для SIP прокси.</translation>
+        <translation>Неправильное значение для SIP прокси.</translation>
     </message>
     <message>
         <source>Invalid value for STUN server.</source>
-        <translation>Не правильное значение для STUN сервера.</translation>
+        <translation>Неправильное значение для STUN сервера.</translation>
     </message>
 </context>
 <context>

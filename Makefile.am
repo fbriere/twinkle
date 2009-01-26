@@ -3,6 +3,8 @@
 # So here the executable is defined as a script such that it will
 # only be installed and not built.
 
+ACLOCAL_AMFLAGS = -I m4
+
 pkglangdir = $(pkgdatadir)/lang
 
 bin_SCRIPTS = src/gui/twinkle
@@ -16,6 +18,7 @@ pkgdata_DATA = data/ringback.wav data/ringtone.wav \
 EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
 	src/gui/twinkle.pro src/gui/images/* \
 	data/ringback.wav data/ringtone.wav data/providers.csv \
+	m4/*.m4 \
 	sip.protocol twinkle.desktop.in Doxyfile
 
 SUBDIRS = src

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -462,6 +462,7 @@ public:
 
 /** User interface callback types. */
 enum t_ui_event_type {
+	TYPE_UI_CB_DISPLAY_MSG,			/**< Display a message */
 	TYPE_UI_CB_DTMF_DETECTED,		/**< DTMF tone detected */
 	TYPE_UI_CB_SEND_DTMF,			/**< Sending DTMF */
 	TYPE_UI_CB_RECV_CODEC_CHANGED,		/**< Codec changed */
@@ -470,6 +471,14 @@ enum t_ui_event_type {
 	TYPE_UI_CB_SHOW_ZRTP_SAS,		/**< Show the ZRTP SAS */
 	TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR,	/**< ZRTP Confirm go-clear */
 	TYPE_UI_CB_QUIT				/**< Quit the user interface */
+};
+
+/** Display message priorities. */
+enum t_msg_priority {
+	MSG_NO_PRIO,
+	MSG_INFO,
+	MSG_WARNING,
+	MSG_CRITICAL
 };
 
 /**
@@ -491,6 +500,8 @@ private:
 	bool		encrypted;	/**< Encryption indication. */
 	string		cipher_mode;	/**< Cipher mode (algorithm name). */
 	string		zrtp_sas;	/**< ZRTP SAS/ */
+	t_msg_priority	msg_priority;	/**< Priority of a display message. */
+	string		msg;		/**> Message to display. */
 	//@}
 
 public:
@@ -510,6 +521,7 @@ public:
 	void set_encrypted(bool on);
 	void set_cipher_mode(const string &_cipher_mode);
 	void set_zrtp_sas(const string &sas);
+	void set_display_msg(const string &_msg, t_msg_priority &_msg_priority);
 	//@}
 	
 	/**

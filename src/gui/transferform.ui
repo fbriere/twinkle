@@ -59,6 +59,9 @@
                     <property name="text">
                         <string></string>
                     </property>
+                    <property name="accel">
+                        <string>F10</string>
+                    </property>
                     <property name="iconSet">
                         <iconset>kontact_contacts.png</iconset>
                     </property>

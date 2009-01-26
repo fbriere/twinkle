@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,6 +80,8 @@ void SelectUserForm::show(t_select_purpose purpose)
 			break;
 		case SELECT_AUTO_ANSWER:
 			item->setOn(phone->ref_service(*i)->is_auto_answer_active());
+			break;
+		default:
 			break;
 		}
 	}

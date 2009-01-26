@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -88,6 +88,7 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_route(m.hdr_route),
 		hdr_rseq(m.hdr_rseq),
 		hdr_server(m.hdr_server),
+		hdr_service_route(m.hdr_service_route),
 		hdr_sip_etag(m.hdr_sip_etag),
 		hdr_sip_if_match(m.hdr_sip_if_match),
 		hdr_subject(m.hdr_subject),
@@ -190,6 +191,7 @@ string t_sip_message::encode(bool add_content_length) {
 	s += hdr_via.encode();
 	s += hdr_route.encode();
 	s += hdr_record_route.encode();
+	s += hdr_service_route.encode();
 	s += hdr_proxy_require.encode();
 	s += hdr_max_forwards.encode();
 	s += hdr_proxy_authenticate.encode();
@@ -295,6 +297,7 @@ list<string> t_sip_message::encode_env(void) {
 	l.push_back(hdr_via.encode_env());
 	l.push_back(hdr_route.encode_env());
 	l.push_back(hdr_record_route.encode_env());
+	l.push_back(hdr_service_route.encode_env());
 	l.push_back(hdr_proxy_require.encode_env());
 	l.push_back(hdr_max_forwards.encode_env());
 	l.push_back(hdr_proxy_authenticate.encode_env());
@@ -447,8 +450,10 @@ bool t_sip_message::local_ip_check(void) const {
 	}
 	
 	if (hdr_contact.is_populated()) {
-		const t_contact_param &c = hdr_contact.contact_list.front();
-		if (c.uri.get_host() == "0.0.0.0") return false;
+		if (!hdr_contact.any_flag && !hdr_contact.contact_list.empty()) {
+			const t_contact_param &c = hdr_contact.contact_list.front();
+			if (c.uri.get_host() == "0.0.0.0") return false;
+		}
 	}
 	
 	if (body) {

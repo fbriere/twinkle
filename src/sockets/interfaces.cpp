@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,6 @@ string t_interface::get_ip_netmask(void) const {
 list <t_interface> *get_interfaces(bool include_loopback) {
     	struct ifaddrs *ifa, *ifaddrs;
     	struct sockaddr_in *sin;
-    	int i;
 	t_interface *intf;
 
 	list<t_interface> *result = new list<t_interface>;

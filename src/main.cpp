@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -145,7 +145,7 @@ unsigned short		g_override_rtp_port = 0;
 bool			threading_is_LinuxThreads;
 
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	string error_msg;
 	
 	end_app = false;
@@ -401,8 +401,8 @@ main(int argc, char *argv[]) {
 	t_thread *thr_listen_conn_tcp;
 	t_thread *thr_conn_timeout_handler;
 	t_thread *thr_timekeeper;
-	t_thread *thr_alarm_catcher;
-	t_thread *thr_sig_catcher;
+	t_thread *thr_alarm_catcher = NULL;
+	t_thread *thr_sig_catcher = NULL;
 	t_thread *thr_trans_mgr;
 	t_thread *thr_phone_uas;
 

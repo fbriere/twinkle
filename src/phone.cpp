@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,11 +44,11 @@ extern string		user_host;
 // t_transfer_data
 
 t_transfer_data::t_transfer_data(t_request *r, unsigned short _lineno, bool _hide_user, 
-		t_user *user) :
+		t_phone_user *pu) :
 	refer_request(dynamic_cast<t_request *>(r->copy())),
 	lineno(_lineno),
 	hide_user(_hide_user),
-	user_config(user)
+	phone_user(pu)
 {}
 	
 t_transfer_data::~t_transfer_data() {
@@ -68,8 +68,8 @@ unsigned short t_transfer_data::get_lineno(void) const {
 	return lineno;
 }
 
-t_user *t_transfer_data::get_user(void) const {
-	return user_config;
+t_phone_user *t_transfer_data::get_phone_user(void) const {
+	return phone_user;
 }
 
 
@@ -214,8 +214,7 @@ void t_phone::invite(t_phone_user *pu, const t_url &to_uri, const string &to_dis
 		return;
 	}
 
-	lines[active_line]->invite(pu->get_user_profile(), to_uri, to_display, subject,
-					anonymous);
+	lines[active_line]->invite(pu, to_uri, to_display, subject, anonymous);
 }
 
 void t_phone::answer(void) {
@@ -852,7 +851,7 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 	int replace_line = -1;
 	if (r->hdr_replaces.is_populated() && user_config->get_ext_replaces()) {
 		bool early_matched = false;
-		for (int i = 0; i < lines.size(); i++) {
+		for (size_t i = 0; i < lines.size(); i++) {
 			if (lines.at(i)->match_replaces(r->hdr_replaces.call_id,
 				r->hdr_replaces.to_tag,
 				r->hdr_replaces.from_tag,
@@ -1160,7 +1159,7 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 	
 	// Send INVITE to hunted line
 	if (hunted_line >= 0) {
-		lines.at(hunted_line)->recvd_invite(user_config, r, tid,
+		lines.at(hunted_line)->recvd_invite(pu, r, tid,
 			script_result.ringtone);
 		return;
 	}
@@ -1214,8 +1213,9 @@ void t_phone::recvd_re_invite(t_request *r, t_tid tid) {
 	// Find a line that matches the request
 	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
-			t_user *user_config = lines[i]->get_user();
-			assert(user_config);
+			t_phone_user *pu = lines[i]->get_phone_user();
+			assert(pu);
+			t_user *user_config = pu->get_user_profile();
 			
 			// Check if the far end requires any unsupported extensions
 			if (!user_config->check_required_ext(r, unsupported))
@@ -1229,7 +1229,7 @@ void t_phone::recvd_re_invite(t_request *r, t_tid tid) {
 				return;
 			}
 		
-			lines[i]->recvd_invite(user_config, r, tid, "");
+			lines[i]->recvd_invite(pu, r, tid, "");
 			return;
 		}
 	}
@@ -1504,12 +1504,11 @@ void t_phone::recvd_subscribe(t_request *r, t_tid tid) {
 		if (r->hdr_event.event_type == SIP_EVENT_REFER) {
 			// RFC 3515 2.4.4
 			resp = r->create_response(R_403_FORBIDDEN);
+			send_response(resp, 0 ,tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
 		}
-
-		send_response(resp, 0 ,tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
-		return;
 	}
 
 	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
@@ -1615,8 +1614,9 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 
 	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
-			t_user *user_config = lines[i]->get_user();
-			assert(user_config);
+			t_phone_user *pu = lines[i]->get_phone_user();
+			assert(pu);
+			t_user *user_config = pu->get_user_profile();
 			
 			list <string> unsupported;
 			if (!user_config->check_required_ext(r, unsupported))
@@ -1679,7 +1679,7 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 			// for the call transfer.
 			lines[i]->set_keep_seized(true);
 			incoming_refer_data = new t_transfer_data(r, i, 
-					lines[i]->get_hide_user(), user_config);
+					lines[i]->get_hide_user(), pu);
 			MEMMAN_NEW(incoming_refer_data);
 			return;
 		}
@@ -1712,7 +1712,8 @@ void t_phone::recvd_refer_permission(bool permission) {
 	unsigned short i = incoming_refer_data->get_lineno();
 	t_request *r = incoming_refer_data->get_refer_request();
 	bool hide_user = incoming_refer_data->get_hide_user();
-	t_user *user_config = incoming_refer_data->get_user();
+	t_phone_user *pu = incoming_refer_data->get_phone_user();
+	t_user *user_config = pu->get_user_profile();
 			
 	lines[i]->recvd_refer_permission(permission, r);
 	
@@ -1792,7 +1793,7 @@ void t_phone::recvd_refer_permission(bool permission) {
 	
 	ui->cb_call_referred(user_config, i, r);
 	
-	lines[i]->invite(user_config, 
+	lines[i]->invite(pu, 
 		r->hdr_refer_to.uri.copy_without_headers(),
 		r->hdr_refer_to.display, "", r->hdr_referred_by, 
 		hdr_replaces, hdr_require, hide_user);
@@ -2509,7 +2510,7 @@ unsigned short t_phone::get_active_line(void) const {
 }
 
 t_line *t_phone::get_line_by_id(t_object_id id) const {
-	for (int i = 0; i < lines.size(); i++) {
+	for (size_t i = 0; i < lines.size(); i++) {
 		if (lines[i]->get_object_id() == id) {
 			return lines[i];
 		}
@@ -2917,7 +2918,7 @@ time_t t_phone::get_startup_time(void) const {
 }
 
 void t_phone::init_rtp_ports(void) {
-	for (int i = 0; i < lines.size(); i++) {
+	for (size_t i = 0; i < lines.size(); i++) {
 		lines[i]->init_rtp_port();
 	}
 }
@@ -3258,9 +3259,10 @@ void t_phone::terminate(void) {
 	// Clear all lines
 	log_file->write_report("Clear all lines.",
 		"t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
-	for (int i = 0; i < NUM_CALL_LINES; i++) {
+	for (size_t i = 0; i < NUM_CALL_LINES; i++) {
 		switch (lines[i]->get_substate()) {
 		case LSSUB_IDLE:
+		case LSSUB_RELEASING:
 			break;
 		case LSSUB_SEIZED:
 			lines[i]->unseize();
@@ -3365,7 +3367,7 @@ void t_phone::terminate(void) {
 	// Force lines to idle state if they could not be cleared
 	// gracefully
 	lock();
-	for (int i = 0; i < lines.size(); i++) {
+	for (size_t i = 0; i < lines.size(); i++) {
 		if (lines[i]->get_substate() != LSSUB_IDLE) {
 			msg = "Force line %1 to idle state.";
 			msg = replace_first(msg, "%1", int2str(i));

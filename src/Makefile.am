@@ -1,6 +1,6 @@
 AM_LDFLAGS = -L $(libdir)
 
-AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = -Wall $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 
 noinst_PROGRAMS = twinkle
 
@@ -24,6 +24,7 @@ twinkle_LDADD = libtwinkle.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
+	-lreadline \
 	-lsndfile\
 	-lmagic
 

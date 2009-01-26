@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,32 +20,6 @@
 #include "hdr_record_route.h"
 #include "parse_ctrl.h"
 #include "util.h"
-
-void t_route::add_param(const t_parameter &p) {
-	params.push_back(p);
-}
-
-void t_route::set_params(const list<t_parameter> &l) {
-	params = l;
-}
-
-string t_route::encode(void) const {
-	string s;
-
-	if (display.size() > 0) {
-		s += '"';
-		s += escape(display, '"');
-		s += '"';
-		s += ' ';
-	}
-
-	s += '<';
-	s += uri.encode();
-	s += '>';
-
-	s += param_list2str(params);
-	return s;
-}
 
 t_hdr_record_route::t_hdr_record_route() : t_header("Record-Route") {}
 
