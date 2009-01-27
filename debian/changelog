@@ -1,3 +1,12 @@
+twinkle (1:1.4-2) experimental; urgency=low
+
+  * Fix "twinkle_1:1.4-1(sparc/experimental): FTBFS: error:
+    readline/readline.h: No such file or directory" 
+    - Add Build-Depends: libreadline-dev & libspeexdsp-dev (Closes: #513135)
+  * Update Description: to match upstream
+
+ -- Mark Purcell <msp@debian.org>  Tue, 27 Jan 2009 17:30:42 +1100
+
 twinkle (1:1.4-1) experimental; urgency=low
 
   * New upstream release
