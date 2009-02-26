@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>768</width>
-            <height>624</height>
+            <width>783</width>
+            <height>594</height>
         </rect>
     </property>
     <property name="caption">
@@ -182,7 +182,7 @@
                 <string>Select a category for which you want to see or modify the settings.</string>
             </property>
         </widget>
-        <widget class="QLayoutWidget" row="2" column="0" rowspan="1" colspan="2">
+        <widget class="QLayoutWidget" row="2" column="0">
             <property name="name">
                 <cstring>layout12</cstring>
             </property>
@@ -240,7 +240,7 @@
                 </widget>
             </hbox>
         </widget>
-        <widget class="QWidgetStack" row="1" column="1">
+        <widget class="QWidgetStack" row="1" column="1" rowspan="2" colspan="1">
             <property name="name">
                 <cstring>settingsWidgetStack</cstring>
             </property>
@@ -2348,11 +2348,11 @@ Send DTMF out-of-band via a SIP INFO request.
                 <attribute name="id">
                     <number>3</number>
                 </attribute>
-                <vbox>
+                <grid>
                     <property name="name">
                         <cstring>unnamed</cstring>
                     </property>
-                    <widget class="QLabel">
+                    <widget class="QLabel" row="0" column="0">
                         <property name="name">
                             <cstring>sipProtocolTitleTextLabel</cstring>
                         </property>
@@ -2378,7 +2378,7 @@ Send DTMF out-of-band via a SIP INFO request.
                             <number>10</number>
                         </property>
                     </widget>
-                    <widget class="QTabWidget">
+                    <widget class="QTabWidget" row="1" column="0">
                         <property name="name">
                             <cstring>sipProtoclTabWidget</cstring>
                         </property>
@@ -2806,7 +2806,7 @@ This format is what most SIP phones use.
                                                 <cstring>allowReferCheckBox</cstring>
                                             </property>
                                             <property name="text">
-                                                <string>Allow call &amp;transfer (incoming REFER)</string>
+                                                <string>Accept call &amp;transfer request (incoming REFER)</string>
                                             </property>
                                             <property name="accel">
                                                 <string>Alt+T</string>
@@ -2882,6 +2882,17 @@ This format is what most SIP phones use.
                                                 <string>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endoint.</string>
                                             </property>
                                         </widget>
+                                        <widget class="QCheckBox">
+                                            <property name="name">
+                                                <cstring>transferConsultInprogCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Allow call transfer while consultation in progress</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>When you perform an attended call transfer, you normally transfer the call after you established a consultation call. If you enable this option you can transfer the call while the consultation call is still in progress. This is a non-standard implementation and may not work with all SIP devices.</string>
+                                            </property>
+                                        </widget>
                                     </vbox>
                                 </widget>
                                 <spacer>
@@ -2897,7 +2908,7 @@ This format is what most SIP phones use.
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>90</height>
+                                            <height>200</height>
                                         </size>
                                     </property>
                                 </spacer>
@@ -2961,7 +2972,7 @@ This format is what most SIP phones use.
                             </vbox>
                         </widget>
                     </widget>
-                </vbox>
+                </grid>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -3244,6 +3255,20 @@ When you choose this option you have to create static address mappings in your N
                                     <string>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</string>
                                 </property>
                             </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>natKeepaliveCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Enable NAT &amp;keep alive</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+K</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Send UDP NAT keep alive packets.</string>
+                                </property>
+                            </widget>
                         </vbox>
                     </widget>
                     <spacer>
@@ -3259,7 +3284,7 @@ When you choose this option you have to create static address mappings in your N
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>100</height>
+                                <height>80</height>
                             </size>
                         </property>
                     </spacer>
@@ -3724,14 +3749,6 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
                                     <property name="name">
                                         <cstring>unnamed</cstring>
                                     </property>
-                                    <widget class="QLabel" row="1" column="2">
-                                        <property name="name">
-                                            <cstring>secNatKeepaliveTextLabel</cstring>
-                                        </property>
-                                        <property name="text">
-                                            <string>for STUN</string>
-                                        </property>
-                                    </widget>
                                     <widget class="QLabel" row="0" column="2">
                                         <property name="name">
                                             <cstring>secNoanswerTextLabel</cstring>
@@ -3774,7 +3791,7 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
                                             <number>10</number>
                                         </property>
                                         <property name="whatsThis" stdset="0">
-                                            <string>Keep alive timer for the STUN protocol. If you have enabled STUN, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</string>
+                                            <string>If you have enabled STUN or NAT keep alive, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</string>
                                         </property>
                                     </widget>
                                     <widget class="QSpinBox" row="0" column="1">
@@ -5510,6 +5527,12 @@ Sollicited message waiting indication as specified by RFC 3842.
         <receiver>spxDspAgcLevelSpinBox</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
+    <connection>
+        <sender>natStunRadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>natKeepaliveCheckBox</receiver>
+        <slot>setDisabled(bool)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>displayLineEdit</tabstop>
@@ -5726,8 +5749,7 @@ Sollicited message waiting indication as specified by RFC 3842.
     <function returnType="int">ext_support2indexComboItem( t_ext_support ext )</function>
     <function returnType="t_ext_support">indexComboItem2ext_support( int index )</function>
     <function returnType="int">exec( list&lt;t_user *&gt; profiles, QString show_profile )</function>
-    <function returnType="bool">check_dynamic_payload( QSpinBox * spb, QValueList&lt;int&gt; &amp;
-    checked_list )</function>
+    <function returnType="bool">check_dynamic_payload( QSpinBox * spb, QValueList&lt;int&gt; &amp; checked_list )</function>
     <function returnType="list&lt;t_number_conversion&gt;">get_number_conversions()</function>
     <function returnType="bool">validateValues()</function>
 </functions>

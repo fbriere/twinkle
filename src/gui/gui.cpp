@@ -24,7 +24,17 @@
 
 #ifdef HAVE_KDE
 #include <kmimetype.h>
+#include <krun.h>
+#include <kservice.h>
+#include <ktrader.h>
 #endif
+
+// This include is needed to avoid build error when building Twinkle
+// without Qt. One of the other includes below seems to include qdir.h
+// indirectly. But by that time it probably conflicts with a macro causing
+// compilation errors reported in qdir.h Include qdir.h here avoids the
+// conflict.
+#include "qdir.h"
 
 #include "gui.h"
 #include "line.h"
@@ -55,6 +65,7 @@
 #include "qlistbox.h"
 #include "qmessagebox.h"
 #include "qpixmap.h"
+#include "qprocess.h"
 #include "qpushbutton.h"
 #include "qsize.h"
 #include "qsizepolicy.h"
@@ -923,12 +934,12 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	mainWindow->display(s);
 	
 	// Is this a transferred call?
+	QString referredByParty;
 	if (r->hdr_referred_by.is_populated()) {
+		referredByParty = format_sip_address(user_config, 
+				r->hdr_referred_by.display, r->hdr_referred_by.uri).c_str();
 		s = "Call transferred by ";
-		s = qApp->translate("GUI", "Call transferred by %1").arg(
-				format_sip_address(user_config, 
-					    r->hdr_referred_by.display, 
-					    r->hdr_referred_by.uri).c_str());
+		s = qApp->translate("GUI", "Call transferred by %1").arg(referredByParty);
 		mainWindow->display(s);
 	}
 	
@@ -965,7 +976,7 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	}
 	displaySubject(subject);
 	
-	cb_notify_call(line, fromParty, organization, fromPhoto, subject);
+	cb_notify_call(line, fromParty, organization, fromPhoto, subject, referredByParty);
 	
 	unlock();
 }
@@ -1004,8 +1015,7 @@ void t_gui::cb_answer_timeout(int line) {
 	if (line >= NUM_USER_LINES) return;
 	
 	lock();
-	QString s;
-
+	
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -1541,7 +1551,7 @@ void t_gui::cb_redirecting_request(t_user *user_config, const t_contact_param &c
 }
 
 void t_gui::cb_notify_call(int line, const QString &from_party, const QString &organization,
-			   const QImage &photo, const QString &subject)
+			   const QImage &photo, const QString &subject, QString &referred_by_party)
 {
 	if (line >= NUM_USER_LINES) return;
 	
@@ -1560,15 +1570,20 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 	if (tray && !sys_tray_popup &&  !phone->is_line_auto_answered(line)) {
 		QString presFromParty("");
 		if (!from_party.isEmpty()) {
-			presFromParty = dotted_truncate(from_party.ascii(), 40).c_str();
+			presFromParty = dotted_truncate(from_party.ascii(), 50).c_str();
 		}
 		QString presOrganization("");
 		if (!organization.isEmpty()) {
-			presOrganization = dotted_truncate(organization.ascii(), 40).c_str();
+			presOrganization = dotted_truncate(organization.ascii(), 50).c_str();
 		}
 		QString presSubject("");
 		if (!subject.isEmpty()) {
-			presSubject = dotted_truncate(subject.ascii(), 40).c_str();
+			presSubject = dotted_truncate(subject.ascii(), 50).c_str();
+		}
+		QString presReferredByParty("");
+		if (!referred_by_party.isEmpty()) {
+			presReferredByParty = qApp->translate("GUI", "Transferred by: %1").arg(
+					dotted_truncate(referred_by_party.ascii(), 40).c_str());
 		}
 		
 		// Create photo pixmap. If no photo is available, then use
@@ -1594,7 +1609,10 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 		lblPhoto->setPixmap(pm);
 		lblPhoto->setFrameShape(photoFrameShape);
 		QVBox *vb = new QVBox(hb);
-		QLabel *lblCaption = new QLabel("<H2>Incoming Call</H2>", vb);
+		QString captionText("<H2>");
+		captionText += qApp->translate("SysTrayPopup", "Incoming Call");
+		captionText += "</H2>";
+		QLabel *lblCaption = new QLabel(captionText, vb);
 		lblCaption->setAlignment(Qt::AlignTop | Qt::AlignLeft);
 		lblCaption->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 		QLabel *lblFrom = new QLabel(presFromParty, vb);
@@ -1607,6 +1625,13 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 			lblOrganization->setSizePolicy(QSizePolicy::Expanding, 
 						       QSizePolicy::Minimum);
 			lastLabel = lblOrganization;
+		}
+		if (!presReferredByParty.isEmpty()) {
+			QLabel *lblReferredBy = new QLabel(presReferredByParty, vb);
+			lblReferredBy->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+			lblReferredBy->setSizePolicy(QSizePolicy::Expanding, 
+						       QSizePolicy::Minimum);
+			lastLabel = lblReferredBy;
 		}
 		if (!presSubject.isEmpty()) {
 			QLabel *lblSubject = new QLabel(presSubject, vb);
@@ -2986,4 +3011,47 @@ string t_gui::mime2file_extension(t_media media) {
 	}
 #endif
 	return extension;
+}
+
+void t_gui::open_url_in_browser(const QString &url) {
+	string sys_browser = sys_config->get_gui_browser_cmd();
+#ifdef HAVE_KDE
+	if (sys_browser.empty())
+	{
+		KTrader::OfferList offers = KTrader::self()->query("text/html", "Type == 'Application'");
+		if (!offers.empty()) {
+			KService::Ptr ptr = offers.first();
+			KURL::List lst;
+			lst.append(url);
+			KRun::run(*ptr, lst);
+		
+			return;
+		}
+	}
+#endif
+	QProcess process;
+	bool process_started = false;
+	
+	QStringList browsers;
+	
+	if (sys_browser.empty()) {
+		browsers << "firefox" << "mozilla" << "netscape" << "opera";
+		browsers << "galeon" << "epiphany" << "konqueror";
+	} else {
+		browsers << sys_browser.c_str();
+	}
+	
+	for (QStringList::Iterator it = browsers.begin(); it != browsers.end(); ++it)
+	{
+		process.setArguments(QStringList() << *it << url);
+		process_started = process.start();
+		if (process_started) break;
+	}
+	
+	if (!process_started) {
+		QString msg = qApp->translate("GUI", "Cannot open web browser: %1").arg(url);
+		msg += "\n\n";
+		msg += qApp->translate("GUI", "Configure your web browser in the system settings.");
+		cb_show_msg(msg.ascii(), MSG_CRITICAL);
+	}
 }

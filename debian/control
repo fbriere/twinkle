@@ -90,7 +90,8 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   Speex ultra wide band (36 kbps payload, 32 kHz sampling rate)
   G.726 (16, 24, 32 or 40 kbps payload, 8 kHz sampling rate)
  .
- For all codecs the following preprocessing options are available to improve quality at the far end of a call. 
+ For all codecs the following preprocessing options are available to improve
+ quality at the far end of a call. 
   Automatic gain control (AGC) (new)
   Noise reduction (new)
   Voice activity detection (VAD) (new)

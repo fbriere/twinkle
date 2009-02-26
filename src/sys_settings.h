@@ -111,6 +111,9 @@ private:
 	// Mutex to avoid sync concurrent access
 	mutable t_recursive_mutex	mtx_sys;
 	
+	/** File descriptor of lock file */
+	int fd_lock_file;
+	
 	// Share directory for files applicable to all users
 	string		dir_share;
 	
@@ -140,13 +143,18 @@ private:
 	bool		log_show_memory;
 	bool		log_show_debug;
 	
-	// GUI settings
+	/** @name GUI settings */
+	//@{
 	bool		gui_use_systray;
 	bool		gui_hide_on_close;
 	
-	// Show main window on incoming call after a few seconds
+	/** Show main window on incoming call after a few seconds */
 	bool		gui_auto_show_incoming;
 	int		gui_auto_show_timeout;
+	
+	/** Command to start an internet browser */
+	string		gui_browser_cmd;
+	//@}
 	
 	// Address book settings
 	bool		ab_show_sip_only;
@@ -285,6 +293,7 @@ public:
 	bool get_gui_hide_on_close(void) const;
 	bool get_gui_auto_show_incoming(void) const;
 	int get_gui_auto_show_timeout(void) const;
+	string get_gui_browser_cmd(void) const;
 	bool get_ab_show_sip_only(void) const;
 	bool get_ab_lookup_name(void) const;
 	bool get_ab_override_display(void) const;
@@ -339,6 +348,7 @@ public:
 	void set_gui_hide_on_close(bool b);
 	void set_gui_auto_show_incoming(bool b);
 	void set_gui_auto_show_timeout(int timeout);
+	void set_gui_browser_cmd(const string &s);
 	void set_ab_show_sip_only(bool b);
 	void set_ab_lookup_name(bool b);
 	void set_ab_override_display(bool b);
@@ -477,9 +487,22 @@ public:
 	/** Remove all files from the temporary file directory */
 	void remove_all_tmp_files(void) const;
 
-	// Lock file operations
-	bool create_lock_file(string &error_msg, bool &already_running) const;
-	void delete_lock_file(void) const;
+	/** @name Lock file operations */
+	/**
+	 * Create a lock file if it does not exist yet and take a file lock on it.
+	 * @param shared_lock [in] Indicates if the file lock must be shared or exclusive.
+	 *        A shared lock is needed when the users forces multiple Twinkle processes
+	 *        to run.
+	 * @param error_msg [out] Error message if the operation fails.
+	 * @param already_running [out] If the operation fails, this flag indicates Twinkle
+	 *        is already running.
+	 * @return True if the file is locked succesfully.
+	 * @return False if the file could not be locked.
+	 */
+	bool create_lock_file(bool shared_lock, string &error_msg, bool &already_running);
+	
+	/** Unlock the lock file. */
+	void delete_lock_file(void);
 	
 	// Read and parse a config file into the t_sys_settings object.
 	// Returns false if it fails. error_msg is an error message that can

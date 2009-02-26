@@ -212,7 +212,7 @@ public:
 	void cb_redirecting_request(t_user *user_config, int line, const t_contact_param &contact);
 	void cb_redirecting_request(t_user *user_config, const t_contact_param &contact);
 	void cb_notify_call(int line, const QString &from_party, const QString &organization,
-			   const QImage &photo, const QString &subject);
+			   const QImage &photo, const QString &subject, QString &referred_by_party);
 	void cb_stop_call_notification(int line);
 	void cb_dtmf_detected(int line, char dtmf_event);
 	void cb_send_dtmf(int line, char dtmf_event);
@@ -378,6 +378,12 @@ public:
 	  * @return file extension as glob expression.
 	  */
 	string mime2file_extension(t_media media);
+	
+	/** 
+             * Open a URL in an external web browser.
+	  * @param url [in] URL to open.
+             */
+	void open_url_in_browser(const QString &url);
 	
 private slots:
 	/** 

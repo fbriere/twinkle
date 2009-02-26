@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>729</width>
-            <height>593</height>
+            <width>765</width>
+            <height>624</height>
         </rect>
     </property>
     <property name="caption">
@@ -1006,6 +1006,35 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
                                     </size>
                                 </property>
                             </spacer>
+                        </hbox>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout34</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>browserTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>W&amp;eb browser command:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>browserLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>browserLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Command to start your web browser. If you leave this field empty Twinkle will try to figure out your default web browser.</string>
+                                </property>
+                            </widget>
                         </hbox>
                     </widget>
                 </vbox>

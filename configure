@@ -2427,7 +2427,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION="1.4"
+ VERSION="1.4.2"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -2575,7 +2575,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "January 25 2009"
+#define VERSION_DATE "February 25 2009"
 _ACEOF
 
 ac_ext=c
@@ -21448,7 +21448,7 @@ done
     fi
   fi
 
-if test "x$vl_cv_lib_readline" == "no"
+if test "x$vl_cv_lib_readline" == "xno"
 then
 	{ { echo "$as_me:$LINENO: error: readline-devel package is not installed" >&5
 echo "$as_me: error: readline-devel package is not installed" >&2;}
@@ -23347,7 +23347,11 @@ done
 	$QTDIR/bin/qmake -o src/gui/Makefile $srcdir/src/gui/twinkle.pro
 	echo "distdir:" >> src/gui/Makefile
 	echo "check:" >> src/gui/Makefile
-	sed -i -e "s|\(LIBS *= \)|\1-L${kde_libraries} |" src/gui/Makefile
+
+	if test -n "$kde_libraries"
+	then
+		sed -i -e "s|\(LIBS *= \)|\1-L${kde_libraries} |" src/gui/Makefile
+	fi
 	 ;;
 
   esac

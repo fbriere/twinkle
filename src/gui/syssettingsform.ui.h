@@ -264,37 +264,8 @@ void SysSettingsForm::populate()
 		}
 	}
 	
-#if 0
-	// DEPRECATED
-	list<t_interface> *l = get_interfaces();
-	// The socket routines are not under control of MEMMAN so report
-	// the allocation here.
-	MEMMAN_NEW(l);
-	userHostComboBox->clear();
-	userHostComboBox->insertItem(tr("none", "This is the 'none' in default IP address combo"));
-	userHostComboBox->setCurrentItem(0);
-	idx = 1;
-	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
-		userHostComboBox->insertItem(i->get_ip_addr().c_str());
-		if (sys_config->get_start_user_host() == i->get_ip_addr()) {
-			userHostComboBox->setCurrentItem(idx);
-		}
-	}
-
-	userDevComboBox->clear();
-	userDevComboBox->insertItem(tr("none", "This is the 'none' in default network interface combo"));
-	userDevComboBox->setCurrentItem(0);
-	idx = 1;
-	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
-		userDevComboBox->insertItem(i->name.c_str());
-		if (sys_config->get_start_user_nic() == i->name) {
-			userDevComboBox->setCurrentItem(idx);
-		}
-	}
-
-	delete l;
-	MEMMAN_DELETE(l);
-#endif
+	// Web browser command
+	browserLineEdit->setText(sys_config->get_gui_browser_cmd().c_str());
 	
 	// Network settings
 	sipUdpPortSpinBox->setValue(sys_config->get_config_sip_port());
@@ -331,17 +302,6 @@ void SysSettingsForm::populate()
 
 void SysSettingsForm::validate()
 {
-#if 0
-	// DEPRECATED
-	if (userHostComboBox->currentItem() != 0 && userDevComboBox->currentItem() != 0)
-	{
-		((t_gui *)ui)->cb_show_msg(this, 
-			tr("Either choose a default IP address or a default network interface.").ascii(), 
-			MSG_WARNING);
-		return;
-	}
-#endif
-	
 	bool conversion_ok = false;
 	unsigned short sip_max_udp_size = maxUdpSizeLineEdit->text().toUShort(&conversion_ok);
 	if (!conversion_ok) sip_max_udp_size = sys_config->get_sip_max_udp_size();
@@ -402,20 +362,8 @@ void SysSettingsForm::validate()
 	}
 	sys_config->set_start_user_profiles(start_user_profiles);
 	
-#if 0
-	// DEPRECATED
-	if (userHostComboBox->currentItem() == 0) {
-		sys_config->set_start_user_host("");
-	} else {
-		sys_config->set_start_user_host(userHostComboBox->currentText().ascii());
-	}
-	
-	if (userDevComboBox->currentItem() == 0) {
-		sys_config->set_start_user_nic("");
-	} else {
-		sys_config->set_start_user_nic(userDevComboBox->currentText().ascii());
-	}
-#endif
+	// Web browser command
+	sys_config->set_gui_browser_cmd(browserLineEdit->text().stripWhiteSpace().ascii());
 	
 	// Network
 	if (sys_config->get_config_sip_port() != sipUdpPortSpinBox->value()) {

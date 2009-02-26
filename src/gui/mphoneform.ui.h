@@ -186,6 +186,11 @@ void MphoneForm::init()
 		// View menu
 		viewCall_HistoryAction->addTo(menu);
 		
+		menu->insertSeparator();
+		
+		// Diamondcard menu
+		menu->insertItem("Diamondcard", Diamondcard);
+		
 		// Exit application when user selects Quit from the tray menu
 		connect(sysTray, SIGNAL(quitSelected()),
 			this, SLOT(fileExit()));
@@ -655,6 +660,7 @@ void MphoneForm::updateState()
 	has_media = phone->has_line_media(line);
 	other_line = (line == 0 ? 1 : 0);
 	call_info = phone->get_call_info(line);
+	t_user *user_config = phone->get_line_user(line);
 	
 	// The active line may change when one of the parties in a conference
 	// releases the call. If this happens, then update the state of the
@@ -696,7 +702,13 @@ void MphoneForm::updateState()
 		callBye->setEnabled(true);
 		callReject->setEnabled(false);
 		callRedirect->setEnabled(false);
-		callTransfer->setEnabled(false);
+		
+		if (is_transfer_consult && user_config->get_allow_transfer_consultation_inprog()) {
+			callTransfer->setEnabled(true);
+		} else {
+			callTransfer->setEnabled(false);
+		}
+		
 		callHold->setEnabled(false);
 		callConference->setEnabled(false);
 		callMute->setEnabled(false);
@@ -1380,6 +1392,123 @@ void MphoneForm::updateMenuStatus()
 		connect(serviceAutoAnswer, SIGNAL(activated()),
 			this, SLOT(srvAutoAnswer()));
 	}
+	
+	updateDiamondcardMenu();
+}
+
+void MphoneForm::updateDiamondcardMenu()
+{
+	// If one Diamondcard user is active, then create actions in the Diamondcard
+	// main menu for recharging, call history, etc. These actions will show the
+	// Diamondcard web page.
+	// If multiple Diamondcard users are active then create a submenu of each
+	// Diamondcard action. In each submenu create an item for each user.
+	// When a user item is clicked, the web page for the action and that user is
+	// shown.
+	list<t_user *> diamondcard_users = diamondcard_get_users(phone);
+	
+	// Menu item identifiers
+	static int rechargeId = -1;
+	static int balanceHistoryId = -1;
+	static int callHistoryId = -1;
+	static int adminCenterId = -1;
+	
+	// Sub menu's
+	static QPopupMenu *rechargeMenu = NULL;
+	static QPopupMenu *balanceHistoryMenu = NULL;
+	static QPopupMenu *callHistoryMenu = NULL;
+	static QPopupMenu *adminCenterMenu = NULL;
+	
+	// Clear old menu
+	removeDiamondcardAction(rechargeId);
+	removeDiamondcardAction(balanceHistoryId);
+	removeDiamondcardAction(callHistoryId);
+	removeDiamondcardAction(adminCenterId);
+	removeDiamondcardMenu(rechargeMenu);
+	removeDiamondcardMenu(balanceHistoryMenu);
+	removeDiamondcardMenu(callHistoryMenu);
+	removeDiamondcardMenu(adminCenterMenu);
+	
+	if (diamondcard_users.size() <= 1)
+	{
+		rechargeId = Diamondcard->insertItem(tr("Recharge..."), this, SLOT(DiamondcardRecharge(int)));
+		Diamondcard->setItemParameter(rechargeId, 0);
+		balanceHistoryId = Diamondcard->insertItem(tr("Balance history..."), this, SLOT(DiamondcardBalanceHistory(int)));
+		Diamondcard->setItemParameter(balanceHistoryId, 0);
+		callHistoryId = Diamondcard->insertItem(tr("Call history..."), this, SLOT(DiamondcardCallHistory(int)));
+		Diamondcard->setItemParameter(callHistoryId, 0);
+		adminCenterId = Diamondcard->insertItem(tr("Admin center..."), this, SLOT(DiamondcardAdminCenter(int)));
+		Diamondcard->setItemParameter(adminCenterId, 0);
+		
+		// Disable actions as there is no active Diamondcard users.
+		if (diamondcard_users.empty()) {
+			Diamondcard->setItemEnabled(rechargeId, false);
+			Diamondcard->setItemEnabled(balanceHistoryId, false);
+			Diamondcard->setItemEnabled(callHistoryId, false);
+			Diamondcard->setItemEnabled(adminCenterId, false);
+		}
+	}
+	else
+	{
+		rechargeMenu = new QPopupMenu(this);
+		balanceHistoryMenu = new QPopupMenu(this);
+		callHistoryMenu = new QPopupMenu(this);
+		adminCenterMenu = new QPopupMenu(this);
+		// No MEMMAN registration as the popup menu may be automatically
+		// deleted by Qt on application close down. This would show up as
+		// a memory leak in MEMMAN.
+		
+		// Insert a menu item for each Diamondcard user.
+		int idx = 0;
+		for (list<t_user *>::const_iterator it = diamondcard_users.begin(); 
+		       it != diamondcard_users.end(); ++it)
+		{
+			int menuId;
+			t_user *user = *it;
+			
+			// Set the index in the user list as parameter to the menu item.
+			// When the menu item gets clicked, then the receiver of the signal
+			// received this parameter and can use it as an index in the user list
+			// to find the user.
+			
+			menuId = rechargeMenu->insertItem(user->get_profile_name().c_str(), this,
+							      SLOT(DiamondcardRecharge(int)));
+			rechargeMenu->setItemParameter(menuId, idx);
+			menuId = balanceHistoryMenu->insertItem(user->get_profile_name().c_str(), this,
+							      SLOT(DiamondcardBalanceHistory(int)));
+			balanceHistoryMenu->setItemParameter(menuId, idx);
+			menuId = callHistoryMenu->insertItem(user->get_profile_name().c_str(), this,
+							      SLOT(DiamondcardCallHistory(int)));
+			callHistoryMenu->setItemParameter(menuId, idx);
+			menuId = adminCenterMenu->insertItem(user->get_profile_name().c_str(), this,
+							      SLOT(DiamondcardAdminCenter(int)));
+			adminCenterMenu->setItemParameter(menuId, idx);
+			
+			++idx;
+		}
+		
+		// Add the Diamondcard popup menus to the main Diamondcard menu.
+		Diamondcard->insertItem(tr("Recharge"), rechargeMenu);
+		Diamondcard->insertItem(tr("Balance history"), balanceHistoryMenu);
+		Diamondcard->insertItem(tr("Call history"), callHistoryMenu);
+		Diamondcard->insertItem(tr("Admin center"), adminCenterMenu);
+	}
+}
+
+void MphoneForm::removeDiamondcardAction(int &id)
+{
+	if (id != -1) {
+		Diamondcard->removeItem(id);
+		id = -1;
+	}
+}
+
+void MphoneForm::removeDiamondcardMenu(QPopupMenu* &menu)
+{
+	if (menu) {
+		delete menu;
+		menu = NULL;
+	}
 }
 
 void MphoneForm::phoneRegister()
@@ -2062,6 +2191,11 @@ void MphoneForm::aboutQt()
 	QMessageBox::aboutQt(this, PRODUCT_NAME);
 }
 
+void MphoneForm::manual()
+{
+	((t_gui *)ui)->open_url_in_browser("http://www.twinklephone.com");
+}
+
 void MphoneForm::editUserProfile()
 {
 	if (!userProfileForm) {
@@ -2212,8 +2346,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 			if (phone->add_phone_user(user_config, &dup_user))
 			{
 				// NAT discovery
-				if (user_config.get_use_stun() &&
-				    !phone->stun_discover_nat(&user_config, error_msg)) 
+				if (!phone->stun_discover_nat(&user_config, error_msg)) 
 				{
 					// Warn user that the STUN settings will not work.
 					((t_gui *)ui)->cb_show_msg(this, error_msg, 
@@ -2308,16 +2441,19 @@ void MphoneForm::updateRtpPorts()
 
 void MphoneForm::updateStunSettings(t_user *user_config)
 {
-	if (user_config->get_use_stun()) {
-		string s;
-		if (!phone->stun_discover_nat(user_config, s)) {
-			// Warn user that the STUN settings will not work.
-			((t_gui *)ui)->cb_show_msg(this, s, MSG_WARNING);
-		}
-	} else {
+	string s;
+	if (!phone->stun_discover_nat(user_config, s)) {
+		// Warn user that the STUN settings will not work.
+		((t_gui *)ui)->cb_show_msg(this, s, MSG_WARNING);
+	}
+	
+	if (!user_config->get_use_stun()) {
 		// Disable STUN
 		phone->disable_stun(user_config);
 	}
+	
+	// Synchronize the sending of NAT keep alives with the user profile settings.
+	phone->sync_nat_keepalive(user_config);
 }
 
 void MphoneForm::updateAuthCache(t_user *user_config, const string &realm)
@@ -2930,4 +3066,61 @@ void MphoneForm::doAvailabilityOnline()
 	if (!pu) return;
 	
 	pu->publish_presence(t_presence_state::ST_BASIC_OPEN);
+}
+
+void MphoneForm::DiamondcardSignUp()
+{
+	DiamondcardProfileForm *f = new DiamondcardProfileForm(this, "select profile", true, 
+							       Qt::WDestructiveClose);
+	
+	connect(f, SIGNAL(newDiamondcardProfile(const QString&)),
+			this, SLOT(newDiamondcardUser(const QString &)));
+	
+	f->show(NULL);
+}
+
+void MphoneForm::newDiamondcardUser(const QString &filename)
+{
+	list<string> profileFilenames;
+	list<t_user *> users = phone->ref_users();
+	
+	for (list<t_user *>::const_iterator it = users.begin(); it != users.end(); ++it) {
+		t_user *user = *it;
+		profileFilenames.push_back(user->get_filename());
+	}
+	
+	profileFilenames.push_back(filename.ascii());
+	newUsers(profileFilenames);
+}
+
+void MphoneForm::DiamondcardAction(t_dc_action action, int userIdx)
+{
+	list<t_user *> diamondcard_users = diamondcard_get_users(phone);
+	vector<t_user *> v(diamondcard_users.begin(), diamondcard_users.end());
+	
+	if (userIdx < 0 || (unsigned int)userIdx >= v.size()) return;
+	
+	t_user *user = v[userIdx];
+	QString url(diamondcard_url(action, user->get_name(), user->get_auth_pass()).c_str());
+	((t_gui *)ui)->open_url_in_browser(url);
+}
+
+void MphoneForm::DiamondcardRecharge(int userIdx)
+{
+	DiamondcardAction(DC_ACT_RECHARGE, userIdx);
+}
+
+void MphoneForm::DiamondcardBalanceHistory(int userIdx)
+{
+	DiamondcardAction(DC_ACT_BALANCE_HISTORY, userIdx);
+}
+
+void MphoneForm::DiamondcardCallHistory(int userIdx)
+{
+	DiamondcardAction(DC_ACT_CALL_HISTORY, userIdx);
+}
+
+void MphoneForm::DiamondcardAdminCenter(int userIdx)
+{
+	DiamondcardAction(DC_ACT_ADMIN_CENTER, userIdx);
 }

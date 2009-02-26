@@ -18,6 +18,8 @@
 
 #include "twinkle_config.h"
 
+
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/soundcard.h>
@@ -73,6 +75,7 @@ using namespace utils;
 #define FLD_GUI_HIDE_ON_CLOSE	"gui_hide_on_close"
 #define FLD_GUI_AUTO_SHOW_INCOMING	"gui_auto_show_incoming"
 #define FLD_GUI_AUTO_SHOW_TIMEOUT	"gui_auto_show_timeout"
+#define FLD_GUI_BROWSER_CMD	"gui_browser_cmd"
 
 // Address book settings
 #define FLD_AB_SHOW_SIP_ONLY	"ab_show_sip_only"
@@ -218,6 +221,7 @@ string t_win_geometry::encode(void) const {
 /////////////////////////
 
 t_sys_settings::t_sys_settings() {
+	fd_lock_file = -1;
 	dir_share = DIR_SHARE;
 	filename = string(DIR_HOME);
 	filename += "/";
@@ -392,35 +396,28 @@ bool t_sys_settings::get_log_show_debug(void) const {
 }
 
 bool t_sys_settings::get_gui_use_systray(void) const {
-	bool result;
-	mtx_sys.lock();
-	result = gui_use_systray;
-	mtx_sys.unlock();
-	return result;	
+	t_mutex_guard guard(mtx_sys);
+	return gui_use_systray;
 }
 
 bool t_sys_settings::get_gui_auto_show_incoming(void) const {
-	bool result;
-	mtx_sys.lock();
-	result = gui_auto_show_incoming;
-	mtx_sys.unlock();
-	return result;
+	t_mutex_guard guard(mtx_sys);
+	return gui_auto_show_incoming;
 }
 
 int t_sys_settings::get_gui_auto_show_timeout(void) const {
-	int result;
-	mtx_sys.lock();
-	result = gui_auto_show_timeout;
-	mtx_sys.unlock();
-	return result;
+	t_mutex_guard guard(mtx_sys);
+	return gui_auto_show_timeout;
 }
 
 bool t_sys_settings::get_gui_hide_on_close(void) const {
-	bool result;
-	mtx_sys.lock();
-	result = gui_hide_on_close;
-	mtx_sys.unlock();
-	return result;	
+	t_mutex_guard guard(mtx_sys);
+	return gui_hide_on_close;
+}
+
+string t_sys_settings::get_gui_browser_cmd(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return gui_browser_cmd;
 }
 
 bool t_sys_settings::get_ab_show_sip_only(void) const {
@@ -734,39 +731,38 @@ void t_sys_settings::set_log_show_stun(bool b) {
 }
 
 void t_sys_settings::set_log_show_memory(bool b) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	log_show_memory = b;
-	mtx_sys.unlock();
 }
 
 void t_sys_settings::set_log_show_debug(bool b) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	log_show_debug = b;
-	mtx_sys.unlock();
 }
 
 void t_sys_settings::set_gui_use_systray(bool b) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	gui_use_systray = b;
-	mtx_sys.unlock();
 }
 
 void t_sys_settings::set_gui_hide_on_close(bool b) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	gui_hide_on_close = b;
-	mtx_sys.unlock();
 }
 
 void t_sys_settings::set_gui_auto_show_incoming(bool b) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	gui_auto_show_incoming = b;
-	mtx_sys.unlock();
 }
 
 void t_sys_settings::set_gui_auto_show_timeout(int timeout) {
-	mtx_sys.lock();
+	t_mutex_guard guard(mtx_sys);
 	gui_auto_show_timeout = timeout;
-	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_gui_browser_cmd(const string &s) {
+	t_mutex_guard guard(mtx_sys);
+	gui_browser_cmd = s;
 }
 
 void t_sys_settings::set_ab_show_sip_only(bool b) {
@@ -1413,8 +1409,9 @@ void t_sys_settings::remove_all_tmp_files(void) const {
 	closedir(tmpdir);
 }
 
-bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) const {
-	struct stat stat_buf;
+bool t_sys_settings::create_lock_file(bool shared_lock, string &error_msg, 
+                                      bool &already_running) 
+{
 	string lck_filename;
 	already_running = false;
 
@@ -1423,45 +1420,42 @@ bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) 
         lck_filename += DIR_USER;
         lck_filename += "/";
         lck_filename += LOCK_FILENAME;
-
-	// Check if a lock file already exists
-	if (stat(lck_filename.c_str(), &stat_buf) == 0) {
-		ifstream f(lck_filename.c_str());
-		if (!f) {
-			error_msg =  TRANSLATE("Lock file %1 already exist, but cannot be opened.");
-			error_msg = replace_first(error_msg, "%1", lck_filename);
-			return false;
-		}
-
-		// Check if lock is stale
-		pid_t lock_pid;
-		f >> lock_pid;
-		if (kill(lock_pid, 0) == 0) {
-			// The pid in the lock file exists, so Twinkle is
-			// already running.
+	
+	fd_lock_file = open(lck_filename.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd_lock_file < 0) {
+		error_msg = TRANSLATE("Cannot create %1 .");
+		error_msg = replace_first(error_msg, "%1", lck_filename);
+		error_msg += "\n";
+		error_msg += get_error_str(errno);
+		return false;
+	}
+	
+	struct flock lock_options;
+	
+	// Try to acquire an exclusive lock
+	if (!shared_lock)
+	{
+		memset(&lock_options, 0, sizeof(struct flock));
+		lock_options.l_type = F_WRLCK;
+		lock_options.l_whence = SEEK_SET;
+		
+		if (fcntl(fd_lock_file, F_SETLK, &lock_options) < 0) {
 			already_running = true;
 			error_msg = TRANSLATE("%1 is already running.\nLock file %2 already exists.");
 			error_msg = replace_first(error_msg, "%1", PRODUCT_NAME);
 			error_msg = replace_first(error_msg, "%2", lck_filename);
 			return false;
 		}
-
-		// The lock is stale; delete it
-		f.close();
-		unlink(lck_filename.c_str());
 	}
-
-	// Create lock file
-	ofstream f(lck_filename.c_str());
-	if (!f) {
-		error_msg = TRANSLATE("Cannot create %1 .");
-		error_msg = replace_first(error_msg, "%1", lck_filename);
-		return false;
-	}
-
-	f << getpid();
-	if (!f.good()) {
-		error_msg = TRANSLATE("Cannot write to %1 .");
+	
+	// Convert the lock to a shared lock. If the user forces multiple
+	// instances of Twinkle to run, then each will have a shared lock.
+	memset(&lock_options, 0, sizeof(struct flock));
+	lock_options.l_type = F_RDLCK;
+	lock_options.l_whence = SEEK_SET;
+	
+	if (fcntl(fd_lock_file, F_SETLK, &lock_options) < 0) {
+		error_msg = TRANSLATE("Cannot lock %1 .");
 		error_msg = replace_first(error_msg, "%1", lck_filename);
 		return false;
 	}
@@ -1469,16 +1463,18 @@ bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) 
 	return true;
 }
 
-void t_sys_settings::delete_lock_file(void) const {
-	string lck_filename;
-
-        lck_filename = DIR_HOME;
-        lck_filename += "/";
-        lck_filename += DIR_USER;
-        lck_filename += "/";
-        lck_filename += LOCK_FILENAME;
-
-	unlink(lck_filename.c_str());
+void t_sys_settings::delete_lock_file(void) {
+	if (fd_lock_file >= 0)
+	{
+		struct flock lock_options;
+		lock_options.l_type = F_UNLCK;
+		lock_options.l_whence = SEEK_SET;
+		
+		fcntl(fd_lock_file, F_SETLK, &lock_options);
+		
+		close(fd_lock_file);
+		fd_lock_file = -1;
+	}
 }
 
 bool t_sys_settings::read_config(string &error_msg) {
@@ -1567,6 +1563,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			gui_auto_show_incoming = yesno2bool(value);
 		} else if (parameter == FLD_GUI_AUTO_SHOW_TIMEOUT) {
 			gui_auto_show_timeout = atoi(value.c_str());
+		} else if (parameter == FLD_GUI_BROWSER_CMD) {
+			gui_browser_cmd = value;
 		} else if (parameter == FLD_AB_SHOW_SIP_ONLY) {
 			ab_show_sip_only = yesno2bool(value);
 		} else if (parameter == FLD_AB_LOOKUP_NAME) {
@@ -1705,6 +1703,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_GUI_HIDE_ON_CLOSE << '=' << bool2yesno(gui_hide_on_close) << endl;
 	config << FLD_GUI_AUTO_SHOW_INCOMING << '=' << bool2yesno(gui_auto_show_incoming) << endl;
 	config << FLD_GUI_AUTO_SHOW_TIMEOUT << '=' << gui_auto_show_timeout << endl;
+	config << FLD_GUI_BROWSER_CMD << '=' << gui_browser_cmd << endl;
 	config << endl;
 	
 	// Write address book settings

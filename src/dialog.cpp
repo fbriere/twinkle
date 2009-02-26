@@ -2366,7 +2366,9 @@ t_dialog *t_dialog::copy(void) {
 void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by,
 		const t_hdr_replaces &hdr_replaces, 
-		const t_hdr_require &hdr_require, bool anonymous)
+		const t_hdr_require &hdr_require, 
+		const t_hdr_request_disposition &hdr_request_disposition,
+		bool anonymous)
 {
 	t_user *user_config = phone_user->get_user_profile();
 	
@@ -2472,6 +2474,9 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	if (hdr_require.is_populated()) {
 		invite.hdr_require.add_features(hdr_require.features);
 	}
+	
+	// RFC 3841 Request-Disposition header
+	invite.hdr_request_disposition = hdr_request_disposition;
 	
 	// Calculate destinations
 	// See create_request() for more comments

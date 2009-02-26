@@ -12,7 +12,7 @@
             <x>0</x>
             <y>0</y>
             <width>739</width>
-            <height>668</height>
+            <height>693</height>
         </rect>
     </property>
     <property name="sizePolicy">
@@ -26,7 +26,7 @@
     <property name="minimumSize">
         <size>
             <width>714</width>
-            <height>668</height>
+            <height>693</height>
         </size>
     </property>
     <property name="caption">
@@ -1665,9 +1665,13 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <action name="viewDisplayAction"/>
         <action name="viewBuddyListAction"/>
     </item>
+    <item text="Diamondcard" name="Diamondcard">
+        <action name="diamondcardSign_upAction"/>
+    </item>
     <item text="&amp;Help" name="helpMenu">
         <action name="helpWhats_ThisAction"/>
         <separator/>
+        <action name="helpManualAction"/>
         <action name="helpAboutAction"/>
         <action name="helpAboutQtAction"/>
     </item>
@@ -2345,6 +2349,31 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <string>Buddy list</string>
         </property>
     </action>
+    <action>
+        <property name="name">
+            <cstring>helpManualAction</cstring>
+        </property>
+        <property name="text">
+            <string>Manual</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Manual</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>diamondcardSign_upAction</cstring>
+        </property>
+        <property name="text">
+            <string>Sign up</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Sign up...</string>
+        </property>
+        <property name="toolTip">
+            <string>Sign up</string>
+        </property>
+    </action>
 </actions>
 <connections>
     <connection>
@@ -2575,6 +2604,18 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <receiver>MphoneForm</receiver>
         <slot>showBuddyList(bool)</slot>
     </connection>
+    <connection>
+        <sender>helpManualAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>manual()</slot>
+    </connection>
+    <connection>
+        <sender>diamondcardSign_upAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>DiamondcardSignUp()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>callComboBox</tabstop>
@@ -2592,6 +2633,25 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <tabstop>to2Label</tabstop>
 </tabstops>
 <includes>
+    <include location="local" impldecl="in declaration">phone.h</include>
+    <include location="local" impldecl="in declaration">dtmfform.h</include>
+    <include location="local" impldecl="in declaration">inviteform.h</include>
+    <include location="local" impldecl="in declaration">redirectform.h</include>
+    <include location="local" impldecl="in declaration">termcapform.h</include>
+    <include location="local" impldecl="in declaration">srvredirectform.h</include>
+    <include location="local" impldecl="in declaration">userprofileform.h</include>
+    <include location="local" impldecl="in declaration">transferform.h</include>
+    <include location="local" impldecl="in declaration">syssettingsform.h</include>
+    <include location="local" impldecl="in declaration">logviewform.h</include>
+    <include location="local" impldecl="in declaration">historyform.h</include>
+    <include location="local" impldecl="in declaration">selectuserform.h</include>
+    <include location="local" impldecl="in declaration">selectprofileform.h</include>
+    <include location="local" impldecl="in declaration">qevent.h</include>
+    <include location="local" impldecl="in declaration">twinklesystray.h</include>
+    <include location="local" impldecl="in declaration">im/msg_session.h</include>
+    <include location="local" impldecl="in declaration">messageformview.h</include>
+    <include location="local" impldecl="in declaration">buddylistview.h</include>
+    <include location="local" impldecl="in declaration">diamondcard.h</include>
     <include location="local" impldecl="in implementation">user.h</include>
     <include location="local" impldecl="in implementation">qtextedit.h</include>
     <include location="local" impldecl="in implementation">qcheckbox.h</include>
@@ -2613,24 +2673,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <include location="local" impldecl="in implementation">qregexp.h</include>
     <include location="local" impldecl="in implementation">qvalidator.h</include>
     <include location="local" impldecl="in implementation">buddyform.h</include>
-    <include location="local" impldecl="in declaration">phone.h</include>
-    <include location="local" impldecl="in declaration">dtmfform.h</include>
-    <include location="local" impldecl="in declaration">inviteform.h</include>
-    <include location="local" impldecl="in declaration">redirectform.h</include>
-    <include location="local" impldecl="in declaration">termcapform.h</include>
-    <include location="local" impldecl="in declaration">srvredirectform.h</include>
-    <include location="local" impldecl="in declaration">userprofileform.h</include>
-    <include location="local" impldecl="in declaration">transferform.h</include>
-    <include location="local" impldecl="in declaration">syssettingsform.h</include>
-    <include location="local" impldecl="in declaration">logviewform.h</include>
-    <include location="local" impldecl="in declaration">historyform.h</include>
-    <include location="local" impldecl="in declaration">selectuserform.h</include>
-    <include location="local" impldecl="in declaration">selectprofileform.h</include>
-    <include location="local" impldecl="in declaration">qevent.h</include>
-    <include location="local" impldecl="in declaration">twinklesystray.h</include>
-    <include location="local" impldecl="in declaration">im/msg_session.h</include>
-    <include location="local" impldecl="in declaration">messageformview.h</include>
-    <include location="local" impldecl="in declaration">buddylistview.h</include>
+    <include location="local" impldecl="in implementation">diamondcardprofileform.h</include>
     <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
 </includes>
 <forwards>
@@ -2685,6 +2728,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>updateMissedCallStatus( int num_missed_calls )</slot>
     <slot>updateSysTrayStatus()</slot>
     <slot>updateMenuStatus()</slot>
+    <slot>updateDiamondcardMenu()</slot>
+    <slot>removeDiamondcardAction( int &amp; id )</slot>
+    <slot>removeDiamondcardMenu( QPopupMenu * &amp; menu )</slot>
     <slot>phoneRegister()</slot>
     <slot>do_phoneRegister( list&lt;t_user *&gt; user_list )</slot>
     <slot>phoneDeregister()</slot>
@@ -2741,6 +2787,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>do_srvRedirect( t_user * user_config, const list&lt;t_display_url&gt; &amp; always, const list&lt;t_display_url&gt; &amp; busy, const list&lt;t_display_url&gt; &amp; noanswer )</slot>
     <slot>about()</slot>
     <slot>aboutQt()</slot>
+    <slot>manual()</slot>
     <slot>editUserProfile()</slot>
     <slot>editSysSettings()</slot>
     <slot>selectProfile()</slot>
@@ -2781,6 +2828,13 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>doAddBuddy()</slot>
     <slot>doAvailabilityOffline()</slot>
     <slot>doAvailabilityOnline()</slot>
+    <slot>DiamondcardSignUp()</slot>
+    <slot>newDiamondcardUser( const QString &amp; filename )</slot>
+    <slot>DiamondcardAction( t_dc_action action, int userIdx )</slot>
+    <slot>DiamondcardRecharge( int userIdx )</slot>
+    <slot>DiamondcardBalanceHistory( int userIdx )</slot>
+    <slot>DiamondcardCallHistory( int userIdx )</slot>
+    <slot>DiamondcardAdminCenter( int userIdx )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

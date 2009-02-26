@@ -224,6 +224,13 @@ public:
 	/** Stop sending NAT keep alives when not necessary anymore. */
 	void cleanup_nat_keepalive(void);
 	
+	/** 
+	 * Synchronize the sending of NAT keep alives with the user config.
+	 * Start sending if keep alives are enabled but currently not being
+	 * sent.
+	 */
+	void sync_nat_keepalive(void);
+	
 	/** Stop sending TCP ping packets when not necessary anumore. */
 	void cleanup_tcp_ping(void);
 	

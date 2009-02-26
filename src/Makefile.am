@@ -24,6 +24,7 @@ twinkle_LDADD = libtwinkle.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
+	-lncurses \
 	-lreadline \
 	-lsndfile\
 	-lmagic
@@ -37,6 +38,7 @@ libtwinkle_a_SOURCES =\
         client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
+        diamondcard.cpp\
         epa.cpp\
         events.cpp\
         id_object.cpp\
@@ -69,6 +71,7 @@ libtwinkle_a_SOURCES =\
         client_request.h\
         cmd_socket.h\
         dialog.h\
+        diamondcard.h\
         epa.h\
         events.h\
 	exceptions.h\

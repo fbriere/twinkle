@@ -1,3 +1,10 @@
+twinkle (1:1.4.2-1) unstable; urgency=low
+
+  * New upstream release
+    - libcommoncpp2 transition
+
+ -- Mark Purcell <msp@debian.org>  Thu, 26 Feb 2009 18:35:47 +1100
+
 twinkle (1:1.4-2) experimental; urgency=low
 
   * Fix "twinkle_1:1.4-1(sparc/experimental): FTBFS: error:

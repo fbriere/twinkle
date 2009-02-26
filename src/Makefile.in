@@ -58,10 +58,10 @@ libtwinkle_a_LIBADD =
 am_libtwinkle_a_OBJECTS = abstract_dialog.$(OBJEXT) \
 	address_book.$(OBJEXT) auth.$(OBJEXT) call_history.$(OBJEXT) \
 	call_script.$(OBJEXT) client_request.$(OBJEXT) \
-	cmd_socket.$(OBJEXT) dialog.$(OBJEXT) epa.$(OBJEXT) \
-	events.$(OBJEXT) id_object.$(OBJEXT) line.$(OBJEXT) \
-	listener.$(OBJEXT) log.$(OBJEXT) phone.$(OBJEXT) \
-	phone_user.$(OBJEXT) prohibit_thread.$(OBJEXT) \
+	cmd_socket.$(OBJEXT) dialog.$(OBJEXT) diamondcard.$(OBJEXT) \
+	epa.$(OBJEXT) events.$(OBJEXT) id_object.$(OBJEXT) \
+	line.$(OBJEXT) listener.$(OBJEXT) log.$(OBJEXT) \
+	phone.$(OBJEXT) phone_user.$(OBJEXT) prohibit_thread.$(OBJEXT) \
 	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
 	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
 	subscription_dialog.$(OBJEXT) sys_settings.$(OBJEXT) \
@@ -363,6 +363,7 @@ twinkle_LDADD = libtwinkle.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
+	-lncurses \
 	-lreadline \
 	-lsndfile\
 	-lmagic
@@ -376,6 +377,7 @@ libtwinkle_a_SOURCES = \
         client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
+        diamondcard.cpp\
         epa.cpp\
         events.cpp\
         id_object.cpp\
@@ -408,6 +410,7 @@ libtwinkle_a_SOURCES = \
         client_request.h\
         cmd_socket.h\
         dialog.h\
+        diamondcard.h\
         epa.h\
         events.h\
 	exceptions.h\
@@ -517,6 +520,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_request.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd_socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diamondcard.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/epa.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id_object.Po@am__quote@

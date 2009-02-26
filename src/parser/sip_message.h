@@ -60,13 +60,13 @@
 #include "hdr_proxy_require.h"
 #include "hdr_rack.h"
 #include "hdr_record_route.h"
-#include "hdr_service_route.h"
 #include "hdr_refer_sub.h"
 #include "hdr_refer_to.h"
 #include "hdr_referred_by.h"
 #include "hdr_replaces.h"
 #include "hdr_reply_to.h"
 #include "hdr_require.h"
+#include "hdr_request_disposition.h"
 #include "hdr_retry_after.h"
 #include "hdr_route.h"
 #include "hdr_rseq.h"
@@ -161,6 +161,7 @@ public:
 	t_hdr_replaces		hdr_replaces;
 	t_hdr_reply_to		hdr_reply_to;
 	t_hdr_require		hdr_require;
+	t_hdr_request_disposition hdr_request_disposition;
 	t_hdr_retry_after	hdr_retry_after;
 	t_hdr_route		hdr_route;
 	t_hdr_rseq		hdr_rseq;

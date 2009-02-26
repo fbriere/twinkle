@@ -8,18 +8,18 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>884</width>
-            <height>619</height>
+            <width>872</width>
+            <height>647</height>
         </rect>
     </property>
     <property name="caption">
         <string>Twinkle - Call History</string>
     </property>
-    <vbox>
+    <grid>
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
-        <widget class="QListView">
+        <widget class="QListView" row="0" column="0">
             <column>
                 <property name="text">
                     <string>Time</string>
@@ -88,7 +88,7 @@
                 <enum>LastColumn</enum>
             </property>
         </widget>
-        <widget class="QLayoutWidget">
+        <widget class="QLayoutWidget" row="1" column="0">
             <property name="name">
                 <cstring>layout37</cstring>
             </property>
@@ -214,7 +214,7 @@
                 </widget>
             </hbox>
         </widget>
-        <widget class="QLayoutWidget">
+        <widget class="QLayoutWidget" row="3" column="0">
             <property name="name">
                 <cstring>layout39</cstring>
             </property>
@@ -290,7 +290,66 @@
                 </widget>
             </hbox>
         </widget>
-    </vbox>
+        <widget class="QLayoutWidget" row="2" column="0">
+            <property name="name">
+                <cstring>layout6</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>numberlCallsTtextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Number of calls:</string>
+                    </property>
+                </widget>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>numberCallsValueTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>###</string>
+                    </property>
+                </widget>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>totalDurationTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Total call duration:</string>
+                    </property>
+                </widget>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>totalDurationValueTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>###</string>
+                    </property>
+                </widget>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer11</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>460</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+            </hbox>
+        </widget>
+    </grid>
 </widget>
 <connections>
     <connection>

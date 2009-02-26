@@ -488,6 +488,8 @@ void UserProfileForm::populate()
 	referrerHoldCheckBox->setChecked(current_profile->get_referrer_hold());
 	refreshReferSubCheckBox->setChecked(current_profile->get_auto_refresh_refer_sub());
 	referAorCheckBox->setChecked(current_profile->get_attended_refer_to_aor());
+	transferConsultInprogCheckBox->setChecked(
+			current_profile->get_allow_transfer_consultation_inprog());
 	pPreferredIdCheckBox->setChecked(current_profile->get_send_p_preferred_id());
 	
 	// Transport/NAT
@@ -524,6 +526,8 @@ void UserProfileForm::populate()
 				    encode_noscheme().c_str());
 	persistentTcpCheckBox->setChecked(current_profile->get_persistent_tcp());
 	persistentTcpCheckBox->setEnabled(current_profile->get_sip_transport() == SIP_TRANS_TCP);
+	natKeepaliveCheckBox->setChecked(current_profile->get_enable_nat_keepalive());
+	natKeepaliveCheckBox->setDisabled(current_profile->get_use_stun());
 	
 	// ADDRESS FORMAT
 	displayTelUserCheckBox->setChecked(current_profile->get_display_useronly_phone());
@@ -1098,6 +1102,8 @@ bool UserProfileForm::validateValues()
 	current_profile->set_referrer_hold(referrerHoldCheckBox->isChecked());
 	current_profile->set_auto_refresh_refer_sub(refreshReferSubCheckBox->isChecked());
 	current_profile->set_attended_refer_to_aor(referAorCheckBox->isChecked());
+	current_profile->set_allow_transfer_consultation_inprog(
+			transferConsultInprogCheckBox->isChecked());
 	current_profile->set_send_p_preferred_id(pPreferredIdCheckBox->isChecked());
 	
 	// Transport/NAT
@@ -1119,12 +1125,13 @@ bool UserProfileForm::validateValues()
 	current_profile->set_nat_public_ip(publicIPLineEdit->text().ascii());
 	current_profile->set_use_stun(natStunRadioButton->isChecked());
 	
-	if (current_profile->get_stun_server().encode_noscheme() != 
-	    stunServerLineEdit->text().ascii()) 
+	if (current_profile->get_stun_server().encode_noscheme() != stunServerLineEdit->text().ascii() ||
+	    current_profile->get_enable_nat_keepalive() != natKeepaliveCheckBox->isChecked()) 
 	{
 		s = "stun:";
 		s.append(stunServerLineEdit->text());
 		current_profile->set_stun_server(t_url(s.ascii()));
+		current_profile->set_enable_nat_keepalive(natKeepaliveCheckBox->isChecked());
 		emit stunServerChanged(current_profile);
 	}
 	

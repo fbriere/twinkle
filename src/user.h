@@ -244,8 +244,8 @@ private:
 	unsigned short		dtmf_volume;
 
 
-	// SIP PROTOCOL
-
+	/** @name SIP PROTOCOL */
+	//@{
 	// SIP protocol options
 	// hold variants: rfc2543, rfc3264
 	// rfc2543 - set IP address to 0.0.0.0
@@ -319,34 +319,47 @@ private:
 	
 	// Replaces (RFC 3891)
 	bool			ext_replaces;
+	//@}
 
-	// REFER options
-	// Hold the current call when an incoming REFER is accepted.
+	/** @name REFER options */
+	//@{
+	/** Hold the current call when an incoming REFER is accepted. */
 	bool			referee_hold;
 
-	// Hold the current call before sending a REFER.
+	/** Hold the current call before sending a REFER. */
 	bool			referrer_hold;
 
-	// Allow an incoming refer
+	/** Allow an incoming refer */
 	bool			allow_refer;
 
-	// Ask user for permission when a REFER is received.
+	/** Ask user for permission when a REFER is received. */
 	bool			ask_user_to_refer;
 
-	// Referrer automatically refreshes subscription before expiry.
+	/** Referrer automatically refreshes subscription before expiry. */
 	bool			auto_refresh_refer_sub;
 	
-	// An attended transfer should use the contact-URI of the transfer target.
-	// This contact-URI is not always globally routable however. As an
-	// alternative the AoR (address of record) can be used. Disadvantage is
-	// that the AoR may route to multiple phones in case of forking, whereas
-	// the contact-URI routes to a particular phone.
+	/**
+	 * An attended transfer should use the contact-URI of the transfer target.
+	 * This contact-URI is not always globally routable however. As an
+	 * alternative the AoR (address of record) can be used. Disadvantage is
+	 * that the AoR may route to multiple phones in case of forking, whereas
+	 * the contact-URI routes to a particular phone.
+	 */
 	bool			attended_refer_to_aor;
 	
-	// Privacy options
+	/** 
+	 * Allow to transfer a call while the consultation call is still
+	 * in progress.
+	 */
+	bool			allow_transfer_consultation_inprog;
+	//@}
+	
+	/** @name Privacy options */
+	//@{
 	// Send P-Preferred-Identity header in initial INVITE when hiding
 	// user identity.
 	bool			send_p_preferred_id;
+	//@}
 	
 	/** @name Transport */
 	//@{
@@ -383,6 +396,9 @@ private:
 	
 	/** User persistent TCP connections. */
 	bool			persistent_tcp;
+	
+	/** Enable sending of NAT keepalive packets for UDP. */
+	bool			enable_nat_keepalive;
 	//@}
 
 	/** @name TIMERS */
@@ -604,6 +620,7 @@ public:
 	bool get_ask_user_to_refer(void) const;
 	bool get_auto_refresh_refer_sub(void) const;
 	bool get_attended_refer_to_aor(void) const;
+	bool get_allow_transfer_consultation_inprog(void) const;
 	bool get_send_p_preferred_id(void) const;
 	t_sip_transport get_sip_transport(void) const;
 	unsigned short get_sip_transport_udp_threshold(void) const;
@@ -612,6 +629,7 @@ public:
 	bool get_use_stun(void) const;
 	t_url get_stun_server(void) const;
 	bool get_persistent_tcp(void) const;
+	bool get_enable_nat_keepalive(void) const;
 	unsigned short get_timer_noanswer(void) const;
 	unsigned short get_timer_nat_keepalive(void) const; 
 	unsigned short get_timer_tcp_ping(void) const;
@@ -720,6 +738,7 @@ public:
 	void set_ask_user_to_refer(bool b);
 	void set_auto_refresh_refer_sub(bool b);
 	void set_attended_refer_to_aor(bool b);
+	void set_allow_transfer_consultation_inprog(bool b);
 	void set_send_p_preferred_id(bool b);
 	void set_sip_transport(t_sip_transport transport);
 	void set_sip_transport_udp_threshold(unsigned short threshold);
@@ -728,6 +747,7 @@ public:
 	void set_use_stun(bool b);
 	void set_stun_server(const t_url &url);
 	void set_persistent_tcp(bool b);
+	void set_enable_nat_keepalive(bool b);
 	void set_timer_noanswer(unsigned short timer);
 	void set_timer_nat_keepalive(unsigned short timer); 
 	void set_timer_tcp_ping(unsigned short timer);
@@ -769,12 +789,23 @@ public:
 	// be given to the user.
 	bool read_config(const string &filename, string &error_msg);
 
-	// Write the settings into a config file
+	/**
+	 * Write the settings into a config file.
+	 * @param filename [in] Name of the file to write.
+	 * @param error_msg [out] Human readable error message when writing fails.
+	 * @return Returns true of writing succeeded, otherwise false.
+	 */
 	bool write_config(const string &filename, string &error_msg);
+	
+	/** Get the file name for this user profile */
 	string get_filename(void) const;
 
-	// Set a config file name
-	void set_config(string _filename);
+	/** 
+	 * Set a config file name.
+	 * @return True if file name did not yet exist.
+	 * @return False if file name already exists.
+	 */
+	bool set_config(string _filename);
 
 	// Get the name of the profile (filename without extension)
 	string get_profile_name(void) const;
@@ -811,6 +842,9 @@ public:
 	
 	// Get URI for sending a SUBSCRIBE for MWI
 	t_url get_mwi_uri(void) const;
+	
+	/** Is this a user profile for a Diamondcard account? */
+	bool is_diamondcard_account(void) const;
 };
 
 #endif

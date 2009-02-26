@@ -69,6 +69,9 @@ void HistoryForm::loadHistory()
 	}
 	
 	// Fill the history table
+	unsigned long numberOfCalls = 0;
+	unsigned long totalCallDuration = 0;
+	unsigned long totalConversationDuration = 0;
 	historyListView->clear();
 	list<t_call_record> history;
 	call_history->get_history(history);
@@ -91,6 +94,14 @@ void HistoryForm::loadHistory()
 			continue;
 		}
 		
+		numberOfCalls++;
+		
+		// Calculate total duration
+		totalCallDuration += i->time_end - i->time_start;
+		if (i->time_answer != 0) {
+			totalConversationDuration += i->time_end - i->time_answer;
+		}
+		
 		t_user *user_config = phone->ref_user_profile(i->user_profile);
 		
 		// If the user profile is not active, then use the
@@ -102,6 +113,17 @@ void HistoryForm::loadHistory()
 		new HistoryListViewItem(historyListView,
 			*i, user_config, timeLastViewed);
 	}
+	
+	numberCallsValueTextLabel->setText(QString().setNum(numberOfCalls));
+	
+	// Total call duration formatting
+	QString durationText = duration2str(totalCallDuration).c_str();
+	durationText += " (";
+	durationText += tr("conversation");
+	durationText += ": ";
+	durationText += duration2str(totalConversationDuration).c_str();
+	durationText += ")";
+	totalDurationValueTextLabel->setText(durationText);
 	
 	// Make the first entry the selected entry.
 	QListViewItem *first = historyListView->firstChild();
