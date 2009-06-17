@@ -9,7 +9,8 @@ include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
-DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc
+DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc --without-kde
+DEB_AUTO_UPDATE_AUTOCONF := yes 
 
 get-orig-source:
 	@@dh_testdir
