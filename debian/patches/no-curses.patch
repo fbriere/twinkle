@@ -1,0 +1,90 @@
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//acinclude.m4 twinkle-1.4.2.new//acinclude.m4
+--- twinkle-1.4.2//acinclude.m4	2007-11-27 15:43:29.000000000 -0500
++++ twinkle-1.4.2.new//acinclude.m4	2011-11-04 19:25:48.000000000 -0400
+@@ -4340,7 +4340,7 @@
+   KDE_TRY_LINK_PYTHON(m_and_thread_and_db3, [$LIBPTHREAD -lm -ldb-3 -lutil])
+   KDE_TRY_LINK_PYTHON(pthread_and_db3, [$LIBPTHREAD -ldb-3])
+   KDE_TRY_LINK_PYTHON(m_and_thread_and_db, [$LIBPTHREAD -lm -ldb -ltermcap -lutil])
+-  KDE_TRY_LINK_PYTHON(pthread_and_dl, [$LIBPTHREAD $LIBDL -lutil -lreadline -lncurses -lm])
++  KDE_TRY_LINK_PYTHON(pthread_and_dl, [$LIBPTHREAD $LIBDL -lutil -lreadline -lm])
+   KDE_TRY_LINK_PYTHON(pthread_and_panel_curses, [$LIBPTHREAD $LIBDL -lm -lpanel -lcurses])
+   KDE_TRY_LINK_PYTHON(m_and_thread_and_db_special, [$LIBPTHREAD -lm -ldb -lutil], [],
+ 	[AC_MSG_WARN([it seems, Python depends on another library.
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//configure twinkle-1.4.2.new//configure
+--- twinkle-1.4.2//configure	2009-02-25 15:15:58.000000000 -0500
++++ twinkle-1.4.2.new//configure	2011-11-04 19:25:03.000000000 -0400
+@@ -20936,11 +20936,9 @@
+ 
+     ORIG_LIBS="$LIBS"
+     for readline_lib in readline edit editline; do
+-      for termcap_lib in "" termcap curses ncurses; do
++      for termcap_lib in "" termcap ; do
+         if test -z "$termcap_lib"; then
+           TRY_LIB="-l$readline_lib"
+-        else
+-          TRY_LIB="-l$readline_lib -l$termcap_lib"
+         fi
+         LIBS="$ORIG_LIBS $TRY_LIB"
+         cat >conftest.$ac_ext <<_ACEOF
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//m4/vl_lib_readline.m4 twinkle-1.4.2.new//m4/vl_lib_readline.m4
+--- twinkle-1.4.2//m4/vl_lib_readline.m4	2009-01-03 09:07:36.000000000 -0500
++++ twinkle-1.4.2.new//m4/vl_lib_readline.m4	2011-11-04 19:26:38.000000000 -0400
+@@ -66,11 +66,9 @@
+                  vl_cv_lib_readline, [
+     ORIG_LIBS="$LIBS"
+     for readline_lib in readline edit editline; do
+-      for termcap_lib in "" termcap curses ncurses; do
++      for termcap_lib in "" termcap ; do
+         if test -z "$termcap_lib"; then
+           TRY_LIB="-l$readline_lib"
+-        else
+-          TRY_LIB="-l$readline_lib -l$termcap_lib"
+         fi
+         LIBS="$ORIG_LIBS $TRY_LIB"
+         AC_TRY_LINK_FUNC(readline, vl_cv_lib_readline="$TRY_LIB")
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//src/gui/Makefile twinkle-1.4.2.new//src/gui/Makefile
+--- twinkle-1.4.2//src/gui/Makefile	2009-02-25 15:17:04.000000000 -0500
++++ twinkle-1.4.2.new//src/gui/Makefile	2011-11-04 19:27:24.000000000 -0400
+@@ -19,7 +19,7 @@
+ INCPATH  = -I/usr/lib/qt3/mkspecs/default -I. -I.. -I../../src -I/usr/local/include -I/usr/include/libxml2 -I/opt/kde3/include -I/usr/include -I$(QTDIR)/include -I.ui/ -I. -I.moc/
+ LINK     = g++
+ LFLAGS   = 
+-LIBS     = -L/opt/kde3/lib $(SUBLIBS) -L/usr/lib/ -L$(QTDIR)/lib/ -L/usr/X11R6/lib/ ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic -lncurses -lreadline -L/usr/local/lib -lccext2 -pthread -lccrtp1 -lccgnu2 -ldl -lrt -lxml2 -lz -L/opt/kde3/lib -lkdecore -lkdeui -L/lib -lkabc -lresolv ../audio/gsm/libgsm.a -lasound -lspeex -lspeexdsp -lilbc -lzrtpcpp -lboost_regex -lqt-mt -lXext -lX11 -lm -lpthread
++LIBS     = -L/opt/kde3/lib $(SUBLIBS) -L/usr/lib/ -L$(QTDIR)/lib/ -L/usr/X11R6/lib/ ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic -lreadline -L/usr/local/lib -lccext2 -pthread -lccrtp1 -lccgnu2 -ldl -lrt -lxml2 -lz -L/opt/kde3/lib -lkdecore -lkdeui -L/lib -lkabc -lresolv ../audio/gsm/libgsm.a -lasound -lspeex -lspeexdsp -lilbc -lzrtpcpp -lboost_regex -lqt-mt -lXext -lX11 -lm -lpthread
+ AR       = ar cqs
+ RANLIB   = 
+ MOC      = $(QTDIR)/bin/moc
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//src/gui/twinkle.pro twinkle-1.4.2.new//src/gui/twinkle.pro
+--- twinkle-1.4.2//src/gui/twinkle.pro	2009-02-25 15:14:55.000000000 -0500
++++ twinkle-1.4.2.new//src/gui/twinkle.pro	2011-11-04 19:27:06.000000000 -0400
+@@ -3,7 +3,7 @@
+ 
+ CONFIG	+= qt warn_on release thread
+ 
+-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic -lncurses -lreadline
++LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic -lreadline
+ 
+ DEFINES	+= QT_NO_STL
+ 
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//src/Makefile.am twinkle-1.4.2.new//src/Makefile.am
+--- twinkle-1.4.2//src/Makefile.am	2009-02-22 07:57:52.000000000 -0500
++++ twinkle-1.4.2.new//src/Makefile.am	2011-11-04 19:27:46.000000000 -0400
+@@ -24,7 +24,6 @@
+ 	$(GSM_LIBS)\
+ 	$(CCRTP_LIBS)\
+ 	$(XML2_LIBS)\
+-	-lncurses \
+ 	-lreadline \
+ 	-lsndfile\
+ 	-lmagic
+diff -Nur -x '*.orig' -x '*~' twinkle-1.4.2//src/Makefile.in twinkle-1.4.2.new//src/Makefile.in
+--- twinkle-1.4.2//src/Makefile.in	2009-02-25 15:16:05.000000000 -0500
++++ twinkle-1.4.2.new//src/Makefile.in	2011-11-04 19:27:52.000000000 -0400
+@@ -363,7 +363,6 @@
+ 	$(GSM_LIBS)\
+ 	$(CCRTP_LIBS)\
+ 	$(XML2_LIBS)\
+-	-lncurses \
+ 	-lreadline \
+ 	-lsndfile\
+ 	-lmagic

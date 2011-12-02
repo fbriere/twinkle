@@ -1,3 +1,12 @@
+twinkle (1:1.4.2-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add debian/patches/no-curses.patch by Daniel T Chen to not build with
+    ncurses (Closes: #646164)
+  * Set urgency to medium due to rc bug fix    
+
+ -- Alexander Reichle-Schmehl <tolimar@debian.org>  Fri, 02 Dec 2011 22:28:05 +0100
+
 twinkle (1:1.4.2-2) unstable; urgency=low
 
   * Drop depreciated KDE3 support: configure --without-kde
