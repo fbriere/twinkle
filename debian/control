@@ -1,20 +1,16 @@
 Source: twinkle
 Section: comm
 Priority: optional
-Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
-Uploaders: Kilian Krause <kilian@debian.org>, Jose Carlos Garcia Sogo <jsogo@debian.org>, Mark Purcell <msp@debian.org>, Santiago Garcia Mantinan <manty@debian.org>, Mikael Magnusson <mikma@users.sourceforge.net>
+Maintainer: Clint Adams <clint@debian.org>
 Build-Depends: debhelper (>= 7), cdbs, help2man,
  autotools-dev, autoconf,
- libqt3-mt-dev (>= 3:3.3.0), qt3-apps-dev,
  libcommoncpp2-dev (>= 1.4.2), libccrtp-dev, libzrtpcpp-dev (>= 1.4.0),
  libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
  libgsm1-dev, libsndfile1-dev, libspeex-dev, libspeexdsp-dev,
  libreadline-dev,
  libboost-regex-dev, libxml2-dev, libxpm-dev, libmagic-dev
-Standards-Version: 3.8.1
+Standards-Version: 3.9.4
 Homepage: http://www.twinklephone.com/
-Vcs-Svn: svn://svn.debian.org/pkg-voip/twinkle/trunk/
-Vcs-Browser: http://svn.debian.org/wsvn/pkg-voip/twinkle/?op=log
 
 Package: twinkle
 Architecture: any

@@ -1,16 +1,15 @@
 #!/usr/bin/make -f
 
-export QTDIR=/usr/share/qt3
-
 URL = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
 FILENAME = $(DEB_SOURCE_PACKAGE)_$(DEB_UPSTREAM_VERSION).orig.tar.gz
 
 include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/rules/simple-patchsys.mk
 
 DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc --without-kde
-DEB_AUTO_UPDATE_AUTOCONF := yes 
+DEB_AUTO_UPDATE_AUTOCONF := yes
+DEB_AUTO_UPDATE_AUTOMAKE := 1.13
+DEB_AUTOMAKE_ARGS := --add-missing --copy
 
 get-orig-source:
 	@@dh_testdir

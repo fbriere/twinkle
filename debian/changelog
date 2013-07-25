@@ -1,11 +1,9 @@
-twinkle (1:1.4.2-2.1) unstable; urgency=medium
+twinkle (1:1.4.2-3) unstable; urgency=low
 
-  * Non-maintainer upload.
-  * Add debian/patches/no-curses.patch by Daniel T Chen to not build with
-    ncurses (Closes: #646164)
-  * Set urgency to medium due to rc bug fix    
+  * Reintroduce to Debian.
+  * Patch to build CLI client instead of Qt3 GUI.
 
- -- Alexander Reichle-Schmehl <tolimar@debian.org>  Fri, 02 Dec 2011 22:28:05 +0100
+ -- Clint Adams <clint@debian.org>  Thu, 25 Jul 2013 12:55:03 -0400
 
 twinkle (1:1.4.2-2) unstable; urgency=low
 

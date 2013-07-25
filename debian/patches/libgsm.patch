@@ -1,7 +1,8 @@
-diff -Nur twinkle-1.2/configure.in twinkle-1.2.new/configure.in
---- twinkle-1.2/configure.in	2008-03-15 22:37:24.000000000 +0100
-+++ twinkle-1.2.new/configure.in	2008-03-15 22:37:25.000000000 +0100
-@@ -188,22 +188,33 @@
+Index: twinkle-1.4.2/configure.in
+===================================================================
+--- twinkle-1.4.2.orig/configure.in	2013-07-25 11:07:54.264533206 -0400
++++ twinkle-1.4.2/configure.in	2013-07-25 11:07:54.256533340 -0400
+@@ -195,22 +195,33 @@
  
  # This check does not work on all platforms
  # Check if libgsm is available
@@ -48,17 +49,18 @@ diff -Nur twinkle-1.2/configure.in twinkle-1.2.new/configure.in
  # Check if ALSA is available
  AC_CHECK_LIB(asound, main, [
  	AC_CHECK_HEADER(alsa/asoundlib.h, [],
-@@ -319,3 +330,4 @@
+@@ -348,3 +359,4 @@
  AC_MSG_RESULT([Speex:       $have_speex])
  AC_MSG_RESULT([iLBC:        $have_ilbc])
  AC_MSG_RESULT([ZRTP:        $have_zrtp])
 +AC_MSG_RESULT([Libgsm dynamic link:	$have_gsm])
-diff -Nur twinkle-1.2/src/twinkle_config.h.in twinkle-1.2.new/src/twinkle_config.h.in
---- twinkle-1.2/src/twinkle_config.h.in	2008-03-09 09:33:02.000000000 +0100
-+++ twinkle-1.2.new/src/twinkle_config.h.in	2008-03-15 22:37:25.000000000 +0100
-@@ -16,6 +16,9 @@
-    don't. */
- #undef HAVE_DECL_STRERROR_R
+Index: twinkle-1.4.2/src/twinkle_config.h.in
+===================================================================
+--- twinkle-1.4.2.orig/src/twinkle_config.h.in	2013-07-25 11:07:54.264533206 -0400
++++ twinkle-1.4.2/src/twinkle_config.h.in	2013-07-25 11:07:54.256533340 -0400
+@@ -19,6 +19,9 @@
+ /* Define to 1 if you have the <history.h> header file. */
+ #undef HAVE_HISTORY_H
  
 +/* Define to 1 if you have the <libgsm> library. */
 +#undef HAVE_GSM
