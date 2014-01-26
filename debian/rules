@@ -8,7 +8,7 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 
 DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc --without-kde
 DEB_AUTO_UPDATE_AUTOCONF := yes
-DEB_AUTO_UPDATE_AUTOMAKE := 1.13
+DEB_AUTO_UPDATE_AUTOMAKE := 1.14
 DEB_AUTOMAKE_ARGS := --add-missing --copy
 
 get-orig-source:

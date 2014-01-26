@@ -1,3 +1,10 @@
+twinkle (1:1.4.2-4) unstable; urgency=medium
+
+  * Tweak for automake 1.14.  closes: #733611.
+  * Bump to Standards-Version 3.9.5.
+
+ -- Clint Adams <clint@debian.org>  Sun, 26 Jan 2014 18:37:34 -0500
+
 twinkle (1:1.4.2-3) unstable; urgency=low
 
   * Reintroduce to Debian.
