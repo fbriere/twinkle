@@ -3,7 +3,7 @@ Section: comm
 Priority: optional
 Maintainer: Clint Adams <clint@debian.org>
 Build-Depends: debhelper (>= 7), cdbs, help2man,
- autotools-dev, autoconf, automake,
+ autotools-dev, dh-autoreconf,
  libcommoncpp2-dev (>= 1.4.2), libccrtp-dev, libzrtpcpp-dev (>= 1.4.0),
  libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
  libgsm1-dev, libsndfile1-dev, libspeex-dev, libspeexdsp-dev,

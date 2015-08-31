@@ -1,3 +1,11 @@
+twinkle (1:1.4.2-4.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Use dh-autoreconf to drop had-dependancy on obsolete
+    automake. (Closes: #754046)
+
+ -- Dimitri John Ledkov <dimitri.j.ledkov@linux.intel.com>  Mon, 31 Aug 2015 19:43:33 +0100
+
 twinkle (1:1.4.2-4) unstable; urgency=medium
 
   * Tweak for automake 1.14.  closes: #733611.
