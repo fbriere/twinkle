@@ -3,7 +3,7 @@
 CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ALSA=ON -DWITH_ZRTP=ON -DWITH_SPEEX=ON -DWITH_GSM=ON
 
 %:
-	dh $@
+	dh $@ --parallel
 
 override_dh_clean:
 	rm -f debian/twinkle.1
