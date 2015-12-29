@@ -35,7 +35,7 @@
 #include "twinkle_config.h"
 
 #define PRODUCT_DATE VERSION_DATE
-#define PRODUCT_AUTHOR	"Michel de Boer"
+#define PRODUCT_AUTHOR	"Michel de Boer and contributors"
 
 // Tone definitions
 // The intervals indicate the length of silence between repetitions
@@ -436,6 +436,9 @@ public:
 
 	// Get all command names
 	const list<string>& get_all_commands(void);
+
+	// Asynchronously run a function on this class' event queue
+	void run_on_event_queue(std::function<void()> fn);
 
 };
 

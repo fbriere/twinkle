@@ -225,6 +225,7 @@ string t_user::bit_rate_type2str(t_bit_rate_type b) const {
 	default:
 		assert(false);
 	}
+	return "";
 }
 
 t_dtmf_transport t_user::str2dtmf_transport(const string &s) const {
@@ -244,6 +245,7 @@ string t_user::dtmf_transport2str(t_dtmf_transport d) const {
 	default:
 		assert(false);
 	}
+	return "";
 }
 
 t_g726_packing t_user::str2g726_packing(const string &s) const {
@@ -259,6 +261,7 @@ string t_user::g726_packing2str(t_g726_packing packing) const {
 	default:
 		assert(false);
 	}
+	return "";
 }
 
 t_sip_transport t_user::str2sip_transport(const string &s) const {
@@ -276,6 +279,7 @@ string t_user::sip_transport2str(t_sip_transport transport) const {
 	default:
 		assert(false);
 	}
+	return "";
 }
 
 string t_user::expand_filename(const string &filename) {
@@ -305,7 +309,7 @@ bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
 	try {
 		c.re.assign(l[0]);
 		c.fmt = l[1];
-	} catch (boost::bad_expression) {
+    } catch (std::regex_error) {
 		// Invalid regular expression
 		log_file->write_header("t_user::parse_num_conversion", 
 				LOG_NORMAL, LOG_WARNING);
@@ -368,6 +372,9 @@ t_user::t_user() {
 	codecs.push_back(CODEC_G711_ALAW);
 	codecs.push_back(CODEC_G711_ULAW);
 	codecs.push_back(CODEC_GSM);
+#ifdef HAVE_BCG729
+	codecs.push_back(CODEC_G729A);
+#endif
 	ptime = 20;
 	out_obey_far_end_codec_pref = true;
 	in_obey_far_end_codec_pref = true;
@@ -2252,6 +2259,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 					codecs.push_back(CODEC_G726_32);
 				} else if (codec == "g726-40") {
 					codecs.push_back(CODEC_G726_40);
+#ifdef HAVE_BCG729
+				} else if (codec == "g729a") {
+					codecs.push_back(CODEC_G729A);
+#endif
 				} else {
 					msg = "Syntax error in file ";
 					msg += f;
@@ -2669,6 +2680,9 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		case CODEC_G726_40:
 			config << "g726-40";
 			break;
+		case CODEC_G729A:
+			config << "g729a";
+			break;
 		default:
 			assert(false);
 		}
@@ -2818,7 +2832,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	     i != number_conversions.end(); i++)
 	{
 		config << FLD_NUMBER_CONVERSION << '=';
-		config << escape(i->re.str(), ',');
+        config << escape(i->re, ',');
 		config << ',';
 		config << escape(i->fmt, ',');
 		config << endl;
@@ -3087,11 +3101,13 @@ string t_user::convert_number(const string &number, const list<t_number_conversi
 	for (list<t_number_conversion>::const_iterator i = l.begin();
 	     i != l.end(); i++)
 	{
-		boost::smatch m;
+        std::smatch m;
 		
 		try {
-			if (boost::regex_match(number, m, i->re)) {
-				string result = m.format(i->fmt);
+            if (std::regex_match(number, m, std::regex(i->re))) {
+				string result;
+
+				m.format(std::back_inserter(result), i->fmt);
 			
 				log_file->write_header("t_user::convert_number", 
 					LOG_NORMAL, LOG_DEBUG);
