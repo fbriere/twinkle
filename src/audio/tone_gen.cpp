@@ -33,6 +33,7 @@
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
+#include "audio_device.h"
 
 // Number of samples read at once from the wav file
 #define NUM_SAMPLES_PER_TURN	1024
@@ -47,14 +48,14 @@ void *tone_gen_play(void *arg) {
 	tg->play();
 }
 
-t_tone_gen::t_tone_gen(const string &filename, const string &_dev_tone) :
+t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) :
 		sema_finished(0) 
 {
 	string f;
 
 	wav_file = NULL;
-	dev_tone = _dev_tone;
-	fd_dsp = 0;
+	dev_tone = &_dev_tone;
+	aio = 0;
 	valid = false;
 	data_buf = NULL;
 	thr_play = NULL;
@@ -181,7 +182,11 @@ t_tone_gen::~t_tone_gen() {
 		MEMMAN_DELETE(wav_file);
 		delete wav_file;
 	}
-	if (fd_dsp > 0) close(fd_dsp);
+	if (aio) {
+		MEMMAN_DELETE(aio);
+		delete aio;
+	}
+	aio = 0;
 	if (data_buf) {
 		MEMMAN_DELETE_ARRAY(data_buf);
 		delete [] data_buf;
@@ -212,94 +217,19 @@ void t_tone_gen::play(void) {
 		return;
 	}
 
-	fd_dsp = open(dev_tone.c_str(), O_WRONLY);
-	if (fd_dsp < 0) {
+	t_audio_sampleformat fmt;
+	if(wav_format.bits_per_sample == 8) {
+		fmt = SAMPLEFORMAT_U8;
+	} else {
+		fmt = SAMPLEFORMAT_S16_LE;
+	}
+
+	aio = t_audio_io::open(*dev_tone, true, false, true, wav_format.channels, fmt, wav_format.samples_per_sec, false);
+	if (!aio) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
-		ui->cb_display_msg(msg, MSG_WARNING);
-		sema_finished.up();
-		return;
-	}
-
-	// Set fragment size
-	arg = 0x00ff000a; // 255 buffers of 2^10 bytes each
-	status = ioctl(fd_dsp, SNDCTL_DSP_SETFRAGMENT, &arg);
-	if (status == -1) {
-		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
-		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::play",
-			LOG_NORMAL, LOG_WARNING);
-		ui->cb_display_msg("Cannot set buffer size on sound card.",
-			MSG_WARNING);
-		sema_finished.up();
-		return;
-	}
-
-	// Set audio format
-	if (wav_format.bits_per_sample == 8) {
-		arg = AFMT_U8;
-		arg2 = 8;
-	} else if (wav_format.bits_per_sample == 16) {
-		arg = AFMT_S16_LE;
-		arg2 = 16;
-	} else {
-		log_file->write_report("Unsupported sample size.",
-			"t_tone_gen::play");
-		sema_finished.up();
-		return;
-	}
-	status = ioctl(fd_dsp, SNDCTL_DSP_SETFMT, &arg);
-	if (status == -1) {
-		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
-		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::play",
-			LOG_NORMAL, LOG_WARNING);
-		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
-			MSG_WARNING);
-		sema_finished.up();
-		return;
-	}
-
-	status = ioctl(fd_dsp, SOUND_PCM_WRITE_BITS, &arg2);
-	if (status == -1) {
-		string msg("SOUND_PCM_WRITE_BITS ioctl failed: ");
-		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::play",
-			LOG_NORMAL, LOG_WARNING);
-		ui->cb_display_msg("Cannot set sound card to 16 bits playing.",
-			MSG_WARNING);
-		sema_finished.up();
-		return;
-	}
-
-	// Channels
-	arg = wav_format.channels;
-	status = ioctl(fd_dsp, SNDCTL_DSP_CHANNELS, &arg);
-	if (status == -1) {
-		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
-		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::play",
-			LOG_NORMAL, LOG_WARNING);
-		msg = "Sound card cannot be set to ";
-		msg += int2str(wav_format.channels);
-		msg += " channel(s).";
-		ui->cb_display_msg(msg, MSG_WARNING);
-		sema_finished.up();
-		return;
-	}
-
-	// Sample rate
-	arg = wav_format.samples_per_sec;
-	status = ioctl(fd_dsp, SNDCTL_DSP_SPEED, &arg);
-	if (status == -1) {
-		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
-		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::play",
-			LOG_NORMAL, LOG_WARNING);
-		msg = "Cannot set sound card sample rate to ";
-		msg += int2str(wav_format.samples_per_sec);
 		ui->cb_display_msg(msg, MSG_WARNING);
 		sema_finished.up();
 		return;
@@ -320,7 +250,7 @@ void t_tone_gen::play(void) {
 
 			// Play sample
 			wav_file->read(data_buf, nbytes);
-			write(fd_dsp, data_buf, wav_file->gcount());
+			aio->write((unsigned char*)data_buf, wav_file->gcount());
 		}
 
 		MEMMAN_DELETE_ARRAY(data_buf);
@@ -346,7 +276,7 @@ void t_tone_gen::play(void) {
 				memset(data_buf, silence, nbytes);
 
 				for (int i = 0; i < pause; i += DURATION_TURN) {
-					write(fd_dsp, data_buf, nbytes);
+					aio->write((unsigned char*)data_buf, nbytes);
 					if (stop_playing) break;
 				}
 
@@ -402,9 +332,10 @@ void t_tone_gen::stop(void) {
 
 	// Stop audio play out
 	int arg = 0;
-	ioctl(fd_dsp, SNDCTL_DSP_RESET, &arg);
-	close(fd_dsp);
-	fd_dsp = 0;
+
+	MEMMAN_DELETE(aio);
+	delete aio;
+	aio = 0;
 }
 
 

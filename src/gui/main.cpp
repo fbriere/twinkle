@@ -16,7 +16,15 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "twinkle_config.h"
+
+#ifdef HAVE_KDE
+#include <kapplication.h>
+#include <kcmdlineargs.h>
+#endif
+
 #include <qapplication.h>
+#include <qmime.h>
 #include "mphoneform.h"
 #include <iostream>
 #include <string>
@@ -148,18 +156,26 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 			if (i < argc - 1 && argv[i+1][0] != '-') {
 				i++;
 				sys_config->set_dir_share(argv[i]);
+			} else {
+				cout << argv[0] << ": ";
+				cout << "Directory missing for option '-share'.\n";
+				exit(0);
 			}
 		} else if (strcmp(argv[i], "-f") == 0) {
 			if (i < argc - 1) {
 				i++;
 				// Config file name
 				config_file = argv[i];
+			} else {
+				cout << argv[0] << ": ";
+				cout << "Config file name missing for option '-f'.\n";
+				exit(0);
 			}
-		} else if (argv[i][0] == '-') {
-			// Skip unknown option, might be an option for Qt.
-			if (i < argc - 1 && argv[i+1][0] != '-') i++;
 		} else {
-			cout << "Uknown argument: " << argv[i] << endl;
+			cout << argv[0] << ": ";
+			cout << "Uknown option '" << argv[i] << "'." << endl;
+			cout << argv[0] << ": ";
+			cout << "Use --help to get a list of available command line options.\n";
 			exit(0);
 		}
 	}
@@ -188,7 +204,11 @@ int main( int argc, char ** argv )
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
 	}
 	
+#ifdef HAVE_KDE
+	KApplication *qa;
+#else
 	QApplication *qa;
+#endif
 	
 	// Store id of main thread
 	thread_id_main = t_thread::self();
@@ -216,6 +236,12 @@ int main( int argc, char ** argv )
 	
 	// Parse command line arguments
 	parse_main_args(argc, argv, cli_mode, config_file);
+	
+	// Read system configuration
+	if (!sys_config->read_config(error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		exit(1);
+	}
 
 	// Create user interface
 	if (cli_mode) {
@@ -224,21 +250,40 @@ int main( int argc, char ** argv )
 		MEMMAN_NEW(ui);
 	} else {
 		// GUI mode
-		qa = new QApplication( argc, argv );
+		
+#ifdef HAVE_KDE
+		// Store the defualt mime source factory for the embedded icons.
+		// This is created by Qt. The KApplication constructor seems to destroy
+		// this default.
+		QMimeSourceFactory *factory_qt = QMimeSourceFactory::takeDefaultFactory();
+		
+		// Initialize the KApplication
+		KCmdLineArgs::init(1, argv, "twinkle", PRODUCT_NAME, "Soft phone",
+				   PRODUCT_VERSION);
+		qa = new KApplication();
 		MEMMAN_NEW(qa);
-	              ui = new t_gui(phone);
+		
+		// Store the KDE mime source factory
+		QMimeSourceFactory *factory_kde = QMimeSourceFactory::takeDefaultFactory();
+		
+		// Make the Qt factory the default to make the embedded icons work.
+		QMimeSourceFactory::setDefaultFactory(factory_qt);
+		
+		// Add the KDE factory
+		QMimeSourceFactory::addFactory(factory_kde);
+#else
+		int tmp = 1;
+		qa = new QApplication(tmp, argv);
+		MEMMAN_NEW(qa);
+#endif
+
+		ui = new t_gui(phone);
 		MEMMAN_NEW(ui);
 	}
 	
 	// Check requirements on environment
 	if (!sys_config->check_environment(error_msg)) {
 		// Environment is not good
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
-		exit(1);
-	}
-	
-	// Read system configuration
-	if (!sys_config->read_config(error_msg)) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
 	}

@@ -19,9 +19,7 @@
 #include <iostream>
 #include <cstdio>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
-#include <sys/soundcard.h>
 #include "audio_rx.h"
 #include "log.h"
 #include "rtp_telephone_event.h"
@@ -60,7 +58,6 @@ unsigned char t_audio_rx::encode(short pcm_sample) {
 
 bool t_audio_rx::get_sound_samples(void) {
 	int status;
-	audio_buf_info dsp_info;
 	struct timespec sleeptimer;
 	struct timeval debug_timer;
 
@@ -94,22 +91,7 @@ bool t_audio_rx::get_sound_samples(void) {
 		}
 	} else {
 		// Get the sound samples from the DSP
-		ioctl(fd, SNDCTL_DSP_GETISPACE, &dsp_info);
-		if (dsp_info.bytes < SAMPLE_BUF_SIZE) {
-			mtx_3way.unlock();
-
-			// Sleep for 1 ms.
-			// Here we do not suffer from the 10ms delay
-			// in nanosleep as sleeps shorter than 2ms
-			// are implemented by busy loops.
-			sleeptimer.tv_sec = 0;
-			sleeptimer.tv_nsec = 1000000;
-			nanosleep(&sleeptimer, NULL);
-			nobreak_count++;
-			return false;
-		}
-
-		status = read(fd, sample_buf, SAMPLE_BUF_SIZE);
+		status = input_device->read(sample_buf, SAMPLE_BUF_SIZE);
 		if (status != SAMPLE_BUF_SIZE) {
 			if (!logged_capture_failure) {
 				// Log this failure only once
@@ -176,7 +158,6 @@ bool t_audio_rx::get_sound_samples(void) {
 }
 
 void t_audio_rx::get_dtmf_payload(void) {
-	audio_buf_info dsp_info;
 	t_rtp_telephone_event *dtmf_payload = (t_rtp_telephone_event *)payload;
 
 	// RFC 2833 3.5, 3.6
@@ -225,12 +206,7 @@ void t_audio_rx::get_dtmf_payload(void) {
 
 	// Empty sound card buffer.
 	// During the DTMF tone, no sound from the sound card is played out.
-	ioctl(fd, SNDCTL_DSP_GETISPACE, &dsp_info);
-	char *buf = new char[dsp_info.bytes];
-	MEMMAN_NEW_ARRAY(buf);
-	read(fd, buf, dsp_info.bytes);
-	MEMMAN_DELETE_ARRAY(buf);
-	delete [] buf;
+	input_device->flush(false, true);
 }
 
 bool t_audio_rx::get_dtmf_event(void) {
@@ -302,11 +278,11 @@ void t_audio_rx::set_sound_payload_format(void) {
 //////////
 
 t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
-		   int _fd, SymmetricRTPSession *_rtp_session,
+		   t_audio_io *_input_device, t_twinkle_rtp_session *_rtp_session,
 	           t_audio_codec _codec, unsigned short _ptime) : sema_dtmf_q(0)
 {
 	audio_session = _audio_session;
-	fd = _fd;
+	input_device = _input_device;
 	rtp_session = _rtp_session;
 	codec = _codec;
 	dtmf_playing = false;
@@ -399,7 +375,6 @@ t_audio_rx::~t_audio_rx() {
 
 void t_audio_rx::run(void) {
 	int status;
-	audio_buf_info dsp_info;
 	struct timespec sleeptimer;
 	struct timeval debug_timer;
 
@@ -409,30 +384,15 @@ void t_audio_rx::run(void) {
 	// to the dsp.
 	if (!is_3way || is_main_rx_3way) {
 		// Enable recording
-		int arg;
-		if (sys_config->equal_oss_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
-			arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		if (sys_config->equal_audio_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+			input_device->enable(true, true);
 		} else {
-			arg = PCM_ENABLE_INPUT;
-		}
-		status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
-		if (status == -1) {
-			string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
-			msg += strerror(errno);
-			log_file->write_report(msg, "t_audio_session::run",
-				LOG_NORMAL, LOG_CRITICAL);
+			input_device->enable(false, true);
 		}
 
 		// If the stream is stopped for call-hold, then the buffer might
 		// be filled with old sound samples.
-		ioctl(fd, SNDCTL_DSP_GETISPACE, &dsp_info);
-		if (dsp_info.bytes > SAMPLE_BUF_SIZE) {
-			char *trash = new char[dsp_info.bytes - SAMPLE_BUF_SIZE];
-			MEMMAN_NEW_ARRAY(trash);
-			read(fd, trash, dsp_info.bytes - SAMPLE_BUF_SIZE);
-			MEMMAN_DELETE_ARRAY(trash);
-			delete [] trash;
-		}
+		input_device->flush(false, true);
 	}
 
 	// Synchronize the timestamp driven by the sampling rate
@@ -443,6 +403,7 @@ void t_audio_rx::run(void) {
 
 	// The nobreak_count will count how many times the loop below cycles
 	// without taking a real time break.
+	// TODO: this is not used anymore. Can be removed in the future if note needed.
 	nobreak_count = 0;
 
 	while (true) {
@@ -518,40 +479,26 @@ void t_audio_rx::run(void) {
 				continue;
 			}
 		} else {
-			ioctl(fd, SNDCTL_DSP_GETISPACE, &dsp_info);
-			if (dsp_info.bytes >= SAMPLE_BUF_SIZE) continue;
+			if (input_device->get_buffer_space(true) >= SAMPLE_BUF_SIZE) continue;
 		}
 
-		// There is not data left in the DSP buffers to play out anymore.
+		// There is no data left in the DSP buffers to play out anymore.
 		// So the timestamp must be in sync with the clock of the ccRTP
 		// stack. It might get behind if the sound cards samples a bit
 		// slower than the set sample rate. Advance the timestamp to get
 		// in sync again.
-		while (timestamp < rtp_session->getCurrentTimestamp()) {
+		if (timestamp <= rtp_session->getCurrentTimestamp() - 
+			(JITTER_BUF_MS / ptime) * nsamples)
+		{
+			timestamp += nsamples * (JITTER_BUF_MS / ptime);
 			log_file->write_header("t_audio_rx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": timestamp forwarded by ");
-			log_file->write_raw(nsamples);
+			log_file->write_raw(nsamples * (JITTER_BUF_MS / ptime));
 			log_file->write_endl();
 			log_file->write_footer();
-			timestamp += nsamples;
-		}
-
-		// Sleep for ptime ms. It seems that nanosleep always
-		// takes 10 ms extra time to wakeup, so subtract
-		// 10ms from ptime.
-		sleeptimer.tv_sec = 0;
-		if (ptime >= 20) {
-			sleeptimer.tv_nsec = ptime * 1000000 - 10000000;
-		} else {
-			// With a thread schedule of 10ms
-			// granularity, this will schedule the
-			// thread every 10ms.
-			sleeptimer.tv_nsec = 5000000;
-		}
-		nanosleep(&sleeptimer, NULL);
-		nobreak_count = 0;
+		}			
 	}
 
 	is_running = false;
@@ -700,36 +647,18 @@ void t_audio_rx::set_main_rx_3way(bool main_rx) {
 
 
 	// Initialize the DSP if we become the mixer and we were not before
-	if (main_rx && !is_main_rx_3way) {
-		int status;
-		audio_buf_info dsp_info;
-		
+	if (main_rx && !is_main_rx_3way) {		
 		// Enable recording
 		int arg;
-		if (sys_config->equal_oss_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
-			arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		if (sys_config->equal_audio_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+			input_device->enable(true, true);
 		} else {
-			arg = PCM_ENABLE_INPUT;
-		}
-		status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
-		if (status == -1) {
-			string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
-			msg += strerror(errno);
-			log_file->write_report(msg,
-				"t_audio_session::set_main_rx_3way",
-				LOG_NORMAL, LOG_CRITICAL);
+			input_device->enable(false, true);
 		}
 
 		// If the stream is stopped for call-hold, then the buffer might
 		// be filled with old sound samples.
-		ioctl(fd, SNDCTL_DSP_GETISPACE, &dsp_info);
-		if (dsp_info.bytes > SAMPLE_BUF_SIZE) {
-			char *trash = new char[dsp_info.bytes - SAMPLE_BUF_SIZE];
-			MEMMAN_NEW_ARRAY(trash);
-			read(fd, trash, dsp_info.bytes - SAMPLE_BUF_SIZE);
-			MEMMAN_DELETE_ARRAY(trash);
-			delete [] trash;
-		}
+		input_device->flush(false, true);
 	}
 
 	is_main_rx_3way = main_rx;

@@ -8,7 +8,7 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>671</width>
+            <width>727</width>
             <height>331</height>
         </rect>
     </property>
@@ -78,6 +78,14 @@
             </hbox>
         </widget>
         <widget class="QListBox" row="0" column="0">
+            <item>
+                <property name="text">
+                    <string>General</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>twinkle32.png</pixmap>
+                </property>
+            </item>
             <item>
                 <property name="text">
                     <string>Audio</string>
@@ -255,6 +263,24 @@
                             </widget>
                         </grid>
                     </widget>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>alsaNoteTextLabel</cstring>
+                        </property>
+                        <property name="paletteForegroundColor">
+                            <color>
+                                <red>0</red>
+                                <green>85</green>
+                                <blue>255</blue>
+                            </color>
+                        </property>
+                        <property name="text">
+                            <string>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</string>
+                        </property>
+                        <property name="alignment">
+                            <set>WordBreak|AlignVCenter</set>
+                        </property>
+                    </widget>
                     <spacer>
                         <property name="name">
                             <cstring>spacer97</cstring>
@@ -268,7 +294,7 @@
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>81</height>
+                                <height>20</height>
                             </size>
                         </property>
                     </spacer>
@@ -452,6 +478,103 @@
                     </spacer>
                 </vbox>
             </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageGeneral</cstring>
+                </property>
+                <attribute name="id">
+                    <number>2</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>generalTitleTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>General</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>systrayGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>System Tray</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>guiUseSystrayCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Create &amp;system tray icon on startup</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+S</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Enable this option if you want a system tray icon for Twinkle. The system tray icon is created when you start Twinkle.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>guiHideCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Hide in system tray when closing main window</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+H</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Enable this option if you want Twinkle to hide in the system tray when you close the main window.</string>
+                                </property>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer8</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>111</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
         </widget>
     </grid>
 </widget>
@@ -474,9 +597,23 @@
         <receiver>SysSettingsForm</receiver>
         <slot>showCategory(QListBoxItem*)</slot>
     </connection>
+    <connection>
+        <sender>guiUseSystrayCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>guiHideCheckBox</receiver>
+        <slot>setEnabled(bool)</slot>
+    </connection>
+    <connection>
+        <sender>guiUseSystrayCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>guiHideCheckBox</receiver>
+        <slot>setChecked(bool)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
+    <tabstop>guiUseSystrayCheckBox</tabstop>
+    <tabstop>guiHideCheckBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
     <tabstop>micComboBox</tabstop>
@@ -496,16 +633,18 @@
     <include location="local" impldecl="in implementation">syssettingsform.ui.h</include>
 </includes>
 <variables>
-    <variable access="private">list&lt;t_oss_device&gt; list_oss_dev;</variable>
+    <variable access="private">list&lt;t_audio_device&gt; list_audio_dev;</variable>
 </variables>
 <slots>
     <slot>showCategory( QListBoxItem * item )</slot>
     <slot>populate()</slot>
     <slot>validate()</slot>
     <slot>show()</slot>
+    <slot returnType="int">exec()</slot>
 </slots>
 <functions>
-    <function returnType="string">comboItem2oss_dev( QString item )</function>
+    <function access="private" specifier="non virtual">init()</function>
+    <function returnType="string">comboItem2audio_dev( QString item )</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

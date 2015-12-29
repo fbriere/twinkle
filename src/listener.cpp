@@ -22,6 +22,7 @@
 #include "log.h"
 #include "user.h"
 #include "userintf.h"
+#include "util.h"
 #include "sockets/socket.h"
 #include "parser/parse_ctrl.h"
 #include "parser/sip_message.h"
@@ -122,6 +123,7 @@ void *listen_udp(void *arg) {
 	t_sip_message	*msg;
 	t_event_network	*ev_network;
 	int		pos_body;	// position of body in msg
+	string		log_msg;
 
 	while(true) {
 		try {
@@ -148,12 +150,11 @@ void *listen_udp(void *arg) {
 		}
 		
 		// SIP message received
-		log_file->write_header("::listen_udp", LOG_SIP);
-		log_file->write_raw("Received from: ");
-		log_file->write_raw(h_ip2str(src_addr));
-		log_file->write_raw(":");
-		log_file->write_raw(src_port);
-		log_file->write_endl();
+		log_msg = "Received from: ";
+		log_msg += h_ip2str(src_addr);
+		log_msg += ":";
+		log_msg += int2str(src_port);
+		log_msg += "\n";
 		
 		// The datagram is a SIP message. A SIP message does not
 		// contain a 0, so it can be safely converted to a string
@@ -182,21 +183,21 @@ void *listen_udp(void *arg) {
 		}
 		catch (int) {
 			// Discard malformed SIP messages.
-			log_file->write_raw("Invalid SIP message.\n");
-			log_file->write_raw("Fatal parse error in headers.\n");
-			log_file->write_footer();
+			log_msg += "Invalid SIP message.\n";
+			log_msg += "Fatal parse error in headers.\n";
+			log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
 			continue;
 		}
 
 		// Log non-fatal parse errors.
 		list<string> l = t_parser::get_parse_errors();
 		if (!l.empty()) {
-			log_file->write_endl();
+			log_msg += "\n";
 			for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
-				log_file->write_raw(*i);
-				log_file->write_endl();
+				log_msg += *i;
+				log_msg += "\n";
 			}
-			log_file->write_endl();
+			log_msg += "\n";
 		}
 
 		// Parse body
@@ -210,9 +211,9 @@ void *listen_udp(void *arg) {
 				// For a SIP request with a malformed body, the
 				// transaction layer will give an error response.
 				if (msg->get_type() == MSG_RESPONSE) {
-					log_file->write_raw("Invalid SIP message.\n");
-					log_file->write_raw("Parse error in body.\n");
-					log_file->write_footer();
+					log_msg += "Invalid SIP message.\n";
+					log_msg += "Parse error in body.\n";
+					log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
 					MEMMAN_DELETE(msg);
 					delete msg;
 					continue;
@@ -220,8 +221,8 @@ void *listen_udp(void *arg) {
 			}
 		}
 
-		log_file->write_raw(datagram);
-		log_file->write_footer();
+		log_msg += datagram;
+		log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
 
 		// If the message does not satisfy the mandatory
 		// requirements from RFC 3261, then discard.

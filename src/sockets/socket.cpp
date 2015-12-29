@@ -19,6 +19,9 @@
 #include <cstdio>
 #include <cerrno>
 #include "socket.h"
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 t_socket_udp::t_socket_udp() {
 	struct sockaddr_in addr;

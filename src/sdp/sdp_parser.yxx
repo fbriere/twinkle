@@ -217,6 +217,9 @@ media:		  T_LINE_MEDIA T_TOKEN { CTX_NUM; } T_NUM { CTX_INITIAL; }
 		  unknown_lines attributes {
 		  	$$ = new t_sdp_media();
 			MEMMAN_NEW($$);
+			
+			if ($4 > 65535) YYERROR;
+			
 			$$->media_type = tolower(*$2);
 			$$->port = $4;
 			$$->transport = $6;

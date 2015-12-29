@@ -38,6 +38,9 @@ string int2str(int i);
 string ulong2str(unsigned long i, const char *format);
 string ulong2str(unsigned long i);
 
+// Convert a pointer to a string (hexadecimal)
+string ptr2str(void *p);
+
 // Convert a bool to a string: "false", "true"
 string bool2str(bool b);
 

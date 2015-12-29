@@ -331,7 +331,7 @@ static const unsigned short yyrline[] =
        0,   101,   101,   115,   115,   115,   120,   120,   120,   134,
      149,   160,   161,   160,   166,   171,   172,   182,   187,   188,
      193,   197,   201,   201,   201,   208,   209,   215,   215,   215,
-     232,   240,   255,   256,   263,   264,   267,   267,   267
+     235,   243,   258,   259,   266,   267,   270,   270,   270
 };
 #endif
 
@@ -1310,6 +1310,9 @@ yyreduce:
     {
 		  	yyval.yysdpt_media = new t_sdp_media();
 			MEMMAN_NEW(yyval.yysdpt_media);
+			
+			if (yyvsp[-8].yysdpt_int > 65535) YYERROR;
+			
 			yyval.yysdpt_media->media_type = tolower(*yyvsp[-10].yysdpt_str);
 			yyval.yysdpt_media->port = yyvsp[-8].yysdpt_int;
 			yyval.yysdpt_media->transport = yyvsp[-6].yysdpt_transport;
@@ -1323,7 +1326,7 @@ yyreduce:
     break;
 
   case 30:
-#line 232 "sdp_parser.yxx"
+#line 235 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_transport = str2sdp_transport(*yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[0].yysdpt_str); delete yyvsp[0].yysdpt_str;
@@ -1335,7 +1338,7 @@ yyreduce:
     break;
 
   case 31:
-#line 240 "sdp_parser.yxx"
+#line 243 "sdp_parser.yxx"
     { try {
 				yyval.yysdpt_transport = str2sdp_transport(*yyvsp[-2].yysdpt_str + '/' + *yyvsp[0].yysdpt_str);
 				MEMMAN_DELETE(yyvsp[-2].yysdpt_str); delete yyvsp[-2].yysdpt_str;
@@ -1349,12 +1352,12 @@ yyreduce:
     break;
 
   case 32:
-#line 255 "sdp_parser.yxx"
+#line 258 "sdp_parser.yxx"
     { yyval.yysdpt_num_list = new list<unsigned short>; MEMMAN_NEW(yyval.yysdpt_num_list); }
     break;
 
   case 33:
-#line 256 "sdp_parser.yxx"
+#line 259 "sdp_parser.yxx"
     {
 			if (is_number(*yyvsp[0].yysdpt_str)) yyval.yysdpt_num_list->push_back(atoi(yyvsp[0].yysdpt_str->c_str()));
 			MEMMAN_DELETE(yyvsp[0].yysdpt_str);
@@ -1362,17 +1365,17 @@ yyreduce:
     break;
 
   case 36:
-#line 267 "sdp_parser.yxx"
+#line 270 "sdp_parser.yxx"
     { CTX_LINE; }
     break;
 
   case 37:
-#line 267 "sdp_parser.yxx"
+#line 270 "sdp_parser.yxx"
     { CTX_INITIAL; }
     break;
 
   case 38:
-#line 268 "sdp_parser.yxx"
+#line 271 "sdp_parser.yxx"
     {
 		  	MEMMAN_DELETE(yyvsp[-2].yysdpt_str); delete yyvsp[-2].yysdpt_str; }
     break;
@@ -1381,7 +1384,7 @@ yyreduce:
     }
 
 /* Line 991 of yacc.c.  */
-#line 1384 "sdp_parser.cxx"
+#line 1387 "sdp_parser.cxx"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1591,7 +1594,7 @@ yyreturn:
 }
 
 
-#line 272 "sdp_parser.yxx"
+#line 275 "sdp_parser.yxx"
 
 
 void

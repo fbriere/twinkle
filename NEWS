@@ -1,8 +1,54 @@
+22 oct 2005 - Release 0.3.2
+===========================
+- Fixed several build problams with KDE include files and
+  libraries.
+
+If you already succesfully installed release 0.3.1 then there is
+no need to upgrade to 0.3.2 as there is no new functionality.
+
+16 oct 2005 - Release 0.3.1
+===========================
+This is a minor bug fix release.
+
+Bug fixes:
+----------
+- Command line options -f and -share were broken in release 0.3
+  This release fixes the command line options.
+
+
+09 oct 2005 - Release 0.3
+=========================
+
+New functionality:
+------------------
+- ALSA support
+- System tray icon
+- Send NAT keep alive packets when Twinkle sits behind a symmetric firewall
+  (discovered via STUN)
+- Allow missing or wrong Contact header in a 200 OK response on a REGISTER
+
+Bug fixes:
+----------
+- Hostnames in Via and Warning headers were erroneously converted to lower case.
+- t_ts_non_invite::timeout assert( t==TIMER_J ) when ACK is received
+  for a non-INVITE request that had INVITE as method in the CSeq header.
+- The SIP/SDP parser accepted a port number > 65535. This caused an assert
+- Segmentation fault on some syntax errors in SIP headers
+- Line got stuck when CSeq sequence nr 0 was received. RFC 3261 allows 0.
+- With 100rel required, every 1XX after the first 1XX response were discarded.
+- Fixed build problems on 64-bit architectures.
+- Dead lock due to logging in UDP sender.
+- Segmentation fault when packet loss occurred while the sequence
+  number in the RTP packets wrapped around.
+- Route set was not recomputed on reception of a 2XX response, when a 1XX
+  repsonse before already contained a Record-Route header.
+
+
 30 jul 2005 - Release 0.2.1
 ===========================
 
 New functionality:
-==================
+------------------
 - Clear button on log view window.
 
 Bug fixes:

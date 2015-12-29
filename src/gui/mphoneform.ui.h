@@ -24,6 +24,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include "twinkle_config.h"
+
+#ifdef HAVE_KDE
+#include <ksystemtray.h>
+#include <kpopupmenu.h>
+#endif
 
 void MphoneForm::init()
 {
@@ -36,6 +42,7 @@ void MphoneForm::init()
 	userProfileForm = 0;
 	sysSettingsForm = 0;
 	logViewForm = 0;
+	sysTray = 0;
 	
 	// Set toolbar icons for disabled options.
 	QIconSet i;
@@ -106,6 +113,24 @@ void MphoneForm::init()
 	from2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	to2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	subject2Label->setPaletteBackgroundColor(paletteBackgroundColor());
+	
+	if (sys_config->gui_use_systray) {
+#ifdef HAVE_KDE
+		// Create system tray icon
+		sysTray = new KSystemTray(this, "twinkle_sys_tray");
+		MEMMAN_NEW(sysTray);
+		((KSystemTray *)sysTray)->setPixmap(
+				QPixmap::fromMimeSource("twinkle24.png"));
+		((KSystemTray *)sysTray)->setCaption(PRODUCT_NAME);
+		QToolTip::add(sysTray, PRODUCT_NAME);
+		
+		// Exit application when user selects Quit from the tray menu
+		connect((KSystemTray *)sysTray, SIGNAL(quitSelected()),
+			this, SLOT(fileExit()));
+		
+		((KSystemTray *)sysTray)->show();
+#endif
+	}
 }
 
 void MphoneForm::destroy()
@@ -147,6 +172,10 @@ void MphoneForm::destroy()
 		MEMMAN_DELETE(logViewForm);
 		delete logViewForm;
 	}
+	if (sysTray) {
+		MEMMAN_DELETE(sysTray);
+		delete sysTray;
+	}
 }
 
 QString MphoneForm::lineSubstate2str( int line) {
@@ -178,9 +207,13 @@ QString MphoneForm::lineSubstate2str( int line) {
 	}
 }
 
-void MphoneForm::closeEvent( QCloseEvent * )
+void MphoneForm::closeEvent( QCloseEvent *e )
 {
-	fileExit();
+	if (sysTray && sys_config->gui_hide_on_close) {
+		hide();
+	} else {
+		fileExit();
+	}
 }
 
 void MphoneForm::fileExit()
@@ -823,5 +856,10 @@ void MphoneForm::viewLog()
 void MphoneForm::updateLog(bool log_zapped)
 {
 	if (logViewForm) logViewForm->update(log_zapped);
+}
+
+QLabel *MphoneForm::getSysTray()
+{
+	return sysTray;
 }
 

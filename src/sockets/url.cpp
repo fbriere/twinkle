@@ -85,7 +85,9 @@ void t_url::construct_user_url(const string &s) {
 	if (i != string::npos) {
 		if (i == 0 || i == hostport.size()-1) return;
 		host = hostport.substr(0, i);
-		port = atoi(hostport.substr(i+1).c_str());
+		unsigned long p = atol(hostport.substr(i+1).c_str());
+		if (p > 65535) return; // illegal port value
+		port = (unsigned short)p;
 	} else {
 		host = hostport;
 	}
@@ -112,7 +114,9 @@ void t_url::construct_machine_url(const string &s) {
 	if (i != string::npos) {
 		if (i == 0 || i == hostport.size()-1) return;
 		host = hostport.substr(0, i);
-		port = atoi(hostport.substr(i+1).c_str());
+		unsigned long p = atol(hostport.substr(i+1).c_str());
+		if (p > 65535) return; // illegal port value
+		port = (unsigned short)p;
 	} else {
 		host = hostport;
 	}

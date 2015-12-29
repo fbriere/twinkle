@@ -39,14 +39,13 @@ void send_sip_udp(t_event *event) {
 	assert(e->dst_addr != 0);
 	assert(e->dst_port != 0);
 
+	string m = e->get_msg()->encode();
 	log_file->write_header("::send_sip_udp", LOG_SIP);
 	log_file->write_raw("Send to: ");
 	log_file->write_raw(h_ip2str(e->dst_addr));
 	log_file->write_raw(":");
 	log_file->write_raw(e->dst_port);
 	log_file->write_endl();
-
-	string m = e->get_msg()->encode();
 	log_file->write_raw(m);
 	log_file->write_footer();
 		

@@ -24,12 +24,13 @@
 #include <assert.h>
 #include <queue>
 #include <string>
-#include <ccrtp/rtp.h>
 #include "audio_codecs.h"
 #include "media_buffer.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
 #include "gsm/inc/gsm.h"
+#include "audio_device.h"
+#include "twinkle_rtp_session.h"
 
 using namespace std;
 using namespace ost;
@@ -44,10 +45,10 @@ private:
 	t_audio_session *audio_session;
 
 	// file descriptor audio capture device
-	int		fd;
+	t_audio_io* input_device;
 
 	// RTP session
-	SymmetricRTPSession *rtp_session;
+	t_twinkle_rtp_session *rtp_session;
 
 	// Media buffer to buffer media from the peer audio trasmitter in a
 	// 3-way call. This media stream will be mixed with the
@@ -150,8 +151,8 @@ public:
 	// _codec	audio codec to use
 	// _ptime	length of the audio packets in ms
 	// _ptime = 0 means use default ptime value for the codec
-	t_audio_rx(t_audio_session *_audio_session, int _fd,
-		   SymmetricRTPSession *_rtp_session,
+	t_audio_rx(t_audio_session *_audio_session, t_audio_io *_input_device,
+		   t_twinkle_rtp_session *_rtp_session,
 	           t_audio_codec _codec, unsigned short _ptime = 0);
 
 	~t_audio_rx();

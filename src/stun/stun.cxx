@@ -660,6 +660,8 @@ stunRand()
       init = true;
 		
       UInt64 tick;
+      
+// Twinkle: I added __x86_64__ for amd64 compiler
 		
 #if defined(WIN32) 
       volatile unsigned int lowtick=0,hightick=0;
@@ -672,7 +674,7 @@ stunRand()
       tick = hightick;
       tick <<= 32;
       tick |= lowtick;
-#elif defined(__GNUC__) && ( defined(__i686__) || defined(__i386__) )
+#elif defined(__GNUC__) && ( defined(__i686__) || defined(__i386__) || defined(__x86_64__) )
       asm("rdtsc" : "=A" (tick));
 #elif defined (__SUNPRO_CC) || defined( __sparc__ )	
       tick = gethrtime();
@@ -681,7 +683,7 @@ stunRand()
       read(fd,&tick,sizeof(tick));
       closesocket(fd);
 #else
-#     error Need some way to seed the random number generator 
+      tick = time(NULL);
 #endif 
       int seed = int(tick);
 #ifdef WIN32

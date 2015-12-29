@@ -63,7 +63,7 @@ void t_memman::trc_new(void *p, const string &filename, int lineno,
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
 		log_file->write_raw(": pointer to ");
-		log_file->write_raw(int2str(int(p), "0x%x"));
+		log_file->write_raw(ptr2str(p));
 		log_file->write_raw(" has already been allocated.\n");
 		log_file->write_raw("It was allocated here: ");
 		log_file->write_raw(i->second.filename);
@@ -100,7 +100,7 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
 		log_file->write_raw(": pointer to ");
-		log_file->write_raw(int2str(int(p), "0x%x"));
+		log_file->write_raw(ptr2str(p));
 		log_file->write_raw(" is deleted.\n");
 		log_file->write_raw("This pointer is not allocated however.\n");
 		log_file->write_footer();
@@ -117,7 +117,7 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
 		log_file->write_raw(": pointer to ");
-		log_file->write_raw(int2str(int(p), "0x%x"));
+		log_file->write_raw(ptr2str(p));
 		log_file->write_raw(" is deleted ");
 		if (is_array) {
 			log_file->write_raw(" as array (delete []).\n");
@@ -170,7 +170,7 @@ void t_memman::report_leaks(void) {
 	for (map<void *, t_ptr_info>::const_iterator i = pointer_map.begin();
 	     i != pointer_map.end(); i++)
 	{
-		log_file->write_raw(int2str(int(i->first), "0x%x"));
+		log_file->write_raw(ptr2str(i->first));
 		log_file->write_raw(" allocated from ");
 		log_file->write_raw(i->second.filename);
 		log_file->write_raw(", line ");

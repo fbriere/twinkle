@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>740</width>
-            <height>649</height>
+            <height>678</height>
         </rect>
     </property>
     <property name="caption">
@@ -19,64 +19,6 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout12</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer8</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>441</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
-                    </property>
-                </widget>
-            </hbox>
-        </widget>
         <widget class="QListBox" row="0" column="0">
             <item>
                 <property name="text">
@@ -157,6 +99,64 @@
             <property name="whatsThis" stdset="0">
                 <string>Select a category for which you want to see or modify the settings.</string>
             </property>
+        </widget>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout12</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer8</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>441</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
         </widget>
         <widget class="QWidgetStack" row="0" column="1">
             <property name="name">
@@ -1288,121 +1288,6 @@ This field is mandatory.</string>
                             <number>10</number>
                         </property>
                     </widget>
-                    <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
-                        <property name="name">
-                            <cstring>optionsGroupBox</cstring>
-                        </property>
-                        <property name="title">
-                            <string>Protocol options</string>
-                        </property>
-                        <grid>
-                            <property name="name">
-                                <cstring>unnamed</cstring>
-                            </property>
-                            <widget class="QLabel" row="0" column="0">
-                                <property name="name">
-                                    <cstring>holdVariantTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>Call &amp;Hold variant:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>holdVariantComboBox</cstring>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="3">
-                                <property name="name">
-                                    <cstring>regTimeCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>Put &amp;registration expiry time in contact header</string>
-                                </property>
-                                <property name="accel">
-                                    <string>Alt+R</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>In a REGISTER message the expiry time for registration can be put in the Contact header or in the Expiry header. If you tick this box it will be put in the Contact header, otherwise it goes in the Expiry header.</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox" row="3" column="0" rowspan="1" colspan="3">
-                                <property name="name">
-                                    <cstring>compactHeadersCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Use compact header names</string>
-                                </property>
-                                <property name="accel">
-                                    <string>Alt+U</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Indicates if compact header names should be used for headers that have a compact form.</string>
-                                </property>
-                            </widget>
-                            <widget class="QComboBox" row="0" column="1">
-                                <item>
-                                    <property name="text">
-                                        <string>RFC 2543</string>
-                                    </property>
-                                </item>
-                                <item>
-                                    <property name="text">
-                                        <string>RFC 3264</string>
-                                    </property>
-                                </item>
-                                <property name="name">
-                                    <cstring>holdVariantComboBox</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>1</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="minimumSize">
-                                    <size>
-                                        <width>110</width>
-                                        <height>0</height>
-                                    </size>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Indicates if RFC 2543 (set media IP address in SDP to 0.0.0.0) or RFC 3264 (use direction attributes in SDP) is used to put a call on-hold.</string>
-                                </property>
-                            </widget>
-                            <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
-                                <property name="name">
-                                    <cstring>maxForwardsCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Max-Forwards header is mandatory</string>
-                                </property>
-                                <property name="accel">
-                                    <string>Alt+M</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</string>
-                                </property>
-                            </widget>
-                            <spacer row="0" column="2">
-                                <property name="name">
-                                    <cstring>spacer4</cstring>
-                                </property>
-                                <property name="orientation">
-                                    <enum>Horizontal</enum>
-                                </property>
-                                <property name="sizeType">
-                                    <enum>Expanding</enum>
-                                </property>
-                                <property name="sizeHint">
-                                    <size>
-                                        <width>70</width>
-                                        <height>20</height>
-                                    </size>
-                                </property>
-                            </spacer>
-                        </grid>
-                    </widget>
                     <widget class="QGroupBox" row="1" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>sipNetworkGroupBox</cstring>
@@ -1495,6 +1380,89 @@ This field is mandatory.</string>
                             </size>
                         </property>
                     </spacer>
+                    <widget class="QGroupBox" row="4" column="0" rowspan="1" colspan="2">
+                        <property name="name">
+                            <cstring>referGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Call transfer (REFER)</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>allowReferCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Allow call &amp;transfer (incoming REFER)</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+T</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if Twinkle should transfer a call if a REFER request is received.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>askUserReferCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>As&amp;k user permission to transfer</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+K</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if Twinkle should ask the user before transferring a call when a REFER request is received.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>refereeHoldCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Hold call &amp;with referrer while setting up call to transfer target</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+W</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if Twinkle should put the current call on hold when a REFER request to transfer a call is received.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>referrerHoldCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Ho&amp;ld call with referee before sending REFER</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+L</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if Twinkle should put the current call on hold when you transfer a call.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>refreshReferSubCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Auto re&amp;fresh subscription to refer event while call transfer is not finished</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+F</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>While a call is being transferred, the referee sends NOTIFY messages to the referrer about the progress of the transfer. These messages are only sent for a short interval which length is determined by the referee. If you tick this box, the referrer will automatically send a SUBSCRIBE to lengthen this interval if it is about to expire and the transfer has not yet been completed.</string>
+                                </property>
+                            </widget>
+                        </vbox>
+                    </widget>
                     <widget class="QGroupBox" row="3" column="0">
                         <property name="name">
                             <cstring>redirectionGroupBox</cstring>
@@ -1665,88 +1633,134 @@ This field is mandatory.</string>
                             </widget>
                         </grid>
                     </widget>
-                    <widget class="QGroupBox" row="4" column="0" rowspan="1" colspan="2">
+                    <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
                         <property name="name">
-                            <cstring>referGroupBox</cstring>
+                            <cstring>optionsGroupBox</cstring>
                         </property>
                         <property name="title">
-                            <string>Call transfer (REFER)</string>
+                            <string>Protocol options</string>
                         </property>
-                        <vbox>
+                        <grid>
                             <property name="name">
                                 <cstring>unnamed</cstring>
                             </property>
-                            <widget class="QCheckBox">
+                            <widget class="QLabel" row="0" column="0">
                                 <property name="name">
-                                    <cstring>allowReferCheckBox</cstring>
+                                    <cstring>holdVariantTextLabel</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Allow call &amp;transfer (incoming REFER)</string>
+                                    <string>Call &amp;Hold variant:</string>
                                 </property>
-                                <property name="accel">
-                                    <string>Alt+T</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Indicates if Twinkle should transfer a call if a REFER request is received.</string>
+                                <property name="buddy" stdset="0">
+                                    <cstring>holdVariantComboBox</cstring>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox">
+                            <widget class="QComboBox" row="0" column="1">
+                                <item>
+                                    <property name="text">
+                                        <string>RFC 2543</string>
+                                    </property>
+                                </item>
+                                <item>
+                                    <property name="text">
+                                        <string>RFC 3264</string>
+                                    </property>
+                                </item>
                                 <property name="name">
-                                    <cstring>askUserReferCheckBox</cstring>
+                                    <cstring>holdVariantComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>1</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                    <size>
+                                        <width>110</width>
+                                        <height>0</height>
+                                    </size>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Indicates if RFC 2543 (set media IP address in SDP to 0.0.0.0) or RFC 3264 (use direction attributes in SDP) is used to put a call on-hold.</string>
+                                </property>
+                            </widget>
+                            <spacer row="0" column="2">
+                                <property name="name">
+                                    <cstring>spacer4</cstring>
+                                </property>
+                                <property name="orientation">
+                                    <enum>Horizontal</enum>
+                                </property>
+                                <property name="sizeType">
+                                    <enum>Expanding</enum>
+                                </property>
+                                <property name="sizeHint">
+                                    <size>
+                                        <width>70</width>
+                                        <height>20</height>
+                                    </size>
+                                </property>
+                            </spacer>
+                            <widget class="QCheckBox" row="4" column="0" rowspan="1" colspan="3">
+                                <property name="name">
+                                    <cstring>compactHeadersCheckBox</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>As&amp;k user permission to transfer</string>
+                                    <string>&amp;Use compact header names</string>
                                 </property>
                                 <property name="accel">
-                                    <string>Alt+K</string>
+                                    <string>Alt+U</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>Indicates if Twinkle should ask the user before transferring a call when a REFER request is received.</string>
+                                    <string>Indicates if compact header names should be used for headers that have a compact form.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox">
+                            <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="3">
                                 <property name="name">
-                                    <cstring>refereeHoldCheckBox</cstring>
+                                    <cstring>missingContactCheckBox</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Hold call &amp;with referrer while setting up call to transfer target</string>
+                                    <string>Allow m&amp;issing Contact header in 200 OK on REGISTER</string>
                                 </property>
                                 <property name="accel">
-                                    <string>Alt+W</string>
+                                    <string>Alt+I</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>Indicates if Twinkle should put the current call on hold when a REFER request to transfer a call is received.</string>
+                                    <string>A 200 OK response on a REGISTER request must contain a Contact header. Some registrars however, do not include a Contact header or include a wrong Contact header. This option allows for such a deviation from the specs.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox">
+                            <widget class="QCheckBox" row="3" column="0" rowspan="1" colspan="3">
                                 <property name="name">
-                                    <cstring>referrerHoldCheckBox</cstring>
+                                    <cstring>regTimeCheckBox</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Ho&amp;ld call with referee before sending REFER</string>
+                                    <string>Put &amp;registration expiry time in contact header</string>
                                 </property>
                                 <property name="accel">
-                                    <string>Alt+L</string>
+                                    <string>Alt+R</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>Indicates if Twinkle should put the current call on hold when you transfer a call.</string>
+                                    <string>In a REGISTER message the expiry time for registration can be put in the Contact header or in the Expires header. If you tick this box it will be put in the Contact header, otherwise it goes in the Expires header.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox">
+                            <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
                                 <property name="name">
-                                    <cstring>refreshReferSubCheckBox</cstring>
+                                    <cstring>maxForwardsCheckBox</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>Auto re&amp;fresh subscription to refer event while call transfer is not finished</string>
+                                    <string>&amp;Max-Forwards header is mandatory</string>
                                 </property>
                                 <property name="accel">
-                                    <string>Alt+F</string>
+                                    <string>Alt+M</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>While a call is being transferred, the referee sends NOTIFY messages to the referrer about the progress of the transfer. These messages are only sent for a short interval which length is determined by the referee. If you tick this box, the referrer will automatically send a SUBSCRIBE to lengthen this interval if it is about to expire and the transfer has not yet been completed.</string>
+                                    <string>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</string>
                                 </property>
                             </widget>
-                        </vbox>
+                        </grid>
                     </widget>
                 </grid>
             </widget>
@@ -2334,6 +2348,7 @@ When you choose this option you have to create static address mappings in your N
     <tabstop>sipUdpPortSpinBox</tabstop>
     <tabstop>holdVariantComboBox</tabstop>
     <tabstop>maxForwardsCheckBox</tabstop>
+    <tabstop>missingContactCheckBox</tabstop>
     <tabstop>regTimeCheckBox</tabstop>
     <tabstop>compactHeadersCheckBox</tabstop>
     <tabstop>allowRedirectionCheckBox</tabstop>

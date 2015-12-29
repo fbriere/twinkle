@@ -22,6 +22,7 @@
 #include <cstdlib>
 #include <string>
 #include <list>
+#include "twinkle_config.h"
 
 using namespace std;
 
@@ -36,17 +37,28 @@ using namespace std;
 // Device file for DSP
 #define DEV_DSP		"/dev/dsp"
 
+// Device prefixes in settings file
+#define PFX_OSS		"oss:"
+#define PFX_ALSA	"alsa:"
+
 // File with SIP providers for the wizard
 #define FILE_PROVIDERS	"providers.csv"
 
-class t_oss_device {
+
+class t_audio_device {
 public:
-	string		device; 	// eg. /dev/dsp, /dev/dsp1
+	enum t_audio_device_type {
+		OSS, ALSA
+	} type;
+	string		device; 	// eg. /dev/dsp, /dev/dsp1 for OSS or hw:0,0 for ALSA
 	string		sym_link;	// real device if the device is a symbolic link
 	string		name;		// name of the sound card
-	
+
 	// Get a one-line description
 	string get_description(void) const;
+	
+	// Get string to be written in settings file
+	string get_settings_value(void) const;
 };
 
 class t_sys_settings {
@@ -59,9 +71,9 @@ private:
 
 public:
 	// Sound devices
-	string		dev_ringtone;
-	string		dev_speaker;
-	string		dev_mic;
+	t_audio_device		dev_ringtone;
+	t_audio_device		dev_speaker;
+	t_audio_device		dev_mic;
 	
 	// Log file settings
 	unsigned short	log_max_size; // in MB
@@ -69,6 +81,10 @@ public:
 	bool		log_show_stun;
 	bool		log_show_memory;
 	bool		log_show_debug;
+	
+	// GUI settings
+	bool		gui_use_systray;
+	bool		gui_hide_on_close;
 
 	t_sys_settings();
 	
@@ -99,10 +115,20 @@ public:
 	bool write_config(string &error_msg);
 	
 	// Get all OSS devices
-	list<t_oss_device> get_oss_devices(void) const;
+	list<t_audio_device> get_oss_devices(void) const;
+	
+#ifdef HAVE_LIBASOUND
+	// Get all ALSA devices
+	list<t_audio_device> get_alsa_devices(void) const;
+#endif
+	
+	// Get all audio devices
+	list<t_audio_device> get_audio_devices(void) const;
 	
 	// Check if two OSS devices are equal
-	bool equal_oss_dev(const string &dev1, const string &dev2) const;
+	bool equal_audio_dev(const t_audio_device &dev1, const t_audio_device &dev2) const;
+	
+	static t_audio_device audio_device(string device = "");
 };
 
 extern t_sys_settings *sys_config;

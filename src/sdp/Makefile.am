@@ -9,8 +9,8 @@ AM_LFLAGS = -Pyysdp -olex.yy.c -is
 # sdpparse_SOURCES = main.cpp
 
 # sdpparse_LDADD = $(top_builddir)/src/util.o\
-#	$(top_builddir)/src/sdp/libsdpparser.a\
-#	$(top_builddir)/src/parser/sip_body.o
+# 	$(top_builddir)/src/sdp/libsdpparser.a\
+# 	$(top_builddir)/src/parser/sip_body.o
 
 noinst_LIBRARIES = libsdpparser.a
 

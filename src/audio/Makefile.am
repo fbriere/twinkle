@@ -3,6 +3,7 @@ INCLUDES = -I $(top_builddir)/src -I $(includedir)
 noinst_LIBRARIES = libaudio.a
 
 libaudio_a_SOURCES =\
+	audio_device.cpp\
         audio_codecs.cpp\
         audio_rx.cpp\
         audio_session.cpp\
@@ -15,6 +16,8 @@ libaudio_a_SOURCES =\
         media_buffer.cpp\
         rtp_telephone_event.cpp\
         tone_gen.cpp\
+        twinkle_rtp_session.cpp\
+        audio_device.h\
         audio_codecs.h\
         audio_rx.h\
         audio_session.h\
@@ -23,7 +26,8 @@ libaudio_a_SOURCES =\
         g72x.h\
         media_buffer.h\
         rtp_telephone_event.h\
-        tone_gen.h
+        tone_gen.h\
+        twinkle_rtp_session.h
 
 SUBDIRS = gsm
 

@@ -22,13 +22,14 @@
 // Receive RTP and send audio to soundcard
 
 #include <string>
-#include <ccrtp/rtp.h>
 #include "audio_codecs.h"
 #include "audio_rx.h"
 #include "media_buffer.h"
 #include "rtp_telephone_event.h"
 #include "threads/mutex.h"
 #include "gsm/inc/gsm.h"
+#include "audio_device.h"
+#include "twinkle_rtp_session.h"
 
 using namespace std;
 using namespace ost;
@@ -43,8 +44,8 @@ private:
 	t_audio_session *audio_session;
 
 	// file descriptor audio capture device
-	int		fd;
-	SymmetricRTPSession *rtp_session;
+	t_audio_io			*playback_device;
+	t_twinkle_rtp_session *rtp_session;
 
 	// Indicates if this transmitter is part of a 3-way conference
 	bool		is_3way;
@@ -142,8 +143,8 @@ public:
 	// _codec	audio codec to use
 	// _ptime	length of the audio packets in ms
 	// _ptime = 0 means use default ptime value for the codec
-	t_audio_tx(t_audio_session *_audio_session, int _fd,
-		   SymmetricRTPSession *_rtp_session,
+	t_audio_tx(t_audio_session *_audio_session, t_audio_io *_playback_device,
+		   t_twinkle_rtp_session *_rtp_session,
 	           t_audio_codec _codec, unsigned short _ptime = 0);
 
 	~t_audio_tx();

@@ -20,10 +20,10 @@
 #define _AUDIO_SESSION_H
 
 #include <string>
-#include <ccrtp/rtp.h>
 #include "audio_rx.h"
 #include "audio_tx.h"
 #include "session.h"
+#include "twinkle_rtp_session.h"
 #include "threads/thread.h"
 #include "threads/mutex.h"
 
@@ -45,9 +45,9 @@ private:
 	bool		valid;
 
 	// file descriptor audio device
-	int		fd_speaker;
-	int		fd_mic;
-	SymmetricRTPSession *rtp_session;
+	t_audio_io		*speaker;
+	t_audio_io		*mic;
+	t_twinkle_rtp_session *rtp_session;
 
 	t_audio_codec	codec;
 	unsigned short	ptime;	// in milliseconds
@@ -100,9 +100,9 @@ public:
 	// Check if audio session is valid
 	bool is_valid(void) const;
 
-	// Get filedescriptor for soundcard
-	int get_fd_dsp_speaker(void) const;
-	int get_fd_dsp_mic(void) const;
+	// Get pointer for soundcard I/O object
+	t_audio_io* get_dsp_speaker(void) const;
+	t_audio_io* get_dsp_mic(void) const;
 };
 
 // Main functions for rx and tx threads

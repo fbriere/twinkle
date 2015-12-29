@@ -176,6 +176,7 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 
 bool stun_discover_nat(string &err_msg) {
 		phone->use_stun = false;
+		phone->use_nat_keepalive = false;
 
 		StunAddress4 stun_ip4;
 		stun_ip4.addr = user_config->stun_server.get_h_ip();
@@ -210,15 +211,43 @@ bool stun_discover_nat(string &err_msg) {
 			err_msg = "You are behind a symmetric NAT.\n";
 			err_msg += "STUN will not work.\n";
 			err_msg += "Configure a public IP address in the user profile\n";
-			err_msg += "and create static bindings in your NAT.";
+			err_msg += "and create the following static bindings (UDP) in your NAT.\n\n";
+			err_msg += "public IP:";
+			err_msg += int2str(user_config->sip_udp_port);
+			err_msg += " --> private IP:";
+			err_msg += int2str(user_config->sip_udp_port);
+			err_msg += " (for SIP signaling)\n";
+			err_msg += "public IP:";
+			err_msg += int2str(user_config->rtp_port);
+			err_msg += "-";
+			err_msg += int2str(user_config->rtp_port + 5);
+			err_msg += " --> private IP:";
+			err_msg += int2str(user_config->rtp_port);
+			err_msg += "-";
+			err_msg += int2str(user_config->rtp_port + 5);
+			err_msg += " (for RTP/RTCP)";
 			return false;
 		case StunTypeSymFirewall:
-			err_msg = "You are behind a symmetric firewall.\n";
-			err_msg += "STUN will not work.\n";
-			return false;
+			// STUN is not needed as we are on a pubic IP.
+			// NAT keep alive is needed however to keep the firewall open.
+			phone->use_nat_keepalive = true;
+			break;
 		case StunTypeBlocked:
 			err_msg = "Cannot reach the STUN server: ";
 			err_msg += user_config->stun_server.encode().c_str();
+			err_msg += "\n\n";
+			err_msg += "If you are behind a firewall then you need to open ";
+			err_msg += "the following UDP ports for a proper working of ";
+			err_msg += PRODUCT_NAME;
+			err_msg += ":\n";
+			err_msg += "Port ";
+			err_msg += int2str(user_config->sip_udp_port);
+			err_msg += " (for SIP signaling)\n";
+			err_msg += "Ports ";
+			err_msg += int2str(user_config->rtp_port);
+			err_msg += "-";
+			err_msg += int2str(user_config->rtp_port + 5);
+			err_msg += " (for RTP/RTCP)";
 			return false;
 		case StunTypeFailure:
 			err_msg = "NAT type discovery via STUN failed.\n";
@@ -226,6 +255,7 @@ bool stun_discover_nat(string &err_msg) {
 		default:
 			// Use STUN.
 			phone->use_stun = true;
+			phone->use_nat_keepalive = true;
 		}
 		
 		return true;

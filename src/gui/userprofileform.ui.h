@@ -238,6 +238,7 @@ void UserProfileForm::populate( bool isRunning )
 	}
 	
 	maxForwardsCheckBox->setChecked(user_config->check_max_forwards);
+	missingContactCheckBox->setChecked(user_config->allow_missing_contact_reg);
 	regTimeCheckBox->setChecked(user_config->registration_time_in_contact);
 	compactHeadersCheckBox->setChecked(user_config->compact_headers);
 	allowRedirectionCheckBox->setChecked(user_config->allow_redirection);
@@ -480,6 +481,7 @@ void UserProfileForm::validate()
 	}
 	
 	user_config->check_max_forwards = maxForwardsCheckBox->isChecked();
+	user_config->allow_missing_contact_reg = missingContactCheckBox->isChecked();
 	user_config->registration_time_in_contact = regTimeCheckBox->isChecked();
 	user_config->compact_headers = compactHeadersCheckBox->isChecked();
 	user_config->allow_redirection = allowRedirectionCheckBox->isChecked();

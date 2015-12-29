@@ -153,7 +153,8 @@ t_request::t_request() : t_sip_message() {
 
 t_request::t_request(const t_request &r) : t_sip_message(r),
 		uri(r.uri),
-		method(r.method)
+		method(r.method),
+		unknown_method(r.unknown_method)
 {
 }
 
