@@ -145,6 +145,9 @@
                             <verstretch>0</verstretch>
                         </sizepolicy>
                     </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>The user that will make the call.</string>
+                    </property>
                 </widget>
                 <widget class="QLabel" row="2" column="0">
                     <property name="name">
@@ -281,11 +284,13 @@
 </variables>
 <signals>
     <signal>destination(t_user *, const QString &amp;, const t_url &amp;, const QString &amp;)</signal>
+    <signal>raw_destination(const QString &amp;)</signal>
 </signals>
 <slots>
     <slot>clear()</slot>
     <slot>show( t_user * user_config, const QString &amp; dest, const QString &amp; subject )</slot>
     <slot>validate()</slot>
+    <slot>addToInviteComboBox( const QString &amp; destination )</slot>
     <slot>reject()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>
     <slot>showAddressBook()</slot>

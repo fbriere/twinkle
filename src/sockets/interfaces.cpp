@@ -29,7 +29,7 @@ string t_interface::get_ip_netmask(void) const {
 	return inet_ntoa(netmask);
 }
 
-list <t_interface> *get_interfaces(void) {
+list <t_interface> *get_interfaces(bool include_loopback) {
     	struct ifaddrs *ifa, *ifaddrs;
     	struct sockaddr_in *sin;
     	int i;
@@ -46,7 +46,7 @@ list <t_interface> *get_interfaces(void) {
 		// Skip interface without address
 		// Skip interfaces marked DOWN and LOOPBACK.
 		if (ifa->ifa_addr == NULL || !(ifa->ifa_flags & IFF_UP) ||
-	    	    (ifa->ifa_flags & IFF_LOOPBACK)) {
+	    	    ((ifa->ifa_flags & IFF_LOOPBACK) && !include_loopback)) {
 	    		continue;
 		}
 
@@ -79,7 +79,7 @@ bool exists_interface(const string &hostname) {
 	if (h == NULL) return false;
 	string ipaddr = inet_ntoa(*((struct in_addr *)h->h_addr));
 
-	list<t_interface> *l = get_interfaces();
+	list<t_interface> *l = get_interfaces(true);
 	
 	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
 		if (i->get_ip_addr() == ipaddr) {

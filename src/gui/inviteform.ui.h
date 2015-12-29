@@ -24,19 +24,12 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
-#define SIZE_REDIAL_LIST 10
-
 void InviteForm::init()
 {
 	getAddressForm = 0;
 	
 	// Set toolbutton icons for disabled options.
-	QIconSet i;
-	i = addressToolButton->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	addressToolButton->setIconSet(i);
+	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
 #ifndef HAVE_KDE
 	addressToolButton->setEnabled(false);
@@ -61,12 +54,12 @@ void InviteForm::clear()
 void InviteForm::show(t_user *user_config, const QString &dest, const QString &subject)
 {
 	((t_gui *)ui)->fill_user_combo(fromComboBox);
-	fromComboBox->setEnabled(fromComboBox->count() > 1);
 	
+	// Select from user
 	if (user_config) {
 		for (int i = 0; i < fromComboBox->count(); i++) {
 			if (fromComboBox->text(i) == 
-			    user_config->get_display_uri().c_str())
+			    user_config->get_profile_name().c_str())
 			{
 				fromComboBox->setCurrentItem(i);
 				break;
@@ -82,7 +75,7 @@ void InviteForm::show(t_user *user_config, const QString &dest, const QString &s
 void InviteForm::validate()
 {
 	string display, dest_str;
-	t_user *from_user = phone->ref_user_display_uri(
+	t_user *from_user = phone->ref_user_profile(
 				fromComboBox->currentText().ascii());
 	
 	ui->expand_destination(from_user, 
@@ -91,15 +84,22 @@ void InviteForm::validate()
 	t_url dest(dest_str);
 	
 	if (dest.is_valid()) {
-		inviteComboBox->insertItem(inviteComboBox->currentText(), 0);
-		if (inviteComboBox->count() > SIZE_REDIAL_LIST) {
-			inviteComboBox->removeItem(inviteComboBox->count() - 1);
-		}
+		addToInviteComboBox(inviteComboBox->currentText());
+		emit raw_destination(inviteComboBox->currentText());
 		emit destination(from_user, display.c_str(), dest, subjectLineEdit->text());
 		accept();
 	} else {
 		inviteComboBox->setFocus();
 		inviteComboBox->lineEdit()->selectAll();
+	}
+}
+
+// Add a destination to the history list of inviteComboBox
+void InviteForm::addToInviteComboBox(const QString &destination)
+{
+	inviteComboBox->insertItem(destination, 0);
+	if (inviteComboBox->count() > SIZE_REDIAL_LIST) {
+		inviteComboBox->removeItem(inviteComboBox->count() - 1);
 	}
 }
 

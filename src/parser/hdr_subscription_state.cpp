@@ -55,8 +55,19 @@ string t_hdr_subscription_state::encode(void) const {
 
 	if (!populated) return s;
 
-	s += "Subscription-State: ";
-	s += substate;
+	s = "Subscription-State: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_subscription_state::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = substate;
 
 	if (reason.size() > 0) {
 		s += ";reason=";
@@ -75,6 +86,14 @@ string t_hdr_subscription_state::encode(void) const {
 
 	s += param_list2str(extensions);
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_subscription_state::encode_env(void) const {
+	string s;
+	
+	s = "SIP_SUBSCRIPTION_STATE=";
+	s += encode_value();
+	
 	return s;
 }

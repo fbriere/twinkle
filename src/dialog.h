@@ -260,6 +260,8 @@ private:
 	void process_notify(t_request *r, t_tuid tuid, t_tid tid);
 
 	// Process timeouts
+	void state_w4invite_resp(t_line_timer timer);
+	void state_early(t_line_timer timer);
 	void state_w4ack(t_line_timer timer);
 	void state_w4ack_re_invite(t_line_timer timer);
 	void state_w4re_invite_resp(t_line_timer timer);
@@ -312,6 +314,7 @@ public:
 	unsigned short		id_ack_guard;
 	unsigned short		id_re_invite_guard;
 	unsigned short		id_glare_retry;
+	unsigned short		id_cancel_guard;
 
 	// RFC 3262
 	// 100rel timers

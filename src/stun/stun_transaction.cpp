@@ -26,8 +26,6 @@
 #include "util.h"
 #include "audits/memman.h"
 
-#define MAX_STUN_TRANSMISSIONS	9
-
 extern t_transaction_mgr	*transaction_mgr;
 extern t_event_queue		*evq_trans_layer;
 extern t_event_queue		*evq_trans_mgr;
@@ -58,24 +56,26 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 	
 	int num_transmissions = 0;
 	int wait_intval = DUR_STUN_START_INTVAL;
-		
+
 	t_socket_udp sock(src_port);
 	sock.connect(destinations.front().ipaddr, destinations.front().port);
 		
+	// Build STUN request
+	char buf[STUN_MAX_MESSAGE_SIZE + 1];
 	StunMessage req_bind;
 	StunAtrString stun_null_str;
 	stun_null_str.sizeValue = 0;	
+	stunBuildReqSimple(&req_bind, stun_null_str, false, false);	
+	char req_msg[STUN_MAX_MESSAGE_SIZE];
+	int req_msg_size = stunEncodeMessage(req_bind, req_msg, 
+		STUN_MAX_MESSAGE_SIZE, stun_null_str, false);
 		
-	while (num_transmissions < MAX_STUN_TRANSMISSIONS) {
+	// Send STUN request and retransmit till a response is received.
+	while (num_transmissions < STUN_MAX_TRANSMISSIONS) {
 		bool ret;
-		char buf[STUN_MAX_MESSAGE_SIZE + 1];
-		stunBuildReqSimple(&req_bind, stun_null_str, false, false);	
-		char m[STUN_MAX_MESSAGE_SIZE];
-		int msg_size = stunEncodeMessage(req_bind, m, 
-			STUN_MAX_MESSAGE_SIZE, stun_null_str, false);
-			
+
 		try {
-			sock.send(m, msg_size);
+			sock.send(req_msg, req_msg_size);
 		}
 		catch (int err) {
 			// Socket error (probably ICMP error)
@@ -137,8 +137,9 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 		}
 			
 		// A message has been received
+		int resp_msg_size;
 		try {
-			msg_size = sock.recv(buf, STUN_MAX_MESSAGE_SIZE + 1);
+			resp_msg_size = sock.recv(buf, STUN_MAX_MESSAGE_SIZE + 1);
 		}
 		catch (int err) {
 			// Socket error (probably ICMP error)
@@ -161,10 +162,11 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 			
 		StunMessage resp_bind;
 		
-		if (!stunParseMessage(buf, msg_size, resp_bind, false)) {
+		if (!stunParseMessage(buf, resp_msg_size, resp_bind, false)) {
 			log_file->write_report(
 				"Received faulty STUN message", "::get_stun_binding", 
 					LOG_STUN);
+			num_transmissions++;
 			if (wait_intval < DUR_STUN_MAX_INTVAL) {
 				wait_intval *= 2;
 			}
@@ -182,12 +184,13 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 		
 		// Check if id in msgHdr matches
 		if (!stunEqualId(resp_bind, req_bind)) {
+			num_transmissions++;
 			if (wait_intval < DUR_STUN_MAX_INTVAL) {
 				wait_intval *= 2;
 			}
 			continue;
-		}	
-			
+		}
+				
 		if (resp_bind.msgHdr.msgType == BindResponseMsg && 
 		    resp_bind.hasMappedAddress) {
 		    	// Bind response received
@@ -484,7 +487,7 @@ void t_stun_transaction::process_icmp(const t_icmp_msg &icmp) {
 
 void t_stun_transaction::timeout(t_stun_timer t) {
 	// RFC 3489 9.3
-	if (num_transmissions < MAX_STUN_TRANSMISSIONS) {
+	if (num_transmissions < STUN_MAX_TRANSMISSIONS) {
 		retransmit();
 		start_timer_req_timeout();
 		return;

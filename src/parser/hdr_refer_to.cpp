@@ -58,6 +58,17 @@ string t_hdr_refer_to::encode(void) const {
 		s = "Refer-To: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_refer_to::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	if (display.size() > 0) {
 		s += '"';
 		s += display;
@@ -70,7 +81,15 @@ string t_hdr_refer_to::encode(void) const {
 	s += '>';
 
 	s += param_list2str(params);
-	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_refer_to::encode_env(void) const {
+	string s;
+	
+	s = "SIP_REFER_TO=";
+	s += encode_value();
+	
 	return s;
 }

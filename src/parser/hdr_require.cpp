@@ -48,6 +48,16 @@ string t_hdr_require::encode(void) const {
 	if (!populated) return s;
 
 	s = "Require: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_require::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<string>::const_iterator i = features.begin();
 	     i != features.end(); i++)
@@ -56,7 +66,15 @@ string t_hdr_require::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_require::encode_env(void) const {
+	string s;
+	
+	s = "SIP_REQUIRE=";
+	s += encode_value();
+	
 	return s;
 }
 

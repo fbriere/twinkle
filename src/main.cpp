@@ -175,7 +175,8 @@ main(int argc, char *argv[]) {
 
 	// Create a lock file to guarantee that the application
 	// runs only once.
-	if (!sys_config->create_lock_file(error_msg)) {
+	bool already_running;
+	if (!sys_config->create_lock_file(error_msg, already_running)) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
 	}

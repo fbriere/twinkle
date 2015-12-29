@@ -3,18 +3,22 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile
 
 DEFINES	+= QT_NO_STL
 
 INCLUDEPATH	+= ..
 
 HEADERS	+= gui.h \
-	historylistview.h
+	historylistview.h \
+	freedesksystray.h \
+	twinklesystray.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
-	historylistview.cpp
+	historylistview.cpp \
+	freedesksystray.cpp \
+	twinklesystray.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -37,7 +41,6 @@ FORMS	= mphoneform.ui \
 	selectuserform.ui
 
 IMAGES	= images/filenew \
-	images/fileopen \
 	images/filesave \
 	images/print \
 	images/undo \
@@ -127,7 +130,30 @@ IMAGES	= images/filenew \
 	images/sys_hold_dis.png \
 	images/sys_mute.png \
 	images/sys_mute_dis.png \
-	images/network.png
+	images/network.png \
+	images/knotify.png \
+	images/fileopen.png \
+	images/fileopen-disabled.png \
+	images/edit.png \
+	images/cf.png \
+	images/auto_answer.png \
+	images/auto_answer-disabled.png \
+	images/cancel-disabled.png \
+	images/cf-disabled.png \
+	images/missed-disabled.png \
+	images/missed.png \
+	images/sys_missed.png \
+	images/sys_missed_dis.png \
+	images/twinkle16-disabled.png \
+	images/gear.png \
+	images/reg_failed-disabled.png \
+	images/reg_failed.png \
+	images/no-indication.png \
+	images/contexthelp.png \
+	images/settings.png \
+	images/reg-query.png \
+	images/log_small.png \
+	images/qt-logo.png
 
 unix {
   UI_DIR = .ui

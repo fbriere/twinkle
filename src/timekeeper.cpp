@@ -218,6 +218,7 @@ string t_tmr_line::get_name(void) const {
 	case LTMR_RE_INVITE_GUARD:	return "LTMR_RE_INVITE_GUARD";
 	case LTMR_100REL_TIMEOUT:	return "LTMR_100REL_TIMEOUT";
 	case LTMR_100REL_GUARD:		return "LTMR_100REL_GUARD";
+	case LTMR_CANCEL_GUARD:		return "LTMR_CANCEL_GUARD";
 	}
 
 	return "UNKNOWN";

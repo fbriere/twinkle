@@ -18,6 +18,7 @@
 
 #include <cstdio>
 #include <cerrno>
+#include <sys/un.h>
 #include "twinkle_config.h"
 #include "socket.h"
 
@@ -33,11 +34,20 @@
 #include <linux/errqueue.h>
 #endif
 
+/////////////////
+// t_icmp_msg
+/////////////////
+
 t_icmp_msg::t_icmp_msg(short _type, short _code, unsigned long _icmp_src_ipaddr,
 	unsigned long _ipaddr, unsigned short _port) :
 		type(_type), code(_code), icmp_src_ipaddr(_icmp_src_ipaddr),
 		ipaddr(_ipaddr), port(_port)
 {}
+
+/////////////////
+// t_socket_udp
+/////////////////
+
 
 t_socket_udp::t_socket_udp() {
 	struct sockaddr_in addr;
@@ -230,4 +240,82 @@ string h_ip2str(unsigned long ipaddr) {
 		ipbuf[3]);
 
 	return string(buf);
+}
+
+/////////////////
+// t_socket_local
+/////////////////
+
+t_socket_local::t_socket_local() {
+	sd = socket(PF_LOCAL, SOCK_STREAM, 0);
+	if (sd < 0) throw errno;
+}
+
+t_socket_local::t_socket_local(int _sd) {
+	sd = _sd;
+}
+
+t_socket_local::~t_socket_local() {
+	close(sd);
+}
+
+void t_socket_local::bind(const string &name) {
+	int ret;
+	struct sockaddr_un sockname;
+	
+	// A name for a local socket can be at most 108 characters
+	// including NULL at end of string.
+	if (name.size() > 107) {
+		throw ENAMETOOLONG;
+	}
+	
+	sockname.sun_family = AF_LOCAL;
+	strcpy(sockname.sun_path, name.c_str());
+	ret = ::bind(sd, (struct sockaddr *)&sockname, SUN_LEN(&sockname));
+	if (ret < 0) throw errno;
+}
+
+void t_socket_local::listen(int backlog) {
+	int ret;
+	ret = ::listen(sd, backlog);
+	if (ret < 0) throw errno;
+}
+
+int t_socket_local::accept(void) {
+	int ret;
+	ret = ::accept(sd, NULL, 0);
+	if (ret < 0) throw errno;
+	return ret;
+}
+
+void t_socket_local::connect(const string &name) {
+	int ret;
+	struct sockaddr_un sockname;
+
+	// A name for a local socket can be at most 108 characters
+	// including NULL at end of string.
+	if (name.size() > 107) {
+		throw ENAMETOOLONG;
+	}
+	
+	sockname.sun_family = AF_LOCAL;
+	strcpy(sockname.sun_path, name.c_str());
+	ret = ::connect(sd, (struct sockaddr *)&sockname, SUN_LEN(&sockname));
+	if (ret < 0) throw errno;
+}
+
+int t_socket_local::read(void *buf, int count) {
+	int ret;
+	
+	ret = ::read(sd, buf, count);
+	if (ret < 0) throw errno;
+	return ret;
+}
+
+int t_socket_local::write(void *buf, int count) {
+	int ret;
+	
+	ret = ::write(sd, buf, count);
+	if (ret < 0) throw errno;
+	return ret;	
 }

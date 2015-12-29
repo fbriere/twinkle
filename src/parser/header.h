@@ -35,6 +35,17 @@ public:
 
 	// Return the text encoded header (CRLF at end of string)
 	virtual string encode(void) const = 0;
+	
+	// Return the text encoded value part (no CRLF at end of string)
+	virtual string encode_value(void) const = 0;
+	
+	// Return a environemnt variable setting
+	// The format of the setting is:
+	//
+	// SIP_<header name>=<value>
+	//
+	// The header name is in capitals. Dashes are replaced by underscores.
+	virtual string encode_env(void) const = 0;
 
 	// Get text encoding of the header value only.
 	// I.e. without header name and no trailing CRLF

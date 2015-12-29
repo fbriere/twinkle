@@ -264,6 +264,9 @@
                     <property name="accel">
                         <string>Alt+C</string>
                     </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
                     <property name="whatsThis" stdset="0">
                         <string>Close this window.</string>
                     </property>
@@ -367,6 +370,7 @@
     <slot>loadHistory()</slot>
     <slot>update()</slot>
     <slot>show()</slot>
+    <slot>closeEvent( QCloseEvent * e )</slot>
     <slot>showCallDetails( QListViewItem * item )</slot>
     <slot>popupMenu( QListViewItem * item, const QPoint &amp; pos )</slot>
     <slot>call( QListViewItem * item )</slot>

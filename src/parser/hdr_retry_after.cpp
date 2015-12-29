@@ -51,7 +51,18 @@ string t_hdr_retry_after::encode(void) const {
 	if (!populated) return s;
 
 	s = "Retry-After: ";
-	s += ulong2str(time);
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_retry_after::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = ulong2str(time);
 
 	if (comment.size() > 0) {
 		s += " (";
@@ -65,6 +76,15 @@ string t_hdr_retry_after::encode(void) const {
 	}
 
 	s += param_list2str(params);
-	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_retry_after::encode_env(void) const {
+	string s;
+	
+	s = "SIP_RETRY_AFTER=";
+	s += encode_value();
+	
 	return s;
 }

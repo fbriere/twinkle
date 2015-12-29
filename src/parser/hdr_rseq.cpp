@@ -34,8 +34,24 @@ string t_hdr_rseq::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "RSeq: " + ulong2str(resp_nr);
+	s = "RSeq: ";
+	s += encode_value();
 	s += CRLF;
+	return s;
+}
+
+string t_hdr_rseq::encode_value(void) const {
+	if (!populated) return "";
+
+	return ulong2str(resp_nr);
+}
+
+string t_hdr_rseq::encode_env(void) const {
+	string s;
+	
+	s = "SIP_RSEQ=";
+	s += encode_value();
+	
 	return s;
 }
 

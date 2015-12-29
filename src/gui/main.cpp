@@ -32,7 +32,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <unistd.h>
 #include "call_history.h"
+#include "cmd_socket.h"
 #include "events.h"
 #include "listener.h"
 #include "log.h"
@@ -123,6 +125,9 @@ t_sys_settings		*sys_config;
 // Call history
 t_call_history		*call_history;
 
+// SIP URI to be called passed via the --call command line parameter
+QString			callto_destination;
+
 // Thread id of main thread
 pthread_t		thread_id_main;
 
@@ -154,6 +159,13 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << " -i <IP addr>";
 			cout << "\tIf you have multiple IP addresses on your computer,\n";
 			cout << "\t\tthen you can supply the IP address to use here.\n";
+			cout << endl;
+			cout << " --call <address>\n";
+			cout << "\t\tInstruct Twinkle to call the address.\n";
+			cout << "\t\tWhen Twinkle is already running, this will instruct the running\n";
+			cout << "\t\tprocess to call the address.\n";
+			cout << "\t\tThe address may be a full or partial SIP URI. A partial SIP URI\n";
+			cout << "\t\twill be completed with the information from the user profile.\n";
 			cout << endl;
 			cout << " --version";
 			cout << "\tGet version information.\n";
@@ -209,6 +221,16 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				cout << "IP address missing for option '-i'.\n";
 				exit(0);
 			}
+		} else if (strcmp(argv[i], "--call") == 0) {
+			if (i < argc - 1) {
+				i++;
+				// SIP URI
+				callto_destination = argv[i];
+			} else {
+				cout << argv[0] << ": ";
+				cout << "SIP URI missing for option '--call'.\n";
+				exit(0);
+			}
 		} else {
 			cout << argv[0] << ": ";
 			cout << "Uknown option '" << argv[i] << "'." << endl;
@@ -227,7 +249,9 @@ int main( int argc, char ** argv )
 	bool cli_mode;
 	list<string> config_files;
 	
+	// Initialize globals
 	end_app = false;
+	callto_destination = "";
 	
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
@@ -277,9 +301,37 @@ int main( int argc, char ** argv )
 	// Parse command line arguments
 	parse_main_args(argc, argv, cli_mode, config_files);
 	
+	// Checking the environment and creating the lock is done at
+	// this early stage to improve performance of the --call parameter.
+	// Creation of the QApplication object for the GUI is slow.
+	// However for errors, the user interface must be created to give
+	// either a message box or text formatted error.
+	
+	// Check requirements on environment
+	// If check fails, then display error after user interface has been
+	// created.
+	string env_error_msg;
+	bool env_check_ok = sys_config->check_environment(env_error_msg);
+	
+	// Create a lock file to guarantee that the application runs only once.
+	bool already_running;
+	bool lock_created;
+	string lock_error_msg;	
+	if (env_check_ok &&
+	    !(lock_created = sys_config->create_lock_file(lock_error_msg, already_running))) 
+	{
+		// If Twinkle is running already and the --call parameter
+		// is present, then send the call destination to the running
+		// Twinkle process.
+		if (already_running && !callto_destination.isEmpty()) {
+			cmd_call(callto_destination.ascii());
+			exit(0);
+		}
+	}
+	
 	// Read system configuration
 	if (!sys_config->read_config(error_msg)) {
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		cerr << PRODUCT_NAME << ": " << error_msg << endl;
 		exit(1);
 	}
 	
@@ -337,17 +389,15 @@ int main( int argc, char ** argv )
 		MEMMAN_NEW(ui);
 	}
 	
-	// Check requirements on environment
-	if (!sys_config->check_environment(error_msg)) {
+	if (!env_check_ok) {
 		// Environment is not good
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		ui->cb_show_msg(env_error_msg, MSG_CRITICAL);
 		exit(1);
 	}
 	
-	// Create a lock file to guarantee that the application
-	// runs only once.
-	if (!sys_config->create_lock_file(error_msg)) {
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+	// Show error if lock file could not be created
+	if (!lock_created) {	
+		ui->cb_show_msg(lock_error_msg, MSG_CRITICAL);
 		exit(1);
 	}
 	
@@ -485,6 +535,41 @@ int main( int argc, char ** argv )
 	{
 		ui->cb_show_msg(*i, MSG_WARNING);
 	}
+	
+	// Open socket for external commands from the command line
+	string cmd_sock_name = sys_config->get_dir_user();
+	cmd_sock_name += '/';
+	cmd_sock_name += CMD_SOCKNAME;
+	t_socket_local *sock_cmd = NULL;
+	try {
+
+		
+		// The local socket may still exist if Twinkle got killed
+		// previously, so remove it if it is still there.
+		unlink(cmd_sock_name.c_str());
+		
+		sock_cmd = new t_socket_local();
+		MEMMAN_NEW(sock_cmd);
+		sock_cmd->bind(cmd_sock_name);
+		sock_cmd->listen(5);
+		
+		string log_msg = "Created local socket: ";
+		log_msg += cmd_sock_name;
+		log_file->write_report(log_msg, "::main");
+	}
+	catch (int e) {
+		if (sock_cmd) {
+			MEMMAN_DELETE(sock_cmd);
+			delete sock_cmd;
+			sock_cmd = NULL;
+		}
+		string log_msg = "Failed to create local socket: ";
+		log_msg += cmd_sock_name;
+		log_msg += "\n";
+		log_msg += strerror(e);
+		log_msg += "\n";
+		log_file->write_report(log_msg, "::main", LOG_NORMAL, LOG_WARNING);
+	}
 				 
 	// Create threads
 	t_thread *thr_sender_udp;
@@ -493,6 +578,7 @@ int main( int argc, char ** argv )
 	t_thread *thr_signal_catcher;
 	t_thread *thr_trans_mgr;
 	t_thread *thr_phone_uas;
+	t_thread *thr_listen_cmd = NULL;
 	
 	try {
 		// UDP sender thread
@@ -520,6 +606,12 @@ int main( int argc, char ** argv )
 		// Phone thread (UAS)
 		thr_phone_uas = new t_thread(phone_uas_main, NULL);
 		MEMMAN_NEW(thr_phone_uas);
+		
+		// External command listener thread
+		if (sock_cmd) {
+			thr_listen_cmd = new t_thread(listen_cmd, sock_cmd);
+			MEMMAN_NEW(thr_listen_cmd);
+		}
 	} catch (int) {
 		string msg = "Failed to create threads.";
 		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
@@ -550,6 +642,11 @@ int main( int argc, char ** argv )
 	end_app = true;
 	
 	// Terminate threads
+	if (thr_listen_cmd) {
+		thr_listen_cmd->cancel();
+		thr_listen_cmd->join();
+	}
+	
 	thr_phone_uas->cancel();
 	thr_phone_uas->join();
 	thr_trans_mgr->cancel();
@@ -566,6 +663,11 @@ int main( int argc, char ** argv )
 	thr_listen_udp->join();
 	thr_sender_udp->cancel();
 	thr_sender_udp->join();
+	
+	if (thr_listen_cmd) {
+		MEMMAN_DELETE(thr_listen_cmd);
+		delete thr_listen_cmd;
+	}
 
 	MEMMAN_DELETE(thr_phone_uas);
 	delete thr_phone_uas;
@@ -593,6 +695,12 @@ int main( int argc, char ** argv )
 	
 	MEMMAN_DELETE(sip_socket);
 	delete sip_socket;
+	
+	if (sock_cmd) {
+		MEMMAN_DELETE(sock_cmd);
+		delete sock_cmd;
+		unlink(cmd_sock_name.c_str());
+	}
 
 	MEMMAN_DELETE(phone);
 	delete phone;

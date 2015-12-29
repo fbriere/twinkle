@@ -48,6 +48,8 @@ public:
 	void add_param(const t_info_param &p);
 
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

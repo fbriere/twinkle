@@ -43,8 +43,9 @@ public:
 	string get_ip_netmask(void) const;
 };
 
-// Return a list of all interfaces that are UP and not LOOPBACK
-list<t_interface> *get_interfaces(void);
+// Return a list of all interfaces that are UP
+// If include_loopback == true, then the loopback interface is returned as well.
+list<t_interface> *get_interfaces(bool include_loopback = false);
 
 // Check if an interface with a certain IP address exists
 bool exists_interface(const string &hostname);

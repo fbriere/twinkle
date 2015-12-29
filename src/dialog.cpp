@@ -1380,6 +1380,9 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 
 		break;
 	case R_2XX:
+		// Stop cancel guard timer if it was running
+		line->stop_timer(LTMR_CANCEL_GUARD, get_id());
+	
 		// Success received.
 		ack_2xx_invite(r);
 
@@ -1410,6 +1413,9 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	case R_5XX:
 	case R_6XX:
 	default:
+		// Stop cancel guard timer if it was running
+		line->stop_timer(LTMR_CANCEL_GUARD, get_id());
+	
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
@@ -1423,6 +1429,27 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	// Notify progress to the referror if this is a referred call
 	if (is_referred_call) {
 		get_phone()->notify_refer_progress(r, line->get_line_number());
+	}
+}
+
+void t_dialog::state_w4invite_resp(t_line_timer timer) {
+	switch (timer) {
+	case LTMR_CANCEL_GUARD:
+		log_file->write_report("Timer LTMR_CANCEL_GUARD expired.",
+				"t_dialog::state_w4invite_resp", LOG_NORMAL, LOG_WARNING);
+	
+		// CANCEL has been responded to, but 487 on INVITE was never
+		// received. Abort the INVITE transaction.
+		if (req_out_invite) {
+			t_tid _tid = req_out_invite->get_tid();
+			if (_tid > 0) {
+				evq_trans_mgr->push_abort_trans(_tid);
+			}
+		}
+		break;
+	default:
+		// Ignore other timeouts
+		break;
 	}
 }
 
@@ -1464,6 +1491,9 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 
 		break;
 	case R_2XX:
+		// Stop cancel guard timer if it was running
+		line->stop_timer(LTMR_CANCEL_GUARD, get_id());
+		
 		// Success received.
 		ack_2xx_invite(r);
 
@@ -1494,6 +1524,9 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	case R_5XX:
 	case R_6XX:
 	default:
+		// Stop cancel guard timer if it was running
+		line->stop_timer(LTMR_CANCEL_GUARD, get_id());
+		
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
@@ -1507,6 +1540,27 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	// Notify progress to the referror if this is a referred call
 	if (is_referred_call) {
 		get_phone()->notify_refer_progress(r, line->get_line_number());
+	}
+}
+
+void t_dialog::state_early(t_line_timer timer) {
+	switch (timer) {
+	case LTMR_CANCEL_GUARD:
+		log_file->write_report("Timer LTMR_CANCEL_GUARD expired.",
+				"t_dialog::state_early", LOG_NORMAL, LOG_WARNING);
+	
+		// CANCEL has been responded to, but 487 on INVITE was never
+		// received. Abort the INVITE transaction.
+		if (req_out_invite) {
+			t_tid _tid = req_out_invite->get_tid();
+			if (_tid > 0) {
+				evq_trans_mgr->push_abort_trans(_tid);
+			}
+		}
+		break;
+	default:
+		// Ignore other timeouts
+		break;
 	}
 }
 
@@ -1744,7 +1798,7 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 			// this cause problems with soundcard access and
 			// showing line status in the GUI. Even though re-INVITE
 			// failed, the RTP still stopped. So simply indicated
-			// the the hold failed, such that a subsequent retrieve
+			// that the hold failed, such that a subsequent retrieve
 			// can simply restart the RTP.
 			hold_failed = true;
 			break;
@@ -1778,9 +1832,18 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 void t_dialog::state_w4re_invite_resp(t_line_timer timer) {
 	switch(timer) {
 	case LTMR_RE_INVITE_GUARD:
-		// Consider this as if a 408 Timeout response has
-		// been received. Terminate the dialog.
-		send_bye();
+		// Abort the INVITE as the user cannot terminate
+		// it in a normal way.
+		if (req_out_invite) {
+			t_tid _tid = req_out_invite->get_tid();
+			if (_tid > 0) {
+				evq_trans_mgr->push_abort_trans(_tid);
+			}
+		} else {
+			// Consider this as if a 408 Timeout response has
+			// been received. Terminate the dialog.
+			send_bye();
+		}
 		break;
 	default:
 		break;
@@ -1883,7 +1946,7 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 	{
 		// There is no SDP and far-end indicated that it is ringing
 		// so generate ring back tone locally.
-		ui->cb_play_ringback();
+		ui->cb_play_ringback(user_config);
 		ringing_received = true;
 	}
 
@@ -2102,6 +2165,7 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 	id_ack_guard = 0;
 	id_re_invite_guard = 0;
 	id_glare_retry = 0;
+	id_cancel_guard = 0;
 
 	// RFC 3262
 	// Timers
@@ -2906,7 +2970,9 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 		if (!req_cancel) return;
 		if (r->is_final()) {
 			remove_client_request(&req_cancel);
-			if (!r->is_success()) {
+			if (r->is_success()) {
+				line->start_timer(LTMR_CANCEL_GUARD, get_id());
+			} else {
 				// CANCEL request failed.
 				ui->cb_cancel_failed(line->get_line_number(), r);
 
@@ -3370,6 +3436,13 @@ bool t_dialog::match_response(t_response *r, t_tuid tuid) {
 		}
 		return false;
 	}
+	
+	// The implementation sends CANCEL on the open dialog.
+	// The tags of a CANCEL response will be identical to the tags of
+	// the INVITE, so it matches all pending dialogs as well.
+	// So a CANCEL should only match if the dialog has a CANCEL request
+	// pending.
+	if (r->hdr_cseq.method == CANCEL && !req_cancel) return false;
 
 	return (call_id == r->hdr_call_id.call_id &&
 		local_tag == r->hdr_from.tag &&
@@ -3450,6 +3523,13 @@ t_dialog_state t_dialog::get_state(void) const {
 
 void t_dialog::timeout(t_line_timer timer) {
 	switch(state) {
+	case DS_W4INVITE_RESP:
+	case DS_W4INVITE_RESP2:
+		state_w4invite_resp(timer);
+		break;
+	case DS_EARLY:
+		state_early(timer);
+		break;
 	case DS_W4ACK:
 		state_w4ack(timer);
 		break;

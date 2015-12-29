@@ -97,6 +97,27 @@ public:
 	bool get_icmp(t_icmp_msg &icmp);
 };
 
+// Local socket
+class t_socket_local {
+private:
+	int	sd;
+	
+public:
+	// Throws an int exception if it fails. The int thrown is the value
+	// of errno as set by 'socket'
+	t_socket_local();
+	
+	t_socket_local(int _sd);
+	~t_socket_local();
+	
+	void bind(const string &name);
+	void listen(int backlog);
+	int accept(void);
+	void connect(const string &name);
+	int read(void *buf, int count);
+	int write(void *buf, int count);
+};
+
 // Convert an IP address in host order to a string.
 string h_ip2str(unsigned long ipaddr);
 

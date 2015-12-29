@@ -46,6 +46,16 @@ string t_hdr_error_info::encode(void) const {
 	if (!populated) return s;
 
 	s += "Error-Info: ";
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_error_info::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_error_param>::const_iterator i = error_param_list.begin();
 	     i != error_param_list.end(); i++)
@@ -54,7 +64,14 @@ string t_hdr_error_info::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
+	return s;
+}
 
+string t_hdr_error_info::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ERROR_INFO=";
+	s += encode_value();
+	
 	return s;
 }

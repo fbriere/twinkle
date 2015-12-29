@@ -158,6 +158,17 @@ string t_hdr_via::encode(void) const {
 		s = "Via: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_via::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	for (list<t_via>::const_iterator i = via_list.begin();
 	     i != via_list.end(); i++)
 	{
@@ -165,7 +176,15 @@ string t_hdr_via::encode(void) const {
 		s += i->encode();
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_via::encode_env(void) const {
+	string s;
+	
+	s = "SIP_VIA=";
+	s += encode_value();
+	
 	return s;
 }
 

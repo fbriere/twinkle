@@ -333,6 +333,8 @@ t_call_history::t_call_history() {
 	filename += USER_DIR;
 	filename += "/";
 	filename += CALL_HISTORY_FILE;
+	
+	num_missed_calls = 0;
 }
 
 void t_call_history::add_call_record(const t_call_record &call_record, bool write) {
@@ -348,6 +350,14 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 	
 	while (call_records.size() > sys_config->ch_max_size) {
 		call_records.pop_front();
+	}
+	
+	// Increment missed calls counter
+	if (call_record.rel_cause == t_call_record::CS_FAILURE && 
+	    call_record.direction == t_call_record::DIR_IN)
+	{
+		++num_missed_calls;
+		ui->cb_missed_call(num_missed_calls);
 	}
 	
 	mtx_ch.unlock();
@@ -441,6 +451,11 @@ bool t_call_history::read_history(string &error_msg) {
 	}
 	
 	mtx_ch.unlock();
+	
+	// Clear the number of missed calls as reading the history
+	// will have increased the number of missed calls for each
+	// record read.
+	clear_num_missed_calls();
 	return true;
 }
 
@@ -507,5 +522,19 @@ void t_call_history::clear(bool write) {
 	}
 	
 	// Update call history in user interface.
-	ui->cb_call_history_updated();		
+	ui->cb_call_history_updated();	
+	
+	clear_num_missed_calls();	
+}
+
+int t_call_history::get_num_missed_calls(void) const {
+	return num_missed_calls;
+}
+
+void t_call_history::clear_num_missed_calls(void) {
+	mtx_ch.lock();
+	num_missed_calls = 0;
+	mtx_ch.unlock();
+	
+	ui->cb_missed_call(0);
 }

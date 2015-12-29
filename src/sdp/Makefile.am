@@ -1,7 +1,7 @@
 INCLUDES = -I $(top_builddir)/src -I $(includedir)
 
 AM_YFLAGS = -p yysdp -d
-AM_LFLAGS = -Pyysdp -olex.yy.c -is
+AM_LFLAGS = -Pyysdp -olex.yy.c -i
 
 # This target is only for testing the parser in isolation
 # noinst_PROGRAMS = sdpparse

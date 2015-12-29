@@ -25,17 +25,15 @@
 */
 
 #include "twinkle_config.h"
+#include "twinklesystray.h"
 
-#ifdef HAVE_KDE
-#include <ksystemtray.h>
-#include <kpopupmenu.h>
-
-#define KSYSTRAY ((KSystemTray *)sysTray)
-
-#endif
+// Time (s) that the conversation timer of a line should stay visible after
+// a call has ended
+#define HIDE_LINE_TIMER_AFTER	5
 
 void MphoneForm::init()
 {
+	// Forms
 	dtmfForm = 0;
 	inviteForm = 0;
 	redirectForm = 0;
@@ -48,71 +46,48 @@ void MphoneForm::init()
 	historyForm = 0;
 	selectUserForm = 0;
 	selectProfileForm = 0;
+	getAddressForm = 0;
 	sysTray = 0;
 	
+	// Line timers
+	lineTimer1 = 0;
+	lineTimer2 = 0;
+	timer1TextLabel->hide();
+	timer2TextLabel->hide();
+	
+	// Timer to hide the conversation timer after a conversation has ended.
+	hideLineTimer1 = new QTimer(this);
+	MEMMAN_NEW(hideLineTimer1);
+	hideLineTimer2 = new QTimer(this);
+	MEMMAN_NEW(hideLineTimer2);
+	connect(hideLineTimer1, SIGNAL(timeout()), timer1TextLabel, SLOT(hide()));
+	connect(hideLineTimer2, SIGNAL(timeout()), timer2TextLabel, SLOT(hide()));
+	
 	// Set toolbar icons for disabled options.
-	QIconSet i;
-	i = callInvite->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("invite-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callInvite->setIconSet(i);
+	setDisabledIcon(callInvite, "invite-disabled.png");
+	setDisabledIcon(callAnswer, "answer-disabled.png");
+	setDisabledIcon(callBye, "bye-disabled.png");
+	setDisabledIcon(callReject, "reject-disabled.png");
+	setDisabledIcon(callRedirect, "redirect-disabled.png");
+	setDisabledIcon(callTransfer, "transfer-disabled.png");
+	setDisabledIcon(callHold, "hold-disabled.png");
+	setDisabledIcon(callConference, "conf-disabled.png");
+	setDisabledIcon(callMute, "mute-disabled.png");
+	setDisabledIcon(callDTMF, "dtmf-disabled.png");
+	setDisabledIcon(callRedial, "redial-disabled.png");
 	
-	i = callAnswer->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("answer-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callAnswer->setIconSet(i);
+	// Set tool button icons for disabled options
+	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
-	i = callBye->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("bye-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callBye->setIconSet(i);
-	
-	i = callReject->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("reject-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callReject->setIconSet(i);
-	
-	i = callRedirect->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("redirect-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callRedirect->setIconSet(i);
-	
-	i = callTransfer->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("transfer-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callTransfer->setIconSet(i);
-	
-	i = callHold->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("hold-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callHold->setIconSet(i);
-	
-	i = callConference->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("conf-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callConference->setIconSet(i);
-	
-	i = callMute->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("mute-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callMute->setIconSet(i);
-	
-	i = callDTMF->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("dtmf-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callDTMF->setIconSet(i);
-	
-	i = callRedial->iconSet();
-	i.setPixmap(QPixmap::fromMimeSource("redial-disabled.png"), 
-		    QIconSet::Automatic, QIconSet::Disabled);
-	callRedial->setIconSet(i);
+#ifndef HAVE_KDE
+	addressToolButton->setEnabled(false);
+#endif
 	
 	// Some text labels on the main window are implemented as QLineEdit
 	// objects as these do not automatically resize when a text set with setText
 	// does not fit. The background of a QLineEdit is static however, it does not
 	// automatically take a background color passed by the -bg parameter.
 	// Set the background color of these QLineEdit objects here.
-	userTextLabel->setPaletteBackgroundColor(paletteBackgroundColor());
 	from1Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	to1Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	subject1Label->setPaletteBackgroundColor(paletteBackgroundColor());
@@ -121,17 +96,21 @@ void MphoneForm::init()
 	subject2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	
 	if (sys_config->gui_use_systray) {
-#ifdef HAVE_KDE
 		// Create system tray icon
-		sysTray = new KSystemTray(this, "twinkle_sys_tray");
+		sysTray = new t_twinkle_sys_tray(this, "twinkle_sys_tray");
 		MEMMAN_NEW(sysTray);
-		KSYSTRAY->setPixmap(
+		sysTray->setPixmap(
 				QPixmap::fromMimeSource("sys_idle_dis.png"));
-		KSYSTRAY->setCaption(PRODUCT_NAME);
+		sysTray->setCaption(PRODUCT_NAME);
 		QToolTip::add(sysTray, PRODUCT_NAME);
 		
 		// Add items to the system tray menu
-		KPopupMenu *menu = KSYSTRAY->contextMenu();
+#ifdef HAVE_KDE
+		KPopupMenu *menu;
+#else
+		QPopupMenu *menu;
+#endif
+		menu = sysTray->contextMenu();
 		
 		// Call menu
 		callInvite->addTo(menu);
@@ -158,11 +137,11 @@ void MphoneForm::init()
 		viewCall_HistoryAction->addTo(menu);
 		
 		// Exit application when user selects Quit from the tray menu
-		connect(KSYSTRAY, SIGNAL(quitSelected()),
+		connect(sysTray, SIGNAL(quitSelected()),
 			this, SLOT(fileExit()));
 		
-		KSYSTRAY->show();
-#endif
+		sysTray->dock();
+		sysTray->show();
 	}
 }
 
@@ -218,10 +197,27 @@ void MphoneForm::destroy()
 		MEMMAN_DELETE(selectProfileForm);
 		delete selectProfileForm;
 	}
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
 	if (sysTray) {
 		MEMMAN_DELETE(sysTray);
 		delete sysTray;
 	}
+	
+	if (lineTimer1) {
+		MEMMAN_DELETE(lineTimer1);
+		delete lineTimer1;
+	}
+	if (lineTimer2) {
+		MEMMAN_DELETE(lineTimer2);
+		delete lineTimer2;
+	}
+	MEMMAN_DELETE(hideLineTimer1);
+	delete hideLineTimer1;
+	MEMMAN_DELETE(hideLineTimer2);
+	delete hideLineTimer2;
 }
 
 QString MphoneForm::lineSubstate2str( int line) {
@@ -264,19 +260,6 @@ void MphoneForm::closeEvent( QCloseEvent *e )
 
 void MphoneForm::fileExit()
 {
-	list<t_user *> user_list = phone->ref_users();
-	
-	// De-register all registered users.
-	display("");
-	display("Deregestering phone ...");
-	for (list<t_user *>::iterator i = user_list.begin();
-	     i != user_list.end(); i++)
-	{
-		if (phone->get_is_registered(*i)) {
-			phone->pub_registration(*i, REG_DEREGISTER);
-		}
-	}
-	
 	QApplication::exit(0);
 }
 
@@ -292,6 +275,118 @@ void MphoneForm::display( const QString &s )
 	
 	// Set cursor position at the end of text
 	displayTextEdit->setCursorPosition(displayTextEdit->paragraphs() - 1, 0);
+}
+
+// Print message header on display
+void MphoneForm::displayHeader()
+{
+	display("");
+	display(current_time2str("%a %H:%M:%S").c_str());
+}
+
+// Update the conversation timer
+void MphoneForm::showLineTimer(int line)
+{
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	
+	QLabel *timerLabel;
+	
+	if (line == 0) {
+		timerLabel = timer1TextLabel;
+	} else {
+		timerLabel = timer2TextLabel;
+	}
+	
+	// Calculate duration of call
+	t_call_record cr = phone->get_call_hist(line);
+	unsigned long duration = t.tv_sec - cr.time_answer;
+
+	timerLabel->setText(timer2str(duration).c_str());
+}
+
+void MphoneForm::showLineTimer1()
+{
+	showLineTimer(0);
+}
+
+void MphoneForm::showLineTimer2()
+{
+	showLineTimer(1);
+}
+
+// Update visibility of the conversation timer for a line
+// Initialize the timer for a new established call.
+void MphoneForm::updateLineTimer(int line)
+{
+	QLabel *timerLabel;
+	QTimer **timer;
+	QTimer *hideLineTimer;
+	
+	if (line == 0) {
+		timerLabel = timer1TextLabel;
+		timer = &lineTimer1;
+		hideLineTimer = hideLineTimer1;
+	} else {
+		timerLabel = timer2TextLabel;
+		timer = &lineTimer2;
+		hideLineTimer = hideLineTimer2;
+	}
+	
+	t_line_substate line_substate = phone->get_line_substate(line);
+	
+	// Stop hide timer if necessary
+	switch(line_substate) {
+	case LSSUB_IDLE:
+	case LSSUB_RELEASING:
+		// Timer can be shown as long as line is idle or releasing.
+		break;
+	default:
+		// The timer showing the call duration should only stay
+		// for a few seconds as long as the line is idle or being
+		// released.
+		// If a new call arrives on the line, the hide timer should
+		// be stopped, otherwise the timer of the new call will
+		// automatically disappear.
+		if (hideLineTimer->isActive()) {
+			hideLineTimer->stop();
+			if (*timer == NULL) timerLabel->hide();
+		}
+		break;
+	}
+	
+	switch(line_substate) {
+	case LSSUB_ESTABLISHED:
+		// Initialize and show call duration timer
+		if (*timer == NULL) {
+			timerLabel->setText(timer2str(0).c_str());
+			timerLabel->show();
+			*timer = new QTimer(this);
+			MEMMAN_NEW(*timer);
+			
+			if (line == 0) {
+				connect(*timer, SIGNAL(timeout()), this, 
+					SLOT(showLineTimer1()));
+			} else {
+				connect(*timer, SIGNAL(timeout()), this, 
+					SLOT(showLineTimer2()));
+			}
+			
+			// Update timer every 1s
+			(*timer)->start(1000, false);
+		}
+		break;
+	default:
+		// Hide call duration timer
+		if (*timer != NULL) {
+			// Hide the timer after a few seconds
+			hideLineTimer->start(HIDE_LINE_TIMER_AFTER * 1000, true);
+			(*timer)->stop();
+			MEMMAN_DELETE(*timer);
+			*timer = NULL;
+		}
+		break;
+	}
 }
 
 // Update line state and enable/disable buttons depending on state
@@ -315,6 +410,7 @@ void MphoneForm::updateState()
 	refer_state = phone->get_line_refer_state(0);
 	if (refer_state != REFST_NULL) state.append(", transferring");
 	status1TextLabel->setText(state);
+	updateLineTimer(0);
 	
 	// Update status of line 2
 	state = lineSubstate2str(1);
@@ -327,6 +423,7 @@ void MphoneForm::updateState()
 	refer_state = phone->get_line_refer_state(1);
 	if (refer_state != REFST_NULL) state.append(", transferring");
 	status2TextLabel->setText(state);
+	updateLineTimer(1);
 	
 	// Disable/enable controls depending on the active line state
 	t_line_substate line_substate;
@@ -351,8 +448,8 @@ void MphoneForm::updateState()
 	}
 	
 	switch(line_substate) {
-	case LSSUB_IDLE:	
-		callInvite->setEnabled(true);
+	case LSSUB_IDLE:
+		enableCallOptions(true);
 		callAnswer->setEnabled(false);
 		callBye->setEnabled(false);
 		callReject->setEnabled(false);
@@ -365,7 +462,7 @@ void MphoneForm::updateState()
 		callRedial->setEnabled(ui->can_redial());
 		break;
 	case LSSUB_OUTGOING_PROGRESS:
-		callInvite->setEnabled(false);
+		enableCallOptions(false);
 		callAnswer->setEnabled(false);
 		callBye->setEnabled(true);
 		callReject->setEnabled(false);
@@ -378,7 +475,7 @@ void MphoneForm::updateState()
 		callRedial->setEnabled(false);
 		break;
 	case LSSUB_INCOMING_PROGRESS:
-		callInvite->setEnabled(false);
+		enableCallOptions(false);
 		callAnswer->setEnabled(true);
 		callBye->setEnabled(false);
 		callReject->setEnabled(true);
@@ -391,6 +488,7 @@ void MphoneForm::updateState()
 		callRedial->setEnabled(false);
 		break;
 	case LSSUB_ESTABLISHED:
+		enableCallOptions(false);
 		callInvite->setEnabled(false);
 		callAnswer->setEnabled(false);
 		callBye->setEnabled(true);
@@ -433,7 +531,7 @@ void MphoneForm::updateState()
 	case LSSUB_RELEASING:
 		// During dialing, answering and call release no other actions are 
 		// possible
-		callInvite->setEnabled(false);
+		enableCallOptions(false);
 		callAnswer->setEnabled(false);
 		callBye->setEnabled(false);
 		callReject->setEnabled(false);
@@ -446,7 +544,7 @@ void MphoneForm::updateState()
 		callRedial->setEnabled(false);
 		break;
 	default:
-		callInvite->setEnabled(true);
+		enableCallOptions(true);
 		callAnswer->setEnabled(true);
 		callBye->setEnabled(true);
 		callReject->setEnabled(true);
@@ -494,12 +592,20 @@ void MphoneForm::updateState()
 	if (callRedial->isEnabled() && 
 	    ui->get_last_call_info(last_url, last_display, last_subject, &last_user))
 	{
-		QString s = "Call ";
-		s.append(ui->format_sip_address(last_user,
-					last_display, last_url).c_str());
+		QString s = "User: ";
+		s += last_user->get_profile_name().c_str();
+		s += "\nCall: ";
+		s += ui->format_sip_address(last_user,
+					last_display, last_url).c_str();
+
+		if (!last_subject.empty()) {
+			s += "\nSubject: ";
+			s += last_subject.c_str();
+		}
+		
 		callRedial->setToolTip(s);
 	} else {
-		callRedial->setToolTip("Repeat last call invitation");
+		callRedial->setToolTip("Repeat last call");
 	}
 	
 	updateSysTrayStatus();
@@ -510,7 +616,7 @@ void MphoneForm::updateRegStatus()
 {
 	int num_registered = 0;
 	int num_failed = 0;
-	QString toolTip;
+	QString toolTip = "Registration status:\n";
 	
 	// Count number of succesful and failed registrations.
 	// Determine tool tip showing registration details for all users.
@@ -518,35 +624,42 @@ void MphoneForm::updateRegStatus()
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
 		if (phone->get_is_registered(*i)) {
 			num_registered++;
-			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append((*i)->get_profile_name().c_str());
 			toolTip.append(" - Registered\n");
 		} else if (phone->get_last_reg_failed(*i)) {
 			num_failed++;
-			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append((*i)->get_profile_name().c_str());
 			toolTip.append(" - Failed\n");
 		} else {
-			toolTip.append((*i)->get_display_uri().c_str());
+			toolTip.append((*i)->get_profile_name().c_str());
 			toolTip.append(" - Not registered\n");
 		}
 	}
 	
 	// Set registration status
 	if (num_registered == user_list.size()) {
-		regStatusTextLabel->setText("Registered");
+		// All users are registered
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("twinkle16.png"));
 	} else if (num_failed == user_list.size()) {
-		regStatusTextLabel->setText("<font color=red>Failed</font>");
+		// All users failed to register
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("reg_failed.png"));
 	} else if (num_registered > 0) {
-		regStatusTextLabel->setText("<i>Registered</i>");
+		// Some users are registered
+		statRegLabel->setPixmap(QPixmap::fromMimeSource(
+				"twinkle16-disabled.png"));
 	} else if (num_failed > 0) {
-		regStatusTextLabel->setText("<i>Failed</i>");	
+		// Some users failed, none are registered
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("reg_failed-disabled.png"));
 	} else {
-		regStatusTextLabel->setText("Not registered");
+		// No users are registered, no users failed
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
 	}
 	
-	// Set tool tip with detailed info for multiple users.
-	QToolTip::remove(regStatusTextLabel);
-	if (user_list.size() > 1) {
-		QToolTip::add(regStatusTextLabel, toolTip);
+	// Set tool tip with detailed info.
+	QToolTip::remove(statRegLabel);
+	
+	if (num_registered > 0 || num_failed > 0) {
+		QToolTip::add(statRegLabel, toolTip);
 	}
 	
 	updateSysTrayStatus();
@@ -568,57 +681,87 @@ void MphoneForm::updateServicesStatus()
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
 		if (phone->ref_service(*i)->is_dnd_active()) {
 			num_dnd++;
-			tipDnd.append((*i)->get_display_uri().c_str());
+			tipDnd.append((*i)->get_profile_name().c_str());
 			tipDnd.append("\n");
 		}
 		if (phone->ref_service(*i)->is_cf_active()) {
 			num_cf++;
-			tipCf.append((*i)->get_display_uri().c_str());
+			tipCf.append((*i)->get_profile_name().c_str());
 			tipCf.append("\n");
 		}
 		if (phone->ref_service(*i)->is_auto_answer_active()) {
 			num_auto_answer++;
-			tipAa.append((*i)->get_display_uri().c_str());
+			tipAa.append((*i)->get_profile_name().c_str());
 			tipAa.append("\n");
 		}
 	}
 	
 	// Set service status
-	dndTextLabel->setEnabled(num_dnd > 0);
-	redirectionTextLabel->setEnabled(num_cf > 0);
-	autoAnswerTextLabel->setEnabled(num_auto_answer > 0);
-	
-	// Set font to italic if not all users have a service active.
-	// NOTE: all services have the same type of font.
-	QFont fontNormal = dndTextLabel->font();
-	fontNormal.setItalic(false);
-	QFont fontItalic = dndTextLabel->font();
-	fontItalic.setItalic(true);
-	
-	if (num_dnd == user_list.size() || num_dnd == 0) {
-		dndTextLabel->setFont(fontNormal);
+	if (num_dnd == user_list.size()) {
+		// All users enabled dnd
+		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel.png"));
+	} else if (num_dnd > 0) {
+		// Some users enabled dnd
+		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel-disabled.png"));
 	} else {
-		dndTextLabel->setFont(fontItalic);
+		// No users enabeld dnd
+		statDndLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
 	}
-	if (num_cf == user_list.size() || num_cf == 0) {
-		redirectionTextLabel->setFont(fontNormal);
+	
+	if (num_cf == user_list.size()) {
+		// All users enabled redirecton
+		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf.png"));
+	} else if (num_cf > 0) {
+		// Some users enabled redirection
+		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf-disabled.png"));
 	} else {
-		redirectionTextLabel->setFont(fontItalic);
+		// No users enabled redirection
+		statCfLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
 	}
-	if (num_auto_answer == user_list.size() || num_auto_answer == 0) {
-		autoAnswerTextLabel->setFont(fontNormal);
+	
+	if (num_auto_answer == user_list.size()) {
+		// All users enabled auto answer
+		statAaLabel->setPixmap(QPixmap::fromMimeSource("auto_answer.png"));
+	} else if (num_auto_answer > 0) {
+		// Some users enabled auto answer
+		statAaLabel->setPixmap(QPixmap::fromMimeSource(
+				"auto_answer-disabled.png"));
 	} else {
-		autoAnswerTextLabel->setFont(fontItalic);
+		// No users enabeld auto answer
+		statAaLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
 	}
 	
 	// Set tool tip with detailed info for multiple users.
-	QToolTip::remove(dndTextLabel);
-	QToolTip::remove(redirectionTextLabel);
-	QToolTip::remove(autoAnswerTextLabel);
-	if (user_list.size() > 1) {
-		if (num_dnd > 0) QToolTip::add(dndTextLabel, tipDnd);
-		if (num_cf > 0) QToolTip::add(redirectionTextLabel, tipCf);
-		if (num_auto_answer > 0) QToolTip::add(autoAnswerTextLabel, tipAa);
+	QToolTip::remove(statDndLabel);
+	QToolTip::remove(statCfLabel);
+	QToolTip::remove(statAaLabel);
+
+	if (num_dnd > 0) QToolTip::add(statDndLabel, tipDnd);
+	if (num_cf > 0) QToolTip::add(statCfLabel, tipCf);
+	if (num_auto_answer > 0) QToolTip::add(statAaLabel, tipAa);
+	
+	updateSysTrayStatus();
+}
+
+void MphoneForm::updateMissedCallStatus(int num_missed_calls)
+{
+	QToolTip::remove(statMissedLabel);
+	
+	if (num_missed_calls == 0) {
+		statMissedLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+	} else {
+		statMissedLabel->setPixmap(
+			QPixmap::fromMimeSource("missed.png"));
+		
+		QString tip = "You missed ";
+		tip.append(QString().setNum(num_missed_calls));
+		if (num_missed_calls == 1) {
+			tip.append(" call.\n");
+		} else {
+			tip.append(" calls.\n");
+		}
+		tip.append("Click to see call history for details.");
+		QToolTip::add(statMissedLabel, tip);
 	}
 	
 	updateSysTrayStatus();
@@ -627,7 +770,6 @@ void MphoneForm::updateServicesStatus()
 // Update system tray status
 void MphoneForm::updateSysTrayStatus()
 {
-#ifdef HAVE_KDE
 	QString icon_name;
 	bool cf_active = false;
 	bool dnd_active = false;
@@ -646,6 +788,12 @@ void MphoneForm::updateSysTrayStatus()
 	switch(line_substate) {
 	case LSSUB_IDLE:
 	case LSSUB_SEIZED:
+		// If there are missed calls, then show the missed call icon
+		if (call_history->get_num_missed_calls() > 0) {
+			icon_name = "sys_missed";
+			break;
+		}
+		
 		// If a service is active, then show the service icon
 		user_list = phone->ref_users();
 		for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
@@ -712,8 +860,7 @@ void MphoneForm::updateSysTrayStatus()
 		icon_name += "_dis.png";
 	}
 	
-	KSYSTRAY->setPixmap(QPixmap::fromMimeSource(icon_name));
-#endif
+	sysTray->setPixmap(QPixmap::fromMimeSource(icon_name));
 }
 
 // Update menu status based on the number of active users
@@ -849,14 +996,22 @@ void MphoneForm::phoneInvite(t_user * user_config,
 	} else {
 		inviteForm = new InviteForm(this, "invite", true);
 		MEMMAN_NEW(inviteForm);
-	}
-	
-	connect(inviteForm, 
-		SIGNAL(destination(t_user *, const QString &, const t_url &, 
-				   const QString &)),
-		this, 
-		SLOT(do_phoneInvite(t_user *, const QString &, 
+		
+		// Initialize the destination history list
+		for (int i = callComboBox->count() - 1; i >= 0; i--) {
+			inviteForm->addToInviteComboBox(callComboBox->text(i));
+		}
+		
+		connect(inviteForm, 
+			SIGNAL(destination(t_user *, const QString &, const t_url &, 
+					   const QString &)),
+			this, 
+			SLOT(do_phoneInvite(t_user *, const QString &, 
 				    const t_url &, const QString &)));
+		
+		connect(inviteForm, SIGNAL(raw_destination(const QString &)), 
+			this, SLOT(addToCallComboBox(const QString &)));
+	}
 	
 	inviteForm->show(user_config, dest, subject);
 	updateState();
@@ -864,12 +1019,14 @@ void MphoneForm::phoneInvite(t_user * user_config,
 
 void MphoneForm::phoneInvite(const QString &dest, const QString &subject)
 {
-	phoneInvite(NULL, "", "");
+	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	phoneInvite(user, dest, subject);
 }
 
 void MphoneForm::phoneInvite()
 {
-	phoneInvite("", "");
+	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	phoneInvite(user, "", "");
 }
 
 // Execute the invite action. This slot is connected to the destination
@@ -1205,11 +1362,6 @@ void MphoneForm::editUserProfile()
 		userProfileForm = new UserProfileForm(this, "user profile", true);
 		MEMMAN_NEW(userProfileForm);
 	
-		connect(userProfileForm, 
-			SIGNAL(sipUserChanged(t_user *)),
-			this, 
-			SLOT(displayUser(t_user *)));
-		
 		connect(userProfileForm,
 			SIGNAL(authCredentialsChanged(t_user *, const string&)),
 			this,
@@ -1221,7 +1373,8 @@ void MphoneForm::editUserProfile()
 			SLOT(updateStunSettings(t_user *)));
 	}
 	
-	userProfileForm->show(phone->ref_users());
+	userProfileForm->show(phone->ref_users(), 
+			      userComboBox->currentText());
 }
 
 void MphoneForm::editSysSettings()
@@ -1245,6 +1398,8 @@ void MphoneForm::selectProfile()
 		MEMMAN_NEW(selectProfileForm);
 		connect(selectProfileForm, SIGNAL(selection(const list<string> &)),
 			this, SLOT(newUsers(const list<string> &)));
+		connect(selectProfileForm, SIGNAL(profileRenamed()),
+			this, SLOT(updateUserComboBox()));
 	}
 	
 	selectProfileForm->showForm(this);
@@ -1369,36 +1524,36 @@ void MphoneForm::newUsers(const list<string> &profiles)
 	}
 	progress.setProgress(add_profile_list.size());
 	
-	displayUser(phone->ref_users().front());
+	updateUserComboBox();
 	updateRegStatus();
 	updateServicesStatus();
 	updateSysTrayStatus();
 	updateMenuStatus();
 	updateState();
+	
+	call_history->clear_num_missed_calls();
 }
 
-void MphoneForm::displayUser(t_user *user_config)
+void MphoneForm::updateUserComboBox()
 {
-	QString s;
-	QString toolTip;
+	QString current_user;
 	
-	list<t_user *> user_list = phone->ref_users();
-	if (user_list.size() == 1) {
-		s = user_config->get_display_uri().c_str();
-		toolTip = s;
+	if (userComboBox->count() == 0) {
+		// The last used profile
+		current_user = sys_config->last_used_profile.c_str();
 	} else {
-		s = "Multiple users";
-		
-		// Tool tip shows all users
-		for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
-			toolTip += (*i)->get_display_uri().c_str();
-			toolTip += "\n";
-		}
+		// Keep the current active profile
+		current_user = userComboBox->currentText();
 	}
 	
-	userTextLabel->setText(s);
-	userTextLabel->setCursorPosition(0);
-	QToolTip::add(userTextLabel, toolTip);
+	((t_gui *)ui)->fill_user_combo(userComboBox);
+	
+	// If previous selected user is still active, make it the current user
+	for (int i = 0; i < userComboBox->count(); i++) {
+		if (userComboBox->text(i) == current_user) {
+			userComboBox->setCurrentItem(i);
+		}
+	}
 }
 
 void MphoneForm::updateSipUdpPort()
@@ -1467,8 +1622,184 @@ void MphoneForm::updateCallHistory()
 	if (historyForm) historyForm->update();
 }
 
-QLabel *MphoneForm::getSysTray()
+t_twinkle_sys_tray *MphoneForm::getSysTray()
 {
 	return sysTray;
 }
 
+// Execute call directly from the main window (press call button)
+void MphoneForm::quickCall()
+{
+	string display, dest_str;
+	
+	t_user *from_user = phone->ref_user_profile(
+				userComboBox->currentText().ascii());
+	
+	ui->expand_destination(from_user, 
+			       callComboBox->currentText().stripWhiteSpace().ascii(), 
+			       display, dest_str);
+	t_url dest(dest_str);
+	
+	if (dest.is_valid()) {
+		QString destination = callComboBox->currentText();
+		addToCallComboBox(destination);
+		if (inviteForm) inviteForm->addToInviteComboBox(destination);
+		callComboBox->setFocus();
+		do_phoneInvite(from_user, display.c_str(), dest, "");
+	}
+}
+
+// Add a destination to the list of callComboBox
+void MphoneForm::addToCallComboBox(const QString &destination)
+{
+	callComboBox->insertItem(destination, 0);
+	if (callComboBox->count() > SIZE_REDIAL_LIST) {
+		callComboBox->removeItem(callComboBox->count() - 1);
+	}
+	
+	// Clearing the edit line must be done here as this function is
+	// also called when a call is made through the inviteForm.
+	// The insertItem puts the text also in the edit field. So it must
+	// be cleared here.
+	callComboBox->clearEdit();
+}
+
+void MphoneForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void MphoneForm::selectedAddress(const QString &address)
+{
+	callComboBox->setEditText(address);
+}
+
+// Enable/disable the various call widgets
+void MphoneForm::enableCallOptions(bool enable)
+{
+	// Enable/disable widgets
+	callInvite->setEnabled(enable);
+	callPushButton->setEnabled(enable);
+	callComboBox->setEnabled(enable);
+	
+#ifdef HAVE_KDE
+	addressToolButton->setEnabled(enable);
+#endif
+	
+	// Set focus on callComboBox
+	if (enable) {
+		callComboBox->setFocus();
+	}
+}
+
+void MphoneForm::keyPressEvent(QKeyEvent *e)
+{
+	if (callPushButton->isEnabled()) {
+		// Quick dial
+		switch (e->key()) {
+		case Qt::Key_Return:
+		case Qt::Key_Enter:
+			quickCall();
+			break;
+		default:
+			e->ignore();
+		}
+	} else if (callDTMF->isEnabled()) {
+		// DTMF keys
+		switch (e->key()) {
+		case Qt::Key_1:
+			sendDTMF("1");
+			break;
+		case Qt::Key_2:
+		case Qt::Key_A:
+		case Qt::Key_B:
+		case Qt::Key_C:
+			sendDTMF("2");
+			break;
+		case Qt::Key_3:
+		case Qt::Key_D:
+		case Qt::Key_E:
+		case Qt::Key_F:
+			sendDTMF("3");
+			break;
+		case Qt::Key_4:
+		case Qt::Key_G:
+		case Qt::Key_H:
+		case Qt::Key_I:
+			sendDTMF("4");
+			break;
+		case Qt::Key_5:
+		case Qt::Key_J:
+		case Qt::Key_K:
+		case Qt::Key_L:
+			sendDTMF("5");
+			break;
+		case Qt::Key_6:
+		case Qt::Key_M:
+		case Qt::Key_N:
+		case Qt::Key_O:
+			sendDTMF("6");
+			break;
+		case Qt::Key_7:
+		case Qt::Key_P:
+		case Qt::Key_Q:
+		case Qt::Key_R:
+		case Qt::Key_S:
+			sendDTMF("7");
+			break;
+		case Qt::Key_8:
+		case Qt::Key_T:
+		case Qt::Key_U:
+		case Qt::Key_V:
+			sendDTMF("8");
+			break;
+		case Qt::Key_9:
+		case Qt::Key_W:
+		case Qt::Key_X:
+		case Qt::Key_Y:
+		case Qt::Key_Z:
+			sendDTMF("9");
+			break;
+		case Qt::Key_0:
+		case Qt::Key_Space:
+			sendDTMF("0");
+			break;
+		case Qt::Key_Asterisk:
+			sendDTMF("*");
+			break;
+		case Qt::Key_NumberSign:
+			sendDTMF("#");
+			break;
+		default:
+			e->ignore();
+		}
+	} else {
+		e->ignore();
+	}
+}
+
+void MphoneForm::mouseReleaseEvent(QMouseEvent *e)
+{
+	// Open the history form, when the user clicks on the missed calls
+	// indication.
+	if (e->button() == Qt::LeftButton &&
+	    e->type() == QEvent::MouseButtonRelease &&
+	    statMissedLabel->hasMouse()) 
+	{
+		if (call_history->get_num_missed_calls() > 0) {
+			viewHistory();
+		}
+	} else {
+		e->ignore();
+	}
+}

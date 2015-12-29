@@ -42,6 +42,8 @@ public:
 	void set_method(const string &s);
 
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

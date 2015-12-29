@@ -191,7 +191,6 @@ stunParseMessage( char* buf, unsigned int bufLen, StunMessage& msg, bool verbose
 	
    if (sizeof(StunMsgHdr) > bufLen)
    {
-      clog << "Bad message" << endl;
       return false;
    }
 	

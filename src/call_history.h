@@ -115,6 +115,9 @@ private:
 	
 	list<t_call_record>	call_records;
 	
+	// Number of missed calls since this counter was cleared
+	int		num_missed_calls;
+	
 public:
 	
 	t_call_history();
@@ -136,7 +139,12 @@ public:
 	bool write_history(string &error_msg) const;
 	
 	void get_history(list<t_call_record> &history);
+	
+	// Clear call history file
 	void clear(bool write = true);
+	
+	int get_num_missed_calls(void) const;
+	void clear_num_missed_calls(void);
 };
 
 extern t_call_history *call_history;

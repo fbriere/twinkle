@@ -32,6 +32,8 @@ public:
 	t_hdr_organization();
 	void set_name(const string &n);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

@@ -72,6 +72,8 @@ public:
 	t_contact_param *find_contact(const t_url &u);
 
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

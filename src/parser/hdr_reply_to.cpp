@@ -52,6 +52,16 @@ string t_hdr_reply_to::encode(void) const {
 	if (!populated) return s;
 
 	s = "Reply-To: ";
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_reply_to::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	if (display.size() > 0) {
 		s += '"';
@@ -65,7 +75,15 @@ string t_hdr_reply_to::encode(void) const {
 	s += '>';
 
 	s += param_list2str(params);
-	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_reply_to::encode_env(void) const {
+	string s;
+	
+	s = "SIP_REPLY_TO=";
+	s += encode_value();
+	
 	return s;
 }

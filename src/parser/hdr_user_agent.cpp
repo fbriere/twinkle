@@ -46,7 +46,23 @@ string t_hdr_user_agent::encode(void) const {
 	if (!populated) return s;
 
 	s = "User-Agent: ";
-	s += get_ua_info();
+	s += encode_value();
 	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_user_agent::encode_value(void) const {
+	if (!populated) return "";
+
+	return get_ua_info();
+}
+
+string t_hdr_user_agent::encode_env(void) const {
+	string s;
+	
+	s = "SIP_USER_AGENT=";
+	s += encode_value();
+	
 	return s;
 }

@@ -55,6 +55,17 @@ string t_hdr_supported::encode(void) const {
 		s = "Supported: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_supported::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	for (list<string>::const_iterator i = features.begin();
 	     i != features.end(); i++)
 	{
@@ -62,6 +73,14 @@ string t_hdr_supported::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_supported::encode_env(void) const {
+	string s;
+	
+	s = "SIP_SUPPORTED=";
+	s += encode_value();
+	
 	return s;
 }

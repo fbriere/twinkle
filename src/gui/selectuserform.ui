@@ -161,6 +161,12 @@
         <receiver>SelectUserForm</receiver>
         <slot>clearAll()</slot>
     </connection>
+    <connection>
+        <sender>userListView</sender>
+        <signal>doubleClicked(QListViewItem*)</signal>
+        <receiver>SelectUserForm</receiver>
+        <slot>toggle(QListViewItem*)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>userListView</tabstop>

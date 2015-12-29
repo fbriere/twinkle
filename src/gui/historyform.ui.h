@@ -129,6 +129,8 @@ void HistoryForm::update()
 
 void HistoryForm::show()
 {
+	call_history->clear_num_missed_calls();
+	
 	if (isShown()) {
 		raise();
 		return;
@@ -137,6 +139,12 @@ void HistoryForm::show()
 	loadHistory();
 	QDialog::show();
 	raise();
+}
+
+void HistoryForm::closeEvent( QCloseEvent *e )
+{
+	call_history->clear_num_missed_calls();
+	QDialog::closeEvent(e);
 }
 
 void HistoryForm::showCallDetails(QListViewItem *item)
@@ -160,6 +168,7 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	s += "Call start:<br>";
 	s += "Call answer:<br>";
 	s += "Call end:<br>";
+	s += "Call duration:<br>";
 	s += "Direction:<br>";
 	s += "From:<br>";
 	s += "To:<br>";
@@ -174,14 +183,23 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	
 	// Right column: values
 	s += "<td>";
-	s += time2str(cr.time_start).c_str();
+	s += time2str(cr.time_start, "%d %b %Y %H:%M:%S").c_str();
 	s += "<br>";
 	if (cr.time_answer != 0) {
-		s += time2str(cr.time_answer).c_str();
+		s += time2str(cr.time_answer,  "%d %b %Y %H:%M:%S").c_str();
 	}
 	s += "<br>";
-	s += time2str(cr.time_end).c_str();
+	s += time2str(cr.time_end, "%d %b %Y %H:%M:%S").c_str();
 	s += "<br>";
+	
+	s += duration2str((unsigned long)(cr.time_end - cr.time_start)).c_str();
+	if (cr.time_answer != 0) {
+		s += " (conversation: ";
+		s += duration2str((unsigned long)(cr.time_end - cr.time_answer)).c_str();
+		s += ")";
+	}
+	s += "<br>";
+	
 	s += cr.get_direction().c_str();
 	s += "<br>";
 	s += str2html(ui->format_sip_address(user_config, cr.from_display, cr.from_uri).c_str());

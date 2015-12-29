@@ -847,17 +847,6 @@ bool t_userintf::exec_user(const list<string> command_list) {
 }
 
 bool t_userintf::exec_quit(const list<string> command_list) {
-	list<t_user *> user_list = phone->ref_users();
-	
-	// De-register all registered users.
-	for (list<t_user *>::iterator i = user_list.begin();
-	     i != user_list.end(); i++)
-	{
-		if (phone->get_is_registered(*i)) {
-			phone->pub_registration(*i, REG_DEREGISTER);
-		}
-	}
-
 	end_interface = true;
 	return true;
 }
@@ -1418,15 +1407,11 @@ void t_userintf::run(void) {
 	
 	cout << "Local IP:       " << user_host << endl;
 	cout << endl;
+	
+	restore_state();
 
-	// Automatic registration at startup if requested
-	for (list<t_user *>::iterator i = user_list.begin();
-	     i != user_list.end(); i++)
-	{
-		if ((*i)->register_at_startup) {
-			phone->pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
-		}
-	}
+	// Initialize phone functions
+	phone->init();
 
 	while (!end_interface) {
 		cout << CLI_PROMPT;
@@ -1437,15 +1422,30 @@ void t_userintf::run(void) {
 			break;
 		}
 	}
+	
+	// Terminate phone functions
+	phone->terminate();
+	
+	save_state();
+	cout << endl;
+}
 
-	// Wait till phone is deregistered.
-	for (list<t_user *>::iterator i = user_list.begin();
-	     i != user_list.end(); i++)
-	{
-		while (phone->get_is_registered(*i)) {
-			sleep(1);
-		}
-	}
+void t_userintf::save_state(void) {
+	string err_msg;
+	
+	sys_config->redial_url = last_called_url;
+	sys_config->redial_display = last_called_display;
+	sys_config->redial_subject = last_called_subject;
+	sys_config->redial_profile = last_called_profile;
+	
+	sys_config->write_config(err_msg);
+}
+
+void t_userintf::restore_state(void) {
+	last_called_url = sys_config->redial_url;
+	last_called_display = sys_config->redial_display;
+	last_called_subject = sys_config->redial_subject;
+	last_called_profile = sys_config->redial_profile;
 }
 
 void t_userintf::lock(void) {
@@ -1546,10 +1546,10 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 	cout.flush();
 
 	// Play ringtone if the call is received on the active line
-	if (line == phone->get_active_line() && 
-	    !phone->ref_service(user_config)->is_auto_answer_active())
+	if (line == phone->get_active_line() &&
+	    !phone->is_line_auto_answered(line))
 	{
-		cb_play_ringtone();
+		cb_play_ringtone(line);
 	}
 }
 
@@ -2015,27 +2015,65 @@ void t_userintf::cb_redirecting_request(t_user *user_config, const t_contact_par
 	cout.flush();
 }
 
-void t_userintf::cb_play_ringtone(void) {
+void t_userintf::cb_play_ringtone(int line) {
+	if (!sys_config->play_ringtone) return;
+
 	if (tone_gen) {
 		tone_gen->stop();
 		MEMMAN_DELETE(tone_gen);
 		delete tone_gen;
 	}
+	
+	// Determine ring tone
+	string ringtone_file = phone->get_ringtone(line);
 
-	tone_gen = new t_tone_gen(FILE_RINGTONE, sys_config->dev_ringtone);
+	tone_gen = new t_tone_gen(ringtone_file, sys_config->dev_ringtone);
 	MEMMAN_NEW(tone_gen);
+	
+	// If ring tone does not exist, then fall back to system default.
+	if (!tone_gen->is_valid() && ringtone_file != FILE_RINGTONE) {
+		MEMMAN_DELETE(tone_gen);
+		delete tone_gen;
+		tone_gen = new t_tone_gen(FILE_RINGTONE, sys_config->dev_ringtone);
+		MEMMAN_NEW(tone_gen);
+	}
+	
+	// Play ring tone
 	tone_gen->start_play_thread(true, INTERVAL_RINGTONE);
 }
 
-void t_userintf::cb_play_ringback(void) {
+void t_userintf::cb_play_ringback(t_user *user_config) {
+	if (!sys_config->play_ringback) return;
+	
 	if (tone_gen) {
 		tone_gen->stop();
 		MEMMAN_DELETE(tone_gen);
 		delete tone_gen;
 	}
+	
+	// Determine ring back tone
+	string ringback_file;
+	if (!user_config->ringback_file.empty()) {
+		ringback_file = user_config->ringback_file;
+	} else if (!sys_config->ringback_file.empty()) {
+		ringback_file = sys_config->ringback_file;
+	} else {
+		// System default
+		ringback_file = FILE_RINGBACK;
+	}
 
-	tone_gen = new t_tone_gen(FILE_RINGBACK, sys_config->dev_speaker);
+	tone_gen = new t_tone_gen(ringback_file, sys_config->dev_speaker);
 	MEMMAN_NEW(tone_gen);
+	
+	// If ring back tone does not exist, then fall back to system default.
+	if (!tone_gen->is_valid() && ringback_file != FILE_RINGBACK) {
+		MEMMAN_DELETE(tone_gen);
+		delete tone_gen;
+		tone_gen = new t_tone_gen(FILE_RINGBACK, sys_config->dev_speaker);
+		MEMMAN_NEW(tone_gen);
+	}
+	
+	// Play ring back tone
 	tone_gen->start_play_thread(true, INTERVAL_RINGBACK);
 }
 
@@ -2281,6 +2319,10 @@ void t_userintf::cb_call_history_updated(void) {
 	// In CLI mode there is no call history viewer.
 }
 
+void t_userintf::cb_missed_call(int num_missed_calls) {
+	// In CLI mode there is no missed call indication.
+}
+
 void t_userintf::cb_nat_discovery_progress_start(int num_steps) {
 	cout << endl;
 	cout << "Firewall/NAT discovery in progress.\n";
@@ -2315,3 +2357,8 @@ bool t_userintf::can_redial(void) const {
 	       phone->ref_user_profile(last_called_profile) != NULL;
 }
 
+void t_userintf::cmd_call(const string &destination) {
+	string s = "invite ";
+	s += destination;
+	exec_command(s);
+}

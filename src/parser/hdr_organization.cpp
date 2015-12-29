@@ -31,6 +31,24 @@ string t_hdr_organization::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "Organization: " + name + CRLF;
+	s = "Organization: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_organization::encode_value(void) const {
+	if (!populated) return "";
+
+	return name;
+}
+
+string t_hdr_organization::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ORGANIZATION=";
+	s += encode_value();
+	
 	return s;
 }

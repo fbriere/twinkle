@@ -181,6 +181,21 @@ string t_request::encode(bool add_content_length) {
 	return s;
 }
 
+list<string> t_request::encode_env(void) {
+	string s;
+	list<string> l = t_sip_message::encode_env();
+	
+	s = "SIPREQUEST_METHOD=";
+	s += method2str(method, unknown_method);
+	l.push_back(s);
+	
+	s = "SIPREQUEST_URI=";
+	s += uri.encode();
+	l.push_back(s);
+	
+	return l;
+}
+
 t_sip_message *t_request::copy(void) const {
 	t_sip_message *m =  new t_request(*this);
 	MEMMAN_NEW(m);
@@ -200,7 +215,8 @@ t_response *t_request::create_response(int code, string reason) const
 	r->hdr_to = hdr_to;
 
 	// Create a to-tag if none was present in the request
-	if (hdr_to.tag.size() == 0) {
+	// NOTE: 100 Trying should not get a to-tag
+	if (hdr_to.tag.size() == 0 && code != R_100_TRYING) {
 		r->hdr_to.set_tag(NEW_TAG);
 	}
 

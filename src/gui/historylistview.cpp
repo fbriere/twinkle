@@ -20,8 +20,9 @@
 #include "util.h"
 
 HistoryListViewItem::HistoryListViewItem( QListView * parent, const t_call_record &cr, QString label2, QString label3, QString label4, QString label5, QString label6, QString label7, QString label8 ) :
-		QListViewItem(parent, time2str(cr.time_start).c_str(), label2, label3,
-			      label4, label5, label6, label7, label8)
+		QListViewItem(parent,
+			      time2str(cr.time_start,  "%d %b %Y %H:%M:%S").c_str(), 
+			      label2, label3, label4, label5, label6, label7, label8)
 {
 	call_record = cr;
 }

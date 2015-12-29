@@ -119,6 +119,22 @@ string t_response::encode(bool add_content_length) {
 	return s;
 }
 
+list<string> t_response::encode_env(void) {
+	string s;
+
+	list<string> l = t_sip_message::encode_env();
+	
+	s = "SIPSTATUS_CODE=";
+	s += int2str(code, "%3d");
+	l.push_back(s);
+	
+	s = "SIPSTATUS_REASON=";
+	s += reason;
+	l.push_back(s);
+	
+	return l;
+}
+
 t_sip_message *t_response::copy(void) const {
 	t_sip_message *m = new t_response(*this);
 	MEMMAN_NEW(m);

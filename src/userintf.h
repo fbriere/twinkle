@@ -134,7 +134,15 @@ public:
 	virtual string format_codec(t_audio_codec codec) const;
 
         bool exec_command(const string &command_line);
+        
+        // Run the user interface
         virtual void run(void);
+        
+        // Save user interface state to system settings
+        virtual void save_state(void);
+        
+        // Restore user interface state from system settings
+        virtual void restore_state(void);
 
 	// Lock the user interface to synchornize output
 	virtual void lock(void);
@@ -184,8 +192,8 @@ public:
 			int line, const t_contact_param &contact);
 	virtual void cb_redirecting_request(t_user *user_config, 
 			const t_contact_param &contact);
-        virtual void cb_play_ringtone(void);
-	virtual void cb_play_ringback(void);
+        virtual void cb_play_ringtone(int line);
+	virtual void cb_play_ringback(t_user *user_config);
         virtual void cb_stop_tone(int line);
 	virtual void cb_dtmf_detected(int line, char dtmf_event);
 	virtual void cb_dtmf_not_supported(int line);
@@ -235,6 +243,7 @@ public:
 	
 	// Call history has been updated
 	virtual void cb_call_history_updated(void);
+	virtual void cb_missed_call(int num_missed_calls);
 	
 	// Show firewall/NAT discovery progress
 	virtual void cb_nat_discovery_progress_start(int num_steps);
@@ -247,6 +256,9 @@ public:
 	virtual bool get_last_call_info(t_url &url, string &display,
 				string &subject, t_user **user_config) const;
 	virtual bool can_redial(void) const;
+	
+	// Execute external commands
+	virtual void cmd_call(const string &destination);
 };
 
 extern t_userintf *ui;

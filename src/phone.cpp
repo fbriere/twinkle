@@ -20,6 +20,7 @@
 #include <iostream>
 #include <signal.h>
 #include "call_history.h"
+#include "call_script.h"
 #include "exceptions.h"
 #include "phone.h"
 #include "line.h"
@@ -80,8 +81,17 @@ void t_phone::end_call(void) {
 	    active_line == line1_3way->get_line_number() ||
 	    active_line == line2_3way->get_line_number()))
 	{
-		line1_3way->end_call();
-		line2_3way->end_call();
+		if (sys_config->hangup_both_3way) {
+			line1_3way->end_call();
+			line2_3way->end_call();
+		} else {
+			// Hangup the active line, and make the next
+			// line active.
+			int l = active_line;
+			activate_line((l+1) % NUM_USER_LINES);
+			lines[l]->end_call();
+		}
+		
 		return;
 	}
 
@@ -188,7 +198,7 @@ void t_phone::activate_line(unsigned short l) {
 	// Play ring tone, if the new active line has an incoming call
 	// in progress.
 	if (get_line(l)->get_substate() == LSSUB_INCOMING_PROGRESS) {
-		ui->cb_play_ringtone();
+		ui->cb_play_ringtone(l);
 	}
 
 	ui->cb_line_state_changed();
@@ -426,16 +436,27 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		resp = r->create_response(R_404_NOT_FOUND);
 		send_response(resp, 0, tid);
 		
-		// Do not create a call history record is this is a misrouted
+		// Do not create a call history record as this is a misrouted
 		// call.
 		
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
 	}
+	
+	// Reject call if phone is not active
+	if (!is_active) {
+		resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+	
+	t_user *user_config = pu->get_user_profile();
 
 	// Check if the far end requires any unsupported extensions
-	if (!pu->get_user_profile()->check_required_ext(r, unsupported))
+	if (!user_config->check_required_ext(r, unsupported))
 	{
 		// Not all required extensions are supported
 		resp = r->create_response(R_420_BAD_EXTENSION);
@@ -453,20 +474,131 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	}
 
 	// RFC 3261 12.2.2
-	// An INVITE with a To-header without a tag is an inital
+	// An INVITE with a To-header without a tag is an initial
 	// INVITE
 	if (r->hdr_to.tag == "") {
+		t_display_url display_url;
 		list<t_display_url> cf_dest; // call forwarding destinations
+		
+		// Call user defineable incoming call script to determine how
+		// to handle this call
+		t_script_result script_result;
+		
+		if (!user_config->script_incoming_call.empty()) {
+			// Send 100 Trying as the script might take a while
+			resp = r->create_response(R_100_TRYING);
+			send_response(resp, 0, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			
+			t_call_script script(user_config->script_incoming_call);
+			script.exec(script_result, user_config, r);
+		}
+		
+		// Perform the action in the script_result.
+		// NOTE: the default action is "continue"
+		switch (script_result.action) {
+		case t_script_result::ACTION_CONTINUE:
+			// Continue with call
+			break;
+		case t_script_result::ACTION_AUTOANSWER:
+			log_file->write_report("Incoming call script action: autoanswer",
+				"t_phone::recvd_invite");
+			break;
+		case t_script_result::ACTION_REJECT:
+			log_file->write_report("Incoming call script action: reject",
+				"t_phone::recvd_invite");
+			resp = r->create_response(R_603_DECLINE, script_result.reason);
+			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+			break;
+		case t_script_result::ACTION_DND:
+			log_file->write_report("Incoming call script action: dnd",
+				"t_phone::recvd_invite");
+			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE, 
+					script_result.reason);
+			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+			break;
+		case  t_script_result::ACTION_REDIRECT:
+			log_file->write_report("Incoming call script action: redirect",
+				"t_phone::recvd_invite");
+			ui->expand_destination(user_config, 
+				script_result.contact, display_url);
+			if (display_url.is_valid()) {
+				cf_dest.clear();
+				cf_dest.push_back(display_url);
+				resp = r->create_response(R_302_MOVED_TEMPORARILY);
+				resp->hdr_contact.set_contacts(cf_dest);
+			} else {
+				log_file->write_report("Invalid redirect contact",
+					"t_phone::recvd_invite",
+					LOG_NORMAL, LOG_WARNING);
+				resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
+			}
+			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+			break;
+		default:
+			log_file->write_report("Error in incoming call script",
+				"t_phone::recvd_invite", LOG_NORMAL, LOG_WARNING);
+			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
+			send_response(resp, 0, tid);
+			
+			// Create a call history record
+			call_record.start_call(r, t_call_record::DIR_IN, 
+				user_config->get_profile_name());
+			call_record.fail_call(resp);
+			call_history->add_call_record(call_record);
+			
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+			break;
+		}		
 
 		// Call forwarding always
-		if (pu->service.get_cf_active(CF_ALWAYS, cf_dest)) {
+		// NOTE: if a call script returned the autoanswer action, then
+		//       call forwarding should be bypassed
+		if (pu->service.get_cf_active(CF_ALWAYS, cf_dest) &&
+		    script_result.action == t_script_result::ACTION_CONTINUE) 
+		{
+			log_file->write_report("Call redirection unconditional",
+				"t_phone::recvd_invite");
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
 			
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				pu->get_user_profile()->get_profile_name());
+				user_config->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 		
@@ -477,13 +609,19 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 
 		// Do not disturb
 		// RFC 3261 21.4.18
-		if (pu->service.is_dnd_active()) {
+		// NOTE: if a call script returned the autoanswer action, then
+		//       do not disturb should be bypassed
+		if (pu->service.is_dnd_active() &&
+		    script_result.action == t_script_result::ACTION_CONTINUE) 
+		{
+			log_file->write_report("Do not disturb",
+				"t_phone::recvd_invite");
 			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
 			send_response(resp, 0, tid);
 
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				pu->get_user_profile()->get_profile_name());
+				user_config->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 			
@@ -494,34 +632,44 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 
 		// Send the INVITE to the active line if it is idle
 		if (lines[active_line]->get_substate() == LSSUB_IDLE) {
-			lines[active_line]->recvd_invite(pu->get_user_profile(), r, tid);
-			
 			// Auto answer
-			if (pu->service.is_auto_answer_active()) {
-				lines[active_line]->answer();
-			}
+			if (pu->service.is_auto_answer_active() ||
+			    script_result.action == t_script_result::ACTION_AUTOANSWER) 
+			{
+				log_file->write_report("Auto answer",
+					"t_phone::recvd_invite");
+				lines[active_line]->set_auto_answer(true);
+			}		
+		
+			lines[active_line]->recvd_invite(user_config, r, tid,
+				script_result.ringtone);
 			
 			return;
 		}
 
-		// Send the INVITE to the first idle unseized line
-		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
-			if (lines[i]->get_substate() == LSSUB_IDLE) {
-				lines[i]->recvd_invite(pu->get_user_profile(), r, tid);
-				return;
+		if (sys_config->call_waiting || all_lines_idle()) {
+			// Send the INVITE to the first idle unseized line
+			for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
+				if (lines[i]->get_substate() == LSSUB_IDLE) {
+					lines[i]->recvd_invite(user_config, r, tid,
+						script_result.ringtone);
+					return;
+				}
 			}
 		}
 
-		// All lines are busy
+		// The phone is busy
 		// Call forwarding busy
 		if (pu->service.get_cf_active(CF_BUSY, cf_dest)) {
+			log_file->write_report("Call redirection busy",
+				"t_phone::recvd_invite");
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
 			
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				pu->get_user_profile()->get_profile_name());
+				user_config->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 			
@@ -535,7 +683,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		
 		// Create a call history record
 		call_record.start_call(r, t_call_record::DIR_IN, 
-			pu->get_user_profile()->get_profile_name());
+			user_config->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 			
@@ -549,7 +697,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	// Find a line that matches the request
 	for (unsigned short i = 0; i < NUM_LINES; i++) {
 		if (lines[i]->match(r)) {
-			lines[i]->recvd_invite(pu->get_user_profile(), r, tid);
+			lines[i]->recvd_invite(user_config, r, tid, "");
 			return;
 		}
 	}
@@ -990,6 +1138,7 @@ void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
 ///////////
 
 t_phone::t_phone() : t_transaction_layer() {
+	is_active = true;
 	active_line = 0;
 
 	// Create phone lines
@@ -1194,6 +1343,22 @@ t_phone_state t_phone::get_state(void) const {
 	return PS_BUSY;
 }
 
+bool t_phone::all_lines_idle(void) const {
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
+		if (lines[i]->get_substate() != LSSUB_IDLE) {
+			self->unlock();
+			return false;
+		}
+	}
+	
+	// All lines are idle
+	self->unlock();
+	return true;
+}
+
 void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
 	lock();
 
@@ -1319,6 +1484,17 @@ bool t_phone::is_line_muted(unsigned short lineno) const {
 	self->unlock();
 	return b;
 }
+
+bool t_phone::is_line_auto_answered(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	bool b = get_line(lineno)->get_auto_answer();
+	self->unlock();
+	return b;
+}
+
 t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
 	t_phone *self = const_cast<t_phone *>(this);
@@ -1537,6 +1713,26 @@ t_call_info t_phone::get_call_info(unsigned short lineno) const {
 	t_call_info call_info = get_line(lineno)->get_call_info();
 	self->unlock();
 	return call_info;
+}
+
+t_call_record t_phone::get_call_hist(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	t_call_record call_hist = get_line(lineno)->call_hist_record;
+	self->unlock();
+	return call_hist;
+}
+
+string t_phone::get_ringtone(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	t_phone *self = const_cast<t_phone *>(this);
+
+	self->lock();
+	string ringtone = get_line(lineno)->get_ringtone();
+	self->unlock();
+	return ringtone;
 }
 
 void t_phone::init_rtp_ports(void) {
@@ -1762,4 +1958,78 @@ t_response *t_phone::create_options_response(t_user *user, t_request *r,
 	unlock();
 	
 	return resp;
+}
+
+void t_phone::init(void) {
+	lock();
+	
+	list<t_user *> user_list = ref_users();
+	
+	// Automatic registration at startup if requested
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
+	{
+		if ((*i)->register_at_startup) {
+			pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
+		}
+	}
+	
+	unlock();
+}
+
+void t_phone::terminate(void) {
+	lock();
+	
+	// Clear all lines
+	for (int i = 0; i < NUM_LINES; i++) {
+		switch (lines[i]->get_substate()) {
+		case LSSUB_IDLE:
+			break;
+		case LSSUB_SEIZED:
+			lines[i]->unseize();
+			break;
+		case LSSUB_INCOMING_PROGRESS:
+			ui->cb_stop_tone(i);
+			lines[i]->reject();
+			break;
+		case LSSUB_OUTGOING_PROGRESS:
+			ui->cb_stop_tone(i);
+			// Fall thru
+		case LSSUB_ANSWERING:
+		case LSSUB_ESTABLISHED:
+			lines[i]->end_call();
+			break;
+		}
+	}
+	
+	// Deactivate phone
+	is_active = false;
+	
+	unlock();
+	
+	// De-register all registered users.
+	list<t_user *> user_list = ref_users();
+	ui->cb_display_msg("Deregistering phone...");
+	for (list<t_user *>::iterator i = user_list.begin();
+	     i != user_list.end(); i++)
+	{
+		if (get_is_registered(*i)) {
+			pub_registration(*i, REG_DEREGISTER);
+		}
+	}
+	
+	// Wait till phone is deregistered.
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
+	{
+		while (get_is_registered(*i)) {
+			sleep(1);
+		}
+	}
+	
+	// Wait till all lines are idle
+	int dur = 0;
+	while (dur < QUIT_IDLE_WAIT) {
+		if (all_lines_idle()) break;
+		sleep(1);
+		dur++;
+	}
 }

@@ -27,6 +27,7 @@
 #include "log.h"
 #include "phone.h"
 #include "user.h"
+#include "userintf.h"
 #include "util.h"
 #include "protocol.h"
 #include "audits/memman.h"
@@ -68,6 +69,7 @@ extern t_phone		*phone;
 #define FLD_ALLOW_MISSING_CONTACT_REG	"allow_missing_contact_reg"	
 #define FLD_REGISTRATION_TIME_IN_CONTACT	"registration_time_in_contact"
 #define FLD_COMPACT_HEADERS		"compact_headers"
+#define FLD_USE_DOMAIN_IN_CONTACT	"use_domain_in_contact"
 #define FLD_ALLOW_REDIRECTION		"allow_redirection"
 #define FLD_ASK_USER_TO_REDIRECT	"ask_user_to_redirect"
 #define FLD_MAX_REDIRECTIONS		"max_redirections"
@@ -89,6 +91,17 @@ extern t_phone		*phone;
 // ADDRESS FORMAT fields
 #define FLD_DISPLAY_USERONLY_PHONE	"display_useronly_phone"
 #define FLD_NUMERICAL_USER_IS_PHONE	"numerical_user_is_phone"
+
+// Ring tone settings
+#define FLD_USER_RINGTONE_FILE		"ringtone_file"
+#define FLD_USER_RINGBACK_FILE		"ringback_file"
+
+// Incoming call script
+#define FLD_SCRIPT_INCOMING_CALL	"script_incoming_call"
+
+/////////////////////////
+// class t_user
+/////////////////////////
 
 ////////////////////
 // Private
@@ -148,20 +161,21 @@ t_user::t_user() {
 	codecs.push_back(SDP_FORMAT_G711_ULAW);
 	codecs.push_back(SDP_FORMAT_GSM);
 	ptime = 20;
-	hold_variant = HOLD_RFC2543;
+	hold_variant = HOLD_RFC3264;
 	use_nat_public_ip = false;
 	use_stun = false;
 	register_at_startup = true;
 	check_max_forwards = false;
 	allow_missing_contact_reg = true;
+	compact_headers = false;
+	registration_time_in_contact = true;
+	use_domain_in_contact = true;
 	allow_redirection = true;
 	ask_user_to_redirect = true;
 	max_redirections = 5;
 	timer_noanswer = 30;
 	timer_nat_keepalive = DUR_NAT_KEEPALIVE;
 	ext_100rel = EXT_SUPPORTED;
-	compact_headers = false;
-	registration_time_in_contact = true;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
 	dtmf_payload_type = 101;
@@ -173,6 +187,9 @@ t_user::t_user() {
 	allow_refer = true;
 	ask_user_to_refer = true;
 	auto_refresh_refer_sub = false;
+	ringtone_file.clear();
+	ringback_file.clear();
+	script_incoming_call.clear();
 }
 
 t_user *t_user::copy(void) const {
@@ -230,7 +247,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		// Skip comment lines
 		if (line[0] == '#') continue;
 
-		list<string> l = split(line, '=');
+		list<string> l = split_on_first(line, '=');
 		if (l.size() != 2) {
 			error_msg = "Syntax error in file ";
 			error_msg += f;
@@ -351,6 +368,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			check_max_forwards = yesno2bool(value);
 		} else if (parameter == FLD_ALLOW_MISSING_CONTACT_REG) {
 			allow_missing_contact_reg = yesno2bool(value);
+		} else if (parameter == FLD_USE_DOMAIN_IN_CONTACT) {
+			use_domain_in_contact = yesno2bool(value);
 		} else if (parameter == FLD_ALLOW_REDIRECTION) {
 			allow_redirection = yesno2bool(value);
 		} else if (parameter == FLD_ASK_USER_TO_REDIRECT) {
@@ -418,6 +437,12 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			display_useronly_phone = yesno2bool(value);
 		} else if (parameter == FLD_NUMERICAL_USER_IS_PHONE) {
 			numerical_user_is_phone = yesno2bool(value);
+		} else if (parameter == FLD_USER_RINGTONE_FILE) {
+			ringtone_file = value;
+		} else if (parameter == FLD_USER_RINGBACK_FILE) {
+			ringback_file = value;
+		} else if (parameter == FLD_SCRIPT_INCOMING_CALL) {
+			script_incoming_call = value;
 		} else {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
@@ -568,6 +593,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_REGISTRATION_TIME_IN_CONTACT << '=';
 	config << bool2yesno(registration_time_in_contact) << endl;
 	config << FLD_COMPACT_HEADERS << '=' << bool2yesno(compact_headers) << endl;
+	config << FLD_USE_DOMAIN_IN_CONTACT << '=';
+	config << bool2yesno(use_domain_in_contact) << endl;
 	config << FLD_ALLOW_REDIRECTION << '=' << bool2yesno(allow_redirection);
 	config << endl;
 	config << FLD_ASK_USER_TO_REDIRECT << '=';
@@ -611,6 +638,16 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_NUMERICAL_USER_IS_PHONE << '=';
 	config << bool2yesno(numerical_user_is_phone) << endl;
 	config << endl;
+	
+	// Write RING TONE settings
+	config << "# RING TONES\n";
+	config << FLD_USER_RINGTONE_FILE << '=' << ringtone_file << endl;
+	config << FLD_USER_RINGBACK_FILE << '=' << ringback_file << endl;
+	config << endl;
+	
+	// Write script settings
+	config << "# SCRIPTS\n";
+	config << FLD_SCRIPT_INCOMING_CALL << '=' << script_incoming_call << endl;
 
 	// Check if writing succeeded
 	if (!config.good()) {
@@ -649,9 +686,34 @@ string t_user::get_profile_name(void) const {
 }
 
 string t_user::get_contact_name(void) const {
+	// Some broken proxies expect the contact name to be the same
+	// as the SIP user name.
+	if (!use_domain_in_contact) return name;
+	
+	// Create a unique contact name from the user name and domain:
+	// 
+	//   username_domain, where all dots in domain are replace
+	//
+	// This way it is possible to activate 2 profiles that have the
+	// same username, but different domains, e.g.
+	//
+	//   michel@domainA
+	//   michel@domainB
+
 	string s = name;
-	s += '.';
-	s += domain;
+	s += '_';
+	
+	// Cut of port and/or uri-parameters if present in domain
+	int i = domain.find_first_of(":;");
+	if (i != string::npos) {
+		// Some broken SIP proxies think that their own address appears
+		// in the contact header when they see the domain in the user part.
+		// By replacing the dots with underscores Twinkle interoperates
+		// with those proxies (yuck).
+		s += replace_char(domain.substr(0, i), '.', '_');
+	} else {
+		s += replace_char(domain, '.', '_');
+	}
 
 	return s;
 }

@@ -163,12 +163,13 @@ public:
 	t_sdp();
 
 	// Create SDP with a single audio media stream
-	t_sdp(string user, string sess_id, string sess_version,
+	t_sdp(string user, string sess_id, string sess_version, string user_host,
 	      string media_host, unsigned short media_port,
 	      list<unsigned short> formats, unsigned short format_dtmf);
 
 	// Create SDP without media streams
-	t_sdp(string user, string sess_id, string sess_version, string media_host);
+	t_sdp(string user, string sess_id, string sess_version, string user_host,
+		string media_host);
 
 	// Add media stream
 	void add_media(const t_sdp_media &m);

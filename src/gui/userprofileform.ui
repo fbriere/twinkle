@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>740</width>
-            <height>653</height>
+            <height>682</height>
         </rect>
     </property>
     <property name="caption">
@@ -19,6 +19,137 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
+        <widget class="QListBox" row="1" column="0">
+            <item>
+                <property name="text">
+                    <string>User</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>penguin.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>SIP server</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>package_network.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>RTP audio</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>kmix.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>SIP protocol</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>package_system.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>NAT</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>yast_babelfish.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Address format</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>yast_PhoneTTOffhook.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Timers</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>clock.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Ring tones</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>knotify.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Scripts</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>edit.png</pixmap>
+                </property>
+            </item>
+            <property name="name">
+                <cstring>categoryListBox</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>1</hsizetype>
+                    <vsizetype>7</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="minimumSize">
+                <size>
+                    <width>150</width>
+                    <height>0</height>
+                </size>
+            </property>
+            <property name="midLineWidth">
+                <number>0</number>
+            </property>
+            <property name="whatsThis" stdset="0">
+                <string>Select a category for which you want to see or modify the settings.</string>
+            </property>
+        </widget>
+        <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout142</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>profileTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>User profile:</string>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <property name="name">
+                        <cstring>profileComboBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Select which profile you want to edit.</string>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
         <widget class="QLayoutWidget" row="2" column="0" rowspan="1" colspan="2">
             <property name="name">
                 <cstring>layout12</cstring>
@@ -1140,7 +1271,7 @@ This field is mandatory.</string>
                             <number>10</number>
                         </property>
                     </widget>
-                    <spacer row="5" column="0" rowspan="1" colspan="2">
+                    <spacer row="4" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>spacer39</cstring>
                         </property>
@@ -1157,7 +1288,7 @@ This field is mandatory.</string>
                             </size>
                         </property>
                     </spacer>
-                    <widget class="QGroupBox" row="4" column="0" rowspan="1" colspan="2">
+                    <widget class="QGroupBox" row="3" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>referGroupBox</cstring>
                         </property>
@@ -1240,7 +1371,7 @@ This field is mandatory.</string>
                             </widget>
                         </vbox>
                     </widget>
-                    <widget class="QGroupBox" row="3" column="0">
+                    <widget class="QGroupBox" row="2" column="0">
                         <property name="name">
                             <cstring>redirectionGroupBox</cstring>
                         </property>
@@ -1337,7 +1468,7 @@ This field is mandatory.</string>
                             </spacer>
                         </grid>
                     </widget>
-                    <widget class="QGroupBox" row="3" column="1">
+                    <widget class="QGroupBox" row="2" column="1">
                         <property name="name">
                             <cstring>sipExtensionsGroupBox</cstring>
                         </property>
@@ -1410,7 +1541,7 @@ This field is mandatory.</string>
                             </widget>
                         </grid>
                     </widget>
-                    <widget class="QGroupBox" row="2" column="0" rowspan="1" colspan="2">
+                    <widget class="QGroupBox" row="1" column="0" rowspan="1" colspan="2">
                         <property name="name">
                             <cstring>optionsGroupBox</cstring>
                         </property>
@@ -1481,20 +1612,6 @@ This field is mandatory.</string>
                                     </size>
                                 </property>
                             </spacer>
-                            <widget class="QCheckBox" row="4" column="0" rowspan="1" colspan="3">
-                                <property name="name">
-                                    <cstring>compactHeadersCheckBox</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Use compact header names</string>
-                                </property>
-                                <property name="accel">
-                                    <string>Alt+U</string>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Indicates if compact header names should be used for headers that have a compact form.</string>
-                                </property>
-                            </widget>
                             <widget class="QCheckBox" row="2" column="0" rowspan="1" colspan="3">
                                 <property name="name">
                                     <cstring>missingContactCheckBox</cstring>
@@ -1507,6 +1624,48 @@ This field is mandatory.</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
                                     <string>A 200 OK response on a REGISTER request must contain a Contact header. Some registrars however, do not include a Contact header or include a wrong Contact header. This option allows for such a deviation from the specs.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
+                                <property name="name">
+                                    <cstring>maxForwardsCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Max-Forwards header is mandatory</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+M</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox" row="5" column="0" rowspan="1" colspan="3">
+                                <property name="name">
+                                    <cstring>useDomainInContactCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Use domain name to create a unique contact header value</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Twinkle creates a unique contact header value by combining the SIP user name and domain:
+&lt;/p&gt;
+&lt;p&gt;
+&lt;tt&gt;&amp;nbsp;user_domain@local_ip&lt;/tt&gt;
+&lt;/p&gt;
+&lt;p&gt;
+This way 2 user profiles, having the same user name but different domain names, have unique contact addresses and hence can be activated simultaneously.
+&lt;/p&gt;
+&lt;p&gt;
+Some proxies do not handle a contact header value like this. You can disable this option to get a contact header value like this:
+&lt;/p&gt;
+&lt;p&gt;
+&lt;tt&gt;&amp;nbsp;user@local_ip&lt;/tt&gt;
+&lt;/p&gt;
+&lt;p&gt;
+This format is what most SIP phones use.
+&lt;/p&gt;</string>
                                 </property>
                             </widget>
                             <widget class="QCheckBox" row="3" column="0" rowspan="1" colspan="3">
@@ -1523,18 +1682,18 @@ This field is mandatory.</string>
                                     <string>In a REGISTER message the expiry time for registration can be put in the Contact header or in the Expires header. If you tick this box it will be put in the Contact header, otherwise it goes in the Expires header.</string>
                                 </property>
                             </widget>
-                            <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
+                            <widget class="QCheckBox" row="4" column="0" rowspan="1" colspan="3">
                                 <property name="name">
-                                    <cstring>maxForwardsCheckBox</cstring>
+                                    <cstring>compactHeadersCheckBox</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>&amp;Max-Forwards header is mandatory</string>
+                                    <string>&amp;Use compact header names</string>
                                 </property>
                                 <property name="accel">
-                                    <string>Alt+M</string>
+                                    <string>Alt+U</string>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</string>
+                                    <string>Indicates if compact header names should be used for headers that have a compact form.</string>
                                 </property>
                             </widget>
                         </grid>
@@ -1996,118 +2155,281 @@ When you choose this option you have to create static address mappings in your N
                     </spacer>
                 </vbox>
             </widget>
-        </widget>
-        <widget class="QListBox" row="1" column="0">
-            <item>
-                <property name="text">
-                    <string>User</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>penguin.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>SIP server</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>package_network.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>RTP audio</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>kmix.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>SIP protocol</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>package_system.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>NAT</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>yast_babelfish.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Address format</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>yast_PhoneTTOffhook.png</pixmap>
-                </property>
-            </item>
-            <item>
-                <property name="text">
-                    <string>Timers</string>
-                </property>
-                <property name="pixmap">
-                    <pixmap>clock.png</pixmap>
-                </property>
-            </item>
-            <property name="name">
-                <cstring>categoryListBox</cstring>
-            </property>
-            <property name="sizePolicy">
-                <sizepolicy>
-                    <hsizetype>1</hsizetype>
-                    <vsizetype>7</vsizetype>
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                </sizepolicy>
-            </property>
-            <property name="minimumSize">
-                <size>
-                    <width>150</width>
-                    <height>0</height>
-                </size>
-            </property>
-            <property name="midLineWidth">
-                <number>0</number>
-            </property>
-            <property name="whatsThis" stdset="0">
-                <string>Select a category for which you want to see or modify the settings.</string>
-            </property>
-        </widget>
-        <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout142</cstring>
-            </property>
-            <hbox>
+            <widget class="QWidget">
                 <property name="name">
-                    <cstring>unnamed</cstring>
+                    <cstring>pageRingTones</cstring>
                 </property>
-                <widget class="QLabel">
+                <attribute name="id">
+                    <number>7</number>
+                </attribute>
+                <vbox>
                     <property name="name">
-                        <cstring>profileTextLabel</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="text">
-                        <string>User profile:</string>
-                    </property>
-                </widget>
-                <widget class="QComboBox">
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>ringtonesTitleTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Ring tones</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout18</cstring>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QToolButton" row="1" column="2">
+                                <property name="name">
+                                    <cstring>openRingbackToolButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                                <property name="iconSet">
+                                    <iconset>fileopen.png</iconset>
+                                </property>
+                            </widget>
+                            <widget class="QToolButton" row="0" column="2">
+                                <property name="name">
+                                    <cstring>openRingtoneToolButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                                <property name="iconSet">
+                                    <iconset>fileopen.png</iconset>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>ringbackTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Ring &amp;back tone:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>ringbackLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="1" column="1">
+                                <property name="name">
+                                    <cstring>ringbackLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Specify the file name of a .wav file that you want to be played as ring back tone for this user.
+&lt;/p&gt;
+&lt;p&gt;
+This ring back tone overrides the ring back tone settings in the system settings.
+&lt;/p&gt;</string>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>ringtoneLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+Specify the file name of a .wav file that you want to be played as ring tone for this user.
+&lt;/p&gt;
+&lt;p&gt;
+This ring tone overrides the ring tone settings in the system settings.
+&lt;/p&gt;</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>ringtoneTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Ring tone:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>ringtoneLineEdit</cstring>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer30</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>391</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageScripts</cstring>
+                </property>
+                <attribute name="id">
+                    <number>8</number>
+                </attribute>
+                <vbox>
                     <property name="name">
-                        <cstring>profileComboBox</cstring>
+                        <cstring>unnamed</cstring>
                     </property>
-                    <property name="sizePolicy">
-                        <sizepolicy>
-                            <hsizetype>7</hsizetype>
-                            <vsizetype>0</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                        </sizepolicy>
-                    </property>
-                </widget>
-            </hbox>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>scriptsTitleTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Scripts</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout17</cstring>
+                        </property>
+                        <hbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel">
+                                <property name="name">
+                                    <cstring>incomingCallScriptTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Incoming call script:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>incomingCallScriptLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit">
+                                <property name="name">
+                                    <cstring>incomingCallScriptLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>&lt;p&gt;
+You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms.
+&lt;/p&gt;
+&lt;p&gt;
+With your script you can customize call handling by outputing one or more of the following parameters to stdout. Each parameter should be on a separate line.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
+reason=&amp;lt;string&amp;gt;&lt;br&gt;
+contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;
+ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;
+&lt;/p&gt;
+&lt;h2&gt;Parameters&lt;/h2&gt;
+&lt;h3&gt;action&lt;/h3&gt;
+&lt;p&gt;
+&lt;b&gt;continue&lt;/b&gt; - continue call handling as usual&lt;br&gt;
+&lt;b&gt;reject&lt;/b&gt; - reject call&lt;br&gt;
+&lt;b&gt;dnd&lt;/b&gt; - deny call with do not disturb indication&lt;br&gt;
+&lt;b&gt;redirect&lt;/b&gt; - redirect call to address specified by &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;
+&lt;b&gt;autoanswer&lt;/b&gt; - automatically answer a call&lt;br&gt;
+&lt;/p&gt;
+&lt;p&gt;
+When the script does not write an action to stdout, then the default action is continue.
+&lt;/p&gt;
+&lt;h3&gt;reason&lt;/h3&gt;
+&lt;p&gt;
+With the reason parameter you can set the reason string for reject or dnd. This might be shown to the far-end user.
+&lt;/p&gt;
+&lt;h3&gt;ringtone&lt;/h3&gt;
+&lt;p&gt;
+The ringtone parameter specifies the .wav file that will be played as ring tone when action is continue.
+&lt;h2&gt;Environment variables&lt;/h2&gt;
+&lt;p&gt;
+The values of all SIP headers in the incoming INVITE message are passed in environment variables to your script. The variable names are formatted as &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; E.g. SIP_FROM contains the value of the from header.
+&lt;/p&gt;
+&lt;p&gt;
+The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</string>
+                                </property>
+                            </widget>
+                            <widget class="QToolButton">
+                                <property name="name">
+                                    <cstring>openIncomingCallScriptToolButton</cstring>
+                                </property>
+                                <property name="text">
+                                    <string></string>
+                                </property>
+                                <property name="iconSet">
+                                    <iconset>fileopen.png</iconset>
+                                </property>
+                            </widget>
+                        </hbox>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer29</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>381</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
         </widget>
     </grid>
 </widget>
@@ -2214,6 +2536,24 @@ When you choose this option you have to create static address mappings in your N
         <receiver>UserProfileForm</receiver>
         <slot>changeProfile(const QString&amp;)</slot>
     </connection>
+    <connection>
+        <sender>openRingtoneToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>chooseRingtone()</slot>
+    </connection>
+    <connection>
+        <sender>openRingbackToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>chooseRingback()</slot>
+    </connection>
+    <connection>
+        <sender>openIncomingCallScriptToolButton</sender>
+        <signal>clicked()</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>chooseIncomingCallScript()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>categoryListBox</tabstop>
@@ -2244,6 +2584,7 @@ When you choose this option you have to create static address mappings in your N
     <tabstop>missingContactCheckBox</tabstop>
     <tabstop>regTimeCheckBox</tabstop>
     <tabstop>compactHeadersCheckBox</tabstop>
+    <tabstop>useDomainInContactCheckBox</tabstop>
     <tabstop>allowRedirectionCheckBox</tabstop>
     <tabstop>askUserRedirectCheckBox</tabstop>
     <tabstop>maxRedirectSpinBox</tabstop>
@@ -2262,8 +2603,12 @@ When you choose this option you have to create static address mappings in your N
     <tabstop>numericalUserIsTelCheckBox</tabstop>
     <tabstop>tmrNoanswerSpinBox</tabstop>
     <tabstop>tmrNatKeepaliveSpinBox</tabstop>
+    <tabstop>ringtoneLineEdit</tabstop>
+    <tabstop>ringbackLineEdit</tabstop>
+    <tabstop>incomingCallScriptLineEdit</tabstop>
     <tabstop>okPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
+    <tabstop>profileComboBox</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in declaration">user.h</include>
@@ -2278,6 +2623,8 @@ When you choose this option you have to create static address mappings in your N
     <include location="local" impldecl="in implementation">protocol.h</include>
     <include location="local" impldecl="in implementation">qmessagebox.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">qfiledialog.h</include>
+    <include location="local" impldecl="in implementation">qfileinfo.h</include>
     <include location="local" impldecl="in implementation">userprofileform.ui.h</include>
 </includes>
 <variables>
@@ -2294,10 +2641,13 @@ When you choose this option you have to create static address mappings in your N
 <slots>
     <slot>showCategory( QListBoxItem * item )</slot>
     <slot>populate()</slot>
-    <slot>initProfileList( list&lt;t_user *&gt; profiles )</slot>
-    <slot>show( list&lt;t_user *&gt; profiles )</slot>
+    <slot>initProfileList( list&lt;t_user *&gt; profiles, QString show_profile_name )</slot>
+    <slot>show( list&lt;t_user *&gt; profiles, QString show_profile )</slot>
     <slot>validate()</slot>
     <slot>changeProfile( const QString &amp; profileName )</slot>
+    <slot>chooseRingtone()</slot>
+    <slot>chooseRingback()</slot>
+    <slot>chooseIncomingCallScript()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
@@ -2305,7 +2655,7 @@ When you choose this option you have to create static address mappings in your N
     <function returnType="short">indexComboItem2codec( int index )</function>
     <function returnType="int">ext_support2indexComboItem( t_ext_support ext )</function>
     <function returnType="t_ext_support">indexComboItem2ext_support( int index )</function>
-    <function returnType="int">exec( list&lt;t_user *&gt; profiles )</function>
+    <function returnType="int">exec( list&lt;t_user *&gt; profiles, QString show_profile )</function>
     <function returnType="bool">validateValues()</function>
 </functions>
 <pixmapinproject/>

@@ -32,6 +32,8 @@ public:
 	t_hdr_mime_version();
 	void set_version(const string &v);
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

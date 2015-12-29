@@ -63,6 +63,17 @@ string t_hdr_from::encode(void) const {
 		s = "From: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_from::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	if (display.size() > 0) {
 		s += '"';
 		s += display;
@@ -80,7 +91,15 @@ string t_hdr_from::encode(void) const {
 	}
 
 	s += param_list2str(params);
-	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_from::encode_env(void) const {
+	string s;
+	
+	s = "SIP_FROM=";
+	s += encode_value();
+	
 	return s;
 }

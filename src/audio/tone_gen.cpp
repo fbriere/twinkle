@@ -39,7 +39,7 @@
 #define NUM_SAMPLES_PER_TURN	1024
 
 // Duration of one turn in ms
-#define DURATION_TURN	(NUM_SAMPLES_PER_TURN * 1000 / wav_format.samples_per_sec)
+#define DURATION_TURN	(NUM_SAMPLES_PER_TURN * 1000 / wav_info.samplerate)
 
 
 // Main function for play thread
@@ -75,9 +75,9 @@ t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) 
 
 	wav_filename = f;
 
-	wav_file = new ifstream(f.c_str());
-	MEMMAN_NEW(wav_file);
-	if (!*wav_file) {
+	memset(&wav_info, 0, sizeof(SF_INFO));
+	wav_file = sf_open(f.c_str(), SFM_READ, &wav_info);
+	if (!wav_file) {
 		string msg("Cannot open ");
 		msg += f;
 		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
@@ -92,95 +92,13 @@ t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) 
 	log_file->write_endl();
 	log_file->write_footer();
 
-	t_iff_header iff_hdr;
-	wav_file->read((char *)&iff_hdr, sizeof(iff_hdr));
-
-	if (strncmp(iff_hdr.id, IFF_ID_RIFF, 4) != 0) {
-		log_file->write_report("This is not a RIFF file.",
-			"t_tone_gen::t_tone_gen", LOG_NORMAL, LOG_WARNING);
-		string msg(f);
-		msg += " is not a valid wav-file.";
-		ui->cb_display_msg(msg, MSG_WARNING);
-		return;
-	}
-
-	if (strncmp(iff_hdr.type, RIFF_TYPE_WAV, 4) != 0) {
-		log_file->write_report("This is not a WAVE file.",
-			"t_tone_gen::t_tone_gen", LOG_NORMAL, LOG_WARNING);
-		string msg(f);
-		msg += " is not a valid wav-file.";
-		ui->cb_display_msg(msg, MSG_WARNING);
-		return;
-	}
-
-	// Find format chunk
-	bool found_fmt_hdr = false;
-	while (!found_fmt_hdr && !wav_file->eof()) {
-		t_chunk_header chunk_hdr;
-
-		wav_file->read((char *)&chunk_hdr, sizeof(chunk_hdr));
-		if (strncmp(chunk_hdr.id, CHK_ID_FMT, 4) != 0) continue;
-		if (chunk_hdr.size != sizeof(wav_format)) {
-			log_file->write_report("Unsupported fmt chunk length.",
-				"t_tone_gen::t_tone_gen",
-				LOG_NORMAL, LOG_WARNING);
-			string msg(f);
-			msg += " has an unsupported wav-format.";
-			ui->cb_display_msg(msg, MSG_WARNING);
-			return;
-		}
-
-		wav_file->read((char *)&wav_format, sizeof(wav_format));
-		if (wav_format.format_tag != FMT_UNCOMPRESSED) {
-			log_file->write_report("Unsupported wav format.",
-				"t_tone_gen::t_tone_gen",
-				LOG_NORMAL, LOG_WARNING);
-			string msg(f);
-			msg += " has an unsupported wav-format.";
-			ui->cb_display_msg(msg, MSG_WARNING);
-			return;
-		}
-
-		found_fmt_hdr = true;
-	}
-
-	if (!found_fmt_hdr) {
-		log_file->write_report("Format chunk missing.",
-			"t_tone_gen::t_tone_gen", LOG_NORMAL, LOG_WARNING);
-		string msg(f);
-		msg += " has an unsupported wav-format.";
-		ui->cb_display_msg(msg, MSG_WARNING);
-		return;
-	}
-
-	// Find data chunk
-	bool found_data_hdr = false;
-	while (!found_data_hdr && !wav_file->eof()) {
-		t_chunk_header chunk_hdr;
-
-		wav_file->read((char *)&chunk_hdr, sizeof(chunk_hdr));
-		if (strncmp(chunk_hdr.id, CHK_ID_DATA, 4) != 0) continue;
-
-		found_data_hdr = true;
-	}
-
-	if (!found_data_hdr) {
-		log_file->write_report("Data chunk missing.",
-			"t_tone_gen::t_tone_gen", LOG_NORMAL, LOG_WARNING);
-		string msg(f);
-		msg += " has an unsupported wav-format.";
-		ui->cb_display_msg(msg, MSG_WARNING);
-		return;
-	}
-
 	valid = true;
 	stop_playing = false;
 }
 
 t_tone_gen::~t_tone_gen() {
 	if (wav_file) {
-		MEMMAN_DELETE(wav_file);
-		delete wav_file;
+		sf_close(wav_file);
 	}
 	if (aio) {
 		MEMMAN_DELETE(aio);
@@ -217,14 +135,8 @@ void t_tone_gen::play(void) {
 		return;
 	}
 
-	t_audio_sampleformat fmt;
-	if(wav_format.bits_per_sample == 8) {
-		fmt = SAMPLEFORMAT_U8;
-	} else {
-		fmt = SAMPLEFORMAT_S16;
-	}
-
-	aio = t_audio_io::open(*dev_tone, true, false, true, wav_format.channels, fmt, wav_format.samples_per_sec, false);
+	aio = t_audio_io::open(*dev_tone, true, false, true, wav_info.channels,
+		SAMPLEFORMAT_S16, wav_info.samplerate, false);
 	if (!aio) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -239,18 +151,20 @@ void t_tone_gen::play(void) {
 		"t_tone_gen::play");
 
 	do {
-		int nbytes = NUM_SAMPLES_PER_TURN * wav_format.block_align;
-		data_buf = new char[nbytes];
+		// Each samples consists of #channels shorts
+		data_buf = new short[NUM_SAMPLES_PER_TURN * wav_info.channels];
 		MEMMAN_NEW_ARRAY(data_buf);
-		unsigned long start_pos = wav_file->tellg();
 
-		bool first_playout = true;
-		while (!wav_file->eof()) {
+		sf_count_t frames_read = NUM_SAMPLES_PER_TURN;
+		while (frames_read == NUM_SAMPLES_PER_TURN) {
 			if (stop_playing) break;
 
 			// Play sample
-			wav_file->read(data_buf, nbytes);
-			aio->write((unsigned char*)data_buf, wav_file->gcount());
+			frames_read = sf_readf_short(wav_file, data_buf, NUM_SAMPLES_PER_TURN);
+			if (frames_read > 0) {
+				aio->write((unsigned char*)data_buf, 
+					frames_read * wav_info.channels * 2);
+			}
 		}
 
 		MEMMAN_DELETE_ARRAY(data_buf);
@@ -263,20 +177,13 @@ void t_tone_gen::play(void) {
 		if (loop) {
 			// Play silence
 			if (pause > 0) {
-				int silence;
-
-				if (wav_format.bits_per_sample == 8) {
-					silence = 128;
-				} else {
-					silence = 0;
-				}
-
-				data_buf = new char[nbytes];
+				data_buf = new short[NUM_SAMPLES_PER_TURN * wav_info.channels];
 				MEMMAN_NEW_ARRAY(data_buf);
-				memset(data_buf, silence, nbytes);
+				memset(data_buf, 0, NUM_SAMPLES_PER_TURN * wav_info.channels * 2);
 
 				for (int i = 0; i < pause; i += DURATION_TURN) {
-					aio->write((unsigned char*)data_buf, nbytes);
+					aio->write((unsigned char*)data_buf, 
+						NUM_SAMPLES_PER_TURN * wav_info.channels * 2);
 					if (stop_playing) break;
 				}
 
@@ -288,11 +195,7 @@ void t_tone_gen::play(void) {
 			if (stop_playing) break;
 
 			// Set file pointer back to start of data
-			MEMMAN_DELETE(wav_file);
-			delete wav_file;
-			wav_file = new ifstream(wav_filename.c_str());
-			MEMMAN_NEW(wav_file);
-			wav_file->seekg(start_pos);
+			sf_seek(wav_file, 0, SEEK_SET);
 		}
 	} while (loop);
 	

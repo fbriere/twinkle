@@ -177,6 +177,17 @@ public:
 	// header must be added. Usually it must, only for sipfrag bodies
 	// it may be omitted.
 	virtual string encode(bool add_content_length = true);
+	
+	// Return list of environment variable settings for all headers
+	// (see header.h for the format)
+	// Besides the header variables the following variables will be
+	// returned as well:
+	//
+	// SIP_REQUEST_METHOD, for a request
+	// SIP_REQUEST_URI, for a request
+	// SIP_STATUS_CODE, for a response
+	// SIP_STATUS_REASON, for a response
+	virtual list<string> encode_env(void);
 
 	// Create a copy of the message
 	virtual t_sip_message *copy(void) const;

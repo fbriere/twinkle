@@ -13,11 +13,13 @@ URL:		http://www.twinklephone.com
 Requires:	commoncpp2 >= 1.3.0 
 Requires:	ccrtp >= 1.3.4
 Requires:	kdelibs3 >= 3.2.0
+Requires:	libsndfile
 BuildRequires:	qt3-devel
 BuildRequires:	update-desktop-files
 BuildRequires:  commoncpp2-devel
 BuildRequires:  ccrtp-devel
 BuildRequires:  kdelibs3-devel
+BuildRequires:	libsndfile-devel
 
 %description
 Twinkle is a SIP based soft phone for making telephone calls
@@ -37,7 +39,7 @@ rm -rf %{buildroot}
 %makeinstall
 install -d 755 %{buildroot}%{_datadir}/pixmaps
 install -m 644 src/gui/images/twinkle48.png %{buildroot}%{_datadir}/pixmaps/twinkle.png
-%suse_update_desktop_file -c twinkle Twinkle "A sip voip phone" twinkle twinkle Network Telephony
+%suse_update_desktop_file -c twinkle Twinkle "A SIP softphone" twinkle twinkle Network Telephony
 
 %clean
 rm -rf %{buildroot}

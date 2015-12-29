@@ -10,8 +10,8 @@ AC_ARG_WITH(kde,
 	AC_HELP_STRING([--without-kde], [do not compile KDE features]),
 	[ac_cv_kde=$withval], [ac_cv_kde=yes])
 
-AM_INIT_AUTOMAKE(twinkle,0.5)
-AC_DEFINE(VERSION_DATE,["January 1 2006"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,0.6.1)
+AC_DEFINE(VERSION_DATE,["February 11 2006"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -115,7 +115,14 @@ else
 	include_x11_FALSE="yes"
 	include_ARTS_FALSE="yes"
 	AC_PREFIX_DEFAULT(${prefix:-/usr/local})
+	AC_CHECK_HEADER(X11/xpm.h, [], [AC_MSG_ERROR([X11/xpm.h missing])])
 fi
+
+# Check if sndfile library is available
+AC_CHECK_LIB(sndfile, sf_open, [], 
+	[AC_MSG_ERROR([libsndfile library is missing.])])
+AC_CHECK_HEADER(sndfile.h, [],
+	[AC_MSG_ERROR([sndfile header files missing (libsndfile-devel package)])])
 
 # Check if ALSA is available
 AC_CHECK_LIB(asound, main, [

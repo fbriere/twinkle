@@ -18,6 +18,7 @@
 
 #include <assert.h>
 #include "line.h"
+#include "phone.h"
 #include "phone_user.h"
 #include "session.h"
 #include "util.h"
@@ -25,6 +26,7 @@
 #include "audits/memman.h"
 
 extern string user_host;
+extern t_phone *phone;
 
 t_session::t_session(t_dialog *_dialog, string _receive_host,
 		  unsigned short _receive_port)
@@ -259,8 +261,8 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 		delete m->body;
 	}
 
-	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, receive_host,
-	                 receive_port, offer_codecs, recv_dtmf_pt);
+	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, USER_HOST(user_config),
+			receive_host, receive_port, offer_codecs, recv_dtmf_pt);
 	MEMMAN_NEW(m->body);
 
 
@@ -295,7 +297,8 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 	// the same order. Media can be rejected by setting the port to 0.
 	// Only the first audio stream is accepted, all other media streams
 	// will be rejected.
-	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, receive_host);
+	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, USER_HOST(user_config),
+				receive_host);
 	MEMMAN_NEW(m->body);
 	bool audio_answered = false;
 	for (list<t_sdp_media>::const_iterator i = recvd_sdp_offer.media.begin();

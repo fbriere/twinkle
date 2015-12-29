@@ -32,6 +32,17 @@ string t_hdr_in_reply_to::encode(void) const {
 	if (!populated) return s;
 
 	s = "In-Reply-To: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_in_reply_to::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	for (list<string>::const_iterator i = call_ids.begin();
 	     i != call_ids.end(); i++)
 	{
@@ -39,6 +50,14 @@ string t_hdr_in_reply_to::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_in_reply_to::encode_env(void) const {
+	string s;
+	
+	s = "SIP_IN_REPLY_TO=";
+	s += encode_value();
+	
 	return s;
 }

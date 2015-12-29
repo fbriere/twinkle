@@ -49,9 +49,30 @@ string t_hdr_cseq::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "CSeq: " + ulong2str(seqnr) + ' ';
-	s += method2str(method, unknown_method);
+	s = "CSeq: ";
+	s += encode_value();
 	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_cseq::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = ulong2str(seqnr) + ' ';
+	s += method2str(method, unknown_method);
+
+	return s;
+}
+
+string t_hdr_cseq::encode_env(void) const {
+	string s;
+	
+	s = "SIP_CSEQ=";
+	s += encode_value();
+	
 	return s;
 }
 

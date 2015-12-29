@@ -83,6 +83,13 @@ t_log::t_log() {
 	s += ", ";
 	s += PRODUCT_DATE;
 	write_report(s, "t_log::t_log");
+	
+	string options_built = sys_config->get_options_built();
+	if (!options_built.empty()) {
+		s = "Built with support for: ";
+		s += options_built;
+		write_report(s, "t_log::t_log");
+	}
 }
 
 t_log::~t_log() {

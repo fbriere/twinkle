@@ -52,6 +52,16 @@ string t_hdr_allow::encode(void) const {
 	if (!populated) return s;
 
 	s += "Allow: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_allow::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
 
 	for (list<t_method>::const_iterator i = method_list.begin();
 	     i != method_list.end(); i++)
@@ -69,6 +79,14 @@ string t_hdr_allow::encode(void) const {
 		s += *i;
 	}
 
-	s += CRLF;
+	return s;
+}
+
+string t_hdr_allow::encode_env(void) const {
+	string s;
+	
+	s = "SIP_ALLOW=";
+	s += encode_value();
+	
 	return s;
 }

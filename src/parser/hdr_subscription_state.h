@@ -58,6 +58,8 @@ public:
 	void add_extension(const t_parameter &p);
 
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

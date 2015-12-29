@@ -284,6 +284,8 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 			  return T_METHOD; }
 <C_NEW>[[:blank:]]	/* Skip white space */
 <C_NEW>.		{ return T_ERROR; }
+<C_NEW>\r\n		{ return T_CRLF; }
+<C_NEW>\n		{ return T_CRLF; }
 
 	/* Authorization scheme */
 <C_AUTH_SCHEME>Digest		{ return T_AUTH_DIGEST; }
@@ -292,3 +294,5 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
 				  return T_AUTH_OTHER; }
 <C_AUTH_SCHEME>[[:blank:]]	/* Skip white space */
 <C_AUTH_SCHEME>.		{ return T_ERROR; }
+<C_AUTH_SCHEME>\r\n		{ return T_CRLF; }
+<C_AUTH_SCHEME>\n		{ return T_CRLF; }

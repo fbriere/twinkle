@@ -31,6 +31,24 @@ string t_hdr_priority::encode(void) const {
 
 	if (!populated) return s;
 
-	s = "Priority: " + priority + CRLF;
+	s = "Priority: ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_priority::encode_value(void) const {
+	if (!populated) return "";
+
+	return priority;
+}
+
+string t_hdr_priority::encode_env(void) const {
+	string s;
+	
+	s = "SIP_PRIORITY=";
+	s += encode_value();
+	
 	return s;
 }

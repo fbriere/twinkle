@@ -182,14 +182,20 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		msg = "Sound card cannot be set to ";
+		msg += int2str(channels);
+		msg += " channels.";
+		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
-	if (arg != 1) {
-		log_file->write_report("Unable to set mono mode",
-			"t_audio_session::open_dsp_full_duplex",
+	if (arg != channels) {
+		log_file->write_report("Unable to set channels",
+			"t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		string msg = "Sound card cannot be set to ";
+		msg += int2str(channels);
+		msg += " channels.";
+		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
 	// Sample format
@@ -672,8 +678,23 @@ void t_alsa_io::enable(bool enable_playback, bool enable_recording) {
 }
 
 void t_alsa_io::flush(bool playback_buffer, bool recording_buffer) {
-	if (playback_buffer && pcm_play_ptr) snd_pcm_reset(pcm_play_ptr);
-	if (recording_buffer && pcm_rec_ptr) snd_pcm_reset(pcm_rec_ptr);
+	if (playback_buffer && pcm_play_ptr) {
+		// snd_pcm_reset(pcm_play_ptr);
+		snd_pcm_drop(pcm_play_ptr);
+		snd_pcm_prepare(pcm_play_ptr);
+		snd_pcm_start(pcm_play_ptr);
+	}
+	if (recording_buffer && pcm_rec_ptr) {
+		// For some obscure reason snd_pcm_reset causes the CPU
+		// load to rise to 99.9% when playing and capturing is
+		// done on the same sound card.
+		// Therefor snd_pcm_reset is replaced by functions to
+		// stop the card, drop samples and start again.
+		// snd_pcm_reset(pcm_rec_ptr);
+		snd_pcm_drop(pcm_rec_ptr);
+		snd_pcm_prepare(pcm_rec_ptr);
+		snd_pcm_start(pcm_rec_ptr);
+	}
 }
 
 int t_alsa_io::get_buffer_space(bool is_recording_buffer) {
@@ -752,7 +773,7 @@ int t_alsa_io::read(unsigned char* buf, int len) {
 			snd_pcm_prepare(pcm_rec_ptr);
 			snd_pcm_start(pcm_rec_ptr);
 			continue;
-		} else if (read < 0) {
+		} else if (read <= 0) {
 			msg = "PCM read error: ";
 			msg += snd_strerror(read);
 			log_file->write_report(msg, "t_alsa_io::read", LOG_NORMAL, LOG_DEBUG);

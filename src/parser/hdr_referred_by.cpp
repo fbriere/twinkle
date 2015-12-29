@@ -63,6 +63,17 @@ string t_hdr_referred_by::encode(void) const {
 		s = "Referred-By: ";
 	}
 
+	s += encode_value();
+	s += CRLF;
+
+	return s;
+}
+
+string t_hdr_referred_by::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
 	if (display.size() > 0) {
 		s += '"';
 		s += display;
@@ -80,7 +91,15 @@ string t_hdr_referred_by::encode(void) const {
 	}
 
 	s += param_list2str(params);
-	s += CRLF;
 
+	return s;
+}
+
+string t_hdr_referred_by::encode_env(void) const {
+	string s;
+	
+	s = "SIP_REFERRED_BY=";
+	s += encode_value();
+	
 	return s;
 }

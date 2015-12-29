@@ -38,6 +38,24 @@ string t_hdr_subject::encode(void) const {
 		s = "Subject: ";
 	}
 
-	s += subject + CRLF;
+	s += encode_value();
+	s += CRLF;
+	
 	return s;
 }
+
+string t_hdr_subject::encode_value(void) const {
+	if (!populated) return "";
+
+	return subject;
+}
+
+string t_hdr_subject::encode_env(void) const {
+	string s;
+
+	s = "SIP_SUBJECT=";
+	s += encode_value();
+	
+	return s;
+}
+	

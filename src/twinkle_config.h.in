@@ -30,6 +30,9 @@
 /* Define if you have a working libpthread (will enable threaded code) */
 #undef HAVE_LIBPTHREAD
 
+/* Define to 1 if you have the `sndfile' library (-lsndfile). */
+#undef HAVE_LIBSNDFILE
+
 /* Define if you have libz */
 #undef HAVE_LIBZ
 

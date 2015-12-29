@@ -72,7 +72,7 @@ void SelectUserForm::show(t_select_purpose purpose)
 	list<t_user *> user_list = phone->ref_users();
 	for (list<t_user *>::reverse_iterator i = user_list.rbegin(); i != user_list.rend(); i++) {
 		QCheckListItem *item = new QCheckListItem(userListView,
-			(*i)->get_display_uri().c_str(), QCheckListItem::CheckBox);
+			(*i)->get_profile_name().c_str(), QCheckListItem::CheckBox);
 		
 		switch (purpose) {
 		case SELECT_DND:
@@ -96,10 +96,10 @@ void SelectUserForm::validate()
 		QCheckListItem *item = (QCheckListItem *)(i.current());
 		if (item->isOn()) {
 			selected_list.push_back(phone->
-				ref_user_display_uri(item->text().ascii()));
+				ref_user_profile(item->text().ascii()));
 		} else {
 			not_selected_list.push_back(phone->
-				ref_user_display_uri(item->text().ascii()));
+				ref_user_profile(item->text().ascii()));
 		}
 		i++;
 	}

@@ -34,6 +34,8 @@ public:
 	void set_features(const list<string> &_features);
 	bool contains(const string &f) const;
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif

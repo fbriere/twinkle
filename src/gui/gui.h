@@ -20,16 +20,21 @@
 #define _GUI_H
 
 #include "userintf.h"
+#include "qaction.h"
 #include "qcombobox.h"
 #include "qlabel.h"
 #include "qlineedit.h"
 #include "qprogressdialog.h"
+#include "qtoolbutton.h"
 #include "qwidget.h"
 
 using namespace std;
 
 // Forward declaration
 class MphoneForm;
+
+// Length of redial list in combo boxes
+#define SIZE_REDIAL_LIST 10
 
 // Selection purpose for select user form
 enum t_select_purpose {
@@ -41,6 +46,9 @@ enum t_select_purpose {
 };
 
 QString str2html(const QString &s);
+
+void setDisabledIcon(QAction *action, const QString &icon);
+void setDisabledIcon(QToolButton *toolButton, const QString &icon);
 
 class t_gui : public t_userintf {
 private:
@@ -55,6 +63,9 @@ private:
 	QLineEdit	*toLabel;
 	QLineEdit	*subjectLabel;
 	QLabel		*codecLabel;
+	
+	// Last dir path browsed by the user with a file dialog
+	QString		lastFileBrowsePath;
 	
 	// Set the line information field pointers to the fields for 'line'
 	void setLineFields(int line);
@@ -77,6 +88,12 @@ public:
 	
 	// Start the GUI
 	void run(void);
+	
+	// Save user interface state to system settings
+	void save_state(void);
+	
+	// Restore user interface state from system settings
+	void restore_state(void);
 	
 	// Lock the user interface to synchornize output
 	void lock(void);
@@ -169,11 +186,15 @@ public:
 	
 	// Call history has been updated
 	void cb_call_history_updated(void);
+	void cb_missed_call(int num_missed_calls);
 	
 	// Show firewall/NAT discovery progress
 	void cb_nat_discovery_progress_start(int num_steps);
 	void cb_nat_discovery_progress_step(int step);
 	bool cb_nat_discovery_cancelled(void);
+	
+	// Execute external commands
+	void cmd_call(const string &destination);
 	
 	// Actions
 	void action_register(list<t_user *> user_list);
@@ -207,6 +228,10 @@ public:
 	
 	// Fill a combo box with user names (display, uri) of active users
 	void fill_user_combo(QComboBox *cb);
+	
+	// Get/set last dir path for a file dialog browse session
+	QString get_last_file_browse_path(void) const;
+	void set_last_file_browse_path(QString path);
 };
 
 #endif

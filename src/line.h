@@ -73,6 +73,9 @@ private:
 	t_line_substate		substate;
 	bool			is_on_hold;
 	bool			is_muted;
+	
+	// Indicates if call must be auto answered
+	bool			auto_answer;
 
 	// Line number (starting from 0)
 	unsigned short		line_number;
@@ -109,6 +112,12 @@ private:
 	// This is a pointer to the user_config owned by a phone user.
 	// So this pointer should never be deleted.
 	t_user			*user_config;
+	
+	// The incoming call script can return a specific ring tone
+	// to be played for an incoming call. This ring tone is
+	// stored here. If there is no specific ring tone to be played
+	// then this attribute is empty
+	string			user_defined_ringtone;
 
 	// Find a dialog from the list that matches the response.
 	t_dialog *match_response(t_response *r,
@@ -172,7 +181,7 @@ public:
 	void recvd_server_error(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_global_error(t_response *r, t_tuid tuid, t_tid tid);
 
-	void recvd_invite(t_user *user, t_request *r, t_tid tid);
+	void recvd_invite(t_user *user, t_request *r, t_tid tid, const string &ringtone);
 	void recvd_ack(t_request *r, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_bye(t_request *r, t_tid tid);
@@ -225,6 +234,8 @@ public:
 	unsigned short get_line_number(void) const;
 	bool get_is_on_hold(void) const;
 	bool get_is_muted(void) const;
+	bool get_auto_answer(void) const;
+	void set_auto_answer(bool enable);
 	bool is_refer_succeeded(void) const;
 
 	// Seize the line. User wants to make an outgoing call, so
@@ -269,6 +280,9 @@ public:
 	// Returns a pointer to the user object owned by the line.
 	// NOT a copy.
 	t_user *get_user(void) const;
+	
+	// Get the ring tone to be played for an incoming call
+	string get_ringtone(void) const;
 };
 
 #endif

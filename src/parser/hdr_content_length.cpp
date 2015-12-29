@@ -41,6 +41,28 @@ string t_hdr_content_length::encode(void) const {
 		s = "Content-Length: ";
 	}
 
-	s += int2str(length) + CRLF;
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_hdr_content_length::encode_value(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = int2str(length);
+	return s;
+}
+
+string t_hdr_content_length::encode_env(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = "SIP_CONTENT_LENGTH=";
+	s += encode_value();
+	
 	return s;
 }

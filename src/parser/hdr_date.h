@@ -33,6 +33,8 @@ public:
 	void set_date_gm(struct tm *tm); // set date, tm is GMT
 	void set_now(void); // Set date/time to current date/time
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 using namespace std;

@@ -842,7 +842,7 @@ YY_RULE_SETUP
 case 27:
 YY_RULE_SETUP
 #line 96 "sdp_scanner.lxx"
-YY_FATAL_ERROR( "flex scanner jammed" );
+ECHO;
 	YY_BREAK
 #line 848 "sdp_scanner.cxx"
 case YY_STATE_EOF(INITIAL):

@@ -38,6 +38,8 @@ public:
 	void add_coding(const t_coding &coding);
 
 	string encode(void) const;
+	string encode_value(void) const;
+	string encode_env(void) const;
 };
 
 #endif
