@@ -2,25 +2,28 @@ Source: twinkle
 Section: comm
 Priority: optional
 Maintainer: Clint Adams <clint@debian.org>
-Build-Depends: autotools-dev,
-               cdbs,
-               debhelper (>= 7),
-               dh-autoreconf,
+Build-Depends: bison,
+               cmake,
+               debhelper (>= 9),
+               flex,
                help2man,
                libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
-               libboost-regex-dev,
                libccrtp-dev,
                libcommoncpp2-dev (>= 1.4.2),
                libgsm1-dev,
                libmagic-dev,
-               libncurses-dev,
                libreadline-dev,
                libsndfile1-dev,
                libspeex-dev,
                libspeexdsp-dev,
                libxml2-dev,
-               libxpm-dev,
-               libzrtpcpp-dev (>= 1.4.0)
+               libzrtpcpp-dev (>= 1.4.0),
+               linux-libc-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               qtdeclarative5-dev,
+               qtquick1-5-dev,
+               qtscript5-dev,
+               qttools5-dev,
+               qttools5-dev-tools
 Standards-Version: 3.9.5
 Homepage: http://www.twinklephone.com/
 
