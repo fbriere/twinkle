@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,10 @@ void SysSettingsForm::init()
 	i.setPixmap(QPixmap::fromMimeSource("fileopen-disabled.png"), 
 		    QIconSet::Automatic, QIconSet::Disabled);
 	openRingbackToolButton->setIconSet(i);
+	
+	QRegExp rxNumber("[0-9]+");
+	maxUdpSizeLineEdit->setValidator(new QRegExpValidator(rxNumber, this));
+	maxTcpSizeLineEdit->setValidator(new QRegExpValidator(rxNumber, this));
 }
 
 void SysSettingsForm::showCategory( int index )
@@ -261,6 +265,8 @@ void SysSettingsForm::populate()
 		}
 	}
 	
+#if 0
+	// DEPRECATED
 	list<t_interface> *l = get_interfaces();
 	// The socket routines are not under control of MEMMAN so report
 	// the allocation here.
@@ -289,10 +295,14 @@ void SysSettingsForm::populate()
 
 	delete l;
 	MEMMAN_DELETE(l);
+#endif
 	
 	// Network settings
-	sipUdpPortSpinBox->setValue(sys_config->get_config_sip_udp_port());
+	sipUdpPortSpinBox->setValue(sys_config->get_config_sip_port());
 	rtpPortSpinBox->setValue(sys_config->get_rtp_port());
+	
+	maxUdpSizeLineEdit->setText(QString::number(sys_config->get_sip_max_udp_size()));
+	maxTcpSizeLineEdit->setText(QString::number(sys_config->get_sip_max_tcp_size()));
 	
 	// Ring tone settings
 	playRingtoneCheckBox->setChecked(sys_config->get_play_ringtone());
@@ -322,6 +332,8 @@ void SysSettingsForm::populate()
 
 void SysSettingsForm::validate()
 {
+#if 0
+	// DEPRECATED
 	if (userHostComboBox->currentItem() != 0 && userDevComboBox->currentItem() != 0)
 	{
 		((t_gui *)ui)->cb_show_msg(this, 
@@ -329,6 +341,14 @@ void SysSettingsForm::validate()
 			MSG_WARNING);
 		return;
 	}
+#endif
+	
+	bool conversion_ok = false;
+	unsigned short sip_max_udp_size = maxUdpSizeLineEdit->text().toUShort(&conversion_ok);
+	if (!conversion_ok) sip_max_udp_size = sys_config->get_sip_max_udp_size();
+
+	unsigned long sip_max_tcp_size = maxTcpSizeLineEdit->text().toULong(&conversion_ok);
+	if (!conversion_ok) sip_max_tcp_size = sys_config->get_sip_max_tcp_size();
 	
 	// Audio
 	string dev;
@@ -384,6 +404,8 @@ void SysSettingsForm::validate()
 	}
 	sys_config->set_start_user_profiles(start_user_profiles);
 	
+#if 0
+	// DEPRECATED
 	if (userHostComboBox->currentItem() == 0) {
 		sys_config->set_start_user_host("");
 	} else {
@@ -395,16 +417,19 @@ void SysSettingsForm::validate()
 	} else {
 		sys_config->set_start_user_nic(userDevComboBox->currentText().ascii());
 	}
+#endif
 	
 	// Network
-	if (sys_config->get_config_sip_udp_port() != sipUdpPortSpinBox->value()) {
-		sys_config->set_config_sip_udp_port(sipUdpPortSpinBox->value());
+	if (sys_config->get_config_sip_port() != sipUdpPortSpinBox->value()) {
+		sys_config->set_config_sip_port(sipUdpPortSpinBox->value());
 		emit sipUdpPortChanged();
 	}
 	if (sys_config->get_rtp_port() != rtpPortSpinBox->value()) {
 		sys_config->set_rtp_port(rtpPortSpinBox->value());
 		emit rtpPortChanged();
 	}
+	sys_config->set_sip_max_udp_size(sip_max_udp_size);
+	sys_config->set_sip_max_tcp_size(sip_max_tcp_size);
 	
 	// Ring tones
 	sys_config->set_play_ringtone(playRingtoneCheckBox->isChecked());

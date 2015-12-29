@@ -79,14 +79,14 @@ twinkle_DEPENDENCIES = libtwinkle.a \
 	$(top_builddir)/src/sockets/libsocket.a \
 	$(top_builddir)/src/threads/libthread.a \
 	$(top_builddir)/src/audio/libaudio.a \
-	$(top_builddir)/src/audio/gsm/libgsm.a \
 	$(top_builddir)/src/audits/libaudits.a \
 	$(top_builddir)/src/stun/libstun.a \
 	$(top_builddir)/src/mwi/libmwi.a \
 	$(top_builddir)/src/im/libim.a \
 	$(top_builddir)/src/presence/libpresence.a \
 	$(top_builddir)/src/patterns/libpatterns.a \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -150,6 +150,7 @@ EXTLIBS = @EXTLIBS@
 FRAMEWORK_COREAUDIO = @FRAMEWORK_COREAUDIO@
 GNULIBS = @GNULIBS@
 GREP = @GREP@
+GSM_LIBS = @GSM_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -207,6 +208,7 @@ LIB_SMB = @LIB_SMB@
 LIB_X11 = @LIB_X11@
 LIB_XEXT = @LIB_XEXT@
 LIB_XRENDER = @LIB_XRENDER@
+LRELEASEOPTION = @LRELEASEOPTION@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MAKEKDEWIDGETS = @MAKEKDEWIDGETS@
@@ -220,7 +222,6 @@ PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
-PARSER_CXXFLAGS = @PARSER_CXXFLAGS@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
@@ -340,9 +341,8 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-INCLUDES = -I $(includedir)
 AM_LDFLAGS = -L $(libdir)
-AM_CPPFLAGS = $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 noinst_LIBRARIES = libtwinkle.a
 twinkle_SOURCES = main.cpp
 twinkle_LDADD = libtwinkle.a\
@@ -351,13 +351,13 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/sockets/libsocket.a\
         $(top_builddir)/src/threads/libthread.a\
         $(top_builddir)/src/audio/libaudio.a\
-        $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
         $(top_builddir)/src/mwi/libmwi.a\
         $(top_builddir)/src/im/libim.a\
         $(top_builddir)/src/presence/libpresence.a\
         $(top_builddir)/src/patterns/libpatterns.a\
+	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
 	-lsndfile

@@ -1,4 +1,6 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src \
+	$(CCRTP_CFLAGS)
 
 noinst_LIBRARIES = libstun.a
 

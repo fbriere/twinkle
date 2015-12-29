@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@ public:
 	void create_sdp_offer(t_sip_message *m, const string &user);
 
 	// Create an SDP answer body for a SIP message
-	void create_sdp_answer(t_sip_message *m, const string &user) const;
+	void create_sdp_answer(t_sip_message *m, const string &user);
 
 	// Start/stop the RTP streams
 	// When a session is on-hold then start_rtp simply returns.

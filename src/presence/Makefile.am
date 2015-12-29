@@ -1,6 +1,4 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
-
-AM_CPPFLAGS = $(XML2_CFLAGS)
+AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libpresence.a
 

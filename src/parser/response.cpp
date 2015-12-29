@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <cassert>
+
 #include "response.h"
 #include "util.h"
 #include "parse_ctrl.h"
@@ -25,7 +27,8 @@ t_response::t_response() : t_sip_message() {}
 
 t_response::t_response(const t_response &r) : t_sip_message(r) ,
 		code(r.code),
-		reason(r.reason)
+		reason(r.reason),
+		src_ip_port_request(r.src_ip_port_request)
 {
 }
 
@@ -206,4 +209,27 @@ bool t_response::must_authenticate(void) const {
 	        hdr_www_authenticate.is_populated() ||
 	        code == R_407_PROXY_AUTH_REQUIRED &&
 	        hdr_proxy_authenticate.is_populated());
+}
+
+void t_response::get_destination(t_ip_port &ip_port) const {
+	assert(hdr_via.is_populated());
+	
+	if (src_ip_port_request.transport == "tcp") {
+		// RFC 3261 18.2.2
+		// For TCP the response should be sent on the connection on which
+		// the request was received. So the address returned here is the
+		// alternative destination when the connection is closed already.
+		ip_port = src_ip_port_request;
+	} else {
+		hdr_via.get_response_dst(ip_port);
+	}
+}
+
+void t_response::calc_local_ip(void) {
+	t_ip_port dst;
+	
+	get_destination(dst);
+	if (dst.ipaddr != 0) {
+		local_ip_ = get_src_ip4_address_for_dst(dst.ipaddr);
+	}
 }

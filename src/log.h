@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,9 @@ enum t_log_class {
 
 class t_log {
 private:
+	/** Maximum length of a logged string (bytes) */
+	static const string::size_type MAX_LEN_LOG_STRING = 1024;
+
         string          log_filename;
         ofstream        *log_stream;
 

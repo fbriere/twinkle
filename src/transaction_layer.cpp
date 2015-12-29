@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,6 +70,20 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	t_response *resp;
 
 	lock();
+	
+	// If a message exceeded the maximum message size, than the body
+	// is not parsed by the listener.
+	if (r->hdr_content_length.is_populated() &&
+	    r->hdr_content_length.length > 0 &&
+	    !r->body)
+	{
+		resp = r->create_response(R_513_MESSAGE_TOO_LARGE);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		unlock();
+		return;
+	}
 
 	// Return a 400 response if the SIP headers are wrong
 	if (!r->is_valid(fatal, reason)) {

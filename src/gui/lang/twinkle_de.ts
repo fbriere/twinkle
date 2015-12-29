@@ -51,7 +51,7 @@
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -59,7 +59,7 @@
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>You must fill in a name.</source>
@@ -395,7 +395,7 @@
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
 </context>
 <context>
@@ -413,7 +413,7 @@
     <name>GUI</name>
     <message>
         <source>Failed to create a UDP socket (SIP) on port %1</source>
-        <translation>Fehler beim Erzeugen des UDP socket (SIP) für Port %1</translation>
+        <translation type="obsolete">Fehler beim Erzeugen des UDP socket (SIP) für Port %1</translation>
     </message>
     <message>
         <source>The following profiles are both for user %1</source>
@@ -775,6 +775,14 @@
         <source>Use domain name to create a unique contact header</source>
         <translation>Domain-Name benutzen für eindeutigen Contact-Header</translation>
     </message>
+    <message>
+        <source>Failed to create a %1 socket (SIP) on port %2</source>
+        <translation>Fehler beim Anlegen: %1 socket (SIP) auf port %2</translation>
+    </message>
+    <message>
+        <source>Accepted by network</source>
+        <translation>Akzeptiert durch Netzwerk</translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -800,7 +808,7 @@
     </message>
     <message>
         <source>Alt+S</source>
-        <translation></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>Check this option when you only want to see contacts with SIP addresses, i.e. starting with &quot;&lt;b&gt;sip:&lt;/b&gt;&quot;.</source>
@@ -812,7 +820,7 @@
     </message>
     <message>
         <source>Alt+R</source>
-        <translation></translation>
+        <translation>Alt+R</translation>
     </message>
     <message>
         <source>Reload the list of addresses from KAddressbook.</source>
@@ -826,7 +834,7 @@ Ein Schliessen und erneutes Öffnen des Fensters führt &lt;i&gt;nicht&lt;/i&gt;
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -834,7 +842,7 @@ Ein Schliessen und erneutes Öffnen des Fensters führt &lt;i&gt;nicht&lt;/i&gt;
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>&amp;KAddressBook</source>
@@ -1239,7 +1247,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>C&amp;lear</source>
@@ -1247,7 +1255,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>Clear the log window. This does &lt;b&gt;not&lt;/b&gt; clear the log file itself.</source>
@@ -1311,6 +1319,17 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Delivery failure</source>
         <translation>Übertragungsfehler</translation>
+    </message>
+    <message>
+        <source>Delivery notification</source>
+        <translation>Übertragungsbestätigung</translation>
+    </message>
+</context>
+<context>
+    <name>MessageFormView</name>
+    <message>
+        <source>sending message</source>
+        <translation>Nachricht wird gesendet</translation>
     </message>
 </context>
 <context>
@@ -1390,7 +1409,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>Alt+1</source>
-        <translation></translation>
+        <translation>Alt+1</translation>
     </message>
     <message>
         <source>Click to switch to line 1.</source>
@@ -1510,7 +1529,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Alt+2</source>
-        <translation></translation>
+        <translation>Alt+2</translation>
     </message>
     <message>
         <source>Click to switch to line 2.</source>
@@ -2231,7 +2250,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -2239,7 +2258,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>Match expression may not be empty.</source>
@@ -2317,7 +2336,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+I</source>
-        <translation></translation>
+        <translation>Alt+I</translation>
     </message>
     <message>
         <source>Make the selected IP address the default IP address. The next time you start Twinkle, this IP address will be automatically selected.</source>
@@ -2329,7 +2348,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+N</source>
-        <translation></translation>
+        <translation>Alt+N</translation>
     </message>
     <message>
         <source>Make the selected network interface the default interface. The next time you start Twinkle, this interface will be automatically selected.</source>
@@ -2341,7 +2360,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>If you want to remove or change the default at a later time, you can do that via the system settings.</source>
@@ -2372,7 +2391,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+N</source>
-        <translation></translation>
+        <translation>Alt+N</translation>
     </message>
     <message>
         <source>Create a new profile with the profile editor.</source>
@@ -2384,7 +2403,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+W</source>
-        <translation></translation>
+        <translation>Alt+W</translation>
     </message>
     <message>
         <source>Create a new profile with the wizard.</source>
@@ -2396,7 +2415,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+E</source>
-        <translation></translation>
+        <translation>Alt+E</translation>
     </message>
     <message>
         <source>Edit the highlighted profile.</source>
@@ -2432,7 +2451,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+S</source>
-        <translation></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>Make the selected profiles the default profiles. The next time you start Twinkle, these profiles will be automatically run.</source>
@@ -2456,7 +2475,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+Y</source>
-        <translation></translation>
+        <translation>Alt+Y</translation>
     </message>
     <message>
         <source>Edit the system settings.</source>
@@ -2468,7 +2487,7 @@ Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Pr
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>&lt;html&gt;Before you can use Twinkle, you must create a user profile.&lt;br&gt;Click OK to create a profile.&lt;/html&gt;</source>
@@ -2528,7 +2547,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>&amp;Select all</source>
@@ -2544,7 +2563,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>C&amp;lear all</source>
@@ -2552,7 +2571,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>purpose</source>
@@ -2708,7 +2727,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>Accept and save all changes.</source>
@@ -2720,7 +2739,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>Undo your changes and close the window.</source>
@@ -2799,7 +2818,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</source>
-        <translation>Wenn Ihr Gesprächspartner schlechte Tonqualität beklagt, versuchen Sie für ALSA ein anderes Gerät statt &quot;default&quot;.</translation>
+        <translation type="obsolete">Wenn Ihr Gesprächspartner schlechte Tonqualität beklagt, versuchen Sie für ALSA ein anderes Gerät statt &quot;default&quot;.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
@@ -2807,7 +2826,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+N</source>
-        <translation></translation>
+        <translation>Alt+N</translation>
     </message>
     <message>
         <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
@@ -2883,7 +2902,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+D</source>
-        <translation></translation>
+        <translation>Alt+D</translation>
     </message>
     <message>
         <source>Indicates if reports marked as &quot;debug&quot; will be logged.</source>
@@ -2895,7 +2914,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+S</source>
-        <translation></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>Indicates if SIP messages will be logged.</source>
@@ -2907,7 +2926,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+T</source>
-        <translation></translation>
+        <translation>Alt+T</translation>
     </message>
     <message>
         <source>Indicates if STUN messages will be logged.</source>
@@ -2919,7 +2938,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+E</source>
-        <translation></translation>
+        <translation>Alt+E</translation>
     </message>
     <message>
         <source>Indicates if reports concerning memory management will be logged.</source>
@@ -2943,7 +2962,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+H</source>
-        <translation></translation>
+        <translation>Alt+H</translation>
     </message>
     <message>
         <source>Enable this option if you want Twinkle to hide in the system tray when you close the main window.</source>
@@ -2955,19 +2974,19 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple and static IP addresses.</source>
-        <translation>Eine hier eingetragene IP-Adresse wird beim Start des Programms automatisch verwendet. Nur sinnvoll, wenn Ihr Rechner mehrere Netzwerkanschlüsse und für den Internetzugang eine unveränderliche IP-Adresse hat.</translation>
+        <translation type="obsolete">Eine hier eingetragene IP-Adresse wird beim Start des Programms automatisch verwendet. Nur sinnvoll, wenn Ihr Rechner mehrere Netzwerkanschlüsse und für den Internetzugang eine unveränderliche IP-Adresse hat.</translation>
     </message>
     <message>
         <source>Default &amp;IP address:</source>
-        <translation>Default &amp;IP-Addresse:</translation>
+        <translation type="obsolete">Default &amp;IP-Addresse:</translation>
     </message>
     <message>
         <source>Next time you start Twinkle, the IP address of this network interface be automatically selected. This is only useful when your computer has multiple network devices.</source>
-        <translation>Wenn Ihr Rechner mehrere Netzwerkanschlüsse hat, können Sie hier festlegen, welchen davon Twinkle beim Start verwenden soll. Sie werden dann nicht beim Start nach dem zu verwendenden Anschluss gefragt.</translation>
+        <translation type="obsolete">Wenn Ihr Rechner mehrere Netzwerkanschlüsse hat, können Sie hier festlegen, welchen davon Twinkle beim Start verwenden soll. Sie werden dann nicht beim Start nach dem zu verwendenden Anschluss gefragt.</translation>
     </message>
     <message>
         <source>Default &amp;network interface:</source>
-        <translation>Default &amp;Netzwerkanschluss:</translation>
+        <translation type="obsolete">Default &amp;Netzwerkanschluss:</translation>
     </message>
     <message>
         <source>S&amp;tartup hidden in system tray</source>
@@ -3007,7 +3026,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+B</source>
-        <translation></translation>
+        <translation>Alt+B</translation>
     </message>
     <message>
         <source>Hang up both lines when you press bye to end a 3-way conference call. When this option is disabled, only the active line will be hung up and you can continue talking with the party on the other line.</source>
@@ -3027,7 +3046,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+A</source>
-        <translation></translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>When the main window is hidden, it will be automatically shown on an incoming call after the number of specified seconds.</source>
@@ -3043,7 +3062,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>The UDP port used for sending and receiving SIP messages.</source>
-        <translation>Der UDP Port, über den das SIP-Protokoll läuft. Standard:5060, ihr Provider kann aber einen anderen Port vorschreiben.</translation>
+        <translation type="obsolete">Der UDP Port, über den das SIP-Protokoll läuft. Standard:5060, ihr Provider kann aber einen anderen Port vorschreiben.</translation>
     </message>
     <message>
         <source>&amp;RTP port:</source>
@@ -3055,7 +3074,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>&amp;SIP UDP port:</source>
-        <translation>&amp;SIP UDP Port:</translation>
+        <translation type="obsolete">&amp;SIP UDP Port:</translation>
     </message>
     <message>
         <source>Ring tone</source>
@@ -3067,7 +3086,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+P</source>
-        <translation></translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Indicates if a ring tone should be played when a call comes in.</source>
@@ -3107,7 +3126,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -3150,7 +3169,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Alt+R</source>
-        <translation></translation>
+        <translation>Alt+R</translation>
     </message>
     <message>
         <source>The caller may have provided a display name already. Tick this box if you want to override that name with the name you have in your address book.</source>
@@ -3170,7 +3189,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>Accept and save your changes.</source>
@@ -3182,7 +3201,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>Undo all your changes and close the window.</source>
@@ -3256,6 +3275,30 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     <message>
         <source>Select ring back tone file.</source>
         <translation>Dateiauswahl Freizeichen.</translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-65535) in bytes of an incoming SIP message over UDP.</source>
+        <translation>Max. zulässige Größe in Byte (0-65535) für ankommende SIP-Nachrichten über UDP.</translation>
+    </message>
+    <message>
+        <source>&amp;SIP port:</source>
+        <translation>&amp;SIP port:</translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;TCP):</source>
+        <translation>Max. SIP-Nachrichtengröße (&amp;TCP):</translation>
+    </message>
+    <message>
+        <source>The UDP/TCP port used for sending and receiving SIP messages.</source>
+        <translation>Die Portnummer, über die SIP-Nachrichten sowohl per UDP als auch TCP gesendet und empfangen werden.</translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;UDP):</source>
+        <translation>Max. SIP-Nachrichtengröße (&amp;UDP):</translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-4294967295) in bytes of an incoming SIP message over TCP.</source>
+        <translation>Max. zulässige Größe in Byte (0-4294967295) für ankommende SIP-Nachrichten über TCP.</translation>
     </message>
 </context>
 <context>
@@ -3340,7 +3383,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -3368,7 +3411,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Alt+R</source>
-        <translation></translation>
+        <translation>Alt+R</translation>
     </message>
     <message>
         <source>Before transferring the call to a third party, first consult the party yourself.</source>
@@ -3380,7 +3423,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>Connect the remote party on the active line with the remote party on the other line.</source>
@@ -3451,7 +3494,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Translated to english by &lt;your name&gt;</source>
-        <translation>Deutsche Übersetzung: ©20070721-2112 Reisenweber tech+it-consult&lt;br&gt;
+        <translation>Deutsche Übersetzung: ©20080308-0105 Reisenweber tech+it-consult&lt;br&gt;
 joerg.twinklephone(AT)gmx.de</translation>
     </message>
     <message>
@@ -3610,6 +3653,10 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
         <source>Cannot open ALSA driver for PCM capture</source>
         <translation>ALSA-Treiber kann nicht für PCM-Aufnahme geöffnet werden</translation>
     </message>
+    <message>
+        <source>Cannot receive incoming TCP connections.</source>
+        <translation>Kann eingehende TCP-Verbindungen nicht annehmen.</translation>
+    </message>
 </context>
 <context>
     <name>UserProfileForm</name>
@@ -3642,10 +3689,6 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
         <translation>SIP-Protokoll</translation>
     </message>
     <message>
-        <source>NAT</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>Address format</source>
         <translation>Adress-Format</translation>
     </message>
@@ -3675,7 +3718,7 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>Accept and save your changes.</source>
@@ -3687,7 +3730,7 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>Undo all your changes and close the window.</source>
@@ -3820,7 +3863,7 @@ Für direct-IP-to-IP gibt es keinen Provider, also dann nicht aktivieren.</trans
     </message>
     <message>
         <source>Alt+U</source>
-        <translation></translation>
+        <translation>Alt+U</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should use an outbound proxy. If an outbound proxy is used then all SIP requests are sent to this proxy. Without an outbound proxy, Twinkle will try to resolve the SIP address that you type for a call invitation for example to an IP address and send the SIP request there.</source>
@@ -3837,7 +3880,7 @@ Ohne Outbound-Proxy (Normalfall) versucht Twinkle selbst, die zu rufende Adresse
     </message>
     <message>
         <source>Alt+S</source>
-        <translation></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>SIP requests within a SIP dialog are normally sent to the address in the contact-headers exchanged during call setup. If you tick this box, that address is ignored and in-dialog request are also sent to the outbound proxy.</source>
@@ -3849,7 +3892,7 @@ Ohne Outbound-Proxy (Normalfall) versucht Twinkle selbst, die zu rufende Adresse
     </message>
     <message>
         <source>Alt+D</source>
-        <translation></translation>
+        <translation>Alt+D</translation>
     </message>
     <message>
         <source>When you tick this option Twinkle will first try to resolve a SIP address to an IP address itself. If it can, then the SIP request will be sent there. Only when it cannot resolve the address, it will send the SIP request to the proxy (note that an in-dialog request will only be sent to the proxy in this case when you also ticked the previous option.)</source>
@@ -3982,7 +4025,7 @@ Abhängig von den Compile-options können manche Codecs nicht verfügbar sein.</
     </message>
     <message>
         <source>Alt+E</source>
-        <translation></translation>
+        <translation>Alt+E</translation>
     </message>
     <message>
         <source>Perceptual enhancement is a part of the decoder which, when turned on, tries to reduce (the perception of) the noise produced by the coding/decoding process. In most cases, perceptual enhancement make the sound further from the original objectively (if you use SNR), but in the end it still sounds better (subjective improvement).</source>
@@ -3998,7 +4041,7 @@ Abhängig von den Compile-options können manche Codecs nicht verfügbar sein.</
     </message>
     <message>
         <source>Alt+V</source>
-        <translation></translation>
+        <translation>Alt+V</translation>
     </message>
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
@@ -4015,7 +4058,7 @@ VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>Alt+B</source>
-        <translation></translation>
+        <translation>Alt+B</translation>
     </message>
     <message>
         <source>Variable bit-rate (VBR) allows a codec to change its bit-rate dynamically to adapt to the &quot;difficulty&quot; of the audio being encoded. In the example of Speex, sounds like vowels and high-energy transients require a higher bit-rate to achieve good quality, while fricatives (e.g. s,f sounds) can be coded adequately with less bits. For this reason, VBR can achieve a lower bit-rate for the same quality, or a better quality for a certain bit-rate. Despite its advantages, VBR has two main drawbacks: first, by only specifying quality, there&apos;s no guarantee about the final average bit-rate. Second, for some real-time applications like voice over IP (VoIP), what counts is the maximum bit-rate, which must be low enough for the communication channel.</source>
@@ -4035,7 +4078,7 @@ VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>Alt+X</source>
-        <translation></translation>
+        <translation>Alt+X</translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
@@ -4188,7 +4231,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation></translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should redirect a request if a 3XX response is received.</source>
@@ -4240,7 +4283,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Alt+I</source>
-        <translation></translation>
+        <translation>Alt+I</translation>
     </message>
     <message>
         <source>A 200 OK response on a REGISTER request must contain a Contact header. Some registrars however, do not include a Contact header or include a wrong Contact header. This option allows for such a deviation from the specs.</source>
@@ -4252,7 +4295,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Alt+M</source>
-        <translation></translation>
+        <translation>Alt+M</translation>
     </message>
     <message>
         <source>According to RFC 3261 the Max-Forwards header is mandatory. But many implementations do not send this header. If you tick this box, Twinkle will reject a SIP request if Max-Forwards is missing.</source>
@@ -4264,7 +4307,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Alt+R</source>
-        <translation></translation>
+        <translation>Alt+R</translation>
     </message>
     <message>
         <source>In a REGISTER message the expiry time for registration can be put in the Contact header or in the Expires header. If you tick this box it will be put in the Contact header, otherwise it goes in the Expires header.</source>
@@ -4391,7 +4434,7 @@ Diese Einstellung beeinflusst das Verhalten bei &quot;early media&quot; (z.B. &q
     </message>
     <message>
         <source>Alt+T</source>
-        <translation></translation>
+        <translation>Alt+T</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should transfer a call if a REFER request is received.</source>
@@ -4415,7 +4458,7 @@ Diese Einstellung beeinflusst das Verhalten bei &quot;early media&quot; (z.B. &q
     </message>
     <message>
         <source>Alt+W</source>
-        <translation></translation>
+        <translation>Alt+W</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should put the current call on hold when a REFER request to transfer a call is received.</source>
@@ -4427,7 +4470,7 @@ Diese Einstellung beeinflusst das Verhalten bei &quot;early media&quot; (z.B. &q
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should put the current call on hold when you transfer a call.</source>
@@ -4440,7 +4483,7 @@ Standard: aktiviert.</translation>
     </message>
     <message>
         <source>Alt+F</source>
-        <translation></translation>
+        <translation>Alt+F</translation>
     </message>
     <message>
         <source>While a call is being transferred, the referee sends NOTIFY messages to the referrer about the progress of the transfer. These messages are only sent for a short interval which length is determined by the referee. If you tick this box, the referrer will automatically send a SUBSCRIBE to lengthen this interval if it is about to expire and the transfer has not yet been completed.</source>
@@ -4456,7 +4499,7 @@ Standard: aktiviert.</translation>
     </message>
     <message>
         <source>Alt+N</source>
-        <translation></translation>
+        <translation>Alt+N</translation>
     </message>
     <message>
         <source>Choose this option when there is no NAT device between you and your SIP proxy or when your SIP provider offers hosted NAT traversal.</source>
@@ -4478,7 +4521,7 @@ Wenn Sie diese Option verwenden, müssen Sie auch in Ihrer NAT die entsprechende
     </message>
     <message>
         <source>Use &amp;STUN</source>
-        <translation>&amp;STUN aktivieren</translation>
+        <translation type="obsolete">&amp;STUN aktivieren</translation>
     </message>
     <message>
         <source>Choose this option when your SIP provider offers a STUN server for NAT traversal.</source>
@@ -5362,6 +5405,58 @@ Sie können diese Einstellung auf 0 setzen, wenn Sie keine ankommenden Instant M
         <source>Refresh rate of presence subscriptions.</source>
         <translation>Die Refreshzeit für die Anmeldung durch &quot;SUBSCRIBE&quot; zum Erhalten von Online-Status-Mitteilungen über die Ereichbarkeit der Buddies unter diesem Benutzerprofil. Standard &quot;3600&quot;.</translation>
     </message>
+    <message>
+        <source>Transport/NAT</source>
+        <translation>Übertragung/NAT</translation>
+    </message>
+    <message>
+        <source>Add q-value to registration</source>
+        <translation>Verwende q-Wert bei der Anmeldung</translation>
+    </message>
+    <message>
+        <source>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</source>
+        <translation>Falls mehrere Geräte auf die gleiche SIP-Benutzerkennung angemeldet werden, kann der Provider den q-Wert dazu verwenden, die Reihenfolge festzulegen, in der ein eingehender Ruf an die Geräte zugetellt wird.</translation>
+    </message>
+    <message>
+        <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
+        <translation>Der q-Wert darf zwischen 0,000 und 1,000 liegen. Ein höherer Wert bedeutet höhere Priorität. Das Gerät mit der höchsten Priorität wird als erstes angesprochen.</translation>
+    </message>
+    <message>
+        <source>SIP transport</source>
+        <translation>SIP Übertragung</translation>
+    </message>
+    <message>
+        <source>UDP</source>
+        <translation>UDP</translation>
+    </message>
+    <message>
+        <source>TCP</source>
+        <translation>TCP</translation>
+    </message>
+    <message>
+        <source>Transport mode for SIP. In auto mode, the size of a message determines which transport protocol is used. Messages larger than the UDP threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation>Übertragungsmodus (TCP oder UDP) für SIP. Bei &quot;Automatisch&quot; wird TCP verwendet, falls die Größe der zu übertragenden Nachricht das Limit für UDP übersteigt.</translation>
+    </message>
+    <message>
+        <source>T&amp;ransport protocol:</source>
+        <translation>Übe&amp;rtragungsprotokoll:</translation>
+    </message>
+    <message>
+        <source>UDP t&amp;hreshold:</source>
+        <translation>UDP &amp;Grenzwert:</translation>
+    </message>
+    <message>
+        <source> bytes</source>
+        <translation> Bytes</translation>
+    </message>
+    <message>
+        <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation>Nachrichten, die größer sind als der Grenzwert, werden über TCP gesendet, kleinere über UDP.</translation>
+    </message>
+    <message>
+        <source>Use &amp;STUN (does not work for incoming TCP)</source>
+        <translation>&amp;STUN benutzen (wirkungslos für eingehende TCP-Verbindungen)</translation>
+    </message>
 </context>
 <context>
     <name>WizardForm</name>
@@ -5456,7 +5551,7 @@ Für direct-IP-to-IP (siehe Handbuch) ist hier die Adresse (DynDNS oder IP) einz
     </message>
     <message>
         <source>Alt+O</source>
-        <translation></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -5464,7 +5559,7 @@ Für direct-IP-to-IP (siehe Handbuch) ist hier die Adresse (DynDNS oder IP) einz
     </message>
     <message>
         <source>Alt+C</source>
-        <translation></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>None (direct IP to IP calls)</source>

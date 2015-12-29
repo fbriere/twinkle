@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -245,6 +245,8 @@ void t_log::write_footer(void) {
 
 	bool log_zapped = false;
 	if (log_stream->tellp() >= sys_config->get_log_max_size() * 1000000) {
+		*log_stream << "*** Log full. Rotate to new log file. ***\n";
+		log_stream->flush();
 		log_stream->close();
 
 		if (!move_current_to_old()) {
@@ -281,8 +283,14 @@ void t_log::write_footer(void) {
 
 void t_log::write_raw(const string &raw) {
 	if (log_disabled || log_report_disabled) return;
-
-	*log_stream << raw;
+	
+	if (raw.size() < MAX_LEN_LOG_STRING) {
+		*log_stream << raw;
+	} else {
+		*log_stream << raw.substr(0, MAX_LEN_LOG_STRING);
+		*log_stream << "\n\n";
+		*log_stream << "<cut off>\n";
+	}
 }
 
 void t_log::write_raw(int raw) {

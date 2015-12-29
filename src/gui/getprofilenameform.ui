@@ -116,9 +116,6 @@
                     <property name="text">
                         <string></string>
                     </property>
-                    <property name="maxLength">
-                        <number>20</number>
-                    </property>
                     <property name="whatsThis" stdset="0">
                         <string>&lt;b&gt;The name of your profile&lt;/b&gt;
 &lt;br&gt;&lt;br&gt;

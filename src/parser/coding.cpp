@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,8 +32,11 @@ string t_coding::encode(void) const {
 	string s;
 
 	s = content_coding;
-
-	if (q != 1.0) s += float2str(q, ";q=%.1f");
+	
+	if (q != 1.0) {
+		s += ";q=";
+		s += float2str(q, 1);
+	}
 
 	return s;
 }

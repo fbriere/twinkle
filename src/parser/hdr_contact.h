@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,11 +33,12 @@ class t_contact_param {
 private:
 	bool			expires_present;
 	unsigned long		expires;
-
+	bool			qvalue_present;
+	float			qvalue;
+	
 public:
 	string			display; // display name
 	t_url			uri;
-	float			q;
 	list<t_parameter>	extensions;
 
 	t_contact_param();
@@ -46,6 +47,8 @@ public:
 	bool is_expires_present(void) const;
 	unsigned long get_expires(void) const;
 	void set_expires(unsigned long e);
+	float get_qvalue(void) const;
+	void set_qvalue(float q);
 
 	// Compare contacts on q-value.
 	// The contacts with the highest q-value comes first in the order

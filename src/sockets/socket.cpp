@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <sys/un.h>
 #include "twinkle_config.h"
 #include "socket.h"
+#include "audits/memman.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -44,6 +45,32 @@ t_icmp_msg::t_icmp_msg(short _type, short _code, unsigned long _icmp_src_ipaddr,
 		type(_type), code(_code), icmp_src_ipaddr(_icmp_src_ipaddr),
 		ipaddr(_ipaddr), port(_port)
 {}
+
+/////////////////
+// t_socket
+/////////////////
+
+t_socket::~t_socket() {
+	close(sd);
+}
+
+t_socket::t_socket() : sd(0)
+{}
+
+t_socket::t_socket(int _sd) : sd(_sd)
+{}
+
+int t_socket::get_descriptor(void) const {
+	return sd;
+}
+
+int t_socket::getsockopt(int level, int optname, void *optval, socklen_t *optlen) {
+	return ::getsockopt(sd, level, optname, optval, optlen);
+}
+
+int t_socket::setsockopt(int level, int optname, const void *optval, socklen_t optlen) {
+	return ::setsockopt(sd, level, optname, optval, optlen);
+}
 
 /////////////////
 // t_socket_udp
@@ -78,10 +105,6 @@ t_socket_udp::t_socket_udp(unsigned short port) {
 	if (ret < 0) throw errno;
 }
 
-t_socket_udp::~t_socket_udp() {
-	close(sd);
-}
-
 int t_socket_udp::connect(unsigned long dest_addr, unsigned short dest_port) {
 	struct sockaddr_in addr;
 	int ret;
@@ -110,7 +133,7 @@ int t_socket_udp::sendto(unsigned long dest_addr, unsigned short dest_port,
 	return ret;
 }
 
-int t_socket_udp::send(const char *data, int data_size) {
+ssize_t t_socket_udp::send(const void *data, int data_size) {
 	int ret = ::send(sd, data, data_size, 0);
 	if (ret < 0) throw errno;
 
@@ -134,7 +157,7 @@ int t_socket_udp::recvfrom(unsigned long &src_addr, unsigned short &src_port,
 	return ret;
 }
 
-int t_socket_udp::recv(char *buf, int buf_size) {
+ssize_t t_socket_udp::recv(void *buf, int buf_size) {
 	int ret;
 
 	memset(buf, 0, buf_size);
@@ -150,7 +173,7 @@ bool t_socket_udp::select_read(unsigned long timeout) {
 	
 	FD_ZERO(&fds);
 	FD_SET(sd, &fds);
-	
+
 	t.tv_sec = timeout / 1000;
 	t.tv_usec = (timeout % 1000) * 1000;
 	
@@ -164,7 +187,7 @@ bool t_socket_udp::select_read(unsigned long timeout) {
 bool t_socket_udp::enable_icmp(void) {
 #if HAVE_LINUX_ERRQUEUE_H
 	int enable = 1;
-	int ret = setsockopt(sd, SOL_IP, IP_RECVERR, &enable, sizeof(int));
+	int ret = setsockopt(SOL_IP, IP_RECVERR, &enable, sizeof(int));
 	if (ret < 0) return false;
 	return true;
 #else
@@ -245,6 +268,103 @@ string h_ip2str(unsigned long ipaddr) {
 }
 
 /////////////////
+// t_socket_tcp
+/////////////////
+
+t_socket_tcp::t_socket_tcp() {
+	struct sockaddr_in addr;
+	int ret;
+
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sd < 0) throw errno;
+}
+
+t_socket_tcp::t_socket_tcp(unsigned short port) {
+	struct sockaddr_in addr;
+	int ret;
+
+	sd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sd < 0) throw errno;
+	
+	int enable = 1;
+	
+	// Allow server to connect to the socket immediately (disable TIME_WAIT)
+	(void)setsockopt(SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
+	
+	enable = 1;
+	
+	// Disable Nagle algorithm
+	(void)setsockopt(IPPROTO_TCP, TCP_NODELAY, &enable, sizeof(enable));
+
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	addr.sin_port = htons(port);
+	ret = bind(sd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) throw errno;
+}
+
+t_socket_tcp::t_socket_tcp(int _sd) : t_socket(_sd)
+{}
+
+void t_socket_tcp::listen(int backlog) {
+	int ret = ::listen(sd, backlog);
+	if (ret < 0) throw errno;
+}
+
+t_socket_tcp *t_socket_tcp::accept(unsigned long &src_addr, unsigned short &src_port) {
+	struct sockaddr_in addr;
+	socklen_t socklen = sizeof(addr);
+	int ret = ::accept(sd, (struct sockaddr *)&addr, &socklen);
+	if (ret < 0) throw errno;
+	
+	src_addr = ntohl(addr.sin_addr.s_addr);
+	src_port = ntohs(addr.sin_port);
+	
+	t_socket_tcp *sock = new t_socket_tcp(ret);
+	MEMMAN_NEW(sock);
+	return sock;
+}
+
+void t_socket_tcp::connect(unsigned long dest_addr, unsigned short dest_port) {
+	struct sockaddr_in addr;
+	int ret;
+
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(dest_addr);
+	addr.sin_port = htons(dest_port);
+	ret = ::connect(sd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) throw errno;
+}
+
+ssize_t t_socket_tcp::send(const void *data, int data_size) {
+	ssize_t ret = ::send(sd, data, data_size, 0);
+	if (ret < 0) throw errno;
+
+	return ret;
+}
+
+ssize_t t_socket_tcp::recv(void *buf, int buf_size) {
+	ssize_t ret;
+
+	ret = ::recv(sd, buf, buf_size, 0);
+	if (ret < 0) throw errno;
+
+	return ret;
+}
+
+void t_socket_tcp::get_remote_address(unsigned long &remote_addr, unsigned short &remote_port) {
+	struct sockaddr_in addr;
+	socklen_t namelen = sizeof(addr);
+	
+	int ret = getpeername(sd, (struct sockaddr *)&addr, &namelen);
+	if (ret < 0) throw errno;
+	if (addr.sin_family != AF_INET) throw EBADF;
+	
+	remote_addr = ntohl(addr.sin_addr.s_addr);
+	remote_port = ntohs(addr.sin_port);
+};
+
+/////////////////
 // t_socket_local
 /////////////////
 
@@ -255,10 +375,6 @@ t_socket_local::t_socket_local() {
 
 t_socket_local::t_socket_local(int _sd) {
 	sd = _sd;
-}
-
-t_socket_local::~t_socket_local() {
-	close(sd);
 }
 
 void t_socket_local::bind(const string &name) {
@@ -314,10 +430,18 @@ int t_socket_local::read(void *buf, int count) {
 	return ret;
 }
 
-int t_socket_local::write(void *buf, int count) {
+ssize_t t_socket_local::recv(void *buf, int buf_size) {
+	return read(buf, buf_size);
+}
+
+int t_socket_local::write(const void *buf, int count) {
 	int ret;
 	
 	ret = ::write(sd, buf, count);
 	if (ret < 0) throw errno;
 	return ret;	
+}
+
+ssize_t t_socket_local::send(const void *buf, int count) {
+	return write(buf, count);
 }

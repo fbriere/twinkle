@@ -413,7 +413,7 @@
     <name>GUI</name>
     <message>
         <source>Failed to create a UDP socket (SIP) on port %1</source>
-        <translation>Impossible de créer un socket UDP (SIP) sur le port %1</translation>
+        <translation type="obsolete">Impossible de créer un socket UDP (SIP) sur le port %1</translation>
     </message>
     <message>
         <source>The following profiles are both for user %1</source>
@@ -774,6 +774,14 @@
     <message>
         <source>Use domain name to create a unique contact header</source>
         <translation>Utilisez le nom de domaine pour créer une entête de contact unique</translation>
+    </message>
+    <message>
+        <source>Failed to create a %1 socket (SIP) on port %2</source>
+        <translation>Impossible de créer un socket %1 (SIP) sur le port %2</translation>
+    </message>
+    <message>
+        <source>Accepted by network</source>
+        <translation>Accepté par le réseau</translation>
     </message>
 </context>
 <context>
@@ -1310,6 +1318,17 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Delivery failure</source>
         <translation>Echec de l&apos;envoi</translation>
+    </message>
+    <message>
+        <source>Delivery notification</source>
+        <translation>Notification de la réception</translation>
+    </message>
+</context>
+<context>
+    <name>MessageFormView</name>
+    <message>
+        <source>sending message</source>
+        <translation>Envoi du message</translation>
     </message>
 </context>
 <context>
@@ -2791,7 +2810,7 @@ Merci de sélectionner un profil.</translation>
     </message>
     <message>
         <source>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</source>
-        <translation>Avec ALSA, il n&apos;est pas recommandé d&apos;utiliser l&apos;interface par défaut pour le microphone car ceci dégrade la qualité du son.</translation>
+        <translation type="obsolete">Avec ALSA, il n&apos;est pas recommandé d&apos;utiliser l&apos;interface par défaut pour le microphone car ceci dégrade la qualité du son.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
@@ -2946,19 +2965,19 @@ L&apos;algoritme de réduction de bruit est très simple. Le son est enregistré
     </message>
     <message>
         <source>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple and static IP addresses.</source>
-        <translation>La prochaine fois que vous lancerez Twinkle, cette adresse IP sera automatiquement sélectionnée. Ceci est utile uniquement si votre ordinateur à plusieurs IP statiques.</translation>
+        <translation type="obsolete">La prochaine fois que vous lancerez Twinkle, cette adresse IP sera automatiquement sélectionnée. Ceci est utile uniquement si votre ordinateur à plusieurs IP statiques.</translation>
     </message>
     <message>
         <source>Default &amp;IP address:</source>
-        <translation>Adresse &amp;IP par défaut:</translation>
+        <translation type="obsolete">Adresse &amp;IP par défaut:</translation>
     </message>
     <message>
         <source>Next time you start Twinkle, the IP address of this network interface be automatically selected. This is only useful when your computer has multiple network devices.</source>
-        <translation>La prochaine fois que vous lancerez Twinkle, l&apos;adresse IP de cette interface réseau sera automatiquement sélectionnée. Ceci est utile uniquement si votre ordinateur à plusieurs interfaces réseau.</translation>
+        <translation type="obsolete">La prochaine fois que vous lancerez Twinkle, l&apos;adresse IP de cette interface réseau sera automatiquement sélectionnée. Ceci est utile uniquement si votre ordinateur à plusieurs interfaces réseau.</translation>
     </message>
     <message>
         <source>Default &amp;network interface:</source>
-        <translation>&amp;Réseau par défaut:</translation>
+        <translation type="obsolete">&amp;Réseau par défaut:</translation>
     </message>
     <message>
         <source>S&amp;tartup hidden in system tray</source>
@@ -3034,7 +3053,7 @@ L&apos;algoritme de réduction de bruit est très simple. Le son est enregistré
     </message>
     <message>
         <source>The UDP port used for sending and receiving SIP messages.</source>
-        <translation>Le port UDP utilisé pour envoyer et recevoir des messages SIP.</translation>
+        <translation type="obsolete">Le port UDP utilisé pour envoyer et recevoir des messages SIP.</translation>
     </message>
     <message>
         <source>&amp;RTP port:</source>
@@ -3046,7 +3065,7 @@ L&apos;algoritme de réduction de bruit est très simple. Le son est enregistré
     </message>
     <message>
         <source>&amp;SIP UDP port:</source>
-        <translation>Port &amp;SIP UDP :</translation>
+        <translation type="obsolete">Port &amp;SIP UDP :</translation>
     </message>
     <message>
         <source>Ring tone</source>
@@ -3244,6 +3263,30 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     <message>
         <source>Select ring back tone file.</source>
         <translation>Sélectionnez votre sonnerie de tonalité.</translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-65535) in bytes of an incoming SIP message over UDP.</source>
+        <translation>Taille maximum allouée pour un message SIP entrant en UDP en octets (0-65535).</translation>
+    </message>
+    <message>
+        <source>&amp;SIP port:</source>
+        <translation>Port &amp;SIP:</translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;TCP):</source>
+        <translation>Taille max. du message SIP (&amp;TCP):</translation>
+    </message>
+    <message>
+        <source>The UDP/TCP port used for sending and receiving SIP messages.</source>
+        <translation>Le port UDP/TCP utilisé pour envoyer et recevoir des messages SIP.</translation>
+    </message>
+    <message>
+        <source>Max. SIP message size (&amp;UDP):</source>
+        <translation>Taille max. du message SIP (&amp;UDP):</translation>
+    </message>
+    <message>
+        <source>Maximum allowed size (0-4294967295) in bytes of an incoming SIP message over TCP.</source>
+        <translation>Taille maximum allouée pour un message SIP entrant en TCP en octets (0-4294967295).</translation>
     </message>
 </context>
 <context>
@@ -3598,6 +3641,10 @@ et créez les attaches statiques suivantes (UDP) dans votre NAT.</translation>
         <source>Cannot open ALSA driver for PCM capture</source>
         <translation>Impossible d&apos;ouvrir ALSA pour la capture PCM</translation>
     </message>
+    <message>
+        <source>Cannot receive incoming TCP connections.</source>
+        <translation>Impossible de recevoir des connexions TCP entrantes.</translation>
+    </message>
 </context>
 <context>
     <name>UserProfileForm</name>
@@ -3628,10 +3675,6 @@ et créez les attaches statiques suivantes (UDP) dans votre NAT.</translation>
     <message>
         <source>SIP protocol</source>
         <translation>Protocole SIP</translation>
-    </message>
-    <message>
-        <source>NAT</source>
-        <translation></translation>
     </message>
     <message>
         <source>Address format</source>
@@ -4447,7 +4490,7 @@ En cochant cette case, vous devez créer un mappage NAT. Vous devez mapper les p
     </message>
     <message>
         <source>Use &amp;STUN</source>
-        <translation>Utiliser &amp;STUN</translation>
+        <translation type="obsolete">Utiliser &amp;STUN</translation>
     </message>
     <message>
         <source>Choose this option when your SIP provider offers a STUN server for NAT traversal.</source>
@@ -5340,6 +5383,58 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
     <message>
         <source>Refresh rate of presence subscriptions.</source>
         <translation>Période d&apos;actualisation de la connexion.</translation>
+    </message>
+    <message>
+        <source>Transport/NAT</source>
+        <translation>Transport/NAT</translation>
+    </message>
+    <message>
+        <source>Add q-value to registration</source>
+        <translation>Ajouter la q-value à la connexion</translation>
+    </message>
+    <message>
+        <source>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</source>
+        <translation>La q-value indique la priorité de l&apos;interface connectée. Si en plus de Twinkle, vous connectez une autre interface SIP pour ce compte, alors le réseau utilisera ces valeurs pour déterminer quelle interface tester en premier pour effectuer un appel.</translation>
+    </message>
+    <message>
+        <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
+        <translation>La q-value est une valeur comprise ent 0.000 et 1.000. Une valeur superieure signifie une priorité plus importante.</translation>
+    </message>
+    <message>
+        <source>SIP transport</source>
+        <translation>Transport SIP</translation>
+    </message>
+    <message>
+        <source>UDP</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>TCP</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Transport mode for SIP. In auto mode, the size of a message determines which transport protocol is used. Messages larger than the UDP threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation>Mode de transport SIP. En mode auto, la taille du message détermine quel protocole de transport utiliser. Les messages plus grand que la limite de l&apos;UDP sont envoyés via TCP.</translation>
+    </message>
+    <message>
+        <source>T&amp;ransport protocol:</source>
+        <translation>Protocole de T&amp;ransport:</translation>
+    </message>
+    <message>
+        <source>UDP t&amp;hreshold:</source>
+        <translation>&amp;Limite UDP:</translation>
+    </message>
+    <message>
+        <source> bytes</source>
+        <translation>octets</translation>
+    </message>
+    <message>
+        <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
+        <translation>Les messages plus grand que la limite sont envoyés via TCP. Les messages plus petits sont envoyés via UDP.</translation>
+    </message>
+    <message>
+        <source>Use &amp;STUN (does not work for incoming TCP)</source>
+        <translation>Utiliser &amp;STUN (ne fonctionne pas pour le TCP entrant)</translation>
     </message>
 </context>
 <context>

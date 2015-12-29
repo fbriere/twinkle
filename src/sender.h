@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,10 +16,18 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * Network sender threads.
+ */
+
 #ifndef _H_SENDER
 #define _H_SENDER
 
-// Thread sending SIP UDP datagrams
-void *sender_udp(void *arg);
+/** Thread sending SIP messages */
+void *sender_loop(void *arg);
+
+/** Thread for sending asynchronously over TCP */
+void *tcp_sender_loop(void *arg);
 
 #endif

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <algorithm>
 #include <assert.h>
 #include <cstdlib>
 #include <iostream>
@@ -26,6 +27,8 @@
 #include "parser/hdr_warning.h"
 #include "parser/parameter.h"
 #include "audits/memman.h"
+
+using namespace std;
 
 string sdp_ntwk_type2str(t_sdp_ntwk_type n) {
 	switch(n) {
@@ -773,4 +776,16 @@ const t_sdp_media *t_sdp::get_first_media(t_sdp_media_type media_type) const {
 	}
 
 	return NULL;
+}
+
+bool t_sdp::local_ip_check(void) const {
+	if (origin.address == AUTO_IP4_ADDRESS) return false;
+	
+	if (connection.address == AUTO_IP4_ADDRESS) return false;
+	
+	for (list<t_sdp_media>::const_iterator it = media.begin(); it != media.end(); ++it) {
+		if (it->connection.address == AUTO_IP4_ADDRESS) return false;
+	}
+	
+	return true;
 }

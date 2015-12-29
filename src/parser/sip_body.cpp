@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,6 +32,10 @@
 
 t_sip_body::t_sip_body() {
 	invalid = false;
+}
+
+bool t_sip_body::local_ip_check(void) const {
+	return true;
 }
 
 ////////////////////////////////////

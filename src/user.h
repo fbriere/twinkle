@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,9 +41,10 @@ class t_request;
 
 #define USER_SCHEME		"sip"
 
-#define PUBLIC_SIP_UDP_PORT(u)	phone->get_public_port_sip(u)
-#define USER_HOST(u)		phone->get_ip_sip(u)
+#define PUBLIC_SIP_PORT(u)	phone->get_public_port_sip(u)
+#define USER_HOST(u,local_ip)	phone->get_ip_sip(u,(local_ip))
 #define LOCAL_IP		user_host
+#define LOCAL_HOSTNAME		local_hostname
 
 #define SPECIAL_PHONE_SYMBOLS	"-()/."
 
@@ -52,6 +53,13 @@ using namespace std;
 enum t_hold_variant {
 	HOLD_RFC2543,	// set IP = 0.0.0.0 in c-line
 	HOLD_RFC3264	// use direction attribute to put call on-hold
+};
+
+/** SIP transport mode */
+enum t_sip_transport {
+	SIP_TRANS_UDP,	/**< SIP over UDP */
+	SIP_TRANS_TCP,	/**< SIP over TCP */
+	SIP_TRANS_AUTO	/**< UDP for small messages, TCP for large messages */
 };
 
 enum t_ext_support {
@@ -137,13 +145,17 @@ private:
 	// Send REGISTER to registrar
 	bool			use_registrar;
 	t_url			registrar;
-
+	
 	// Registration time requested by the client. If set to zero, then
 	// no specific time is requested. The registrar will set a time.
 	unsigned long		registration_time;
 
 	// Automatically register at startup of the client.
 	bool			register_at_startup;
+
+	// q-value for registration
+	bool			reg_add_qvalue;
+	float			reg_qvalue;
 
 
 	// AUDIO
@@ -307,6 +319,19 @@ private:
 	// Send P-Preferred-Identity header in initial INVITE when hiding
 	// user identity.
 	bool			send_p_preferred_id;
+	
+	/** @name Transport */
+	//@{
+	/** SIP transport protocol */
+	t_sip_transport		sip_transport;
+	
+	/** 
+	 * Threshold to decide which transport to use in auto transport mode. 
+	 * A message with a size up to this threshold is sent via UDP. Larger messages
+	 * are sent via TCP.
+	 */
+	unsigned short		sip_transport_udp_threshold;
+	//@}
 
 	// NAT
 
@@ -314,7 +339,7 @@ private:
 	// You can set nat_public_ip to your public IP or FQDN if you are behind
 	// a NAT. This will then be used inside the SIP messages instead of your
 	// private IP. On your NAT you have to create static bindings for port 5060
-	// and ports 8000 - 8003 to the same ports on your private IP address.
+	// and ports 8000 - 8005 to the same ports on your private IP address.
 	bool			use_nat_public_ip;
 	string			nat_public_ip;
 	
@@ -432,6 +457,8 @@ private:
 	string dtmf_transport2str(t_dtmf_transport d) const;
 	t_g726_packing str2g726_packing(const string &s) const;
 	string g726_packing2str(t_g726_packing packing) const;
+	t_sip_transport str2sip_transport(const string &s) const;
+	string sip_transport2str(t_sip_transport transport) const;
 	
 	// Parse a number conversion rule
 	// If the rule can be parsed, then c contains the conversion rule and
@@ -465,6 +492,8 @@ public:
 	t_url get_registrar(void) const;
 	unsigned long get_registration_time(void) const;
 	bool get_register_at_startup(void) const;
+	bool get_reg_add_qvalue(void) const;
+	float get_reg_qvalue(void) const;
 	list<t_audio_codec> get_codecs(void) const;
 	unsigned short get_ptime(void) const;
 	bool get_out_obey_far_end_codec_pref(void) const;
@@ -511,6 +540,8 @@ public:
 	bool get_auto_refresh_refer_sub(void) const;
 	bool get_attended_refer_to_aor(void) const;
 	bool get_send_p_preferred_id(void) const;
+	t_sip_transport get_sip_transport(void) const;
+	unsigned short get_sip_transport_udp_threshold(void) const;
 	bool get_use_nat_public_ip(void) const;
 	string get_nat_public_ip(void) const;
 	bool get_use_stun(void) const;
@@ -566,6 +597,8 @@ public:
 	void set_registrar(const t_url &url);
 	void set_registration_time(const unsigned long time);
 	void set_register_at_startup(bool b);
+	void set_reg_add_qvalue(bool b);
+	void set_reg_qvalue(float q);
 	void set_codecs(const list<t_audio_codec> &_codecs);
 	void set_ptime(unsigned short _ptime);
 	void set_out_obey_far_end_codec_pref(bool b);
@@ -612,6 +645,8 @@ public:
 	void set_auto_refresh_refer_sub(bool b);
 	void set_attended_refer_to_aor(bool b);
 	void set_send_p_preferred_id(bool b);
+	void set_sip_transport(t_sip_transport transport);
+	void set_sip_transport_udp_threshold(unsigned short threshold);
 	void set_use_nat_public_ip(bool b);
 	void set_nat_public_ip(const string &public_ip);
 	void set_use_stun(bool b);
@@ -678,8 +713,16 @@ public:
 	// Check if all required extensions are supported
 	bool check_required_ext(t_request *r, list<string> &unsupported) const;
 	
-	// Create user uri and contact uri
-	string create_user_contact(bool anonymous);
+	/**
+	 * Create contact URI.
+	 * @param anonymous [in] Indicates if an anonymous contact should be created.
+	 * @param auto_ip [in] Automatically determined local IP address that should be
+	 *                     used if not IP address has been determined through other means.
+	 * @return String representation of the contact URI.
+	 */
+	string create_user_contact(bool anonymous, const string &auto_ip);
+	
+	// Create user uri
 	string create_user_uri(bool anonymous);
 	
 	// Convert a number by applying the number conversions.

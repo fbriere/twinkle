@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,6 @@
 
 extern t_phone 		*phone;
 extern t_event_queue	*evq_timekeeper;
-extern t_event_queue	*evq_sender_udp;
 extern string		user_host;
 
 // t_transfer_data
@@ -1750,8 +1749,10 @@ void t_phone::recvd_refer_permission(bool permission) {
 	// See draft-ietf-sipping-cc-transfer-07 7.3
 	if (!r->hdr_refer_to.uri.get_headers().empty()) {
 		try {
+			list<string> parse_errors;
 			t_sip_message *m = t_parser::parse_headers(
-					r->hdr_refer_to.uri.get_headers());
+					r->hdr_refer_to.uri.get_headers(),
+					parse_errors);
 			hdr_replaces = m->hdr_replaces;
 			hdr_require = m->hdr_require;
 			MEMMAN_DELETE(m);
@@ -2876,7 +2877,7 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 		// Check if there is already another profile having
 		// the same contact name.
 		if (user->get_contact_name() == user_config.get_contact_name() &&
-		    USER_HOST(user) == USER_HOST(&user_config) &&
+		    USER_HOST(user, AUTO_IP4_ADDRESS) == USER_HOST(&user_config, AUTO_IP4_ADDRESS) &&
 		    (*i)->is_active())
 		{
 			*dup_user = user;
@@ -2990,17 +2991,19 @@ t_presence_epa *t_phone::ref_presence_epa(t_user *user) {
 	return epa;
 }
 
-string t_phone::get_ip_sip(const t_user *user) const {
+string t_phone::get_ip_sip(const t_user *user, const string &auto_ip) const {
 	string result;
 
 	lock();
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
-		result = pu->get_ip_sip();
+		result = pu->get_ip_sip(auto_ip);
 	} else {
 		result = LOCAL_IP;
 	}
 	unlock();
+	
+	if (result == AUTO_IP4_ADDRESS) result = auto_ip;
 	
 	return result;
 }
@@ -3013,7 +3016,7 @@ unsigned short t_phone::get_public_port_sip(const t_user *user) const {
 	if (pu) {
 		result = pu->get_public_port_sip();
 	} else {
-		result = sys_config->get_sip_udp_port();
+		result = sys_config->get_sip_port();
 	}
 	unlock();
 	
@@ -3066,7 +3069,10 @@ bool t_phone::stun_discover_nat(list<string> &msg_list) {
 	{
 		if (!(*i)->is_active()) continue;
 		t_user *user_config = (*i)->get_user_profile();
-		if (user_config->get_use_stun()) {
+		if (user_config->get_use_stun() && 
+		    (user_config->get_sip_transport() == SIP_TRANS_UDP ||
+		     user_config->get_sip_transport() == SIP_TRANS_AUTO))
+		{
 			string msg;
 			if (!::stun_discover_nat(*i, msg)) {
 				string s("User profile: ");

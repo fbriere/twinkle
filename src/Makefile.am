@@ -1,8 +1,6 @@
-INCLUDES = -I $(includedir)
-
 AM_LDFLAGS = -L $(libdir)
 
-AM_CPPFLAGS = $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
+AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -DDATADIR=\"$(pkgdatadir)\"
 
 noinst_PROGRAMS = twinkle
 
@@ -16,13 +14,13 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/sockets/libsocket.a\
         $(top_builddir)/src/threads/libthread.a\
         $(top_builddir)/src/audio/libaudio.a\
-        $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
         $(top_builddir)/src/mwi/libmwi.a\
         $(top_builddir)/src/im/libim.a\
         $(top_builddir)/src/presence/libpresence.a\
         $(top_builddir)/src/patterns/libpatterns.a\
+	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
 	-lsndfile

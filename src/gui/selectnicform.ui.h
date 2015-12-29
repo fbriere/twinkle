@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ void SelectNicForm::init()
 
 void SelectNicForm::setAsDefault(bool setIp)
 {
+#if 0
+	// DEPRECATED
 	// Only show the information when the default button is
 	// pressed for the first time.
 	if (idxDefault == -1) {
@@ -73,6 +75,7 @@ void SelectNicForm::setAsDefault(bool setIp)
 		// Failed to write config file
 		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_CRITICAL);
 	}
+#endif
 }
 
 void SelectNicForm::setAsDefaultIp()

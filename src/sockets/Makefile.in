@@ -52,8 +52,9 @@ AR = ar
 ARFLAGS = cru
 libsocket_a_AR = $(AR) $(ARFLAGS)
 libsocket_a_LIBADD =
-am_libsocket_a_OBJECTS = dnssrv.$(OBJEXT) interfaces.$(OBJEXT) \
-	socket.$(OBJEXT) url.$(OBJEXT)
+am_libsocket_a_OBJECTS = connection.$(OBJEXT) \
+	connection_table.$(OBJEXT) dnssrv.$(OBJEXT) \
+	interfaces.$(OBJEXT) socket.$(OBJEXT) url.$(OBJEXT)
 libsocket_a_OBJECTS = $(am_libsocket_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -111,6 +112,7 @@ EXTLIBS = @EXTLIBS@
 FRAMEWORK_COREAUDIO = @FRAMEWORK_COREAUDIO@
 GNULIBS = @GNULIBS@
 GREP = @GREP@
+GSM_LIBS = @GSM_LIBS@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -168,6 +170,7 @@ LIB_SMB = @LIB_SMB@
 LIB_X11 = @LIB_X11@
 LIB_XEXT = @LIB_XEXT@
 LIB_XRENDER = @LIB_XRENDER@
+LRELEASEOPTION = @LRELEASEOPTION@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
 MAKEKDEWIDGETS = @MAKEKDEWIDGETS@
@@ -181,7 +184,6 @@ PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
-PARSER_CXXFLAGS = @PARSER_CXXFLAGS@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PERL = @PERL@
 PKG_CONFIG = @PKG_CONFIG@
@@ -301,7 +303,9 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src
+
 noinst_LIBRARIES = libsocket.a
 
 #noinst_PROGRAMS = srvinfo urlinfo
@@ -314,10 +318,14 @@ noinst_LIBRARIES = libsocket.a
 #	$(top_builddir)/src/sockets/libsocket.a\
 #	-lresolv
 libsocket_a_SOURCES = \
+	connection.cpp\
+	connection_table.cpp\
 	dnssrv.cpp\
         interfaces.cpp\
         socket.cpp\
         url.cpp\
+        connection.h\
+        connection_table.h\
         dnssrv.h\
         interfaces.h\
         socket.h\
@@ -370,6 +378,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/connection.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/connection_table.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dnssrv.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interfaces.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Po@am__quote@

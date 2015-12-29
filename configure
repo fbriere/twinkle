@@ -827,7 +827,8 @@ LIB_KDNSSD
 LIB_KSYCOCA
 LIB_KFILE
 LIB_KFM
-PARSER_CXXFLAGS
+GSM_LIBS
+LRELEASEOPTION
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -2424,7 +2425,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION="1.1"
+ VERSION="1.2"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -2572,7 +2573,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "July 21 2007"
+#define VERSION_DATE "March 9 2008"
 _ACEOF
 
 ac_ext=c
@@ -15602,7 +15603,7 @@ for i in $jpeg_incdirs;
 do
   for j in jpeglib.h;
   do
-    echo "configure: 15605: $i/$j" >&5
+    echo "configure: 15606: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       jpeg_incdir=$i
@@ -15910,7 +15911,7 @@ for i in $qt_incdirs;
 do
   for j in $kde_qt_header;
   do
-    echo "configure: 15913: $i/$j" >&5
+    echo "configure: 15914: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       qt_incdir=$i
@@ -16710,13 +16711,29 @@ echo "$as_me: error: lrelease is missing (qt3-devel-tools package)" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-# Create a Qt include project file for platform dependend variables
-# This file will be included by the project file in the gui directory
-# Determine include files and dynamic libs.
 QT_INCL_PRO=qtccxxincl.pro
 { echo "$as_me:$LINENO: creating $QT_INCL_PRO (include project file for Qt)" >&5
 echo "$as_me: creating $QT_INCL_PRO (include project file for Qt)" >&6;}
-echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
+
+# first set include path to generated files
+echo "INCLUDEPATH += `pwd`/src" > $QT_INCL_PRO
+# next get includes specified on command line
+(
+set -- $CPPFLAGS
+while test -n "$1"; do
+  echo $1
+  shift
+done
+) | grep '^-I' | sed -e 's|^-I||' | xargs echo INCLUDEPATH += >> $QT_INCL_PRO
+
+#echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
+# libccrtp1(ccrtp) depend from libccgnu2(commoncpp2) and
+# should include above flags !
+echo "INCLUDEPATH += `$PKG_CONFIG --cflags-only-I libccrtp1`" | sed -e s/-I//g >> $QT_INCL_PRO
+
+# get libraries specified on command line
+echo $LDFLAGS | xargs echo LIBS += >> $QT_INCL_PRO
+
 echo "LIBS += `$CCGNU2_CONFIG --stdlibs`" >> $QT_INCL_PRO
 echo "LIBS += $CCRTP_LIBS" >> $QT_INCL_PRO
 echo "LIBS += $XML2_LIBS" >> $QT_INCL_PRO
@@ -17199,7 +17216,7 @@ for i in $kde_incdirs;
 do
   for j in $kde_check_header;
   do
-    echo "configure: 17202: $i/$j" >&5
+    echo "configure: 17219: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_incdir=$i
@@ -17229,7 +17246,7 @@ for i in $kde_libdirs;
 do
   for j in $kde_check_lib;
   do
-    echo "configure: 17232: $i/$j" >&5
+    echo "configure: 17249: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_libdir=$i
@@ -17247,7 +17264,7 @@ for i in $kde_libdirs;
 do
   for j in "kde3/plugins/designer/kdewidgets.la";
   do
-    echo "configure: 17250: $i/$j" >&5
+    echo "configure: 17267: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_widgetdir=$i
@@ -18747,7 +18764,7 @@ for i in $kde_sharedirs;
 do
   for j in apps/ksgmltools2/customization/kde-chunk.xsl;
   do
-    echo "configure: 18750: $i/$j" >&5
+    echo "configure: 18767: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       KDE_XSL_STYLESHEET=$i
@@ -19274,6 +19291,24 @@ else
 echo "$as_me: error: libsndfile library is missing." >&2;}
    { (exit 1); exit 1; }; }
 fi
+
+
+# This check does not work on all platforms
+# Check if libgsm is available
+# AC_CHECK_LIB(gsm, sf_open, [
+#	AC_CHECK_HEADER(gsm.h, [],
+#		[AC_MSG_ERROR([gsm header files missing (gsm.h)])])
+#	AC_DEFINE(HAVE_GSM, 1, [Define to 1 if you have the <libgsm> library.])
+#	GSM_LIBS="-lgsm"
+#	echo "LIBS += -lgsm" >> $QT_INCL_PRO
+#	have_gsm="yes" ], [
+#	have_gsm="no"
+#	GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+#	echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO ])
+have_gsm="no"
+GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO
+
 
 
 # Check if ALSA is available
@@ -20611,13 +20646,25 @@ fi
 
 
 
-$QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
-echo "distdir:" >> src/gui/Makefile
+{ echo "$as_me:$LINENO: checking LRELEASE OPTIONS" >&5
+echo $ECHO_N "checking LRELEASE OPTIONS... $ECHO_C" >&6; }
 
-# Strip the -O2 flag from CXXFLAGS for building the SIP parser.
-# g++ cannot compile the generated C code from bison with -O2 or -Os
-# Note: -Os is used on VIA C3 processor
-PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
+if lrelease -compress /dev/null -qm /dev/null 1>/dev/null 2>&1
+then
+{ echo "$as_me:$LINENO: result: compress" >&5
+echo "${ECHO_T}compress" >&6; }
+LRELEASEOPTION="-compress"
+else
+{ echo "$as_me:$LINENO: result: nocompress" >&5
+echo "${ECHO_T}nocompress" >&6; }
+LRELEASEOPTION=""
+fi
+
+
+
+
+ac_config_commands="$ac_config_commands src/gui/Makefile"
+
 
 
 ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile src/gui/lang/Makefile src/mwi/Makefile src/im/Makefile src/patterns/Makefile src/utils/Makefile src/presence/Makefile twinkle.spec"
@@ -21208,6 +21255,7 @@ do
   case $ac_config_target in
     "src/twinkle_config.h") CONFIG_HEADERS="$CONFIG_HEADERS src/twinkle_config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
+    "src/gui/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS src/gui/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "src/audio/Makefile") CONFIG_FILES="$CONFIG_FILES src/audio/Makefile" ;;
@@ -21596,12 +21644,13 @@ LIB_KDNSSD!$LIB_KDNSSD$ac_delim
 LIB_KSYCOCA!$LIB_KSYCOCA$ac_delim
 LIB_KFILE!$LIB_KFILE$ac_delim
 LIB_KFM!$LIB_KFM$ac_delim
-PARSER_CXXFLAGS!$PARSER_CXXFLAGS$ac_delim
+GSM_LIBS!$GSM_LIBS$ac_delim
+LRELEASEOPTION!$LRELEASEOPTION$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 36; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 37; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -22159,6 +22208,12 @@ echo "$as_me: error: cannot create directory $as_dir" >&2;}
     echo '# dummy' > "$dirpart/$file"
   done
 done
+ ;;
+    "src/gui/Makefile":C)
+	$QTDIR/bin/qmake -o src/gui/Makefile $srcdir/src/gui/twinkle.pro
+	echo "distdir:" >> src/gui/Makefile
+	echo "check:" >> src/gui/Makefile
+
  ;;
 
   esac

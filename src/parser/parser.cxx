@@ -3451,7 +3451,7 @@ yyreduce:
 			list<t_parameter>::const_iterator i;
 			for (i = (yyvsp[(2) - (2)].yyt_params)->begin(); i != (yyvsp[(2) - (2)].yyt_params)->end(); i++) {
 				if (i->name == "q") {
-					(yyval.yyt_contact)->q = atof(i->value.c_str());
+					(yyval.yyt_contact)->set_qvalue(atof(i->value.c_str()));
 				} else if (i->name == "expires") {
 					(yyval.yyt_contact)->set_expires(strtoul(
 						i->value.c_str(), NULL, 10));

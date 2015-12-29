@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ bool t_mwi_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 		t_msg_summary summary;
 		if (body->get_msg_summary(MSG_CONTEXT_VOICE, summary)) {
 			mwi->set_voice_msg_summary(summary);
+		} else {
+			mwi->clear_voice_msg_summary();
 		}
 		
 		mwi->set_status(t_mwi::MWI_KNOWN);

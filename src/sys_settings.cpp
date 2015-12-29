@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,13 +79,19 @@
 
 // Startup settings
 #define FLD_START_USER_PROFILE	"start_user_profile"
+#if 0
+// DEPRECATED
 #define FLD_START_USER_HOST	"start_user_host"
 #define FLD_START_USER_NIC	"start_user_nic"
+#endif
 #define FLD_START_HIDDEN	"start_hidden"
 
 // Network settings
-#define FLD_SIP_UDP_PORT	"sip_udp_port"
+#define FLD_sip_udp_port	"sip_udp_port"
+#define FLD_sip_port		"sip_port"
 #define FLD_RTP_PORT		"rtp_port"
+#define FLD_SIP_MAX_UDP_SIZE	"sip_max_udp_size"
+#define FLD_SIP_MAX_TCP_SIZE	"sip_max_tcp_size"
 
 // Ring tone settings
 #define FLD_PLAY_RINGTONE	"play_ringtone"
@@ -199,15 +205,20 @@ t_sys_settings::t_sys_settings() {
 	hangup_both_3way = true;
 	
 	start_user_profiles.clear();
+#if 0
+	// DEPRECATED
 	start_user_host.clear();
 	start_user_nic.clear();
+#endif
 	start_hidden = false;
 	
-	config_sip_udp_port = 5060;
-	active_sip_udp_port = 0;
-	override_sip_udp_port = 0;
+	config_sip_port = 5060;
+	active_sip_port = 0;
+	override_sip_port = 0;
 	rtp_port = 8000;
 	override_rtp_port = 0;
+	sip_max_udp_size = 65535;
+	sip_max_tcp_size = 1000000;
 	
 	play_ringtone = true;
 	ringtone_file.clear();
@@ -428,6 +439,8 @@ list<string> t_sys_settings::get_start_user_profiles(void) const {
 	return result;	
 }
 
+#if 0
+// DEPRECATED
 string t_sys_settings::get_start_user_host(void) const {
 	string result;
 	mtx_sys.lock();
@@ -443,6 +456,7 @@ string t_sys_settings::get_start_user_nic(void) const {
 	mtx_sys.unlock();
 	return result;
 }
+#endif
 
 bool t_sys_settings::get_start_hidden(void) const {
 	bool result;
@@ -452,10 +466,10 @@ bool t_sys_settings::get_start_hidden(void) const {
 	return result;	
 }
 
-unsigned short t_sys_settings::get_config_sip_udp_port(void) const {
+unsigned short t_sys_settings::get_config_sip_port(void) const {
 	unsigned short result;
 	mtx_sys.lock();
-	result = config_sip_udp_port;
+	result = config_sip_port;
 	mtx_sys.unlock();
 	return result;	
 }
@@ -470,6 +484,16 @@ unsigned short t_sys_settings::get_rtp_port(void) const {
 	}
 	mtx_sys.unlock();
 	return result;	
+}
+
+unsigned short t_sys_settings::get_sip_max_udp_size(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return sip_max_udp_size;
+}
+
+unsigned long t_sys_settings::get_sip_max_tcp_size(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return sip_max_tcp_size;
 }
 
 bool t_sys_settings::get_play_ringtone(void) const {
@@ -744,6 +768,8 @@ void t_sys_settings::set_start_user_profiles(const list<string> &profiles) {
 	mtx_sys.unlock();
 }
 
+#if 0
+// DEPRECATED
 void t_sys_settings::set_start_user_host(const string &host) {
 	mtx_sys.lock();
 	start_user_host = host;
@@ -755,6 +781,7 @@ void t_sys_settings::set_start_user_nic(const string &dev) {
 	start_user_nic = dev;
 	mtx_sys.unlock();
 }
+#endif
 
 void t_sys_settings::set_start_hidden(bool b) {
 	mtx_sys.lock();
@@ -762,15 +789,15 @@ void t_sys_settings::set_start_hidden(bool b) {
 	mtx_sys.unlock();
 }
 
-void t_sys_settings::set_config_sip_udp_port(unsigned short port) {
+void t_sys_settings::set_config_sip_port(unsigned short port) {
 	mtx_sys.lock();
-	config_sip_udp_port = port;
+	config_sip_port = port;
 	mtx_sys.unlock();
 }
 
-void t_sys_settings::set_override_sip_udp_port(unsigned short port) {
+void t_sys_settings::set_override_sip_port(unsigned short port) {
 	mtx_sys.lock();
-	override_sip_udp_port = port;
+	override_sip_port = port;
 	mtx_sys.unlock();
 }
 
@@ -784,6 +811,16 @@ void t_sys_settings::set_override_rtp_port(unsigned short port) {
 	mtx_sys.lock();
 	override_rtp_port = port;
 	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_sip_max_udp_size(unsigned short size) {
+	t_mutex_guard guard(mtx_sys);
+	sip_max_udp_size = size;
+}
+
+void t_sys_settings::set_sip_max_tcp_size(unsigned long size) {
+	t_mutex_guard guard(mtx_sys);
+	sip_max_tcp_size = size;
 }
 
 void t_sys_settings::set_play_ringtone(bool b) {
@@ -886,7 +923,7 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "Copyright (C) 2005-2007  ";
+	s += "Copyright (C) 2005-2008  ";
 	s += PRODUCT_AUTHOR;
 	if (html) s += "<BR>";
 	s += "\n";
@@ -1307,16 +1344,25 @@ bool t_sys_settings::read_config(string &error_msg) {
 			hangup_both_3way = yesno2bool(value);
 		} else if (parameter == FLD_START_USER_PROFILE) {
 			if (!value.empty()) start_user_profiles.push_back(value);
+#if 0
+		// DEPRECATED
 		} else if (parameter == FLD_START_USER_HOST) {
 			start_user_host = value;
 		} else if (parameter == FLD_START_USER_NIC) {
 			start_user_nic = value;
+#endif
 		} else if (parameter == FLD_START_HIDDEN) {
 			start_hidden = yesno2bool(value);
-		} else if (parameter == FLD_SIP_UDP_PORT) {
-			config_sip_udp_port = atoi(value.c_str());
+		} else if (parameter == FLD_sip_udp_port) { // Deprecated parameter
+			config_sip_port = atoi(value.c_str());
+		} else if (parameter == FLD_sip_port) {
+			config_sip_port = atoi(value.c_str());
 		} else if (parameter == FLD_RTP_PORT) {
 			rtp_port = atoi(value.c_str());
+		} else if (parameter == FLD_SIP_MAX_UDP_SIZE) {
+			sip_max_udp_size = atoi(value.c_str());
+		} else if (parameter == FLD_SIP_MAX_TCP_SIZE) {
+			sip_max_tcp_size = atoi(value.c_str());
 		} else if (parameter == FLD_PLAY_RINGTONE) {
 			play_ringtone = yesno2bool(value);
 		} else if (parameter == FLD_RINGTONE_FILE) {
@@ -1445,15 +1491,20 @@ bool t_sys_settings::write_config(string &error_msg) {
 	{
 		config << FLD_START_USER_PROFILE << '=' << *i << endl;
 	}
+#if 0
+	// DEPRECATED
 	config << FLD_START_USER_HOST << '=' << start_user_host << endl;
 	config << FLD_START_USER_NIC  << '=' << start_user_nic << endl;
+#endif
 	config << FLD_START_HIDDEN << '=' << bool2yesno(start_hidden) << endl;
 	config << endl;
 	
 	// Write network settings
 	config << "# Network\n";
-	config << FLD_SIP_UDP_PORT << '=' << config_sip_udp_port << endl;
+	config << FLD_sip_port << '=' << config_sip_port << endl;
 	config << FLD_RTP_PORT << '=' << rtp_port << endl;
+	config << FLD_SIP_MAX_UDP_SIZE << '=' << sip_max_udp_size << endl;
+	config << FLD_SIP_MAX_TCP_SIZE << '=' << sip_max_tcp_size << endl;
 	config << endl;
 	
 	// Write ring tone settings
@@ -1718,21 +1769,21 @@ bool t_sys_settings::exec_audio_validation(bool ringtone, bool speaker, bool mic
 	return valid;
 }
 
-unsigned short t_sys_settings::get_sip_udp_port(bool force_active) {
+unsigned short t_sys_settings::get_sip_port(bool force_active) {
 	mtx_sys.lock();
 	
 	// The configured port becomes the active port after first
 	// usage of the port.
-	if (!active_sip_udp_port || force_active) {
-		if (override_sip_udp_port > 0) {
+	if (!active_sip_port || force_active) {
+		if (override_sip_port > 0) {
 			// The port provided on the command line overrides
 			// the configured port.
-			active_sip_udp_port = override_sip_udp_port;
+			active_sip_port = override_sip_port;
 		} else {
-			active_sip_udp_port = config_sip_udp_port;
+			active_sip_port = config_sip_port;
 		}
 	}
 	
 	mtx_sys.unlock();
-	return active_sip_udp_port;
+	return active_sip_port;
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,12 @@
 #include "twinkle_config.h"
 #include "audio_codecs.h"
 #include "user.h"
+
+#ifdef HAVE_GSM
+#include <gsm/gsm.h>
+#else
 #include "gsm/inc/gsm.h"
+#endif
 
 #ifdef HAVE_SPEEX
 #include <speex/speex.h>

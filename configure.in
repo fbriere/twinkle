@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ilbc-cpp,
 	AC_HELP_STRING([--enable-ilbc-cpp], [your ilbc library is built for C++ instead of C]),
 	[ac_cv_ilbc_cpp=$enableval], [ac_cv_ilbc_cpp=no])
 
-AM_INIT_AUTOMAKE(twinkle,"1.1")
-AC_DEFINE(VERSION_DATE,["July 21 2007"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,"1.2")
+AC_DEFINE(VERSION_DATE,["March 9 2008"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -110,12 +110,37 @@ then
 	AC_MSG_ERROR([lrelease is missing (qt3-devel-tools package)])
 fi
 
-# Create a Qt include project file for platform dependend variables
-# This file will be included by the project file in the gui directory
-# Determine include files and dynamic libs.
+dnl Create a Qt include project file for platform dependend variables
+dnl This file will be included by the project file in the gui directory
+dnl Determine include files and dynamic libs.
+dnl Creation of qtccxxincl.pro is good to be in AC_CONFIG_COMMANDS
+dnl macro so that config.status to be able to create it too.
+dnl In this case we benefit from more ac_xxx variables.
+dnl Disadvantage is autoconf don't group commands with same tag
+dnl and we should use different tags. In result AC_OUTPUT will
+dnl show all of them.
 QT_INCL_PRO=qtccxxincl.pro
 AC_MSG_NOTICE([creating $QT_INCL_PRO (include project file for Qt)])
-echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
+
+# first set include path to generated files
+echo "INCLUDEPATH += `pwd`/src" > $QT_INCL_PRO
+# next get includes specified on command line
+(
+set -- $CPPFLAGS
+while test -n "$1"; do
+  echo $1
+  shift
+done
+) | grep '^-I' | sed -e 's|^-I||' | xargs echo INCLUDEPATH += >> $QT_INCL_PRO
+
+#echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
+# libccrtp1(ccrtp) depend from libccgnu2(commoncpp2) and
+# should include above flags !
+echo "INCLUDEPATH += `$PKG_CONFIG --cflags-only-I libccrtp1`" | sed -e s/-I//g >> $QT_INCL_PRO
+
+# get libraries specified on command line
+echo $LDFLAGS | xargs echo LIBS += >> $QT_INCL_PRO
+
 echo "LIBS += `$CCGNU2_CONFIG --stdlibs`" >> $QT_INCL_PRO
 echo "LIBS += $CCRTP_LIBS" >> $QT_INCL_PRO
 echo "LIBS += $XML2_LIBS" >> $QT_INCL_PRO
@@ -160,6 +185,24 @@ AC_CHECK_HEADER(sndfile.h, [],
 	[AC_MSG_ERROR([sndfile header files missing (libsndfile-devel package)])])
 AC_CHECK_LIB(sndfile, sf_open, [], 
 	[AC_MSG_ERROR([libsndfile library is missing.])])
+
+# This check does not work on all platforms
+# Check if libgsm is available
+# AC_CHECK_LIB(gsm, sf_open, [
+#	AC_CHECK_HEADER(gsm.h, [],
+#		[AC_MSG_ERROR([gsm header files missing (gsm.h)])])
+#	AC_DEFINE(HAVE_GSM, 1, [Define to 1 if you have the <libgsm> library.])
+#	GSM_LIBS="-lgsm"
+#	echo "LIBS += -lgsm" >> $QT_INCL_PRO
+#	have_gsm="yes" ], [
+#	have_gsm="no"
+#	GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+#	echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO ])
+have_gsm="no"
+GSM_LIBS="\$(top_builddir)/src/audio/gsm/libgsm.a"
+echo "LIBS += ../audio/gsm/libgsm.a" >> $QT_INCL_PRO
+
+AC_SUBST(GSM_LIBS)
 
 # Check if ALSA is available
 AC_CHECK_LIB(asound, main, [
@@ -233,15 +276,30 @@ AC_CHECK_LIB(boost_regex, main, [
 		echo "LIBS += -lboost_regex-gcc" >> $QT_INCL_PRO],
 		[AC_MSG_ERROR([libboost_regex library is missing (boost package).])])])
 
+ms_CHECK_LRELEASE()
 	
-$QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
-echo "distdir:" >> src/gui/Makefile
+dnl $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
+dnl Command above is incorrect because srcdir may differ from builddir
+dnl
+dnl $QTDIR/bin/qmake -o src/gui/Makefile $srcdir/src/gui/twinkle.pro
+dnl Command above although is correct in both cases, i.e. when srcdir
+dnl is equal or differ from builddir will not generate proper Makefile.
+dnl Reason is unknown.
+dnl
+AC_CONFIG_COMMANDS([src/gui/Makefile],
+	[
+	$QTDIR/bin/qmake -o src/gui/Makefile $srcdir/src/gui/twinkle.pro
+	echo "distdir:" >> src/gui/Makefile
+	echo "check:" >> src/gui/Makefile
+	]
+)
 
-# Strip the -O2 flag from CXXFLAGS for building the SIP parser.
-# g++ cannot compile the generated C code from bison with -O2 or -Os
-# Note: -Os is used on VIA C3 processor
-PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
-AC_SUBST(PARSER_CXXFLAGS)
+dnl Next is useless. See comments in src/parser/Makefile.am .
+dnl # Strip the -O2 flag from CXXFLAGS for building the SIP parser.
+dnl # g++ cannot compile the generated C code from bison with -O2 or -Os
+dnl # Note: -Os is used on VIA C3 processor
+dnl PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
+dnl AC_SUBST(PARSER_CXXFLAGS)
 
 AC_OUTPUT(Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile \
 	src/audits/Makefile src/sdp/Makefile src/parser/Makefile \

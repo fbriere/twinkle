@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,14 +46,14 @@ struct t_command_args {
 	/** If a port number is passed by the user on the command line, then
 	 * that port number overrides the port from the system settings.
 	 */
-	unsigned short		override_sip_udp_port;
+	unsigned short		override_sip_port;
 	unsigned short		override_rtp_port;
 	
 	t_command_args() :
 			cmd_immediate_mode(false),
 			cmd_show(false),
 			cmd_hide(false),
-			override_sip_udp_port(0),
+			override_sip_port(0),
 			override_rtp_port(0)
 	{}
 };

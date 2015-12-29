@@ -1273,7 +1273,7 @@ static int yy_more_len = 0;
 char *yytext;
 #line 1 "scanner.lxx"
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -533,6 +533,10 @@ bool t_gui::do_options(bool dest_set, const string &destination, bool immediate)
 }
 
 void t_gui::do_line(int line) {
+	// Cannot get current line number via CLI interface on GUI.
+	// So return in this case.
+	if (line == 0) return;
+	
 	phone->pub_activate_line(line - 1);
 }
 
@@ -653,7 +657,6 @@ void t_gui::run(void) {
 	
 	// Set configuration file name in titlebar
 	s = PRODUCT_NAME;
-	s.append(" - ").append(user_host.c_str());
 	mainWindow->setCaption(s);
 	
 	// Set user combo box
@@ -664,7 +667,7 @@ void t_gui::run(void) {
 	s.append(' ').append(PRODUCT_VERSION).append(", ");
 	s.append(sys_config->get_product_date().c_str());
 	mainWindow->display(s);
-	s = "Copyright (C) 2005-2007  ";
+	s = "Copyright (C) 2005-2008  ";
 	s.append(PRODUCT_AUTHOR);
 	mainWindow->display(s);
 	
@@ -2416,9 +2419,6 @@ bool t_gui::cb_message_request(t_user *user_config, t_request *r) {
 }
 
 void t_gui::cb_message_response(t_user *user_config, t_response *r) {
-	// Only report failure responses to the user
-	if (r->is_success()) return;
-	
 	lock();
 	
 	// Find session associated with the response
@@ -2426,10 +2426,24 @@ void t_gui::cb_message_response(t_user *user_config, t_response *r) {
 				r->hdr_from.get_display_presentation());
 	
 	if (session) {
-		string s = int2str(r->code);
-		s += ' ';
-		s += r->reason;
-		session->set_error(s);
+		if (!r->is_success()) {
+			string s = int2str(r->code);
+			s += ' ';
+			s += r->reason;
+			session->set_error(s);
+		} else {
+			if (r->code == R_202_ACCEPTED) {
+				string s;
+				if (r->reason == REASON_202) {
+					s = qApp->translate("GUI", "Accepted by network").ascii();
+				} else { 
+					s = r->reason;
+				}
+				session->set_delivery_notification(s);
+			}
+		}
+		
+		session->set_msg_in_flight(false);
 	}
 	// If there is no session anymore, then discard the response
 	

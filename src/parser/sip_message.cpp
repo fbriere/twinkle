@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,16 +26,17 @@
 // class t_sip_message
 ////////////////////////////////////
 
-t_sip_message::t_sip_message() {
-	src_ipaddr = 0;
-	src_port = 0;
+t_sip_message::t_sip_message() :
+	local_ip_(0)
+{
+	src_ip_port.clear();
 	version = SIP_VERSION;
 	body = NULL;
 }
 
 t_sip_message::t_sip_message(const t_sip_message& m) :
-		src_ipaddr(m.src_ipaddr),
-		src_port(m.src_port),
+		local_ip_(m.local_ip_),
+		src_ip_port(m.src_ip_port),
 		version(m.version),
 		hdr_accept(m.hdr_accept),
 		hdr_accept_encoding(m.hdr_accept_encoding),
@@ -160,6 +161,16 @@ bool t_sip_message::is_valid(bool &fatal, string &reason) const {
 	if (body && !hdr_content_type.is_populated()) {
 		fatal = false;
 		reason = "Content-Type header missing";
+		return false;
+	}
+	
+	// RFC 3261 18.4
+	// The Content-Length header field MUST be used with stream oriented transports.
+	if (cmp_nocase(hdr_via.via_list.front().transport, "tcp") == 0 &&
+	    !hdr_content_length.is_populated())
+	{
+		fatal = false;
+		reason = "Content-Length header missing";
 		return false;
 	}
 
@@ -378,4 +389,36 @@ void t_sip_message::set_body_plain_text(const string &text, const string &charse
 	
 	body = new t_sip_body_plain_text(text);
 	MEMMAN_NEW(body);
+}
+
+size_t t_sip_message::get_encoded_size(void) {
+	string s = encode();
+	return s.size();
+}
+
+bool t_sip_message::local_ip_check(void) const {
+	if (get_type() == MSG_REQUEST && hdr_via.is_populated()) {
+		const t_via &v = hdr_via.via_list.front();
+		if (v.host == "0.0.0.0") return false;
+	}
+	
+	if (hdr_contact.is_populated()) {
+		const t_contact_param &c = hdr_contact.contact_list.front();
+		if (c.uri.get_host() == "0.0.0.0") return false;
+	}
+	
+	if (body) {
+		return body->local_ip_check();
+	}
+	
+	return true;
+}
+
+void t_sip_message::calc_local_ip(void) {
+	// Do nothing
+}
+
+unsigned long t_sip_message::get_local_ip(void) {
+	if (local_ip_ == 0) calc_local_ip();
+	return local_ip_;
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,9 +28,24 @@
 #define PRODUCT_NAME	"Twinkle"
 #define PRODUCT_VERSION	VERSION
 
+/**
+ * When a SIP message is created, some addresses will be filled in
+ * by the sender thread as only this thread knows the source IP
+ * address of an outgoing message.
+ * The sender thread will look for occurrences of the AUTO_IP4_ADDRESS
+ * and replace it with the source IP address.
+ */
+#define AUTO_IP4_ADDRESS	"255.255.255.255"
+
 // Anonymous calling
 #define ANONYMOUS_DISPLAY	"Anonymous"
 #define ANONYMOUS_URI		"sip:anonymous@anonymous.invalid"
+
+/** Types of failures. */
+enum t_failure {
+	FAIL_TIMEOUT,	/**< Transaction timed out */
+	FAIL_TRANSPORT	/**< Transport failure */
+};
 
 // Call transfer types
 enum t_transfer_type {
@@ -90,6 +105,9 @@ enum t_sip_timer {
 #define DURATION_I	DURATION_T4
 #define DURATION_J	(64 * DURATION_T1)
 #define DURATION_K	DURATION_T4
+
+/** Time to keep an idle connection open before closing */
+#define DUR_IDLE_CONNECTION	(64 * DURATION_T1)
 
 /** UA (phone) timers */
 enum t_phone_timer {
@@ -219,7 +237,7 @@ enum t_stun_timer {
 #define CALL_ID_LEN	15
 
 // Create a new call-id
-#define NEW_CALL_ID(u)	(random_token(CALL_ID_LEN) + '@' + USER_HOST(u))
+#define NEW_CALL_ID(u)	(random_token(CALL_ID_LEN) + '@' + LOCAL_HOSTNAME)
 
 // Create a new sequence number fo CSeq header
 #define NEW_SEQNR	rand() % 1000 + 1

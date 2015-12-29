@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -53,8 +53,14 @@ string timer_type2str(t_timer_type t) {
 ///////////////////////////////////////////////////////////
 
 t_timer::t_timer(long dur) : t_id_object() {
-	duration = dur;
-	relative_duration = dur;
+	long d = dur;
+	
+	// HACK: if a timer is set to zero seconds, set it to 1 ms, otherwise
+	//       the timer will not expire.
+	if (dur == 0) d++;
+
+	duration = d;
+	relative_duration = d;
 }
 
 long t_timer::get_duration(void) const {

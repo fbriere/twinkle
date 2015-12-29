@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -91,10 +91,16 @@
 #define idxMWIUnsollicited	0
 #define idxMWISollicited	1
 
+// SIP transport protocol indices
+#define idxSipTransportAuto	0
+#define idxSipTransportUDP	1
+#define idxSipTransportTCP	2
+
 void UserProfileForm::init()
 {
 	QRegExp rxNoSpace("\\S*");
 	QRegExp rxNoAtSign("[^@]*");
+	QRegExp rxQvalue("(0\\.[0-9]{0,3})|(1\\.0{0,3})");
 	
 	// Set validators
 	// USER
@@ -104,6 +110,7 @@ void UserProfileForm::init()
 	
 	// SIP SERVER
 	registrarLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
+	regQvalueLineEdit->setValidator(new QRegExpValidator(rxQvalue, this));
 	proxyLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
 	
 	// Voice mail
@@ -296,6 +303,9 @@ void UserProfileForm::populate()
 	registrarLineEdit->setText(current_profile->get_registrar().encode_noscheme().c_str());
 	expirySpinBox->setValue(current_profile->get_registration_time());
 	regAtStartupCheckBox->setChecked(current_profile->get_register_at_startup());
+	regAddQvalueCheckBox->setChecked(current_profile->get_reg_add_qvalue());
+	regQvalueLineEdit->setEnabled(current_profile->get_reg_add_qvalue());
+	regQvalueLineEdit->setText(float2str(current_profile->get_reg_qvalue(), 3).c_str());
 	useProxyCheckBox->setChecked(current_profile->get_use_outbound_proxy());
 	proxyTextLabel->setEnabled(current_profile->get_use_outbound_proxy());
 	proxyLineEdit->setEnabled(current_profile->get_use_outbound_proxy());
@@ -461,7 +471,23 @@ void UserProfileForm::populate()
 	referAorCheckBox->setChecked(current_profile->get_attended_refer_to_aor());
 	pPreferredIdCheckBox->setChecked(current_profile->get_send_p_preferred_id());
 	
-	// NAT
+	// Transport/NAT
+	switch (current_profile->get_sip_transport()) {
+	case SIP_TRANS_UDP:
+		sipTransportComboBox->setCurrentItem(idxSipTransportUDP);
+		break;
+	case SIP_TRANS_TCP:
+		sipTransportComboBox->setCurrentItem(idxSipTransportTCP);
+		break;
+	default:
+		sipTransportComboBox->setCurrentItem(idxSipTransportAuto);
+		break;
+	}
+	
+	udpThresholdSpinBox->setValue(current_profile->get_sip_transport_udp_threshold());
+	udpThresholdTextLabel->setEnabled(current_profile->get_sip_transport() == SIP_TRANS_AUTO);
+	udpThresholdSpinBox->setEnabled(current_profile->get_sip_transport() == SIP_TRANS_AUTO);
+	
 	if (current_profile->get_use_nat_public_ip()) {
 		natStaticRadioButton->setChecked(true);
 	} else if (current_profile->get_use_stun()) {
@@ -860,6 +886,8 @@ bool UserProfileForm::validateValues()
 	current_profile->set_registrar(t_url(s.ascii()));
 	current_profile->set_registration_time(expirySpinBox->value());
 	current_profile->set_register_at_startup(regAtStartupCheckBox->isChecked());
+	current_profile->set_reg_add_qvalue(regAddQvalueCheckBox->isChecked());
+	current_profile->set_reg_qvalue(atof(regQvalueLineEdit->text().ascii()));
 	
 	current_profile->set_use_outbound_proxy(useProxyCheckBox->isChecked());
 	s = USER_SCHEME;
@@ -1028,7 +1056,21 @@ bool UserProfileForm::validateValues()
 	current_profile->set_attended_refer_to_aor(referAorCheckBox->isChecked());
 	current_profile->set_send_p_preferred_id(pPreferredIdCheckBox->isChecked());
 	
-	// NAT
+	// Transport/NAT
+	switch (sipTransportComboBox->currentItem()) {
+	case idxSipTransportUDP:
+		current_profile->set_sip_transport(SIP_TRANS_UDP);
+		break;
+	case idxSipTransportTCP:
+		current_profile->set_sip_transport(SIP_TRANS_TCP);
+		break;
+	default:
+		current_profile->set_sip_transport(SIP_TRANS_AUTO);
+		break;
+	}
+	
+	current_profile->set_sip_transport_udp_threshold(udpThresholdSpinBox->value());
+	
 	current_profile->set_use_nat_public_ip(natStaticRadioButton->isChecked());
 	current_profile->set_nat_public_ip(publicIPLineEdit->text().ascii());
 	current_profile->set_use_stun(natStunRadioButton->isChecked());
@@ -1353,4 +1395,9 @@ void UserProfileForm::changeMWIType(int idxMWIType) {
 	} else {
 		mwiSollicitedGroupBox->setEnabled(false);
 	}
+}
+
+void UserProfileForm::changeSipTransportProtocol(int idx) {
+	udpThresholdTextLabel->setEnabled(idx == idxSipTransportAuto);
+	udpThresholdSpinBox->setEnabled(idx == idxSipTransportAuto);
 }

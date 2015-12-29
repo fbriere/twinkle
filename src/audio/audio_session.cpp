@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -111,12 +111,6 @@ bool t_audio_session::open_dsp_speaker(void) {
 }
 
 bool t_audio_session::open_dsp_mic(void) {
-
-	// On some systems opening the audio devices blocks if another
-	// process or thread has opened it already. To prevent a deadlock
-	// first try to open the device in non-blocking mode.
-	// If the device is still open by another twinkle thread then that
-	// is a bug, but this way at least non deadlock is caused.
 	mic = t_audio_io::open(sys_config->get_dev_mic(), false, true, true, 1, 
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!mic) {

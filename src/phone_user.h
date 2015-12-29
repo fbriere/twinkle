@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,8 +77,9 @@ private:
 	bool			is_registered;
 	unsigned long		registration_time; // expiration in seconds
 	bool			last_reg_failed; // last registration failed
-	unsigned long		register_ipaddr; // Dest IP addr of last REGISTER
-	unsigned short		register_port; // Dest port of last REGISTER
+	
+	/** Destination of last REGISTER */
+	t_ip_port		register_ip_port;
 	
 	// A STUN request can be triggered by the following events:
 	//
@@ -223,6 +224,13 @@ public:
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid);
 	void handle_response_out_of_dialog(StunMessage *r, t_tuid tuid);
 	
+	/**
+	 * Send a registration, de-registration or query registration request.
+	 * @param register_type [in] Type of registration request.
+	 * @param re_register [in] Indicates if this registration request is a re-registration.
+	 * @param expires [in] Epxiry time to put in registration request.
+	 * @note If needed a STUN request is sent before doing a registration.
+	 */
 	void registration(t_register_type register_type, bool re_register,
 					unsigned long expires = 0);
 					
@@ -375,8 +383,18 @@ public:
 	bool get_is_registered(void) const;
 	bool get_last_reg_failed(void) const;
 	
-	// Get IP address and port for SIP
-	string get_ip_sip(void) const;
+	/**
+	 * Get local IP address for SIP.
+	 * @param auto_ip [in] IP address to use if no IP address has been determined through
+	 *                     some NAT procedure.
+	 * @return The IP address.
+	 */
+	string get_ip_sip(const string &auto_ip) const;
+	
+	/**
+	 * Get local port for SIP.
+	 * @return SIP port.
+	 */ 
 	unsigned short get_public_port_sip(void) const;
 	
 	// Try to match message with phone user

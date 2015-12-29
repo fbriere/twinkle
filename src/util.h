@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,11 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+/**
+ * @file
+ * Utility functions
+ */
+
 #include <vector>
 #include <string>
 
@@ -27,8 +32,13 @@ using namespace std;
 string random_token(int length);
 string random_hexstr(int length);
 
-// Convert a float to a string. format is a printf format
-string float2str(float f, const char *format);
+/**
+ * Convert a float to a string.
+ * @param f [in] Float to convert.
+ * @param precision [in] Number of digits after the decimal point in output.
+ * @return String representation of the float.
+ */
+string float2str(float f, int precision);
 
 // Convert an int to a string. format is a printf format
 string int2str(int i, const char *format);

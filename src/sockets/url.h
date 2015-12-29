@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,11 +27,19 @@ using namespace std;
 
 class t_ip_port {
 public:
-	unsigned long	ipaddr;
-	unsigned short	port;
+	string			transport;
+	unsigned long		ipaddr;
+	unsigned short		port;
 	
-	t_ip_port() {};
+	t_ip_port() : transport("udp") {};
 	t_ip_port(unsigned long _ipaddr, unsigned short _port);
+	t_ip_port(const string &proto, unsigned long _ipaddr, unsigned short _port);
+	
+	void clear(void);
+	bool is_null(void) const;
+	bool operator==(const t_ip_port &other) const;
+	bool operator!=(const t_ip_port &other) const;
+	string tostring(void) const;
 };
 
 // Return the default port for a protocol (host order)
@@ -44,20 +52,48 @@ unsigned long gethostbyname(const string &name);
 // Return all IP address of host name
 list<unsigned long> gethostbyname_all(const string &name);
 
+/**
+ * Get local host name.
+ * @return Local host name.
+ */
+string get_local_hostname(void);
+
+/**
+ * Get the source IP address that will be used for sending
+ * a packet to a certain destination.
+ * @param dst_ip4 [in] The destination IPv4 address.
+ * @return The source IPv4 address.
+ * @return 0 if the source address cannot be determined.
+ */
+unsigned long get_src_ip4_address_for_dst(unsigned long dst_ip4);
+
 class t_url {
 private:
-	// A t_url object is created with a string represnetation of
-	// the URL. The encode method just returns this string.
-	// If one of the components of the t_url object is modified
-	// however, then encode will build a new string representation.
-	// The modified flag indicates if the object was modified after
-	// construction.
+	/**
+	 * A t_url object is created with a string represnetation of
+	 * the URL. The encode method just returns this string.
+	 * If one of the components of the t_url object is modified
+	 * however, then encode will build a new string representation.
+	 * The modified flag indicates if the object was modified after
+	 * construction.
+	 */
 	bool		modified;
 
+	/** URL scheme. */
 	string		scheme;
+	
+	/** The user part of a URL. For a tel URL this is empty. */
 	string		user;
+	
+	/** The user password. */
 	string		password;
+	
+	/** 
+	 * The host part of a URL. For a tel URL, it contains the part before
+	 * the first semi-colon.
+	 */
 	string		host;
+	
 	unsigned short	port; 		// host order
 
 	// parameters
@@ -140,6 +176,8 @@ public:
 	// transport = the transport protocol for the service
 	list<t_ip_port> get_h_ip_srv(const string &transport) const;
 	
+	/** @name Getters */
+	//@{
 	string get_transport(void) const;
 	string get_maddr(void) const;
 	bool get_lr(void) const;
@@ -148,16 +186,28 @@ public:
 	int get_ttl(void) const;
 	string get_other_params(void) const;
 	string get_headers(void) const;
+	//@}
 	
+	/** @name Setters */
+	//@{
 	void set_user(const string &u);
+	void set_host(const string &h);
+	//@}
 	
-	// Add a header to the URI
-	// The encoded header will be concatenated to the headers field
+	/**
+	 * Add a header to the URI.
+	 * The encoded header will be concatenated to the headers field.
+	 /* @param hdr [in] Header to be added.
+	 */
 	void add_header(const t_header &hdr);
 	
-	// Remove headers from the URI
+	/** Remove headers from the URI. */
 	void clear_headers(void);
 
+	/**
+	 * Check if the URI is valid.
+	 * @return True if valid, otherwise false.
+	 */
 	bool is_valid(void) const;
 
 	// Check if 2 sip or sips url's are equivalent

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,6 +50,9 @@ bool t_request::authorize(const t_challenge &chlg,
 	}
 
 	// Determine QOP
+	// If both auth and auth-int are supported by the server, then
+	// choose auth to avoid problems with SIP ALGs. A SIP ALG rewrites
+	// the body of a message, thereby breaking auth-int authentication.
 	if (!dchlg.qop_options.empty()) {
 		const list<string>::const_iterator i = find(
 			dchlg.qop_options.begin(), dchlg.qop_options.end(),
@@ -57,11 +60,11 @@ bool t_request::authorize(const t_challenge &chlg,
 		const list<string>::const_iterator j = find(
 			dchlg.qop_options.begin(), dchlg.qop_options.end(),
 			QOP_AUTH);
-		if (i != dchlg.qop_options.end())
-			qop = QOP_AUTH_INT;
+		if (j != dchlg.qop_options.end())
+			qop = QOP_AUTH;
 		else {
-			if (j != dchlg.qop_options.end())
-				qop = QOP_AUTH;
+			if (i != dchlg.qop_options.end())
+				qop = QOP_AUTH_INT;
 			else {
 				fail_reason = "Non of the qop values are supported.";
 				return false;
@@ -208,6 +211,9 @@ t_response *t_request::create_response(int code, string reason) const
 
 	r = new t_response(code, reason);
 	MEMMAN_NEW(r);
+	
+	r->src_ip_port_request = src_ip_port;
+	
 	r->hdr_from = hdr_from;
 	r->hdr_call_id = hdr_call_id;
 	r->hdr_cseq = hdr_cseq;
@@ -233,6 +239,13 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 
 	if (t_parser::check_max_forwards && !hdr_max_forwards.is_populated()) {
 		reason = "Max-Forwards header missing";
+		return false;
+	}
+
+	// RFC 3261 8.1.1.5
+	// The CSeq method must match the request method.
+	if (hdr_cseq.method != method) {
+		reason = "CSeq method does not match request method";
 		return false;
 	}
 
@@ -313,12 +326,34 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 	return true;
 }
 
+void t_request::add_destinations(const t_user &user_profile, const t_url &dst_uri) {
+	if ((user_profile.get_sip_transport() == SIP_TRANS_AUTO ||
+	     user_profile.get_sip_transport() == SIP_TRANS_TCP)
+	    &&
+	    (dst_uri.get_transport().empty() ||
+	     cmp_nocase(dst_uri.get_transport(), "tcp") == 0))
+	{
+		list<t_ip_port> l = dst_uri.get_h_ip_srv("tcp");
+		destinations.insert(destinations.end(), l.begin(), l.end());
+	}
+	
+	if ((user_profile.get_sip_transport() == SIP_TRANS_AUTO ||
+	    user_profile.get_sip_transport() == SIP_TRANS_UDP)
+	   &&
+	   (dst_uri.get_transport().empty() ||
+	    cmp_nocase(dst_uri.get_transport(), "udp") == 0))
+	{
+		list<t_ip_port> l = dst_uri.get_h_ip_srv("udp");
+		destinations.insert(destinations.end(), l.begin(), l.end());
+	}
+}
+
 void t_request::calc_destinations(const t_user &user_profile) {
 	destinations.clear();
 
 	// Send a REGISTER to the registrar if provisioned.
 	if (method == REGISTER && user_profile.get_use_registrar()) {
-		destinations = user_profile.get_registrar().get_h_ip_srv("udp");
+		add_destinations(user_profile, user_profile.get_registrar());
 		return;
 	}
 	
@@ -327,7 +362,7 @@ void t_request::calc_destinations(const t_user &user_profile) {
 		if (hdr_event.event_type == SIP_EVENT_MSG_SUMMARY) {
 			if (!user_profile.get_mwi_via_proxy()) {
 				// Take Request-URI
-				destinations = uri.get_h_ip_srv("udp");
+				add_destinations(user_profile, uri);
 				return;
 			}
 		}
@@ -345,10 +380,10 @@ void t_request::calc_destinations(const t_user &user_profile) {
 		if (hdr_route.is_populated() && hdr_route.route_to_first_route) {
 			// Take URI from first route-header
 			t_url &u = hdr_route.route_list.front().uri;
-			destinations = u.get_h_ip_srv("udp");
+			add_destinations(user_profile, u);
 		} else {
 			// Take Request-URI
-			destinations = uri.get_h_ip_srv("udp");
+			add_destinations(user_profile, uri);
 		}
 	}
 
@@ -364,27 +399,45 @@ void t_request::calc_destinations(const t_user &user_profile) {
 		if (user_profile.get_all_requests_to_proxy() || hdr_to.tag == "") {
 			// All requests should go to the proxy.
 			// Override destination by the outbound proxy address.
-			destinations = user_profile.get_outbound_proxy().get_h_ip_srv("udp");
+			destinations.clear();
+			add_destinations(user_profile, user_profile.get_outbound_proxy());
 		}
 	}
 }
 
-void t_request::get_destination(unsigned long &ipaddr, unsigned short &port,
-			const t_user &user_profile)
-{
+void t_request::get_destination(t_ip_port &ip_port, const t_user &user_profile) {
 	if (destinations.empty()) calc_destinations(user_profile);
-	get_current_destination(ipaddr, port);
+	
+	// RFC 3261 18.1.1
+	// If the message size is larger than 1300 then the message must be
+	// sent over TCP.
+	// If the request-URI indicated an explicit transport, then the
+	// destination calculation picked the possible destinations already.
+	// The size cannot influence this calculation anymore.
+	if (user_profile.get_sip_transport() == SIP_TRANS_AUTO &&
+	    !destinations.empty() &&
+	    destinations.front().transport == "tcp" &&
+	    get_encoded_size() <= user_profile.get_sip_transport_udp_threshold() &&
+	    uri.get_transport().empty())
+	{
+		// The message can be sent over UDP. Remove all TCP destinations.
+		while (!destinations.empty() && destinations.front().transport == "tcp") {
+			destinations.pop_front();
+		}
+	}
+	
+	get_current_destination(ip_port);
 }
 
-void t_request::get_current_destination(unsigned long &ipaddr, unsigned short &port) {
+void t_request::get_current_destination(t_ip_port &ip_port) {
 	if (destinations.empty()) {
 		// No destinations could be found.
-		ipaddr =0;
-		port = 0;
+		ip_port.transport = "udp";
+		ip_port.ipaddr = 0;
+		ip_port.port = 0;
 	} else {
 		// Return first destination
-		ipaddr = destinations.front().ipaddr;
-		port = destinations.front().port;
+		ip_port = destinations.front();
 	}
 }
 
@@ -396,9 +449,9 @@ bool t_request::next_destination(void) {
 	return true;	
 }
 
-void t_request::set_destination(unsigned long ipaddr, unsigned short port) {
+void t_request::set_destination(const t_ip_port &ip_port) {
 	destinations.clear();
-	destinations.push_back(t_ip_port(ipaddr, port));
+	destinations.push_back(ip_port);
 }
 
 bool t_request::www_authorize(const t_challenge &chlg, const string &username,
@@ -425,4 +478,13 @@ bool t_request::proxy_authorize(const t_challenge &chlg, const string &username,
 	hdr_proxy_authorization.add_credentials(cr);
 
 	return true;
+}
+
+void t_request::calc_local_ip(void) {
+	t_ip_port dst;
+	
+	get_current_destination(dst);
+	if (dst.ipaddr != 0) {
+		local_ip_ = get_src_ip4_address_for_dst(dst.ipaddr);
+	}
 }

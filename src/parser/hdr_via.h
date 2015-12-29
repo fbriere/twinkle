@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ public:
 	string encode(void) const;
 
 	// Get the response destination
-	void get_response_dst(unsigned long &ipaddr, unsigned short &prt);
+	void get_response_dst(t_ip_port &ip_port) const;
 
 	// Returns true if branch starts with RFC 3261 magic cookie
 	bool rfc3261_compliant(void) const;
@@ -67,7 +67,7 @@ public:
 	string encode_value(void) const;
 
 	// Get the response destination
-	void get_response_dst(unsigned long &ipaddr, unsigned short &prt);
+	void get_response_dst(t_ip_port &ip_port) const;
 };
 
 #endif

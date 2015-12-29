@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ struct yy_buffer_state;
 extern struct yy_buffer_state *yy_scan_string(const char *);
 extern void yy_delete_buffer(struct yy_buffer_state *);
 
+t_mutex t_parser::mtx_parser;
 bool t_parser::check_max_forwards = true;
 bool t_parser::compact_headers = false;
 bool t_parser::multi_values_as_list = true;
@@ -63,7 +64,9 @@ string t_parser::unfold(const string &h) {
 t_parser::t_context t_parser::context = t_parser::X_INITIAL;
 t_sip_message *t_parser::msg = NULL;
 
-t_sip_message *t_parser::parse(const string &s) {
+t_sip_message *t_parser::parse(const string &s, list<string> &parse_errors_) {
+	t_mutex_guard guard(mtx_parser);
+	
 	int ret;
 	struct yy_buffer_state *b;
 	msg = NULL;
@@ -85,10 +88,11 @@ t_sip_message *t_parser::parse(const string &s) {
 		throw ret;
 	}
 
+	parse_errors_ = parse_errors;
 	return msg;
 }
 
-t_sip_message *t_parser::parse_headers(const string &s) {
+t_sip_message *t_parser::parse_headers(const string &s, list<string> &parse_errors_) {
 	string msg("INVITE sip:fake@fake.invalid SIP/2.0");
 	msg += CRLF;
 	
@@ -104,7 +108,7 @@ t_sip_message *t_parser::parse_headers(const string &s) {
 	
 	msg += CRLF;
 	
-	return parse(msg);
+	return parse(msg, parse_errors_);
 }
 
 void t_parser::enter_ctx_comment(void) {
@@ -125,10 +129,6 @@ bool t_parser::dec_comment_level(void) {
 void t_parser::add_header_error(const string &header_name) {
 	string s = "Parse error in header: " + header_name;
 	parse_errors.push_back(s);
-}
-
-list<string> t_parser::get_parse_errors(void) {
-	return parse_errors;
 }
 
 t_syntax_error::t_syntax_error(const string &e) {

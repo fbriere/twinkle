@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -84,8 +84,20 @@ private:
 	t_user		*user_config;	/**< User profile of the local user. */
 	t_display_url	remote_party;	/**< Remote party. */
 	list<t_msg>	messages;	/**< Messages sent/received. */
+	
+	/** Indicates if a new message has been added to the list of message. */
+	bool		new_message_added;
+	
 	bool		error_recvd;	/**< Indicates that an error has been received. */
 	string		error_msg;	/**< Received error message. */
+	
+	/** Indicates that a delivery notification has been received. */
+	bool		delivery_notification_recvd;
+	
+	/** Received delivery notification. */
+	string		delivery_notification;
+	
+	bool		msg_in_flight;	/**< Indicates if an outgoing message is in flight. */
 	
 public:
 	/**
@@ -120,6 +132,9 @@ public:
 	 * @throws empty_list_exception  There are no messages.
 	 */
 	t_msg get_last_message(void);
+	
+	/** Check if a new message has been added. */
+	bool is_new_message_added(void) const;
 	
 	/**
 	 * Set the display name of the remote party if it is not yet set.
@@ -166,6 +181,29 @@ public:
 	string take_error(void);
 	
 	/**
+	 * Set the delivery notification of the session.
+	 * @param notification [in] Delivery notification.
+	 * @post @ref delivery_notification == notification
+	 * @post @ref delivery_notification_recvd == true
+	 */
+	void set_delivery_notification(const string &notification);
+	
+	/**
+	 * Check if a delivery notification has been received.
+	 * @return true, if an error has been received.
+	 * @return false, otherwise
+	 */
+	bool delivery_notification_received(void) const;
+	
+	/**
+	 * Take the delivery notification from the session.
+	 * @return Delivery notification.
+	 * @pre @ref delivery_notification_received() == true
+	 * @post @ref delivery_notification_received() == false
+	 */
+	string take_delivery_notification(void);
+	
+	/**
 	 * Check if the session matches with a particular user and
 	 * remote party.
 	 * @param user [in] The user
@@ -174,6 +212,19 @@ public:
 	 * @return false, otherwise
 	 */
 	bool match(t_user *user, t_url _remote_party);
+	
+	/**
+	 * Set the message in flight indicator.
+	 * @param in_flight [in] Indicator value to set.
+	 */
+	void set_msg_in_flight(bool in_flight);
+	
+	/**
+	 * Check if a message is in flight.
+	 * @return true, message is in flight.
+	 * @return false, no message is in flight.
+	 */
+	bool is_msg_in_flight(void) const;
 };
 
 }; // end namespace

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@
 #include "util.h"
 
 t_contact_param::t_contact_param() {
-	q = 1.0;
+	qvalue = 1.0;
+	qvalue_present = false;
 	expires = 0;
 	expires_present = false;
 }
@@ -44,7 +45,12 @@ string t_contact_param::encode(void) const {
 	s += '<';
 	s += uri.encode();
 	s += '>';
-	if (q != 1) s += float2str(q, ";q=%.1f");
+	
+	if (qvalue_present) {
+		s += ";q=";
+		s += float2str(qvalue, 3);
+	}
+	
 	if (expires_present) s += ulong2str(expires, ";expires=%u");
 	s += param_list2str(extensions);
 
@@ -52,7 +58,7 @@ string t_contact_param::encode(void) const {
 }
 
 bool t_contact_param::operator<(const t_contact_param &c) const {
-	return (q > c.q);
+	return (qvalue > c.qvalue);
 }
 
 
@@ -132,6 +138,15 @@ unsigned long t_contact_param::get_expires(void) const {
 void t_contact_param::set_expires(unsigned long e) {
 	expires_present = true;
 	expires = e;
+}
+
+float t_contact_param::get_qvalue(void) const {
+	return qvalue;
+}
+
+void t_contact_param::set_qvalue(float q) {
+	qvalue_present = true;
+	qvalue = q;
 }
 
 string t_hdr_contact::encode_value(void) const {

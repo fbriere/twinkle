@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 extern t_transaction_mgr	*transaction_mgr;
 extern t_event_queue		*evq_trans_layer;
 extern t_event_queue		*evq_trans_mgr;
-extern t_event_queue		*evq_sender_udp;
+extern t_event_queue		*evq_sender;
 extern t_phone			*phone;
 
 
@@ -235,8 +235,11 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 	t_user *user_config = pu->get_user_profile();
 
-	pu->use_stun = false;
-	pu->use_nat_keepalive = false;
+	// By default enable STUN. If for some reason we cannot perform
+	// NAT discovery, then enable STUN. It will not harm, but only
+	// create non-needed STUN transactions if we are not behind a NAT.
+	pu->use_stun = true;
+	pu->use_nat_keepalive = true;
 
 	list<t_ip_port> destinations = 
 		user_config->get_stun_server().get_h_ip_srv("udp");
@@ -272,24 +275,29 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 		switch (nat_type) {
 		case StunTypeOpen:
 			// STUN is not needed.
+			pu->use_stun = false;
+			pu->use_nat_keepalive = false;
 			return true;
 		case StunTypeSymNat:
 			err_msg = TRANSLATE("You are behind a symmetric NAT.\nSTUN will not work.\nConfigure a public IP address in the user profile\nand create the following static bindings (UDP) in your NAT.");
 			err_msg += "\n\n";
 			err_msg += TRANSLATE("public IP: %1 --> private IP: %2 (SIP signaling)");
-			err_msg = replace_first(err_msg, "%1", int2str(sys_config->get_sip_udp_port()));
-			err_msg = replace_first(err_msg, "%2", int2str(sys_config->get_sip_udp_port()));
+			err_msg = replace_first(err_msg, "%1", int2str(sys_config->get_sip_port()));
+			err_msg = replace_first(err_msg, "%2", int2str(sys_config->get_sip_port()));
 			err_msg += "\n";
 			err_msg += TRANSLATE("public IP: %1-%2 --> private IP: %3-%4 (RTP/RTCP)");
 			err_msg = replace_first(err_msg, "%1", int2str(sys_config->get_rtp_port()));
 			err_msg = replace_first(err_msg, "%2", int2str(sys_config->get_rtp_port() + 5));
 			err_msg = replace_first(err_msg, "%3", int2str(sys_config->get_rtp_port()));
 			err_msg = replace_first(err_msg, "%4", int2str(sys_config->get_rtp_port() + 5));
+			
+			pu->use_stun = false;
+			pu->use_nat_keepalive = false;
 			return false;
 		case StunTypeSymFirewall:
 			// STUN is not needed as we are on a pubic IP.
 			// NAT keep alive is needed however to keep the firewall open.
-			pu->use_nat_keepalive = true;
+			pu->use_stun = false;
 			return true;
 		case StunTypeBlocked:
 			destinations.pop_front();
@@ -308,13 +316,14 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 				err_msg += "\n";
 				err_msg += TRANSLATE("Port %1 (SIP signaling)");
 				err_msg = replace_first(err_msg, "%1",
-						int2str(sys_config->get_sip_udp_port()));
+						int2str(sys_config->get_sip_port()));
 				err_msg += "\n";
 				err_msg += TRANSLATE("Ports %1-%2 (RTP/RTCP)");
 				err_msg = replace_first(err_msg, "%1",
 						int2str(sys_config->get_rtp_port()));
 				err_msg = replace_first(err_msg, "%2",
 						int2str(sys_config->get_rtp_port() + 5));
+						
 				return false;
 			}
 			
@@ -328,8 +337,6 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 			break;
 		default:
 			// Use STUN.
-			pu->use_stun = true;
-			pu->use_nat_keepalive = true;
 			return true;
 		}
 	}
@@ -471,7 +478,7 @@ void t_stun_transaction::process_icmp(const t_icmp_msg &icmp) {
 	}
 	
 	// Failover to next destination
-	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+	evq_sender->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
 		destinations.front().ipaddr, destinations.front().port);
 	num_transmissions = 1;
 	dur_req_timeout = DUR_STUN_START_INTVAL;
@@ -522,7 +529,7 @@ bool t_stun_transaction::match(const t_icmp_msg &icmp) const {
 
 void t_sip_stun_trans::retransmit(void) {
 	// The SIP UDP sender will send out the STUN request.
-	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+	evq_sender->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
 		destinations.front().ipaddr, destinations.front().port);
 	num_transmissions++;
 }
@@ -532,7 +539,7 @@ t_sip_stun_trans::t_sip_stun_trans(t_user *user, StunMessage *r,
 		t_stun_transaction(user, r, _tuid, dst)
 {
 	// The SIP UDP sender will send out the STUN request.
-	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+	evq_sender->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
 		destinations.front().ipaddr, destinations.front().port);
 	num_transmissions++;
 	start_timer_req_timeout();	

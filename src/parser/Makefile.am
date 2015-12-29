@@ -1,4 +1,5 @@
-INCLUDES = -I $(top_builddir)/src -I $(includedir)
+AM_CPPFLAGS = \
+	-I$(top_srcdir)/src
 
 # bison flags
 AM_YFLAGS = -d
@@ -12,8 +13,18 @@ AM_LFLAGS = -i
 # The output of bison cannot be compiled with the -O2 flag.
 # With the -O2 flag g++ crashes. The -O2 flag is stripped from
 # CXXFLAGS by configure.
+# rumen:
+# Above don't work.
+# It is enought to drop -funit-at-a-time set when -O2 flag is set.
+# The error is:
+# "cc1plus: out of memory allocating 336746144 bytes after a total of 10846208 bytes."
+# Note user can specify -O2 in CXXFLAGS at configure time !
+# Also note that unit-at-a-time if new for gcc 3.4 !
+# See http://lists.debian.org/debian-gcc/2006/07/msg00281.html
+# that claim to be fixed in gcc-4.1+ .
 
-CXXFLAGS = @PARSER_CXXFLAGS@
+AM_CXXFLAGS = -fno-unit-at-a-time
+
 
 # This target is only for testing the parser in isolation
 #noinst_PROGRAMS = sipparse

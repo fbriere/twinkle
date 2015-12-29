@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -99,12 +99,19 @@ enum t_msg_type {
 
 
 class t_sip_message {
+protected:
+	/**
+	 * Local IP address that will be uses for this SIP message.
+	 * The local IP address can only be determined when the destination
+	 * of a SIP message is known (because of multi homing).
+	 */
+	unsigned long		local_ip_;
+	
 public:
 	// The source IP address and port are only set for messages
 	// received from the network. So the transaction user knows
-	// where a message somes from.
-	unsigned long		src_ipaddr;
-	unsigned short		src_port;
+	// where a message comes from.
+	t_ip_port		src_ip_port;
 
 	// SIP version
 	string			version;
@@ -221,6 +228,29 @@ public:
 	 * @post If a body was already present then it is deleted.
 	 */
 	void set_body_plain_text(const string &text, const string &charset);
+	
+	/**
+	 * Get the size of an encoded SIP message.
+	 * @return Size in bytes.
+	 */
+	size_t get_encoded_size(void);
+	
+	/**
+	 * Check if all local IP address are correctly filled in. This
+	 * check is an integrity check to help debugging the auto IP
+	 * discover feature.
+	 */
+	bool local_ip_check(void) const;
+	
+	/** Determine the local IP address for this SIP message. */
+	virtual void calc_local_ip(void);
+	
+	/**
+	 * Get the local IP address for this SIP message.
+	 * @return The local IP address.
+	 * @return 0, if the local IP address is not determined yet.
+	 */
+	unsigned long get_local_ip(void);
 };
 
 #endif

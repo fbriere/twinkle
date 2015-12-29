@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -251,7 +251,8 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 	// RFC 3265 7.1
 	// Contact header is mandatory
 	t_contact_param contact;
-	contact.uri.set_url(get_dialog()->get_line()->create_user_contact());
+	contact.uri.set_url(get_dialog()->get_line()->create_user_contact(
+			h_ip2str(resp->get_local_ip())));
 	resp->hdr_contact.add_contact(contact);
 
 	// Expires header is mandatory

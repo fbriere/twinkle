@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,12 +31,14 @@
 #include "userintf.h"
 #include "audio/rtp_telephone_event.h"
 #include "audits/memman.h"
+#include "sdp/sdp.h"
 #include "sockets/socket.h"
 #include "stun/stun_transaction.h"
 
-extern t_event_queue	*evq_sender_udp;
+extern t_event_queue	*evq_sender;
 extern t_event_queue	*evq_trans_mgr;
 extern string		user_host;
+extern string		local_hostname;
 extern t_phone		*phone;
 
 // Protected
@@ -67,10 +69,9 @@ t_request *t_dialog::create_request(t_method m) {
 		// RFC 3263 4
 		// CANCEL for a particular SIP request MUST be sent to the same SIP
 		// server that the SIP request was delivered to.
-		unsigned long ipaddr;
-		unsigned short port;
-		orig_req->get_destination(ipaddr, port, *user_config);
-		r->set_destination(ipaddr, port);
+		t_ip_port ip_port;
+		orig_req->get_destination(ip_port, *user_config);
+		r->set_destination(ip_port);
 		return r;
 	}
 	
@@ -105,7 +106,7 @@ t_request *t_dialog::create_request(t_method m) {
 	case NOTIFY:
 		// RFC 3265 7.1, RFC 3515 2.2
 		// Contact header is mandatory
-		contact.uri.set_url(line->create_user_contact());
+		contact.uri.set_url(line->create_user_contact(h_ip2str(r->get_local_ip())));
 		r->hdr_contact.add_contact(contact);
 		break;
 	default:
@@ -206,7 +207,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 			resp = r->create_response(
 					R_488_NOT_ACCEPTABLE_HERE);
 			resp->hdr_to.set_tag(local_tag);
-			resp->hdr_warning.add_warning(t_warning(USER_HOST(user_config),
+			resp->hdr_warning.add_warning(t_warning(LOCAL_HOSTNAME,
 					0, warn_code, warn_text));
 			line->send_response(resp, tuid, tid);
 			
@@ -267,7 +268,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 
 		// Set Contact header
 		t_contact_param contact;
-		contact.uri.set_url(line->create_user_contact());
+		contact.uri.set_url(line->create_user_contact(h_ip2str(resp->get_local_ip())));
 		resp->hdr_contact.add_contact(contact);
 
 		// RFC 3262 5
@@ -276,7 +277,7 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 		// This implentation does not create an answer in an
 		// reliable 1xx response if an offer was received.
 		if (!session->recvd_offer) {
-			session->create_sdp_offer(resp, local_uri.get_user());
+			session->create_sdp_offer(resp, SDP_O_USER);
 		}
 
 		// Keep a copy of the response for retransmission
@@ -423,8 +424,7 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_dialog::state_w4answer(t_line_timer timer) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 	t_response *resp;
 	
 	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
@@ -434,11 +434,11 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 	switch(timer) {
 	case LTMR_100REL_TIMEOUT:
 		// Retransmit 1xx response.
-		// Send the response directly to the UDP sender thread
+		// Send the response directly to the sender thread
 		// bypassing the transaction layer. As this is a retransmission
 		// from the TU, the transaction layer does not need to know.
-		resp_1xx_invite->hdr_via.get_response_dst(ipaddr, port);
-		if (ipaddr == 0) {
+		resp_1xx_invite->get_destination(ip_port);
+		if (ip_port.ipaddr == 0) {
 			// This should not happen. The response has been
 			// sent before so it should be possible to sent
 			// it again. Ignore the timeout. When the 100rel
@@ -446,7 +446,7 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 			// cleaned up.
 			break;
 		}
-		evq_sender_udp->push_network(resp_1xx_invite, ipaddr, port);
+		evq_sender->push_network(resp_1xx_invite, ip_port);
 		line->start_timer(LTMR_100REL_TIMEOUT, get_object_id());
 		break;
 	case LTMR_100REL_GUARD:
@@ -674,8 +674,7 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 
 // RFC 3261 13.3.1.4
 void t_dialog::state_w4ack(t_line_timer timer) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 
 	// NOTE: this code is also executed for re-INVITE ACK time-outs
 	//       timeout handling for INVITE/re-INVITE is the same
@@ -683,12 +682,12 @@ void t_dialog::state_w4ack(t_line_timer timer) {
 	switch(timer) {
 	case LTMR_ACK_TIMEOUT:
 		// Retransmit 2xx response.
-		// Send the response directly to the UDP sender thread
+		// Send the response directly to the sender thread
 		// as the INVITE transaction completed already.
 		// (see RFC 3261 17.2.1)
 		if (!resp_invite) break; // there is no response to send
-		resp_invite->hdr_via.get_response_dst(ipaddr, port);
-		if (ipaddr == 0) {
+		resp_invite->get_destination(ip_port);
+		if (ip_port.ipaddr == 0) {
 			// This should not happen. The response has been
 			// sent before so it should be possible to sent
 			// it again. Ignore the timeout. When the ACK
@@ -696,7 +695,7 @@ void t_dialog::state_w4ack(t_line_timer timer) {
 			// cleaned up.
 			break;
 		}
-		evq_sender_udp->push_network(resp_invite, ipaddr, port);
+		evq_sender->push_network(resp_invite, ip_port);
 		line->start_timer(LTMR_ACK_TIMEOUT, get_object_id());
 		break;
 	case LTMR_ACK_GUARD:
@@ -936,7 +935,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 			// Unsupported media
 			resp = r->create_response(
 					R_488_NOT_ACCEPTABLE_HERE);
-			resp->hdr_warning.add_warning(t_warning(USER_HOST(user_config),
+			resp->hdr_warning.add_warning(t_warning(LOCAL_HOSTNAME,
 					0, warn_code, warn_text));
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
@@ -1011,7 +1010,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 
 	// Set Contact header
 	t_contact_param contact;
-	contact.uri.set_url(line->create_user_contact());
+	contact.uri.set_url(line->create_user_contact(h_ip2str(resp_invite->get_local_ip())));
 	resp_invite->hdr_contact.add_contact(contact);
 
 	// Set Allow and Supported headers
@@ -1023,11 +1022,9 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	// was sent in a reliable 1xx response (RFC 3262 5).
 	// Otherwise create an SDP answer.
 	if (!session_re_invite->recvd_offer && !session_re_invite->sent_offer) {
-		session_re_invite->create_sdp_offer(resp_invite,
-						local_uri.get_user());
+		session_re_invite->create_sdp_offer(resp_invite, SDP_O_USER);
 	} else {
-		session_re_invite->create_sdp_answer(resp_invite,
-						local_uri.get_user());
+		session_re_invite->create_sdp_answer(resp_invite, SDP_O_USER);
 	}
 
 	line->send_response(resp_invite, tuid, tid);
@@ -1069,7 +1066,7 @@ void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
 
 	// RFC 3515 2.2
 	// Contact header is mandatory
-	contact.uri.set_url(line->create_user_contact());
+	contact.uri.set_url(line->create_user_contact(h_ip2str(resp->get_local_ip())));
 	resp->hdr_contact.add_contact(contact);
 
 	if (r->hdr_refer_sub.is_populated() && !r->hdr_refer_sub.create_refer_sub) {
@@ -1288,7 +1285,11 @@ void t_dialog::process_message(t_request *r, t_tuid tuid, t_tid tid) {
 	if (accepted) {
 		resp = r->create_response(R_200_OK);
 	} else {
-		resp = r->create_response(R_486_BUSY_HERE);
+		if (user_config->get_im_max_sessions() == 0) {
+			resp = r->create_response(R_603_DECLINE);
+		} else {
+			resp = r->create_response(R_486_BUSY_HERE);
+		}
 	}
 	
 	resp = r->create_response(R_200_OK);
@@ -2033,8 +2034,7 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 }
 
 void t_dialog::ack_2xx_invite(t_response *r) {
-	unsigned long ipaddr;
-	unsigned short port;
+	t_ip_port ip_port;
 
 	if (ack) {
 		// delete previous cached ACK
@@ -2042,13 +2042,13 @@ void t_dialog::ack_2xx_invite(t_response *r) {
 		delete ack;
 	}
 	ack = create_request(ACK);
-	ack->get_destination(ipaddr, port, *user_config);
+	ack->get_destination(ip_port, *user_config);
 
 	// If for some strange reason the destination could
 	// not be computed then wait for a retransmission of
 	// 2XX.
-	if (ipaddr != 0 && port != 0) {
-		evq_sender_udp->push_network(ack, ipaddr, port);
+	if (ip_port.ipaddr != 0 && ip_port.port != 0) {
+		evq_sender->push_network(ack, ip_port);
 	} else {
 		log_file->write_header("t_dialog::ack_2xx_invite", LOG_SIP, LOG_CRITICAL);
 		log_file->write_raw("Cannot determine destination IP address for ACK.\n\n");
@@ -2217,7 +2217,7 @@ t_dialog::t_dialog(t_line *_line) :
 	id_100rel_guard = 0;
 
 	// Create session
-	session = new t_session(this, USER_HOST(user_config), line->get_rtp_port());
+	session = new t_session(this, USER_HOST(user_config, AUTO_IP4_ADDRESS), line->get_rtp_port());
 	MEMMAN_NEW(session);
 	session_re_invite = NULL;
 
@@ -2377,15 +2377,6 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	invite.hdr_cseq.set_method(INVITE);
 	invite.hdr_cseq.set_seqnr(local_seqnr);
 
-	// Set Contact header
-	t_contact_param contact;
-	contact.uri.set_url(line->create_user_contact());
-	invite.hdr_contact.add_contact(contact);
-
-	// Set Via header
-	t_via via(USER_HOST(user_config), PUBLIC_SIP_UDP_PORT(user_config));
-	invite.hdr_via.add_via(via);
-
 	// Set Max-Forwards header
 	invite.hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
 
@@ -2433,13 +2424,27 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	if (hdr_require.is_populated()) {
 		invite.hdr_require.add_features(hdr_require.features);
 	}
-
-	// Create SDP offer
-	session->create_sdp_offer(&invite, local_uri.get_user());
 	
 	// Calculate destinations
 	// See create_request() for more comments
 	invite.calc_destinations(*user_config);
+	
+        // The Contatc, Via header and SDP can only be created after the destinations
+        // are calculated, because the destination deterimines which
+        // local IP address should be used.
+        
+	// Create SDP offer
+	session->create_sdp_offer(&invite, SDP_O_USER);
+	
+	// Set Via header
+	unsigned long local_ip = invite.get_local_ip();
+	t_via via(USER_HOST(user_config, h_ip2str(local_ip)), PUBLIC_SIP_PORT(user_config));
+	invite.hdr_via.add_via(via);
+	
+	// Set Contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact(h_ip2str(local_ip)));
+	invite.hdr_contact.add_contact(contact);
 	
 	// Send INVITE
 	req_out_invite = new t_client_request(user_config, &invite, 0);
@@ -2721,7 +2726,7 @@ void t_dialog::send_re_invite(void) {
 	// Set Contact header
 	// INVITE must contain a contact header
 	t_contact_param contact;
-	contact.uri.set_url(line->create_user_contact());
+	contact.uri.set_url(line->create_user_contact(h_ip2str(r->get_local_ip())));
 	r->hdr_contact.add_contact(contact);
 
 	// RFC 3261 13.2.1
@@ -2739,7 +2744,7 @@ void t_dialog::send_re_invite(void) {
 	}
 
 	// Create SDP offer
-	session_re_invite->create_sdp_offer(r, local_uri.get_user());
+	session_re_invite->create_sdp_offer(r, SDP_O_USER);
 
 	// Send INVITE
 	req_out_invite = new t_client_request(user_config, r, 0);
@@ -3064,8 +3069,7 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 	if (r->hdr_cseq.method == INVITE &&
 	    tuid == 0 && tid == 0 && !req_out_invite)
 	{
-		unsigned long ipaddr;
-		unsigned short port;
+		t_ip_port ip_port;
 
 		// Only a retransmission of a 2XX INVITE is allowed.
 		if (r->get_class() != R_2XX) return;
@@ -3076,9 +3080,9 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 			return;
 		}
 
-		ack->get_destination(ipaddr, port, *user_config);
-		if (ipaddr != 0 && port != 0) {
-			evq_sender_udp->push_network(ack, ipaddr, port);
+		ack->get_destination(ip_port, *user_config);
+		if (ip_port.ipaddr != 0 && ip_port.port != 0) {
+			evq_sender->push_network(ack, ip_port);
 		}
 
 		return;
@@ -3446,7 +3450,7 @@ void t_dialog::answer(void) {
 
 	// Set Contact header
 	t_contact_param contact;
-	contact.uri.set_url(line->create_user_contact());
+	contact.uri.set_url(line->create_user_contact(h_ip2str(resp_invite->get_local_ip())));
 	resp_invite->hdr_contact.add_contact(contact);
 
 	// Set Allow and Supported headers
@@ -3459,9 +3463,9 @@ void t_dialog::answer(void) {
 	// Otherwise if no offer was sent in a reliable 1xx, create an SDP answer.
 	if (!session->sent_offer) {
 		if (!session->recvd_offer && !session->sent_offer) {
-			session->create_sdp_offer(resp_invite, local_uri.get_user());
+			session->create_sdp_offer(resp_invite, SDP_O_USER);
 		} else {
-			session->create_sdp_answer(resp_invite, local_uri.get_user());
+			session->create_sdp_answer(resp_invite, SDP_O_USER);
 			session->start_rtp();
 		}
 	}
@@ -3538,7 +3542,7 @@ void t_dialog::redirect(const list<t_display_url> &destinations, int code, strin
 		MEMMAN_NEW(contact);
 		contact->display = i->display;
 		contact->uri = i->url;
-		contact->q = q;
+		contact->set_qvalue(q);
 		resp->hdr_contact.add_contact(*contact);
 		MEMMAN_DELETE(contact);
 		delete contact;
@@ -3628,16 +3632,15 @@ bool t_dialog::is_invite_retrans(t_request *r) {
 }
 
 void t_dialog::process_invite_retrans(void) {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	t_ip_port ip_port;
 	
 	// Retransmit 2xx response.
-	// Send the response directly to the UDP sender thread
+	// Send the response directly to the sender thread
 	// as the INVITE transaction completed already.
 	// (see RFC 3261 17.2.1)
 	if (!resp_invite) return; // there is no response to send
-	resp_invite->hdr_via.get_response_dst(ipaddr, port);
-	if (ipaddr == 0) {
+	resp_invite->get_destination(ip_port);
+	if (ip_port.ipaddr == 0) {
 		// This should not happen. The response has been
 		// sent before so it should be possible to sent
 		// it again. Ignore the timeout. When the ACK
@@ -3645,7 +3648,7 @@ void t_dialog::process_invite_retrans(void) {
 		// cleaned up.
 		return;
 	}
-	evq_sender_udp->push_network(resp_invite, ipaddr, port);
+	evq_sender->push_network(resp_invite, ip_port);
 }
 
 t_dialog_state t_dialog::get_state(void) const {

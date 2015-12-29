@@ -150,9 +150,6 @@
                     <property name="name">
                         <cstring>msgLineEdit</cstring>
                     </property>
-                    <property name="maxLength">
-                        <number>800</number>
-                    </property>
                     <property name="whatsThis" stdset="0">
                         <string>Type your message here and then press "send" to send it.</string>
                     </property>
@@ -219,6 +216,7 @@
     <slot>sendMessage()</slot>
     <slot>addMessage( const QString &amp; name, const QString &amp; msg, bool incoming, bool html )</slot>
     <slot>displayError( const QString &amp; errorMsg )</slot>
+    <slot>displayDeliveryNotification( const QString &amp; notifcation )</slot>
     <slot>setRemotePartyCaption( void )</slot>
 </slots>
 <functions>

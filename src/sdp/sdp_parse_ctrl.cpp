@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,12 +27,15 @@ struct yy_buffer_state;
 extern struct yy_buffer_state *yysdp_scan_string(const char *);
 extern void yysdp_delete_buffer(struct yy_buffer_state *);
 
+t_mutex t_sdp_parser::mtx_parser;
 t_sdp_parser::t_context t_sdp_parser::context = t_sdp_parser::X_INITIAL;
 t_sdp *t_sdp_parser::sdp = NULL;
 
 t_sdp *t_sdp_parser::parse(const string &s) {
 	int ret;
 	struct yy_buffer_state *b;
+	
+	t_mutex_guard guard(mtx_parser);
 
 	sdp = new t_sdp();
 	MEMMAN_NEW(sdp);
