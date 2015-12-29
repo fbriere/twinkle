@@ -1,3 +1,45 @@
+twinkle (1:1.9.0+dfsg-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+  * Repack orig tarball without embedded gsm library.
+  * Update Homepage to new upstream URL.
+  * Add Build-Depends:
+    - bison
+    - cmake
+    - flex
+    - linux-libc-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386]
+    - qtdeclarative5-dev
+    - qtquick1-5-dev
+    - qtscript5-dev
+    - qttools5-dev
+    - qttools5-dev-tools
+  * Drop Build-Depends:
+    - autotools-dev
+    - cdbs
+    - dh-autoreconf
+    - libboost-regex-dev
+    - libncurses-dev
+    - libxpm-dev
+  * Update patches:
+    - desktop-entry-contains-encoding-key.patch
+    - libgsm.patch
+  * Drop patches:
+    - boost_regex-mt.patch
+    - localetime_r_conflict.diff
+    - newer-automake.diff
+    - newer-libccrtp.diff
+    - no-qt.diff
+    - vsnprintf_incompatibility.diff
+  * Add machine-readable copyright file.
+  * Update watch file to track github releases.
+  * Update debhelper compat level to 9.
+  * Migrate from cdbs to dh.
+  * Support parallel build.
+  * Remove deprecated menu file.
+  * Bump Standards-Version to 3.9.6.
+
+ -- Peter Colberg <peter@colberg.org>  Mon, 28 Dec 2015 20:31:28 -0500
+
 twinkle (1:1.4.2-4.1) unstable; urgency=medium
 
   * Non-maintainer upload.
