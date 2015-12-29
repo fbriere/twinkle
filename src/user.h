@@ -25,13 +25,12 @@
 
 #include <string>
 #include <list>
-#include <cc++/config.h>
 #include "protocol.h"
 #include "sys_settings.h"
 #include "audio/audio_codecs.h"
 #include "sockets/url.h"
 #include "threads/mutex.h"
-#include "boost/regex.hpp"
+#include <regex>
 
 // Forward declaration
 class t_request;
@@ -92,10 +91,10 @@ enum t_g726_packing {
 };
 
 struct t_number_conversion {
-	boost::regex	re;
-	string		fmt;
+    string re;
+    string fmt;
 	
-	string str(void) const { return re.str() + " --> " + fmt; }
+    string str(void) const { return re + " --> " + fmt; }
 };
 
 

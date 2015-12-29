@@ -2172,6 +2172,7 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 	case CODEC_G726_24:	return "g726-24";
 	case CODEC_G726_32:	return "g726-32";
 	case CODEC_G726_40:	return "g726-40";
+	case CODEC_G729A: return "g729a";
 	default:		return "???";
 	}
 }
@@ -2186,7 +2187,7 @@ void t_userintf::run(void) {
 
 	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
 	cout << endl;
-	cout << "Copyright (C) 2005-2009  " << PRODUCT_AUTHOR << endl;
+	cout << "Copyright (C) 2005-2015  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
 	
 	cout << "Users:";
@@ -2225,6 +2226,10 @@ void t_userintf::run(void) {
 	cout << endl;
 }
 
+void t_userintf::run_on_event_queue(std::function<void()> fn) {
+	evq_ui_events.push_fncall(fn);
+}
+
 void t_userintf::process_events(void) {
 	t_event		*event;
 	t_event_ui	*ui_event;
@@ -2240,6 +2245,9 @@ void t_userintf::process_events(void) {
 			break;
 		case EV_QUIT:
 			quit = true;
+			break;
+		case EV_FN_CALL:
+			static_cast<t_event_fncall*>(event)->invoke();
 			break;
 		default:
 			assert(false);

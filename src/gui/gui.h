@@ -31,7 +31,7 @@
 #include "qcombobox.h"
 #include "qlabel.h"
 #include "qlineedit.h"
-#include "qprogressdialog.h"
+#include <QProgressDialog>
 #include "qtimer.h"
 #include "qtoolbutton.h"
 #include "qwidget.h"
@@ -111,39 +111,67 @@ private:
 	
 protected:
 	// The do_* methods perform the commands parsed by the exec_* methods.
-	virtual bool do_invite(const string &destination, const string &display, 
-			const string &subject, bool immediate,
-			bool anonymous);
+	virtual bool do_invite(const string &destination, const string &display,
+			       const string &subject, bool immediate,
+			       bool anonymous);
 	virtual void do_redial(void);
 	virtual void do_answer(void);
 	virtual void do_answerbye(void);
 	virtual void do_reject(void);
-	virtual void do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
-		bool action_present, bool enable, int num_redirections,
-		const list<string> &dest_strlist, bool immediate);
+	virtual void do_redirect(bool show_status, bool type_present,
+				 t_cf_type cf_type, bool action_present,
+				 bool enable, int num_redirections,
+				 const list<string> &dest_strlist,
+				 bool immediate);
 	virtual void do_dnd(bool show_status, bool toggle, bool enable);
 	virtual void do_auto_answer(bool show_status, bool toggle, bool enable);
 	virtual void do_bye(void);
 	virtual void do_hold(void);
 	virtual void do_retrieve(void);
-	virtual bool do_refer(const string &destination, t_transfer_type transfer_type,
-		bool immediate);
+	virtual bool do_refer(const string &destination,
+			      t_transfer_type transfer_type, bool immediate);
 	virtual void do_conference(void);
 	virtual void do_mute(bool show_status, bool toggle, bool enable);
 	virtual void do_dtmf(const string &digits);
 	virtual void do_register(bool reg_all_profiles);
-	virtual void do_deregister(bool dereg_all_profiles, bool dereg_all_devices);
+	virtual void do_deregister(bool dereg_all_profiles,
+				   bool dereg_all_devices);
 	virtual void do_fetch_registrations(void);
-	virtual bool do_options(bool dest_set, const string &destination, bool immediate);
+	virtual bool do_options(bool dest_set, const string &destination,
+				bool immediate);
 	virtual void do_line(int line);
 	virtual void do_user(const string &profile_name);
 	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
-	virtual bool do_message(const string &destination, const string &display,
-				const im::t_msg &msg);
+	virtual bool do_message(const string &destination,
+				const string &display, const im::t_msg &msg);
 	virtual void do_presence(t_presence_state::t_basic_state basic_state);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
-	
+private slots:
+	void gui_do_invite(const QString &destination, const QString &display,
+			   const QString &subject, bool immediate,
+			   bool anonymous);
+	void gui_do_redial(void);
+	void gui_do_answer(void);
+	void gui_do_answerbye(void);
+	void gui_do_reject(void);
+	void gui_do_redirect(bool type_present, t_cf_type cf_type,
+			     bool action_present, bool enable,
+			     int num_redirections,
+			     const std::list<std::string> &dest_strlist,
+			     bool immediate);
+	void gui_do_dnd(bool toggle, bool enable);
+	void gui_do_auto_answer(bool toggle, bool enable);
+	void gui_do_bye(void);
+	void gui_do_hold(void);
+	void gui_do_retrieve(void);
+	void gui_do_refer(const QString &destination,
+			  t_transfer_type transfer_type, bool immediate);
+	void gui_do_conference(void);
+	void gui_do_mute(bool toggle, bool enable);
+	void gui_do_dtmf(const QString &digits);
+	void gui_do_user(const QString &profile_name);
+	QString gui_get_current_profile();
 public:
 	t_gui(t_phone *_phone);
 	virtual ~t_gui();
@@ -384,6 +412,16 @@ public:
 	  * @param url [in] URL to open.
              */
 	void open_url_in_browser(const QString &url);
+
+signals:
+	void update_reg_status();
+	void update_mwi();
+	void update_state();
+	void mw_display(const QString& s);
+	void mw_display_header();
+	void mw_update_log(bool log_zapped);
+	void mw_update_call_history();
+	void mw_update_missed_call_status(int num_missed_calls);
 	
 private slots:
 	/** 
@@ -391,6 +429,14 @@ private slots:
 	 * function should be called every second.
 	 */
 	void updateTimersMessageSessions();
+
+	bool do_cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &destination,
+			const string &display);
+	bool do_cb_ask_user_to_redirect_request(t_user *user_config, const t_url &destination,
+			const string &display, t_method method);
+	bool do_cb_ask_credentials(t_user *user_config, const string &realm, string &username,
+			string &password);
+    void do_cb_register_inprog(t_user *user_config, t_register_type register_type);
 };
 
 #endif

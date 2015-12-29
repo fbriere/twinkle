@@ -21,7 +21,6 @@
 #ifndef _AUDIO_ENCODER_H
 #define _AUDIO_ENCODER_H
 
-#include <cc++/config.h>
 #include "twinkle_config.h"
 #include "audio_codecs.h"
 #include "user.h"
@@ -34,6 +33,12 @@
 
 #ifdef HAVE_SPEEX
 #include <speex/speex.h>
+#endif
+
+#ifdef HAVE_BCG729
+extern "C" {
+#	include <bcg729/encoder.h>
+}
 #endif
 
 #ifdef HAVE_ILBC
@@ -179,5 +184,20 @@ public:
 	virtual uint16 encode(int16 *sample_buf, uint16 nsamples, 
 			uint8 *payload, uint16 payload_size, bool &silence);
 };
+
+#ifdef HAVE_BCG729
+class t_g729a_audio_encoder : public t_audio_encoder
+{
+public:
+	t_g729a_audio_encoder(uint16 payload_id, uint16 ptime, t_user *user_config);
+	virtual ~t_g729a_audio_encoder();
+
+	virtual uint16 encode(int16 *sample_buf, uint16 nsamples,
+			uint8 *payload, uint16 payload_size, bool &silence);
+private:
+	bcg729EncoderChannelContextStruct* _context;
+};
+
+#endif
 
 #endif

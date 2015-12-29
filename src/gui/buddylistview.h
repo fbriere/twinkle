@@ -19,14 +19,14 @@
 #ifndef BUDDYLISTVIEW_H
 #define BUDDYLISTVIEW_H
 
-#include "qlistview.h"
+#include <QTreeWidgetItem>
 #include "qpainter.h"
 #include "qtooltip.h"
 #include "presence/buddy.h"
 #include "presence/presence_epa.h"
 #include "patterns/observer.h"
 
-class AbstractBLVItem : public QListViewItem {
+class AbstractBLVItem : public QTreeWidgetItem {
 protected:
 	// Text to show as a tool tip.
 	QString		tip;
@@ -35,14 +35,15 @@ protected:
 	virtual void set_icon(t_presence_state::t_basic_state state);
 	
 public:
-	AbstractBLVItem(QListViewItem *parent, const QString &text);
-	AbstractBLVItem(QListView *parent, const QString &text);
+    AbstractBLVItem(QTreeWidgetItem *parent, const QString &text);
+    AbstractBLVItem(QTreeWidget *parent, const QString &text);
 	virtual ~AbstractBLVItem();
 	virtual QString get_tip(void);
 };
 
 // List view item representing a buddy.
-class BuddyListViewItem : public AbstractBLVItem, public patterns::t_observer {
+class BuddyListViewItem : public QObject, public AbstractBLVItem, public patterns::t_observer {
+	Q_OBJECT
 private:
 	t_buddy		*buddy;
 	
@@ -50,43 +51,43 @@ private:
 	void set_icon(void);
 	
 public:
-	BuddyListViewItem(QListViewItem *parent, t_buddy *_buddy);
+    BuddyListViewItem(QTreeWidgetItem *parent, t_buddy *_buddy);
 	virtual ~BuddyListViewItem();
 	
 	virtual void update(void);
 	virtual void subject_destroyed(void);
 	
 	t_buddy *get_buddy(void);
+
+signals:
+	void update_signal();
+
+private slots:
+	void update_slot();
 };
 
 // List view item representing a user
-class BLViewUserItem : public AbstractBLVItem, public patterns::t_observer {
+class BLViewUserItem : public QObject, public AbstractBLVItem, public patterns::t_observer {
+	Q_OBJECT
 private:
 	t_presence_epa *presence_epa;
 	
 	void set_icon(void);
 	
 public:
-	BLViewUserItem(QListView *parent, t_presence_epa *_presence_epa);
+    BLViewUserItem(QTreeWidget *parent, t_presence_epa *_presence_epa);
 	virtual ~BLViewUserItem();
-	
-	void paintCell(QPainter *painter, const QColorGroup &cg, 
-				    int column, int width, int align);
 	
 	virtual void update(void);
 	virtual void subject_destroyed(void);
 	
 	t_presence_epa *get_presence_epa(void);
-};
 
-class BuddyListViewTip : public QToolTip {
-private:
-	QListView *parentListView;
-	
-public:
-	BuddyListViewTip(QListView *parent);
-	virtual ~BuddyListViewTip() {};
-	void maybeTip ( const QPoint & p );
+signals:
+	void update_signal();
+
+private slots:
+	void update_slot();
 };
 
 #endif

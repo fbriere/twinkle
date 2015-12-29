@@ -31,7 +31,7 @@
 #ifndef _TEXTBROWSERNOAUTOLINK_H
 #define _TEXTBROWSERNOAUTOLINK_H
 
-#include <qtextbrowser.h>
+#include <QTextBrowser>
 
 /**
   * A text browser similar to QTextBrowser, but when a user clicks a link
@@ -40,9 +40,8 @@
 class TextBrowserNoAutoLink : public QTextBrowser {
 	Q_OBJECT
 public:
-	TextBrowserNoAutoLink ( QWidget * parent = 0, const char * name = 0 ) :
-			QTextBrowser(parent, name) {};
-	virtual void setSource ( const QString & name ) {};
+	TextBrowserNoAutoLink ( QWidget * parent = 0 );
+	virtual void setSource(const QUrl& name) override;
 };
 
 #endif

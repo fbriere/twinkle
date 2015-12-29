@@ -40,6 +40,7 @@ void *main_logview(void *arg) {
 		// TODO: handle situation where log file was zapped.
 		if (ui) ui->cb_log_updated(false);
 	}
+	return NULL;
 }
 
 bool t_log::move_current_to_old(void) {
@@ -161,7 +162,7 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 
 	gettimeofday(&t, NULL);
 	date = t.tv_sec;
-	localtime_r(&date, &tm);
+	::localtime_r(&date, &tm);
 
 	*log_stream << "+++ ";
 	*log_stream << tm.tm_mday;
