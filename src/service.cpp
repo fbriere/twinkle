@@ -40,6 +40,18 @@ t_service::t_service() {
 	auto_answer_active = false;
 }
 
+bool t_service::multiple_services_active(void) {
+	int num_services = 0;
+	
+	if (is_cf_active()) num_services++;
+	if (is_dnd_active()) num_services++;
+	if (is_auto_answer_active()) num_services++;
+	
+	if (num_services > 1) return true;
+	
+	return false;
+}
+
 void t_service::enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest) {
 	lock();
 

@@ -191,7 +191,7 @@
         <sender>cancelPushButton</sender>
         <signal>clicked()</signal>
         <receiver>InviteForm</receiver>
-        <slot>cancel()</slot>
+        <slot>reject()</slot>
     </connection>
     <connection>
         <sender>okPushButton</sender>
@@ -231,7 +231,7 @@
     <slot>clear()</slot>
     <slot>show( const QString &amp; dest )</slot>
     <slot>validate()</slot>
-    <slot>cancel()</slot>
+    <slot>reject()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>
     <slot>showAddressBook()</slot>
     <slot>selectedAddress( const QString &amp; address )</slot>

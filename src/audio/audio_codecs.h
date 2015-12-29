@@ -59,4 +59,7 @@ enum t_audio_codec {
 // Mix 2 16 bits signed linear PCM values
 short mix_linear_pcm(short pcm1, short pcm2);
 
+// Reduce noise of 16 bits signed linear PCM samples
+void pcm_reduce_noise(short *pcm_buf, int bufsize);
+
 #endif

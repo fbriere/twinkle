@@ -10,8 +10,8 @@ AC_ARG_WITH(kde,
 	AC_HELP_STRING([--without-kde], [do not compile KDE features]),
 	[ac_cv_kde=$withval], [ac_cv_kde=yes])
 
-AM_INIT_AUTOMAKE(twinkle,0.4.1)
-AC_DEFINE(VERSION_DATE,["November 19 2005"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,0.4.2)
+AC_DEFINE(VERSION_DATE,["November 28 2005"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP

@@ -147,7 +147,7 @@
         <sender>cancelPushButton</sender>
         <signal>clicked()</signal>
         <receiver>TransferForm</receiver>
-        <slot>cancel()</slot>
+        <slot>reject()</slot>
     </connection>
     <connection>
         <sender>addressToolButton</sender>
@@ -172,7 +172,7 @@
     <signal>destination(const t_display_url&amp;)</signal>
 </signals>
 <slots>
-    <slot>cancel()</slot>
+    <slot>reject()</slot>
     <slot>validate()</slot>
     <slot>closeEvent( QCloseEvent * )</slot>
     <slot>showAddressBook()</slot>

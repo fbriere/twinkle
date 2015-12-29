@@ -94,7 +94,7 @@ void SrvRedirectForm::show()
 	QDialog::show();
 }
 
-void SrvRedirectForm::cancel()
+void SrvRedirectForm::reject()
 {
 	// Restore old values
 	cfAlwaysCheckBox->setChecked(oldAlwaysActive);
@@ -113,7 +113,7 @@ void SrvRedirectForm::cancel()
 	cfNoanswerDst2LineEdit->setText(oldNoanswerDst2);
 	cfNoanswerDst3LineEdit->setText(oldNoanswerDst3);
 	
-	reject();
+	QDialog::reject();
 }
 		
 void SrvRedirectForm::validate()

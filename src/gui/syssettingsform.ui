@@ -59,6 +59,64 @@
                 <string>Select a category for which you want to see or modify the settings.</string>
             </property>
         </widget>
+        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout38</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer98</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>321</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save your changes.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo all your changes and close the window.</string>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
         <widget class="QWidgetStack" row="0" column="1">
             <property name="name">
                 <cstring>settingsWidgetStack</cstring>
@@ -138,6 +196,17 @@
                                     <string>Select the sound card for playing the ring tone for incoming calls.</string>
                                 </property>
                             </widget>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>ringtoneTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Ring tone:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>ringtoneComboBox</cstring>
+                                </property>
+                            </widget>
                             <widget class="QComboBox" row="1" column="1">
                                 <property name="name">
                                     <cstring>speakerComboBox</cstring>
@@ -152,33 +221,6 @@
                                 </property>
                                 <property name="whatsThis" stdset="0">
                                     <string>Select the sound card for the speaker function during a call.</string>
-                                </property>
-                            </widget>
-                            <widget class="QComboBox" row="2" column="1">
-                                <property name="name">
-                                    <cstring>micComboBox</cstring>
-                                </property>
-                                <property name="sizePolicy">
-                                    <sizepolicy>
-                                        <hsizetype>7</hsizetype>
-                                        <vsizetype>0</vsizetype>
-                                        <horstretch>0</horstretch>
-                                        <verstretch>0</verstretch>
-                                    </sizepolicy>
-                                </property>
-                                <property name="whatsThis" stdset="0">
-                                    <string>Select the sound card to which your microphone is connected.</string>
-                                </property>
-                            </widget>
-                            <widget class="QLabel" row="0" column="0">
-                                <property name="name">
-                                    <cstring>ringtoneTextLabel</cstring>
-                                </property>
-                                <property name="text">
-                                    <string>&amp;Ring tone:</string>
-                                </property>
-                                <property name="buddy" stdset="0">
-                                    <cstring>ringtoneComboBox</cstring>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="1" column="0">
@@ -203,24 +245,54 @@
                                     <cstring>micComboBox</cstring>
                                 </property>
                             </widget>
+                            <widget class="QComboBox" row="2" column="1">
+                                <property name="name">
+                                    <cstring>micComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>7</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Select the sound card to which your microphone is connected.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="3" column="0" rowspan="1" colspan="2">
+                                <property name="name">
+                                    <cstring>alsaNoteTextLabel</cstring>
+                                </property>
+                                <property name="paletteForegroundColor">
+                                    <color>
+                                        <red>0</red>
+                                        <green>85</green>
+                                        <blue>255</blue>
+                                    </color>
+                                </property>
+                                <property name="text">
+                                    <string>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</string>
+                                </property>
+                                <property name="alignment">
+                                    <set>WordBreak|AlignVCenter</set>
+                                </property>
+                            </widget>
                         </grid>
                     </widget>
-                    <widget class="QLabel">
+                    <widget class="QCheckBox">
                         <property name="name">
-                            <cstring>alsaNoteTextLabel</cstring>
-                        </property>
-                        <property name="paletteForegroundColor">
-                            <color>
-                                <red>0</red>
-                                <green>85</green>
-                                <blue>255</blue>
-                            </color>
+                            <cstring>reduceNoiseMicCheckBox</cstring>
                         </property>
                         <property name="text">
-                            <string>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</string>
+                            <string>Reduce &amp;noise from the microphone</string>
                         </property>
-                        <property name="alignment">
-                            <set>WordBreak|AlignVCenter</set>
+                        <property name="accel">
+                            <string>Alt+N</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.</string>
                         </property>
                     </widget>
                     <spacer>
@@ -651,64 +723,6 @@
                 </vbox>
             </widget>
         </widget>
-        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
-            <property name="name">
-                <cstring>layout38</cstring>
-            </property>
-            <hbox>
-                <property name="name">
-                    <cstring>unnamed</cstring>
-                </property>
-                <spacer>
-                    <property name="name">
-                        <cstring>spacer98</cstring>
-                    </property>
-                    <property name="orientation">
-                        <enum>Horizontal</enum>
-                    </property>
-                    <property name="sizeType">
-                        <enum>Expanding</enum>
-                    </property>
-                    <property name="sizeHint">
-                        <size>
-                            <width>321</width>
-                            <height>20</height>
-                        </size>
-                    </property>
-                </spacer>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>okPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;OK</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+O</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Accept and save your changes.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>cancelPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Cancel</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+C</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Undo all your changes and close the window.</string>
-                    </property>
-                </widget>
-            </hbox>
-        </widget>
     </grid>
 </widget>
 <connections>
@@ -760,6 +774,7 @@
     <tabstop>ringtoneComboBox</tabstop>
     <tabstop>speakerComboBox</tabstop>
     <tabstop>micComboBox</tabstop>
+    <tabstop>reduceNoiseMicCheckBox</tabstop>
     <tabstop>logMaxSizeSpinBox</tabstop>
     <tabstop>logDebugCheckBox</tabstop>
     <tabstop>logSipCheckBox</tabstop>

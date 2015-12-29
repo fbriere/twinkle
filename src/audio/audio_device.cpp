@@ -306,10 +306,22 @@ t_alsa_io::t_alsa_io() : pcm_play_ptr(0), pcm_rec_ptr(0), play_framesize(1), rec
 
 t_alsa_io::~t_alsa_io() {
 	if (pcm_play_ptr) {
+		log_file->write_header("t_alsa_io::~t_alsa_io", LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("snd_pcm_close, handle = ");
+		log_file->write_raw(ptr2str(pcm_play_ptr));
+		log_file->write_endl();
+		log_file->write_footer();
+		
 		snd_pcm_close(pcm_play_ptr);
 		pcm_play_ptr = 0;
 	}
 	if (pcm_rec_ptr) {
+		log_file->write_header("t_alsa_io::~t_alsa_io", LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("snd_pcm_close, handle = ");
+		log_file->write_raw(ptr2str(pcm_rec_ptr));
+		log_file->write_endl();
+		log_file->write_footer();
+		
 		snd_pcm_close(pcm_rec_ptr);
 		pcm_rec_ptr = 0;
 	}
@@ -368,7 +380,20 @@ open_again:
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
+	
+	log_file->write_header("t_alsa_io::open", LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("snd_pcm_open succeeded, handle = ");
+	log_file->write_raw(ptr2str(pcm_ptr));
+	log_file->write_endl();
+	log_file->write_footer();
+	
 	if (blocking && mode & SND_PCM_NONBLOCK) {
+		log_file->write_header("t_alsa_io::open", LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("snd_pcm_close, handle = ");
+		log_file->write_raw(ptr2str(pcm_ptr));
+		log_file->write_endl();
+		log_file->write_footer();
+		
 		snd_pcm_close(pcm_ptr);
 		mode &= ~SND_PCM_NONBLOCK;
 		goto open_again;

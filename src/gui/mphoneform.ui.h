@@ -124,7 +124,7 @@ void MphoneForm::init()
 		sysTray = new KSystemTray(this, "twinkle_sys_tray");
 		MEMMAN_NEW(sysTray);
 		KSYSTRAY->setPixmap(
-				QPixmap::fromMimeSource("twinkle24.png"));
+				QPixmap::fromMimeSource("sys_idle_dis.png"));
 		KSYSTRAY->setCaption(PRODUCT_NAME);
 		QToolTip::add(sysTray, PRODUCT_NAME);
 		
@@ -151,13 +151,22 @@ void MphoneForm::init()
 			"D&tmf",  this, SLOT(phoneDTMF()));
 		idTrayRedial = menu->insertItem(callRedial->iconSet(),
 			"Redia&l",  this, SLOT(phoneRedial()));
+		
 		menu->insertSeparator();
+		
+		// Service menu
 		idTrayDnd = menu->insertItem(
 			"&Do not disturb", serviceDnd, SLOT(toggle()));
 		idTraySrvRedirect = menu->insertItem(
 			"Red&irect service", this, SLOT(srvRedirect()));
 		idTrayAutoAnswer = menu->insertItem(
 			"Auto ans&wer", serviceAutoAnswer, SLOT(toggle()));
+		
+		menu->insertSeparator();
+		
+		// View menu
+		idTrayCallHistory - menu->insertItem(
+			"Call Hi&story", this, SLOT(viewHistory()));
 		
 		// Exit application when user selects Quit from the tray menu
 		connect(KSYSTRAY, SIGNAL(quitSelected()),
@@ -316,7 +325,7 @@ void MphoneForm::updateState()
 	if (refer_state != REFST_NULL) state.append(", transferring");
 	status2TextLabel->setText(state);
 	
-	// Disable/enable controls depending on the line state
+	// Disable/enable controls depending on the active line state
 	t_line_substate line_substate;
 	line = phone->get_active_line();
 	line_substate = phone->get_line_substate(line);
@@ -488,8 +497,91 @@ void MphoneForm::updateState()
 		callRedial->setToolTip("Repeat last call invitation");
 	}
 	
-	// Enable/disable system tray menu items
+	updateSysTrayStatus();
+}
+
+// Update registration status
+void MphoneForm::updateRegStatus()
+{
+	if (phone->get_is_registered()) {
+		regStatusTextLabel->setText("Registered");
+	} else if (phone->get_last_reg_failed()) {
+		regStatusTextLabel->setText("<font color=red>Failed</font>");
+	} else {
+		regStatusTextLabel->setText("Not registered");
+	}
+	
+	updateSysTrayStatus();
+}
+
+// Update active services status
+void MphoneForm::updateServicesStatus()
+{	
+	dndTextLabel->setEnabled(phone->service.is_dnd_active());
+	redirectionTextLabel->setEnabled(phone->service.is_cf_active());
+	autoAnswerTextLabel->setEnabled(phone->service.is_auto_answer_active());
+	
+	updateSysTrayStatus();
+}
+
+// Update system tray status
+void MphoneForm::updateSysTrayStatus()
+{
 #ifdef HAVE_KDE
+	QString icon_name;
+	
+	if (!sysTray) return;
+	
+	// Get status of active line
+	int line = phone->get_active_line();
+	t_line_substate line_substate = phone->get_line_substate(line);
+	
+	switch(line_substate) {
+	case LSSUB_IDLE:
+	case LSSUB_SEIZED:
+		// If a service is active, then show the service icon
+		if (phone->service.multiple_services_active()) {
+			icon_name = "sys_services";
+		} else {
+			if (phone->service.is_dnd_active())  {
+				icon_name = "sys_dnd";
+			}
+			if (phone->service.is_cf_active()) {
+				icon_name = "sys_redir";
+			}
+			if (phone->service.is_auto_answer_active()) {
+				icon_name = "sys_auto_ans";
+			}
+		}
+		
+		// If no service is active, show the idle icon
+		if (icon_name.isEmpty()) icon_name = "sys_idle";
+		break;
+	case LSSUB_ESTABLISHED:
+		if (phone->is_line_on_hold(line)) {
+			icon_name = "sys_hold";
+		} else if (phone->is_line_muted(line)) {
+			icon_name = "sys_mute";
+		} else {
+			icon_name = "sys_busy_estab";
+		}
+		break;
+	default:
+		// Line is in a busy transient state
+		icon_name = "sys_busy_trans";
+	}
+	
+	// Based on the registration status use the active or disabled version
+	// of the icon.
+	if (phone->get_is_registered()) {
+		icon_name += ".png";
+	} else {
+		icon_name += "_dis.png";
+	}
+	
+	KSYSTRAY->setPixmap(QPixmap::fromMimeSource(icon_name));
+	
+	// Enable/disable system tray call menu items
 	KPopupMenu *menu = KSYSTRAY->contextMenu();
 	menu->setItemEnabled(idTrayCall, callInvite->isEnabled());
 	menu->setItemEnabled(idTrayAnswer, callAnswer->isEnabled());
@@ -503,33 +595,12 @@ void MphoneForm::updateState()
 	menu->setItemChecked(idTrayMute, callMute->isOn());
 	menu->setItemEnabled(idTrayDtmf, callDTMF->isEnabled());
 	menu->setItemEnabled(idTrayRedial, callRedial->isEnabled());
-#endif
-}
-
-// Update registration status
-void MphoneForm::updateRegStatus()
-{
-	if (phone->get_is_registered()) {
-		regStatusTextLabel->setText("Registered");
-	} else if (phone->get_last_reg_failed()) {
-		regStatusTextLabel->setText("<font color=red>Failed</font>");
-	} else {
-		regStatusTextLabel->setText("Not registered");
-	}
-}
-
-// Update active services status
-void MphoneForm::updateServicesStatus()
-{	
-	dndTextLabel->setEnabled(phone->service.is_dnd_active());
-	redirectionTextLabel->setEnabled(phone->service.is_cf_active());
-	autoAnswerTextLabel->setEnabled(phone->service.is_auto_answer_active());
 	
-#ifdef HAVE_KDE
-	KPopupMenu *menu = KSYSTRAY->contextMenu();
+	// Enable/disable system tray service menu items
 	menu->setItemChecked(idTrayDnd, phone->service.is_dnd_active());
 	menu->setItemChecked(idTraySrvRedirect, phone->service.is_cf_active());
-	menu->setItemChecked(idTrayAutoAnswer, phone->service.is_auto_answer_active());
+	menu->setItemChecked(
+			idTrayAutoAnswer, phone->service.is_auto_answer_active());
 #endif
 }
 
@@ -540,18 +611,6 @@ void MphoneForm::phoneRegister()
 
 void MphoneForm::phoneDeregister()
 {
-	/*
-	DeregisterForm *df = new DeregisterForm(this, "deregister", true);
-	MEMMAN_NEW(df);
-	
-	if (df->exec()) {
-		((t_gui *)ui)->action_deregister(df->deregAllCheckBox->isChecked());
-	}
-	
-	MEMMAN_DELETE(df);
-	delete df;
-	*/
-	
 	((t_gui *)ui)->action_deregister(false);
 }
 

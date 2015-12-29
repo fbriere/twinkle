@@ -101,6 +101,8 @@ void SysSettingsForm::populate()
 		}
 	}
 	
+	reduceNoiseMicCheckBox->setChecked(sys_config->au_reduce_noise_mic);
+	
 	// Log settings
 	logMaxSizeSpinBox->setValue(sys_config->log_max_size);
 	logDebugCheckBox->setChecked(sys_config->log_show_debug);
@@ -169,6 +171,8 @@ void SysSettingsForm::validate()
 	if (dev != "") sys_config->dev_speaker = sys_config->audio_device(dev);
 	dev = comboItem2audio_dev(micComboBox->currentText());
 	if (dev != "") sys_config->dev_mic = sys_config->audio_device(dev);
+	
+	sys_config->au_reduce_noise_mic = reduceNoiseMicCheckBox->isChecked();
 	
 	// Log
 	sys_config->log_max_size = logMaxSizeSpinBox->value();

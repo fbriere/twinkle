@@ -85,16 +85,16 @@ void InviteForm::validate()
 }
 
 
-void InviteForm::cancel()
+void InviteForm::reject()
 {
 	// Unseize the line
 	((t_gui *)ui)->action_unseize();
-	reject();
+	QDialog::reject();
 }
 
 void InviteForm::closeEvent(QCloseEvent *)
 {
-	cancel();
+	reject();
 }
 
 void InviteForm::showAddressBook()
