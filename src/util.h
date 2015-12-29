@@ -75,4 +75,11 @@ list<string> split_ws(const string &s, bool quote_sensitive = false);
 // Remove surrounding quotes of a string if present.
 string unquote(const string &s);
 
+// Check if a string is a number
+bool is_number(const string &s);
+
+// Conversion between yes/no values and bool
+bool yesno2bool(const string &yesno);
+string bool2yesno(bool b);
+
 #endif

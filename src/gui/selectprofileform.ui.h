@@ -48,7 +48,31 @@ int SelectProfileForm::exec()
 		QMessageBox::information(this, PRODUCT_NAME,
 			"Before you can use Twinkle, you must create a user "\
 			"profile.\nClick OK to create a profile.");
-		newProfile();
+		
+		int useWizard = QMessageBox::question(this, PRODUCT_NAME,
+			"You can use the profile editor to create a profile. "\
+			"With the profile editor you can change many settings "\
+			"to tune the SIP protocol, RTP and many other things.\n"\
+			"Alternatively you can use the wizard to quickly setup a "\
+			"user profile. The wizard asks you only a few essential "\
+			"settings. If you create a user profile with the wizard you "\
+			"can still edit the full profile with the profile editor at a later "\
+			"time.\n"\
+			"Choose what method you wish to use.",
+			"&Wizard", "&Profile editor", QString::null);
+		
+		cout << "DEBUG: " << QMessageBox::Yes << endl;
+		cout << "DEBUG: " << QMessageBox::No << endl;
+		cout << "DEBUG: " << useWizard << endl;
+		
+		if (useWizard == 0) {
+			wizardProfile();
+		} else if (useWizard == 1) {
+			newProfile();
+		} else {
+			return QDialog::Rejected;
+		}
+		
 		if (profileListBox->count() == 0) {
 			// No profile has been created.
 			return QDialog::Rejected;
@@ -92,7 +116,7 @@ void SelectProfileForm::editProfile()
 	user_config = new t_user();
 	MEMMAN_NEW(user_config);
 	if (!user_config->read_config(profile.ascii(), error_msg)) {
-		ui->cb_show_msg(error_msg, MSG_WARNING);
+		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_WARNING);
 		MEMMAN_DELETE(user_config);
 		delete user_config;
 		return;
@@ -233,5 +257,45 @@ void SelectProfileForm::renameProfile()
 			QPixmap::fromMimeSource("penguin-small.png"), newProfile,
 			profileListBox->currentItem());
 	}
+}
+
+void SelectProfileForm::wizardProfile()
+{
+	// Ask user for a profile name
+	GetProfileNameForm getProfileNameForm(this, "get profile name", true);
+	if (!getProfileNameForm.execNewName()) return;
+	
+	// Create file name
+	QString profile = getProfileNameForm.getProfileName();
+	QString filename = profile;
+	filename.append(".cfg");
+	
+	// Create a new user config
+	user_config = new t_user();
+	MEMMAN_NEW(user_config);
+	user_config->set_config(filename.ascii());
+	
+	// Show the wizard form (modal dialog)
+	WizardForm f(this, "wizard", true);
+	if (f.exec()) {
+		// New profile created
+		// Add the new profile to the profile list box
+		profileListBox->insertItem(
+			QPixmap::fromMimeSource("penguin-small.png"), profile);
+		
+		// Make the new profile the selected profile
+		// Do not change this without changing the exec method.
+		// When there are no profiles, the exec methods relies on the
+		// fact that afer creation of the profile it is selected.
+		profileListBox->setSelected(profileListBox->count() - 1, true);
+		
+		// Enable buttons that act on a profile
+		editPushButton->setEnabled(true);
+		deletePushButton->setEnabled(true);
+		runPushButton->setEnabled(true);
+	}
+	
+	MEMMAN_DELETE(user_config);
+	delete user_config;
 }
 

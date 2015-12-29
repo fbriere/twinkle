@@ -21,6 +21,7 @@
 
 #include <queue>
 #include "timekeeper.h"
+#include "stun/stun.h"
 #include "parser/sip_message.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
@@ -29,13 +30,17 @@ using namespace std;
 
 // Different types of events
 enum t_event_type {
-	EV_NETWORK,	// Network event, eg. SIP message from/to network
-	EV_USER,	// User event, eg. SIP message from/to user
-	EV_TIMEOUT,	// Timer expiry
-	EV_FAILURE,	// Failure, eg. transport failure
-	EV_START_TIMER,	// Start timer
-	EV_STOP_TIMER,	// Stop timer
-	EV_ABORT_TRANS	// Abort transaction
+	EV_NETWORK,		// Network event, eg. SIP message from/to network
+	EV_USER,		// User event, eg. SIP message from/to user
+	EV_TIMEOUT,		// Timer expiry
+	EV_FAILURE,		// Failure, eg. transport failure
+	EV_START_TIMER,		// Start timer
+	EV_STOP_TIMER,		// Stop timer
+	EV_GET_TIMER_DUR,	// Get remaining duration of a running timer
+	EV_ABORT_TRANS,		// Abort transaction
+	EV_STUN_REQUEST,	// Outgoing STUN request
+	EV_STUN_RESPONSE,	// Received STUN response
+	EV_NAT_KEEPALIVE,	// Send a NAT keep alive packet
 };
 
 ///////////////////////////////////////////////////////////////
@@ -155,6 +160,32 @@ public:
 	t_event_type get_type(void) const;
 	unsigned short get_timer_id(void) const;
 };
+///////////////////////////////////////////////////////////////
+// Get timer duration event
+///////////////////////////////////////////////////////////////
+class t_event_get_timer_dur : public t_event {
+private:
+	unsigned short	timer_id;
+
+	// The semaphore is passed by the originator of the event.
+	// The originator downs the semaphore. As soon as the
+	// timekeeper has determined the remainind duration, it
+	// ups the semaphore, so the originator can read the
+	// duration.
+	t_semaphore	*sema;
+
+	// Pointer passed by the originator of the event. The
+	// timekeeper will place the result here.
+	unsigned long	*remaining_duration;
+
+public:
+	t_event_get_timer_dur(unsigned short id, t_semaphore *_sema,
+			unsigned long *dur);
+	t_event_type get_type(void) const;
+	unsigned short get_timer_id(void) const;
+	t_semaphore *get_sema(void) const;
+	unsigned long *get_duration(void) const;
+};
 
 ///////////////////////////////////////////////////////////////
 // Abort transaction events
@@ -166,6 +197,68 @@ public:
 	t_event_abort_trans(unsigned short _tid);
 	t_event_type get_type(void) const;
 	unsigned short get_tid(void) const;
+};
+
+///////////////////////////////////////////////////////////////
+// STUN request event
+///////////////////////////////////////////////////////////////
+enum t_stun_event_type {
+	TYPE_STUN_SIP,
+	TYPE_STUN_MEDIA,
+};	
+
+class t_event_stun_request : public t_event {
+private:
+	StunMessage		*msg;
+	unsigned short		tuid;		// transaction user id
+	unsigned short		tid;		// transaction id
+	t_stun_event_type	stun_event_type;
+
+public:
+	// Address and ports are in host order
+	unsigned int	dst_addr;
+	unsigned short	dst_port;
+	unsigned short	src_port;	// Src port for media
+
+	t_event_stun_request(StunMessage *m, t_stun_event_type ev_type,
+		unsigned short _tuid, unsigned short _tid);
+	~t_event_stun_request();
+	t_event_type get_type(void) const;
+	StunMessage *get_msg(void) const;
+	unsigned short get_tuid(void) const;
+	unsigned short get_tid(void) const;
+	t_stun_event_type get_stun_event_type(void) const;
+};
+
+///////////////////////////////////////////////////////////////
+// STUN response event
+///////////////////////////////////////////////////////////////
+class t_event_stun_response : public t_event {
+private:
+	StunMessage	*msg;
+	unsigned short	tuid;		// transaction user id
+	unsigned short	tid;		// transaction id
+
+public:
+	t_event_stun_response(StunMessage *m, unsigned short _tuid,
+		unsigned short _tid);
+	~t_event_stun_response();
+	t_event_type get_type(void) const;
+	StunMessage *get_msg(void) const;
+	unsigned short get_tuid(void) const;
+	unsigned short get_tid(void) const;
+};
+
+///////////////////////////////////////////////////////////////
+// NAT keep alive event
+///////////////////////////////////////////////////////////////
+class t_event_nat_keepalive : public t_event {
+public:
+	// Address and ports are in host order
+	unsigned int	dst_addr;
+	unsigned short	dst_port;
+	
+	t_event_type get_type(void) const;
 };
 
 
@@ -218,8 +311,25 @@ public:
 	// Create a stop timer event
 	void push_stop_timer(unsigned short timer_id);
 
+	// Create a get timer duration event
+	void push_get_timer_dur(unsigned short timer_id, t_semaphore *sema,
+		unsigned long *duration);
+
 	// Create an abort transaction event
 	void push_abort_trans(unsigned short tid);
+	
+	// Create a STUN request event
+	// The src_port should only be set for media STUN requests
+	void push_stun_request(StunMessage *m, t_stun_event_type ev_type,
+		unsigned short tuid, unsigned short tid,
+		unsigned long ipaddr, unsigned short port, unsigned short src_port = 0);
+		
+	// Create a STUN response event
+	void push_stun_response(StunMessage *m,
+		unsigned short tuid, unsigned short tid);
+		
+	// Create a NAT keepalive event
+	void push_nat_keepalive(unsigned long ipaddr, unsigned short port);
 
 	// Pop an event from the queue. If the queue is empty
 	// then the thread will be blocked until an event arrives.

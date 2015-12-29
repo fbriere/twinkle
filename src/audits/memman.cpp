@@ -58,7 +58,7 @@ void t_memman::trc_new(void *p, const string &filename, int lineno,
 		// MEMMAN_NEW. A wrong pointer has been passed.
 		num_new_duplicate++;
 		log_file->write_header("t_memman::trc_new",
-			LOG_DEBUG_MEM, LOG_WARNING);
+			LOG_MEMORY, LOG_WARNING);
 		log_file->write_raw(filename);
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
@@ -95,7 +95,7 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 	if (i == pointer_map.end()) {
 		num_delete_mismatch++;
 		log_file->write_header("t_memman::trc_delete",
-			LOG_DEBUG_MEM, LOG_WARNING);
+			LOG_MEMORY, LOG_WARNING);
 		log_file->write_raw(filename);
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
@@ -112,7 +112,7 @@ void t_memman::trc_delete(void *p, const string &filename, int lineno,
 	if (is_array != i->second.is_array) {
 		num_array_mixing++;
 		log_file->write_header("t_memman::trc_delete",
-			LOG_DEBUG_MEM, LOG_WARNING);
+			LOG_MEMORY, LOG_WARNING);
 		log_file->write_raw(filename);
 		log_file->write_raw(", line ");
 		log_file->write_raw(lineno);
@@ -150,10 +150,10 @@ void t_memman::report_leaks(void) {
 			log_file->write_report(
 				"All pointers have correctly been deallocated.",
 				"t_memman::report_leaks",
-				LOG_DEBUG_MEM, LOG_INFO);
+				LOG_MEMORY, LOG_INFO);
 		} else {
 			log_file->write_header("t_memman::report_leaks",
-				LOG_DEBUG_MEM, LOG_WARNING);
+				LOG_MEMORY, LOG_WARNING);
 			log_file->write_raw("All pointers have been deallocated."),
 			log_file->write_raw(
 				"Mixing of array/non-array caused memory loss though.");
@@ -164,7 +164,7 @@ void t_memman::report_leaks(void) {
 		return;
 	}
 
-	log_file->write_header("t_memman::report_leaks", LOG_DEBUG_MEM, LOG_WARNING);
+	log_file->write_header("t_memman::report_leaks", LOG_MEMORY, LOG_WARNING);
 	log_file->write_raw("The following pointers were never deallocated:\n");
 
 	for (map<void *, t_ptr_info>::const_iterator i = pointer_map.begin();
@@ -186,7 +186,7 @@ void t_memman::report_leaks(void) {
 void t_memman::report_stats(void) {
 	mtx_memman.lock();
 
-	log_file->write_header("t_memman::report_stats", LOG_DEBUG_MEM, LOG_INFO);
+	log_file->write_header("t_memman::report_stats", LOG_MEMORY, LOG_INFO);
 
 	log_file->write_raw("Number of allocations: ");
 	log_file->write_raw(num_new);

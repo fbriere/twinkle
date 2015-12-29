@@ -133,12 +133,13 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 			cout << "\tStartup with a specific profile. You will not be requested\n";
 			cout << "\t\tto choose a profile at startup. The profiles that you created\n";
 			cout << "\t\tare the .cfg files in your .twinkle directory.\n";
+			cout << " --version";
+			cout << "\tGet version information.\n";
 			exit(0);
 		} else if (strcmp(argv[i], "--version") == 0) {
 			// Get version
-			cout << PRODUCT_NAME << " " << PRODUCT_VERSION;
-			cout << ", " << PRODUCT_DATE << endl;
-			cout << "Written by " << PRODUCT_AUTHOR << endl;
+			QString s = sys_config->about(false).c_str();
+			cout << s;
 			exit(0);
 		} else if (strcmp(argv[i], "-c") == 0) {
 			// CLI mode
@@ -182,6 +183,7 @@ int main( int argc, char ** argv )
 	// in LinuxThreads a signal handler is used instead.
 	if (!threading_is_LinuxThreads) {
 		sigset_t sigset;
+		sigemptyset(&sigset);
 		sigaddset(&sigset, SIGALRM);
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
 	}
@@ -235,6 +237,12 @@ int main( int argc, char ** argv )
 		exit(1);
 	}
 	
+	// Read system configuration
+	if (!sys_config->read_config(error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		exit(1);
+	}
+	
 	// Create a lock file to guarantee that the application
 	// runs only once.
 	if (!sys_config->create_lock_file(error_msg)) {
@@ -274,6 +282,9 @@ int main( int argc, char ** argv )
 		exit(1);
 	}
 	
+	// Initialize RTP port settings.
+	phone->init_rtp_ports();
+	
 	// Open socket for SIP signaling
 	try {
 		sip_socket = new t_socket_udp(user_config->sip_udp_port);
@@ -289,12 +300,20 @@ int main( int argc, char ** argv )
 		sys_config->delete_lock_file();
 		exit(1);
 	}
-
+	
 	// Pick network interface
 	user_host = ui->select_network_intf();
 	if (user_host == "") {
 		sys_config->delete_lock_file();
 		exit(1);
+	}
+	
+	// Discover NAT type if STUN is enabled
+	if (user_config->use_stun) {
+		string msg;
+		if (!stun_discover_nat(msg)) {
+			ui->cb_show_msg(msg, MSG_WARNING);
+		}
 	}
 	
 	// Create threads
@@ -397,6 +416,7 @@ int main( int argc, char ** argv )
 
 	MEMMAN_DELETE(ui);
 	delete ui;
+	ui = NULL;
 	
 	MEMMAN_DELETE(sip_socket);
 	delete sip_socket;

@@ -168,14 +168,14 @@ void t_request::set_method(const string &s) {
 	}
 }
 
-string t_request::encode(void) {
+string t_request::encode(bool add_content_length) {
 	string s;
 
 	s = method2str(method, unknown_method) + ' ' + uri.encode();
 	s += " SIP/";
 	s += version;
 	s += CRLF;
-	s += t_sip_message::encode();
+	s += t_sip_message::encode(add_content_length);
 	return s;
 }
 
@@ -229,6 +229,42 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 		// RFC 3262 7.1
 		if (!hdr_rack.is_populated()) {
 			reason = "RAck header missing";
+			return false;
+		}
+		break;
+	case SUBSCRIBE:
+		// RFC 3265 7.1, 7.2
+		if (!hdr_contact.is_populated()) {
+			reason = "Contact header missing";
+			return false;
+		}
+
+		if (!hdr_event.is_populated()) {
+			reason = "Event header missing";
+			return false;
+		}
+		break;
+	case NOTIFY:
+		// RFC 3265 7.1, 7.2
+		if (!hdr_contact.is_populated()) {
+			reason = "Contact header missing";
+			return false;
+		}
+
+		if (!hdr_event.is_populated()) {
+			reason = "Event header missing";
+			return false;
+		}
+
+		if (!hdr_subscription_state.is_populated()) {
+			reason = "Subscription-State header missing";
+			return false;
+		}
+		break;
+	case REFER:
+		// RFC 3515 2.4.1
+		if (!hdr_refer_to.is_populated()) {
+			reason = "Refer-To header missing";
 			return false;
 		}
 		break;

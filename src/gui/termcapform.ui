@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>TermCapForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -60,6 +60,9 @@
                         <widget class="QLineEdit">
                             <property name="name">
                                 <cstring>partyLineEdit</cstring>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>The address that you want to query for capabilities (OPTION request). This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</string>
                             </property>
                         </widget>
                     </hbox>

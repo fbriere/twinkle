@@ -17,6 +17,7 @@
 */
 
 #include "sip_body.h"
+#include "sip_message.h"
 #include "audits/memman.h"
 
 ////////////////////////////////////
@@ -47,5 +48,32 @@ t_sip_body *t_sip_body_opaque::copy(void) const {
 
 t_body_type t_sip_body_opaque::get_type(void) const {
 	return BODY_OPAQUE;
+}
+
+////////////////////////////////////
+// class t_sip_body_sipfrag
+////////////////////////////////////
+
+t_sip_body_sipfrag::t_sip_body_sipfrag(t_sip_message *m) {
+	sipfrag = m->copy();
+}
+
+t_sip_body_sipfrag::~t_sip_body_sipfrag() {
+	MEMMAN_DELETE(sipfrag);
+	delete sipfrag;
+}
+
+string t_sip_body_sipfrag::encode(void) const {
+	return sipfrag->encode(false);
+}
+
+t_sip_body *t_sip_body_sipfrag::copy(void) const {
+	t_sip_body_sipfrag *sb = new t_sip_body_sipfrag(sipfrag);
+	MEMMAN_NEW(sb);
+	return sb;
+}
+
+t_body_type t_sip_body_sipfrag::get_type(void) const {
+	return BODY_SIPFRAG;
 }
 

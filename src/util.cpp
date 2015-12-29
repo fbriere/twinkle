@@ -17,6 +17,7 @@
 */
 
 #include <iostream>
+#include <cctype>
 #include <cstdlib>
 #include <cstdio>
 #include "util.h"
@@ -226,3 +227,19 @@ string unquote(const string &s) {
 
         return s;
 }
+
+bool is_number(const string &s) {
+        for (int i = 0; i < s.size(); i++ ) {
+		if (!isdigit(s[i])) return false;
+	}
+
+	return true;
+}
+
+bool yesno2bool(const string &yesno) {
+	return (yesno == "yes" ? true : false);
+}
+string bool2yesno(bool b) {
+	return (b ? "yes" : "no");
+}
+

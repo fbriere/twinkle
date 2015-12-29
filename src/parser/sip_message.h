@@ -29,6 +29,7 @@
 #include "hdr_accept_language.h"
 #include "hdr_alert_info.h"
 #include "hdr_allow.h"
+#include "hdr_allow_events.h"
 #include "hdr_auth_info.h"
 #include "hdr_authorization.h"
 #include "hdr_call_id.h"
@@ -42,6 +43,7 @@
 #include "hdr_cseq.h"
 #include "hdr_date.h"
 #include "hdr_error_info.h"
+#include "hdr_event.h"
 #include "hdr_expires.h"
 #include "hdr_from.h"
 #include "hdr_in_reply_to.h"
@@ -55,6 +57,8 @@
 #include "hdr_proxy_require.h"
 #include "hdr_rack.h"
 #include "hdr_record_route.h"
+#include "hdr_refer_to.h"
+#include "hdr_referred_by.h"
 #include "hdr_reply_to.h"
 #include "hdr_require.h"
 #include "hdr_retry_after.h"
@@ -62,6 +66,7 @@
 #include "hdr_rseq.h"
 #include "hdr_server.h"
 #include "hdr_subject.h"
+#include "hdr_subscription_state.h"
 #include "hdr_supported.h"
 #include "hdr_timestamp.h"
 #include "hdr_to.h"
@@ -81,7 +86,8 @@ using namespace std;
 
 enum t_msg_type {
 	MSG_REQUEST,
-	MSG_RESPONSE
+	MSG_RESPONSE,
+	MSG_SIPFRAG,	// Only a sequence of headers (RFC 3420)
 };
 
 
@@ -95,6 +101,7 @@ public:
 	t_hdr_accept_language	hdr_accept_language;
 	t_hdr_alert_info	hdr_alert_info;
 	t_hdr_allow		hdr_allow;
+	t_hdr_allow_events	hdr_allow_events;
 	t_hdr_auth_info		hdr_auth_info;
 	t_hdr_authorization	hdr_authorization;
 	t_hdr_call_id		hdr_call_id;
@@ -108,6 +115,7 @@ public:
 	t_hdr_cseq		hdr_cseq;
 	t_hdr_date		hdr_date;
 	t_hdr_error_info	hdr_error_info;
+	t_hdr_event		hdr_event;
 	t_hdr_expires		hdr_expires;
 	t_hdr_from		hdr_from;
 	t_hdr_in_reply_to	hdr_in_reply_to;
@@ -121,6 +129,8 @@ public:
 	t_hdr_proxy_require	hdr_proxy_require;
 	t_hdr_rack		hdr_rack;
 	t_hdr_record_route	hdr_record_route;
+	t_hdr_refer_to		hdr_refer_to;
+	t_hdr_referred_by	hdr_referred_by;
 	t_hdr_reply_to		hdr_reply_to;
 	t_hdr_require		hdr_require;
 	t_hdr_retry_after	hdr_retry_after;
@@ -128,6 +138,7 @@ public:
 	t_hdr_rseq		hdr_rseq;
 	t_hdr_server		hdr_server;
 	t_hdr_subject		hdr_subject;
+	t_hdr_subscription_state hdr_subscription_state;
 	t_hdr_supported		hdr_supported;
 	t_hdr_timestamp		hdr_timestamp;
 	t_hdr_to		hdr_to;
@@ -149,7 +160,7 @@ public:
 	t_sip_message(const t_sip_message& m);
 	virtual ~t_sip_message();
 
-	virtual t_msg_type get_type(void) const = 0;
+	virtual t_msg_type get_type(void) const;
 	void add_unknown_header(const string &name, const string &value);
 
 	// Check if the message is valid. At this class the
@@ -162,10 +173,13 @@ public:
 
 	// Return encoded headers
 	// The version should be encode by the subclasses.
-	virtual string encode(void);
+	// Parameter add_content_length indicates if a Content-Length
+	// header must be added. Usually it must, only for sipfrag bodies
+	// it may be omitted.
+	virtual string encode(bool add_content_length = true);
 
 	// Create a copy of the message
-	virtual t_sip_message *copy(void) const = 0;
+	virtual t_sip_message *copy(void) const;
 };
 
 #endif

@@ -46,14 +46,28 @@ public:
 	t_socket_udp(unsigned short port);
 
 	~t_socket_udp();
+	
+	// Connect a socket
+	// Throws an int exception if it fails (errno as set by 'sendto')
+	int connect(unsigned long dest_addr, unsigned short dest_port);
 
 	// Throws an int exception if it fails (errno as set by 'sendto')
 	int sendto(unsigned long dest_addr, unsigned short dest_port,
-	           const string &data);
+	           const char *data, int data_size);
+	int send(const char *data, int data_size);
 
 	// Throws an int exception if it fails (errno as set by 'recvfrom')
+	// On success the length of the data in buf is returned. After the
+	// data in buf there will be a 0.
 	int recvfrom(unsigned long &src_addr, unsigned short &src_port,
-		     string &data);
+		     char *buf, int buf_size);
+	int recv(char *buf, int buf_size);
+	
+	// Do a select on the socket in read mode. timeout is in ms.
+	// Returns true if the socket becomes unblocked. Returns false
+	// on time out. Throws an int exception if select fails
+	// (errno as set by 'select')
+	bool select_read(unsigned long timeout);
 };
 
 // Convert an IP address in host order to a string.

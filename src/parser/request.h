@@ -50,7 +50,7 @@ public:
 
 	t_msg_type get_type(void) const { return MSG_REQUEST; }
 	void set_method(const string &s);
-	string encode(void);
+	string encode(bool add_content_length = true);
 	t_sip_message *copy(void) const;
 
 	// Create a response with response code based on the

@@ -29,11 +29,11 @@
 #define USER_FILE_EXT		".cfg"
 #define USER_DIR		DIR_USER
 
-#define USER_SCHEME	"sip"
+#define USER_SCHEME		"sip"
 
-#define USER_HOST	(user_config->use_nat_public_ip ? \
-				user_config->nat_public_ip : user_host)
-#define LOCAL_IP	user_host
+#define PUBLIC_SIP_UDP_PORT	phone->get_public_port_sip()
+#define USER_HOST		phone->get_ip_sip()
+#define LOCAL_IP		user_host
 
 using namespace std;
 
@@ -57,9 +57,6 @@ private:
 	// Expand file name to a fully qualified file name
 	string expand_filename(const string &filename);
 
-	// Conver a yes/no value to a bool
-	bool yesno2bool(const string &yesno) const;
-	string bool2yesno(bool b) const;
 	t_ext_support str2ext_support(const string &s) const;
 	string ext_support2str(t_ext_support e) const;
 
@@ -116,8 +113,21 @@ public:
 
 	// AUDIO
 
-	// For the 1st phone line rtp_port is used for RTP, rtp_port+1 for RTCP
-	// For the 2nd phone line rtp_port+2 is used for RTP, rtp_port+2 for RTCP
+	// rtp_port is the base port for RTP streams. Each phone line
+	// uses has its own RPT port number.
+	// line x has RTP port = rtp_port + x * 2 and
+	//           RTCP port = rtp_port + x * 2 + 1
+	// Where x starts at 0
+	//
+	// NOTE: for call transfer scenario, line 2 (3rd line) is used
+	//       which is not a line that is visible to the user. The user
+	//       only sees 2 lines for its use. By having a dedicated port
+	//       for line 2, the  RTP stream for a referred call uses another
+	//       port than the RTP stream for an original call, preventing
+	//       the RTP streams for these calls to become mixed.
+	//
+	// NOTE: during a call transfer, line 2 will be swapped with another
+	//       line, so the ports swap accordingly.
 	unsigned short		rtp_port;
 
 	list<unsigned short>	codecs; // in order of preference
@@ -131,6 +141,9 @@ public:
 	// the event in case of packet loss.
 	unsigned short		dtmf_duration; // ms
 	unsigned short		dtmf_pause; // ms
+	
+	// Volume of the tone in -dBm
+	unsigned short		dtmf_volume;
 
 
 	// SIP PROTOCOL
@@ -182,6 +195,21 @@ public:
 	//		call will be re-attempted without the 100rel requirement.
 	t_ext_support		ext_100rel;
 
+	// REFER options
+	// Hold the current call when an incoming REFER is accepted.
+	bool			referee_hold;
+
+	// Hold the current call before sending a REFER.
+	bool			referrer_hold;
+
+	// Allow an incoming refer
+	bool			allow_refer;
+
+	// Ask user for permission when a REFER is received.
+	bool			ask_user_to_refer;
+
+	// Referrer automatically refreshes subscription before expiry.
+	bool			auto_refresh_refer_sub;
 
 	// NAT
 
@@ -192,6 +220,10 @@ public:
 	// and ports 8000 - 8003 to the same ports on your private IP address.
 	bool			use_nat_public_ip;
 	string			nat_public_ip;
+	
+	// NAT traversal via STUN
+	bool			use_stun;
+	t_url			stun_server;
 
 
 	// TIMERS
@@ -200,7 +232,9 @@ public:
 	// the user does not respond within the timer, then the call will be
 	// released with a 480 Temporarily Unavailable response.
 	unsigned short		timer_noanswer; // seconds
-
+	
+	// Duration of NAT keepalive timer (s)
+	unsigned long		timer_nat_keepalive; 
 
 	// ADDRESS FORMAT
 

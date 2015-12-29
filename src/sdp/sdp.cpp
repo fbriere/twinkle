@@ -73,7 +73,8 @@ t_sdp_transport str2sdp_transport(string s) {
 	if (s == "RTP/AVP") return SDP_TRANS_RTP;
 	if (s == "udp") return SDP_TRANS_UDP;
 
-	throw (t_sdp_syntax_error("unknown transport: " + s));
+	// Other transports are not recognized and are mapped to NULL.
+	return SDP_TRANS_NULL;
 }
 
 t_sdp_media_type str2sdp_media_type(string s) {

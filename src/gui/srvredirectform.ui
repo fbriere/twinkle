@@ -1,4 +1,4 @@
-<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
 <class>SrvRedirectForm</class>
 <widget class="QDialog">
     <property name="name">
@@ -26,6 +26,14 @@
             <property name="enabled">
                 <bool>true</bool>
             </property>
+            <property name="whatsThis" stdset="0">
+                <string>There are redirection services:&lt;br&gt;&lt;br&gt;
+&lt;b&gt;Unconditional&lt;/b&gt;: all incoming calls will be redirected.
+&lt;br&gt;&lt;br&gt;
+&lt;b&gt;Busy&lt;/b&gt;: redirect an incoming call when all lines are busy.
+&lt;br&gt;&lt;br&gt;
+&lt;b&gt;No answer&lt;/b&gt;: redirect an incoming call when you do not answer it.</string>
+            </property>
             <widget class="QWidget">
                 <property name="name">
                     <cstring>tab</cstring>
@@ -43,6 +51,12 @@
                         </property>
                         <property name="text">
                             <string>&amp;Redirect all calls</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+R</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Activate the unconditional redirection service.</string>
                         </property>
                     </widget>
                     <widget class="QGroupBox">
@@ -74,6 +88,9 @@
                                         <property name="enabled">
                                             <bool>true</bool>
                                         </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                                        </property>
                                     </widget>
                                     <widget class="QLineEdit" row="1" column="1">
                                         <property name="name">
@@ -81,6 +98,9 @@
                                         </property>
                                         <property name="enabled">
                                             <bool>true</bool>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="2" column="0">
@@ -103,6 +123,9 @@
                                         </property>
                                         <property name="enabled">
                                             <bool>true</bool>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="1" column="0">
@@ -151,6 +174,12 @@
                         <property name="text">
                             <string>&amp;Redirect calls when I am busy</string>
                         </property>
+                        <property name="accel">
+                            <string>Alt+R</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Activate the redirection when busy service.</string>
+                        </property>
                     </widget>
                     <widget class="QGroupBox">
                         <property name="name">
@@ -181,6 +210,9 @@
                                         <property name="enabled">
                                             <bool>true</bool>
                                         </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                                        </property>
                                     </widget>
                                     <widget class="QLabel" row="2" column="0">
                                         <property name="name">
@@ -199,6 +231,9 @@
                                         </property>
                                         <property name="enabled">
                                             <bool>true</bool>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="1" column="0">
@@ -230,6 +265,9 @@
                                         <property name="enabled">
                                             <bool>true</bool>
                                         </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                                        </property>
                                     </widget>
                                 </grid>
                             </widget>
@@ -254,6 +292,12 @@
                         </property>
                         <property name="text">
                             <string>&amp;Redirect calls when I do not answer</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+R</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Activate the redirection on no answer service.</string>
                         </property>
                     </widget>
                     <widget class="QGroupBox">
@@ -285,6 +329,9 @@
                                         <property name="enabled">
                                             <bool>true</bool>
                                         </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
+                                        </property>
                                     </widget>
                                     <widget class="QLineEdit" row="1" column="1">
                                         <property name="name">
@@ -292,6 +339,9 @@
                                         </property>
                                         <property name="enabled">
                                             <bool>true</bool>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="2" column="0">
@@ -311,6 +361,9 @@
                                         </property>
                                         <property name="enabled">
                                             <bool>true</bool>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
                                         </property>
                                     </widget>
                                     <widget class="QLabel" row="1" column="0">
@@ -391,8 +444,14 @@
                     <property name="text">
                         <string>&amp;OK</string>
                     </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
+                    </property>
                     <property name="default">
                         <bool>true</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Accept and save all changes.</string>
                     </property>
                 </widget>
                 <widget class="QPushButton">
@@ -401,6 +460,12 @@
                     </property>
                     <property name="text">
                         <string>&amp;Cancel</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+C</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Undo your changes and close the window.</string>
                     </property>
                 </widget>
             </hbox>

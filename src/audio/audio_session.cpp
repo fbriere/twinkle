@@ -22,10 +22,11 @@
 #include <sys/ioctl.h>
 #include <cstdlib>
 #include <cstdio>
-#include <linux/soundcard.h>
+#include <sys/soundcard.h>
 #include "audio_session.h"
 #include "line.h"
 #include "log.h"
+#include "sys_settings.h"
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
@@ -53,6 +54,14 @@ t_audio_session *t_audio_session::get_peer_3way(void) const {
 }
 
 bool t_audio_session::open_dsp(void) {
+	if (sys_config->equal_oss_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+		return open_dsp_full_duplex();
+	}
+	
+	return open_dsp_speaker() && open_dsp_mic();
+}
+
+bool t_audio_session::open_dsp_full_duplex(void) {
 	int arg;	// arg for ioctl()
 	int status;	// return from ioctl()
 
@@ -61,11 +70,11 @@ bool t_audio_session::open_dsp(void) {
 	// first try to open the device in non-blocking mode.
 	// If the device is still open by another twinkle thread then that
 	// is a bug, but this way at least non deadlock is caused.
-	fd = open(AUDIO_DEVICE, O_RDWR | O_NONBLOCK);
-	if (fd < 0) {
+	fd_speaker = open(sys_config->dev_speaker.c_str(), O_RDWR | O_NONBLOCK);
+	if (fd_speaker < 0) {
 		string msg("Failed to open sound card (non-blocking): ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
@@ -73,14 +82,14 @@ bool t_audio_session::open_dsp(void) {
 
 	// Now close the device again as we do not want to have subsequent
 	// operations on the device in non-blocking mode.
-	close(fd);
+	close(fd_speaker);
 
 	// Open audio device
-	fd = open(AUDIO_DEVICE, O_RDWR);
-	if (fd < 0) {
+	fd_speaker = open(sys_config->dev_speaker.c_str(), O_RDWR);
+	if (fd_speaker < 0) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
@@ -95,11 +104,11 @@ bool t_audio_session::open_dsp(void) {
 	// Also a large delay is introduced by this. So recording should
 	// be enabled just before the data is read from the device.
 	arg = ~PCM_ENABLE_INPUT;
-	status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETTRIGGER, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Cannot disable recording on sound card.",
 			MSG_CRITICAL);
@@ -107,11 +116,11 @@ bool t_audio_session::open_dsp(void) {
 	}
 
 	// Full duplex
-	status = ioctl(fd, SNDCTL_DSP_SETDUPLEX, 0);
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETDUPLEX, 0);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETDUPLEX ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Sound card cannot be set to full duplex.",
 			MSG_CRITICAL);
@@ -120,11 +129,11 @@ bool t_audio_session::open_dsp(void) {
 
 	// Set fragment size
 	arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
-	status = ioctl(fd, SNDCTL_DSP_SETFRAGMENT, &arg);
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETFRAGMENT, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Cannot set buffer size on sound card.",
 			MSG_CRITICAL);
@@ -133,18 +142,18 @@ bool t_audio_session::open_dsp(void) {
 
 	// Mono
 	arg = 1;
-	status = ioctl(fd, SNDCTL_DSP_CHANNELS, &arg);
+	status = ioctl(fd_speaker, SNDCTL_DSP_CHANNELS, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
 		return false;
 	}
 	if (arg != 1) {
 		log_file->write_report("Unable to set mono mode",
-			"t_audio_session::t_audio_session",
+			"t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
 		return false;
@@ -152,11 +161,11 @@ bool t_audio_session::open_dsp(void) {
 
 	// Sample format
 	arg = AFMT_S16_LE; // signed 16 bits little endian
-	status = ioctl(fd, SNDCTL_DSP_SETFMT, &arg);
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETFMT, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
 			MSG_CRITICAL);
@@ -164,11 +173,11 @@ bool t_audio_session::open_dsp(void) {
 	}
 
 	arg = 16;	   /* sample size in bits */
-  	status = ioctl(fd, SOUND_PCM_WRITE_BITS, &arg);
+  	status = ioctl(fd_speaker, SOUND_PCM_WRITE_BITS, &arg);
 	if (status == -1) {
 		string msg("SOUND_PCM_WRITE_BITS ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg("Cannot set sound card to 16 bits playing.",
 			MSG_CRITICAL);
@@ -177,11 +186,236 @@ bool t_audio_session::open_dsp(void) {
 
 	// Sample rate
 	arg = AUDIO_SAMPLE_RATE;
-	status = ioctl(fd, SNDCTL_DSP_SPEED, &arg);
+	status = ioctl(fd_speaker, SNDCTL_DSP_SPEED, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
+			LOG_NORMAL, LOG_CRITICAL);
+		msg = "Cannot set sound card sample rate to ";
+		msg += int2str(AUDIO_SAMPLE_RATE);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+	
+	fd_mic = fd_speaker;
+	return true;
+}
+
+bool t_audio_session::open_dsp_speaker(void) {
+	int arg;	// arg for ioctl()
+	int status;	// return from ioctl()
+
+	// On some systems opening the audio devices blocks if another
+	// process or thread has opened it already. To prevent a deadlock
+	// first try to open the device in non-blocking mode.
+	// If the device is still open by another twinkle thread then that
+	// is a bug, but this way at least non deadlock is caused.
+	fd_speaker = open(sys_config->dev_speaker.c_str(), O_WRONLY | O_NONBLOCK);
+	if (fd_speaker < 0) {
+		string msg("Failed to open sound card (non-blocking): ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+
+	// Now close the device again as we do not want to have subsequent
+	// operations on the device in non-blocking mode.
+	close(fd_speaker);
+
+	// Open audio device
+	fd_speaker = open(sys_config->dev_speaker.c_str(), O_WRONLY);
+	if (fd_speaker < 0) {
+		string msg("Failed to open sound card: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+
+	// Set fragment size
+	arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETFRAGMENT, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot set buffer size on sound card.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	// Mono
+	arg = 1;
+	status = ioctl(fd_speaker, SNDCTL_DSP_CHANNELS, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		return false;
+	}
+	if (arg != 1) {
+		log_file->write_report("Unable to set mono mode",
+			"t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		return false;
+	}
+
+	// Sample format
+	arg = AFMT_S16_LE; // signed 16 bits little endian
+	status = ioctl(fd_speaker, SNDCTL_DSP_SETFMT, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	arg = 16;	   /* sample size in bits */
+  	status = ioctl(fd_speaker, SOUND_PCM_WRITE_BITS, &arg);
+	if (status == -1) {
+		string msg("SOUND_PCM_WRITE_BITS ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot set sound card to 16 bits playing.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	// Sample rate
+	arg = AUDIO_SAMPLE_RATE;
+	status = ioctl(fd_speaker, SNDCTL_DSP_SPEED, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
+			LOG_NORMAL, LOG_CRITICAL);
+		msg = "Cannot set sound card sample rate to ";
+		msg += int2str(AUDIO_SAMPLE_RATE);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+	
+	return true;
+}
+
+bool t_audio_session::open_dsp_mic(void) {
+	int arg;	// arg for ioctl()
+	int status;	// return from ioctl()
+
+	// On some systems opening the audio devices blocks if another
+	// process or thread has opened it already. To prevent a deadlock
+	// first try to open the device in non-blocking mode.
+	// If the device is still open by another twinkle thread then that
+	// is a bug, but this way at least non deadlock is caused.
+	fd_mic = open(sys_config->dev_mic.c_str(), O_RDONLY | O_NONBLOCK);
+	if (fd_mic < 0) {
+		string msg("Failed to open sound card (non-blocking): ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+
+	// Now close the device again as we do not want to have subsequent
+	// operations on the device in non-blocking mode.
+	close(fd_mic);
+
+	// Open audio device
+	fd_mic = open(sys_config->dev_mic.c_str(), O_RDONLY);
+	if (fd_mic < 0) {
+		string msg("Failed to open sound card: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg(msg, MSG_CRITICAL);
+		return false;
+	}
+
+	// Disable recording
+	// If recording is not disabled, then the capture buffers will
+	// already fill with data. Then when the audio_rx thread starts
+	// to read blocks of 160 samples, it gets all these initial blocks
+	// very quickly 1 per 12 ms I have seen. And hence the timestamps
+	// for these blocks get out of sync with the RTP stack.
+	// Also a large delay is introduced by this. So recording should
+	// be enabled just before the data is read from the device.
+	arg = ~PCM_ENABLE_INPUT;
+	status = ioctl(fd_mic, SNDCTL_DSP_SETTRIGGER, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot disable recording on sound card.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	// Set fragment size
+	arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
+	status = ioctl(fd_mic, SNDCTL_DSP_SETFRAGMENT, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot set buffer size on sound card.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	// Mono
+	arg = 1;
+	status = ioctl(fd_mic, SNDCTL_DSP_CHANNELS, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		return false;
+	}
+	if (arg != 1) {
+		log_file->write_report("Unable to set mono mode",
+			"t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Sound card cannot be set to mono.", MSG_CRITICAL);
+		return false;
+	}
+
+	// Sample format
+	arg = AFMT_S16_LE; // signed 16 bits little endian
+	status = ioctl(fd_mic, SNDCTL_DSP_SETFMT, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
+			LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
+			MSG_CRITICAL);
+		return false;
+	}
+
+	// Sample rate
+	arg = AUDIO_SAMPLE_RATE;
+	status = ioctl(fd_mic, SNDCTL_DSP_SPEED, &arg);
+	if (status == -1) {
+		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
+		msg += strerror(errno);
+		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
 			LOG_NORMAL, LOG_CRITICAL);
 		msg = "Cannot set sound card sample rate to ";
 		msg += int2str(AUDIO_SAMPLE_RATE);
@@ -272,17 +506,20 @@ t_audio_session::t_audio_session(t_session *_session,
 	}
 
 	// Open and initialize sound card
+	fd_speaker = -1;
+	fd_mic = -1;
 	t_audio_session *as_peer;
 	if (is_3way() && (as_peer = get_peer_3way())) {
-		fd = as_peer->get_fd_dsp();
-		if (fd < 0) return;
+		fd_speaker = as_peer->get_fd_dsp_speaker();
+		fd_mic = as_peer->get_fd_dsp_mic();
+		if (fd_speaker < 0 || fd_mic < 0) return;
 	} else {
 		if (!open_dsp()) return;
 	}
 
 	// Create recorder
 	if (!_recv_host.empty() && _recv_port != 0) {
-		audio_rx = new t_audio_rx(this, fd, rtp_session, codec, ptime);
+		audio_rx = new t_audio_rx(this, fd_mic, rtp_session, codec, ptime);
 		MEMMAN_NEW(audio_rx);
 
 		// Setup 3-way configuration if this audio session is part of
@@ -311,7 +548,7 @@ t_audio_session::t_audio_session(t_session *_session,
 
 	// Create player
 	if (!_dst_host.empty() && _dst_port != 0) {
-		audio_tx = new t_audio_tx(this, fd, rtp_session, codec, ptime);
+		audio_tx = new t_audio_tx(this, fd_speaker, rtp_session, codec, ptime);
 		MEMMAN_NEW(audio_tx);
 
 		// Setup 3-way configuration if this audio session is part of
@@ -407,8 +644,12 @@ t_audio_session::~t_audio_session() {
 		log_file->write_footer();
 	}
 
-	if (fd >= 0 && (!is_3way() || !get_peer_3way())) {
-		close(fd);
+	if (fd_speaker >= 0 && (!is_3way() || !get_peer_3way())) {
+		close(fd_speaker);
+	}
+	
+	if (fd_mic >= 0 && fd_mic != fd_speaker && (!is_3way() || !get_peer_3way())) {
+		close(fd_mic);
 	}
 }
 
@@ -517,8 +758,12 @@ bool t_audio_session::is_valid(void) const {
 	return valid;
 }
 
-int t_audio_session::get_fd_dsp(void) const {
-	return fd;
+int t_audio_session::get_fd_dsp_speaker(void) const {
+	return fd_speaker;
+}
+
+int t_audio_session::get_fd_dsp_mic(void) const {
+	return fd_mic;
 }
 
 void *main_audio_rx(void *arg) {

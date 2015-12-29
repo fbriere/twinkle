@@ -50,6 +50,9 @@ enum t_method {
 	CANCEL,
 	REGISTER,
 	PRACK,
+	SUBSCRIBE,
+	NOTIFY,
+	REFER,
 	METHOD_UNKNOWN
 };
 

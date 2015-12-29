@@ -20,15 +20,40 @@
 #include "events.h"
 #include "listener.h"
 #include "log.h"
+#include "user.h"
 #include "userintf.h"
 #include "sockets/socket.h"
 #include "parser/parse_ctrl.h"
 #include "parser/sip_message.h"
 #include "sdp/sdp_parse_ctrl.h"
+#include "stun/stun.h"
 #include "audits/memman.h"
 
+extern t_phone *phone;
 extern t_socket_udp *sip_socket;
 extern t_event_queue *evq_trans_mgr;
+
+void recvd_stun_msg(char *datagram, int datagram_size, 
+	unsigned long src_addr, unsigned short src_port) 
+{
+	StunMessage m;
+	
+	if (!stunParseMessage(datagram, datagram_size, m, false)) {
+		log_file->write_report("Received faulty STUN message", "::recvd_stun_msg");
+		return;
+	}
+	
+	log_file->write_header("::recvd_stun_msg", LOG_STUN);
+	log_file->write_raw("Received from: ");
+	log_file->write_raw(h_ip2str(src_addr));
+	log_file->write_raw(":");
+	log_file->write_raw(src_port);
+	log_file->write_endl();
+	log_file->write_raw(stunMsg2Str(m));
+	log_file->write_footer();
+	
+	evq_trans_mgr->push_stun_response(&m, 0, 0);
+}
 
 t_sip_body *parse_body(string &data, const t_sip_message *msg) {
 	if (!msg->hdr_content_type.is_populated()) {
@@ -40,22 +65,57 @@ t_sip_body *parse_body(string &data, const t_sip_message *msg) {
 		return p;
 	}
 
-	if (msg->hdr_content_type.media.type != "application" ||
-	    msg->hdr_content_type.media.subtype != "sdp")
+	if (msg->hdr_content_type.media.type == "application" &&
+	    msg->hdr_content_type.media.subtype == "sdp")
 	{
-		// Currenttly only SDP bodies are supported.
+		// Parse SDP body
+		return t_sdp_parser::parse(data);
+	} else if (msg->hdr_content_type.media.type == "message" &&
+	           msg->hdr_content_type.media.subtype == "sipfrag")
+	{
+		t_sip_body_sipfrag *b;
+
+		// Parse sipfrag body (RFC 3420)
+		try {
+			t_sip_message *m = t_parser::parse(data);
+			b = new t_sip_body_sipfrag(m);
+			MEMMAN_NEW(b);
+			MEMMAN_DELETE(m);
+			delete m;
+			return b;
+		} catch (int) {
+			// Parsing failed, maybe because a request or status
+			// line is not present, which is not mandatory for a
+			// sipfrag body. Add a fake status line and try to parse
+			// again.
+			string tmp = "SIP/2.0 100 Trying";
+			tmp += CRLF;
+			tmp += data;
+			t_sip_message *resp = t_parser::parse(tmp);
+
+			// Parsing succeeded. Now strip the fake header
+			t_sip_message *m = new t_sip_message(*resp);
+			MEMMAN_NEW(m);
+			MEMMAN_DELETE(resp);
+			delete (resp);
+			b = new t_sip_body_sipfrag(m);
+			MEMMAN_NEW(b);
+			MEMMAN_DELETE(m);
+			delete m;
+			return b;
+		}
+	} else {
 		// Pass other bodies unparsed. The upper application
 		// layer will decide what to do.
 		t_sip_body_opaque *p = new t_sip_body_opaque(data);
 		MEMMAN_NEW(p);
 		return p;
 	}
-
-	// Parse SDP body
-	return t_sdp_parser::parse(data);
 }
 
 void *listen_udp(void *arg) {
+	char		buf[MAX_UDP_SIZE + 1];
+	int		data_size;
 	string 		datagram;
 	unsigned long	src_addr;
 	unsigned short	src_port;
@@ -65,7 +125,8 @@ void *listen_udp(void *arg) {
 
 	while(true) {
 		try {
-			sip_socket->recvfrom(src_addr, src_port, datagram);
+			data_size = sip_socket->recvfrom(src_addr, src_port, buf, 
+				MAX_UDP_SIZE + 1);
 		} catch (int err) {
 			string msg("Failed to receive from SIP UDP socket.\n");
 			msg += strerror(err);
@@ -74,13 +135,30 @@ void *listen_udp(void *arg) {
 			ui->cb_show_msg(msg, MSG_CRITICAL);
 			return NULL;
 		}
-
+		
+		// Check if this is a STUN message
+		// The first byte of a STUN message is 0x00 or 0x01.
+		// A SIP message is ASCII so the first byte for SIP is
+		// never 0x00 or 0x01
+		if (phone->use_stun &&
+		    buf[0] <= 1)
+		{
+			recvd_stun_msg(buf, data_size, src_addr, src_port);
+			continue;
+		}
+		
+		// SIP message received
 		log_file->write_header("::listen_udp", LOG_SIP);
 		log_file->write_raw("Received from: ");
 		log_file->write_raw(h_ip2str(src_addr));
 		log_file->write_raw(":");
 		log_file->write_raw(src_port);
 		log_file->write_endl();
+		
+		// The datagram is a SIP message. A SIP message does not
+		// contain a 0, so it can be safely converted to a string
+		// as recvfrom added a trailing zero.
+		datagram = buf;
 
 		// Split body from header
 		string seperator = string(CRLF) + string(CRLF);

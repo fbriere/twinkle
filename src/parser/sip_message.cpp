@@ -38,6 +38,7 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_accept_language(m.hdr_accept_language),
 		hdr_alert_info(m.hdr_alert_info),
 		hdr_allow(m.hdr_allow),
+		hdr_allow_events(m.hdr_allow_events),
 		hdr_auth_info(m.hdr_auth_info),
 		hdr_authorization(m.hdr_authorization),
 		hdr_call_id(m.hdr_call_id),
@@ -51,6 +52,7 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_cseq(m.hdr_cseq),
 		hdr_date(m.hdr_date),
 		hdr_error_info(m.hdr_error_info),
+		hdr_event(m.hdr_event),
 		hdr_expires(m.hdr_expires),
 		hdr_from(m.hdr_from),
 		hdr_in_reply_to(m.hdr_in_reply_to),
@@ -64,6 +66,8 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_proxy_require(m.hdr_proxy_require),
 		hdr_rack(m.hdr_rack),
 		hdr_record_route(m.hdr_record_route),
+		hdr_refer_to(m.hdr_refer_to),
+		hdr_referred_by(m.hdr_referred_by),
 		hdr_reply_to(m.hdr_reply_to),
 		hdr_require(m.hdr_require),
 		hdr_retry_after(m.hdr_retry_after),
@@ -71,6 +75,7 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_rseq(m.hdr_rseq),
 		hdr_server(m.hdr_server),
 		hdr_subject(m.hdr_subject),
+		hdr_subscription_state(m.hdr_subscription_state),
 		hdr_supported(m.hdr_supported),
 		hdr_timestamp(m.hdr_timestamp),
 		hdr_to(m.hdr_to),
@@ -93,6 +98,10 @@ t_sip_message::~t_sip_message() {
 		MEMMAN_DELETE(body);
 		delete body;
 	}
+}
+
+t_msg_type t_sip_message::get_type(void) const {
+	return MSG_SIPFRAG;
 }
 
 void t_sip_message::add_unknown_header(const string &name,
@@ -146,7 +155,7 @@ bool t_sip_message::is_valid(bool &fatal, string &reason) const {
 	return true;
 }
 
-string t_sip_message::encode(void) {
+string t_sip_message::encode(bool add_content_length) {
 	string s;
 	string encoded_body;
 
@@ -179,12 +188,14 @@ string t_sip_message::encode(void) {
 	s += hdr_accept_language.encode();
 	s += hdr_alert_info.encode();
 	s += hdr_allow.encode();
+	s += hdr_allow_events.encode();
 	s += hdr_call_info.encode();
 	s += hdr_content_disp.encode();
 	s += hdr_content_encoding.encode();
 	s += hdr_content_language.encode();
 	s += hdr_date.encode();
 	s += hdr_error_info.encode();
+	s += hdr_event.encode();
 	s += hdr_expires.encode();
 	s += hdr_in_reply_to.encode();
 	s += hdr_min_expires.encode();
@@ -192,12 +203,15 @@ string t_sip_message::encode(void) {
 	s += hdr_organization.encode();
 	s += hdr_priority.encode();
 	s += hdr_rack.encode();
+	s += hdr_refer_to.encode();
+	s += hdr_referred_by.encode();
 	s += hdr_reply_to.encode();
 	s += hdr_require.encode();
 	s += hdr_retry_after.encode();
 	s += hdr_rseq.encode();
 	s += hdr_server.encode();
 	s += hdr_subject.encode();
+	s += hdr_subscription_state.encode();
 	s += hdr_supported.encode();
 	s += hdr_timestamp.encode();
 	s += hdr_unsupported.encode();
@@ -225,7 +239,9 @@ string t_sip_message::encode(void) {
 	}
 
 	// Content-Length appears last in examples
-	s += hdr_content_length.encode();
+	if (add_content_length) {
+		s += hdr_content_length.encode();
+	}
 
 	// Blank line between headers and body
 	s += CRLF;
@@ -234,4 +250,10 @@ string t_sip_message::encode(void) {
 	if (body) s += encoded_body;
 
 	return s;
+}
+
+t_sip_message *t_sip_message::copy(void) const {
+	t_sip_message *m = new t_sip_message(*this);
+	MEMMAN_NEW(m);
+	return m;
 }

@@ -1,13 +1,17 @@
+TEMPLATE	= app
+LANGUAGE	= C++
+
+CONFIG	+= qt warn_off release thread
+
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a
+
+INCLUDEPATH	+= ..
+
+HEADERS	+= gui.h
+
 SOURCES	+= main.cpp \
 	gui.cpp
-HEADERS	+= gui.h
-unix {
-  UI_DIR = .ui
-  MOC_DIR = .moc
-  OBJECTS_DIR = .obj
-}
 
-include( ../../qtccxxincl.pro )
 FORMS	= mphoneform.ui \
 	inviteform.ui \
 	deregisterform.ui \
@@ -19,7 +23,12 @@ FORMS	= mphoneform.ui \
 	authenticationform.ui \
 	userprofileform.ui \
 	selectprofileform.ui \
-	getprofilenameform.ui
+	getprofilenameform.ui \
+	transferform.ui \
+	syssettingsform.ui \
+	logviewform.ui \
+	wizardform.ui
+
 IMAGES	= images/filenew \
 	images/fileopen \
 	images/filesave \
@@ -63,9 +72,31 @@ IMAGES	= images/filenew \
 	images/mute-disabled.png \
 	images/twinkle16.png \
 	images/twinkle48.png \
-	images/twinkle32.png
-TEMPLATE	=app
-CONFIG	+= qt warn_on release thread
-INCLUDEPATH	+= ..
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a
-LANGUAGE	= C++
+	images/twinkle32.png \
+	images/transfer-disabled.png \
+	images/transfer.png \
+	images/log.png \
+	images/dtmf-2.png \
+	images/dtmf-3.png \
+	images/dtmf-5.png \
+	images/dtmf-6.png \
+	images/dtmf-7.png \
+	images/dtmf-8.png \
+	images/dtmf-9.png \
+	images/dtmf-4.png \
+	images/dtmf-1.png \
+	images/dtmf-0.png \
+	images/dtmf-star.png \
+	images/dtmf-pound.png \
+	images/dtmf-a.png \
+	images/dtmf-b.png \
+	images/dtmf-c.png \
+	images/dtmf-d.png
+
+unix {
+  UI_DIR = .ui
+  MOC_DIR = .moc
+  OBJECTS_DIR = .obj
+}
+
+include( ../../qtccxxincl.pro )

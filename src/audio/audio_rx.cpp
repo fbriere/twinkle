@@ -21,13 +21,14 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
-#include <linux/soundcard.h>
+#include <sys/soundcard.h>
 #include "audio_rx.h"
 #include "log.h"
 #include "rtp_telephone_event.h"
 #include "user.h"
 #include "userintf.h"
 #include "line.h"
+#include "sys_settings.h"
 #include <ctime>
 #include <cstdlib>
 #include "audits/memman.h"
@@ -112,7 +113,8 @@ bool t_audio_rx::get_sound_samples(void) {
 		if (status != SAMPLE_BUF_SIZE) {
 			if (!logged_capture_failure) {
 				// Log this failure only once
-				log_file->write_header("t_audio_rx::get_sound_samples");
+				log_file->write_header("t_audio_rx::get_sound_samples",
+					LOG_NORMAL, LOG_WARNING);
 				log_file->write_raw("Audio rx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": sound capture failed.\n");
@@ -180,7 +182,7 @@ void t_audio_rx::get_dtmf_payload(void) {
 	// RFC 2833 3.5, 3.6
 	dtmf_payload->set_event(dtmf_current);
 	dtmf_payload->set_reserved(false);
-	dtmf_payload->set_volume(20);
+	dtmf_payload->set_volume(user_config->dtmf_volume);
 
 	if (dtmf_pause) {
 		// Trailing pause phase of a DTMF tone
@@ -195,7 +197,7 @@ void t_audio_rx::get_dtmf_payload(void) {
 			// This is the last packet to be sent for the
 			// current DTMF tone.
 			dtmf_stop = true;
-			log_file->write_header("t_audio_rx::get_dtmf_payload");
+			log_file->write_header("t_audio_rx::get_dtmf_payload", LOG_NORMAL);
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": finish DTMF event - ");
@@ -254,7 +256,7 @@ bool t_audio_rx::get_dtmf_event(void) {
 	dtmf_duration = nsamples;
 
 	// Log DTMF event
-	log_file->write_header("t_audio_rx::get_dtmf_event");
+	log_file->write_header("t_audio_rx::get_dtmf_event", LOG_NORMAL);
 	log_file->write_raw("Audio rx line ");
 	log_file->write_raw(get_line()->get_line_number()+1);
 	log_file->write_raw(": start DTMF event - ");
@@ -407,7 +409,12 @@ void t_audio_rx::run(void) {
 	// to the dsp.
 	if (!is_3way || is_main_rx_3way) {
 		// Enable recording
-		int arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		int arg;
+		if (sys_config->equal_oss_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+			arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		} else {
+			arg = PCM_ENABLE_INPUT;
+		}
 		status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
 		if (status == -1) {
 			string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
@@ -494,7 +501,7 @@ void t_audio_rx::run(void) {
 
 			timestamp += nsamples;
 		} else {
-			log_file->write_header("t_audio_rx::run");
+			log_file->write_header("t_audio_rx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": discarded surplus of sound samples.\n");
@@ -521,7 +528,7 @@ void t_audio_rx::run(void) {
 		// slower than the set sample rate. Advance the timestamp to get
 		// in sync again.
 		while (timestamp < rtp_session->getCurrentTimestamp()) {
-			log_file->write_header("t_audio_rx::run");
+			log_file->write_header("t_audio_rx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": timestamp forwarded by ");
@@ -583,7 +590,7 @@ void t_audio_rx::join_3way(bool main_rx, t_audio_rx *peer_rx) {
 	mtx_3way.lock();
 
 	if (is_3way) {
-		log_file->write_header("t_audio_rx::join_3way");
+		log_file->write_header("t_audio_rx::join_3way", LOG_NORMAL);
 		log_file->write_raw("ERROR: audio rx line ");
 		log_file->write_raw(get_line()->get_line_number()+1);
 		log_file->write_raw(" - 3way is already active.\n");
@@ -698,7 +705,12 @@ void t_audio_rx::set_main_rx_3way(bool main_rx) {
 		audio_buf_info dsp_info;
 		
 		// Enable recording
-		int arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		int arg;
+		if (sys_config->equal_oss_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+			arg = PCM_ENABLE_INPUT | PCM_ENABLE_OUTPUT;
+		} else {
+			arg = PCM_ENABLE_INPUT;
+		}
 		status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
 		if (status == -1) {
 			string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");

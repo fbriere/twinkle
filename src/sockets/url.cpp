@@ -33,6 +33,7 @@ unsigned short get_default_port(const string &protocol) {
 	if (protocol == "http")		return 80;
 	if (protocol == "sip")		return 5060;
 	if (protocol == "sips")		return 5061;
+	if (protocol == "stun")		return 3478;
 
 	return 0;
 }

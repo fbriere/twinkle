@@ -52,38 +52,83 @@ t_socket_udp::~t_socket_udp() {
 	close(sd);
 }
 
-int t_socket_udp::sendto(unsigned long dest_addr, unsigned short dest_port,
-	           const string &data) {
+int t_socket_udp::connect(unsigned long dest_addr, unsigned short dest_port) {
 	struct sockaddr_in addr;
 	int ret;
 
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(dest_addr);
 	addr.sin_port = htons(dest_port);
-	ret = ::sendto(sd, data.c_str(), data.size(), 0,
+	ret = ::connect(sd, (struct sockaddr *)&addr, sizeof(addr));
+	if (ret < 0) throw errno;
+	
+	return ret;
+}
+
+int t_socket_udp::sendto(unsigned long dest_addr, unsigned short dest_port,
+	           const char *data, int data_size) {
+	struct sockaddr_in addr;
+	int ret;
+
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = htonl(dest_addr);
+	addr.sin_port = htons(dest_port);
+	ret = ::sendto(sd, data, data_size, 0,
 		     (struct sockaddr *)&addr, sizeof(addr));
 	if (ret < 0) throw errno;
 
 	return ret;
 }
 
+int t_socket_udp::send(const char *data, int data_size) {
+	int ret = ::send(sd, data, data_size, 0);
+	if (ret < 0) throw errno;
+
+	return ret;
+}
+
 int t_socket_udp::recvfrom(unsigned long &src_addr, unsigned short &src_port,
-		     string &data) {
+		     char *buf, int buf_size) {
 	struct sockaddr_in addr;
 	int ret, len_addr;
-	char buf[MAX_UDP_SIZE + 1];
 
 	len_addr = sizeof(addr);
-	memset(buf, 0, MAX_UDP_SIZE + 1);
-	ret = ::recvfrom(sd, buf, MAX_UDP_SIZE, 0,
+	memset(buf, 0, buf_size);
+	ret = ::recvfrom(sd, buf, buf_size - 1, 0,
 		       (struct sockaddr *)&addr, (socklen_t *)&len_addr);
 	if (ret < 0) throw errno;
 
-	data = buf;
 	src_addr = ntohl(addr.sin_addr.s_addr);
 	src_port = ntohs(addr.sin_port);
 
 	return ret;
+}
+
+int t_socket_udp::recv(char *buf, int buf_size) {
+	int ret;
+
+	memset(buf, 0, buf_size);
+	ret = ::recv(sd, buf, buf_size - 1, 0);
+	if (ret < 0) throw errno;
+
+	return ret;
+}
+
+bool t_socket_udp::select_read(unsigned long timeout) {
+	fd_set fds;
+	struct timeval t;
+	
+	FD_ZERO(&fds);
+	FD_SET(sd, &fds);
+	
+	t.tv_sec = timeout / 1000;
+	t.tv_usec = (timeout % 1000) * 1000;
+	
+	int ret = select(sd + 1, &fds, NULL, NULL, &t);
+	
+	if (ret < 0) throw errno;
+	if (ret == 0) return false;
+	return true;
 }
 
 string h_ip2str(unsigned long ipaddr) {

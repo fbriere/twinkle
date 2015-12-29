@@ -18,6 +18,8 @@
 
 #include <iostream>
 #include <cstdlib>
+#include "line.h"
+#include "sys_settings.h"
 #include "userintf.h"
 #include "util.h"
 #include "user.h"
@@ -328,7 +330,7 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 bool t_userintf::exec_dnd(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
-	bool enable = true;
+	bool enable = !phone->service.is_dnd_active();
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help dnd");
@@ -380,6 +382,61 @@ bool t_userintf::exec_dnd(const list<string> command_list) {
 	}
 }
 
+bool t_userintf::exec_auto_answer(const list<string> command_list) {
+	list<t_command_arg> al;
+	bool show_status = false;
+	bool enable = !phone->service.is_auto_answer_active();
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help auto_answer");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 's':
+			show_status = true;
+			break;
+		case 'a':
+			if (i->value == "on") {
+				enable = true;
+			} else if (i->value == "off") {
+				enable = false;
+			} else {
+				exec_command("help auto_answer");
+				return false;
+			}
+			break;
+		default:
+			exec_command("help auto_answer");
+			return false;
+			break;
+		}
+	}
+
+	if (show_status) {
+		cout << endl;
+		cout << "Auto answer: ";
+		if (phone->service.is_auto_answer_active()) {
+			cout << "active";
+		} else {
+			cout << "not active";
+		}
+		cout << endl;
+		return true;
+	}
+
+	if (enable) {
+		phone->service.enable_auto_answer(true);
+		cout << "Auto answer enabled.\n\n";
+		return true;
+	} else {
+		phone->service.enable_auto_answer(false);
+		cout << "Auto answer disabled.\n\n";
+		return true;
+	}
+}
+
 bool t_userintf::exec_bye(const list<string> command_list) {
 	phone->pub_end_call();
 	return true;
@@ -394,6 +451,44 @@ bool t_userintf::exec_retrieve(const list<string> command_list) {
 	phone->pub_retrieve();
 	return true;
 }
+
+bool t_userintf::exec_refer(const list<string> command_list) {
+	list<t_command_arg> al;
+	t_url destination;
+	bool dest_set = false;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help refer");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 0:
+			destination.set_url(expand_destination(i->value));
+			dest_set = true;
+			break;
+		default:
+			exec_command("help refer");
+			return false;
+			break;
+		}
+	}
+
+	if (!dest_set) {
+		exec_command("help refer");
+		return false;
+	}
+
+	if (!destination.is_valid()) {
+		exec_command("help refer");
+		return false;
+	}
+
+	phone->pub_refer(destination, "");
+	return true;
+}
+
 
 bool t_userintf::exec_conference(const list<string> command_list) {
 	if (phone->join_3way(0, 1)) {
@@ -673,6 +768,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "answer		Answer an incoming call\n";
 		cout << "reject		Reject an incoming call\n";
 		cout << "redirect	Redirect an incoming call\n";
+		cout << "refer		Refer a standing call\n";
 		cout << "bye		End a call\n";
 		cout << "hold		Put a call on-hold\n";
 		cout << "retrieve	Retrieve a held call\n";
@@ -685,6 +781,7 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "options\t\tGet capabilities of another SIP endpoint\n";
 		cout << "line		Toggle between phone lines\n";
 		cout << "dnd		Do not disturb\n";
+		cout << "auto_answer	Auto answer\n";
 		cout << "quit		Quit\n";
 		cout << "help		Get help on a command\n";
 		cout << endl;
@@ -762,6 +859,19 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << endl;
 		cout << "\tDisable redirection of busy calls.\n";
 		cout << "\tredirect -t busy -a off\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "refer") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\trefer dst\n";
+		cout << "Description:\n";
+		cout << "\tRefer a standing call to another destination.\n";
+		cout << "Arguments:\n";
+		cout << "\tdst	SIP uri of refer destination\n";
 		cout << endl;
 
 		return true;
@@ -931,6 +1041,24 @@ bool t_userintf::exec_help(const list<string> command_list) {
 		cout << "Arguments:\n";
 		cout << "\t-s		Show if dnd is active.\n";
 		cout << "\t-a on|off	Enable/disable dnd.\n";
+		cout << "Notes:\n";
+		cout << "\tWithout any arguments you can toggle the status.\n";
+		cout << endl;
+
+		return true;
+	}
+	
+	if (c == "auto_answer") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tauto_answer [-s] [-a on|off]\n";
+		cout << "Description:\n";
+		cout << "\tEnable/disable the auto answer service.\n";
+		cout << "Arguments:\n";
+		cout << "\t-s		Show if auto answer is active.\n";
+		cout << "\t-a on|off	Enable/disable auto answer.\n";
+		cout << "Notes:\n";
+		cout << "\tWithout any arguments you can toggle the status.\n";
 		cout << endl;
 
 		return true;
@@ -984,6 +1112,7 @@ t_userintf::t_userintf(t_phone *_phone) {
 	all_commands.push_back("bye");
 	all_commands.push_back("hold");
 	all_commands.push_back("retrieve");
+	all_commands.push_back("refer");
 	all_commands.push_back("conference");
 	all_commands.push_back("mute");
 	all_commands.push_back("dtmf");
@@ -993,6 +1122,7 @@ t_userintf::t_userintf(t_phone *_phone) {
 	all_commands.push_back("options");
 	all_commands.push_back("line");
 	all_commands.push_back("dnd");
+	all_commands.push_back("auto_answer");
 	all_commands.push_back("quit");
 	all_commands.push_back("exit");
 	all_commands.push_back("q");
@@ -1060,6 +1190,7 @@ bool t_userintf::exec_command(const string &command_line) {
 	if (command == "bye") return exec_bye(l);
 	if (command == "hold") return exec_hold(l);
 	if (command == "retrieve") return exec_retrieve(l);
+	if (command == "refer") return exec_refer(l);
 	if (command == "conference") return exec_conference(l);
 	if (command == "mute") return exec_mute(l);
 	if (command == "dtmf") return exec_dtmf(l);
@@ -1069,6 +1200,7 @@ bool t_userintf::exec_command(const string &command_line) {
 	if (command == "options") return exec_options(l);
 	if (command == "line") return exec_line(l);
 	if (command == "dnd") return exec_dnd(l);
+	if (command == "auto_answer") return exec_auto_answer(l);
 	if (command == "quit") return exec_quit(l);
 	if (command == "exit") return exec_quit(l);
 	if (command == "x") return exec_quit(l);
@@ -1143,7 +1275,7 @@ void t_userintf::run(void) {
 
 	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
 	cout << endl;
-	cout << "Author: " << PRODUCT_AUTHOR << endl;
+	cout << "Copyright (C) 2005  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
 
 	cout << "User:           " << user_config->display;
@@ -1159,7 +1291,7 @@ void t_userintf::run(void) {
 			cout << user_config->outbound_proxy.encode();
 			cout << endl;
 		} else {
-			cout << user_config->domain << ">\n";
+			cout << "sip:" << user_config->domain << "\n";
 		}
 	}
 
@@ -1177,6 +1309,12 @@ void t_userintf::run(void) {
 		cout << user_config->nat_public_ip;
 		cout << endl;
 		cout << "Configure your NAT such that SIP and RTP can pass.\n";
+		cout << endl;
+	}
+	
+	if (user_config->use_stun) {
+		cout << "STUN server:    ";
+		cout << user_config->stun_server.encode();
 		cout << endl;
 	}
 
@@ -1215,10 +1353,14 @@ string t_userintf::select_network_intf(void) {
 	// As memman has no hooks in the socket routines, report it here.
 	MEMMAN_NEW(l);
 	if (l->size() == 0) {
-		cout << "Cannot find a network interface\n";
+		// cout << "Cannot find a network interface\n";
+		cout << "Cannot find a network interface. Twinkle will use\n"
+			"127.0.0.1 as the local IP address. When you connect to\n"
+			"the network you have to restart Twinkle to use the correct\n"
+			"IP address.\n";
 		MEMMAN_DELETE(l);
 		delete l;
-		return "";
+		return "127.0.0.1";
 	}
 
 	if (l->size() == 1) {
@@ -1278,6 +1420,13 @@ void t_userintf::cb_incoming_call(int line, const t_request *r) {
 	cout << "To:\t\t";
 	cout << format_sip_address(r->hdr_to.display, r->hdr_to.uri) << endl;
 
+	if (r->hdr_referred_by.is_populated()) {
+		cout << "Referred-by:\t";
+		cout << format_sip_address(r->hdr_referred_by.display,
+			r->hdr_referred_by.uri);
+		cout << endl;
+	}
+
 	if (r->hdr_subject.is_populated()) {
 		cout << "Subject:\t" << r->hdr_subject.subject << endl;
 	}
@@ -1286,8 +1435,10 @@ void t_userintf::cb_incoming_call(int line, const t_request *r) {
 	cout << CLI_PROMPT;
 	cout.flush();
 
-	// Play ringtone if the call is received on the active line.
-	if (line == phone->get_active_line()) {
+	// Play ringtone if the call is received on the active line
+	if (line == phone->get_active_line() && 
+	    !phone->service.is_auto_answer_active())
+	{
 		cb_play_ringtone();
 	}
 }
@@ -1568,6 +1719,17 @@ void t_userintf::cb_reinvite_failed(int line, const t_response *r) {
 	cout.flush();
 }
 
+void t_userintf::cb_retrieve_failed(int line, const t_response *r) {
+	// The status code from the response has already been reported
+	// by cb_reinvite_failed.
+
+	cout << endl;
+	cout << "Line " << line + 1 << ": retrieve failed.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
 void t_userintf::cb_invalid_reg_resp(const t_response *r, const string &reason) {
 	cout << endl;
 	cout << "Registration failed: " << r->code << ' ' << r->reason << endl;
@@ -1603,6 +1765,17 @@ void t_userintf::cb_register_failed(const t_response *r, bool first_failure) {
 
 	cout << endl;
 	cout << "Registration failed: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_register_stun_failed(bool first_failure) {
+	// Only report the first failure in a sequence of failures
+	if (!first_failure) return;
+
+	cout << endl;
+	cout << "Registration failed: STUN failure";
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
@@ -1709,7 +1882,7 @@ void t_userintf::cb_play_ringtone(void) {
 		delete tone_gen;
 	}
 
-	tone_gen = new t_tone_gen(FILE_RINGTONE);
+	tone_gen = new t_tone_gen(FILE_RINGTONE, sys_config->dev_ringtone);
 	MEMMAN_NEW(tone_gen);
 	tone_gen->start_play_thread(true, INTERVAL_RINGTONE);
 }
@@ -1721,7 +1894,7 @@ void t_userintf::cb_play_ringback(void) {
 		delete tone_gen;
 	}
 
-	tone_gen = new t_tone_gen(FILE_RINGBACK);
+	tone_gen = new t_tone_gen(FILE_RINGBACK, sys_config->dev_speaker);
 	MEMMAN_NEW(tone_gen);
 	tone_gen->start_play_thread(true, INTERVAL_RINGBACK);
 }
@@ -1784,6 +1957,121 @@ void t_userintf::cb_recv_codec_changed(int line, t_audio_codec codec) {
 	// No feedback in CLI
 }
 
+void t_userintf::cb_notify_recvd(int line, const t_request *r) {
+	cout << endl;
+	cout << "Line " << line + 1 <<  ": received notification.\n";
+	cout << "Event:    " << r->hdr_event.event_type << endl;
+	cout << "State:    " << r->hdr_subscription_state.substate << endl;
+
+	if (r->hdr_subscription_state.substate == SUBSTATE_TERMINATED) {
+		cout << "Reason:   " << r->hdr_subscription_state.reason << endl;
+	}
+
+	t_response *sipfrag = (t_response *)((t_sip_body_sipfrag *)r->body)->sipfrag;
+	cout << "Progress: " << sipfrag->code << ' ' << sipfrag->reason << endl;
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_refer_failed(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": refer request failed.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_refer_result_success(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call succesfully referred.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_refer_result_failed(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call refer failed.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_refer_result_inprog(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call refer in progress.\n";
+	cout << "No further notifications will be received.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_call_referred(int line, t_request *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": transferring call to ";
+	cout << format_sip_address(r->hdr_refer_to.display,
+		r->hdr_refer_to.uri);
+	cout << endl;
+
+	if (r->hdr_referred_by.is_populated()) {
+		cout << "Tranfer requested by ";
+		cout << format_sip_address(r->hdr_referred_by.display,
+			r->hdr_referred_by.uri);
+		cout << endl;
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_retrieve_referrer(int line) {
+	const t_call_info call_info = phone->get_call_info(line);
+
+	cout << endl;
+	cout << "Line " << line + 1 << ": call transfer failed.\n";
+	cout << "Retrieving call: \n";
+	cout << "From:    ";
+	cout << format_sip_address(call_info.from_display, call_info.from_uri);
+	cout << endl;
+	if (!call_info.from_organization.empty()) {
+		cout << "         " << call_info.from_organization;
+		cout << endl;
+	}
+	cout << "To:      ";
+	cout << format_sip_address(call_info.to_display, call_info.to_uri);
+	cout << endl;
+	if (!call_info.to_organization.empty()) {
+		cout << "         " << call_info.to_organization;
+		cout << endl;
+	}
+	cout << "Subject: ";
+	cout << call_info.subject;
+	cout << endl << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_stun_failed(int err_code, const string &err_reason) {
+	cout << endl;
+	cout << "STUN request failed: ";
+	cout << err_code << " " << err_reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_stun_failed(void) {
+	cout << endl;
+	cout << "STUN request failed.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
 
 bool t_userintf::cb_ask_user_to_redirect_invite(const t_url &destination,
 			const string &display)
@@ -1803,6 +2091,15 @@ bool t_userintf::cb_ask_credentials(const string &realm, string &username,
 			string &password)
 {
 	// Cannot ask user for username/password in CLI
+	return false;
+}
+
+bool t_userintf::cb_ask_user_to_refer(const t_url &refer_to_uri,
+			const string &refer_to_display,
+			const t_url &referred_by_uri,
+			const string &referred_by_display)
+{
+	// Cannot ask user for permission in CLI, so deny REFER
 	return false;
 }
 
@@ -1835,6 +2132,9 @@ void t_userintf::cb_display_msg(const string &msg, t_msg_priority prio) {
 	cb_show_msg(msg, prio);
 }
 
+void t_userintf::cb_log_updated(bool log_zapped) {
+	// In CLI mode there is no log viewer.
+}
 
 bool t_userintf::get_last_call_info(t_url &url, string &display,
 			string &subject) const

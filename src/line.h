@@ -23,15 +23,45 @@
 #include <string>
 #include "dialog.h"
 #include "phone.h"
+#include "protocol.h"
+#include "audio/audio_codecs.h"
 #include "sockets/url.h"
 #include "parser/request.h"
 #include "parser/response.h"
+#include "stun/stun.h"
 
 using namespace std;
 
 // Forward declarations
 class t_dialog;
 class t_phone;
+
+// Info about the current call.
+// This info can be used by the user interface to render the
+// call state to the user.
+class t_call_info {
+public:
+	t_url			from_uri;
+	string			from_display;
+	string			from_organization;
+	t_url			to_uri;
+	string			to_display;
+	string			to_organization;
+	string			subject;
+	bool			dtmf_supported;
+	t_hdr_referred_by	hdr_referred_by;
+
+	// The reason phrase of the last received provisional response
+	// on an outgoing INVITE.
+	string		last_provisional_reason;
+
+	t_audio_codec	send_codec;
+	t_audio_codec	recv_codec;
+	bool		refer_supported;
+
+	t_call_info();
+	void clear(void);
+};
 
 class t_line {
 	friend class t_phone;
@@ -67,8 +97,16 @@ private:
 	unsigned short		id_invite_comp;
 	unsigned short		id_no_answer;
 
+	// Call info
+	t_call_info		call_info;
+
+	// RTP port to be used for this line.
+	unsigned short		rtp_port;
+
 	// Find a dialog from the list that matches the response.
 	t_dialog *match_response(t_response *r,
+				const list<t_dialog *> &l) const;
+	t_dialog *match_response(StunMessage *r, t_tuid tuid,
 				const list<t_dialog *> &l) const;
 
 	// Get the dialog with id == did. If dialog does not exist
@@ -87,12 +125,15 @@ public:
 
 	t_line_state get_state(void) const;
 	t_line_substate get_substate(void) const;
+	t_refer_state get_refer_state(void) const;
 
 	// Timer operations
 	void start_timer(t_line_timer timer, t_dialog_id did = 0);
 	void stop_timer(t_line_timer timer, t_dialog_id did = 0);
 
 	// Actions
+	void invite(const t_url &to_uri, const string &to_display,
+		const string &subject, const t_hdr_referred_by &hdr_referred_by);
 	void invite(const t_url &to_uri, const string &to_display,
 		const string &subject);
 	void answer(void);
@@ -104,8 +145,9 @@ public:
 	// OPTIONS inside dialog
 	void options(void);
 
-	bool hold(void); // returns false if call cannot be put on hold
+	bool hold(bool rtponly = false); // returns false if call cannot be put on hold
 	void retrieve(void);
+	void refer(const t_url &uri, const string &display);
 
 	// Mute/unmute a call
 	// - enable = true -> mute
@@ -127,16 +169,33 @@ public:
 	void recvd_options(t_request *r, t_tid tid);
 	void recvd_register(t_request *r, t_tid tid);
 	void recvd_prack(t_request *r, t_tid tid);
+	void recvd_subscribe(t_request *r, t_tid tid);
+	void recvd_notify(t_request *r, t_tid tid);
+
+	// Returns true if refer has been accepted.
+	bool recvd_refer(t_request *r, t_tid tid);
+	
+	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 
 	void failure(t_failure failure, t_tid tid);
 
 	void timeout(t_line_timer timer, t_dialog_id did);
+	void timeout_sub(t_subscribe_timer timer, t_dialog_id did,
+		const string &event_type, const string &event_id);
 
 	// Return true if the reponse or request matches a dialog that
 	// is owned by this line
 	bool match(t_response *r, t_tuid tuid);
 	bool match(t_request *r);
 	bool match_cancel(t_request *r, t_tid target_tid);
+	bool match(StunMessage *r, t_tuid tuid);
+
+	// Check if an incoming INVITE is a retransmission of an INVITE
+	// that is already being processed by this line
+	bool is_invite_retrans(t_request *r);
+
+	// Process a retransmission of an incoming INVITE
+	void process_invite_retrans(void);
 
 	// Create user uri and contact uri
 	string create_user_contact(void) const;
@@ -156,6 +215,7 @@ public:
 	unsigned short get_line_number(void) const;
 	bool get_is_on_hold(void) const;
 	bool get_is_muted(void) const;
+	bool is_refer_succeeded(void) const;
 
 	// Seize the line. User wants to make an outgoing call, so
 	// the line must be marked as busy, such that an incoming call
@@ -168,6 +228,31 @@ public:
 	// Return the audio session belonging to this line.
 	// Returns NULL if there is no audio session
 	t_audio_session *get_audio_session(void) const;
+
+	void notify_refer_progress(t_response *r);
+
+	// Called by dialog if retrieve/hold actions failed.
+	void failed_retrieve(void);
+	void failed_hold(void);
+
+	// Called by dialog if retrt of a retrieve after a glare (491 response)
+	// succeeded.
+	void retry_retrieve_succeeded(void);
+
+	// Get the call info record
+	t_call_info get_call_info(void) const;
+	void ci_set_dtmf_supported(bool supported);
+	void ci_set_last_provisional_reason(const string &reason);
+	void ci_set_send_codec(t_audio_codec codec);
+	void ci_set_recv_codec(t_audio_codec codec);
+	void ci_set_refer_supported(bool supported);
+
+	// Initialize the RTP port for this line based on the settings
+	// in the user profile.
+	void init_rtp_port(void);
+
+	// Get the RTP port to be used for a call on this line
+	unsigned short get_rtp_port(void) const;
 };
 
 #endif

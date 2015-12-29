@@ -46,6 +46,10 @@ private:
 	// Audio RTP session
 	t_audio_session		*audio_rtp_session;
 
+	// Indicates if session is put on-hold, i.e. no RTP should be sent
+	// or received for this session.
+	bool			is_on_hold;
+
 public:
 	// Audio session information
 
@@ -118,6 +122,7 @@ public:
 	void create_sdp_answer(t_sip_message *m, const string &user) const;
 
 	// Start/stop the RTP streams
+	// When a session is on-hold then start_rtp simply returns.
 	void start_rtp(void);
 	void stop_rtp(void);
 
@@ -135,6 +140,17 @@ public:
 
 	// Transfer ownership of this session to a new dialog
 	void set_owner(t_dialog *d);
+
+	// Hold/un-hold a session
+	// These methods only toggle the hold indicator. If you hold
+	// a session, you must make sure that any running RTP is stopped.
+	// If you unhold a session you have to call start_rtp to start the
+	// RTP.
+	void hold(void);
+	void unhold(void);
+	
+	// Check if RTP session is acitve
+	bool is_rtp_active(void) const;
 };
 
 #endif

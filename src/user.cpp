@@ -27,6 +27,7 @@
 #include "log.h"
 #include "user.h"
 #include "util.h"
+#include "protocol.h"
 #include "sdp/sdp.h"
 #include "parser/parse_ctrl.h"
 
@@ -55,6 +56,7 @@
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
 #define FLD_DTMF_DURATION		"dtmf_duration"
 #define FLD_DTMF_PAUSE			"dtmf_pause"
+#define FLD_DTMF_VOLUME			"dtmf_volume"
 
 // SIP PROTOCOL fields
 #define FLD_SIP_UDP_PORT		"sip_udp_port"
@@ -66,12 +68,19 @@
 #define FLD_ASK_USER_TO_REDIRECT	"ask_user_to_redirect"
 #define FLD_MAX_REDIRECTIONS		"max_redirections"
 #define FLD_EXT_100REL			"ext_100rel"
+#define FLD_REFEREE_HOLD		"referee_hold"
+#define FLD_REFERRER_HOLD		"referrer_hold"
+#define FLD_ALLOW_REFER			"allow_refer"
+#define FLD_ASK_USER_TO_REFER		"ask_user_to_refer"
+#define FLD_AUTO_REFRESH_REFER_SUB	"auto_refresh_refer_sub"
 
 // NAT fields
 #define FLD_NAT_PUBLIC_IP		"nat_public_ip"
+#define FLD_STUN_SERVER			"stun_server"
 
 // TIMER fields
 #define FLD_TIMER_NOANSWER		"timer_noanswer"
+#define FLD_TIMER_NAT_KEEPALIVE		"timer_nat_keepalive"
 
 // ADDRESS FORMAT fields
 #define FLD_DISPLAY_USERONLY_PHONE	"display_useronly_phone"
@@ -80,13 +89,6 @@
 ////////////////////
 // Private
 ////////////////////
-
-bool t_user::yesno2bool(const string &yesno) const {
-	return (yesno == "yes" ? true : false);
-}
-string t_user::bool2yesno(bool b) const {
-	return (b ? "yes" : "no");
-}
 
 t_ext_support t_user::str2ext_support(const string &s) const {
 	if (s == "disabled") return EXT_DISABLED;
@@ -146,20 +148,28 @@ t_user::t_user() {
 	ptime = 20;
 	hold_variant = HOLD_RFC2543;
 	use_nat_public_ip = false;
+	use_stun = false;
 	register_at_startup = true;
 	check_max_forwards = false;
 	allow_redirection = true;
 	ask_user_to_redirect = true;
 	max_redirections = 5;
 	timer_noanswer = 30;
+	timer_nat_keepalive = DUR_NAT_KEEPALIVE;
 	ext_100rel = EXT_SUPPORTED;
 	compact_headers = false;
 	registration_time_in_contact = true;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
 	dtmf_payload_type = 101;
+	dtmf_volume = 10;
 	display_useronly_phone = true;
 	numerical_user_is_phone = false;
+	referee_hold = false;
+	referrer_hold = true;
+	allow_refer = true;
+	ask_user_to_refer = true;
+	auto_refresh_refer_sub = false;
 }
 
 bool t_user::read_config(const string &filename, string &error_msg) {
@@ -340,12 +350,41 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			ask_user_to_redirect = yesno2bool(value);
 		} else if (parameter == FLD_MAX_REDIRECTIONS) {
 			max_redirections = atoi(value.c_str());
+		} else if (parameter == FLD_REFEREE_HOLD) {
+			referee_hold = yesno2bool(value);
+		} else if (parameter == FLD_REFERRER_HOLD) {
+			referrer_hold = yesno2bool(value);
+		} else if (parameter == FLD_ALLOW_REFER) {
+			allow_refer = yesno2bool(value);
+		} else if (parameter == FLD_ASK_USER_TO_REFER) {
+			ask_user_to_refer = yesno2bool(value);
+		} else if (parameter == FLD_AUTO_REFRESH_REFER_SUB) {
+			auto_refresh_refer_sub = yesno2bool(value);
 		} else if (parameter == FLD_NAT_PUBLIC_IP) {
 			if (value.size() == 0) continue;
 			use_nat_public_ip = true;
 			nat_public_ip = value;
+		} else if (parameter == FLD_STUN_SERVER) {
+			if (value.size() == 0) continue;
+			string s = "stun:" + value;
+			stun_server.set_url(s);
+			if (!stun_server.is_valid() ||
+			    stun_server.get_user() != "")
+			{
+				error_msg = "Syntax error in file ";
+				error_msg += f;
+				error_msg += "\n";
+				error_msg += "Invalid value for STUN server: ";
+				error_msg += value;
+				log_file->write_report(error_msg, "t_user::read_config",
+					LOG_NORMAL, LOG_CRITICAL);
+				return false;
+			}
+			use_stun = true;
 		} else if (parameter == FLD_TIMER_NOANSWER) {
 			timer_noanswer = atoi(value.c_str());
+		} else if (parameter == FLD_TIMER_NAT_KEEPALIVE) {
+			timer_nat_keepalive = atoi(value.c_str());
 		} else if (parameter == FLD_EXT_100REL) {
 			ext_100rel = str2ext_support(value);
 			if (ext_100rel == EXT_INVALID) {
@@ -366,6 +405,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			dtmf_duration = atoi(value.c_str());
 		} else if (parameter == FLD_DTMF_PAUSE) {
 			dtmf_pause = atoi(value.c_str());
+		} else if (parameter == FLD_DTMF_VOLUME) {
+			dtmf_volume = atoi(value.c_str());
 		} else if (parameter == FLD_DISPLAY_USERONLY_PHONE) {
 			display_useronly_phone = yesno2bool(value);
 		} else if (parameter == FLD_NUMERICAL_USER_IS_PHONE) {
@@ -497,6 +538,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_DTMF_PAYLOAD_TYPE << '=' << dtmf_payload_type << endl;
 	config << FLD_DTMF_DURATION << '=' << dtmf_duration << endl;
 	config << FLD_DTMF_PAUSE << '=' << dtmf_pause << endl;
+	config << FLD_DTMF_VOLUME << '=' << dtmf_volume << endl;
 	config << endl;
 
 	// Write SIP PROTOCOL settings
@@ -525,6 +567,13 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(ask_user_to_redirect) << endl;
 	config << FLD_MAX_REDIRECTIONS << '=' << max_redirections << endl;
 	config << FLD_EXT_100REL << '=' << ext_support2str(ext_100rel) << endl;
+	config << FLD_REFEREE_HOLD << '=' << bool2yesno(referee_hold) << endl;
+	config << FLD_REFERRER_HOLD << '=' << bool2yesno(referrer_hold) << endl;
+	config << FLD_ALLOW_REFER << '=' << bool2yesno(allow_refer) << endl;
+	config << FLD_ASK_USER_TO_REFER << '=';
+	config << bool2yesno(ask_user_to_refer) << endl;
+	config << FLD_AUTO_REFRESH_REFER_SUB << '=';
+	config << bool2yesno(auto_refresh_refer_sub) << endl;
 	config << endl;
 
 	// Write NAT settings
@@ -534,11 +583,18 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	} else {
 		config << FLD_NAT_PUBLIC_IP << '=' << endl;
 	}
+	if (use_stun) {
+		config << FLD_STUN_SERVER << '=' << 
+			stun_server.encode_noscheme() << endl;
+	} else {
+		config << FLD_STUN_SERVER << '=' << endl;
+	}
 	config << endl;
 
 	// Write TIMER settings
 	config << "# TIMERS\n";
 	config << FLD_TIMER_NOANSWER << '=' << timer_noanswer << endl;
+	config << FLD_TIMER_NAT_KEEPALIVE << '=' << timer_nat_keepalive << endl;
 	config << endl;
 
 	// Write ADDRESS FORMAT settings

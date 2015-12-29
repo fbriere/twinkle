@@ -38,6 +38,7 @@ public:
 	t_hdr_allow();
 	void add_method(const t_method &m, const string &unknown = "");
 	void add_method(const string &s);
+	bool contains_method(const t_method &m) const;
 	string encode(void) const;
 };
 

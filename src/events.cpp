@@ -30,7 +30,11 @@ string event_type2str(t_event_type t) {
 	case EV_FAILURE: 	return "EV_FAILURE";
 	case EV_START_TIMER: 	return "EV_START_TIMER";
 	case EV_STOP_TIMER: 	return "EV_STOP_TIMER";
+	case EV_GET_TIMER_DUR:	return "EV_GET_TIMER_DUR";
 	case EV_ABORT_TRANS:	return "EV_ABORT_TRANS";
+	case EV_STUN_REQUEST:	return "EV_STUN_REQUEST";
+	case EV_STUN_RESPONSE:	return "EV_STUN_RESPONSE";
+	case EV_NAT_KEEPALIVE:	return "EV_NAT_KEEPALIVE";
 	}
 
 	return "UNKNOWN";
@@ -181,6 +185,33 @@ unsigned short t_event_stop_timer::get_timer_id(void) const {
 }
 
 ///////////////////////////////////////////////////////////
+// class t_event_get_timer_dur
+///////////////////////////////////////////////////////////
+t_event_get_timer_dur::t_event_get_timer_dur(unsigned short id, t_semaphore *_sema,
+		unsigned long *dur)
+{
+	timer_id = id;
+	sema = _sema;
+	remaining_duration = dur;
+}
+
+t_event_type t_event_get_timer_dur::get_type(void) const {
+	return EV_GET_TIMER_DUR;
+}
+
+unsigned short t_event_get_timer_dur::get_timer_id(void) const {
+	return timer_id;
+}
+
+t_semaphore *t_event_get_timer_dur::get_sema(void) const {
+	return sema;
+}
+
+unsigned long *t_event_get_timer_dur::get_duration(void) const {
+	return remaining_duration;
+}
+
+///////////////////////////////////////////////////////////
 // class t_event_abort_trans
 ///////////////////////////////////////////////////////////
 t_event_abort_trans::t_event_abort_trans(unsigned short _tid) {
@@ -196,20 +227,101 @@ unsigned short t_event_abort_trans::get_tid(void) const {
 }
 
 ///////////////////////////////////////////////////////////
+// class t_event_stun_request
+///////////////////////////////////////////////////////////
+
+t_event_stun_request::t_event_stun_request(StunMessage *m, t_stun_event_type ev_type,
+		unsigned short _tuid, unsigned short _tid) 
+{
+	msg = new StunMessage(*m);
+	MEMMAN_NEW(msg);
+	stun_event_type = ev_type;
+	tuid = _tuid;
+	tid = _tid;
+	dst_addr = 0;
+	dst_port = 0;
+}
+
+t_event_stun_request::~t_event_stun_request() {
+	MEMMAN_DELETE(msg);
+	delete msg;
+}
+
+t_event_type t_event_stun_request::get_type(void) const {
+	return EV_STUN_REQUEST;
+}
+	
+StunMessage *t_event_stun_request::get_msg(void) const {
+	return msg;
+}
+
+unsigned short t_event_stun_request::get_tuid(void) const {
+	return tuid;
+}
+unsigned short t_event_stun_request::get_tid(void) const {
+	return tid;
+}
+
+t_stun_event_type t_event_stun_request::get_stun_event_type(void) const {
+	return stun_event_type;
+}
+
+///////////////////////////////////////////////////////////
+// class t_event_stun_response
+///////////////////////////////////////////////////////////
+
+t_event_stun_response::t_event_stun_response(StunMessage *m, unsigned short _tuid,
+		unsigned short _tid)
+{
+	msg = new StunMessage(*m);
+	MEMMAN_NEW(msg);
+	tuid = _tuid;
+	tid = _tid;
+}
+
+t_event_stun_response::~t_event_stun_response() {
+	MEMMAN_DELETE(msg);
+	delete(msg);
+}
+
+t_event_type t_event_stun_response::get_type(void) const {
+	return EV_STUN_RESPONSE;
+}
+
+StunMessage *t_event_stun_response::get_msg(void) const {
+	return msg;
+}
+
+unsigned short t_event_stun_response::get_tuid(void) const {
+	return tuid;
+}
+
+unsigned short t_event_stun_response::get_tid(void) const {
+	return tid;
+}
+
+///////////////////////////////////////////////////////////
+// class t_event_nat_keepalive
+///////////////////////////////////////////////////////////
+t_event_type t_event_nat_keepalive::get_type(void) const {
+	return EV_NAT_KEEPALIVE;
+}
+
+///////////////////////////////////////////////////////////
 // class t_event_queue
 ///////////////////////////////////////////////////////////
 
 t_event_queue::t_event_queue() : sema_evq(0), sema_caught_interrupt(0) {}
 
 t_event_queue::~t_event_queue() {
-	log_file->write_header("t_event_queue::~t_event_queue", LOG_DEBUG, LOG_INFO);
+	log_file->write_header("t_event_queue::~t_event_queue", LOG_NORMAL, LOG_INFO);
 	log_file->write_raw("Clean up event queue.\n");
 
 	while (!ev_queue.empty())
 	{
 		t_event *e = ev_queue.front();
 		ev_queue.pop();
-		log_file->write_raw("\nDeleting unproccessed event: \n");
+		log_file->write_raw("\nDeleting unprocessed event: \n");
 		log_file->write_raw("Type: ");
 		log_file->write_raw(event_type2str(e->get_type()));
 		log_file->write_raw(", Pointer: ");
@@ -279,9 +391,49 @@ void t_event_queue::push_stop_timer(unsigned short timer_id) {
 	push(event);
 }
 
+void t_event_queue::push_get_timer_dur(unsigned short timer_id, t_semaphore *sema,
+		unsigned long *duration)
+{
+	t_event_get_timer_dur *event = new t_event_get_timer_dur(
+		timer_id, sema, duration);
+	MEMMAN_NEW(event);
+	push(event);
+}
+
 void t_event_queue::push_abort_trans(unsigned short tid) {
 	t_event_abort_trans *event = new t_event_abort_trans(tid);
 	MEMMAN_NEW(event);
+	push(event);
+}
+
+void t_event_queue::push_stun_request(StunMessage *m, t_stun_event_type ev_type,
+		unsigned short tuid, unsigned short tid,
+		unsigned long ipaddr, unsigned short port, unsigned short src_port)
+{
+	t_event_stun_request *event = new t_event_stun_request(m, ev_type, 
+		tuid, tid);
+	MEMMAN_NEW(event);
+	event->dst_addr = ipaddr;
+	event->dst_port = port;
+	event->src_port = src_port;
+
+	push(event);
+}
+
+void t_event_queue::push_stun_response(StunMessage *m,
+		unsigned short tuid, unsigned short tid)
+{
+	t_event_stun_response *event = new t_event_stun_response(m, tuid, tid);
+	MEMMAN_NEW(event);
+	push(event);
+}
+
+void t_event_queue::push_nat_keepalive(unsigned long ipaddr, unsigned short port) {
+	t_event_nat_keepalive *event = new t_event_nat_keepalive();
+	MEMMAN_NEW(event);
+	event->dst_addr = ipaddr;
+	event->dst_port = port;
+
 	push(event);
 }
 

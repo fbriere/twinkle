@@ -30,6 +30,7 @@
 #include "threads/mutex.h"
 #include "parser/request.h"
 #include "sdp/sdp.h"
+#include "stun/stun.h"
 
 using namespace std;
 
@@ -37,13 +38,17 @@ using namespace std;
 class t_phone;
 class t_line;
 class t_session;
+class t_sub_refer;
 
 class t_client_request {
 private:
 	static t_mutex	mtx_next_tuid; // protect updates on next_tuid
 	static t_tuid	next_tuid;
 
+	// A client request is either a SIP or a STUN request
 	t_request	*request;
+	StunMessage	*stun_request;
+	
 	t_tuid		tuid;
 	t_tid		tid;
 
@@ -56,12 +61,14 @@ public:
 
 	// A copy of the request is stored in the client_request object
 	t_client_request(t_request *r, const t_tid _tid);
+	t_client_request(StunMessage *r, const t_tid _tid);
 	~t_client_request();
 
 	t_client_request *copy(void);
 
 	// Returns the request pointer
 	t_request *get_request(void) const;
+	StunMessage *get_stun_request(void) const;
 
 	t_tuid get_tuid(void) const;
 	t_tid get_tid(void) const;
@@ -78,6 +85,11 @@ public:
 
 	// Decrement reference count. Returns the value after decrement.
 	int dec_ref_count(void);
+};
+
+enum t_dialog_type {
+	DT_INVITE,
+	DT_SUBSCRIPTION
 };
 
 enum t_dialog_state {
@@ -99,7 +111,17 @@ enum t_dialog_state {
 	DS_W4ACK_RE_INVITE,	// Waiting for ACK on re-INVITE
 	DS_W4RE_INVITE_RESP,	// re-INVITE sent, waiting for response
 	DS_W4RE_INVITE_RESP2,	// re-INVITE sent, provisional response recvd
-	DS_TERMINATED		// Dialog terminated
+	DS_TERMINATED,		// Dialog terminated
+
+	// Subscription states
+	DS_NULL_SUB,		// Null state for subscription dialog
+	DS_W4SUBSCRIBE_RESP,	// SUBSCRIBE sent, waiting for response
+	DS_CONFIRMED_SUB,	// Confirmed subscription dialog
+};
+
+enum t_reinvite_purpose {
+	REINVITE_HOLD,		// Re-invite for call hold
+	REINVITE_RETRIEVE,	// Re-invite for call retrieve
 };
 
 class t_dialog {
@@ -112,9 +134,11 @@ private:
 	t_dialog_id		id;
 	t_line			*line;
 	t_dialog_state		state;
+	t_dialog_type		dialog_type;
 
 	// Dialog state information
 	string		call_id;
+	bool		call_id_owner;	// indicates if call_id generated locally
 	string		local_tag;
 	string		remote_tag;
 	unsigned long	local_seqnr;	// last local seqnr issued
@@ -138,17 +162,27 @@ private:
 	// information.
 	t_session	*session_re_invite;
 
+	// The purpose of an outgoing re-INVITE request
+	t_reinvite_purpose	reinvite_purpose;
+
+	// Indicates if the last call hold action failed.
+	bool			hold_failed;
+
 	// Pending request
 	t_client_request	*req_out;	  // outgoing non-invite req
 	t_client_request	*req_out_invite;  // outgoing INVITE
 	t_client_request	*req_in_invite;   // incoming INVITE
 	t_client_request	*req_cancel;      // outgoing CANCEL
+	t_client_request	*req_refer;	  // outgoing REFER
 
 	// Last outgoing PRACK. While a PRACK is still pending a new 1xx
 	// response might come in. A PRACK will be sent for this 1xx without
 	// waiting for the response for the previous PRACK.
 	t_client_request	*req_prack;
-
+	
+	// Pending STUN request
+	t_client_request	*req_stun;
+	
 	// Indication if request must be cancelled
 	bool request_cancelled;
 
@@ -160,7 +194,7 @@ private:
 	// a PRACK to acknowledge a 1xx containing SDP from the
 	// far end (RFC 3262 3)
 	bool answer_after_prack;
-
+	
 	// Indication if 180 ringing has already been received
 	bool ringing_received;
 
@@ -174,20 +208,15 @@ private:
 	// Cached ack needed for retransmission
 	t_request		*ack;
 
+	// Subscription created by REFER (RFC 3515)
+	t_sub_refer		*sub_refer;
+
 	// Remove a client request. Pass one of the client request
 	// pointers to this member. The reference count of the
 	// request will be decremented. If it becomes zero, then
 	// the request object is deleted.
 	// In all cases the pointer will be set to NULL.
 	void remove_client_request(t_client_request **cr);
-
-	// Create a request using the stored state information
-	t_request *create_request(t_method m);
-
-	// Create contact/from address
-	// TODO: move these to a dedicated user class???
-	string create_user_contact(void) const;
-	string create_user_from(void) const;
 
 	// Process responses
 	void state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid);
@@ -201,16 +230,24 @@ private:
 	void state_w4answer(t_request *r, t_tuid tuid, t_tid tid);
 	void state_w4ack(t_request *r, t_tuid tuid, t_tid tid);
 	void state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid);
+	void state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid);
+	void state_w4bye_resp(t_request *r, t_tuid tuid, t_tid tid);
 	void state_confirmed(t_request *r, t_tuid tuid, t_tid tid);
-
+	void state_confirmed_sub(t_request *r, t_tuid tuid, t_tid tid);
+	void state_conf_retr_stun(t_request *r, t_tuid tuid, t_tid tid);
+	
 	// Process a re-INVITE request in the confirmed state
 	void process_re_invite(t_request *r, t_tuid tuid, t_tid tid);
+	void process_refer(t_request *r, t_tuid tuid, t_tid tid);
+	void process_subscribe(t_request *r, t_tuid tuid, t_tid tid);
+	void process_notify(t_request *r, t_tuid tuid, t_tid tid);
 
 	// Process timeouts
 	void state_w4ack(t_line_timer timer);
 	void state_w4ack_re_invite(t_line_timer timer);
 	void state_w4re_invite_resp(t_line_timer timer);
 	void state_w4answer(t_line_timer timer);
+	void state_confirmed(t_line_timer timer);
 
 	// Make the re-INVITE session the current session
 	void activate_new_session(void);
@@ -255,6 +292,7 @@ public:
 	unsigned short		id_ack_timeout;
 	unsigned short		id_ack_guard;
 	unsigned short		id_re_invite_guard;
+	unsigned short		id_glare_retry;
 
 	// RFC 3262
 	// 100rel timers
@@ -262,15 +300,28 @@ public:
 	unsigned short		id_100rel_timeout;
 	unsigned short		id_100rel_guard;
 
-	t_dialog(t_line *_line);
+	bool			refer_accepted;  // last incoming REFER accepted?
+	bool			refer_succeeded; // last outgoing REFER succeeded?
+
+	// Indicates if this dialog is setup because the user told to do
+	// so by a REFER.
+	bool			is_referred_call;
+
+	// State of an outgoing REFER
+	t_refer_state		refer_state;
+
+	t_dialog(t_line *_line, t_dialog_type _dialog_type = DT_INVITE);
 	~t_dialog();
+
+	// Create a request using the stored state information
+	t_request *create_request(t_method m);
 
 	t_dialog_id get_id(void) const;
 	t_dialog *copy(void);
 
 	// Send requests
 	void send_invite(const t_url &to_uri, const string &to_display,
-		const string &subject);
+		const string &subject, const t_hdr_referred_by &hdr_referred_by);
 
 	// Resend the INVITE with an authorization header containing credentials
 	// for the challenge in the response. The response must be a 401 or 407.
@@ -311,16 +362,26 @@ public:
 	bool redirect_request(t_response *resp);
 
 	// Call hold/retrieve (send re-INVITE)
-	void hold(void);
+	// rtponly indicates if only the RTP streams should be stopped and
+	// the soundcard freed without any SIP signaling.
+	void hold(bool rtponly = false);
 	void retrieve(void);
+
+	// Refer a call (send REFER)
+	void send_refer(const t_url &uri, const string &display);
 
 	// Send DTMF digit
 	void send_dtmf(char digit);
+	
+	// Create a binding for the media port via STUN.
+	// Returns false if binding cannot be created.
+	bool stun_bind_media(void);
 
 	// Handle received events
 	void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
+	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
 
 	// Answer a call (send 200 OK)
 	void answer(void);
@@ -339,13 +400,26 @@ public:
 
 	// Match response with dialog
 	bool match_response(t_response *r, t_tuid tuid);
+	bool match_response(StunMessage *r, t_tuid tuid);
 
 	// Match request with dialog
 	bool match_request(t_request *r);
 	bool match_cancel(t_request *r, t_tid target_tid);
 
+	// Check if an incoming INVITE is a retransmission
+	bool is_invite_retrans(t_request *r);
+
+	// Process a retransmission of an incoming INVITE
+	void process_invite_retrans(void);
+
 	t_dialog_state get_state(void) const;
+
+	// Process dialog timer timeout
 	void timeout(t_line_timer timer);
+
+	// Process subcribe timer timeout
+	void timeout_sub(t_subscribe_timer timer, const string &event_type,
+		const string &event_id);
 
 	// Get the phone that belongs to this dialog
 	t_phone *get_phone(void) const;
@@ -356,6 +430,13 @@ public:
 	// Return the audio session belonging to this dialog.
 	// Returns NULL if there is no audio session
 	t_audio_session *get_audio_session(void) const;
+
+	// Notify the dialog of the progress of a reference
+	void notify_refer_progress(t_response *r);
+
+	// Returns true if we are the owner of the call id, i.e. the
+	// value is generated locally.
+	bool is_call_id_owner(void) const;
 };
 
 #endif

@@ -23,6 +23,7 @@
 #include <fstream>
 #include "threads/mutex.h"
 #include "threads/thread.h"
+#include "threads/sema.h"
 
 using namespace std;
 
@@ -58,18 +59,19 @@ class t_tone_gen {
 private:
 	string		wav_filename;	// name of wav file
 	ifstream	*wav_file;	// input file stream for wav file
+	string		dev_tone;	// device to play tone
 	int		fd_dsp;		// soundcard
 	t_chunk_fmt	wav_format;	// format chunk from wav file
 	bool		valid;		// wav file is in a valid format
 	bool		stop_playing;	// indicates if playing should stop
-	t_mutex		mtx_play;	// will be locked while playing
 	t_thread	*thr_play;	// playing thread
 	bool		loop;		// repeat playing
 	int		pause;		// pause (ms) between repetitions
 	char		*data_buf;	// buffer for reading sound samples
+	t_semaphore	sema_finished;	// indicates if playing finished
 
 public:
-	t_tone_gen(const string &filename);
+	t_tone_gen(const string &filename, const string &_dev_tone);
 	~t_tone_gen();
 
 	bool is_valid(void) const;

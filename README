@@ -76,16 +76,19 @@ NOTE: the configuration file editor only exists in the GUI.
 
 NAT
 ---
-Twinkle does not have STUN support yet.
-
 If there is a NAT between you and your SIP server then you have
-two options to make things work:
+3 options to make things work:
 
 1) Your SIP provider uses a Session Border Controller
-2) Enable the following option in the NAT section of
-   you profile (with the profile editor)
+2) Your SIP provider offers a STUN server
+3) Make static address mappings in your NAT for SIP and RTP
 
-	Put public IP address inside SIP messages
+STUN can be enabled in the NAT section of the user profile.
+
+For the static address mappings enable the following in
+the NAT section of the user profile:
+
+      Use statically configured public IP address inside SIP messages
 
    And fill in the public IP address of your NAT.
 
@@ -100,6 +103,8 @@ two options to make things work:
 	public:8001 --> private:8001 (for RTCP on line 1)
 	public:8002 --> private:8002 (for RTP on line 2)
 	public:8003 --> private:8003 (for RTCP on line 2)
+        public:8004 --> private:8004 (for RTP for call transfer)
+        public:8005 --> private:8005 (for RTCP for call transfer)
 
    If you have changed the SIP/RTP ports in your profile you have
    to change the port forwarding rules likewise.
@@ -112,8 +117,8 @@ your .twinkle directory:
 	twinkle.log	This is the latest log file
 	twinkle.log.old	This is the previous log file
 
-When twinkle.log is full (5 MB) then it is moved to twinkle.log.old
-and a new twinkle.log is created.
+When twinkle.log is full (default is 5 MB) then it is moved to 
+twinkle.log.old and a new twinkle.log is created.
 
 On startup an existing twinkle.log is moved to twinkle.log.old and a
 new twinkle.log is created.
@@ -233,3 +238,4 @@ Currently "sip:" is the only addressing scheme supported by Twinkle.
 
 
 Michel de Boer
+michel@twinklephone.com

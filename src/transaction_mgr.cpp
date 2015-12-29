@@ -71,6 +71,26 @@ t_trans_server *t_transaction_mgr::find_trans_server(t_tid tid) const {
 	return i->second;
 }
 
+t_stun_transaction *t_transaction_mgr::find_stun_trans(StunMessage *r) const {
+	map<t_tid, t_stun_transaction *>::const_iterator i;
+
+	for (i = map_stun_trans.begin(); i != map_stun_trans.end();
+			i++)
+	{
+		if (i->second->match(r)) return i->second;
+	}
+
+	return NULL;
+}
+
+t_stun_transaction *t_transaction_mgr::find_stun_trans(t_tid tid) const {
+	map<t_tid, t_stun_transaction *>::const_iterator i;
+
+	i = map_stun_trans.find(tid);
+	if (i == map_stun_trans.end()) return NULL;
+	return i->second;
+}
+
 t_trans_server *t_transaction_mgr::find_cancel_target(t_request *r) const {
 	map<t_tid, t_trans_server *>::const_iterator i;
 
@@ -129,6 +149,42 @@ t_ts_non_invite *t_transaction_mgr::create_ts_non_invite(t_request *r) {
 	return t;
 }
 
+t_sip_stun_trans *t_transaction_mgr::create_sip_stun_trans(StunMessage *r,
+		unsigned short tuid)
+{
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	ipaddr = user_config->stun_server.get_h_ip();
+	if (ipaddr == 0) return NULL;
+	port = user_config->stun_server.get_hport();
+	if (port == 0) return NULL;	
+
+	t_sip_stun_trans *t = new t_sip_stun_trans(r, tuid, ipaddr, port);
+	MEMMAN_NEW(t);
+	map_stun_trans[t->get_id()] = (t_stun_transaction *)t;
+	return t;
+}
+
+t_media_stun_trans *t_transaction_mgr::create_media_stun_trans(StunMessage *r,
+		unsigned short tuid, unsigned short src_port)
+{
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	ipaddr = user_config->stun_server.get_h_ip();
+	if (ipaddr == 0) return NULL;
+	port = user_config->stun_server.get_hport();
+	if (port == 0) return NULL;	
+	
+	t_media_stun_trans *t = new t_media_stun_trans(r, tuid,
+		ipaddr, port, src_port);
+	MEMMAN_NEW(t);
+	map_stun_trans[t->get_id()] = (t_stun_transaction *)t;
+	return t;
+}
+
+
 void t_transaction_mgr::delete_trans_client(t_trans_client *tc) {
 	map_trans_client.erase(tc->get_id());
 	MEMMAN_DELETE(tc);
@@ -141,9 +197,15 @@ void t_transaction_mgr::delete_trans_server(t_trans_server *ts) {
 	delete ts;
 }
 
+void t_transaction_mgr::delete_stun_trans(t_stun_transaction *st) {
+	map_stun_trans.erase(st->get_id());
+	MEMMAN_DELETE(st);
+	delete st;
+}
+
 t_transaction_mgr::~t_transaction_mgr() {
 	log_file->write_header("t_transaction_mgr::~t_transaction_mgr",
-		LOG_DEBUG, LOG_INFO);
+		LOG_NORMAL, LOG_INFO);
 	log_file->write_raw("Clean up transaction manager.\n");
 
 	map<t_tid, t_trans_client *>::iterator i;
@@ -176,6 +238,20 @@ t_transaction_mgr::~t_transaction_mgr() {
 		log_file->write_endl();
 		MEMMAN_DELETE(j->second);
 		delete j->second;
+	}
+	
+	map<t_tid, t_stun_transaction *>::iterator k;
+	for (k = map_stun_trans.begin(); k != map_stun_trans.end();
+	     k++)
+	{
+		log_file->write_raw("\nDeleting STUN transaction: \n");
+		log_file->write_raw("Tid: ");
+		log_file->write_raw(k->first);
+		log_file->write_raw(", State: ");
+		log_file->write_raw(trans_state2str(k->second->get_state()));
+		log_file->write_endl();
+		MEMMAN_DELETE(k->second);
+		delete k->second;
 	}
 
 	log_file->write_footer();
@@ -347,9 +423,11 @@ void t_transaction_mgr::handle_event_user(t_event_user *e) {
 void t_transaction_mgr::handle_event_timeout(t_event_timeout *e) {
 	t_timer			*t = e->get_timer();
 	t_tmr_transaction	*tmr_trans;
+	t_tmr_stun_trans	*tmr_stun_trans;
 	t_tid			tid;
 	t_trans_client		*tc;
 	t_trans_server		*ts;
+	t_stun_transaction	*st;
 
 	switch (t->get_type()) {
 	case TMR_TRANSACTION:
@@ -379,6 +457,22 @@ void t_transaction_mgr::handle_event_timeout(t_event_timeout *e) {
 
 		// The transaction is already gone. Discard timeout.
 		break;
+	case TMR_STUN_TRANSACTION:
+		tmr_stun_trans = (t_tmr_stun_trans *)t;
+		tid = tmr_stun_trans->get_tid();
+		st = find_stun_trans(tid);
+		if (st) {
+			st->timeout(tmr_stun_trans->get_stun_timer());
+			
+			if (st->get_state() == TS_TERMINATED) {
+				delete_stun_trans(st);
+			}
+			
+			return;
+		}
+		
+		// The transaction is already gone. Discard timeout.
+		break;
 	default:
 		assert(false);
 		break;
@@ -403,10 +497,93 @@ void t_transaction_mgr::handle_event_abort(t_event_abort_trans *e) {
 	}
 }
 
+void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
+	StunMessage *msg = e->get_msg();
+	unsigned short tuid = e->get_tuid();
+	unsigned short tid = e->get_tid();
+	StunMessage *response;
+	t_sip_stun_trans *sst;
+	t_media_stun_trans *mst;
+	StunMessage *resp;
+	
+	switch(e->get_stun_event_type()) {
+	case TYPE_STUN_SIP:
+		sst = create_sip_stun_trans(msg, tuid);
+		if (!sst) {
+			// STUN server not found
+			log_file->write_header(
+				"t_transaction_mgr::handle_event_stun_request",
+				LOG_NORMAL, LOG_INFO);
+			log_file->write_raw("Cannot resolve:\n");
+			log_file->write_raw(user_config->stun_server.encode());
+			log_file->write_endl();
+			log_file->write_raw("Send internal: 404 Not Found\n");
+			log_file->write_footer();
+				
+			resp = stunBuildError(*msg, 404, "Not Found");
+			evq_trans_layer->push_stun_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+		}
+		break;
+	case TYPE_STUN_MEDIA:
+		mst = create_media_stun_trans(msg, tuid, e->src_port);
+		if (!mst) {
+			// STUN server not found
+			log_file->write_header(
+				"t_transaction_mgr::handle_event_stun_request",
+				LOG_NORMAL, LOG_INFO);
+			log_file->write_raw("Cannot resolve:\n");
+			log_file->write_raw(user_config->stun_server.encode());
+			log_file->write_endl();
+			log_file->write_raw("Send internal: 404 Not Found\n");
+			log_file->write_footer();
+				
+			resp = stunBuildError(*msg, 404, "Not Found");
+			evq_trans_layer->push_stun_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+		}
+		break;
+	default:
+		assert(false);
+		break;
+	}
+}
+
+void t_transaction_mgr::handle_event_stun_response(t_event_stun_response *e) {
+	StunMessage *response = e->get_msg();
+	t_stun_transaction *st = find_stun_trans(response);
+	
+	if (!st) {
+		// This response does not match any transaction.
+		// Ignore it.
+		return;
+	}
+	
+	st->process_response(response);
+	
+	if (st->get_state() == TS_TERMINATED) {
+		delete_stun_trans(st);
+	}
+}
+
 unsigned short t_transaction_mgr::start_timer(long dur, t_sip_timer tmr,
 			unsigned short tid)
 {
 	t_tmr_transaction *t = new t_tmr_transaction(dur, tmr, tid);
+	MEMMAN_NEW(t);
+	evq_timekeeper->push_start_timer(t);
+	unsigned short timer_id = t->get_id();
+	MEMMAN_DELETE(t);
+	delete t;
+	return timer_id;
+}
+
+unsigned short t_transaction_mgr::start_stun_timer(long dur, t_stun_timer tmr,
+			unsigned short tid)
+{
+	t_tmr_stun_trans *t = new t_tmr_stun_trans(dur, tmr, tid);
 	MEMMAN_NEW(t);
 	evq_timekeeper->push_start_timer(t);
 	unsigned short timer_id = t->get_id();
@@ -425,6 +602,8 @@ void t_transaction_mgr::run(void) {
 	t_event_user		*ev_user;
 	t_event_timeout		*ev_timeout;
 	t_event_abort_trans	*ev_abort;
+	t_event_stun_request	*ev_stun_request;
+	t_event_stun_response	*ev_stun_response;
 
 	while (true) {
 		event = evq_trans_mgr->pop();
@@ -445,6 +624,14 @@ void t_transaction_mgr::run(void) {
 		case EV_ABORT_TRANS:
 			ev_abort = (t_event_abort_trans *)event;
 			handle_event_abort(ev_abort);
+			break;
+		case EV_STUN_REQUEST:
+			ev_stun_request = (t_event_stun_request *)event;
+			handle_event_stun_request(ev_stun_request);
+			break;
+		case EV_STUN_RESPONSE:
+			ev_stun_response = (t_event_stun_response *)event;
+			handle_event_stun_response(ev_stun_response);
 			break;
 		default:
 			assert(false);

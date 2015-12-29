@@ -1,3 +1,113 @@
-Release 0.1
+30 jul 2005 - Release 0.2.1
+===========================
+
+New functionality:
+==================
+- Clear button on log view window.
+
+Bug fixes:
+----------
+- The system settings window confused the speaker and mic settings.
+- Log view window sometimes opened behind other windows.
+- Segmentation fault when SUBSCRIBE with expires=0 was received to end
+  a refer subscription.
+- When a call transfer fails, the original call is received. If the line
+  for this call is not the active call however, the call should stay
+  on-hold.
+- On rare occasions a segmentation fault occurred when the ring tone
+  was stopped.
+- Log view window sometimes caused deadlock.
+
+
+24 jul 2005 - Release 0.2
+=========================
+
+New functionality:
+------------------
+- STUN support for NAT traversal
+- Blind call transfer service
+- Reject call transfer request
+- Auto answer service
+- REFER, NOTIFY and SUBSCRIBE support for call transfer scenario's
+  * REFER is sent for blind call transfer. Twinkle accpets incoming
+    NOTIFY messages about the transfer progress.
+    Twinkle can send SUBSCRIBE to extend refer event subscription
+  * Incoming REFER within dialog is handled by Twinkle
+    Twinkle sends NOTIFY messages during transfer.
+    Incoming SUBSCRIBE to extend refer event subscription is granted.
+- Retry re-INVITE after a glare (491 response, RFC 3261 14.1)
+- Respond with 416 if a request with a non-sip URI is received
+- Multiple sound card support for playing ring tone to a different
+  device than speech
+- The To-tag in a 200 OK on a CANCEL was different than the To-tag in a provisional
+  response on the INVITE. RFC 3261 recommends that these To-tags are the same.
+  Twinkle now uses the same To-tag.
+- Show error messages to user when trying to submit invalid values on the
+  user profile
+- DTMF volume configurable via user profile
+- Log viewer
+- User profile wizard
+- Help texts for many input fields (e.g. in user profile). Help can be accessed
+  by pressing Ctrl+F1 or using the question mark from the title bar.
+
+Bug fixes:
+----------
+- A retransmission of an incoming INVITE after a 2XX has been sent
+  was seen as a new INVITE.
+- If an OPTIONS request timed out then the GUI did not release its
+  lock causing a deadlock.
+- If the URI in a To, From, Contact or Reply-To header is not 
+  enclosed by < and >, then the parameters (separated by a semi-colon) 
+  belong to the header, NOT to the URI.
+  They were parsed as parameters of the URI. This could cause the
+  loss of a tag-parameter causing call setup failures.
+- Do not resize window when setting a long string in to, from or subject
+
+Newly supported RFC's
+---------------------
+RFC 3265 - Session Initiation Protocol (SIP)-Specific Event Notification
+RFC 3420 - Internet Media Type message/sipfrag
+RFC 3489 - Simple Traversal of User Datagram Protocol (UDP)
+           Through Network Address Translators (NATs)
+RFC 3515 - The Session Initiation Protocol (SIP) Refer Method
+RFC 3892 - The Session Initiation Protocol (SIP) Referred-By Mechanism
+        
+
+27 apr 2005 - Release 0.1
+=========================
 
 First release of Twinkle, a SIP VoIP client.
+
+- Basic calls
+- 2 call appearances (lines)
+- Call Waiting
+- Call Hold
+- 3-way conference calling
+- Mute
+- Call redirection on demand
+- Call redirection unconditional
+- Call redirection when busy
+- Call redirection no answer
+- Reject call redirection request
+- Call reject
+- Do not disturb
+- Send DTMF digits to navigate IVR systems
+- NAT traversal through static provisioning
+- Audio codecs: G.711 A-law, G.711 u-law, GSM
+
+Supported RFC's
+---------------
+- RFC 2327 - SDP: Session Description Protocol
+- RFC 2833 - RTP Payload for DTMF Digits
+- RFC 3261 - SIP: Session Initiation Protocol
+- RFC 3262 - Reliability of Provisional Responses in SIP
+- RFC 3264 - An Offer/Answer Model with the Session Description Protocol (SDP)
+- RFC 3581 - An extension to SIP for Symmetric Response Routing
+- RFC 3550 - RTP: A Transport Protocol for Real-Time Applications
+
+RFC 3261 is not fully implemented yet.
+
+- No TCP transport support, only UDP
+- No DNS SRV support, only DNS A-record lookup
+- Only plain SDP bodies are supported, no multi-part MIME or S/MIME
+- Only sip: URI support, no sips: URI support

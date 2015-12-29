@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <linux/soundcard.h>
+#include <sys/soundcard.h>
 #include <iostream>
 #include "tone_gen.h"
 #include "log.h"
@@ -33,8 +33,6 @@
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
-
-#define	TONE_DEVICE	DEV_DSP
 
 // Number of samples read at once from the wav file
 #define NUM_SAMPLES_PER_TURN	1024
@@ -49,10 +47,13 @@ void *tone_gen_play(void *arg) {
 	tg->play();
 }
 
-t_tone_gen::t_tone_gen(const string &filename) {
+t_tone_gen::t_tone_gen(const string &filename, const string &_dev_tone) :
+		sema_finished(0) 
+{
 	string f;
 
 	wav_file = NULL;
+	dev_tone = _dev_tone;
 	fd_dsp = 0;
 	valid = false;
 	data_buf = NULL;
@@ -189,6 +190,9 @@ t_tone_gen::~t_tone_gen() {
 		MEMMAN_DELETE(thr_play);
 		delete thr_play;
 	}
+	
+	log_file->write_report("Deleted tone generator.",
+		"t_tone_gen::~t_tone_gen");
 }
 
 bool t_tone_gen::is_valid(void) const {
@@ -200,15 +204,22 @@ void t_tone_gen::play(void) {
 	int status;	// return from ioctl()
 	struct timespec sleeptimer;
 
-	if (!valid) return;
+	if (!valid) {
+		log_file->write_report(
+			"Tone generator is invalid. Cannot play tone",
+			"t_tone_gen::play", LOG_NORMAL, LOG_WARNING);
+		sema_finished.up();
+		return;
+	}
 
-	fd_dsp = open(TONE_DEVICE, O_WRONLY);
+	fd_dsp = open(dev_tone.c_str(), O_WRONLY);
 	if (fd_dsp < 0) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		ui->cb_display_msg(msg, MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
 
@@ -218,10 +229,11 @@ void t_tone_gen::play(void) {
 	if (status == -1) {
 		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		ui->cb_display_msg("Cannot set buffer size on sound card.",
 			MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
 
@@ -234,17 +246,19 @@ void t_tone_gen::play(void) {
 		arg2 = 16;
 	} else {
 		log_file->write_report("Unsupported sample size.",
-			"t_tone_gen::t_tone_gen");
+			"t_tone_gen::play");
+		sema_finished.up();
 		return;
 	}
 	status = ioctl(fd_dsp, SNDCTL_DSP_SETFMT, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
 			MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
 
@@ -252,10 +266,11 @@ void t_tone_gen::play(void) {
 	if (status == -1) {
 		string msg("SOUND_PCM_WRITE_BITS ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		ui->cb_display_msg("Cannot set sound card to 16 bits playing.",
 			MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
 
@@ -265,12 +280,13 @@ void t_tone_gen::play(void) {
 	if (status == -1) {
 		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_tone_gen::t_tone_gen",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		msg = "Sound card cannot be set to ";
 		msg += int2str(wav_format.channels);
 		msg += " channel(s).";
 		ui->cb_display_msg(msg, MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
 
@@ -280,15 +296,17 @@ void t_tone_gen::play(void) {
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
 		msg += strerror(errno);
-		log_file->write_report(msg, "t_audio_session::t_audio_session",
+		log_file->write_report(msg, "t_tone_gen::play",
 			LOG_NORMAL, LOG_WARNING);
 		msg = "Cannot set sound card sample rate to ";
 		msg += int2str(wav_format.samples_per_sec);
 		ui->cb_display_msg(msg, MSG_WARNING);
+		sema_finished.up();
 		return;
 	}
-
-	mtx_play.lock();
+	
+	log_file->write_report("Start playing tone.",
+		"t_tone_gen::play");
 
 	do {
 		int nbytes = NUM_SAMPLES_PER_TURN * wav_format.block_align;
@@ -347,8 +365,11 @@ void t_tone_gen::play(void) {
 			wav_file->seekg(start_pos);
 		}
 	} while (loop);
+	
+	log_file->write_report("Tone ended.",
+		"t_tone_gen::play_tone");
 
-	mtx_play.unlock();
+	sema_finished.up();
 }
 
 void t_tone_gen::start_play_thread(bool _loop, int _pause) {
@@ -360,13 +381,24 @@ void t_tone_gen::start_play_thread(bool _loop, int _pause) {
 }
 
 void t_tone_gen::stop(void) {
-	if (stop_playing) return;
+	log_file->write_report("Stopping tone.",
+		"t_tone_gen::stop");
 
+	if (stop_playing) {
+		log_file->write_report("Tone has stopped already.",
+			"t_tone_gen::stop");
+		return;
+	}
+
+	// This will stop the playing thread.
 	stop_playing = true;
-
-	// The lock will return as soon as the playing has finished.
-	mtx_play.lock();
-	mtx_play.unlock();
+	
+	// The semaphore will be upped by the playing thread as soon 
+	// as playing finishes.
+	sema_finished.down();
+	
+	log_file->write_report("Tone stopped.",
+		"t_tone_gen::stop");
 
 	// Stop audio play out
 	int arg = 0;

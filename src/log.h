@@ -22,6 +22,8 @@
 #include <string>
 #include <fstream>
 #include "threads/mutex.h"
+#include "threads/sema.h"
+#include "threads/thread.h"
 
 using namespace std;
 
@@ -31,15 +33,16 @@ using namespace std;
 enum t_log_severity {
 	LOG_INFO,
 	LOG_WARNING,
-	LOG_CRITICAL
+	LOG_CRITICAL,
+	LOG_DEBUG
 };
 
 // Message class
 enum t_log_class {
 	LOG_NORMAL,
 	LOG_SIP,
-	LOG_DEBUG,
-	LOG_DEBUG_MEM
+	LOG_STUN,
+	LOG_MEMORY
 };
 
 class t_log {
@@ -52,6 +55,16 @@ private:
 
 	// Indicates if logging is disabled
 	bool		log_disabled;
+	bool		log_report_disabled;
+	
+	// Indicates if the user should be informed about log updates
+	bool		inform_user;
+	
+	// Indicates if new data for the log viewer is available
+	t_semaphore	*sema_logview;
+	
+	// Thread for updating the log viewer
+	t_thread	*thr_logview;
 
         // Move the current log file to the .old log file
         bool move_current_to_old(void);
@@ -63,7 +76,7 @@ public:
         // Write a report with header and footer
         void write_report(const string &report, const string &func_name); // normal, info
 	void write_report(const string &report, const string &func_name,
-		t_log_class log_class, t_log_severity severity);
+		t_log_class log_class, t_log_severity severity = LOG_INFO);
 
         // Write header
 	// This locks the mtx_log. So you must call write footer to release
@@ -85,6 +98,15 @@ public:
 
         // Write end of line
         void write_endl(void);
+        
+        // Return the full path name of the log file
+        string get_filename(void) const;
+        
+        // Enable/disable user informs on updates
+        void enable_inform_user(bool on);
+        
+        // Block till log information is available for log viewer
+        void wait_for_log(void);
 };
 
 extern t_log *log_file;
