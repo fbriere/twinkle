@@ -24,7 +24,7 @@ Build-Depends: bison,
                qtscript5-dev,
                qttools5-dev,
                qttools5-dev-tools
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Homepage: http://twinkle.dolezel.info/
 
 Package: twinkle
