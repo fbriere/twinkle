@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -92,6 +92,7 @@ public:
         // Write raw data
         void write_raw(const string &raw);
         void write_raw(int raw);
+        void write_raw(unsigned int raw);
         void write_raw(unsigned short raw);
         void write_raw(unsigned long raw);
 	void write_raw(long raw);

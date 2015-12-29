@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 
 #include <assert.h>
 #include "line.h"
+#include "phone_user.h"
 #include "session.h"
 #include "util.h"
-#include "user.h"
 #include "userintf.h"
 #include "audits/memman.h"
 
@@ -30,6 +30,9 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 		  unsigned short _receive_port)
 {
 	dialog = _dialog;
+	
+	user_config = dialog->get_line()->get_user();
+	assert(user_config);
 
 	receive_host = _receive_host;
 	retrieve_host = _receive_host;

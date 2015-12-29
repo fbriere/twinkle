@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -316,10 +316,23 @@ string unquote(const string &s) {
 }
 
 bool is_number(const string &s) {
+	if (s.empty()) return false;
+	
         for (int i = 0; i < s.size(); i++ ) {
 		if (!isdigit(s[i])) return false;
 	}
 
+	return true;
+}
+
+bool is_ipaddr(const string &s) {
+	list<string> l = split(s, '.');
+	if (l.size() != 4) return false;
+	
+	for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+		if (!is_number(*i) || atoi(i->c_str()) > 255) return false;
+	}
+	
 	return true;
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,11 @@ protected:
 	t_dialog		*dialog; // dialog owning the subscription
 	string			event_type;
 	string			event_id;
+	
+	// User profile of user using the line
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user			*user_config;
 
 	bool			pending; // indicates if not active yet
 
@@ -73,8 +78,8 @@ protected:
 	virtual t_request *create_notify(const string &sub_state,
 		const string &reason = "") const;
 
-	void send_request(t_request *r, t_tuid tuid) const;
-	void send_response(t_response *r, t_tuid tuid, t_tid tid) const;
+	void send_request(t_user *user_config, t_request *r, t_tuid tuid) const;
+	void send_response(t_user *user_config, t_response *r, t_tuid tuid, t_tid tid) const;
 
 	void start_timer(t_subscribe_timer timer, long duration);
 	void stop_timer(t_subscribe_timer timer);

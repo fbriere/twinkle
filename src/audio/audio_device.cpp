@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -141,7 +141,25 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	// Set fragment size
 	int arg;
 	if (short_latency) {
-		arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
+		switch (sys_config->oss_fragment_size) {
+		case 16:
+			arg = 0x00ff0004; // 255 buffers of 2^4 bytes each
+			break;		
+		case 32:
+			arg = 0x00ff0005; // 255 buffers of 2^5 bytes each
+			break;
+		case 64:
+			arg = 0x00ff0006; // 255 buffers of 2^5 bytes each
+			break;
+		case 128:
+			arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
+			break;
+		case 256:
+			arg = 0x00ff0008; // 255 buffers of 2^8 bytes each
+			break;
+		default:
+			arg = 0x00ff0007; // 255 buffers of 2^7 bytes each
+		}
 	} else {
 		arg = 0x00ff000a; // 255 buffers of 2^10 bytes each
 	}
@@ -312,6 +330,8 @@ t_alsa_io::~t_alsa_io() {
 		log_file->write_endl();
 		log_file->write_footer();
 		
+		// Without the snd_pcm_hw_free, snd_pcm_close sometimes fails.
+		snd_pcm_hw_free(pcm_play_ptr);
 		snd_pcm_close(pcm_play_ptr);
 		pcm_play_ptr = 0;
 	}
@@ -322,6 +342,7 @@ t_alsa_io::~t_alsa_io() {
 		log_file->write_endl();
 		log_file->write_footer();
 		
+		snd_pcm_hw_free(pcm_rec_ptr);
 		snd_pcm_close(pcm_rec_ptr);
 		pcm_rec_ptr = 0;
 	}
@@ -394,6 +415,9 @@ open_again:
 		log_file->write_endl();
 		log_file->write_footer();
 		
+		// Do not call snd_pcm_hw_free here. There is no hardware to release
+		// yet. On ALSA 1.0.9 it is fine to call snd_pcm_hw_free here. But
+		// ALSA 1.0.6 gives an assert.
 		snd_pcm_close(pcm_ptr);
 		mode &= ~SND_PCM_NONBLOCK;
 		goto open_again;
@@ -475,6 +499,11 @@ open_again:
 		}
 	}
 	
+	// Read back card rate for reporting in the log file.
+	unsigned int card_rate;
+	int card_dir;
+	snd_pcm_hw_params_get_rate(hw_params, &card_rate, &card_dir);
+	
 	if ((err = snd_pcm_hw_params_set_channels (pcm_ptr, hw_params, channels)) < 0) {
 		string s("snd_pcm_hw_params_set_channels(");
 		s += int2str(channels);
@@ -489,7 +518,11 @@ open_again:
 	
 	// Set the size of one period in samples
 	if (short_latency) {
-		buffersize = 128;
+		if (playback) {
+			buffersize = sys_config->alsa_play_period_size;
+		} else {
+			buffersize = sys_config->alsa_capture_period_size;
+		}
 	} else {
 		buffersize = 1024;
 	}
@@ -499,9 +532,17 @@ open_again:
 		HANDLE_ALSA_ERROR("snd_pcm_hw_params_set_period_size_near");
 	}
 	
-	if(buffersize < 256) {
-		periods *= 2;
+	// The number of periods determines the ALSA application buffer size.
+	// This size must be larger than the jitter buffer.
+	// TODO: use some more sophisticated algorithm here: read back the period
+	//       size and calculate the number of periods needed (only in the
+	//       short latency case)?
+	if (buffersize <= 64) {
+		periods *= 8;
+	} else if (buffersize <= 256) {
+		periods *= 4;
 	}
+	
 	dir = 1;
 	if ((err = snd_pcm_hw_params_set_periods(pcm_ptr, hw_params, periods, dir)) < 0) {
 		if ((err = snd_pcm_hw_params_set_periods_near(pcm_ptr, hw_params, 
@@ -548,6 +589,9 @@ open_again:
 		
 		log_file->write_header("t_alsa_io::open", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("ALSA playback buffer settings.\n");
+		log_file->write_raw("Rate = ");
+		log_file->write_raw(card_rate);
+		log_file->write_raw(" frames/sec\n");
 		log_file->write_raw("Frame size = ");
 		log_file->write_raw(play_framesize);
 		log_file->write_raw(" bytes\n");
@@ -590,6 +634,9 @@ open_again:
 		
 		log_file->write_header("t_alsa_io::open", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("ALSA capture buffer settings.\n");
+		log_file->write_raw("Rate = ");
+		log_file->write_raw(card_rate);
+		log_file->write_raw(" frames/sec\n");
 		log_file->write_raw("Frame size = ");
 		log_file->write_raw(rec_framesize);
 		log_file->write_raw(" bytes\n");

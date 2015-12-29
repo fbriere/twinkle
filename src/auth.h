@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,8 +48,8 @@ private:
 	list<t_cr_cache_entry>	cache;
 
 	// Find a cache entry that matches the realm
-	list<t_cr_cache_entry>::iterator find_cache_entry(
-		const t_url &_to, const string &realm, bool proxy=false);
+	list<t_cr_cache_entry>::iterator find_cache_entry(const t_url &_to, 
+		const string &realm, bool proxy=false);
 
 	// If the cache does not contain the credentials already
 	// then it will be added to the end of the list. If the cache
@@ -75,7 +75,10 @@ private:
 public:
 	// Authorize the request based on the challenge in the response
 	// Returns false if authorization fails.
-	bool authorize(t_request *r, t_response *resp);
+	bool authorize(t_user *user_config, t_request *r, t_response *resp);
+	
+	// Remove credentials for a particular realm from cache.
+	void remove_from_cache(const string &realm);
 };
 
 #endif

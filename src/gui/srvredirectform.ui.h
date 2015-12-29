@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -74,49 +74,84 @@ void SrvRedirectForm::destroy()
 
 void SrvRedirectForm::show()
 {
-	// Store previous values to restore when user cancels
-	oldAlwaysActive = cfAlwaysCheckBox->isChecked();
-	oldBusyActive = cfBusyCheckBox->isChecked();
-	oldNoanswerActive = cfNoanswerCheckBox->isChecked();
-	
-	oldAlwaysDst1 = cfAlwaysDst1LineEdit->text();
-	oldAlwaysDst2 = cfAlwaysDst2LineEdit->text();
-	oldAlwaysDst3 = cfAlwaysDst3LineEdit->text();
-	
-	oldBusyDst1 = cfBusyDst1LineEdit->text();
-	oldBusyDst2 = cfBusyDst2LineEdit->text();
-	oldBusyDst3 = cfBusyDst3LineEdit->text();
-	
-	oldNoanswerDst1 = cfNoanswerDst1LineEdit->text();
-	oldNoanswerDst2 = cfNoanswerDst2LineEdit->text();
-	oldNoanswerDst3 = cfNoanswerDst3LineEdit->text();
+	current_user_idx = -1;
+	((t_gui *)ui)->fill_user_combo(userComboBox);
+	userComboBox->setEnabled(userComboBox->count() > 1);
+	current_user = phone->ref_users().front();
+	current_user_idx = 0;
+	populate();
 	
 	QDialog::show();
 }
 
-void SrvRedirectForm::reject()
+void SrvRedirectForm::populate()
 {
-	// Restore old values
-	cfAlwaysCheckBox->setChecked(oldAlwaysActive);
-	cfBusyCheckBox->setChecked(oldBusyActive);
-	cfNoanswerCheckBox->setChecked(oldNoanswerActive);
+	t_service *srv = phone->ref_service(current_user);
+	bool cf_active;
+	list<t_display_url> dest_list;
+	int field;
 	
-	cfAlwaysDst1LineEdit->setText(oldAlwaysDst1);
-	cfAlwaysDst2LineEdit->setText(oldAlwaysDst2);
-	cfAlwaysDst3LineEdit->setText(oldAlwaysDst3);
+	// Call forwarding unconditional
+	cf_active = srv->get_cf_active(CF_ALWAYS, dest_list);
+	cfAlwaysDst1LineEdit->clear();
+	cfAlwaysDst2LineEdit->clear();
+	cfAlwaysDst3LineEdit->clear();
+	cfAlwaysCheckBox->setChecked(cf_active);
+	if (cf_active) {
+		field = 1;
+		for (list<t_display_url>::iterator i = dest_list.begin(); i != dest_list.end(); i++) {
+			if (field == 1) cfAlwaysDst1LineEdit->setText(i->encode().c_str());
+			if (field == 2) cfAlwaysDst2LineEdit->setText(i->encode().c_str());
+			if (field == 3) cfAlwaysDst3LineEdit->setText(i->encode().c_str());
+			field++;
+		}
+	}
 	
-	cfBusyDst1LineEdit->setText(oldBusyDst1);
-	cfBusyDst2LineEdit->setText(oldBusyDst2);
-	cfBusyDst3LineEdit->setText(oldBusyDst3);
+	// Call forwarding busy
+	cf_active = srv->get_cf_active(CF_BUSY, dest_list);
+	cfBusyDst1LineEdit->clear();
+	cfBusyDst2LineEdit->clear();
+	cfBusyDst3LineEdit->clear();
+	cfBusyCheckBox->setChecked(cf_active);
+	if (cf_active) {
+		field = 1;
+		for (list<t_display_url>::iterator i = dest_list.begin(); i != dest_list.end(); i++) {
+			if (field == 1) cfBusyDst1LineEdit->setText(i->encode().c_str());
+			if (field == 2) cfBusyDst2LineEdit->setText(i->encode().c_str());
+			if (field == 3) cfBusyDst3LineEdit->setText(i->encode().c_str());
+			field++;
+		}
+	}
 	
-	cfNoanswerDst1LineEdit->setText(oldNoanswerDst1);
-	cfNoanswerDst2LineEdit->setText(oldNoanswerDst2);
-	cfNoanswerDst3LineEdit->setText(oldNoanswerDst3);
-	
-	QDialog::reject();
+	// Call forwarding no answer
+	cf_active = srv->get_cf_active(CF_NOANSWER, dest_list);
+	cfNoanswerDst1LineEdit->clear();
+	cfNoanswerDst2LineEdit->clear();
+	cfNoanswerDst3LineEdit->clear();
+	cfNoanswerCheckBox->setChecked(cf_active);
+	if (cf_active) {
+		field = 1;
+		for (list<t_display_url>::iterator i = dest_list.begin(); i != dest_list.end(); i++) {
+			if (field == 1) cfNoanswerDst1LineEdit->setText(i->encode().c_str());
+			if (field == 2) cfNoanswerDst2LineEdit->setText(i->encode().c_str());
+			if (field == 3) cfNoanswerDst3LineEdit->setText(i->encode().c_str());
+			field++;
+		}
+	}
 }
 		
 void SrvRedirectForm::validate()
+{
+	if (validateValues()) {
+		accept();
+	} else {
+		((t_gui *)ui)->cb_show_msg(this,
+			"You have entered an invalid destination.",
+			MSG_WARNING);
+	}
+}
+
+bool SrvRedirectForm::validateValues()
 {
 	list<t_display_url> cfDestAlways, cfDestBusy, cfDestNoanswer;
 	bool valid = false;
@@ -127,7 +162,7 @@ void SrvRedirectForm::validate()
 		 cfDestAlways);
 	if (!valid) {
 		cfTabWidget->setCurrentPage(0);
-		return;
+		return false;
 	}
 	
 	// Redirect busy
@@ -136,7 +171,7 @@ void SrvRedirectForm::validate()
 		 cfDestBusy);
 	if (!valid) {
 		cfTabWidget->setCurrentPage(1);
-		return;
+		return false;
 	}
 	
 	// Redirect no answer
@@ -146,11 +181,11 @@ void SrvRedirectForm::validate()
 		 cfDestNoanswer);
 	if (!valid) {
 		cfTabWidget->setCurrentPage(2);
-		return;
+		return false;
 	}
 	
-	emit destinations(cfDestAlways, cfDestBusy, cfDestNoanswer);
-	accept();
+	emit destinations(current_user, cfDestAlways, cfDestBusy, cfDestNoanswer);	
+	return true;
 }
 
 
@@ -174,7 +209,7 @@ bool SrvRedirectForm::validate(bool cf_active,
 	}
 	
 	// 1st choice destination
-	ui->expand_destination(dst1->text().stripWhiteSpace().ascii(), destination);
+	ui->expand_destination(current_user, dst1->text().stripWhiteSpace().ascii(), destination);
 	if (destination.is_valid()) {
 		dest_list.push_back(destination);
 	} else {
@@ -184,7 +219,8 @@ bool SrvRedirectForm::validate(bool cf_active,
 	
 	// 2nd choice destination
 	if (!dst2->text().isEmpty()) {
-		ui->expand_destination(dst2->text().stripWhiteSpace().ascii(), destination);
+		ui->expand_destination(current_user, 
+				       dst2->text().stripWhiteSpace().ascii(), destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -195,7 +231,8 @@ bool SrvRedirectForm::validate(bool cf_active,
 	
 	// 3rd choice destination
 	if (!dst3->text().isEmpty()) {
-		ui->expand_destination(dst3->text().stripWhiteSpace().ascii(), destination);
+		ui->expand_destination(current_user,
+				       dst3->text().stripWhiteSpace().ascii(), destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -232,6 +269,33 @@ void SrvRedirectForm::toggleNoanswer(bool on)
 	} else {
 		cfNoanswerGroupBox->setEnabled(false);
 	}
+}
+
+void SrvRedirectForm::changedUser(const QString &user_display_uri)
+{
+	if (current_user_idx == -1) {
+		// Initializing combo box
+		return;
+	}
+	
+	t_user *new_user = phone->ref_user_display_uri(user_display_uri.ascii());
+	if (!new_user) {
+		userComboBox->setCurrentItem(current_user_idx);
+		return;
+	}
+	
+	if (!validateValues()) {
+		userComboBox->setCurrentItem(current_user_idx);
+		((t_gui *)ui)->cb_show_msg(this,
+			"You have entered an invalid destination.",
+			MSG_WARNING);
+		return;
+	}
+	
+	// Change current user
+	current_user_idx = userComboBox->currentItem();
+	current_user = new_user;
+	populate();
 }
 
 void SrvRedirectForm::showAddressBook()

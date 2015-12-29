@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>648</width>
-            <height>275</height>
+            <height>315</height>
         </rect>
     </property>
     <property name="caption">
@@ -19,6 +19,40 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout114</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>userTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>User:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>userComboBox</cstring>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <property name="name">
+                        <cstring>userComboBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
         <widget class="QTabWidget">
             <property name="name">
                 <cstring>cfTabWidget</cstring>
@@ -82,6 +116,12 @@
                                 </property>
                                 <property name="enabled">
                                     <bool>true</bool>
+                                </property>
+                                <property name="frameShape">
+                                    <enum>LineEditPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                    <enum>Sunken</enum>
                                 </property>
                                 <property name="whatsThis" stdset="0">
                                     <string>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</string>
@@ -680,6 +720,12 @@
         <receiver>SrvRedirectForm</receiver>
         <slot>showAddressBook9()</slot>
     </connection>
+    <connection>
+        <sender>userComboBox</sender>
+        <signal>activated(const QString&amp;)</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>changedUser(const QString&amp;)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>cfTabWidget</tabstop>
@@ -708,34 +754,30 @@
     <include location="global" impldecl="in declaration">list</include>
     <include location="local" impldecl="in declaration">qlineedit.h</include>
     <include location="local" impldecl="in declaration">getaddressform.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
     <include location="local" impldecl="in implementation">srvredirectform.ui.h</include>
 </includes>
+<forwards>
+    <forward>extern t_phone *phone;</forward>
+</forwards>
 <variables>
-    <variable access="private">QString oldNoanswerDst3;</variable>
-    <variable access="private">QString oldNoanswerDst2;</variable>
-    <variable access="private">QString oldNoanswerDst1;</variable>
-    <variable access="private">bool oldNoanswerActive;</variable>
-    <variable access="private">QString oldBusyDst3;</variable>
-    <variable access="private">QString oldBusyDst2;</variable>
-    <variable access="private">QString oldBusyDst1;</variable>
-    <variable access="private">bool oldBusyActive;</variable>
-    <variable access="private">QString oldAlwaysDst3;</variable>
-    <variable access="private">QString oldAlwaysDst2;</variable>
-    <variable access="private">QString oldAlwaysDst1;</variable>
-    <variable access="private">bool oldAlwaysActive;</variable>
     <variable access="private">int nrAddressBook;</variable>
     <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">t_user *current_user;</variable>
+    <variable access="private">int current_user_idx;</variable>
 </variables>
 <signals>
-    <signal>destinations(const list&lt;t_display_url&gt; &amp;always, const list&lt;t_display_url&gt; &amp;busy, const list&lt;t_display_url&gt; &amp;noanswer)</signal>
+    <signal>destinations(t_user *, const list&lt;t_display_url&gt; &amp;always, const list&lt;t_display_url&gt; &amp;busy, const list&lt;t_display_url&gt; &amp;noanswer)</signal>
 </signals>
 <slots>
     <slot>show()</slot>
-    <slot>reject()</slot>
+    <slot>populate()</slot>
     <slot>validate()</slot>
     <slot>toggleAlways( bool on )</slot>
     <slot>toggleBusy( bool on )</slot>
     <slot>toggleNoanswer( bool on )</slot>
+    <slot>changedUser( const QString &amp; user_display_uri )</slot>
     <slot>showAddressBook()</slot>
     <slot>showAddressBook1()</slot>
     <slot>showAddressBook2()</slot>
@@ -751,6 +793,7 @@
 <functions>
     <function access="private" specifier="non virtual">init()</function>
     <function access="private" specifier="non virtual">destroy()</function>
+    <function returnType="bool">validateValues()</function>
     <function returnType="bool">validate( bool cf_active, QLineEdit * dst1, QLineEdit * dst2, QLineEdit * dst3, list&lt;t_display_url&gt; &amp; dest_list )</function>
 </functions>
 <pixmapinproject/>

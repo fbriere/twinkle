@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -303,6 +303,12 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// This can only happen if the thread did not get
 	// processing time for a while and RTP packets start to
 	// pile up.
+	// Or if a soundcard plays out the samples at just less then
+	// the requested sample rate.
+	/* Not needed anymore, the ::run loop already discards incoming RTP packets
+	   with a late timestamp. This seems to solve the slow soundcard problem
+	   better. The solution below caused annoying ticks in the playout.
+	   
 	if (soundcard_buf_size - bufferspace > JITTER_BUF_SIZE + len) {
 		log_file->write_header("t_audio_tx::play_pcm", LOG_NORMAL, LOG_DEBUG);
 		log_file->write_raw("Audio tx line ");
@@ -313,6 +319,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 		log_file->write_footer();
 		return;
 	}
+	*/
 
 	// Write passed sound samples to DSP.
 	status = playback_device->write(playbuf, len);

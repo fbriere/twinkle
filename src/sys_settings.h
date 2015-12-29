@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -68,13 +68,19 @@ private:
 	
 	// Full file name for config file
 	string		filename;
-
+	
+	// The SIP UDP port that is currently used
+	unsigned short	active_sip_udp_port;
+	
 public:
 	// Sound devices
 	t_audio_device		dev_ringtone;
 	t_audio_device		dev_speaker;
 	t_audio_device		dev_mic;
 	bool			au_reduce_noise_mic;
+	int			alsa_play_period_size;
+	int			alsa_capture_period_size;
+	int			oss_fragment_size;
 	
 	// Log file settings
 	unsigned short	log_max_size; // in MB
@@ -94,9 +100,33 @@ public:
 	int		ch_max_size; // #calls
 	
 	// Startup settings
-	string		start_user_profile;
+	list<string>	start_user_profiles;
 	string		start_user_host;
 	bool		start_hidden;
+	
+	// Network settings
+	// Port for sending and receiving SIP messages. This is the value
+	// written in the system settings file. This value can differ from
+	// active_sip_udp_port value if the user changed the system
+	// settings while Twinkle is running.
+	unsigned short	config_sip_udp_port;
+	
+	// rtp_port is the base port for RTP streams. Each phone line
+	// uses has its own RTP port number.
+	// line x has RTP port = rtp_port + x * 2 and
+	//           RTCP port = rtp_port + x * 2 + 1
+	// Where x starts at 0
+	//
+	// NOTE: for call transfer scenario, line 2 (3rd line) is used
+	//       which is not a line that is visible to the user. The user
+	//       only sees 2 lines for its use. By having a dedicated port
+	//       for line 2, the  RTP stream for a referred call uses another
+	//       port than the RTP stream for an original call, preventing
+	//       the RTP streams for these calls to become mixed.
+	//
+	// NOTE: during a call transfer, line 2 will be swapped with another
+	//       line, so the ports swap accordingly.
+	unsigned short		rtp_port;	
 
 	t_sys_settings();
 	
@@ -141,6 +171,9 @@ public:
 	bool equal_audio_dev(const t_audio_device &dev1, const t_audio_device &dev2) const;
 	
 	static t_audio_device audio_device(string device = "");
+	
+	// Get the active value of the SIP UDP port
+	unsigned short get_sip_udp_port(void);
 };
 
 extern t_sys_settings *sys_config;

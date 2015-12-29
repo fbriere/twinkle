@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #include "audio_rx.h"
 #include "log.h"
 #include "rtp_telephone_event.h"
-#include "user.h"
 #include "userintf.h"
 #include "line.h"
 #include "sys_settings.h"
@@ -163,6 +162,8 @@ bool t_audio_rx::get_sound_samples(void) {
 }
 
 void t_audio_rx::get_dtmf_payload(void) {
+	struct timespec sleeptimer;
+	
 	t_rtp_telephone_event *dtmf_payload = (t_rtp_telephone_event *)payload;
 
 	// RFC 2833 3.5, 3.6
@@ -208,6 +209,22 @@ void t_audio_rx::get_dtmf_payload(void) {
 	}
 
 	dtmf_payload->set_duration(dtmf_duration);
+	
+	// Sleep ptime ms
+	// The reason for sleeping is that the DTMF event indicates that
+	// the DTMF tone lasts for ptime ms. So this time really has to pass.
+	sleeptimer.tv_sec = 0;
+
+	if (ptime >= 20) {
+		sleeptimer.tv_nsec =
+			ptime * 1000000 - 5000000;
+	} else {
+		// With a thread schedule of 10ms
+		// granularity, this will schedule the
+		// thread every 10ms.
+		sleeptimer.tv_nsec = 5000000;
+	}
+	nanosleep(&sleeptimer, NULL);
 
 	// Empty sound card buffer.
 	// During the DTMF tone, no sound from the sound card is played out.
@@ -222,7 +239,7 @@ bool t_audio_rx::get_dtmf_event(void) {
 		// No DTMF event available
 		return false;
 	}
-
+	
 	// Get next DTMF event
 	mtx_dtmf_q.lock();
 	dtmf_current = dtmf_queue.front();
@@ -287,6 +304,10 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	           t_audio_codec _codec, unsigned short _ptime) : sema_dtmf_q(0)
 {
 	audio_session = _audio_session;
+	
+	user_config = audio_session->get_line()->get_user();
+	assert(user_config);
+	
 	input_device = _input_device;
 	rtp_session = _rtp_session;
 	codec = _codec;

@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,17 +27,6 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
-QString str2html(const QString &s)
-{
-	QString result(s);
-	
-	result.replace('&', "&amp;");
-	result.replace('<', "&lt;");
-	result.replace('>', "&gt;");
-	
-	return result;
-}
 
 void HistoryForm::init()
 {
@@ -59,6 +48,14 @@ void HistoryForm::init()
 
 void HistoryForm::loadHistory()
 {
+	// Create list of all active profile names
+	QStringList profile_name_list;
+	list<t_user *>user_list = phone->ref_users();
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+		profile_name_list.append((*i)->get_profile_name().c_str());
+	}
+	
+	// Fill the history table
 	historyListView->clear();
 	list<t_call_record> history;
 	call_history->get_history(history);
@@ -75,18 +72,28 @@ void HistoryForm::loadHistory()
 		if (i->invite_resp_code >= 300 && !missedCheckBox->isChecked()) {
 			continue;
 		}
-		if (i->user_profile != user_config->get_profile_name() &&
+		if (!profile_name_list.contains(i->user_profile.c_str()) &&
 		    profileCheckBox->isChecked())
 		{
 			continue;
+		}
+		
+		t_user *user_config = phone->ref_user_profile(i->user_profile);
+		
+		// If the user profile is not active, then use the
+		// first user profile for formatting	
+		if (!user_config) {
+			user_config = phone->ref_users().front();
 		}
 		
 		HistoryListViewItem *item = new HistoryListViewItem(historyListView,
 			*i,
 			i->get_direction().c_str(),
 			(i->direction == t_call_record::DIR_IN ?
-			 ui->format_sip_address(i->from_display, i->from_uri).c_str() :
-			 ui->format_sip_address(i->to_display, i->to_uri).c_str()),
+			 ui->format_sip_address(user_config, 
+					i->from_display, i->from_uri).c_str() :
+			 ui->format_sip_address(user_config,
+					i->to_display, i->to_uri).c_str()),
 			i->subject.c_str(),
 			i->invite_resp_reason.c_str());
 		
@@ -101,6 +108,7 @@ void HistoryForm::loadHistory()
 				    QPixmap::fromMimeSource("cancel.png")));
 	}
 	
+	// Make the first entry the selected entry.
 	QListViewItem *first = historyListView->firstChild();
 	if (first) {
 		historyListView->setSelected(first, true);
@@ -138,6 +146,13 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	t_call_record cr = ((HistoryListViewItem *)item)->get_call_record();
 	cdrTextEdit->clear();
 	
+	t_user *user_config = phone->ref_user_profile(cr.user_profile);
+	// If the user profile is not active, then use the
+	// first user profile for formatting	
+	if (!user_config) {
+		user_config = phone->ref_users().front();
+	}
+	
 	s = "<table>";
 	
 	// Left column: header names
@@ -169,24 +184,25 @@ void HistoryForm::showCallDetails(QListViewItem *item)
 	s += "<br>";
 	s += cr.get_direction().c_str();
 	s += "<br>";
-	s += str2html(ui->format_sip_address(cr.from_display, cr.from_uri).c_str());
+	s += str2html(ui->format_sip_address(user_config, cr.from_display, cr.from_uri).c_str());
 	if (cr.from_organization != "") {
 		s += ", ";
 		s += str2html(cr.from_organization.c_str());
 	}
 	s += "<br>";
-	s +=  str2html(ui->format_sip_address(cr.to_display, cr.to_uri).c_str());
+	s +=  str2html(ui->format_sip_address(user_config, cr.to_display, cr.to_uri).c_str());
 	if (cr.to_organization != "") {
 		s += ", ";
 		s +=  str2html(cr.to_organization.c_str());
 	}
 	s += "<br>";
 	if (cr.reply_to_uri.is_valid()) {
-		s +=  str2html(ui->format_sip_address(cr.reply_to_display, cr.reply_to_uri).c_str());
+		s +=  str2html(ui->format_sip_address(user_config,
+					cr.reply_to_display, cr.reply_to_uri).c_str());
 		s += "<br>";
 	}
 	if (cr.referred_by_uri.is_valid()) {
-		s +=  str2html(ui->format_sip_address(
+		s +=  str2html(ui->format_sip_address(user_config,
 				cr.referred_by_display, cr.referred_by_uri).c_str());
 		s += "<br>";
 	}
@@ -240,13 +256,38 @@ void HistoryForm::call(QListViewItem *item)
 	HistoryListViewItem *histItem = (HistoryListViewItem *)item;
 	t_call_record cr = histItem->get_call_record();
 	
+	t_user *user_config = phone->ref_user_profile(cr.user_profile);
+	// If the user profile is not active, then use the first profile
+	if (!user_config) {
+		user_config = phone->ref_users().front();
+	}
+	
+	// Determine subject
+	QString subject;
+	if (cr.direction == t_call_record::DIR_IN) {
+		if (!cr.subject.empty()) {
+			if (cr.subject.substr(0, 3) != "Re:") {
+				subject = "Re: ";
+				subject += cr.subject.c_str();
+			} else {
+				subject = cr.subject.c_str();
+			}
+		}
+	} else {
+		subject = cr.subject.c_str();
+	}
+	
+	// Send call signal
 	if (cr.direction == t_call_record::DIR_IN && cr.reply_to_uri.is_valid()) {
 		// Call to the Reply-To contact
-		emit call(ui->format_sip_address(cr.reply_to_display, cr.reply_to_uri).c_str());
+		emit call(user_config,
+			ui->format_sip_address(user_config, 
+				cr.reply_to_display, cr.reply_to_uri).c_str(),
+			subject);
 	} else {
 		// For incoming calls, call to the From contact
 		// For outgoing calls, call to the To contact
-		emit call(item->text(HISTCOL_FROMTO));
+		emit call(user_config, item->text(HISTCOL_FROMTO), subject);
 	}
 }
 

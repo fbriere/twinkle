@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +30,25 @@ using namespace std;
 
 // ports and addresses should be in host order
 
+// ICMP message
+class t_icmp_msg {
+public:
+	short		type;
+	short		code;
+	
+	// ICMP source IP address
+	unsigned long	icmp_src_ipaddr;
+	
+	// Destination IP address/port of packet causing the ICMP message.
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	t_icmp_msg() {};
+	t_icmp_msg(short _type, short _code, unsigned long _icmp_src_ipaddr,
+		unsigned long _ipaddr, unsigned short _port);
+};
+
+// UDP socket
 class t_socket_udp {
 private:
 	int	sd;
@@ -68,6 +87,14 @@ public:
 	// on time out. Throws an int exception if select fails
 	// (errno as set by 'select')
 	bool select_read(unsigned long timeout);
+	
+	// Enable reception of ICMP errors on this socket.
+	// Returns false if ICMP reception cannot be enabled.
+	bool enable_icmp(void);
+	
+	// Get an ICMP message that was received on this socket.
+	// Returns false if no ICMP message can be retrieved.
+	bool get_icmp(t_icmp_msg &icmp);
 };
 
 // Convert an IP address in host order to a string.

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #include "sub_refer.h"
 #include "line.h"
 #include "log.h"
+#include "phone_user.h"
 #include "user.h"
 #include "userintf.h"
 #include "audits/memman.h"
@@ -124,7 +125,7 @@ void t_sub_refer::send_notify(t_response *r, const string &substate,
 		const string reason)
 {
 	t_request *notify;
-
+	
 	if (substate == SUBSTATE_TERMINATED) {
 		// RFC 3515 2.4.7
 		notify = create_notify(substate, reason);
@@ -147,9 +148,9 @@ void t_sub_refer::send_notify(t_response *r, const string &substate,
 		queue_notify.push(notify);
 	} else {
 		// Send NOTIFY
-		req_out = new t_client_request(notify,0);
+		req_out = new t_client_request(user_config, notify,0);
 		MEMMAN_NEW(req_out);
-		send_request(notify, req_out->get_tuid());
+		send_request(user_config, notify, req_out->get_tuid());
 		MEMMAN_DELETE(notify);
 		delete notify;
 	}
@@ -168,13 +169,13 @@ void t_sub_refer::send_notify(t_response *r, const string &substate,
 
 bool t_sub_refer::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	if (t_subscription::recv_notify(r, tuid, tid)) return true;
-
+	
 	// RFC 3515 2.4.5.
 	// NOTIFY must have a sipfrag body
 	if (!r->body || r->body->get_type() != BODY_SIPFRAG) {
 		t_response *resp = r->create_response(R_400_BAD_REQUEST,
 				"message/sipfrag body missing");
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -185,7 +186,7 @@ bool t_sub_refer::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	if (((t_sip_body_sipfrag *)r->body)->sipfrag->get_type() != MSG_RESPONSE) {
 		t_response *resp = r->create_response(R_400_BAD_REQUEST,
 				"sipfrag body does not begin with Status-Line");
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -214,7 +215,7 @@ bool t_sub_refer::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	ui->cb_notify_recvd(dialog->get_line()->get_line_number(), r);
 
 	t_response *resp = r->create_response(R_200_OK);
-	send_response(resp, 0, tid);
+	send_response(user_config, resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
 
@@ -225,7 +226,7 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 	unsigned long expires;
 
 	if (t_subscription::recv_subscribe(r, tuid, tid)) return true;
-
+	
 	// Determine value for Expires header
 	if (!r->hdr_expires.is_populated() ||
 	    r->hdr_expires.time > 2 * DUR_REFER_SUBSCRIPTION)
@@ -245,13 +246,13 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 	// RFC 3265 7.1
 	// Contact header is mandatory
 	t_contact_param contact;
-	contact.uri.set_url(dialog->get_phone()->create_user_contact());
+	contact.uri.set_url(dialog->get_line()->create_user_contact());
 	r->hdr_contact.add_contact(contact);
 
 	// Expires header is mandatory
 	r->hdr_expires.set_time(expires);
 
-	send_response(resp, 0, tid);
+	send_response(user_config, resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
 

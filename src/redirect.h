@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,9 +24,6 @@
 #include "parser/hdr_contact.h"
 #include "sockets/url.h"
 
-// Maximum number of redirections that will be tried
-#define MAX_REDIRECTIONS	(user_config->max_redirections)
-
 using namespace std;
 
 class t_redirector {
@@ -42,6 +39,9 @@ private:
 
 	// Original destination
 	t_url			org_dest;
+	
+	// Maximum number of redirections that will be tried
+	int			max_redirections;
 
 	bool contact_already_added(const t_contact_param contact) const;
 
@@ -49,7 +49,7 @@ private:
 	t_redirector();
 
 public:
-	t_redirector(const t_url &_org_dest);
+	t_redirector(const t_url &_org_dest, int _max_redirections);
 
 	// Get the next contact to try
 	// Returns false if there is no next contact

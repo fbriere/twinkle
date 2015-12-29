@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,16 +19,29 @@
 #ifndef _H_URL
 #define _H_URL
 
+#include <list>
 #include <string>
 
 using namespace std;
 
+class t_ip_port {
+public:
+	unsigned long	ipaddr;
+	unsigned short	port;
+	
+	t_ip_port() {};
+	t_ip_port(unsigned long _ipaddr, unsigned short _port);
+};
+
 // Return the default port for a protocol (host order)
 unsigned short get_default_port(const string &protocol);
 
-// Return the IP address of host name.
+// Return the first IP address of host name.
 // Return 0 if no IP address can be found.
-unsigned long gethostbyname(string name);
+unsigned long gethostbyname(const string &name);
+
+// Return all IP address of host name
+list<unsigned long> gethostbyname_all(const string &name);
 
 class t_url {
 private:
@@ -85,12 +98,23 @@ public:
 	int get_port(void) const;
 
 	// ip address network order. Return 0 if address not found
+	// DNS A RR lookup
 	unsigned long get_n_ip(void) const;
 
 	// ip address host order. Return 0 if address not found
+	// DNS A RR lookup
 	unsigned long get_h_ip(void) const;
+	list<unsigned long> get_h_ip_all(void) const;
 
+	// DNS A RR lookup
 	string get_ip(void) const; // ip address as string
+	
+	// Get list op IP address/ports in host order.
+	// First do DNS SRV lookup. If no SRV RR's are found, then
+	// do a DNS A RR lookup.
+	// transport = the transport protocol for the service
+	list<t_ip_port> get_h_ip_srv(const string &transport) const;
+	
 	string get_transport(void) const;
 	string get_maddr(void) const;
 	bool get_lr(void) const;

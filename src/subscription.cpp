@@ -1,5 +1,25 @@
+/*
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include "subscription.h"
+#include "line.h"
 #include "log.h"
+#include "phone_user.h"
 #include "audits/memman.h"
 
 extern t_event_queue	*evq_trans_mgr;
@@ -56,12 +76,14 @@ t_request *t_subscription::create_notify(const string &sub_state,
 	return r;
 }
 
-void t_subscription::send_request(t_request *r, t_tuid tuid) const {
-	evq_trans_mgr->push_user((t_sip_message *)r, tuid, 0);
+void t_subscription::send_request(t_user *user_config, t_request *r, t_tuid tuid) const {
+	evq_trans_mgr->push_user(user_config, (t_sip_message *)r, tuid, 0);
 }
 
-void t_subscription::send_response(t_response *r, t_tuid tuid, t_tid tid) const {
-	evq_trans_mgr->push_user((t_sip_message *)r, tuid, tid);
+void t_subscription::send_response(t_user *user_config, t_response *r, 
+		t_tuid tuid, t_tid tid) const 
+{
+	evq_trans_mgr->push_user(user_config, (t_sip_message *)r, tuid, tid);
 }
 
 void t_subscription::start_timer(t_subscribe_timer timer, long duration) {
@@ -104,6 +126,10 @@ void t_subscription::stop_timer(t_subscribe_timer timer) {
 
 t_subscription::t_subscription(t_dialog *_dialog, t_subscription_role _role) {
 	dialog = _dialog;
+	
+	user_config = dialog->get_line()->get_user();
+	assert(user_config);
+	
 	role = _role;
 	state = SS_NULL;
 	pending = true;
@@ -116,6 +142,10 @@ t_subscription::t_subscription(t_dialog *_dialog, t_subscription_role _role,
 			const string &_event_id)
 {
 	dialog = _dialog;
+	
+	user_config = dialog->get_line()->get_user();
+	assert(user_config);
+	
 	role = _role;
 	state = SS_NULL;
 	pending = true;
@@ -159,7 +189,7 @@ bool t_subscription::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 		// Reject a SUBSCRIBE coming in for a SUBSCRIBER
 		// TODO: is this ok??
 		t_response *resp = r->create_response(R_603_DECLINE);
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -170,7 +200,7 @@ bool t_subscription::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 	if (state == SS_TERMINATED) {
 		t_response *resp = r->create_response(R_481_TRANSACTION_NOT_EXIST,
 			REASON_481_SUBSCRIPTION_NOT_EXIST);
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -196,7 +226,7 @@ bool t_subscription::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 		t_response *resp = r->create_response(
 					R_423_INTERVAL_TOO_BRIEF);
 		resp->hdr_min_expires.set_time(MIN_DUR_SUBSCRIPTION);
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -213,7 +243,7 @@ bool t_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 		// Reject a NOTIFY coming in for a NOTIFIER
 		// TODO: is this ok??
 		t_response *resp = r->create_response(R_603_DECLINE);
-		send_response(resp, 0, tid);
+		send_response(user_config, resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return true;
@@ -279,7 +309,7 @@ bool t_subscription::recv_notify_response(t_response *r, t_tuid tuid, t_tid tid)
 
 	// Ignore provisional responses
 	if (r->is_provisional()) return true;
-
+	
 	// Successful response
 	if (r->is_success()) {
 		if (req_out->get_request()->hdr_subscription_state.substate ==
@@ -315,9 +345,9 @@ bool t_subscription::recv_notify_response(t_response *r, t_tuid tuid, t_tid tid)
 	if (!queue_notify.empty()) {
 		t_request *notify = queue_notify.front();
 		queue_notify.pop();
-		req_out = new t_client_request(notify,0);
+		req_out = new t_client_request(user_config, notify,0);
 		MEMMAN_NEW(req_out);
-		send_request(notify, req_out->get_tuid());
+		send_request(user_config, notify, req_out->get_tuid());
 		MEMMAN_DELETE(notify);
 		delete notify;
 	}
@@ -332,7 +362,7 @@ bool t_subscription::recv_subscribe_response(t_response *r, t_tuid tuid, t_tid t
 
 	// Ignore provisional responses
 	if (r->is_provisional()) return true;
-
+	
 	// Successful response
 	if (r->is_success()) {
 		if (state == SS_NULL) state = SS_ESTABLISHED;
@@ -425,11 +455,11 @@ void t_subscription::unsubscribe(void) {
 		MEMMAN_DELETE(req_out);
 		delete req_out;
 	}
-
+	
 	t_request *r = create_subscribe(0);
-	req_out = new t_client_request(r ,0);
+	req_out = new t_client_request(user_config, r ,0);
 	MEMMAN_NEW(req_out);
-	send_request(r, req_out->get_tuid());
+	send_request(user_config, r, req_out->get_tuid());
 	MEMMAN_DELETE(r);
 	delete r;
 
@@ -444,11 +474,11 @@ void t_subscription::refresh_subscribe(unsigned long expires) {
 		MEMMAN_DELETE(req_out);
 		delete req_out;
 	}
-
+	
 	t_request *r = create_subscribe(expires);
-	req_out = new t_client_request(r ,0);
+	req_out = new t_client_request(user_config, r ,0);
 	MEMMAN_NEW(req_out);
-	send_request(r, req_out->get_tuid());
+	send_request(user_config, r, req_out->get_tuid());
 	MEMMAN_DELETE(r);
 	delete r;
 }

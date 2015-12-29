@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -165,6 +165,8 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 	*log_stream << int2str(tm.tm_min, "%02d");
 	*log_stream << ":";
 	*log_stream << int2str(tm.tm_sec, "%02d");
+	*log_stream << ".";
+	*log_stream << ulong2str(t.tv_usec, "%06d");
 	*log_stream << " ";
 
 	// Severity
@@ -276,6 +278,12 @@ void t_log::write_raw(const string &raw) {
 }
 
 void t_log::write_raw(int raw) {
+	if (log_disabled || log_report_disabled) return;
+
+	*log_stream << raw;
+}
+
+void t_log::write_raw(unsigned int raw) {
 	if (log_disabled || log_report_disabled) return;
 
 	*log_stream << raw;

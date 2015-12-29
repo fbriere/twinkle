@@ -1,5 +1,12 @@
 Twinkle is a SIP based VoIP client.
 
+Release 0.5 notes
+-----------------
+In this release the SIP UDP port and RTP port settings have been
+moved from the user profile to the system settings. If you made
+any changes to the default port values in your user profiles, then
+these changes will be lost.
+
 Library requirements
 --------------------
 To compile Twinkle you need the following libraries:
@@ -131,7 +138,7 @@ User profile configuration
 A user profile contains information about your user account,
 SIP proxy, and several SIP protocol options. If you use Twinkle
 with different user accounts you may create multiple user
-profiles. However, at any time only one profile can be active.
+profiles.
 
 When you create a new profile you first give it a name and
 then you can make the appropriate settings. The name of the
@@ -239,7 +246,7 @@ as your 'domain'.
 
 Currently "sip:" is the only addressing scheme supported by Twinkle.
 
-Novmeber 2005
+January 2006
 
 Michel de Boer
 michel@twinklephone.com

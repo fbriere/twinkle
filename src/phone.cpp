@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@
 #include "userintf.h"
 #include "audits/memman.h"
 #include "sockets/socket.h"
+#include "stun/stun_transaction.h"
 
 extern t_phone 		*phone;
 extern t_event_queue	*evq_timekeeper;
@@ -40,7 +41,7 @@ extern string		user_host;
 // Private
 ///////////
 
-void t_phone::invite(const t_url &to_uri, const string &to_display,
+void t_phone::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject)
 {
 	// Ignore if active line is not idle
@@ -48,7 +49,7 @@ void t_phone::invite(const t_url &to_uri, const string &to_display,
 		return;
 	}
 
-	lines[active_line]->invite(to_uri, to_display, subject);
+	lines[active_line]->invite(pu->get_user_profile(), to_uri, to_display, subject);
 }
 
 void t_phone::answer(void) {
@@ -90,173 +91,14 @@ void t_phone::end_call(void) {
 	lines[active_line]->end_call();
 }
 
-void t_phone::registration(t_register_type register_type, unsigned long expires)
+void t_phone::registration(t_phone_user *pu, t_register_type register_type, 
+		unsigned long expires)
 {
-	// If STUN is enabled, then do a STUN query before registering if not
-	// done so already.
-	if (register_type == REG_REGISTER && phone->use_stun &&
-	    stun_public_ip_sip == 0)
-	{
-		if (r_stun) return;
-	
-		StunMessage req;
-		StunAtrString username;
-		username.sizeValue = 0;
-		stunBuildReqSimple(&req, username, false, false);
-		r_stun = new t_client_request(&req, 0);
-		MEMMAN_NEW(r_stun);
-		send_request(&req, r_stun->get_tuid());
-		registration_time = expires;
-		return;
-	}
-
-	// Stop registration timer for non-query request
-	if (register_type != REG_QUERY) {
-		stop_timer(PTMR_REGISTRATION);
-	}
-
-	// Create call-id if no call-id is created yet
-	if (register_call_id == "") {
-		register_call_id = NEW_CALL_ID;
-	}
-
-	// RFC 3261 10.2
-	// Construct REGISTER request
-
-	t_request *req = create_request(REGISTER);
-
-	// Request-URI
-	req->uri = string(USER_SCHEME) + ":" + user_config->domain;
-
-	// To
-	req->hdr_to.set_uri(create_user_uri());
-	req->hdr_to.set_display(user_config->display);
-
-	//Call-ID
-	req->hdr_call_id.set_call_id(register_call_id);
-
-	// CSeq
-	req->hdr_cseq.set_method(REGISTER);
-	req->hdr_cseq.set_seqnr(++register_seqnr);
-
-	// Contact
-        t_contact_param contact;
-
-        switch (register_type) {
-        case REG_REGISTER:
-                contact.uri.set_url(create_user_contact());
-                if (expires > 0) {
-			if (user_config->registration_time_in_contact) {
-				contact.set_expires(expires);
-			} else {
-				req->hdr_expires.set_time(expires);
-			}
-		}
-                req->hdr_contact.add_contact(contact);
-                break;
-        case REG_DEREGISTER:
-                contact.uri.set_url(create_user_contact());
- 		if (user_config->registration_time_in_contact) {
-			contact.set_expires(0);
-		} else {
-			req->hdr_expires.set_time(0);
-		}
-                req->hdr_contact.add_contact(contact);
-                break;
-        case REG_DEREGISTER_ALL:
-                req->hdr_contact.set_any();
-                req->hdr_expires.set_time(0);
-                break;
-        default:
-                break;
-        }
-
-	// Allow
-	SET_HDR_ALLOW(req->hdr_allow);
-
-	// Store request in the proper place
-	t_tuid tuid;
-
-        switch(register_type) {
-        case REG_REGISTER:
-		// Delete a possible pending registration request
-		if (r_register) {
-			MEMMAN_DELETE(r_register);
-			delete r_register;
-		}
-                r_register = new t_client_request(req, 0);
-		MEMMAN_NEW(r_register);
-                tuid = r_register->get_tuid();
-
-                // Store expiration time for re-registration.
-                registration_time = expires;
-                break;
-        case REG_QUERY:
-		// Delete a possible pending query registration request
-		if (r_query_register) {
-			MEMMAN_DELETE(r_query_register);
-			delete r_query_register;
-		}
-                r_query_register = new t_client_request(req, 0);
-		MEMMAN_NEW(r_query_register);
-                tuid = r_query_register->get_tuid();
-                break;
-        case REG_DEREGISTER:
-        case REG_DEREGISTER_ALL:
-		// Delete a possible pending de-registration request
-		if (r_deregister) {
-			MEMMAN_DELETE(r_deregister);
-			delete r_deregister;
-		}
-                r_deregister = new t_client_request(req, 0);
-		MEMMAN_NEW(r_deregister);
-                tuid = r_deregister->get_tuid();
-                break;
-        default:
-                assert(false);
-        }
-
-        // Send REGISTER
-	ui->cb_register_inprog(register_type);
-        send_request(req, tuid);
-	MEMMAN_DELETE(req);
-        delete req;
+	pu->registration(register_type, expires);
 }
 
-void t_phone::options(const t_url &to_uri, const string &to_display) {
-	// RFC 3261 11.1
-	// Construct OPTIONS request
-
-	t_request *req = create_request(OPTIONS);
-
-	// Request-URI
-	req->uri = to_uri;
-
-	// To
-	req->hdr_to.set_uri(to_uri);
-	req->hdr_to.set_display(to_display);
-
-	// Call-ID
-	req->hdr_call_id.set_call_id(NEW_CALL_ID);
-
-	// CSeq
-	req->hdr_cseq.set_method(OPTIONS);
-	req->hdr_cseq.set_seqnr(NEW_SEQNR);
-
-	// Accept
-	req->hdr_accept.add_media(t_media("application","sdp"));
-
-	// Store and send request
-	// Delete a possible pending options request
-	if (r_options) {
-		MEMMAN_DELETE(r_options);
-		delete r_options;
-	}
-	r_options = new t_client_request(req, 0);
-	MEMMAN_NEW(r_options);
-	send_request(req, r_options->get_tuid());
-	MEMMAN_DELETE(req);
-	delete req;
+void t_phone::options(t_phone_user *pu, const t_url &to_uri, const string &to_display) {
+	pu->options(to_uri, to_display);
 }
 
 void t_phone::options(void) {
@@ -336,8 +178,9 @@ void t_phone::activate_line(unsigned short l) {
 	// Retrieve the call on the new active line unless that line
 	// is transferring a call and the user profile indicates that
 	// the referrer holds the call during call transfer.
-	if (get_line_refer_state(l) == REFST_NULL ||
-	    !user_config->referrer_hold)
+	t_user *user_config = lines[l]->get_user();
+	if (get_line_refer_state(l) == REFST_NULL || 
+	    (user_config && !user_config->referrer_hold))
 	{
 		retrieve();
 	}
@@ -355,35 +198,15 @@ void t_phone::send_dtmf(char digit) {
 	lines[active_line]->send_dtmf(digit);
 }
 
-bool t_phone::check_required_ext(t_request *r, list<string> &unsupported) const {
-	bool all_supported = true;
-
-	unsupported.clear();
-	if (!r->hdr_require.is_populated()) return true;
-
-	for (list<string>::iterator i = r->hdr_require.features.begin();
-	     i != r->hdr_require.features.end(); i++)
-	{
-		if (*i == EXT_100REL) {
-			if (user_config->ext_100rel != EXT_DISABLED) continue;
-		}
-
-		// Extension is not supported
-		unsupported.push_back(*i);
-		all_supported = false;
-	}
-
-	return all_supported;
-}
-
-void t_phone::start_timer(t_phone_timer timer) {
+void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
 	t_tmr_phone	*t;
+	t_user		*user_config = pu->get_user_profile();
 
 	switch(timer) {
 	case PTMR_NAT_KEEPALIVE:
 		t = new t_tmr_phone(user_config->timer_nat_keepalive * 1000, timer, this);
 		MEMMAN_NEW(t);
-		id_nat_keepalive = t->get_id();
+		pu->id_nat_keepalive = t->get_id();
 		break;
 	default:
 		assert(false);
@@ -394,15 +217,15 @@ void t_phone::start_timer(t_phone_timer timer) {
 	delete t;
 }
 
-void t_phone::stop_timer(t_phone_timer timer) {
+void t_phone::stop_timer(t_phone_timer timer, t_phone_user *pu) {
 	unsigned short	*id;
 
 	switch(timer) {
 	case PTMR_REGISTRATION:
-		id = &id_registration;
+		id = &pu->id_registration;
 		break;
 	case PTMR_NAT_KEEPALIVE:
-		id = &id_nat_keepalive;
+		id = &pu->id_nat_keepalive;
 		break;
 	default:
 		assert(false);
@@ -412,7 +235,7 @@ void t_phone::stop_timer(t_phone_timer timer) {
 	*id = 0;
 }
 
-void t_phone::start_set_timer(t_phone_timer timer, long time) {
+void t_phone::start_set_timer(t_phone_timer timer, long time, t_phone_user *pu) {
 	t_tmr_phone	*t;
 
 
@@ -421,14 +244,14 @@ void t_phone::start_set_timer(t_phone_timer timer, long time) {
 		long new_time;
 
 		// Re-register before registration expires
-		if (last_reg_failed || time <= RE_REGISTER_DELTA * 1000) {
+		if (pu->get_last_reg_failed() || time <= RE_REGISTER_DELTA * 1000) {
 			new_time = time;
 		} else {
 			new_time = time - (RE_REGISTER_DELTA * 1000);
 		}
 		t = new t_tmr_phone(new_time, timer, this);
 		MEMMAN_NEW(t);
-		id_registration = t->get_id();
+		pu->id_registration = t->get_id();
 		break;
 	default:
 		assert(false);
@@ -440,380 +263,68 @@ void t_phone::start_set_timer(t_phone_timer timer, long time) {
 }
 
 void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
-	t_client_request **current_cr;
-	t_request *req;
-	bool is_register = false;
-
-	if (r_register && r_register->get_tuid() == tuid) {
-		current_cr = &r_register;
-		is_register = true;
-	} else if (r_deregister && r_deregister->get_tuid() == tuid) {
-		current_cr = &r_deregister;
-		is_register = true;
-	} else if (r_query_register && r_query_register->get_tuid() == tuid) {
-		current_cr = &r_query_register;
-		is_register = true;
-	} else if (r_options && r_options->get_tuid() == tuid) {
-		current_cr = &r_options;
-	} else {
+	t_phone_user *pu = match_phone_user(r, tuid);
+	if (!pu) {
 		// Response does not match any pending request.
 		return;
 	}
-
-	req = (*current_cr)->get_request();
-
-	// Authentication
-	if (r->must_authenticate()) {
-		if (authorizor.authorize(req, r)) {
-			// A new sequence number must be assigned
-			if (is_register) {
-				req->hdr_cseq.set_seqnr(++register_seqnr);
-			} else {
-				req->hdr_cseq.seqnr++;
-			}
-
-			// Create a new via-header. Otherwise the
-			// request will be seen as a retransmission
-			req->hdr_via.via_list.clear();
-			t_via via(USER_HOST, user_config->sip_udp_port);
-			req->hdr_via.add_via(via);
-
-			(*current_cr)->renew(0);
-			send_request(req, (*current_cr)->get_tuid());
-			return;
-		}
-
-		// Authentication failed
-		// Handle the 401/407 as a normal failure response
-	}
-
-	// Redirect request if there is another destination
-	if (user_config->allow_redirection) {
-		// If the response is a 3XX response then add redirection
-		// contacts
-		if (r->get_class() == R_3XX  &&
-		    r->hdr_contact.is_populated())
-		{
-			(*current_cr)->redirector.add_contacts(
-					r->hdr_contact.contact_list);
-		}
-
-		// Get next destination
-		t_contact_param contact;
-		if ((*current_cr)->redirector.get_next_contact(contact)) {
-			// Ask user for permission to redirect if indicated
-			// by user config
-			bool permission = true;
-			if (user_config->ask_user_to_redirect) {
-				permission = ui->cb_ask_user_to_redirect_request(
-							contact.uri, contact.display,
-							r->hdr_cseq.method);
-			}
-
-			if (permission) {
-				req->uri = contact.uri;
-
-				// CSeq must be incremented
-				if (is_register) {
-					req->hdr_cseq.set_seqnr(++register_seqnr);
-				} else {
-					req->hdr_cseq.seqnr++;
-				}
-
-				// Create a new via-header. Otherwise the
-				// request will be seen as a retransmission
-				req->hdr_via.via_list.clear();
-				t_via via(USER_HOST, user_config->sip_udp_port);
-				req->hdr_via.add_via(via);
-
-				ui->cb_redirecting_request(contact);
-
-				(*current_cr)->renew(0);
-				send_request(req, (*current_cr)->get_tuid());
-
-				return;
-			}
-		}
-	}
-
-	// REGISTER (register)
-	if (r_register && r_register->get_tuid() == tuid) {
-		bool re_register;
-		handle_response_register(r, re_register);
-		MEMMAN_DELETE(r_register);
-		delete r_register;
-		r_register = NULL;
-		if (re_register) registration(REG_REGISTER, registration_time);
-		return;
-	}
-
-	// REGISTER (de-register)
-	if (r_deregister && r_deregister->get_tuid() == tuid) {
-		handle_response_deregister(r);
-		MEMMAN_DELETE(r_deregister);
-		delete r_deregister;
-		r_deregister = NULL;
-		return;
-	}
-
-	// REGISTER (query)
-	if (r_query_register && r_query_register->get_tuid() == tuid) {
-		handle_response_query_register(r);
-		MEMMAN_DELETE(r_query_register);
-		delete r_query_register;
-		r_query_register = NULL;
-		return;
-	}
-
-
-	// OPTIONS
-	if (r_options && r_options->get_tuid() == tuid) {
-		handle_response_options(r);
-		MEMMAN_DELETE(r_options);
-		delete r_options;
-		r_options = NULL;
-		return;
-	}
-
-	// Response does not match any pending request. Do nothing.
+	
+	pu->handle_response_out_of_dialog(r, tuid);
 }
 
 void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
-
-	if (!r_stun || r_stun->get_tuid() != tuid) {
-		// Response does not match pending STUN request
+	t_phone_user *pu = match_phone_user(r, tuid);
+	if (!pu) {
+		// Response does not match any pending request.
 		return;
 	}
 	
-	if (r->msgHdr.msgType == BindResponseMsg && r->hasMappedAddress) {
-		// The STUN response contains the public IP.
-		stun_public_ip_sip = r->mappedAddress.ipv4.addr;
-		stun_public_port_sip = r->mappedAddress.ipv4.port;
-                MEMMAN_DELETE(r_stun);
-                delete r_stun;
-                r_stun = NULL;
-                registration(REG_REGISTER, registration_time);
-                return;
-	}
-	
-	if (r->msgHdr.msgType == BindErrorResponseMsg && r->hasErrorCode) {
-		// STUN request failed.
-                ui->cb_stun_failed(r->errorCode.errorClass * 100 +
-                	r->errorCode.number, r->errorCode.reason);
-	} else {	
-		// No satisfying STUN response was received.
- 	       ui->cb_stun_failed();
-	}
-	
-        MEMMAN_DELETE(r_stun);
-        delete r_stun;
-        r_stun = NULL;
-	
-        // Try registration later.
-	bool first_failure = !last_reg_failed;
-        last_reg_failed = true;
-        is_registered = false;
-	ui->cb_register_stun_failed(first_failure);
-        start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000);
+	pu->handle_response_out_of_dialog(r, tuid);
 }
 
-void t_phone::handle_response_register(t_response *r, bool &re_register) {
-	t_contact_param *c;
-	unsigned long expires;
-	unsigned long e;
-	bool first_failure, first_success;
-
-	re_register = false;
-
-        switch(r->get_class()) {
-        case R_2XX:
-                last_reg_failed = false;
-
-                // Stop registration timer if one was running
-                stop_timer(PTMR_REGISTRATION);
-
-                c = r->hdr_contact.find_contact(create_user_contact());
-                if (!c) {
-               		log_file->write_report(
-               			"Contact header is missing.",
-               			"t_phone::handle_response_register",
-               			LOG_NORMAL, LOG_WARNING);
-	               	
-	               	if (!user_config->allow_missing_contact_reg) {
-				is_registered = false;
-				ui->cb_invalid_reg_resp(r, "Contact header missing.");
-				return;
-                        }
-                }
-
-                if (c && c->is_expires_present() && c->get_expires() != 0) {
-                        expires = c->get_expires();
-                }
-                else if (r->hdr_expires.is_populated() &&
-                         r->hdr_expires.time != 0)
-                {
-                        expires = r->hdr_expires.time;
-                }
-                else {
-               		log_file->write_report(
-               			"Expires parameter/header mising.",
-               			"t_phone::handle_response_register",
-               			LOG_NORMAL, LOG_WARNING);
-               			
-               		if (!user_config->allow_missing_contact_reg) {
-				is_registered = false;
-				ui->cb_invalid_reg_resp(r, "Expires parameter/header mising.");
-				return;
-                        }
-                        
-                        expires = user_config->registration_time;
-                        
-                        // Assume a default expiration of 3600 sec if no expiry
-                        // time was returned.
-                        if (expires == 0) expires = 3600;
-                }
-
-                // Start new registration timer
-                // The maximum value of the timer can be 2^32-1 s
-                // The maximum timer that we can handle however is 2^31-1 ms
-                e = (expires > 2147483 ? 2147483 : expires);
-                start_set_timer(PTMR_REGISTRATION, e * 1000);
-		first_success = !is_registered;
-                is_registered = true;
-		ui->cb_register_success(r, expires, first_success);
+t_phone_user *t_phone::find_phone_user(const string &profile_name) {
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if (!(*i)->is_active()) continue;
 		
-		// Start sending NAT keepalive packets when STUN is used
-		// (or in case of symmetric firewall)
-		if (use_nat_keepalive && id_nat_keepalive == 0) {
-			// Just start the NAT keepalive timer. The REGISTER
-			// message itself created the NAT binding. So there is
-			// no need to send a NAT keep alive packet now.
-			start_timer(PTMR_NAT_KEEPALIVE);
+		t_user *user_config = (*i)->get_user_profile();
+		if (user_config->get_profile_name() == profile_name) {
+			return *i;
 		}
-
-                break;
-        case R_4XX:
-                is_registered = false;
-
-                // RFC 3261 10.3
-                if (r->code == R_423_INTERVAL_TOO_BRIEF) {
-                        if (!r->hdr_min_expires.is_populated()) {
-                                // Violation of RFC 3261 10.3 item 7
-                                ui->cb_invalid_reg_resp(r,
-                                        "Min-Expires header missing.");
-                                return;
-                        }
-
-                        if (r->hdr_min_expires.time <= registration_time) {
-                                // Wrong Min-Expires time
-                                string s = "Min-Expires (";
-                                s += ulong2str(r->hdr_min_expires.time);
-                                s += ") is smaller than the requested ";
-                                s += "time (";
-                                s += ulong2str(registration_time);
-                                s += ")";
-                                ui->cb_invalid_reg_resp(r, s);
-                                return;
-                        }
-
-                        // Automatic re-register with Min-Expires time
-                        registration_time = r->hdr_min_expires.time;
-                        re_register = true;
-                        return;
-                }
-
-		// If authorization failed, the do not start the continuous
-		// re-attempts. When authorization fails the user is asked
-		// for credentials (in GUI). So the user cancelled these
-		// questions and should not be bothered with the same question
-		// again every 30 seconds. The user does not have the
-		// credentials.
-		if (r->code == R_401_UNAUTHORIZED ||
-		    r->code == R_407_PROXY_AUTH_REQUIRED)
-		{
-			last_reg_failed = true;
-			ui->cb_register_failed(r, true);			
+	}
 	
-			return;
-		}
-
-                // fall thru
-        default:
-		first_failure = !last_reg_failed;
-                last_reg_failed = true;
-                is_registered = false;
-		ui->cb_register_failed(r, first_failure);
-                start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000);
-                
-		// Clear STUN information
-		if (use_stun) {
-			stun_public_ip_sip = 0L;
-			stun_public_port_sip = 0;
-		}
-		
-		if (use_nat_keepalive) {
-			stop_timer(PTMR_NAT_KEEPALIVE);
-		}
-        }
+	return NULL;
 }
 
-void t_phone::handle_response_deregister(t_response *r) {
-	is_registered = false;
-	last_reg_failed = false;
-
-	if (r->is_success()) {
-		ui->cb_deregister_success(r);
-	} else {
-		ui->cb_deregister_failed(r);
+t_phone_user *t_phone::match_phone_user(t_response *r, t_tuid tuid) {
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if ((*i)->match(r, tuid)) return *i;
 	}
 	
-	// Clear STUN information
-	if (use_stun) {
-		stun_public_ip_sip = 0L;
-		stun_public_port_sip = 0;
-	}
-	
-	if (use_nat_keepalive) {
-		stop_timer(PTMR_NAT_KEEPALIVE);
-	}
+	return NULL;
 }
 
-void t_phone::handle_response_query_register(t_response *r) {
-	if (r->is_success()) {
-		ui->cb_fetch_reg_result(r);
-	} else {
-		ui->cb_fetch_reg_failed(r);
-	}
-}
-
-void t_phone::handle_response_options(t_response *r) {
-	ui->cb_options_response(r);
-}
-
-void t_phone::send_nat_keepalive(void) {
-	unsigned long	ipaddr;
-	unsigned short	port;
-	
-	if (user_config->use_registrar) {
-		ipaddr = user_config->registrar.get_h_ip();
-		port = user_config->registrar.get_hport();
-	} else if (user_config->use_outbound_proxy) {
-		ipaddr = user_config->outbound_proxy.get_h_ip();
-		port = user_config->outbound_proxy.get_hport();
-	} else {
-		t_url u(string(USER_SCHEME) + ":" + user_config->domain);	
-		ipaddr = u.get_h_ip();
-		port = u.get_hport();
+t_phone_user *t_phone::match_phone_user(t_request *r) {
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if ((*i)->match(r)) return *i;
 	}
 	
-	if (ipaddr == 0 || port == 0) {
-		log_file->write_report(
-			"Cannot resolve destination for NAT keepalive packet.",
-			"t_phone::send_nat_keepalive", LOG_NORMAL, LOG_CRITICAL);
-		return;
+	return NULL;
+}
+
+t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid) {
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if ((*i)->match(r, tuid)) return *i;
 	}
-		
-	evq_sender_udp->push_nat_keepalive(ipaddr, port);
+	
+	return NULL;
 }
 
 //////////////
@@ -908,9 +419,23 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 			return;
 		}
 	}
+	
+	// Find out for which user this INVITE is.
+	t_phone_user *pu = match_phone_user(r);
+	if (!pu) {
+		resp = r->create_response(R_404_NOT_FOUND);
+		send_response(resp, 0, tid);
+		
+		// Do not create a call history record is this is a misrouted
+		// call.
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
 
 	// Check if the far end requires any unsupported extensions
-	if (!check_required_ext(r, unsupported))
+	if (!pu->get_user_profile()->check_required_ext(r, unsupported))
 	{
 		// Not all required extensions are supported
 		resp = r->create_response(R_420_BAD_EXTENSION);
@@ -934,14 +459,14 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		list<t_display_url> cf_dest; // call forwarding destinations
 
 		// Call forwarding always
-		if (service.get_cf_active(CF_ALWAYS, cf_dest)) {
+		if (pu->service.get_cf_active(CF_ALWAYS, cf_dest)) {
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
 			
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
+				pu->get_user_profile()->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 		
@@ -952,13 +477,13 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 
 		// Do not disturb
 		// RFC 3261 21.4.18
-		if (service.is_dnd_active()) {
+		if (pu->service.is_dnd_active()) {
 			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
 			send_response(resp, 0, tid);
 
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
+				pu->get_user_profile()->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 			
@@ -969,10 +494,10 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 
 		// Send the INVITE to the active line if it is idle
 		if (lines[active_line]->get_substate() == LSSUB_IDLE) {
-			lines[active_line]->recvd_invite(r, tid);
+			lines[active_line]->recvd_invite(pu->get_user_profile(), r, tid);
 			
 			// Auto answer
-			if (service.is_auto_answer_active()) {
+			if (pu->service.is_auto_answer_active()) {
 				lines[active_line]->answer();
 			}
 			
@@ -982,21 +507,21 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Send the INVITE to the first idle unseized line
 		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 			if (lines[i]->get_substate() == LSSUB_IDLE) {
-				lines[i]->recvd_invite(r, tid);
+				lines[i]->recvd_invite(pu->get_user_profile(), r, tid);
 				return;
 			}
 		}
 
 		// All lines are busy
 		// Call forwarding busy
-		if (service.get_cf_active(CF_BUSY, cf_dest)) {
+		if (pu->service.get_cf_active(CF_BUSY, cf_dest)) {
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
 			resp->hdr_contact.set_contacts(cf_dest);
 			send_response(resp, 0, tid);
 			
 			// Create a call history record
 			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
+				pu->get_user_profile()->get_profile_name());
 			call_record.fail_call(resp);
 			call_history->add_call_record(call_record);
 			
@@ -1010,7 +535,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		
 		// Create a call history record
 		call_record.start_call(r, t_call_record::DIR_IN, 
-			user_config->get_profile_name());
+			pu->get_user_profile()->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 			
@@ -1024,7 +549,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	// Find a line that matches the request
 	for (unsigned short i = 0; i < NUM_LINES; i++) {
 		if (lines[i]->match(r)) {
-			lines[i]->recvd_invite(r, tid);
+			lines[i]->recvd_invite(pu->get_user_profile(), r, tid);
 			return;
 		}
 	}
@@ -1074,20 +599,22 @@ void t_phone::recvd_bye(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 
-	// Check if the far end requires any unsupported extensions
-	if (!check_required_ext(r, unsupported))
-	{
-		// Not all required extensions are supported
-		resp = r->create_response(R_420_BAD_EXTENSION);
-		resp->hdr_unsupported.set_features(unsupported);
-		send_response(resp, 0, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
-		return;
-	}
-
 	for (unsigned short i = 0; i < NUM_LINES; i++) {
 		if (lines[i]->match(r)) {
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);
+
+			if (!user_config->check_required_ext(r, unsupported))
+			{
+				// Not all required extensions are supported
+				resp = r->create_response(R_420_BAD_EXTENSION);
+				resp->hdr_unsupported.set_features(unsupported);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}			
+		
 			lines[i]->recvd_bye(r, tid);
 			return;
 		}
@@ -1102,9 +629,19 @@ void t_phone::recvd_bye(t_request *r, t_tid tid) {
 void t_phone::recvd_options(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
+	
+	// Find out for which user this OPTIONS is.
+	t_phone_user *pu = match_phone_user(r);
+	if (!pu) {
+		resp = r->create_response(R_404_NOT_FOUND);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
 
 	// Check if the far end requires any unsupported extensions
-	if (!check_required_ext(r, unsupported))
+	if (!pu->get_user_profile()->check_required_ext(r, unsupported))
 	{
 		// Not all required extensions are supported
 		resp = r->create_response(R_420_BAD_EXTENSION);
@@ -1133,17 +670,7 @@ void t_phone::recvd_options(t_request *r, t_tid tid) {
 		delete resp;
 	 } else {
 		// Request outside dialog
-
-		// Check user in the request-URI
-		if (r->uri.get_user() != user_config->name) {
-			resp = r->create_response(R_404_NOT_FOUND);
-			send_response(resp, 0, tid);
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-		}
-
-		resp = create_options_response(r);
+		resp = pu->create_options_response(r);
 		send_response(resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -1307,7 +834,9 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 				} else {
 					log_file->write_report("Refer failed.",
 						"t_phone::recvd_notify");
-						
+
+					t_user *user_config = lines[i]->get_user();
+					assert(user_config);
 					if (user_config->referrer_hold &&
 					    lines[i]->get_is_on_hold())
 					{
@@ -1385,8 +914,11 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 				// Refer has been rejected.
 				return;
 			}
+			
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);
 
-			ui->cb_call_referred(i, r);
+			ui->cb_call_referred(user_config, i, r);
 
 			// Put line on-hold and place it in the referrer line
 			log_file->write_report(
@@ -1413,7 +945,7 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 			// Setup call to the Refer-To destination
 			log_file->write_report("Call refer-target.",
 				"t_phone::recvd_refer");
-			lines[i]->invite(r->hdr_refer_to.uri,
+			lines[i]->invite(user_config, r->hdr_refer_to.uri,
 				r->hdr_refer_to.display, "", r->hdr_referred_by);
 			lines[i]->open_dialog->is_referred_call = true;
 
@@ -1460,17 +992,6 @@ void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
 t_phone::t_phone() : t_transaction_layer() {
 	active_line = 0;
 
-	r_options = NULL;
-	r_register = NULL;
-	r_deregister = NULL;
-	r_query_register = NULL;
-	r_stun = NULL;
-
-	// Initialize registration data
-	// Call-ID cannot be set here as user_host is not determined yet.
-	register_seqnr = NEW_SEQNR;
-	is_registered = false;
-
 	// Create phone lines
 	for (unsigned short i = 0; i < NUM_LINES; i++) {
 		lines[i] = new t_line(this, i);
@@ -1481,57 +1002,40 @@ t_phone::t_phone() : t_transaction_layer() {
 	is_3way = false;
 	line1_3way = NULL;
 	line2_3way = NULL;
-	
-	// Initialize STUN data
-	stun_public_ip_sip = 0L;
-	stun_public_port_sip = 0;
-	use_stun = false;
-	use_nat_keepalive = false;
-	
-	// Timers
-	id_registration = 0;
-	id_nat_keepalive = 0;
 }
 
 t_phone::~t_phone() {
-	// Stop timers
-	if (id_registration) stop_timer(PTMR_REGISTRATION);
-	if (id_nat_keepalive) stop_timer(PTMR_NAT_KEEPALIVE);
-
-	// Delete pointers
-	if (r_options) {
-		MEMMAN_DELETE(r_options);
-		delete r_options;
-	}
-	if (r_register) {
-		MEMMAN_DELETE(r_register);
-		delete r_register;
-	}
-	if (r_deregister) {
-		MEMMAN_DELETE(r_deregister);
-		delete r_deregister;
-	}
-	if (r_query_register) {
-		MEMMAN_DELETE(r_query_register);
-		delete r_query_register;
-	}
-	if (r_stun) {
-		MEMMAN_DELETE(r_stun);
-		delete r_stun;
-	}
-
 	// Delete phone lines
 	for (unsigned short i = 0; i < NUM_LINES; i++) {
 		MEMMAN_DELETE(lines[i]);
 		delete lines[i];
 	}
+	
+	// Delete all phone users
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		MEMMAN_DELETE(*i);
+		delete *i;
+	}
 }
 
-void t_phone::pub_invite(const t_url &to_uri, const string &to_display,
+void t_phone::pub_invite(t_user *user, 
+		const t_url &to_uri, const string &to_display,
 		const string &subject)
 {
 	lock();
-	invite(to_uri, to_display, subject);
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		invite(pu, to_uri, to_display, subject);
+	} else {
+		log_file->write_header("t_phone::pub_invite", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
 	unlock();
 }
 
@@ -1560,17 +1064,40 @@ void t_phone::pub_end_call(void) {
 	unlock();
 }
 
-void t_phone::pub_registration(t_register_type register_type,
+void t_phone::pub_registration(t_user *user,
+		t_register_type register_type,
 		unsigned long expires)
 {
 	lock();
-	registration(register_type, expires);
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		registration(pu, register_type, expires);
+	} else {
+		log_file->write_header("t_phone::pub_registration", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
 	unlock();
 }
 
-void t_phone::pub_options(const t_url &to_uri, const string &to_display) {
+void t_phone::pub_options(t_user *user,
+		const t_url &to_uri, const string &to_display) 
+{
 	lock();
-	options(to_uri, to_display);
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		options(pu, to_uri, to_display);
+	} else {
+		log_file->write_header("t_phone::pub_options", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
 	unlock();
 }
 
@@ -1667,24 +1194,26 @@ t_phone_state t_phone::get_state(void) const {
 	return PS_BUSY;
 }
 
-void t_phone::timeout(t_phone_timer timer) {
+void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
 	lock();
 
 	switch (timer) {
 	case PTMR_REGISTRATION:
-		// Registration expired. Re-register.
-		if (is_registered || last_reg_failed) {
-			// Re-register if no register is pending
-			if (!r_register) {
-				registration(REG_REGISTER, registration_time);
+		for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+		{
+			if ((*i)->id_registration == id_timer) {
+				(*i)->timeout(timer);
 			}
 		}
 		break;
 	case PTMR_NAT_KEEPALIVE:
-		// Send a new NAT keepalive packet
-		if (use_nat_keepalive) {
-			send_nat_keepalive();
-			start_timer(PTMR_NAT_KEEPALIVE);
+		for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+		{
+			if ((*i)->id_nat_keepalive == id_timer) {
+				(*i)->timeout(timer);
+			}
 		}
 		break;
 	default:
@@ -1692,115 +1221,6 @@ void t_phone::timeout(t_phone_timer timer) {
 	}
 
 	unlock();
-}
-
-string t_phone::create_user_contact(void) const {
-	string s;
-
-	s = USER_SCHEME;
-	s += ':';
-	s += user_config->name;
-	s += '@';
-	s += USER_HOST;
-
-	if (PUBLIC_SIP_UDP_PORT != get_default_port(USER_SCHEME)) {
-		s += ':';
-		s += int2str(PUBLIC_SIP_UDP_PORT);
-	}
-
-	if (user_config->numerical_user_is_phone &&
-	    t_url::looks_like_phone(user_config->name))
-	{
-		// RFC 3261 19.1.1
-		// If the URI contains a telephone number it SHOULD contain
-		// the user=phone parameter.
-		s += ";user=phone";
-	}
-
-	return s;
-}
-
-string t_phone::create_user_uri(void) const {
-	string s;
-
-	s = USER_SCHEME;
-	s += ':';
-	s += user_config->name;
-	s += '@';
-	s += user_config->domain;
-
-	if (user_config->numerical_user_is_phone &&
-	    t_url::looks_like_phone(user_config->name))
-	{
-		// RFC 3261 19.1.1
-		// If the URI contains a telephone number it SHOULD contain
-		// the user=phone parameter.
-		s += ";user=phone";
-	}
-
-	return s;
-}
-
-t_request *t_phone::create_request(t_method m) const {
-	t_request *req = new t_request(m);
-	MEMMAN_NEW(req);
-
-	// Via
-	t_via via(USER_HOST, user_config->sip_udp_port);
-	req->hdr_via.add_via(via);
-
-	// From
-	req->hdr_from.set_uri(create_user_uri());
-	req->hdr_from.set_display(user_config->display);
-	req->hdr_from.set_tag(NEW_TAG);
-
-	// Max-Forwards header (mandatory)
-	req->hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
-
-	// User-Agent
-	SET_HDR_USER_AGENT(req->hdr_user_agent);
-
-	return req;
-}
-
-t_response *t_phone::create_options_response(t_request *r,
-		bool in_dialog) const
-{
-	t_response *resp;
-
-	// RFC 3261 11.2
-	switch(get_state()) {
-	case PS_IDLE:
-		if (!in_dialog && service.is_dnd_active()) {
-			resp = r->create_response(R_486_BUSY_HERE);
-		} else {
-			resp = r->create_response(R_200_OK);
-		}
-		break;
-	case PS_BUSY:
-		if (in_dialog) {
-			resp = r->create_response(R_200_OK);
-		} else {
-			resp = r->create_response(R_486_BUSY_HERE);
-		}
-		break;
-	default:
-		assert(false);
-	}
-
-	SET_HDR_ALLOW(resp->hdr_allow);
-	SET_HDR_ACCEPT(resp->hdr_accept);
-	SET_HDR_ACCEPT_ENCODING(resp->hdr_accept_encoding);
-	SET_HDR_ACCEPT_LANGUAGE(resp->hdr_accept_language);
-	SET_HDR_SUPPORTED(resp->hdr_supported);
-
-	if (user_config->ext_100rel != EXT_DISABLED) {
-		resp->hdr_supported.add_feature(EXT_100REL);
-	}
-
-	// TODO: include SDP body if requested (optional)
-
-	return resp;
 }
 
 void t_phone::set_active_line(unsigned short l) {
@@ -1819,32 +1239,45 @@ t_line *t_phone::get_line(unsigned short lineno) const {
 	return lines[lineno];
 }
 
-bool t_phone::authorize(t_request *r, t_response *resp) {
+bool t_phone::authorize(t_user *user, t_request *r, t_response *resp) 
+{
+	bool result = false;
+	
 	lock();
-	if (authorizor.authorize(r, resp)) {
-		// A new sequence number must be assigned
-		r->hdr_cseq.seqnr++;
-
-		// Create a new via-header. Otherwise the
-		// request will be seen as a retransmission
-		r->hdr_via.via_list.clear();
-		t_via via(USER_HOST, user_config->sip_udp_port);
-		r->hdr_via.add_via(via);
-
-		unlock();
-		return true;
-	}
-
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->authorize(r, resp);
 	unlock();
-	return false;
+	
+	return result;
 }
 
-bool t_phone::get_is_registered(void) const {
-	return is_registered;
+void t_phone::remove_cached_credentials(t_user *user, const string &realm) {
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) pu->remove_cached_credentials(realm);
+	unlock();
 }
 
-bool t_phone::get_last_reg_failed(void) const {
-	return last_reg_failed;
+bool t_phone::get_is_registered(t_user *user) {
+	bool result = false;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->get_is_registered();
+	unlock();
+	
+	return result;
+}
+
+bool t_phone::get_last_reg_failed(t_user *user) {
+	bool result = false;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->get_last_reg_failed();
+	unlock();
+	
+	return result;
 }
 
 t_line_state t_phone::get_line_state(unsigned short lineno) const {
@@ -1894,6 +1327,14 @@ t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
 	t_refer_state s = get_line(lineno)->get_refer_state();
 	self->unlock();
 	return s;
+}
+
+t_user *t_phone::get_line_user(unsigned short lineno) {
+	assert(lineno < NUM_LINES);
+	lock();
+	t_user *user = get_line(lineno)->get_user();
+	unlock();
+	return user;
 }
 
 bool t_phone::part_of_3way(unsigned short lineno) {
@@ -2077,10 +1518,12 @@ void t_phone::notify_refer_progress(t_response *r, unsigned short referee_lineno
 						"Retrieve call with referrer.",
 						"t_phone::notify_refer_progress");
 					lines[referee_lineno]->retrieve();
-
 				}
 				
-				ui->cb_retrieve_referrer(referee_lineno);
+				t_user *user_config = lines[referee_lineno]->get_user();
+				assert(user_config);
+				
+				ui->cb_retrieve_referrer(user_config, referee_lineno);
 			}
 		}
 	}
@@ -2102,13 +1545,221 @@ void t_phone::init_rtp_ports(void) {
 	}
 }
 
-string t_phone::get_ip_sip(void) const {
-	if (stun_public_ip_sip) return h_ip2str(stun_public_ip_sip);
-	if (user_config->use_nat_public_ip) return user_config->nat_public_ip;
-	return LOCAL_IP;
+bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
+	lock();
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		t_user *user = (*i)->get_user_profile();
+		
+		// If the profile is already added, then just activate it.
+		if (user->get_profile_name() == user_config.get_profile_name())
+		{	
+			if (!(*i)->is_active()) (*i)->activate(user_config);
+			unlock();
+			return true;
+		}
+		
+		// Check if there is already another profile for the same
+		// user.
+		if (user->name == user_config.name &&
+		    user->domain == user_config.domain &&
+		    (*i)->is_active())
+		{
+			*dup_user = user;
+			unlock();
+			return false;
+		}
+	}
+	
+	// Add the user
+	t_phone_user *pu = new t_phone_user(user_config);
+	MEMMAN_NEW(pu);
+	phone_users.push_back(pu);
+	unlock();
+	
+	return true;
 }
 
-unsigned short t_phone::get_public_port_sip(void) const {
-	if (stun_public_port_sip) return stun_public_port_sip;
-	return user_config->sip_udp_port;
+void t_phone::remove_phone_user(const t_user &user_config) {
+	lock();
+	t_phone_user *pu = find_phone_user(user_config.get_profile_name());
+	if (pu) pu->deactivate();
+	unlock();
+}
+
+list<t_user *> t_phone::ref_users(void) {
+	list<t_user *> l;
+	
+	lock();
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if (!(*i)->is_active()) continue;
+		l.push_back((*i)->get_user_profile());
+	}
+	unlock();
+	
+	return l;
+}
+
+t_user *t_phone::ref_user_display_uri(const string &display_uri) {
+	t_user *u = NULL;
+	
+	lock();
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if (!(*i)->is_active()) continue;
+		if ((*i)->get_user_profile()->get_display_uri() == display_uri) {
+			u = (*i)->get_user_profile();
+			break;
+		}
+	}
+	unlock();
+	
+	return u;
+}
+
+t_user *t_phone::ref_user_profile(const string &profile_name) {
+	t_user *u = NULL;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(profile_name);
+	if (pu) u = pu->get_user_profile();
+	unlock();
+	
+	return u;
+}
+
+t_service t_phone::get_service(t_user *user) {
+	t_service srv;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) srv = pu->service;
+	unlock();
+	
+	return srv;
+}
+
+t_service *t_phone::ref_service(t_user *user) {
+	t_service *srv;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) srv = &(pu->service);
+	unlock();
+	
+	return srv;
+}
+
+string t_phone::get_ip_sip(t_user *user) {
+	string result;
+
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		result = pu->get_ip_sip();
+	} else {
+		result = LOCAL_IP;
+	}
+	unlock();
+	
+	return result;
+}
+
+unsigned short t_phone::get_public_port_sip(t_user *user) {
+	unsigned short result;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		result = pu->get_public_port_sip();
+	} else {
+		result = get_default_port(USER_SCHEME);
+	}
+	unlock();
+	
+	return result;
+}
+
+bool t_phone::use_stun(t_user *user) {
+	bool result;
+
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		result = pu->use_stun;
+	} else {
+		result = false;
+	}
+	unlock();
+	
+	return result;
+}
+
+void t_phone::disable_stun(t_user *user) {
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) pu->use_stun = false;
+	unlock();
+}
+
+bool t_phone::stun_discover_nat(list<string> &msg_list) {
+	bool retval = true;
+	
+	lock();
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+	     i != phone_users.end(); i++)
+	{
+		if (!(*i)->is_active()) continue;
+		t_user *user_config = (*i)->get_user_profile();
+		if (user_config->use_stun) {
+			string msg;
+			if (!::stun_discover_nat(*i, msg)) {
+				string s("User profile: ");
+				s + user_config->get_profile_name();
+				s += "\n\n";
+				s += msg;
+				msg_list.push_back(s);
+				retval = false;
+			}
+		}
+	}
+	unlock();
+	
+	return retval;
+}
+
+bool t_phone::stun_discover_nat(t_user *user, string &msg) {
+	bool retval = true;
+	
+	lock();
+	if (user->use_stun) {
+		t_phone_user *pu = find_phone_user(user->get_profile_name());
+		if (pu) {
+			retval = ::stun_discover_nat(pu, msg);
+		}
+	}
+	unlock();
+	
+	return retval;
+}
+
+t_response *t_phone::create_options_response(t_user *user, t_request *r,
+					bool in_dialog)
+{
+	t_response *resp;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		resp = pu->create_options_response(r, in_dialog);
+	} else {
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
+	}
+	unlock();
+	
+	return resp;
 }

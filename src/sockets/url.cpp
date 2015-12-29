@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "dnssrv.h"
 #include "url.h"
 #include "util.h"
 
@@ -38,13 +39,34 @@ unsigned short get_default_port(const string &protocol) {
 	return 0;
 }
 
-unsigned long gethostbyname(string name) {
+unsigned long gethostbyname(const string &name) {
 	struct hostent *h;
-
+	
 	h = gethostbyname(name.c_str());
 	if (h == NULL) return 0;
 	return ntohl(*((unsigned long *)h->h_addr));
 }
+
+list<unsigned long> gethostbyname_all(const string &name) {
+	struct hostent *h;
+	list<unsigned long> l;
+	
+	h = gethostbyname(name.c_str());
+	if (h == NULL) return l;
+	
+	char **ipaddr = h->h_addr_list;
+	while (*ipaddr) {
+		l.push_back(ntohl(*((unsigned long *)(*ipaddr))));
+		ipaddr++;
+	}
+	
+	return l;
+}
+
+// t_ip_port
+
+t_ip_port::t_ip_port(unsigned long _ipaddr, unsigned short _port) :
+	ipaddr(_ipaddr), port(_port) {}
 
 // Private
 
@@ -262,6 +284,8 @@ int t_url::get_port(void) const {
 unsigned long t_url::get_n_ip(void) const {
 	struct hostent *h;
 
+	// TODO: handle multiple A RR's
+	
 	h = gethostbyname(host.c_str());
 	if (h == NULL) return 0;
 	return *((unsigned long *)h->h_addr);
@@ -271,12 +295,60 @@ unsigned long t_url::get_h_ip(void) const {
 	return gethostbyname(host);
 }
 
+list<unsigned long> t_url::get_h_ip_all(void) const {
+	return gethostbyname_all(host);
+}
+
 string t_url::get_ip(void) const {
 	struct hostent *h;
 
+	// TODO: handle multiple A RR's
+	
 	h = gethostbyname(host.c_str());
 	if (h == NULL) return "";
 	return inet_ntoa(*((struct in_addr *)h->h_addr));
+}
+
+list<t_ip_port> t_url::get_h_ip_srv(const string &transport) const {
+	list<t_ip_port> ip_list;
+	list<t_dns_result> srv_list;
+	list<unsigned long> ipaddr_list;
+		
+	// RFC 3263 4.2
+	// Only do an SRV lookup if host is a hostname and no port is specified.
+	if (!is_ipaddr(host) && port == 0) {
+		int ret = insrv_lookup(scheme.c_str(), transport.c_str(), 
+				host.c_str(), srv_list);
+		
+		if (ret >= 0 && !srv_list.empty()) {
+			// SRV RR's found
+			for (list<t_dns_result>::iterator i = srv_list.begin();
+			i != srv_list.end(); i++)
+			{
+				// Get A RR's
+				t_ip_port ip_port;
+				ipaddr_list = gethostbyname_all(i->hostname);
+				for (list<unsigned long>::iterator j = ipaddr_list.begin();
+				     j != ipaddr_list.end(); j++)
+				{
+					ip_list.push_back(t_ip_port(*j, i->port));
+				}
+			}
+			
+			return ip_list;
+		}
+	}
+	
+	// No SRV RR's found, do an A RR lookup
+	t_ip_port ip_port;
+	ipaddr_list = get_h_ip_all();
+	for (list<unsigned long>::iterator j = ipaddr_list.begin();
+		j != ipaddr_list.end(); j++)
+	{
+		ip_list.push_back(t_ip_port(*j, get_hport()));
+	}
+	
+	return ip_list;
 }
 
 string t_url::get_transport(void) const {

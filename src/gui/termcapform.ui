@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>532</width>
-            <height>134</height>
+            <width>581</width>
+            <height>168</height>
         </rect>
     </property>
     <property name="sizePolicy">
@@ -27,6 +27,40 @@
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout53</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>fromTextLabel</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;From:</string>
+                    </property>
+                    <property name="buddy" stdset="0">
+                        <cstring>fromComboBox</cstring>
+                    </property>
+                </widget>
+                <widget class="QComboBox">
+                    <property name="name">
+                        <cstring>fromComboBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
         <widget class="QGroupBox">
             <property name="name">
                 <cstring>termCapGroupBox</cstring>
@@ -161,20 +195,32 @@
         <slot>showAddressBook()</slot>
     </connection>
 </connections>
+<tabstops>
+    <tabstop>partyLineEdit</tabstop>
+    <tabstop>okPushButton</tabstop>
+    <tabstop>cancelPushButton</tabstop>
+    <tabstop>fromComboBox</tabstop>
+</tabstops>
 <includes>
-    <include location="local" impldecl="in declaration">sockets/url.h</include>
-    <include location="local" impldecl="in declaration">getaddressform.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in declaration">sockets/url.h</include>
+    <include location="local" impldecl="in declaration">getaddressform.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
     <include location="local" impldecl="in implementation">termcapform.ui.h</include>
 </includes>
+<forwards>
+    <forward>extern t_phone *phone;</forward>
+</forwards>
 <variables>
     <variable access="private">GetAddressForm *getAddressForm;</variable>
 </variables>
 <signals>
-    <signal>destination(const t_url &amp;)</signal>
+    <signal>destination(t_user *, const t_url &amp;)</signal>
 </signals>
 <slots>
+    <slot>show()</slot>
     <slot>validate()</slot>
     <slot>showAddressBook()</slot>
     <slot>selectedAddress( const QString &amp; address )</slot>

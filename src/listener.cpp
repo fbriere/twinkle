@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -123,28 +123,67 @@ void *listen_udp(void *arg) {
 	unsigned short	src_port;
 	t_sip_message	*msg;
 	t_event_network	*ev_network;
+	t_event_icmp	*ev_icmp;
 	int		pos_body;	// position of body in msg
 	string		log_msg;
+
+	// Number of consecutive non-icmp errors received
+	int num_non_icmp_errors = 0;
 
 	while(true) {
 		try {
 			data_size = sip_socket->recvfrom(src_addr, src_port, buf, 
 				MAX_UDP_SIZE + 1);
+			num_non_icmp_errors = 0;
 		} catch (int err) {
-			string msg("Failed to receive from SIP UDP socket.\n");
-			msg += strerror(err);
-			log_file->write_report(msg, "::listen_udp",
-				LOG_NORMAL, LOG_CRITICAL);
-			ui->cb_show_msg(msg, MSG_CRITICAL);
-			return NULL;
+			// Check if an ICMP error has been received
+			t_icmp_msg icmp;
+			if (sip_socket->get_icmp(icmp)) {
+				log_msg = "Received ICMP from: ";
+				log_msg += h_ip2str(icmp.icmp_src_ipaddr);
+				log_msg += "\nICMP type: ";
+				log_msg += int2str(icmp.type);
+				log_msg += "\nICMP code: ";
+				log_msg += int2str(icmp.code);
+				log_msg += "\nDestination of packet causing ICMP: ";
+				log_msg += h_ip2str(icmp.ipaddr);
+				log_msg += ":";
+				log_msg += int2str(icmp.port);
+				log_msg += "\nSocket error: ";
+				log_msg += strerror(err);
+				log_file->write_report(log_msg, "::listen_udp", LOG_NORMAL);
+			
+				ev_icmp = new t_event_icmp(icmp);
+				MEMMAN_NEW(ev_icmp);
+				evq_trans_mgr->push(ev_icmp);
+				
+				num_non_icmp_errors = 0;
+			} else {
+				// Even if an ICMP message is received this code can get
+				//  executed. Sometimes the error is already present on 
+				// the socket, but the ICMP message is not yet queued.
+				log_msg = "Failed to receive from SIP UDP socket.\n";
+				log_msg += strerror(err);
+				log_file->write_report(log_msg, "::listen_udp");
+				
+				num_non_icmp_errors++;
+				if (num_non_icmp_errors > 100) {
+					log_msg = "Excessive number of socket errors.";
+					log_file->write_report(log_msg, "::listen_udp", 
+						LOG_NORMAL, LOG_CRITICAL);
+					ui->cb_show_msg(log_msg, MSG_CRITICAL);
+					exit(1);
+				}
+			}			
+			
+			continue;
 		}
 		
 		// Check if this is a STUN message
 		// The first byte of a STUN message is 0x00 or 0x01.
 		// A SIP message is ASCII so the first byte for SIP is
 		// never 0x00 or 0x01
-		if (phone->use_stun &&
-		    buf[0] <= 1)
+		if (buf[0] <= 1)
 		{
 			recvd_stun_msg(buf, data_size, src_addr, src_port);
 			continue;
@@ -250,7 +289,13 @@ void *listen_udp(void *arg) {
 
 		if (msg->get_type() == MSG_REQUEST) {
 			// RFC 3261 18.2.1
-			// Add received-parameter to topmost Via-header if needed.
+			// When the server transport receives a request over any transport, it
+			// MUST examine the value of the "sent-by" parameter in the top Via
+			// header field value.  If the host portion of the "sent-by" parameter
+			// contains a domain name, or if it contains an IP address that differs
+			// from the packet source address, the server MUST add a "received"
+			// parameter to that Via header field value.  This parameter MUST
+			// contain the source address from which the packet was received.
 			string src_ip = h_ip2str(src_addr);
 			t_via &top_via = msg->hdr_via.via_list.front();
 			if (top_via.host != src_ip) {

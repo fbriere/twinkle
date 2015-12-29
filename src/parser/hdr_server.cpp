@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,7 +41,8 @@ string t_server::encode(void) const {
 	}
 
 	if (comment.size() > 0) {
-		s += " (";
+		if (s.size() > 0) s += ' ';
+		s += "(";
 		s += comment;
 		s += ')';
 	}

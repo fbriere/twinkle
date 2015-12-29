@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <list>
 #include <string>
 #include "dialog.h"
+#include "user.h"
 #include "sdp/sdp.h"
 #include "parser/sip_message.h"
 #include "audio/audio_session.h"
@@ -39,6 +40,11 @@ class t_session {
 private:
 	// The owning dialog
 	t_dialog		*dialog;
+	
+	// User profile of user for which the session is created.
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user			*user_config;
 
 	// Copy of host needed for call-retrieve after call-hold
 	string			retrieve_host;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,13 @@ enum t_refer_state {
 	REFST_ACTIVE,		// Referee granted refer
 };
 
+// Types of registration requests
+enum t_register_type {
+	REG_REGISTER,
+	REG_QUERY,
+	REG_DEREGISTER,
+	REG_DEREGISTER_ALL
+};
 
 // RFC 3261 Annex A
 // SIP timers
@@ -85,7 +92,7 @@ enum t_line_timer {
 	LTMR_ACK_TIMEOUT,	// Waiting for ACK
 	LTMR_ACK_GUARD,		// After this timer ACK is lost for good
 	LTMR_INVITE_COMP,	// After this timer INVITE transiction is
-				// cosidered complete.
+				// considered complete.
 	LTMR_NO_ANSWER,		// This timer expires if the callee does
 				// not answer. The call will be torn down.
 	LTMR_RE_INVITE_GUARD,	// re-INVITE timeout
@@ -106,11 +113,11 @@ enum t_stun_timer {
 
 
 // No answer timer (ms)
-#define DUR_NO_ANSWER	(user_config->timer_noanswer * 1000)
+#define DUR_NO_ANSWER(u)	((u)->timer_noanswer * 1000)
 
 // Registration timers (s)
 // Registration duration (seconds)
-#define DUR_REGISTRATION	(user_config->registration_time)
+#define DUR_REGISTRATION(u)	((u)->registration_time)
 #define RE_REGISTER_DELTA	5   // Re-register 5 seconds before expiry
 #define DUR_REG_FAILURE         30  // Re-registration interval after reg. failure
 
@@ -181,7 +188,7 @@ enum t_stun_timer {
 #define CALL_ID_LEN	15
 
 // Create a new call-id
-#define NEW_CALL_ID	(random_token(CALL_ID_LEN) + '@' + USER_HOST)
+#define NEW_CALL_ID(u)	(random_token(CALL_ID_LEN) + '@' + USER_HOST(u))
 
 // Create a new sequence number fo CSeq header
 #define NEW_SEQNR	rand() % 1000 + 1
@@ -193,12 +200,12 @@ enum t_stun_timer {
 #define NEW_CNONCE	random_hexstr(CNONCE_LEN)
 
 // Set Allow header with methods that can be handled by the phone
-#define SET_HDR_ALLOW(h)	{ (h).add_method(INVITE); \
+#define SET_HDR_ALLOW(h, u)	{ (h).add_method(INVITE); \
 				  (h).add_method(ACK); \
 				  (h).add_method(BYE); \
 				  (h).add_method(CANCEL); \
 				  (h).add_method(OPTIONS); \
-				  if (user_config->ext_100rel != EXT_DISABLED) {\
+				  if ((u)->ext_100rel != EXT_DISABLED) {\
 				  	(h).add_method(PRACK);\
 				  }\
 				  (h).add_method(REFER); \
@@ -230,7 +237,7 @@ enum t_stun_timer {
 					PRODUCT_VERSION)); }
 
 // Set Organization header
-#define SET_HDR_ORGANIZATION(h)	{ if (user_config->organization != "") {\
-					(h).set_name(user_config->organization); }}
+#define SET_HDR_ORGANIZATION(h, u)	{ if ((u)->organization != "") {\
+					(h).set_name((u)->organization); }}
 
 #endif

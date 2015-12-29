@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,11 +25,13 @@
 */
 
 
-int AuthenticationForm::exec(const QString &realm, QString &username,
+int AuthenticationForm::exec(t_user *user_config, const QString &realm, QString &username,
 			     QString &password)
 {
 	int retval;
 	
+	profileValueTextLabel->setText(user_config->get_profile_name().c_str());
+	userValueTextLabel->setText(user_config->get_display_uri().c_str());
 	realmTextLabel->setText(realm);
 	retval = QDialog::exec();
 	username = usernameLineEdit->text();

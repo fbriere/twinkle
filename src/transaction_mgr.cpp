@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 #include "log.h"
 #include "transaction_mgr.h"
 #include "sockets/url.h"
-#include "user.h"
 #include "util.h"
 #include "audits/memman.h"
 
@@ -49,6 +48,18 @@ t_trans_client *t_transaction_mgr::find_trans_client(t_tid tid) const {
 	i = map_trans_client.find(tid);
 	if (i == map_trans_client.end()) return NULL;
 	return i->second;
+}
+
+t_trans_client *t_transaction_mgr::find_trans_client(const t_icmp_msg &icmp) const {
+	map<t_tid, t_trans_client *>::const_iterator i;
+
+	for (i = map_trans_client.begin(); i != map_trans_client.end();
+			i++)
+	{
+		if (i->second->match(icmp)) return i->second;
+	}
+
+	return NULL;
 }
 
 t_trans_server *t_transaction_mgr::find_trans_server(t_request *r) const {
@@ -91,6 +102,18 @@ t_stun_transaction *t_transaction_mgr::find_stun_trans(t_tid tid) const {
 	return i->second;
 }
 
+t_stun_transaction *t_transaction_mgr::find_stun_trans(const t_icmp_msg &icmp) const {
+	map<t_tid, t_stun_transaction *>::const_iterator i;
+
+	for (i = map_stun_trans.begin(); i != map_stun_trans.end();
+			i++)
+	{
+		if (i->second->match(icmp)) return i->second;
+	}
+
+	return NULL;
+}
+
 t_trans_server *t_transaction_mgr::find_cancel_target(t_request *r) const {
 	map<t_tid, t_trans_server *>::const_iterator i;
 
@@ -103,15 +126,14 @@ t_trans_server *t_transaction_mgr::find_cancel_target(t_request *r) const {
 	return NULL;
 }
 
-t_tc_invite *t_transaction_mgr::create_tc_invite(t_request *r,
+t_tc_invite *t_transaction_mgr::create_tc_invite(t_user *user_config, t_request *r,
 		unsigned short tuid)
 {
 	unsigned long	ipaddr;
 	unsigned short	port;
 
 	r->get_destination(ipaddr, port, *user_config);
-	if (ipaddr == 0) return NULL;
-	if (port == 0) return NULL;
+	if (ipaddr == 0 || port == 0) return NULL;
 
 	t_tc_invite *t = new t_tc_invite(r, ipaddr, port, tuid);
 	MEMMAN_NEW(t);
@@ -119,15 +141,14 @@ t_tc_invite *t_transaction_mgr::create_tc_invite(t_request *r,
 	return t;
 }
 
-t_tc_non_invite *t_transaction_mgr::create_tc_non_invite(t_request *r,
+t_tc_non_invite *t_transaction_mgr::create_tc_non_invite(t_user *user_config, t_request *r,
 		unsigned short tuid)
 {
 	unsigned long	ipaddr;
 	unsigned short	port;
 
 	r->get_destination(ipaddr, port, *user_config);
-	if (ipaddr == 0) return NULL;
-	if (port == 0) return NULL;
+	if (ipaddr == 0 || port == 0) return NULL;
 
 	t_tc_non_invite *t = new t_tc_non_invite(r, ipaddr, port, tuid);
 	MEMMAN_NEW(t);
@@ -149,36 +170,28 @@ t_ts_non_invite *t_transaction_mgr::create_ts_non_invite(t_request *r) {
 	return t;
 }
 
-t_sip_stun_trans *t_transaction_mgr::create_sip_stun_trans(StunMessage *r,
+t_sip_stun_trans *t_transaction_mgr::create_sip_stun_trans(t_user *user_config, StunMessage *r,
 		unsigned short tuid)
 {
-	unsigned long	ipaddr;
-	unsigned short	port;
-	
-	ipaddr = user_config->stun_server.get_h_ip();
-	if (ipaddr == 0) return NULL;
-	port = user_config->stun_server.get_hport();
-	if (port == 0) return NULL;	
-
-	t_sip_stun_trans *t = new t_sip_stun_trans(r, tuid, ipaddr, port);
+	list<t_ip_port> destinations = 
+		user_config->stun_server.get_h_ip_srv("udp");
+	if (destinations.empty()) return NULL;
+		
+	t_sip_stun_trans *t = new t_sip_stun_trans(user_config, r, tuid, destinations);
 	MEMMAN_NEW(t);
 	map_stun_trans[t->get_id()] = (t_stun_transaction *)t;
 	return t;
 }
 
-t_media_stun_trans *t_transaction_mgr::create_media_stun_trans(StunMessage *r,
-		unsigned short tuid, unsigned short src_port)
+t_media_stun_trans *t_transaction_mgr::create_media_stun_trans(t_user *user_config, 
+		StunMessage *r, unsigned short tuid, unsigned short src_port)
 {
-	unsigned long	ipaddr;
-	unsigned short	port;
+	list<t_ip_port> destinations = 
+		user_config->stun_server.get_h_ip_srv("udp");
+	if (destinations.empty()) return NULL;
 	
-	ipaddr = user_config->stun_server.get_h_ip();
-	if (ipaddr == 0) return NULL;
-	port = user_config->stun_server.get_hport();
-	if (port == 0) return NULL;	
-	
-	t_media_stun_trans *t = new t_media_stun_trans(r, tuid,
-		ipaddr, port, src_port);
+	t_media_stun_trans *t = new t_media_stun_trans(user_config, r, tuid,
+		destinations, src_port);
 	MEMMAN_NEW(t);
 	map_stun_trans[t->get_id()] = (t_stun_transaction *)t;
 	return t;
@@ -354,7 +367,8 @@ void t_transaction_mgr::handle_event_user(t_event_user *e) {
 		switch (request->method) {
 		case INVITE:
 			t_tc_invite *t1;
-			t1 = create_tc_invite(request, e->get_tuid());
+			assert(e->get_user_config());
+			t1 = create_tc_invite(e->get_user_config(), request, e->get_tuid());
 			if (t1 == NULL) {
 				// Report 404 to TU
 				response = request->create_response(
@@ -378,7 +392,8 @@ void t_transaction_mgr::handle_event_user(t_event_user *e) {
 			break;
 		default:
 			t_tc_non_invite *t2;
-			t2 = create_tc_non_invite(request, e->get_tuid());
+			assert(e->get_user_config());
+			t2 = create_tc_non_invite(e->get_user_config(), request, e->get_tuid());
 			if (t2 == NULL) {
 				// Report 404 to TU
 				response = request->create_response(
@@ -500,8 +515,6 @@ void t_transaction_mgr::handle_event_abort(t_event_abort_trans *e) {
 		if (tc->get_state() == TS_TERMINATED) {
 			delete_trans_client(tc);
 		}
-
-		return;
 	}
 }
 
@@ -516,14 +529,15 @@ void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
 	
 	switch(e->get_stun_event_type()) {
 	case TYPE_STUN_SIP:
-		sst = create_sip_stun_trans(msg, tuid);
+		assert(e->get_user_config());
+		sst = create_sip_stun_trans(e->get_user_config(), msg, tuid);
 		if (!sst) {
 			// STUN server not found
 			log_file->write_header(
 				"t_transaction_mgr::handle_event_stun_request",
 				LOG_NORMAL, LOG_INFO);
 			log_file->write_raw("Cannot resolve:\n");
-			log_file->write_raw(user_config->stun_server.encode());
+			log_file->write_raw(e->get_user_config()->stun_server.encode());
 			log_file->write_endl();
 			log_file->write_raw("Send internal: 404 Not Found\n");
 			log_file->write_footer();
@@ -535,14 +549,15 @@ void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
 		}
 		break;
 	case TYPE_STUN_MEDIA:
-		mst = create_media_stun_trans(msg, tuid, e->src_port);
+		assert(e->get_user_config());
+		mst = create_media_stun_trans(e->get_user_config(), msg, tuid, e->src_port);
 		if (!mst) {
 			// STUN server not found
 			log_file->write_header(
 				"t_transaction_mgr::handle_event_stun_request",
 				LOG_NORMAL, LOG_INFO);
 			log_file->write_raw("Cannot resolve:\n");
-			log_file->write_raw(user_config->stun_server.encode());
+			log_file->write_raw(e->get_user_config()->stun_server.encode());
 			log_file->write_endl();
 			log_file->write_raw("Send internal: 404 Not Found\n");
 			log_file->write_footer();
@@ -573,6 +588,32 @@ void t_transaction_mgr::handle_event_stun_response(t_event_stun_response *e) {
 	
 	if (st->get_state() == TS_TERMINATED) {
 		delete_stun_trans(st);
+	}
+}
+
+void t_transaction_mgr::handle_event_icmp(t_event_icmp *e) {
+	// Only a client and STUN transactions can handle ICMP errors
+	// If both a client and STUN transaction match then send the ICMP
+	// error to both transactions. It cannot be determined which transaction
+	// caused the error, but as both transactions have the same destination
+	// it is likely that both will fail.
+	
+	t_trans_client *tc = find_trans_client(e->get_icmp());
+	if (tc) {
+		tc->process_icmp(e->get_icmp());
+
+		if (tc->get_state() == TS_TERMINATED) {
+			delete_trans_client(tc);
+		}
+	}
+	
+	t_stun_transaction *st = find_stun_trans(e->get_icmp());
+	if (st) {
+		st->process_icmp(e->get_icmp());
+		
+		if (st->get_state() == TS_TERMINATED) {
+			delete_stun_trans(st);
+		}
 	}
 }
 
@@ -612,6 +653,7 @@ void t_transaction_mgr::run(void) {
 	t_event_abort_trans	*ev_abort;
 	t_event_stun_request	*ev_stun_request;
 	t_event_stun_response	*ev_stun_response;
+	t_event_icmp		*ev_icmp;
 
 	while (true) {
 		event = evq_trans_mgr->pop();
@@ -640,6 +682,10 @@ void t_transaction_mgr::run(void) {
 		case EV_STUN_RESPONSE:
 			ev_stun_response = (t_event_stun_response *)event;
 			handle_event_stun_response(ev_stun_response);
+			break;
+		case EV_ICMP:
+			ev_icmp = (t_event_icmp *)event;
+			handle_event_icmp(ev_icmp);
 			break;
 		default:
 			assert(false);

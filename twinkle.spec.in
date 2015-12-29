@@ -8,7 +8,7 @@ Source:		%{name}-%{version}.tar.gz
 Prefix:		%{_prefix}
 BuildArch:	i586
 BuildRoot:	%{_tmppath}/making_of_%{name}_%{version}
-Packager:	Michel de Boer <michel@twinklephone.com>
+Packager:
 URL:		http://www.twinklephone.com
 Requires:	commoncpp2 >= 1.3.0 
 Requires:	ccrtp >= 1.3.4

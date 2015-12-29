@@ -13,7 +13,7 @@
         </rect>
     </property>
     <property name="caption">
-        <string>Twinkle - Select Address</string>
+        <string>Twinkle - Select address</string>
     </property>
     <vbox>
         <property name="name">

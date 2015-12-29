@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -140,14 +140,14 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	unlock();
 }
 
-void t_transaction_layer::send_request(t_request *r, t_tuid tuid) {
-	evq_trans_mgr->push_user((t_sip_message *)r, tuid, 0);
+void t_transaction_layer::send_request(t_user *user_config, t_request *r, t_tuid tuid) {
+	evq_trans_mgr->push_user(user_config, (t_sip_message *)r, tuid, 0);
 }
 
-void t_transaction_layer::send_request(StunMessage *r, t_tuid tuid) {
+void t_transaction_layer::send_request(t_user *user_config, StunMessage *r, t_tuid tuid) {
 	// The transaction manager will determine the destination IP and port,
 	// so they can be left to zero in the event.
-	evq_trans_mgr->push_stun_request(r, TYPE_STUN_SIP, tuid, 0, 0, 0);
+	evq_trans_mgr->push_stun_request(user_config, r, TYPE_STUN_SIP, tuid, 0, 0, 0);
 }
 
 void t_transaction_layer::send_response(t_response *r, t_tuid tuid,

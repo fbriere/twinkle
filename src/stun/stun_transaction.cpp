@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include "events.h"
 #include "log.h"
 #include "phone.h"
+#include "sys_settings.h"
 #include "transaction_mgr.h"
 #include "util.h"
 #include "audits/memman.h"
@@ -34,13 +35,13 @@ extern t_event_queue		*evq_sender_udp;
 extern t_phone			*phone;
 
 
-bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
+bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned long &mapped_ip,
 	unsigned short &mapped_port, int &err_code, string &err_reason)
 {
-	unsigned long dst_ipaddr = user_config->stun_server.get_h_ip();
-	unsigned short dst_port = user_config->stun_server.get_hport();
+	list<t_ip_port> destinations = 
+		user_config->stun_server.get_h_ip_srv("udp");
 	
-	if (dst_ipaddr == 0 || dst_port == 0) {
+	if (destinations.empty()) {
 		// Cannot resolve STUN server address.
 		log_file->write_header("::get_stun_binding", LOG_NORMAL, LOG_CRITICAL);
 		log_file->write_raw("Failed to resolve: ");
@@ -59,7 +60,7 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 	int wait_intval = DUR_STUN_START_INTVAL;
 		
 	t_socket_udp sock(src_port);
-	sock.connect(dst_ipaddr, dst_port);
+	sock.connect(destinations.front().ipaddr, destinations.front().port);
 		
 	StunMessage req_bind;
 	StunAtrString stun_null_str;
@@ -72,13 +73,34 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 		char m[STUN_MAX_MESSAGE_SIZE];
 		int msg_size = stunEncodeMessage(req_bind, m, 
 			STUN_MAX_MESSAGE_SIZE, stun_null_str, false);
-		sock.send(m, msg_size);
+			
+		try {
+			sock.send(m, msg_size);
+		}
+		catch (int err) {
+			// Socket error (probably ICMP error)
+			// Failover to next destination
+			log_file->write_report("Send failed. Failover to next destination.",
+					"::get_stun_binding");	
+						
+			destinations.pop_front();
+			if (destinations.empty()) {
+				log_file->write_report("No next destination for failover.",
+					"::get_stun_binding");
+				break;
+			}
+			
+			num_transmissions = 0;
+			wait_intval = DUR_STUN_START_INTVAL;
+			sock.connect(destinations.front().ipaddr, destinations.front().port);
+			continue;
+		}
 		
 		log_file->write_header("::get_stun_binding", LOG_STUN);
 		log_file->write_raw("Send to: ");
-		log_file->write_raw(h_ip2str(dst_ipaddr));
+		log_file->write_raw(h_ip2str(destinations.front().ipaddr));
 		log_file->write_raw(":");
-		log_file->write_raw(dst_port);
+		log_file->write_raw(destinations.front().port);
 		log_file->write_endl();
 		log_file->write_raw(stunMsg2Str(req_bind));
 		log_file->write_footer();
@@ -87,14 +109,26 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 			ret = sock.select_read(wait_intval);
 		}
 		catch (int err) {
-			num_transmissions++;
-			if (wait_intval < DUR_STUN_MAX_INTVAL) {
-				wait_intval *= 2;
+			// Socket error (probably ICMP error)
+			// Failover to next destination
+			log_file->write_report("Select failed. Failover to next destination.",
+					"::get_stun_binding");	
+						
+			destinations.pop_front();
+			if (destinations.empty()) {
+				log_file->write_report("No next destination for failover.",
+					"::get_stun_binding");
+				break;
 			}
-			continue;	
+			
+			num_transmissions = 0;
+			wait_intval = DUR_STUN_START_INTVAL;
+			sock.connect(destinations.front().ipaddr, destinations.front().port);
+			continue;
 		}
 			
 		if (!ret) {
+			// Time out
 			num_transmissions++;
 			if (wait_intval < DUR_STUN_MAX_INTVAL) {
 				wait_intval *= 2;
@@ -103,7 +137,27 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 		}
 			
 		// A message has been received
-		msg_size = sock.recv(buf, STUN_MAX_MESSAGE_SIZE + 1);
+		try {
+			msg_size = sock.recv(buf, STUN_MAX_MESSAGE_SIZE + 1);
+		}
+		catch (int err) {
+			// Socket error (probably ICMP error)
+			// Failover to next destination
+			log_file->write_report("Recv failed. Failover to next destination.",
+					"::get_stun_binding");	
+						
+			destinations.pop_front();
+			if (destinations.empty()) {
+				log_file->write_report("No next destination for failover.",
+					"::get_stun_binding");
+				break;
+			}
+			
+			num_transmissions = 0;
+			wait_intval = DUR_STUN_START_INTVAL;
+			sock.connect(destinations.front().ipaddr, destinations.front().port);
+			continue;
+		}
 			
 		StunMessage resp_bind;
 		
@@ -119,9 +173,9 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 		
 		log_file->write_header("::get_stun_binding", LOG_STUN);
 		log_file->write_raw("Received from: ");
-		log_file->write_raw(h_ip2str(dst_ipaddr));
+		log_file->write_raw(h_ip2str(destinations.front().ipaddr));
 		log_file->write_raw(":");
-		log_file->write_raw(dst_port);
+		log_file->write_raw(destinations.front().port);
 		log_file->write_endl();
 		log_file->write_raw(stunMsg2Str(resp_bind));
 		log_file->write_footer();
@@ -174,30 +228,38 @@ bool get_stun_binding(unsigned short src_port, unsigned long &mapped_ip,
 	return false;
 }
 
-bool stun_discover_nat(string &err_msg) {
-		phone->use_stun = false;
-		phone->use_nat_keepalive = false;
+bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
+	t_user *user_config = pu->get_user_profile();
 
+	pu->use_stun = false;
+	pu->use_nat_keepalive = false;
+
+	list<t_ip_port> destinations = 
+		user_config->stun_server.get_h_ip_srv("udp");
+
+	if (destinations.empty()) {
+		// Cannot resolve STUN server address.
+		log_file->write_header("::main", LOG_NORMAL, LOG_CRITICAL);
+		log_file->write_raw("Failed to resolve: ");
+		log_file->write_raw(user_config->stun_server.encode());
+		log_file->write_endl();
+		log_file->write_footer();
+
+		err_msg = "Cannot resolve STUN server: ";
+		err_msg += user_config->stun_server.encode().c_str();
+		return false;
+	}
+
+	while (!destinations.empty()) {
 		StunAddress4 stun_ip4;
-		stun_ip4.addr = user_config->stun_server.get_h_ip();
-		stun_ip4.port = user_config->stun_server.get_hport();
-	
-		if (stun_ip4.addr == 0 || stun_ip4.port == 0) {
-			// Cannot resolve STUN server address.
-			log_file->write_header("::main", LOG_NORMAL, LOG_CRITICAL);
-			log_file->write_raw("Failed to resolve: ");
-			log_file->write_raw(user_config->stun_server.encode());
-			log_file->write_endl();
-			log_file->write_footer();
-
-			err_msg = "Cannot resolve STUN server: ";
-			err_msg += user_config->stun_server.encode().c_str();
-			return false;
-		}
-
+		stun_ip4.addr = destinations.front().ipaddr;
+		stun_ip4.port = destinations.front().port;
+		
 		NatType nat_type = stunNatType(stun_ip4, false);
 		log_file->write_header("::main");
-		log_file->write_raw("STUN NAT type discovery\n");
+		log_file->write_raw("STUN NAT type discovery for ");
+		log_file->write_raw(user_config->get_profile_name());
+		log_file->write_endl();
 		log_file->write_raw("NAT type: ");
 		log_file->write_raw(stunNatType2Str(nat_type));
 		log_file->write_endl();
@@ -206,59 +268,78 @@ bool stun_discover_nat(string &err_msg) {
 		switch (nat_type) {
 		case StunTypeOpen:
 			// STUN is not needed.
-			break;
+			return true;
 		case StunTypeSymNat:
 			err_msg = "You are behind a symmetric NAT.\n";
 			err_msg += "STUN will not work.\n";
 			err_msg += "Configure a public IP address in the user profile\n";
 			err_msg += "and create the following static bindings (UDP) in your NAT.\n\n";
 			err_msg += "public IP:";
-			err_msg += int2str(user_config->sip_udp_port);
+			err_msg += int2str(sys_config->get_sip_udp_port());
 			err_msg += " --> private IP:";
-			err_msg += int2str(user_config->sip_udp_port);
+			err_msg += int2str(sys_config->get_sip_udp_port());
 			err_msg += " (for SIP signaling)\n";
 			err_msg += "public IP:";
-			err_msg += int2str(user_config->rtp_port);
+			err_msg += int2str(sys_config->rtp_port);
 			err_msg += "-";
-			err_msg += int2str(user_config->rtp_port + 5);
+			err_msg += int2str(sys_config->rtp_port + 5);
 			err_msg += " --> private IP:";
-			err_msg += int2str(user_config->rtp_port);
+			err_msg += int2str(sys_config->rtp_port);
 			err_msg += "-";
-			err_msg += int2str(user_config->rtp_port + 5);
+			err_msg += int2str(sys_config->rtp_port + 5);
 			err_msg += " (for RTP/RTCP)";
 			return false;
 		case StunTypeSymFirewall:
 			// STUN is not needed as we are on a pubic IP.
 			// NAT keep alive is needed however to keep the firewall open.
-			phone->use_nat_keepalive = true;
-			break;
+			pu->use_nat_keepalive = true;
+			return true;
 		case StunTypeBlocked:
-			err_msg = "Cannot reach the STUN server: ";
-			err_msg += user_config->stun_server.encode().c_str();
-			err_msg += "\n\n";
-			err_msg += "If you are behind a firewall then you need to open ";
-			err_msg += "the following UDP ports for a proper working of ";
-			err_msg += PRODUCT_NAME;
-			err_msg += ":\n";
-			err_msg += "Port ";
-			err_msg += int2str(user_config->sip_udp_port);
-			err_msg += " (for SIP signaling)\n";
-			err_msg += "Ports ";
-			err_msg += int2str(user_config->rtp_port);
-			err_msg += "-";
-			err_msg += int2str(user_config->rtp_port + 5);
-			err_msg += " (for RTP/RTCP)";
-			return false;
+			destinations.pop_front();
+			
+			// The code for NAT type discovery does not handle
+			// ICMP errors. So if the conclusion is that the network
+			// connection is blocked, it might be due to a down STUN
+			// server. Try alternative destination if avaliable.
+		
+			if (destinations.empty()) {
+				err_msg = "Cannot reach the STUN server: ";
+				err_msg += user_config->stun_server.encode().c_str();
+				err_msg += "\n\n";
+				err_msg += "If you are behind a firewall then you need to open ";
+				err_msg += "the following UDP ports for a proper working of ";
+				err_msg += PRODUCT_NAME;
+				err_msg += ":\n";
+				err_msg += "Port ";
+				err_msg += int2str(sys_config->get_sip_udp_port());
+				err_msg += " (for SIP signaling)\n";
+				err_msg += "Ports ";
+				err_msg += int2str(sys_config->rtp_port);
+				err_msg += "-";
+				err_msg += int2str(sys_config->rtp_port + 5);
+				err_msg += " (for RTP/RTCP)";
+				
+				return false;
+			}
+			
+			log_file->write_report("Failover to next destination.",
+				"::stun_discover_nat");			
+			break;
 		case StunTypeFailure:
-			err_msg = "NAT type discovery via STUN failed.\n";
-			return false;
+			destinations.pop_front();
+			log_file->write_report("Failover to next destination.",
+				"::stun_discover_nat");
+			break;
 		default:
 			// Use STUN.
-			phone->use_stun = true;
-			phone->use_nat_keepalive = true;
+			pu->use_stun = true;
+			pu->use_nat_keepalive = true;
+			return true;
 		}
-		
-		return true;
+	}
+
+	err_msg = "NAT type discovery via STUN failed.\n";	
+	return false;
 }
 
 
@@ -306,9 +387,8 @@ void *stun_listen_main(void *arg) {
 t_mutex t_stun_transaction::mtx_class;
 t_tid t_stun_transaction::next_id = 1;
 
-t_stun_transaction::t_stun_transaction(StunMessage *r,
-			   unsigned short _tuid, unsigned long ipaddr,
-			   unsigned short port) 
+t_stun_transaction::t_stun_transaction(t_user *user, StunMessage *r,
+			   unsigned short _tuid, const list<t_ip_port> &dst) 
 {
 	mtx_class.lock();
 	id = next_id++;
@@ -323,13 +403,16 @@ t_stun_transaction::t_stun_transaction(StunMessage *r,
 	dur_req_timeout = DUR_STUN_START_INTVAL;
 	num_transmissions = 0;
 	
-	dst_ipaddr = ipaddr;
-	dst_port = port;
+	destinations = dst;
+	
+	user_config = user->copy();
 }
 
 t_stun_transaction::~t_stun_transaction() {
 	MEMMAN_DELETE(request);
 	delete request;
+	MEMMAN_DELETE(user_config);
+	delete user_config;
 }
 
 t_tid t_stun_transaction::get_id(void) const {
@@ -364,6 +447,41 @@ void t_stun_transaction::process_response(StunMessage *r) {
 	state = TS_TERMINATED;
 }
 
+void t_stun_transaction::process_icmp(const t_icmp_msg &icmp) {
+	stop_timer_req_timeout();
+	
+	log_file->write_report("Failover to next destination.",
+				"t_stun_transaction::process_icmp");	
+				
+	destinations.pop_front();
+	if (destinations.empty()) {
+		log_file->write_report("No next destination for failover.",
+				"t_stun_transaction::process_icmp");
+						
+		log_file->write_header("t_stun_transaction::process_icmp",
+			LOG_NORMAL, LOG_INFO);
+		log_file->write_raw("ICMP error received.\n\n");
+		log_file->write_raw("Send internal: 500 Server Error");
+		log_file->write_footer();	
+	
+		// No server could be reached, Notify the TU with 500 Server
+		// Error.
+		StunMessage *resp = stunBuildError(*request, 500, "Server Error");
+		evq_trans_layer->push_stun_response(resp, tuid, id);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		state = TS_TERMINATED;
+	}
+	
+	// Failover to next destination
+	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+		destinations.front().ipaddr, destinations.front().port);
+	num_transmissions = 1;
+	dur_req_timeout = DUR_STUN_START_INTVAL;
+	start_timer_req_timeout();
+}
+
 void t_stun_transaction::timeout(t_stun_timer t) {
 	// RFC 3489 9.3
 	if (num_transmissions < MAX_STUN_TRANSMISSIONS) {
@@ -389,25 +507,37 @@ bool t_stun_transaction::match(StunMessage *resp) const {
 	return stunEqualId(*resp, *request);
 }
 
+// An ICMP error matches a transaction when the destination IP address/port
+// of the packet that caused the ICMP error equals the destination 
+// IP address/port of the transaction. Other information of the packet causing
+// the ICMP error is not available.
+// In theory when multiple transactions are open for the same destination, the
+// wrong transaction may process the ICMP error. In practice this should rarely
+// happen as the destination will be unreachable for all those transactions.
+// If it happens a transaction gets aborted.
+bool t_stun_transaction::match(const t_icmp_msg &icmp) const {
+	return (destinations.front().ipaddr == icmp.ipaddr && 
+	        destinations.front().port == icmp.port);
+}
+
 //////////////////////////////////////////////
 // SIP STUN transaction
 //////////////////////////////////////////////
 
 void t_sip_stun_trans::retransmit(void) {
 	// The SIP UDP sender will send out the STUN request.
-	evq_sender_udp->push_stun_request(request, TYPE_STUN_SIP, tuid, id,
-		dst_ipaddr, dst_port);
+	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+		destinations.front().ipaddr, destinations.front().port);
 	num_transmissions++;
 }
 
-t_sip_stun_trans::t_sip_stun_trans(StunMessage *r,
-			unsigned short _tuid, unsigned long ipaddr,
-			unsigned short port) :
-		t_stun_transaction(r, _tuid, ipaddr, port)
+t_sip_stun_trans::t_sip_stun_trans(t_user *user, StunMessage *r,
+			unsigned short _tuid, const list<t_ip_port> &dst) :
+		t_stun_transaction(user, r, _tuid, dst)
 {
 	// The SIP UDP sender will send out the STUN request.
-	evq_sender_udp->push_stun_request(request, TYPE_STUN_SIP, tuid, id,
-		dst_ipaddr, dst_port);
+	evq_sender_udp->push_stun_request(user_config, request, TYPE_STUN_SIP, tuid, id,
+		destinations.front().ipaddr, destinations.front().port);
 	num_transmissions++;
 	start_timer_req_timeout();	
 	state = TS_PROCEEDING;
@@ -417,6 +547,8 @@ t_sip_stun_trans::t_sip_stun_trans(StunMessage *r,
 // Media STUN transaction
 //////////////////////////////////////////////
 
+// TODO: this code is not used anymore. Remove?
+
 void t_media_stun_trans::retransmit(void) {
 	// Retransmit the STUN request
 	StunAtrString stun_pass;
@@ -425,7 +557,8 @@ void t_media_stun_trans::retransmit(void) {
 	int msg_size = stunEncodeMessage(*request, m, STUN_MAX_MESSAGE_SIZE, stun_pass, false);
 	
 	try {
-		sock->sendto(dst_ipaddr, dst_port, m, msg_size);
+		sock->sendto(destinations.front().ipaddr, destinations.front().port, 
+			m, msg_size);
 	} catch (int err) {
 		string msg("Failed to send STUN request for media.\n");
 		msg += strerror(err);
@@ -445,17 +578,17 @@ void t_media_stun_trans::retransmit(void) {
 	num_transmissions++;
 }
 
-t_media_stun_trans::t_media_stun_trans(StunMessage *r,
-			 unsigned short _tuid, unsigned long _dst_ipaddr,
-			 unsigned short _dst_port, unsigned short src_port) :
-		t_stun_transaction(r, _tuid, _dst_ipaddr, _dst_port)
+t_media_stun_trans::t_media_stun_trans(t_user *user, StunMessage *r,
+			 unsigned short _tuid, const list<t_ip_port> &dst, 
+			 unsigned short src_port) :
+		t_stun_transaction(user, r, _tuid, dst)
 {
 	thr_listen = NULL;
 	
 	try {
 		sock = new t_socket_udp(src_port);
 		MEMMAN_NEW(sock);
-		sock->connect(dst_ipaddr, dst_port);
+		sock->connect(destinations.front().ipaddr, destinations.front().port);
 	} catch (int err) {
 		string msg("Failed to create a UDP socket (STUN) on port ");
 		msg += int2str(src_port);

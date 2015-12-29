@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,10 +18,26 @@
 
 #include <cstdio>
 #include <cerrno>
+#include "twinkle_config.h"
 #include "socket.h"
+
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+
+#if HAVE_LINUX_TYPES_H
+#include <linux/types.h>
+#endif
+
+#if HAVE_LINUX_ERRQUEUE_H
+#include <linux/errqueue.h>
+#endif
+
+t_icmp_msg::t_icmp_msg(short _type, short _code, unsigned long _icmp_src_ipaddr,
+	unsigned long _ipaddr, unsigned short _port) :
+		type(_type), code(_code), icmp_src_ipaddr(_icmp_src_ipaddr),
+		ipaddr(_ipaddr), port(_port)
+{}
 
 t_socket_udp::t_socket_udp() {
 	struct sockaddr_in addr;
@@ -132,6 +148,77 @@ bool t_socket_udp::select_read(unsigned long timeout) {
 	if (ret < 0) throw errno;
 	if (ret == 0) return false;
 	return true;
+}
+
+bool t_socket_udp::enable_icmp(void) {
+#if HAVE_LINUX_ERRQUEUE_H
+	int enable = 1;
+	int ret = setsockopt(sd, SOL_IP, IP_RECVERR, &enable, sizeof(int));
+	if (ret < 0) return false;
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool t_socket_udp::get_icmp(t_icmp_msg &icmp) {
+#if HAVE_LINUX_ERRQUEUE_H
+	int ret;
+	char buf[256];
+	
+	// The destination address of the packet causing the ICMP
+	struct sockaddr dest_addr;
+	
+	struct msghdr msgh;
+	struct cmsghdr *cmsg;
+	
+	// Initialize message header to receive the ancillary data for
+	// an ICMP message.
+	msgh.msg_control = buf;
+	msgh.msg_controllen = 256;
+	msgh.msg_name = &dest_addr;
+	msgh.msg_namelen = sizeof(struct sockaddr);
+	
+	// Get error from the socket error queue
+	ret = recvmsg(sd, &msgh, MSG_ERRQUEUE);
+	if (ret < 0) return false;
+	
+	// Find ICMP message in returned controll messages
+	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg != NULL; 
+	     cmsg = CMSG_NXTHDR(&msgh, cmsg))
+	{
+		if (cmsg->cmsg_level == SOL_IP &&
+		    cmsg->cmsg_type == IP_RECVERR)
+		{
+			// ICMP message found
+			sock_extended_err *err = (sock_extended_err *)CMSG_DATA(cmsg);
+			icmp.type = err->ee_type;
+			icmp.code = err->ee_code;
+			
+			// Get IP address of host that has sent the ICMP error
+			sockaddr *sa_src_icmp = SO_EE_OFFENDER(err);
+			if (sa_src_icmp->sa_family == AF_INET) {
+				sockaddr_in *addr = (sockaddr_in *)sa_src_icmp;
+				icmp.icmp_src_ipaddr = ntohl(addr->sin_addr.s_addr);
+			} else {
+				// Non supported address type
+				icmp.icmp_src_ipaddr = 0;
+			}
+			
+			// Get destinnation address/port of packet causing the error.
+			if (dest_addr.sa_family == AF_INET) {
+				sockaddr_in *addr = (sockaddr_in *)&dest_addr;
+				icmp.ipaddr = ntohl(addr->sin_addr.s_addr);
+				icmp.port = ntohs(addr->sin_port);
+				return true;
+			} else {
+				// Non supported address type
+				continue;
+			}
+		}
+	}
+#endif
+	return false;
 }
 
 string h_ip2str(unsigned long ipaddr) {

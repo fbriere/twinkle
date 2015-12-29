@@ -1,3 +1,45 @@
+01 jan 2006 - Release 0.5
+=========================
+- Run multiple user profiles in parallel
+- Add/remove users while Twinkle is running
+- The SIP UDP port and RTP port settings have been moved from the user
+  profile to system settings. Changes of the default values in the user
+  profile will be lost.
+- DNS SRV support for SIP and STUN
+- ICMP processing
+- SIP failover on 503 response
+- SIP and STUN failover on ICMP error
+- When a call is originated from the call history, copy the subject to the
+  call window (prefixed with "Re:" when replying to a call).
+- Remove '/' from a phone number taken from KAddressbook. / is used in 
+  Germany to separate the area code from the local number.
+- Queue incoming in-dialog request if ACK has not been received yet.
+- Clear credentials cache when user changes realm, username or password
+- Added micro seconds to timestamps in log
+- Detecting a soundcard playing out at slightly less than 8000 samples per
+  second is now done on the RTP queue status. This seems to be more reliable 
+  than checking the ALSA sound buffer filling.
+- OSS fragment size and ALSA period size are now changeable via the system
+  settings. Some soundcard problems may be solved by changing these values.
+- Default ALSA period size for capturing lowered from 128 to 32. This seems
+  to give better performance on some sound cards.
+
+Bug fixes
+---------
+- With certain ALSA settings (eg. mic=default, speaker=plughw), the ALSA 
+  device got locked up after 1 call.
+- The ports used for NAT discovery via STUN stayed open.
+- When a STUN transaction for a media port failed, the GUI did not clear
+  the line information fields.
+- Sending DTMF events took many unnecessary CPU cycles
+- Parse failure when Server or User-Agent header contained comment only
+
+Newly supported RFC's
+---------------------
+RFC 2782 - A DNS RR for specifying the location of services (DNS SRV)
+RFC 3263 - Session Initiation Protocol (SIP): Locating SIP Servers
+
+
 28 nov 2005 - Release 0.4.2
 ===========================
 - Microphone noise reduction (can be disabled in system settings)

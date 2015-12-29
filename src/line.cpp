@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -192,6 +192,7 @@ void t_line::cleanup(void) {
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
 		phone->line_cleared(line_number);
+		user_config = NULL;
 		ui->cb_line_state_changed();
 	}
 }
@@ -219,6 +220,7 @@ void t_line::cleanup_open_pending(void) {
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
 		phone->line_cleared(line_number);
+		user_config = NULL;
 		ui->cb_line_state_changed();
 	}
 }
@@ -243,6 +245,7 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	line_number = _line_number;
 	id_invite_comp = 0;
 	id_no_answer = 0;
+	user_config = NULL;
 }
 
 t_line::~t_line() {
@@ -271,6 +274,11 @@ t_line::~t_line() {
 	for (i = dying_dialogs.begin(); i != dying_dialogs.end(); i++) {
 		MEMMAN_DELETE(*i);
 		delete *i;
+	}
+	
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
 	}
 }
 
@@ -323,7 +331,7 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 		id_invite_comp = t->get_id();
 		break;
 	case LTMR_NO_ANSWER:
-		t = new t_tmr_line(DUR_NO_ANSWER, timer, this, did);
+		t = new t_tmr_line(DUR_NO_ANSWER(user_config), timer, this, did);
 		MEMMAN_NEW(t);
 		id_no_answer = t->get_id();
 		break;
@@ -418,21 +426,25 @@ void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
 	*id = 0;
 }
 
-void t_line::invite(const t_url &to_uri, const string &to_display,
+void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 		const string &subject)
 {
-	invite(to_uri, to_display, subject, t_hdr_referred_by());
+	invite(user, to_uri, to_display, subject, t_hdr_referred_by());
 }
 
-void t_line::invite(const t_url &to_uri, const string &to_display,
+void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by)
 {
+	assert(user);
+	
 	// Ignore if line is not idle
 	if (state != LS_IDLE) {
 		return;
 	}
 
 	assert(!open_dialog);
+	
+	user_config = user;
 
 	call_info.from_uri = create_user_uri();
 	call_info.from_display = user_config->display;
@@ -717,6 +729,8 @@ void t_line::recvd_success(t_response *r, t_tuid tuid, t_tid tid) {
 
 void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
+	
+	assert(user_config);
 
 	if (active_dialog) {
 		// If an active dialog exists then non-2XX should
@@ -817,6 +831,8 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 
 void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
+	
+	assert(user_config);
 
 	if (active_dialog) {
 		// If an active dialog exists then non-2XX should
@@ -986,14 +1002,167 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
-	recvd_redirect(r, tuid, tid);
+	t_dialog *d;
+
+	assert(user_config);
+	
+	if (active_dialog) {
+		// If an active dialog exists then non-2XX should
+		// only be for this dialog.
+		if (active_dialog->match_response(r, 0)) {
+			bool response_processed = false;
+
+			if (r->code == R_503_SERVICE_UNAVAILABLE) {
+				// RFC 3263 4.3
+				// Failover to next destination
+				if (active_dialog->failover_request(r))
+				{
+					// Failover successul.
+					// The response does not need to be
+					// processed any further
+					response_processed = true;
+				}
+			}
+
+			if (!response_processed) {
+				// The request failed, redirect it if there
+				// are other destinations available.
+				if (!user_config->allow_redirection ||
+				    !active_dialog->redirect_request(r))
+				{
+					// Request failed
+					active_dialog->
+						recvd_response(r, tuid, tid);
+				}
+			}
+		}
+
+		cleanup();
+		return;
+	}
+
+	d = match_response(r, pending_dialogs);
+	if (d) {
+		d->recvd_response(r, tuid, tid);
+		if (r->hdr_cseq.method == INVITE) {
+			pending_dialogs.remove(d);
+			MEMMAN_DELETE(d);
+			delete d;
+
+			// RFC 3261 13.2.2.3
+			// All early dialogs are considered terminated
+			// upon reception of the non-2xx final response.
+			list<t_dialog *>::iterator i;
+			for (i = pending_dialogs.begin();
+			     i != pending_dialogs.end(); i++)
+			{
+				MEMMAN_DELETE(*i);
+				delete *i;
+			}
+			pending_dialogs.clear();
+
+			if (open_dialog) {
+				bool response_processed = false;
+
+				if (r->code == R_503_SERVICE_UNAVAILABLE) {
+					// INVITE failover
+					if (open_dialog->failover_invite())
+					{
+						// Failover successul.
+						// The response does not need to
+						// be processed any further
+						response_processed = true;
+					}
+				}
+
+				if (!response_processed) {
+					// The request failed, redirect it if there
+					// are other destinations available.
+					if (!user_config->allow_redirection ||
+					    !open_dialog->redirect_invite(r))
+					{
+						// Request failed
+						MEMMAN_DELETE(open_dialog);
+						delete open_dialog;
+						open_dialog = NULL;
+					}
+				}
+			}
+		}
+
+		cleanup();
+		return;
+	}
+
+	d = match_response(r, dying_dialogs);
+	if (d) {
+		d->recvd_response(r, tuid, tid);
+		cleanup();
+		return;
+	}
+
+	if (open_dialog && open_dialog->match_response(r, tuid)) {
+		// If the response is a 503 then do not send the
+		// response to the dialog as the request must be resent.
+		// For an INVITE request, the transaction layer has already
+		// sent ACK for a failure response.
+		if (r->code != R_503_SERVICE_UNAVAILABLE && r->hdr_cseq.method != INVITE) {
+			open_dialog->recvd_response(r, tuid, tid);
+		}
+
+		if (r->hdr_cseq.method == INVITE) {
+			bool response_processed = false;
+
+			if (r->code == R_503_SERVICE_UNAVAILABLE) {
+				// INVITE failover
+				if (open_dialog->failover_invite())
+				{
+					// Failover successul.
+					// The response does not need to
+					// be processed any further
+					response_processed = true;
+				}
+			}
+
+			if (!response_processed) {
+				// The request failed, redirect it if there
+				// are other destinations available.
+				if (!user_config->allow_redirection ||
+				    !open_dialog->redirect_invite(r))
+				{
+					// Request failed
+					open_dialog->recvd_response(r, tuid, tid);
+					MEMMAN_DELETE(open_dialog);
+					delete open_dialog;
+					open_dialog = NULL;
+				}
+			}
+
+			// RFC 3261 13.2.2.3
+			// All early dialogs are considered terminated
+			// upon reception of the non-2xx final response.
+			list<t_dialog *>::iterator i;
+			for (i = pending_dialogs.begin();
+			     i != pending_dialogs.end(); i++)
+			{
+				MEMMAN_DELETE(*i);
+				delete *i;
+			}
+			pending_dialogs.clear();
+		}
+
+		cleanup();
+		return;
+	}
+
+	// out-of-dialog responses should be handled by the phone
 }
 
 void t_line::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 	recvd_redirect(r, tuid, tid);
 }
 
-void t_line::recvd_invite(t_request *r, t_tid tid) {
+void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid) {
 	t_response *resp;
 
 	switch (state) {
@@ -1019,15 +1188,9 @@ void t_line::recvd_invite(t_request *r, t_tid tid) {
 			return;
 		}
 		*/
-
-		// Check user in the request-URI
-		if (r->uri.get_user() != user_config->name) {
-			resp = r->create_response(R_404_NOT_FOUND);
-			send_response(resp, 0, tid);
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-		}
+		
+		assert(user);
+		user_config = user;
 
 		call_info.from_uri = r->hdr_from.uri;
 		call_info.from_display = r->hdr_from.display;
@@ -1291,7 +1454,9 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 		// If there is no active dialog then ignore the timeout.
 		// The timer should have been stopped already.
 		if (active_dialog) {
-			if (phone->service.get_cf_active(CF_NOANSWER, cf_dest)) {
+			assert(user_config);
+			t_service srv = phone->get_service(user_config);
+			if (srv.get_cf_active(CF_NOANSWER, cf_dest)) {
 				active_dialog->redirect(cf_dest,
 					R_302_MOVED_TEMPORARILY);
 			} else {
@@ -1418,16 +1583,19 @@ void t_line::process_invite_retrans(void) {
 }
 
 string t_line::create_user_contact(void) const {
-	return phone->create_user_contact();
+	assert(user_config);
+	return user_config->create_user_contact();
 }
 
 string t_line::create_user_uri(void) const {
-	return phone->create_user_uri();
+	assert(user_config);
+	return user_config->create_user_uri();
 }
 
 t_response *t_line::create_options_response(t_request *r, bool in_dialog) const
 {
-	return phone->create_options_response(r, in_dialog);
+	assert(user_config);
+	return phone->create_options_response(user_config, r, in_dialog);
 }
 
 void t_line::send_response(t_response *r, t_tuid tuid, t_tid tid) {
@@ -1435,7 +1603,8 @@ void t_line::send_response(t_response *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_line::send_request(t_request *r, t_tuid tuid) {
-	phone->send_request(r, tuid);
+	assert(user_config);
+	phone->send_request(user_config, r, tuid);
 }
 
 t_phone *t_line::get_phone(void) const {
@@ -1530,10 +1699,13 @@ void t_line::ci_set_refer_supported(bool supported) {
 }
 
 void t_line::init_rtp_port(void) {
-	rtp_port = user_config->rtp_port + line_number * 2;
+	rtp_port = sys_config->rtp_port + line_number * 2;
 }
 
 unsigned short t_line::get_rtp_port(void) const {
 	return rtp_port;
 }
 
+t_user *t_line::get_user(void) const {
+	return user_config;
+}

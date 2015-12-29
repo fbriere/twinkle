@@ -201,7 +201,7 @@
                                 <cstring>profileCheckBox</cstring>
                             </property>
                             <property name="text">
-                                <string>Current &amp;user profile only</string>
+                                <string>Current &amp;user profiles only</string>
                             </property>
                             <property name="accel">
                                 <string>Alt+U</string>
@@ -351,13 +351,17 @@
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="local" impldecl="in implementation">historylistview.h</include>
-    <include location="local" impldecl="in implementation">user.h</include>
     <include location="local" impldecl="in implementation">qpopupmenu.h</include>
     <include location="local" impldecl="in implementation">qiconset.h</include>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
     <include location="local" impldecl="in implementation">historyform.ui.h</include>
 </includes>
+<forwards>
+    <forward>extern t_phone *phone;</forward>
+</forwards>
 <signals>
-    <signal>call(const QString &amp;)</signal>
+    <signal>call(t_user *, const QString &amp;, const QString &amp;)</signal>
 </signals>
 <slots>
     <slot>loadHistory()</slot>

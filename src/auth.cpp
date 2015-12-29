@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ void t_auth::remove_credentials(t_request *r, const t_challenge &c,
 	}
 }
 
-bool t_auth::authorize(t_request *r, t_response *resp) {
+bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 	string username;
 	string passwd;
 	list<t_cr_cache_entry>::iterator i;
@@ -165,7 +165,7 @@ bool t_auth::authorize(t_request *r, t_response *resp) {
 
 	// Ask user for username/password
 	if (username == "" && passwd == "") {
-		if (!ui->cb_ask_credentials(dc.realm, username, passwd)) {
+		if (!ui->cb_ask_credentials(user_config, dc.realm, username, passwd)) {
 			log_file->write_report("Asking user name and password failed.",
 						"t_auth::authorize");
 			return false;
@@ -205,4 +205,15 @@ bool t_auth::authorize(t_request *r, t_response *resp) {
 	}
 
 	return true;
+}
+
+void t_auth::remove_from_cache(const string &realm) {
+	if (realm.empty()) {
+		cache.clear();
+	} else {	
+		list<t_cr_cache_entry>::iterator i = find_cache_entry(t_url(), realm);
+		if (i != cache.end()) {
+			cache.erase(i);
+		}
+	}
 }
