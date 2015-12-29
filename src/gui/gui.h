@@ -79,7 +79,7 @@ private:
 #ifdef HAVE_KDE
 	// Popup window on system tray for incoming call notification
 	KPassivePopup	*sys_tray_popup;
-	int		line_sys_tray_popup; // lineno for popup
+	unsigned short	line_sys_tray_popup; // lineno for popup
 #endif
 	
 	// Last dir path browsed by the user with a file dialog
@@ -109,6 +109,7 @@ protected:
 			const string &subject, bool immediate);
 	virtual void do_redial(void);
 	virtual void do_answer(void);
+	virtual void do_answerbye(void);
 	virtual void do_reject(void);
 	virtual void do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
 		bool action_present, bool enable, int num_redirections,
@@ -128,6 +129,7 @@ protected:
 	virtual bool do_options(bool dest_set, const string &destination, bool immediate);
 	virtual void do_line(int line);
 	virtual void do_user(const string &profile_name);
+	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
 	
@@ -247,6 +249,13 @@ public:
 	void cb_nat_discovery_finished(void);
 	bool cb_nat_discovery_cancelled(void);
 	
+	// ZRTP
+	void cb_line_encrypted(int line, bool encrypted, const string &cipher_mode = "");
+	void cb_show_zrtp_sas(int line, const string &sas);
+	void cb_zrtp_confirm_go_clear(int line);
+	void cb_zrtp_sas_confirmed(int line);
+	void cb_zrtp_sas_confirmation_reset(int line);
+	
 	// Execute external commands
 	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
@@ -264,6 +273,7 @@ public:
 	void action_answer(void);
 	void action_bye(void);
 	void action_reject(void);
+	void action_reject(unsigned short line);
 	void action_redirect(const list<t_display_url> &contacts);
 	void action_refer(const t_url &destination, const string &display);
 	void action_hold(void);
@@ -276,6 +286,13 @@ public:
 	void action_activate_line(unsigned short line);
 	bool action_seize(void);
 	void action_unseize(void);
+	void action_confirm_zrtp_sas(int line);
+	void action_confirm_zrtp_sas();
+	void action_reset_zrtp_sas_confirmation(int line);
+	void action_reset_zrtp_sas_confirmation();
+	void action_enable_zrtp(void);
+	void action_zrtp_request_go_clear(void);
+	void action_zrtp_go_clear_ok(unsigned short line);
 	
 	// Service (de)activation
 	void srv_dnd(list<t_user *> user_list, bool on);
@@ -290,6 +307,11 @@ public:
 	// Get/set last dir path for a file dialog browse session
 	QString get_last_file_browse_path(void) const;
 	void set_last_file_browse_path(QString path);
+	
+#ifdef HAVE_KDE
+	// Get the line associated with the sys tray popup
+	unsigned short get_line_sys_tray_popup(void) const;
+#endif
 };
 
 #endif

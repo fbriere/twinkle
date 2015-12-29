@@ -8,7 +8,7 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>415</width>
+            <width>482</width>
             <height>144</height>
         </rect>
     </property>
@@ -60,7 +60,7 @@
                         <cstring>selectTextLabel</cstring>
                     </property>
                     <property name="text">
-                        <string>Select the network interface that you want to use:</string>
+                        <string>Select the network interface/IP address that you want to use:</string>
                     </property>
                     <property name="alignment">
                         <set>WordBreak|AlignTop</set>
@@ -95,7 +95,7 @@
         </spacer>
         <widget class="QLayoutWidget" row="2" column="1">
             <property name="name">
-                <cstring>layout17</cstring>
+                <cstring>layout11</cstring>
             </property>
             <hbox>
                 <property name="name">
@@ -113,20 +113,34 @@
                     </property>
                     <property name="sizeHint">
                         <size>
-                            <width>100</width>
+                            <width>40</width>
                             <height>20</height>
                         </size>
                     </property>
                 </spacer>
                 <widget class="QPushButton">
                     <property name="name">
-                        <cstring>defaultPushButton</cstring>
+                        <cstring>defaultIpPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;Set as default</string>
+                        <string>Set as default &amp;IP</string>
                     </property>
                     <property name="accel">
-                        <string>Alt+S</string>
+                        <string>Alt+I</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Make the selected IP address the default IP address. The next time you start Twinkle, this IP address will be automatically selected.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>defaultNicPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Set as default &amp;NIC</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+N</string>
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>Make the selected network interface the default interface. The next time you start Twinkle, this interface will be automatically selected.</string>
@@ -138,6 +152,9 @@
                     </property>
                     <property name="text">
                         <string>&amp;OK</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+O</string>
                     </property>
                     <property name="default">
                         <bool>true</bool>
@@ -161,10 +178,16 @@
         <slot>accept()</slot>
     </connection>
     <connection>
-        <sender>defaultPushButton</sender>
+        <sender>defaultIpPushButton</sender>
         <signal>clicked()</signal>
         <receiver>SelectNicForm</receiver>
-        <slot>setAsDefault()</slot>
+        <slot>setAsDefaultIp()</slot>
+    </connection>
+    <connection>
+        <sender>defaultNicPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectNicForm</receiver>
+        <slot>setAsDefaultNic()</slot>
     </connection>
 </connections>
 <includes>
@@ -174,10 +197,12 @@
     <include location="local" impldecl="in implementation">selectnicform.ui.h</include>
 </includes>
 <variables>
-    <variable access="private">int idxDefaultNic;</variable>
+    <variable access="private">int idxDefault;</variable>
 </variables>
 <slots>
-    <slot>setAsDefault()</slot>
+    <slot>setAsDefault( bool setIp )</slot>
+    <slot>setAsDefaultIp()</slot>
+    <slot>setAsDefaultNic()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

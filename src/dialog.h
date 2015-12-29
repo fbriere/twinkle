@@ -21,6 +21,7 @@
 
 #include <string>
 #include <list>
+#include <queue>
 #include "phone.h"
 #include "transaction_layer.h"
 #include "protocol.h"
@@ -186,6 +187,7 @@ private:
 	t_client_request	*req_in_invite;   // incoming INVITE
 	t_client_request	*req_cancel;      // outgoing CANCEL
 	t_client_request	*req_refer;	  // outgoing REFER
+	t_client_request	*req_info;	  // outgoing INFO
 
 	// Last outgoing PRACK. While a PRACK is still pending a new 1xx
 	// response might come in. A PRACK will be sent for this 1xx without
@@ -227,6 +229,9 @@ private:
 
 	// Subscription created by REFER (RFC 3515)
 	t_sub_refer		*sub_refer;
+	
+	// Queue of DTMF digits to be sent via INFO requests
+	queue<char>		dtmf_queue;
 
 	// Remove a client request. Pass one of the client request
 	// pointers to this member. The reference count of the
@@ -258,6 +263,7 @@ private:
 	void process_refer(t_request *r, t_tuid tuid, t_tid tid);
 	void process_subscribe(t_request *r, t_tuid tuid, t_tid tid);
 	void process_notify(t_request *r, t_tuid tuid, t_tid tid);
+	void process_info(t_request *r, t_tuid tuid, t_tid tid);
 
 	// Process timeouts
 	void state_w4invite_resp(t_line_timer timer);
@@ -401,7 +407,7 @@ public:
 	void send_refer(const t_url &uri, const string &display);
 
 	// Send DTMF digit
-	void send_dtmf(char digit, bool inband);
+	void send_dtmf(char digit, bool inband, bool info);
 	
 	// Create a binding for the media port via STUN.
 	// Returns false if binding cannot be created.

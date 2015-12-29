@@ -15,6 +15,7 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
+#include "twinkle_config.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -25,9 +26,14 @@
 #include "line.h"
 #include "log.h"
 #include "sys_settings.h"
+#include "user.h"
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
+
+#ifdef HAVE_ZRTP
+#include "twinkle_zrtp_ui.h"
+#endif
 
 static t_audio_session *_audio_session;
 
@@ -145,7 +151,8 @@ t_audio_session::t_audio_session(t_session *_session,
 	        const string &_dst_host, unsigned short _dst_port,
 		t_audio_codec _codec, unsigned short _ptime,
 		const map<unsigned short, t_audio_codec> &recv_payload2ac,
-		const map<t_audio_codec, unsigned short> &send_ac2payload)
+		const map<t_audio_codec, unsigned short> &send_ac2payload,
+		bool encrypt)
 {
 	valid = false;
 
@@ -159,6 +166,15 @@ t_audio_session::t_audio_session(t_session *_session,
 
 	codec = _codec;
 	ptime = _ptime;
+	
+	is_encrypted = false;
+	zrtp_sas.clear();
+	
+	// Assume the SAS is confirmed. When a SAS is received from the ZRTP
+	// stack, the confirmed flag will be cleared.
+	zrtp_sas_confirmed = true;
+	
+	srtp_cipher_mode.clear();
 
 	log_file->write_header("t_audio_session::t_audio_session");
 	log_file->write_raw("Receive RTP from: ");
@@ -172,6 +188,8 @@ t_audio_session::t_audio_session(t_session *_session,
 	log_file->write_raw(_dst_port);
 	log_file->write_endl();
 	log_file->write_footer();
+	
+	t_user *user_config = get_line()->get_user();
 
 	// Create RTP session
 	try {
@@ -184,6 +202,22 @@ t_audio_session::t_audio_session(t_session *_session,
 				InetHostAddress(_recv_host.c_str()), _recv_port);
 			MEMMAN_NEW(rtp_session);
 		}
+#ifdef HAVE_ZRTP
+		ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+		if (zque && rtp_session->is_zrtp_initialized()) {
+			zque->setEnableZrtp(encrypt);
+		
+			if (user_config->get_zrtp_enabled()) {
+				// Create the ZRTP call back interface
+				TwinkleZrtpUI* twui = new TwinkleZrtpUI(zque, this);
+				
+				// The ZrtpQueue keeps track of the twui - the destructor of 
+				// ZrtpQueue (aka t_twinkle_rtp_session) deletes this object, 
+				// thus no other management is required.
+				zque->setUserCallback(twui);
+			}
+		}
+#endif
 	} catch(...) {
 		// If the RTPSession constructor throws an exception, no
 		// object is created, so clear the pointer.
@@ -338,7 +372,7 @@ t_audio_session::~t_audio_session() {
 		log_file->write_raw(get_line()->get_line_number()+1);
 		log_file->write_raw(": stopping RTP session.\n");
 		log_file->write_footer();
-
+		
 		MEMMAN_DELETE(rtp_session);
 		delete rtp_session;
 
@@ -491,6 +525,105 @@ bool t_audio_session::matching_sample_rates(void) const {
 	int codec_sample_rate = audio_sample_rate(codec);
 	return (speaker->get_sample_rate() == codec_sample_rate &&
 		mic->get_sample_rate() == codec_sample_rate);
+}
+
+void t_audio_session::confirm_zrtp_sas(void) {
+#ifdef HAVE_ZRTP
+	ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+	if (zque) {
+		zque->SASVerified();
+		set_zrtp_sas_confirmed(true);
+	}
+#endif
+}
+
+void t_audio_session::reset_zrtp_sas_confirmation(void) {
+#ifdef HAVE_ZRTP
+	ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+	if (zque) {
+		zque->resetSASVerified();
+		set_zrtp_sas_confirmed(false);
+	}
+#endif
+}
+
+void t_audio_session::enable_zrtp(void) {
+#ifdef HAVE_ZRTP
+	ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+	if (zque) {
+		zque->setEnableZrtp(true);
+	}
+#endif
+}
+
+void t_audio_session::zrtp_request_go_clear(void) {
+#ifdef HAVE_ZRTP
+	ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+	if (zque) {
+		zque->requestGoClear();
+	}
+#endif
+}
+
+void t_audio_session::zrtp_go_clear_ok(void) {
+#ifdef HAVE_ZRTP
+	ZrtpQueue* zque = dynamic_cast<ZrtpQueue*>(rtp_session);
+	if (zque) {
+		zque->goClearOk();
+	}
+#endif
+}
+
+bool t_audio_session::get_is_encrypted(void) const {
+	mtx_zrtp_data.lock();
+	bool b = is_encrypted;
+	mtx_zrtp_data.unlock();
+	return b;
+}
+
+string t_audio_session::get_zrtp_sas(void) const {
+	mtx_zrtp_data.lock();
+	string s = zrtp_sas;
+	mtx_zrtp_data.unlock();
+	return s;
+}
+
+bool t_audio_session::get_zrtp_sas_confirmed(void) const {
+	mtx_zrtp_data.lock();
+	bool b = zrtp_sas_confirmed;
+	mtx_zrtp_data.unlock();
+	return b;
+}
+
+string t_audio_session::get_srtp_cipher_mode(void) const {
+	mtx_zrtp_data.lock();
+	string s = srtp_cipher_mode;
+	mtx_zrtp_data.unlock();
+	return s;
+}
+
+void t_audio_session::set_is_encrypted(bool on) {
+	mtx_zrtp_data.lock();
+	is_encrypted = on;
+	mtx_zrtp_data.unlock();
+}
+
+void t_audio_session::set_zrtp_sas(const string &sas) {
+	mtx_zrtp_data.lock();
+	zrtp_sas = sas;
+	mtx_zrtp_data.unlock();
+}
+
+void t_audio_session::set_zrtp_sas_confirmed(bool confirmed) {
+	mtx_zrtp_data.lock();
+	zrtp_sas_confirmed = confirmed;
+	mtx_zrtp_data.unlock();
+}
+
+void t_audio_session::set_srtp_cipher_mode(const string &cipher_mode) {
+	mtx_zrtp_data.lock();
+	srtp_cipher_mode = cipher_mode;
+	mtx_zrtp_data.unlock();
 }
 
 void *main_audio_rx(void *arg) {

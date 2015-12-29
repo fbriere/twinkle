@@ -56,6 +56,14 @@ struct t_command_arg {
 };
 
 class t_userintf : public i_prohibit_thread {
+protected:
+	enum t_zrtp_cmd {
+		ZRTP_ENCRYPT,
+		ZRTP_GO_CLEAR,
+		ZRTP_CONFIRM_SAS,
+		ZRTP_RESET_SAS
+	};
+	
 private:
         bool            end_interface; // indicates if interface loop should quit
         list<string>    all_commands;  // list of all commands
@@ -80,6 +88,7 @@ private:
         bool exec_invite(const list<string> command_list, bool immediate = false);
         bool exec_redial(const list<string> command_list);
         bool exec_answer(const list<string> command_list);
+        bool exec_answerbye(const list<string> command_list);
         bool exec_reject(const list<string> command_list);
 	bool exec_redirect(const list<string> command_list, bool immediate = false);
 	bool exec_dnd(const list<string> command_list);
@@ -97,6 +106,7 @@ private:
         bool exec_options(const list<string> command_list, bool immediate = false);
         bool exec_line(const list<string> command_list);
         bool exec_user(const list<string> command_list);
+        bool exec_zrtp(const list<string> command_list);
         bool exec_quit(const list<string> command_list);
         bool exec_help(const list<string> command_list);
 
@@ -124,6 +134,7 @@ protected:
 			const string &subject, bool immediate);
 	virtual void do_redial(void);
 	virtual void do_answer(void);
+	virtual void do_answerbye(void);
 	virtual void do_reject(void);
 	virtual void do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
 		bool action_present, bool enable, int num_redirections,
@@ -143,6 +154,7 @@ protected:
 	virtual bool do_options(bool dest_set, const string &destination, bool immediate);
 	virtual void do_line(int line);
 	virtual void do_user(const string &profile_name);
+	virtual void do_zrtp(t_zrtp_cmd zrtp_cmd);
 	virtual void do_quit(void);
 	virtual void do_help(const list<t_command_arg> &al);
 
@@ -254,6 +266,7 @@ public:
 	virtual void cb_dtmf_not_supported(int line);
 	virtual void cb_dtmf_supported(int line);
 	virtual void cb_line_state_changed(void);
+	virtual void cb_async_line_state_changed(void);
 	virtual void cb_send_codec_changed(int line, t_audio_codec codec);
 	virtual void cb_recv_codec_changed(int line, t_audio_codec codec);
 	virtual void cb_async_recv_codec_changed(int line, t_audio_codec codec);
@@ -306,6 +319,16 @@ public:
 	virtual void cb_nat_discovery_progress_step(int step);
 	virtual void cb_nat_discovery_finished(void);
 	virtual bool cb_nat_discovery_cancelled(void);
+	
+	// ZRTP
+	virtual void cb_line_encrypted(int line, bool encrypted, const string &cipher_mode = "");
+	virtual void cb_async_line_encrypted(int line, bool encrypted, const string &cipher_mode = "");
+	virtual void cb_show_zrtp_sas(int line, const string &sas);
+	virtual void cb_async_show_zrtp_sas(int line, const string &sas);
+	virtual void cb_zrtp_confirm_go_clear(int line);
+	virtual void cb_async_zrtp_confirm_go_clear(int line);
+	virtual void cb_zrtp_sas_confirmed(int line);
+	virtual void cb_zrtp_sas_confirmation_reset(int line);
 
 	// Get last call information
 	// Returns true if last call information is valid

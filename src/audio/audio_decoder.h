@@ -163,4 +163,32 @@ public:
 
 #endif
 
+// G.726
+class t_g726_audio_decoder : public t_audio_decoder {
+public:
+	enum t_bit_rate {
+		BIT_RATE_16,
+		BIT_RATE_24,
+		BIT_RATE_32,
+		BIT_RATE_40
+	};
+	
+private:
+	uint16 decode_16(uint8 *payload, uint16 payload_size, int16 *pcm_buf, uint16 pcm_buf_size);
+	uint16 decode_24(uint8 *payload, uint16 payload_size, int16 *pcm_buf, uint16 pcm_buf_size);
+	uint16 decode_32(uint8 *payload, uint16 payload_size, int16 *pcm_buf, uint16 pcm_buf_size);
+	uint16 decode_40(uint8 *payload, uint16 payload_size, int16 *pcm_buf, uint16 pcm_buf_size);
+
+	struct g72x_state	_state;
+	t_bit_rate		_bit_rate;
+	uint8			_bits_per_sample;
+	
+public:
+	t_g726_audio_decoder(t_bit_rate bit_rate, uint16 default_ptime, t_user *user_config);
+	virtual uint16 get_ptime(uint16 payload_size) const;
+	virtual uint16 decode(uint8 *payload, uint16 payload_size,
+			int16 *pcm_buf, uint16 pcm_buf_size);
+	virtual bool valid_payload_size(uint16 payload_size, uint16 sample_buf_size) const;
+};
+
 #endif

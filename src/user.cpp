@@ -71,6 +71,10 @@ extern t_phone		*phone;
 #define FLD_SPEEX_COMPLEXITY		"speex_complexity"
 #define FLD_ILBC_PAYLOAD_TYPE		"ilbc_payload_type"
 #define FLD_ILBC_MODE			"ilbc_mode"
+#define FLD_G726_16_PAYLOAD_TYPE	"g726_16_payload_type"
+#define FLD_G726_24_PAYLOAD_TYPE	"g726_24_payload_type"
+#define FLD_G726_32_PAYLOAD_TYPE	"g726_32_payload_type"
+#define FLD_G726_40_PAYLOAD_TYPE	"g726_40_payload_type"
 #define FLD_DTMF_TRANSPORT		"dtmf_transport"
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
 #define FLD_DTMF_DURATION		"dtmf_duration"
@@ -127,6 +131,12 @@ extern t_phone		*phone;
 // Number conversion
 #define FLD_NUMBER_CONVERSION		"number_conversion"
 
+// Security
+#define FLD_ZRTP_ENABLED		"zrtp_enabled"
+#define FLD_ZRTP_GOCLEAR_WARNING	"zrtp_goclear_warning"
+#define FLD_ZRTP_SDP			"zrtp_sdp"
+#define FLD_ZRTP_SEND_IF_SUPPORTED	"zrtp_send_if_supported"
+
 /////////////////////////
 // class t_user
 /////////////////////////
@@ -179,6 +189,7 @@ t_dtmf_transport t_user::str2dtmf_transport(const string &s) const {
 	if (s == "inband") return DTMF_INBAND;
 	if (s == "rfc2833") return DTMF_RFC2833;
 	if (s == "auto") return DTMF_AUTO;
+	if (s == "info") return DTMF_INFO;
 	return DTMF_AUTO;
 }
 
@@ -187,6 +198,7 @@ string t_user::dtmf_transport2str(t_dtmf_transport d) const {
 	case DTMF_INBAND:	return "inband";
 	case DTMF_RFC2833:	return "rfc2833";
 	case DTMF_AUTO:		return "auto";
+	case DTMF_INFO:		return "info";
 	default:
 		assert(false);
 	}
@@ -288,6 +300,10 @@ t_user::t_user() {
 	speex_complexity = 2;
 	ilbc_payload_type = 96;
 	ilbc_mode = 30;
+	g726_16_payload_type = 102;
+	g726_24_payload_type = 103;
+	g726_32_payload_type = 104;
+	g726_40_payload_type = 105;
 	dtmf_transport = DTMF_AUTO;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
@@ -313,6 +329,10 @@ t_user::t_user() {
 	script_local_release.clear();
 	script_remote_release.clear();
 	number_conversions.clear();
+	zrtp_enabled = false;
+	zrtp_goclear_warning = true;
+	zrtp_sdp = true;
+	zrtp_send_if_supported = false;
 }
 
 t_user::t_user(const t_user &u) {
@@ -348,6 +368,10 @@ t_user::t_user(const t_user &u) {
 	speex_complexity = u.speex_complexity;
 	ilbc_payload_type = u.ilbc_payload_type;
 	ilbc_mode = u.ilbc_mode;
+	g726_16_payload_type = u.g726_16_payload_type;
+	g726_24_payload_type = u.g726_24_payload_type;
+	g726_32_payload_type = u.g726_32_payload_type;
+	g726_40_payload_type = u.g726_40_payload_type;
 	dtmf_transport = u.dtmf_transport;
 	dtmf_payload_type = u.dtmf_payload_type;
 	dtmf_duration = u.dtmf_duration;
@@ -391,6 +415,10 @@ t_user::t_user(const t_user &u) {
 	script_local_release = u.script_local_release;
 	script_remote_release = u.script_remote_release;
 	number_conversions = u.number_conversions;
+	zrtp_enabled = u.zrtp_enabled;
+	zrtp_goclear_warning = u.zrtp_goclear_warning;
+	zrtp_sdp = u.zrtp_sdp;
+	zrtp_send_if_supported = u.zrtp_send_if_supported;
 	
 	u.mtx_user.unlock();
 }
@@ -629,6 +657,38 @@ unsigned short t_user::get_ilbc_mode(void) const {
 	unsigned short result;
 	mtx_user.lock();
 	result = ilbc_mode;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_g726_16_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = g726_16_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_g726_24_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = g726_24_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_g726_32_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = g726_32_payload_type;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_g726_40_payload_type(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = g726_40_payload_type;
 	mtx_user.unlock();
 	return result;
 }
@@ -977,6 +1037,37 @@ list<t_number_conversion> t_user::get_number_conversions(void) const {
 	return result;	
 }
 
+bool t_user::get_zrtp_enabled(void) const {
+	bool result;
+	mtx_user.lock();
+	result = zrtp_enabled;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_zrtp_goclear_warning(void) const {
+	bool result;
+	mtx_user.lock();
+	result = zrtp_goclear_warning;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_zrtp_sdp(void) const {
+	bool result;
+	mtx_user.lock();
+	result = zrtp_sdp;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_zrtp_send_if_supported(void) const {
+	bool result;
+	mtx_user.lock();
+	result = zrtp_send_if_supported;
+	mtx_user.unlock();
+	return result;
+}
 
 	
 void t_user::set_name(const string &_name) {
@@ -1150,6 +1241,30 @@ void t_user::set_ilbc_payload_type(unsigned short payload_type) {
 void t_user::set_ilbc_mode(unsigned short mode) {
 	mtx_user.lock();
 	ilbc_mode = mode;
+	mtx_user.unlock();
+}
+
+void t_user::set_g726_16_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	g726_16_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_g726_24_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	g726_24_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_g726_32_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	g726_32_payload_type = payload_type;
+	mtx_user.unlock();
+}
+
+void t_user::set_g726_40_payload_type(unsigned short payload_type) {
+	mtx_user.lock();
+	g726_40_payload_type = payload_type;
 	mtx_user.unlock();
 }
 
@@ -1411,6 +1526,30 @@ void t_user::set_number_conversions(const list<t_number_conversion> &l) {
 	mtx_user.unlock();
 }
 
+void t_user::set_zrtp_enabled(bool b) {
+	mtx_user.lock();
+	zrtp_enabled = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_zrtp_goclear_warning(bool b) {
+	mtx_user.lock();
+	zrtp_goclear_warning = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_zrtp_sdp(bool b) {
+	mtx_user.lock();
+	zrtp_sdp = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_zrtp_send_if_supported(bool b) {
+	mtx_user.lock();
+	zrtp_send_if_supported = b;
+	mtx_user.unlock();
+}
+
 bool t_user::read_config(const string &filename, string &error_msg) {
 	string f;
 	string msg;
@@ -1569,6 +1708,14 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				} else if (codec == "ilbc") {
 					codecs.push_back(CODEC_ILBC);
 #endif
+				} else if (codec == "g726-16") {
+					codecs.push_back(CODEC_G726_16);
+				} else if (codec == "g726-24") {
+					codecs.push_back(CODEC_G726_24);
+				} else if (codec == "g726-32") {
+					codecs.push_back(CODEC_G726_32);
+				} else if (codec == "g726-40") {
+					codecs.push_back(CODEC_G726_40);
 				} else {
 					msg = "Syntax error in file ";
 					msg += f;
@@ -1711,6 +1858,14 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			ilbc_payload_type = atoi(value.c_str());
 		} else if (parameter == FLD_ILBC_MODE) {
 			ilbc_mode = atoi(value.c_str());
+		} else if (parameter == FLD_G726_16_PAYLOAD_TYPE) {
+			g726_16_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_G726_24_PAYLOAD_TYPE) {
+			g726_24_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_G726_32_PAYLOAD_TYPE) {
+			g726_32_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_G726_40_PAYLOAD_TYPE) {
+			g726_40_payload_type = atoi(value.c_str());
 		} else if (parameter == FLD_DTMF_TRANSPORT) {
 			dtmf_transport = str2dtmf_transport(value);	
 		} else if (parameter == FLD_DTMF_PAYLOAD_TYPE) {
@@ -1754,6 +1909,14 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			if (parse_num_conversion(value, c)) {
 				number_conversions.push_back(c);
 			}
+		} else if (parameter == FLD_ZRTP_ENABLED) {
+			zrtp_enabled = yesno2bool(value);
+		} else if (parameter == FLD_ZRTP_GOCLEAR_WARNING) {
+			zrtp_goclear_warning = yesno2bool(value);
+		} else if (parameter == FLD_ZRTP_SDP) {
+			zrtp_sdp = yesno2bool(value);
+		} else if (parameter == FLD_ZRTP_SEND_IF_SUPPORTED) {
+			zrtp_send_if_supported = yesno2bool(value);
 		} else {
 			// Ignore unknown parameters. Only report in log file.
 			log_file->write_header("t_user::read_config",
@@ -1890,6 +2053,18 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		case CODEC_ILBC:
 			config << "ilbc";
 			break;
+		case CODEC_G726_16:
+			config << "g726-16";
+			break;
+		case CODEC_G726_24:
+			config << "g726-24";
+			break;
+		case CODEC_G726_32:
+			config << "g726-32";
+			break;
+		case CODEC_G726_40:
+			config << "g726-40";
+			break;
 		default:
 			assert(false);
 		}
@@ -1909,6 +2084,10 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_SPEEX_COMPLEXITY << '=' << speex_complexity << endl;
 	config << FLD_ILBC_PAYLOAD_TYPE << '=' << ilbc_payload_type << endl;
 	config << FLD_ILBC_MODE << '=' << ilbc_mode << endl;
+	config << FLD_G726_16_PAYLOAD_TYPE << '=' << g726_16_payload_type << endl;
+	config << FLD_G726_24_PAYLOAD_TYPE << '=' << g726_24_payload_type << endl;
+	config << FLD_G726_32_PAYLOAD_TYPE << '=' << g726_32_payload_type << endl;
+	config << FLD_G726_40_PAYLOAD_TYPE << '=' << g726_40_payload_type << endl;
 	config << FLD_DTMF_TRANSPORT << '=' << dtmf_transport2str(dtmf_transport) << endl;
 	config << FLD_DTMF_PAYLOAD_TYPE << '=' << dtmf_payload_type << endl;
 	config << FLD_DTMF_DURATION << '=' << dtmf_duration << endl;
@@ -1971,7 +2150,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		config << FLD_STUN_SERVER << '=' << endl;
 	}
 	config << endl;
-
+config << FLD_G726_16_PAYLOAD_TYPE << '=' << g726_16_payload_type << endl;
 	// Write TIMER settings
 	config << "# TIMERS\n";
 	config << FLD_TIMER_NOANSWER << '=' << timer_noanswer << endl;
@@ -2008,7 +2187,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << endl;
 	
 	// Write number conversion rules
-	config << "# Number conversion\n";
+	config << "# NUMBER CONVERSION\n";
 
 	for (list<t_number_conversion>::iterator i = number_conversions.begin();
 	     i != number_conversions.end(); i++)
@@ -2019,6 +2198,14 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		config << escape(i->fmt, ',');
 		config << endl;
 	}
+	config << endl;
+	
+	// Write security settings
+	config << "# SECURITY\n";
+	config << FLD_ZRTP_ENABLED << '=' << bool2yesno(zrtp_enabled) << endl;
+	config << FLD_ZRTP_GOCLEAR_WARNING << '=' << bool2yesno(zrtp_goclear_warning) << endl;
+	config << FLD_ZRTP_SDP << '=' << bool2yesno(zrtp_sdp) << endl;
+	config << FLD_ZRTP_SEND_IF_SUPPORTED << '=' << bool2yesno(zrtp_send_if_supported) << endl;
 
 	// Check if writing succeeded
 	if (!config.good()) {

@@ -69,6 +69,13 @@ void t_phone::reject(void) {
 	lines[active_line]->reject();
 }
 
+void t_phone::reject(unsigned short line) {
+	if (line > NUM_USER_LINES) return;
+	if (lines[line]->get_state() == LS_IDLE) return;
+	
+	lines[line]->reject();
+}
+
 void t_phone::redirect(const list<t_display_url> &destinations, int code, string reason)
 {
 	// Ignore if active line is idle
@@ -206,8 +213,8 @@ void t_phone::activate_line(unsigned short l) {
 	ui->cb_line_state_changed();
 }
 
-void t_phone::send_dtmf(char digit, bool inband) {
-	lines[active_line]->send_dtmf(digit, inband);
+void t_phone::send_dtmf(char digit, bool inband, bool info) {
+	lines[active_line]->send_dtmf(digit, inband, info);
 }
 
 void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
@@ -1155,6 +1162,37 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 	delete resp;
 }
 
+void t_phone::recvd_info(t_request *r, t_tid tid) {
+	t_response *resp;
+	list <string> unsupported;
+
+	for (unsigned short i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->match(r)) {
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);
+
+			if (!user_config->check_required_ext(r, unsupported))
+			{
+				// Not all required extensions are supported
+				resp = r->create_response(R_420_BAD_EXTENSION);
+				resp->hdr_unsupported.set_features(unsupported);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}			
+		
+			lines[i]->recvd_info(r, tid);
+			return;
+		}
+	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
 void t_phone::failure(t_failure failure, t_tid tid) {
 	// TODO
 }
@@ -1236,6 +1274,12 @@ void t_phone::pub_answer(void) {
 void t_phone::pub_reject(void) {
 	lock();
 	reject();
+	unlock();
+}
+
+void t_phone::pub_reject(unsigned short line) {
+	lock();
+	reject(line);
 	unlock();
 }
 
@@ -1339,9 +1383,9 @@ void t_phone::pub_activate_line(unsigned short l) {
 	unlock();
 }
 
-void t_phone::pub_send_dtmf(char digit, bool inband) {
+void t_phone::pub_send_dtmf(char digit, bool inband, bool info) {
 	lock();
-	send_dtmf(digit, inband);
+	send_dtmf(digit, inband, info);
 	unlock();
 }
 
@@ -1361,35 +1405,76 @@ void t_phone::pub_unseize(void) {
 	unlock();
 }
 
-t_phone_state t_phone::get_state(void) const {
-	t_phone *self = const_cast<t_phone *>(this);
+void t_phone::pub_confirm_zrtp_sas(unsigned short line) {
+	assert(line < NUM_USER_LINES);
+	lock();
+	lines[line]->confirm_zrtp_sas();
+	unlock();
+}
 
-	self->lock();
+void t_phone::pub_confirm_zrtp_sas(void) {
+	lock();
+	lines[active_line]->confirm_zrtp_sas();
+	unlock();
+}
+
+void t_phone::pub_reset_zrtp_sas_confirmation(unsigned short line) {
+	assert(line < NUM_USER_LINES);
+	lock();
+	lines[line]->reset_zrtp_sas_confirmation();
+	unlock();
+}
+
+void t_phone::pub_reset_zrtp_sas_confirmation(void) {
+	lock();
+	lines[active_line]->reset_zrtp_sas_confirmation();
+	unlock();
+}
+
+void t_phone::pub_enable_zrtp(void) {
+	lock();
+	lines[active_line]->enable_zrtp();
+	unlock();
+}
+
+void t_phone::pub_zrtp_request_go_clear(void) {
+	lock();
+	lines[active_line]->zrtp_request_go_clear();
+	unlock();
+}
+
+void t_phone::pub_zrtp_go_clear_ok(unsigned short line) {
+	assert(line < NUM_USER_LINES);
+	lock();
+	lines[line]->zrtp_go_clear_ok();
+	unlock();
+}
+
+t_phone_state t_phone::get_state(void) const {
+	lock();
 	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 		if (lines[i]->get_state() == LS_IDLE) {
-			self->unlock();
+			unlock();
 			return PS_IDLE;
 		}
 	}
 
 	// All lines are busy, so the phone is busy.
-	self->unlock();
+	unlock();
 	return PS_BUSY;
 }
 
 bool t_phone::all_lines_idle(void) const {
-	t_phone *self = const_cast<t_phone *>(this);
-
-	self->lock();
+	lock();
 	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 		if (lines[i]->get_substate() != LSSUB_IDLE) {
-			self->unlock();
+			unlock();
 			return false;
 		}
 	}
 	
 	// All lines are idle
-	self->unlock();
+	unlock();
 	return true;
 }
 
@@ -1481,61 +1566,64 @@ bool t_phone::get_last_reg_failed(t_user *user) {
 
 t_line_state t_phone::get_line_state(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	t_line_state s = get_line(lineno)->get_state();
-	self->unlock();
+	unlock();
 	return s;
 }
 
 t_line_substate t_phone::get_line_substate(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	t_line_substate s = get_line(lineno)->get_substate();
-	self->unlock();
+	unlock();
 	return s;
 }
 
 bool t_phone::is_line_on_hold(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	bool b = get_line(lineno)->get_is_on_hold();
-	self->unlock();
+	unlock();
 	return b;
 }
 
 bool t_phone::is_line_muted(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	bool b = get_line(lineno)->get_is_muted();
-	self->unlock();
+	unlock();
+	return b;
+}
+
+bool t_phone::is_line_encrypted(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+
+	lock();
+	bool b = get_line(lineno)->get_is_encrypted();
+	unlock();
 	return b;
 }
 
 bool t_phone::is_line_auto_answered(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	bool b = get_line(lineno)->get_auto_answer();
-	self->unlock();
+	unlock();
 	return b;
 }
 
 t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	t_refer_state s = get_line(lineno)->get_refer_state();
-	self->unlock();
+	unlock();
 	return s;
 }
 
@@ -1545,6 +1633,16 @@ t_user *t_phone::get_line_user(unsigned short lineno) {
 	t_user *user = get_line(lineno)->get_user();
 	unlock();
 	return user;
+}
+
+bool t_phone::
+has_line_media(unsigned short lineno) const {
+	assert(lineno < NUM_LINES);
+	
+	lock();
+	bool b = get_line(lineno)->has_media();
+	unlock();
+	return b;
 }
 
 bool t_phone::part_of_3way(unsigned short lineno) {
@@ -1754,31 +1852,28 @@ void t_phone::notify_refer_progress(t_response *r, unsigned short referee_lineno
 
 t_call_info t_phone::get_call_info(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	t_call_info call_info = get_line(lineno)->get_call_info();
-	self->unlock();
+	unlock();
 	return call_info;
 }
 
 t_call_record t_phone::get_call_hist(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	t_call_record call_hist = get_line(lineno)->call_hist_record;
-	self->unlock();
+	unlock();
 	return call_hist;
 }
 
 string t_phone::get_ringtone(unsigned short lineno) const {
 	assert(lineno < NUM_LINES);
-	t_phone *self = const_cast<t_phone *>(this);
 
-	self->lock();
+	lock();
 	string ringtone = get_line(lineno)->get_ringtone();
-	self->unlock();
+	unlock();
 	return ringtone;
 }
 
@@ -2084,6 +2179,16 @@ void t_phone::terminate(void) {
 		sleep(1);
 		dur++;
 	}
+	
+	// Force lines to idle state if they could not be cleared
+	// gracefully
+	lock();
+	for (int i = 0; i < NUM_LINES; i++) {
+		if (lines[i]->get_substate() != LSSUB_IDLE) {
+			lines[i]->force_idle();
+		}
+	}
+	unlock();
 }
 
 void *phone_uas_main(void *arg) {

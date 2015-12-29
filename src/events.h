@@ -294,6 +294,10 @@ enum t_ui_event_type {
 	TYPE_UI_CB_DTMF_DETECTED,
 	TYPE_UI_CB_SEND_DTMF,
 	TYPE_UI_CB_RECV_CODEC_CHANGED,
+	TYPE_UI_CB_LINE_STATE_CHANGED,
+	TYPE_UI_CB_LINE_ENCRYPTED,
+	TYPE_UI_CB_SHOW_ZRTP_SAS,
+	TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR
 };
 
 class t_event_ui : public t_event {
@@ -304,6 +308,9 @@ private:
 	int		line;
 	t_audio_codec	codec;
 	char		dtmf_event;
+	bool		encrypted;
+	string		cipher_mode;
+	string		zrtp_sas;
 
 public:
 	t_event_ui(t_ui_event_type _type);
@@ -311,6 +318,9 @@ public:
 	void set_line(int _line);
 	void set_codec(t_audio_codec _codec);
 	void set_dtmf_event(char _dtmf_event);
+	void set_encrypted(bool on);
+	void set_cipher_mode(const string &_cipher_mode);
+	void set_zrtp_sas(const string &sas);
 	void exec(t_userintf *user_intf);
 };
 

@@ -125,6 +125,7 @@ private:
 	// Startup settings
 	list<string>	start_user_profiles;
 	string		start_user_host;
+	string		start_user_nic;
 	bool		start_hidden;
 	
 	// Network settings
@@ -170,6 +171,10 @@ private:
 	// History of latest dialed addresses
 	list<string>	dial_history;
 	
+	// GUI view settings
+	bool		show_display;
+	bool		compact_line_status;
+	
 public:
 	t_sys_settings();
 	
@@ -199,6 +204,7 @@ public:
 	bool get_hangup_both_3way(void) const;
 	list<string> get_start_user_profiles(void) const;
 	string get_start_user_host(void) const;
+	string get_start_user_nic(void) const;
 	bool get_start_hidden(void) const;
 	unsigned short get_config_sip_udp_port(void) const;
 	unsigned short get_rtp_port(void) const;
@@ -212,6 +218,8 @@ public:
 	string get_redial_subject(void) const;
 	string get_redial_profile(void) const;
 	list<string> get_dial_history(void) const;
+	bool get_show_display(void) const;
+	bool get_compact_line_status(void) const;
 	
 	// Setters
 	void set_dev_ringtone(const t_audio_device &dev);
@@ -239,6 +247,7 @@ public:
 	void set_hangup_both_3way(bool b);
 	void set_start_user_profiles(const list<string> &profiles);
 	void set_start_user_host(const string &host);
+	void set_start_user_nic(const string &dev);
 	void set_start_hidden(bool b);
 	void set_config_sip_udp_port(unsigned short port);
 	void set_rtp_port(unsigned short port);
@@ -252,6 +261,8 @@ public:
 	void set_redial_subject(const string &subject);
 	void set_redial_profile(const string &profile);
 	void set_dial_history(const list<string> &history);
+	void set_show_display(bool b);
+	void set_compact_line_status(bool b);
 	
 	// Return "about" text
 	string about(bool html) const;

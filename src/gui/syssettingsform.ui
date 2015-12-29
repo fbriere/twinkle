@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>709</width>
-            <height>558</height>
+            <height>583</height>
         </rect>
     </property>
     <property name="caption">
@@ -782,7 +782,7 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
                                     </sizepolicy>
                                 </property>
                                 <property name="whatsThis" stdset="0">
-                                    <string>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple IP addresses.</string>
+                                    <string>Next time you start Twinkle, this IP address will be automatically selected. This is only useful when your computer has multiple and static IP addresses.</string>
                                 </property>
                             </widget>
                             <widget class="QLabel" row="2" column="0">
@@ -794,6 +794,33 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
                                 </property>
                                 <property name="buddy" stdset="0">
                                     <cstring>userHostComboBox</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QComboBox" row="3" column="1">
+                                <property name="name">
+                                    <cstring>userDevComboBox</cstring>
+                                </property>
+                                <property name="sizePolicy">
+                                    <sizepolicy>
+                                        <hsizetype>3</hsizetype>
+                                        <vsizetype>0</vsizetype>
+                                        <horstretch>0</horstretch>
+                                        <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Next time you start Twinkle, the IP address of this network interface be automatically selected. This is only useful when your computer has multiple network devices.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLabel" row="3" column="0">
+                                <property name="name">
+                                    <cstring>userDevLextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>Default &amp;network interface:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>userDevComboBox</cstring>
                                 </property>
                             </widget>
                             <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
@@ -1732,6 +1759,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>startHiddenCheckBox</tabstop>
     <tabstop>profileListView</tabstop>
     <tabstop>userHostComboBox</tabstop>
+    <tabstop>userDevComboBox</tabstop>
     <tabstop>callWaitingCheckBox</tabstop>
     <tabstop>hangupBothCheckBox</tabstop>
     <tabstop>histSizeSpinBox</tabstop>

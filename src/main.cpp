@@ -169,8 +169,12 @@ main(int argc, char *argv[]) {
 	}
 
 	if (user_host.empty()) {
+                string ip;
 		if (exists_interface(sys_config->get_start_user_host())) {
 			user_host = sys_config->get_start_user_host();
+		}
+		else if (exists_interface_dev(sys_config->get_start_user_nic(), ip)) {
+			user_host = ip;
 		}
 	}
 

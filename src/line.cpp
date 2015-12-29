@@ -169,7 +169,7 @@ void t_line::cleanup(void) {
 	}
 
 	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED_SUB) {
-		// The calls has been released but a subscription is
+		// The calls have been released but a subscription is
 		// still active.
 		// TODO: a line with this state should go to the background?
 		substate = LSSUB_RELEASING;
@@ -198,6 +198,7 @@ void t_line::cleanup(void) {
 		substate = LSSUB_IDLE;
 		is_on_hold = false;
 		is_muted = false;
+		try_to_encrypt = false;
 		auto_answer = false;
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
@@ -226,6 +227,7 @@ void t_line::cleanup_open_pending(void) {
 	if (!active_dialog) {
 		is_on_hold = false;
 		is_muted = false;
+		try_to_encrypt = false;
 		auto_answer = false;
 		state = LS_IDLE;
 		substate = LSSUB_IDLE;
@@ -238,6 +240,52 @@ void t_line::cleanup_open_pending(void) {
 		ui->cb_line_state_changed();
 	}
 }
+
+void t_line::cleanup_forced(void) {
+	list<t_dialog *>::iterator i;
+
+	if (open_dialog) {
+		MEMMAN_DELETE(open_dialog);
+		delete open_dialog;
+		open_dialog = NULL;
+	}
+
+	if (active_dialog) {
+		MEMMAN_DELETE(active_dialog);
+		delete active_dialog;
+		active_dialog = NULL;
+	}
+
+	for (i = pending_dialogs.begin(); i != pending_dialogs.end(); i++) {
+		MEMMAN_DELETE(*i);
+		delete *i;
+		*i = NULL;
+	}
+	pending_dialogs.remove(NULL);
+
+	for (i = dying_dialogs.begin(); i != dying_dialogs.end(); i++) {
+		MEMMAN_DELETE(*i);
+		delete *i;
+		*i = NULL;
+	}
+	dying_dialogs.remove(NULL);
+	
+	// TODO: stop running timers?
+
+	state = LS_IDLE;
+	substate = LSSUB_IDLE;
+	is_on_hold = false;
+	is_muted = false;
+	auto_answer = false;
+	call_info.clear();
+	call_history->add_call_record(call_hist_record);
+	call_hist_record.renew();
+	phone->line_cleared(line_number);
+	user_config = NULL;
+	user_defined_ringtone.clear();
+	ui->cb_line_state_changed();
+}
+
 
 ///////////
 // Public
@@ -256,6 +304,7 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	active_dialog = NULL;
 	is_on_hold = false;
 	is_muted = false;
+	try_to_encrypt = false;
 	auto_answer = false;
 	line_number = _line_number;
 	id_invite_comp = 0;
@@ -484,6 +533,8 @@ void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 	call_info.to_organization.clear();
 	call_info.subject = subject;
 	call_info.hdr_referred_by = hdr_referred_by;
+	
+	try_to_encrypt = user_config->get_zrtp_enabled();
 
 	state = LS_BUSY;
 	substate = LSSUB_OUTGOING_PROGRESS;
@@ -588,9 +639,9 @@ void t_line::end_call(void) {
 	// proper way. Maybe add to dying_dialogs.
 }
 
-void t_line::send_dtmf(char digit, bool inband) {
+void t_line::send_dtmf(char digit, bool inband, bool info) {
 	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED) {
-		active_dialog->send_dtmf(digit, inband);
+		active_dialog->send_dtmf(digit, inband, info);
 		cleanup();
 		return;
 	}
@@ -904,7 +955,19 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 
 	d = match_response(r, pending_dialogs);
 	if (d) {
-		d->recvd_response(r, tuid, tid);
+		if (r->hdr_cseq.method != INVITE) {
+			if (r->must_authenticate()) {
+				// Authentication for non-INVITE request in pending dialog
+				if (!d->resend_request_auth(r)) {
+					// Could not authorize, send response to dialog
+					// where it will be handle as a client failure.
+					d->recvd_response(r, tuid, tid);
+				}
+			} else {
+				d->recvd_response(r, tuid, tid);
+			}
+		}
+		
 		if (r->hdr_cseq.method == INVITE) {
 			pending_dialogs.remove(d);
 			MEMMAN_DELETE(d);
@@ -975,8 +1038,17 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 		// response to the dialog as the request must be resent.
 		// For an INVITE request, the transaction layer has already
 		// sent ACK for a failure response.
-		if (!r->must_authenticate() && r->hdr_cseq.method != INVITE) {
-			open_dialog->recvd_response(r, tuid, tid);
+		if (r->hdr_cseq.method != INVITE) {
+			if (r->must_authenticate()) {
+				// Authenticate non-INVITE request
+				if (!open_dialog->resend_request_auth(r)) {
+					// Could not authorize, handle as other client
+					// errors.
+					open_dialog->recvd_response(r, tuid, tid);
+				}
+			} else {
+				open_dialog->recvd_response(r, tuid, tid);
+			}
 		}
 
 		if (r->hdr_cseq.method == INVITE) {
@@ -1239,6 +1311,8 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &r
 		call_info.to_display = r->hdr_to.display;
 		call_info.to_organization.clear();
 		call_info.subject = r->hdr_subject.subject;
+		
+		try_to_encrypt = user_config->get_zrtp_enabled();
 
 		// Check for REFER support
 		// If the Allow header is not present then assume REFER
@@ -1394,6 +1468,17 @@ void t_line::recvd_subscribe(t_request *r, t_tid tid) {
 }
 
 void t_line::recvd_notify(t_request *r, t_tid tid) {
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_request(r, 0, tid);
+	} else {
+		// Should not get here as phone already checked that
+		// the request matched with this line
+		assert(false);
+	}
+	cleanup();
+}
+
+void t_line::recvd_info(t_request *r, t_tid tid) {
 	if (active_dialog && active_dialog->match_request(r)) {
 		active_dialog->recvd_request(r, 0, tid);
 	} else {
@@ -1674,6 +1759,16 @@ bool t_line::get_is_muted(void) const {
 	return is_muted;
 }
 
+bool t_line::get_is_encrypted(void) const {
+	t_audio_session *as = get_audio_session();
+	if (as) return as->get_is_encrypted();
+	return false;
+}
+
+bool t_line::get_try_to_encrypt(void) const {
+	return try_to_encrypt;
+}
+
 bool t_line::get_auto_answer(void) const {
 	return auto_answer;
 }
@@ -1685,6 +1780,11 @@ void t_line::set_auto_answer(bool enable) {
 bool t_line::is_refer_succeeded(void) const {
 	if (active_dialog) return active_dialog->refer_succeeded;
 	return false;
+}
+
+bool t_line::has_media(void) const {
+	t_session *session = get_session();
+	return (session && !session->receive_host.empty() && !session->dst_rtp_host.empty());
 }
 
 bool t_line::seize(void) {
@@ -1743,9 +1843,10 @@ t_call_info t_line::get_call_info(void) const {
 	return call_info;
 }
 
-void t_line::ci_set_dtmf_supported(bool supported, bool inband) {
+void t_line::ci_set_dtmf_supported(bool supported, bool inband, bool info) {
 	call_info.dtmf_supported = supported;
 	call_info.dtmf_inband = inband;
+	call_info.dtmf_info = info;
 }
 
 void t_line::ci_set_last_provisional_reason(const string &reason) {
@@ -1790,4 +1891,59 @@ string t_line::get_ringtone(void) const {
 		// Twinkle default
 		return FILE_RINGTONE;
 	}	
+}
+
+void t_line::confirm_zrtp_sas(void) {
+	t_audio_session *as = get_audio_session();
+	
+	if (as && !as->get_zrtp_sas_confirmed()) {
+		as->confirm_zrtp_sas();
+		ui->cb_zrtp_sas_confirmed(line_number);
+		ui->cb_line_state_changed();
+		log_file->write_header("t_line::confirm_zrtp_sas");
+		log_file->write_raw("Line ");
+		log_file->write_raw(line_number + 1);
+		log_file->write_raw(": User confirmed ZRTP SAS\n");
+		log_file->write_footer();
+	}
+}
+
+void t_line::reset_zrtp_sas_confirmation(void) {
+	t_audio_session *as = get_audio_session();
+	
+	if (as && as->get_zrtp_sas_confirmed()) {
+		as->reset_zrtp_sas_confirmation();
+		ui->cb_zrtp_sas_confirmation_reset(line_number);
+		ui->cb_line_state_changed();
+		log_file->write_header("t_line::reset_zrtp_sas_confirmation");
+		log_file->write_raw("Line ");
+		log_file->write_raw(line_number + 1);
+		log_file->write_raw(": User reset ZRTP SAS confirmation\n");
+		log_file->write_footer();
+	}
+}
+
+void t_line::enable_zrtp(void) {
+	t_audio_session *as = get_audio_session();
+	if (as) {
+		as->enable_zrtp();
+	}
+}
+
+void t_line::zrtp_request_go_clear(void) {
+	t_audio_session *as = get_audio_session();
+	if (as) {
+		as->zrtp_request_go_clear();
+	}
+}
+
+void t_line::zrtp_go_clear_ok(void) {
+	t_audio_session *as = get_audio_session();
+	if (as) {
+		as->zrtp_go_clear_ok();
+	}
+}
+
+void t_line::force_idle(void) {
+	cleanup_forced();
 }

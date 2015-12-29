@@ -31,7 +31,7 @@ using namespace std;
 class i_prohibit_thread {
 private:
 	// List of thread id's that are prohibited from some action
-	t_mutex			prohibited_mutex;
+	mutable t_mutex			prohibited_mutex;
 	set<pthread_t>		prohibited_threads;
 	
 public:
@@ -41,7 +41,7 @@ public:
 	void remove_prohibited_thread(void);
 	
 	// Returns true if the current thread is prohibited
-	bool is_prohibited_thread(void);
+	bool is_prohibited_thread(void) const;
 };
 
 #endif

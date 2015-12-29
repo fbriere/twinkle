@@ -42,7 +42,7 @@
 
 // Number of seconds to wait till all lines are idle when terminating
 // Twinkle
-#define QUIT_IDLE_WAIT	5
+#define QUIT_IDLE_WAIT	2
 
 using namespace std;
 
@@ -100,6 +100,7 @@ private:
 	void answer(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void reject(void);
+	void reject(unsigned short line);
 	void end_call(void);
 	void registration(t_phone_user *pu, t_register_type register_type,
 					unsigned long expires = 0);
@@ -122,10 +123,9 @@ private:
 	void activate_line(unsigned short l);
 
 	// Send a DTMF digit
-	void send_dtmf(char digit, bool inband);
+	void send_dtmf(char digit, bool inband, bool info);
 
 	void set_active_line(unsigned short l);
-	t_line *get_line(unsigned short lineno) const;
 
 	// Handle responses for out-of-dialog requests
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid);
@@ -158,6 +158,7 @@ protected:
 	void recvd_subscribe(t_request *r, t_tid tid);
 	void recvd_notify(t_request *r, t_tid tid);
 	void recvd_refer(t_request *r, t_tid tid);
+	void recvd_info(t_request *r, t_tid tid);
 
 	void failure(t_failure failure, t_tid tid);
 	
@@ -166,6 +167,8 @@ protected:
 public:
 	t_phone();
 	virtual ~t_phone();
+	
+	t_line *get_line(unsigned short lineno) const;
 
 	// Get busy/idle state of the phone
 	// PS_IDLE - at least one line is idle
@@ -185,6 +188,7 @@ public:
 		const string &subject);
 	void pub_answer(void);
 	void pub_reject(void);
+	void pub_reject(unsigned short line);
 	void pub_redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void pub_end_call(void);
 	void pub_registration(t_user *user, t_register_type register_type,
@@ -197,7 +201,16 @@ public:
 	void pub_refer(const t_url &uri, const string &display);
 	void mute(bool enable);
 	void pub_activate_line(unsigned short l);
-	void pub_send_dtmf(char digit, bool inband);
+	void pub_send_dtmf(char digit, bool inband, bool info);
+	
+	// ZRTP actions
+	void pub_confirm_zrtp_sas(unsigned short line);
+	void pub_confirm_zrtp_sas(void);
+	void pub_reset_zrtp_sas_confirmation(unsigned short line);
+	void pub_reset_zrtp_sas_confirmation(void);
+	void pub_enable_zrtp(void);
+	void pub_zrtp_request_go_clear(void);
+	void pub_zrtp_go_clear_ok(unsigned short line);
 
 	// Join 2 lines in a 3-way conference. Returns false if 3-way cannot
 	// be setup
@@ -227,9 +240,11 @@ public:
 	t_line_substate get_line_substate(unsigned short lineno) const;
 	bool is_line_on_hold(unsigned short lineno) const;
 	bool is_line_muted(unsigned short lineno) const;
+	bool is_line_encrypted(unsigned short lineno) const;
 	bool is_line_auto_answered(unsigned short lineno) const;
 	t_refer_state get_line_refer_state(unsigned short lineno) const;
 	t_user *get_line_user(unsigned short lineno);
+	bool has_line_media(unsigned short lineno) const;
 
 	// Return if a line is part of a 3-way conference
 	bool part_of_3way(unsigned short lineno);

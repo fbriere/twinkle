@@ -29,6 +29,7 @@
 #include "sub_refer.h"
 #include "util.h"
 #include "userintf.h"
+#include "audio/rtp_telephone_event.h"
 #include "audits/memman.h"
 #include "sockets/socket.h"
 #include "stun/stun_transaction.h"
@@ -995,6 +996,9 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 	case NOTIFY:
 		process_notify(r, tuid, tid);
 		break;
+	case INFO:
+		process_info(r, tuid, tid);
+		break;
 	default:
 		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR);
 		line->send_response(resp, tuid, tid);
@@ -1369,6 +1373,37 @@ void t_dialog::process_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	delete resp;
 }
 
+void t_dialog::process_info(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	
+	if (!r->body || r->body->get_type() != BODY_DTMF_RELAY) {
+		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
+		resp->hdr_accept.add_media(t_media("application", "dtmf-relay"));
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		return;
+	}
+	
+	char dtmf_signal = ((t_sip_body_dtmf_relay *)r->body)->signal;
+	if (!VALID_DTMF_SYM(dtmf_signal)) {
+		resp = r->create_response(R_400_BAD_REQUEST, "Invalid DTMF signal");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		return;
+	}
+	
+	resp = r->create_response(R_200_OK);
+	line->send_response(resp, tuid, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+	
+	ui->cb_dtmf_detected(line->get_line_number(), char2dtmf_ev(dtmf_signal));
+}
+
 // INVITE sent. Waiting for a first non-100 response.
 void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	if (r->hdr_cseq.method != INVITE) return;
@@ -1709,6 +1744,16 @@ void t_dialog::state_confirmed_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		}
 
 		refer_state = REFST_W4NOTIFY;
+		break;
+	case INFO:
+		remove_client_request(&req_info);
+		
+		if (!dtmf_queue.empty()) {
+			char digit = dtmf_queue.front();
+			dtmf_queue.pop();
+			send_dtmf(digit, false, true);
+		}
+		
 		break;
 	default:
 		// The received response should match the pending request.
@@ -2210,6 +2255,7 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) {
 	req_cancel = NULL;
 	req_prack = NULL;
 	req_refer = NULL;
+	req_info = NULL;
 	req_stun = NULL;
 
 	call_id_owner = false;
@@ -2276,6 +2322,7 @@ t_dialog::~t_dialog() {
 	if (req_cancel) remove_client_request(&req_cancel);
 	if (req_prack) remove_client_request(&req_prack);
 	if (req_refer) remove_client_request(&req_refer);
+	if (req_info) remove_client_request(&req_info);
 	if (req_stun) remove_client_request(&req_stun);
 	if (resp_invite) { MEMMAN_DELETE(resp_invite); delete resp_invite; }
 	if (resp_1xx_invite) {
@@ -2737,18 +2784,37 @@ void t_dialog::send_re_invite(void) {
 bool t_dialog::resend_request_auth(t_response *resp) {
 	t_client_request **current_cr;
 
-	if (resp->hdr_cseq.method == INVITE) {
+	switch (resp->hdr_cseq.method) {
+	case INVITE:
 		// re-INVITE
 		if (!req_out_invite) return false;
 		assert(state == DS_W4RE_INVITE_RESP ||
 		       state == DS_W4RE_INVITE_RESP2);
 		current_cr = &req_out_invite;
-	} else {
-		// non-INVITE
+		break;
+	case PRACK:
+		if (!req_prack) return false;
+		current_cr = &req_prack;
+		break;
+	case REFER:
+		if (!req_refer) return false;
+		current_cr = &req_refer;
+		break;
+	case INFO:
+		if (!req_info) return false;
+		current_cr = &req_info;
+		break;
+	case SUBSCRIBE:
+	case NOTIFY:
+		if (!sub_refer) return false;
+		if (!sub_refer->req_out) return false;
+		current_cr = &(sub_refer->req_out);
+		break;
+	default:
+		// other requests
 		if (!req_out) return false;
 		current_cr = &req_out;
 	}
-
 
 	t_request *req = (*current_cr)->get_request();
 
@@ -2988,8 +3054,34 @@ void t_dialog::send_refer(const t_url &uri, const string &display) {
 	refer_state = REFST_W4RESP;
 }
 
-void t_dialog::send_dtmf(char digit, bool inband) {
-	if (session) session->send_dtmf(digit, inband);
+void t_dialog::send_dtmf(char digit, bool inband, bool info) {
+	if (info) {
+		if (req_info) {
+			// An INFO request is still in progress, put the
+			// DTMF digit in the queue
+			dtmf_queue.push(digit);
+		} else {
+			t_request *info_request = create_request(INFO);
+			
+			// Content-Type header
+			info_request->hdr_content_type.set_media(t_media("application", "dtmf-relay"));
+			
+			// application/dtmf-relay body
+			info_request->body = new t_sip_body_dtmf_relay(digit,
+					user_config->get_dtmf_duration());
+			MEMMAN_NEW(info_request->body);
+			
+			req_info = new t_client_request(user_config, info_request, 0);
+			MEMMAN_NEW(req_info);
+			line->send_request(info_request, req_info->get_tuid());
+			MEMMAN_DELETE(info_request);
+			delete info_request;
+			
+			ui->cb_send_dtmf(line->get_line_number(), char2dtmf_ev(digit));
+		}
+	} else {
+		if (session) session->send_dtmf(digit, inband);
+	}
 }
 
 bool t_dialog::stun_bind_media(void) {
@@ -3142,6 +3234,9 @@ void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
 		break;
 	case REFER:
 		req = req_refer;
+		break;
+	case INFO:
+		req = req_info;
 		break;
 	default:
 		req = req_out;
@@ -3713,4 +3808,3 @@ void t_dialog::notify_refer_progress(t_response *r) {
 bool t_dialog::is_call_id_owner(void) const {
 	return call_id_owner;
 }
-

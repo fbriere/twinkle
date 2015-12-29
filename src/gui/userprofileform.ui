@@ -126,6 +126,14 @@
                     <pixmap>edit.png</pixmap>
                 </property>
             </item>
+            <item>
+                <property name="text">
+                    <string>Security</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>encrypted32.png</pixmap>
+                </property>
+            </item>
             <property name="name">
                 <cstring>categoryListBox</cstring>
             </property>
@@ -1003,7 +1011,7 @@ This field is mandatory.</string>
                                                 <cstring>ptimeTextLabel</cstring>
                                             </property>
                                             <property name="text">
-                                                <string>&amp;G.711 payload size:</string>
+                                                <string>&amp;G.711/G.726 payload size:</string>
                                             </property>
                                             <property name="buddy" stdset="0">
                                                 <cstring>ptimeSpinBox</cstring>
@@ -1043,7 +1051,7 @@ This field is mandatory.</string>
                                                 <number>10</number>
                                             </property>
                                             <property name="whatsThis" stdset="0">
-                                                <string>The preferred payload size for the G.711 codecs.</string>
+                                                <string>The preferred payload size for the G.711 and G.726 codecs.</string>
                                             </property>
                                         </widget>
                                         <widget class="QLabel">
@@ -1454,6 +1462,176 @@ This field is mandatory.</string>
                         </widget>
                         <widget class="QWidget">
                             <property name="name">
+                                <cstring>tabG726</cstring>
+                            </property>
+                            <attribute name="title">
+                                <string>G.726</string>
+                            </attribute>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QGroupBox">
+                                    <property name="name">
+                                        <cstring>g726GroupBox</cstring>
+                                    </property>
+                                    <property name="title">
+                                        <string>G.726</string>
+                                    </property>
+                                    <hbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QLayoutWidget">
+                                            <property name="name">
+                                                <cstring>layout22</cstring>
+                                            </property>
+                                            <grid>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QLabel" row="3" column="0">
+                                                    <property name="name">
+                                                        <cstring>g72640PayloadTypeTextLabel</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>G.726 &amp;40 kbps payload type:</string>
+                                                    </property>
+                                                    <property name="buddy" stdset="0">
+                                                        <cstring>g72640PayloadSpinBox</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QSpinBox" row="3" column="1">
+                                                    <property name="name">
+                                                        <cstring>g72640PayloadSpinBox</cstring>
+                                                    </property>
+                                                    <property name="maxValue">
+                                                        <number>127</number>
+                                                    </property>
+                                                    <property name="minValue">
+                                                        <number>96</number>
+                                                    </property>
+                                                    <property name="whatsThis" stdset="0">
+                                                        <string>The dynamic type value (96 or higher) to be used for G.726 40 kbps.</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QSpinBox" row="2" column="1">
+                                                    <property name="name">
+                                                        <cstring>g72632PayloadSpinBox</cstring>
+                                                    </property>
+                                                    <property name="maxValue">
+                                                        <number>127</number>
+                                                    </property>
+                                                    <property name="minValue">
+                                                        <number>96</number>
+                                                    </property>
+                                                    <property name="whatsThis" stdset="0">
+                                                        <string>The dynamic type value (96 or higher) to be used for G.726 32 kbps.</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel" row="1" column="0">
+                                                    <property name="name">
+                                                        <cstring>g72624PayloadTypeTextLabel</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>G.726 &amp;24 kbps payload type:</string>
+                                                    </property>
+                                                    <property name="buddy" stdset="0">
+                                                        <cstring>g72624PayloadSpinBox</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QSpinBox" row="1" column="1">
+                                                    <property name="name">
+                                                        <cstring>g72624PayloadSpinBox</cstring>
+                                                    </property>
+                                                    <property name="maxValue">
+                                                        <number>127</number>
+                                                    </property>
+                                                    <property name="minValue">
+                                                        <number>96</number>
+                                                    </property>
+                                                    <property name="whatsThis" stdset="0">
+                                                        <string>The dynamic type value (96 or higher) to be used for G.726 24 kbps.</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel" row="2" column="0">
+                                                    <property name="name">
+                                                        <cstring>g72632PayloadTypeTextLabel</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>G.726 &amp;32 kbps payload type:</string>
+                                                    </property>
+                                                    <property name="buddy" stdset="0">
+                                                        <cstring>g72632PayloadSpinBox</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QSpinBox" row="0" column="1">
+                                                    <property name="name">
+                                                        <cstring>g72616PayloadSpinBox</cstring>
+                                                    </property>
+                                                    <property name="maxValue">
+                                                        <number>127</number>
+                                                    </property>
+                                                    <property name="minValue">
+                                                        <number>96</number>
+                                                    </property>
+                                                    <property name="whatsThis" stdset="0">
+                                                        <string>The dynamic type value (96 or higher) to be used for G.726 16 kbps.</string>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QLabel" row="0" column="0">
+                                                    <property name="name">
+                                                        <cstring>g72616PayloadTypeTextLabel</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>G.726 &amp;16 kbps payload type:</string>
+                                                    </property>
+                                                    <property name="buddy" stdset="0">
+                                                        <cstring>g72616PayloadSpinBox</cstring>
+                                                    </property>
+                                                </widget>
+                                            </grid>
+                                        </widget>
+                                        <spacer>
+                                            <property name="name">
+                                                <cstring>spacer31</cstring>
+                                            </property>
+                                            <property name="orientation">
+                                                <enum>Horizontal</enum>
+                                            </property>
+                                            <property name="sizeType">
+                                                <enum>Expanding</enum>
+                                            </property>
+                                            <property name="sizeHint">
+                                                <size>
+                                                    <width>231</width>
+                                                    <height>20</height>
+                                                </size>
+                                            </property>
+                                        </spacer>
+                                    </hbox>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer32</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Vertical</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>241</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                            </vbox>
+                        </widget>
+                        <widget class="QWidget">
+                            <property name="name">
                                 <cstring>tabDtmf</cstring>
                             </property>
                             <attribute name="title">
@@ -1683,7 +1861,7 @@ This field is mandatory.</string>
                                                         </size>
                                                     </property>
                                                     <property name="maxValue">
-                                                        <number>200</number>
+                                                        <number>500</number>
                                                     </property>
                                                     <property name="minValue">
                                                         <number>40</number>
@@ -1732,6 +1910,11 @@ This field is mandatory.</string>
                                                             <string>Inband</string>
                                                         </property>
                                                     </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>Out-of-band (SIP INFO)</string>
+                                                        </property>
+                                                    </item>
                                                     <property name="name">
                                                         <cstring>dtmfTransportComboBox</cstring>
                                                     </property>
@@ -1741,7 +1924,12 @@ This field is mandatory.</string>
 &lt;h2&gt;Inband&lt;/h2&gt;
 &lt;p&gt;Send DTMF inband.&lt;/p&gt;
 &lt;h2&gt;Auto&lt;/h2&gt;
-&lt;p&gt;If the far end of your call supports RFC 2833, then a DTMF tone will be send as RFC 2833 telephone event, otherwise it will be sent inband.&lt;/p&gt;</string>
+&lt;p&gt;If the far end of your call supports RFC 2833, then a DTMF tone will be send as RFC 2833 telephone event, otherwise it will be sent inband.
+&lt;/p&gt;
+&lt;h2&gt;Out-of-band (SIP INFO)&lt;/h2&gt;
+&lt;p&gt;
+Send DTMF out-of-band via a SIP INFO request.
+&lt;/p&gt;</string>
                                                     </property>
                                                 </widget>
                                                 <spacer>
@@ -3625,6 +3813,131 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
                     </spacer>
                 </vbox>
             </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageSecurity</cstring>
+                </property>
+                <attribute name="id">
+                    <number>9</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>scriptsTitleTextLabel_2</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Security</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>zrtpEnabledCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Enable ZRTP/SRTP encryption</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+E</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>zrtpSettingsGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>ZRTP settings</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>zrtpSendIfSupportedCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>O&amp;nly encrypt audio if remote party indicated ZRTP support in SDP</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+N</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>A SIP endpoint supporting ZRTP may indicate ZRTP support during call setup in its signalling. Enabling this option will cause Twinkle only to encrypt calls when the remote party indicates ZRTP support.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>zrtpSdpCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Indicate ZRTP support in SDP</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+I</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Twinkle will indicate ZRTP support during call setup in its signalling.</string>
+                                </property>
+                            </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>zrtpGoClearWarningCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Popup warning when remote party disables encryption during call</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+P</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>A remote party of an encrypted call may send a ZRTP go-clear command to stop encryption. When Twinkle receives this command it will popup a warning if this option is enabled.</string>
+                                </property>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer33</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>241</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
         </widget>
     </grid>
 </widget>
@@ -3862,6 +4175,12 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
         <signal>clicked()</signal>
         <receiver>UserProfileForm</receiver>
         <slot>testConversion()</slot>
+    </connection>
+    <connection>
+        <sender>zrtpEnabledCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>zrtpSettingsGroupBox</receiver>
+        <slot>setEnabled(bool)</slot>
     </connection>
 </connections>
 <tabstops>

@@ -371,6 +371,18 @@ void t_event_ui::set_dtmf_event(char _dtmf_event) {
 	dtmf_event = _dtmf_event;
 }
 
+void t_event_ui::set_encrypted(bool on) {
+	encrypted = on;
+}
+
+void t_event_ui::set_cipher_mode(const string &_cipher_mode) {
+	cipher_mode = _cipher_mode;
+}
+
+void t_event_ui::set_zrtp_sas(const string &sas) {
+	zrtp_sas = sas;
+}
+
 void t_event_ui::exec(t_userintf *user_intf) {
 	switch (type) {
 	case TYPE_UI_CB_DTMF_DETECTED:
@@ -381,6 +393,18 @@ void t_event_ui::exec(t_userintf *user_intf) {
 		break;
 	case TYPE_UI_CB_RECV_CODEC_CHANGED:
 		ui->cb_recv_codec_changed(line, codec);
+		break;
+	case TYPE_UI_CB_LINE_STATE_CHANGED:
+		ui->cb_line_state_changed();
+		break;
+	case TYPE_UI_CB_LINE_ENCRYPTED:
+		ui->cb_line_encrypted(line, encrypted, cipher_mode);
+		break;
+	case TYPE_UI_CB_SHOW_ZRTP_SAS:
+		ui->cb_show_zrtp_sas(line, zrtp_sas);
+		break;
+	case TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR:
+		ui->cb_zrtp_confirm_go_clear(line);
 		break;
 	default:
 		assert(false);

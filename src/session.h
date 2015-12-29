@@ -92,6 +92,7 @@ public:
 	string			dst_sdp_id;
 	string			dst_rtp_host;
 	unsigned short		dst_rtp_port;
+	bool			dst_zrtp_support;
 
 	// Direction of the audio stream from this phone's point of view
 	t_sdp_media_direction	direction;

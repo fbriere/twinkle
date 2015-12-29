@@ -11,8 +11,9 @@ BuildRoot:	%{_tmppath}/making_of_%{name}_%{version}
 Packager:
 URL:		http://www.twinklephone.com
 Requires:	alsa
-Requires:	commoncpp2 >= 1.3.0 
-Requires:	ccrtp >= 1.3.4
+Requires:	commoncpp2 >= 1.4.0 
+Requires:	ccrtp >= 1.5.0
+Requires:	libzrtpcpp >= 0.9.0
 Requires:	kdelibs3 >= 3.2.0
 Requires:	libsndfile
 Requires:	speex
@@ -22,6 +23,7 @@ BuildRequires:	qt3-devel
 BuildRequires:	update-desktop-files
 BuildRequires:  commoncpp2-devel
 BuildRequires:  ccrtp-devel
+BuildRequires:  libzrtpcpp-devel
 BuildRequires:  kdelibs3-devel
 BuildRequires:	libsndfile-devel
 BuildRequires:	speex-devel
@@ -37,7 +39,7 @@ over IP networks.
 
 %build
 autoreconf -fi
-%configure
+%configure --without-ilbc
 make
 
 %install

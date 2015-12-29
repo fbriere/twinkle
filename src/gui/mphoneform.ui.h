@@ -120,9 +120,13 @@ void MphoneForm::init()
 		callRedirect->addTo(menu);
 		callTransfer->addTo(menu);
 		callHold->addTo(menu);
+		callConference->addTo(menu);
 		callMute->addTo(menu);
 		callDTMF->addTo(menu);
 		callRedial->addTo(menu);
+		
+		menu->insertSeparator();
+		actgrActivateLine->addTo(menu);
 		
 		menu->insertSeparator();
 		
@@ -241,7 +245,12 @@ QString MphoneForm::lineSubstate2str( int line) {
 	case LSSUB_ANSWERING:
 		return "establishing call, please wait";
 	case LSSUB_ESTABLISHED:
-		return "established";
+		if (phone->has_line_media(line)) {
+			return "established";
+		} else {
+			return "established (waiting for media)";
+		}
+		break;
 	case LSSUB_RELEASING:
 		return "releasing call, please wait";
 	default:
@@ -389,6 +398,156 @@ void MphoneForm::updateLineTimer(int line)
 	}
 }
 
+void MphoneForm::updateLineEncryptionState(int line)
+{
+	QLabel *cryptLabel, *sasLabel;
+	if (line == 0) {
+		cryptLabel = crypt1Label;
+		sasLabel = line1SasLabel;
+	} else {
+		cryptLabel = crypt2Label;
+		sasLabel = line2SasLabel;
+	}
+	
+	t_audio_session *as = phone->get_line(line)->get_audio_session();
+	if (as && phone->is_line_encrypted(line)) {
+		string zrtp_sas = as->get_zrtp_sas();
+		bool zrtp_sas_confirmed = as->get_zrtp_sas_confirmed();
+		string srtp_cipher_mode = as->get_srtp_cipher_mode();
+		
+		QToolTip::remove(cryptLabel);
+		QString toolTip = "Voice is encrypted (";
+		toolTip.append(srtp_cipher_mode.c_str()).append(")");
+		
+		if (!zrtp_sas.empty()) {
+			// Set tool tip on encryption icon
+			toolTip.append("\nSAS = ");
+			toolTip.append(zrtp_sas.c_str());
+			
+			// Show SAS
+			sasLabel->setText(zrtp_sas.c_str());
+			sasLabel->show();
+		} else {
+			sasLabel->hide();
+		}
+			
+		if (!zrtp_sas_confirmed) {
+			toolTip.append("\nClick to confirm SAS.");
+			cryptLabel->setFrameStyle(QFrame::Panel | QFrame::Raised);
+			cryptLabel->setPixmap(
+				QPixmap::fromMimeSource("encrypted.png"));
+		} else {
+			toolTip.append("\nClick to clear SAS verification.");
+			cryptLabel->setFrameStyle(QFrame::NoFrame);
+			cryptLabel->setPixmap(
+				QPixmap::fromMimeSource("encrypted_verified.png"));
+		}
+
+		QToolTip::add(cryptLabel, toolTip);
+		cryptLabel->show();
+	} else {
+		cryptLabel->hide();
+		sasLabel->hide();
+	}
+}
+
+void MphoneForm::updateLineStatus(int line)
+{
+	QString state;
+	bool on_hold; // indicates if a line is put on-hold
+	bool in_conference; // indicates if a line is in a conference
+	bool is_muted; // indicates is a line is muted
+	t_refer_state refer_state; // indicates if a call transfer is in progress
+	t_call_info call_info;
+	
+	QLabel *statLabel, *holdLabel, *muteLabel, *confLabel, *referLabel, *statusTextLabel;
+	
+	if (line == 0) {
+		statLabel = line1StatLabel;
+		holdLabel = line1HoldLabel;
+		muteLabel = line1MuteLabel;
+		confLabel = line1ConfLabel;
+		referLabel = line1ReferLabel;
+		statusTextLabel = status1TextLabel;
+	} else {
+		statLabel = line2StatLabel;
+		holdLabel = line2HoldLabel;
+		muteLabel = line2MuteLabel;
+		confLabel = line2ConfLabel;
+		referLabel = line2ReferLabel;
+		statusTextLabel = status2TextLabel;
+	}
+	
+	state = lineSubstate2str(line);
+	on_hold = phone->is_line_on_hold(line);
+	if (on_hold) {
+		holdLabel->show();
+	} else {
+		holdLabel->hide();
+	}
+	in_conference = phone->part_of_3way(line);
+	if (in_conference) {
+		confLabel->show();
+	} else {
+		confLabel->hide();
+	}
+	is_muted = phone->is_line_muted(line);
+	if (is_muted) {
+		muteLabel->show();
+	} else {
+		muteLabel->hide();
+	}
+	refer_state = phone->get_line_refer_state(line);
+	if (refer_state != REFST_NULL) {
+		referLabel->show();
+	} else {
+		referLabel->hide();
+	}
+	
+	statusTextLabel->setText(state);
+	
+	t_line_substate line_substate;
+	line_substate = phone->get_line_substate(line);
+	switch (line_substate) {
+	case LSSUB_IDLE:
+		statLabel->hide();
+		break;
+	case LSSUB_SEIZED:
+	case LSSUB_OUTGOING_PROGRESS:
+		statLabel->setPixmap(QPixmap::fromMimeSource("stat_outgoing.png"));
+		statLabel->show();
+		break;
+	case LSSUB_INCOMING_PROGRESS:
+		statLabel->setPixmap(QPixmap::fromMimeSource("stat_ringing.png"));
+		statLabel->show();
+		break;
+	case LSSUB_ANSWERING:
+		statLabel->setPixmap(QPixmap::fromMimeSource("gear.png"));
+		statLabel->show();
+		break;
+	case LSSUB_ESTABLISHED:
+		if (phone->has_line_media(line)) {
+			statLabel->setPixmap(QPixmap::fromMimeSource(
+					"stat_established.png"));
+		} else {
+			statLabel->setPixmap(QPixmap::fromMimeSource(
+					"stat_established_nomedia.png"));
+		}
+		statLabel->show();
+		break;
+	case LSSUB_RELEASING:
+		statLabel->setPixmap(QPixmap::fromMimeSource("gear.png"));
+		statLabel->show();
+		break;
+	default:
+		statLabel->hide();
+		break;
+	}
+	
+	updateLineEncryptionState(line);
+	updateLineTimer(line);
+}
+
 // Update line state and enable/disable buttons depending on state
 void MphoneForm::updateState()
 {
@@ -398,32 +557,14 @@ void MphoneForm::updateState()
 	bool in_conference; // indicates if a line is in a conference
 	bool is_muted; // indicates is a line is muted
 	t_refer_state refer_state; // indicates if a call transfer is in progress
+	bool has_media; // indicates if a media stream is present
+	t_call_info call_info;
 	
 	// Update status of line 1
-	state = lineSubstate2str(0);
-	on_hold = phone->is_line_on_hold(0);
-	if (on_hold) state.append(", on hold");
-	in_conference = phone->part_of_3way(0);
-	if (in_conference) state.append(", conference");
-	is_muted = phone->is_line_muted(0);
-	if (is_muted) state.append(", mute");
-	refer_state = phone->get_line_refer_state(0);
-	if (refer_state != REFST_NULL) state.append(", transferring");
-	status1TextLabel->setText(state);
-	updateLineTimer(0);
+	updateLineStatus(0);
 	
 	// Update status of line 2
-	state = lineSubstate2str(1);
-	on_hold = phone->is_line_on_hold(1);
-	if (on_hold) state.append(", on hold");
-	in_conference = phone->part_of_3way(1);
-	if (in_conference) state.append(", conference");
-	is_muted = phone->is_line_muted(1);
-	if (is_muted) state.append(", mute");
-	refer_state = phone->get_line_refer_state(1);
-	if (refer_state != REFST_NULL) state.append(", transferring");
-	status2TextLabel->setText(state);
-	updateLineTimer(1);
+	updateLineStatus(1);
 	
 	// Disable/enable controls depending on the active line state
 	t_line_substate line_substate;
@@ -433,8 +574,9 @@ void MphoneForm::updateState()
 	in_conference = phone->part_of_3way(line);
 	is_muted = phone->is_line_muted(line);
 	refer_state = phone->get_line_refer_state(line);
+	has_media = phone->has_line_media(line);
 	other_line = (line == 0 ? 1 : 0);
-	t_call_info call_info = phone->get_call_info(line);
+	call_info = phone->get_call_info(line);
 	
 	// The active line may change when one of the parties in a conference
 	// releases the call. If this happens, then update the state of the
@@ -445,6 +587,15 @@ void MphoneForm::updateState()
 	} else if (line == 1 && line1RadioButton->isOn())
 	{
 		line2RadioButton->setChecked(true);
+	}
+	
+	// Same logic for the activate line menu items
+	if (line == 0 && actionLine2->isOn()) 
+	{
+		actionLine1->setOn(true);
+	} else if (line == 1 && actionLine1->isOn())
+	{
+		actionLine2->setOn(true);
 	}
 	
 	switch(line_substate) {
@@ -501,9 +652,9 @@ void MphoneForm::updateState()
 			callConference->setEnabled(false);
 			callDTMF->setEnabled(false);
 		} else {
-			callTransfer->setEnabled(call_info.refer_supported &&
+			callTransfer->setEnabled(has_media && call_info.refer_supported &&
 						 refer_state == REFST_NULL);
-			callHold->setEnabled(true);
+			callHold->setEnabled(has_media);
 			callDTMF->setEnabled(call_info.dtmf_supported);
 			
 			if (phone->get_line_substate(other_line) == 
@@ -516,7 +667,7 @@ void MphoneForm::updateState()
 				{
 					callConference->setEnabled(false);
 				} else {
-					callConference->setEnabled(true);
+					callConference->setEnabled(has_media);
 				}
 			} else {
 				callConference->setEnabled(false);
@@ -853,6 +1004,13 @@ void MphoneForm::updateSysTrayStatus()
 			icon_name = "sys_hold";
 		} else if (phone->is_line_muted(line)) {
 			icon_name = "sys_mute";
+		} else if (phone->is_line_encrypted(line)) {
+			t_audio_session *as = phone->get_line(line)->get_audio_session();
+			if (as && as->get_zrtp_sas_confirmed()) {
+				icon_name = "sys_encrypted_verified";
+			} else {
+				icon_name = "sys_encrypted";
+			}
 		} else {
 			icon_name = "sys_busy_estab";
 		}
@@ -1075,6 +1233,24 @@ void MphoneForm::phoneAnswer()
 	updateState();
 }
 
+// A call can be answered from the systray popup. The user may have
+// switched lines, the systray popup answer button should answer the
+// correct line.
+void MphoneForm::phoneAnswerFromSystrayPopup()
+{
+#ifdef HAVE_KDE
+	unsigned short line = ((t_gui *)ui)->get_line_sys_tray_popup();
+	unsigned short active_line = phone->get_active_line();
+	
+	if (line != active_line) {
+		((t_gui *)ui)->action_activate_line(line);
+	}
+	
+	((t_gui *)ui)->action_answer();
+	updateState();
+#endif
+}
+
 void MphoneForm::phoneBye()
 {
 	((t_gui *)ui)->action_bye();
@@ -1086,6 +1262,18 @@ void MphoneForm::phoneReject()
 {
 	((t_gui *)ui)->action_reject();
 	updateState();
+}
+
+// A call can be rejected from the systray popup. The user may have
+// switched lines, the systray popup reject button should answer the
+// correct line.
+void MphoneForm::phoneRejectFromSystrayPopup()
+{
+#ifdef HAVE_KDE
+	unsigned short line = ((t_gui *)ui)->get_line_sys_tray_popup();
+	((t_gui *)ui)->action_reject(line);
+	updateState();
+#endif
 }
 
 
@@ -1233,6 +1421,47 @@ void MphoneForm::sendDTMF(const QString &digits)
 	((t_gui *)ui)->action_dtmf(digits.ascii());	
 }
 
+void MphoneForm::phoneConfirmZrtpSas(int line)
+{
+	((t_gui *)ui)->action_confirm_zrtp_sas(line);
+	updateState();
+}
+
+void MphoneForm::phoneConfirmZrtpSas()
+{
+	((t_gui *)ui)->action_confirm_zrtp_sas();
+	updateState();
+}
+
+void MphoneForm::phoneResetZrtpSasConfirmation(int line)
+{
+	((t_gui *)ui)->action_reset_zrtp_sas_confirmation(line);
+	updateState();	
+}
+
+void MphoneForm::phoneResetZrtpSasConfirmation()
+{
+	((t_gui *)ui)->action_reset_zrtp_sas_confirmation();
+	updateState();	
+}
+
+void MphoneForm::phoneEnableZrtp(bool on)
+{
+	if (on) {
+		((t_gui *)ui)->action_enable_zrtp();
+	} else {
+		((t_gui *)ui)->action_zrtp_request_go_clear();
+	}
+	
+	updateState();
+}
+
+void MphoneForm::phoneZrtpGoClearOk(unsigned short line)
+{
+	((t_gui *)ui)->action_zrtp_go_clear_ok(line);
+	updateState();
+}
+
 // Radio button for line 1 changed state
 void MphoneForm::line1rbChangedState( bool on )
 {
@@ -1249,6 +1478,18 @@ void MphoneForm::line2rbChangedState( bool on )
 	// on the other line will handle the action
 	if (!on) return;
 	
+	((t_gui *)ui)->action_activate_line(1);
+}
+
+void MphoneForm::actionLine1Toggled( bool on)
+{
+	if (!on) return;
+	((t_gui *)ui)->action_activate_line(0);
+}
+
+void MphoneForm::actionLine2Toggled( bool on)
+{
+	if (!on) return;
 	((t_gui *)ui)->action_activate_line(1);
 }
 
@@ -1839,14 +2080,17 @@ void MphoneForm::keyPressEvent(QKeyEvent *e)
 // been clicked.
 void MphoneForm::mouseReleaseEvent(QMouseEvent *e)
 {
-	// Only process left mouse button release events
-	if (e->button() != Qt::LeftButton ||
-	    e->type() != QEvent::MouseButtonRelease)
-	{
+	if (e->button() == Qt::LeftButton && e->type() == QEvent::MouseButtonRelease) {
+		processLeftMouseButtonRelease(e);
+	} else if (e->button() == Qt::RightButton && e->type() == QEvent::MouseButtonRelease) {
+		processRightMouseButtonRelease(e);
+	} else {
 		e->ignore();
-		return;
 	}
-	
+}
+
+void MphoneForm::processLeftMouseButtonRelease(QMouseEvent *e)
+{
 	if (statAaLabel->hasMouse()) {
 		if (phone->ref_users().size() == 1) {
 			bool enable = !serviceAutoAnswer->isOn();
@@ -1872,7 +2116,104 @@ void MphoneForm::mouseReleaseEvent(QMouseEvent *e)
 	} else if (statRegLabel->hasMouse()) {
 		// Fetch registration status
 		phoneShowRegistrations();
+	} else if (crypt1Label->hasMouse()) {
+		processCryptLabelClick(0);
+	} else if (crypt2Label->hasMouse()) {
+		processCryptLabelClick(1);
 	} else {
 		e->ignore();
 	}
+}
+
+void MphoneForm::processRightMouseButtonRelease(QMouseEvent *e)
+{
+	e->ignore();
+}
+
+void MphoneForm::processCryptLabelClick(int line) 
+{
+	t_audio_session *as = phone->get_line(line)->get_audio_session();
+	if (!as) return;
+	
+	if (as->get_zrtp_sas_confirmed()) {
+		phoneResetZrtpSasConfirmation(line);
+	} else {
+		phoneConfirmZrtpSas(line);
+	}
+}
+
+void MphoneForm::showDisplay(bool on)
+{
+	if (on) {
+		displayGroupBox->show();
+	} else {
+		int hDisplay = displayGroupBox->height();
+		displayGroupBox->hide();
+		
+		if (hDisplay < minimumHeight()) {
+			setMinimumHeight(minimumHeight() - hDisplay);
+		}
+		resize(width(), minimumHeight());
+	}
+	
+	viewDisplay = on;
+	viewDisplayAction->setOn(on);
+}
+
+void MphoneForm::showCompactLineStatus(bool on)
+{
+	if (on) {
+		int hLabels = fromhead1Label->height() +
+			      tohead1Label->height() +
+			      subjecthead1Label->height() +
+			      fromhead2Label->height() +
+			      tohead2Label->height() +
+			      subjecthead2Label->height();
+		
+		fromhead1Label->hide();
+		tohead1Label->hide();
+		subjecthead1Label->hide();
+		from1Label->hide();
+		to1Label->hide();
+		subject1Label->hide();
+		photo1Label->hide();
+		fromhead2Label->hide();
+		tohead2Label->hide();
+		subjecthead2Label->hide();
+		from2Label->hide();
+		to2Label->hide();
+		subject2Label->hide();
+		photo2Label->hide();
+		
+		if (hLabels < minimumHeight()) {
+			setMinimumHeight(minimumHeight() - hLabels);
+		}
+		resize(width(), minimumHeight());
+	} else {
+		fromhead1Label->show();
+		tohead1Label->show();
+		subjecthead1Label->show();
+		from1Label->show();
+		to1Label->show();
+		subject1Label->show();
+		fromhead2Label->show();
+		tohead2Label->show();
+		subjecthead2Label->show();
+		from2Label->show();
+		to2Label->show();
+		subject2Label->show();
+	}
+	
+	viewCompactLineStatus = on;
+	//viewCompactLineStatusAction->setOn(on);
+}
+
+bool MphoneForm::getViewDisplay()
+{
+	return viewDisplay;
+}
+
+bool MphoneForm::getViewCompactLineStatus()
+{
+	return viewCompactLineStatus;
 }

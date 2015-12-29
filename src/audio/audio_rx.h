@@ -115,10 +115,10 @@ private:
 	t_dtmf_player	*dtmf_player;
 
 	// Inidicates if the recording thread is running
-	bool is_running;
+	volatile bool is_running;
 
 	// The thread exits when this indicator is set to true
-	bool stop_running;
+	volatile bool stop_running;
 
 	// Indicates if a capture failure was already logged (log throttling).
 	bool logged_capture_failure;

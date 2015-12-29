@@ -171,6 +171,10 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << "\tIf you have multiple IP addresses on your computer,\n";
 			cout << "\t\tthen you can supply the IP address to use here.\n";
 			cout << endl;
+			cout << " --nic <NIC>";
+			cout << "\tIf you have multiple NICs on your computer,\n";
+			cout << "\t\tthen you can supply the NIC name to use here (e.g. eth0).\n";
+			cout << endl;
 			cout << " --call <address>\n";
 			cout << "\t\tInstruct Twinkle to call the address.\n";
 			cout << "\t\tWhen Twinkle is already running, this will instruct the running\n";
@@ -263,6 +267,25 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			} else {
 				cout << argv[0] << ": ";
 				cout << "IP address missing for option '-i'.\n";
+				exit(0);
+			}
+		} else if (strcmp(argv[i], "--nic") == 0) {
+			if (i < argc - 1) {
+				i++;
+				// NIC name, e.g. eth0
+				string user_dev = argv[i];
+				string ip;
+				if (exists_interface_dev(user_dev, ip)) {
+				        user_host = ip;
+				} else {
+					cout << argv[0] << ": ";
+					cout << "There is no network interface ";
+					cout << user_dev << endl;
+					exit(0);
+				}
+			} else {
+				cout << argv[0] << ": ";
+				cout << "NIC name missing for option '-d'.\n";
 				exit(0);
 			}
 		} else if (strcmp(argv[i], "--call") == 0) {
@@ -478,8 +501,11 @@ int main( int argc, char ** argv )
 		}
 	}
 	if (user_host.empty()) {
+		string ip;
 		if (exists_interface(sys_config->get_start_user_host())) {
 			user_host = sys_config->get_start_user_host();
+		} else if (exists_interface_dev(sys_config->get_start_user_nic(), ip)) {
+			user_host = ip;
 		}
 	}
 

@@ -91,3 +91,21 @@ bool exists_interface(const string &hostname) {
 	delete l;
 	return false;
 }
+
+
+
+bool exists_interface_dev(const string &devname, string &ip_address) {
+
+	list<t_interface> *l = get_interfaces(true);
+	
+	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
+	  if (i->name == devname) {
+	    ip_address = i->get_ip_addr();
+	    delete l;
+	    return true;
+	  }
+	}
+	
+	delete l;
+	return false;
+}

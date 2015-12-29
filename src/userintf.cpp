@@ -98,7 +98,7 @@ void t_userintf::expand_destination(t_user *user_config,
 	}
 	
 	// Find start of url
-	int i = dst.rfind('<');
+	string::size_type i = dst.rfind('<');
 	if (i == string::npos) {
 		// It seems the string is invalid.
 		return;
@@ -299,6 +299,25 @@ bool t_userintf::exec_answer(const list<string> command_list) {
 void t_userintf::do_answer(void) {
 	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_answer();
+}
+
+bool t_userintf::exec_answerbye(const list<string> command_list) {
+	do_answerbye();
+	return true;
+}
+
+void t_userintf::do_answerbye(void) {
+	unsigned short line = phone->get_active_line();
+	
+	switch (phone->get_line_substate(line)) {
+	case LSSUB_INCOMING_PROGRESS:
+		do_answer();
+		break;
+	case LSSUB_OUTGOING_PROGRESS:
+	case LSSUB_ESTABLISHED:
+		do_bye();
+		break;
+	}
 }
 
 bool t_userintf::exec_reject(const list<string> command_list) {
@@ -824,7 +843,7 @@ void t_userintf::do_dtmf(const string &digits) {
 	
 	for (string::const_iterator i = digits.begin(); i != digits.end(); i++) {
 		if (VALID_DTMF_SYM(*i)) {
-			phone->pub_send_dtmf(*i, call_info.dtmf_inband);
+			phone->pub_send_dtmf(*i, call_info.dtmf_inband, call_info.dtmf_info);
 		}
 	}
 }
@@ -1044,7 +1063,7 @@ bool t_userintf::exec_user(const list<string> command_list) {
 	string profile_name;
 
 	if (!parse_args(command_list, al)) {
-		exec_command("help exec_user");
+		exec_command("help user");
 		return false;
 	}
 	
@@ -1054,7 +1073,7 @@ bool t_userintf::exec_user(const list<string> command_list) {
 			profile_name = i->value;
 			break;
 		default:
-			exec_command("help options");
+			exec_command("help user");
 			return false;
 			break;
 		}
@@ -1108,6 +1127,66 @@ void t_userintf::do_user(const string &profile_name) {
 	cout << endl << endl;
 }
 
+bool t_userintf::exec_zrtp(const list<string> command_list) {
+	list<t_command_arg> al;
+	t_zrtp_cmd zrtp_cmd;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help zrtp");
+		return false;
+	}
+	
+	if (al.size() != 1) {
+		exec_command("help zrtp");
+		return false;
+	}
+	
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 0:
+			if (i->value == "encrypt") {
+				zrtp_cmd = ZRTP_ENCRYPT;
+			} else if (i->value == "go-clear") {
+				zrtp_cmd = ZRTP_GO_CLEAR;
+			} else if (i->value == "confirm-sas") {
+				zrtp_cmd = ZRTP_CONFIRM_SAS;
+			} else if (i->value == "reset-sas") {
+				zrtp_cmd = ZRTP_RESET_SAS;
+			} else {
+				exec_command("help zrtp");
+				return false;
+			}
+			break;
+		default:
+			exec_command("help zrtp");
+			return false;
+			break;
+		}
+	}
+	
+	do_zrtp(zrtp_cmd);
+	return true;
+}
+
+void t_userintf::do_zrtp(t_zrtp_cmd zrtp_cmd) {
+	switch (zrtp_cmd) {
+	case ZRTP_ENCRYPT:
+		phone->pub_enable_zrtp();
+		break;
+	case ZRTP_GO_CLEAR:
+		phone->pub_zrtp_request_go_clear();
+		break;
+	case ZRTP_CONFIRM_SAS:
+		phone->pub_confirm_zrtp_sas();
+		break;
+	case ZRTP_RESET_SAS:
+		phone->pub_reset_zrtp_sas_confirmation();
+		break;
+	default:
+		assert(false);
+	}
+}
+
 bool t_userintf::exec_quit(const list<string> command_list) {
 	do_quit();
 	return true;
@@ -1139,6 +1218,7 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 		cout << endl;
 		cout << "call		Call someone\n";
 		cout << "answer		Answer an incoming call\n";
+		cout << "answerbye	Answer an incoming call or end a call\n";
 		cout << "reject		Reject an incoming call\n";
 		cout << "redirect	Redirect an incoming call\n";
 		cout << "transfer	Transfer a standing call\n";
@@ -1157,6 +1237,9 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 		cout << "dnd		Do not disturb\n";
 		cout << "auto_answer	Auto answer\n";
 		cout << "user		Show users / set active user\n";
+#ifdef HAVE_ZRTP
+		cout << "zrtp		ZRTP command for voice encryption\n";
+#endif
 		cout << "quit		Quit\n";
 		cout << "help		Get help on a command\n";
 		cout << endl;
@@ -1188,6 +1271,18 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 		cout << "\tanswer\n";
 		cout << "Description:\n";
 		cout << "\tAnswer an incoming call.\n";
+		cout << endl;
+
+		return;
+	}
+	
+	if (c == "answerbye") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tanswerbye\n";
+		cout << "Description:\n";
+		cout << "\tWith this command you can answer an incoming call or\n";
+		cout << "\tend an established call.\n";
 		cout << endl;
 
 		return;
@@ -1474,6 +1569,24 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 		
 		return;
 	}
+	
+#ifdef HAVE_ZRTP
+	if (c == "zrtp") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tzrtp <zrtp-command>\n";
+		cout << "Description:\n";
+		cout << "\tExecute a ZRTP command.\n";
+		cout << "ZRTP commands:\n";
+		cout << "\tencrypt      Start ZRTP negotiation for encryption.\n";
+		cout << "\tgo-clear     Send ZRTP go-clear request.\n";
+		cout << "\tconfirm-sas  Confirm the SAS value.\n";
+		cout << "\treset-sas    Reset SAS confirmation.\n";
+		cout << endl;
+		
+		return;
+	}
+#endif
 
 	if (c == "quit") {
 		cout << endl;
@@ -1521,6 +1634,7 @@ t_userintf::t_userintf(t_phone *_phone) {
 	all_commands.push_back("invite");
 	all_commands.push_back("call");
 	all_commands.push_back("answer");
+	all_commands.push_back("answerbye");
 	all_commands.push_back("reject");
 	all_commands.push_back("redirect");
 	all_commands.push_back("bye");
@@ -1540,6 +1654,9 @@ t_userintf::t_userintf(t_phone *_phone) {
 	all_commands.push_back("dnd");
 	all_commands.push_back("auto_answer");
 	all_commands.push_back("user");
+#ifdef HAVE_ZRTP
+	all_commands.push_back("zrtp");
+#endif
 	all_commands.push_back("quit");
 	all_commands.push_back("exit");
 	all_commands.push_back("q");
@@ -1613,6 +1730,7 @@ bool t_userintf::exec_command(const string &command_line, bool immediate) {
 	if (command == "invite") return exec_invite(l, immediate);
 	if (command == "call") return exec_invite(l, immediate);
 	if (command == "answer") return exec_answer(l);
+	if (command == "answerbye") return exec_answerbye(l);
 	if (command == "reject") return exec_reject(l);
 	if (command == "redirect") return exec_redirect(l, immediate);
 	if (command == "bye") return exec_bye(l);
@@ -1632,6 +1750,9 @@ bool t_userintf::exec_command(const string &command_line, bool immediate) {
 	if (command == "dnd") return exec_dnd(l);
 	if (command == "auto_answer") return exec_auto_answer(l);
 	if (command == "user") return exec_user(l);
+#ifdef HAVE_ZRTP
+	if (command == "zrtp") return exec_zrtp(l);
+#endif
 	if (command == "quit") return exec_quit(l);
 	if (command == "exit") return exec_quit(l);
 	if (command == "x") return exec_quit(l);
@@ -1712,6 +1833,10 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 	case CODEC_SPEEX_WB:	return "spx-wb";
 	case CODEC_SPEEX_UWB:	return "spx-uwb";
 	case CODEC_ILBC:	return "ilbc";
+	case CODEC_G726_16:	return "g726-16";
+	case CODEC_G726_24:	return "g726-24";
+	case CODEC_G726_32:	return "g726-32";
+	case CODEC_G726_40:	return "g726-40";
 	default:		return "???";
 	}
 }
@@ -1954,7 +2079,7 @@ void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "Unsupported content type in answer from far end.\n";
 	cout << r->hdr_content_type.media.type << "/";
-	cout << r->hdr_content_type.media.type << endl;
+	cout << r->hdr_content_type.media.subtype << endl;
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
@@ -2443,7 +2568,7 @@ void t_userintf::cb_stop_call_notification(int line) {
 
 void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
 	cout << endl;
-	cout << "Line " << line + 1 << ": DTMF telephone event detected: ";
+	cout << "Line " << line + 1 << ": DTMF detected: ";
 
 	if (VALID_DTMF_EV(dtmf_event)) {
 		cout << dtmf_ev2char(dtmf_event) << endl;
@@ -2500,6 +2625,13 @@ void t_userintf::cb_dtmf_supported(int line) {
 
 void t_userintf::cb_line_state_changed(void) {
 	// Nothing to do for CLI
+}
+
+void t_userintf::cb_async_line_state_changed(void) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_LINE_STATE_CHANGED);
+	MEMMAN_NEW(event);
+	
+	evq_ui_events.push(event);
 }
 
 void t_userintf::cb_send_codec_changed(int line, t_audio_codec codec) {
@@ -2725,6 +2857,81 @@ void t_userintf::cb_nat_discovery_progress_step(int step) {
 bool t_userintf::cb_nat_discovery_cancelled(void) {
 	// User cannot cancel NAT discovery in CLI mode.
 	return false;
+}
+
+void t_userintf::cb_line_encrypted(int line, bool encrypted, const string &cipher_mode) {
+	cout << endl;
+	if (encrypted) {
+		cout << "Line " << line + 1 << ": audio encryption enabled (";
+		cout << cipher_mode << ").\n";
+	} else {
+		cout << "Line " << line + 1 << ": audio encryption disabled.\n";
+	}
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_async_line_encrypted(int line, bool encrypted, const string &cipher_mode) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_LINE_ENCRYPTED);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	event->set_encrypted(encrypted);
+	event->set_cipher_mode(cipher_mode);	
+	evq_ui_events.push(event);
+}
+
+void t_userintf::cb_show_zrtp_sas(int line, const string &sas) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ZRTP SAS = " << sas << endl;
+	cout << "Confirm the SAS if it is correct.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_async_show_zrtp_sas(int line, const string &sas) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_SHOW_ZRTP_SAS);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	event->set_zrtp_sas(sas);
+	evq_ui_events.push(event);
+}
+
+void t_userintf::cb_zrtp_confirm_go_clear(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": remote user disabled encryption.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+	
+	phone->pub_zrtp_go_clear_ok(line);
+}
+
+void t_userintf::cb_async_zrtp_confirm_go_clear(int line) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	evq_ui_events.push(event);
+}
+
+void t_userintf::cb_zrtp_sas_confirmed(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": SAS confirmed.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_zrtp_sas_confirmation_reset(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": SAS confirmation reset.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
 }
 
 bool t_userintf::get_last_call_info(t_url &url, string &display,

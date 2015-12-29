@@ -271,14 +271,14 @@ void SrvRedirectForm::toggleNoanswer(bool on)
 	}
 }
 
-void SrvRedirectForm::changedUser(const QString &user_display_uri)
+void SrvRedirectForm::changedUser(const QString &user_profile)
 {
 	if (current_user_idx == -1) {
 		// Initializing combo box
 		return;
 	}
 	
-	t_user *new_user = phone->ref_user_display_uri(user_display_uri.ascii());
+	t_user *new_user = phone->ref_user_profile(user_profile.ascii());
 	if (!new_user) {
 		userComboBox->setCurrentItem(current_user_idx);
 		return;

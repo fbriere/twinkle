@@ -1,3 +1,36 @@
+01 oct 2006 - Release 0.9
+=========================
+- Supports Phil Zimmermann's ZRTP and SRTP for
+  secure voice communication.
+  ZRTP/SRTP is provided by the latest version (1.5.0) of the
+  GNU ccRTP library.
+  The implementation is interoperable with Zfone beta2
+- SIP INFO method (RFC 2976)
+- DTMF via SIP INFO
+- G.726 codec (16, 24, 32 and 48 kbps modes)
+- Option to hide display
+- CLI command "answerbye" to answer an incoming or hangup an established call
+- Switch lines from system tray menu
+- Answer or reject a call from the KDE systray popup on incoming call
+- Icons to indicate line status
+- Default NIC option in system settings
+- Accept SDP offer without m= lines (RFC 3264 section 5, RFC 3725 flow IV)
+
+Bug fixes
+---------
+- t_audio::open did not return a value
+- segmentation fault when quitting Twinkle in transient call state
+- Twinkle did not accept message/sipfrag body with a single CRLF at the end
+- user profile could not be changed on service redirect dialog
+- Twinkle did not react to 401/407 authentication challenges for
+  PRACK, REFER, SUBSCRIBE and NOTIFY
+
+Build changes
+-------------
+- For ZRTP support you need to install libzrtpcpp first. This library
+  comes as an extension library with ccRTP.
+
+
 09 jul 2006 - Release 0.8.1
 ===========================
 - Removed iLBC source code from Twinkle. To use iLBC you can

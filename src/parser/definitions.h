@@ -53,6 +53,7 @@ enum t_method {
 	SUBSCRIBE,
 	NOTIFY,
 	REFER,
+	INFO,
 	METHOD_UNKNOWN
 };
 

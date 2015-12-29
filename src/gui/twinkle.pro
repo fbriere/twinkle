@@ -162,7 +162,21 @@ IMAGES	= images/filenew \
 	images/1leftarrow.png \
 	images/1uparrow.png \
 	images/1downarrow.png \
-	images/kontact_contacts32.png
+	images/kontact_contacts32.png \
+	images/encrypted.png \
+	images/sys_encrypted.png \
+	images/sys_encrypted_dis.png \
+	images/encrypted32.png \
+	images/encrypted-disabled.png \
+	images/stat_conference.png \
+	images/stat_established.png \
+	images/stat_outgoing.png \
+	images/stat_ringing.png \
+	images/stat_mute.png \
+	images/stat_established_nomedia.png \
+	images/encrypted_verified.png \
+	images/sys_encrypted_verified.png \
+	images/sys_encrypted_verified_dis.png
 
 unix {
   UI_DIR = .ui
