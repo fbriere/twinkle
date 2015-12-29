@@ -25,7 +25,7 @@ Build-Depends: bison,
                qttools5-dev,
                qttools5-dev-tools
 Standards-Version: 3.9.5
-Homepage: http://www.twinklephone.com/
+Homepage: http://twinkle.dolezel.info/
 
 Package: twinkle
 Architecture: any
