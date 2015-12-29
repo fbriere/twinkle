@@ -54,10 +54,12 @@ AR = ar
 ARFLAGS = cru
 libaudio_a_AR = $(AR) $(ARFLAGS)
 libaudio_a_LIBADD =
-am_libaudio_a_OBJECTS = audio_device.$(OBJEXT) audio_codecs.$(OBJEXT) \
-	audio_rx.$(OBJEXT) audio_session.$(OBJEXT) audio_tx.$(OBJEXT) \
-	g711.$(OBJEXT) g721.$(OBJEXT) g723_24.$(OBJEXT) \
-	g723_40.$(OBJEXT) g72x.$(OBJEXT) media_buffer.$(OBJEXT) \
+am_libaudio_a_OBJECTS = audio_device.$(OBJEXT) audio_encoder.$(OBJEXT) \
+	audio_codecs.$(OBJEXT) audio_rx.$(OBJEXT) \
+	audio_session.$(OBJEXT) audio_tx.$(OBJEXT) \
+	dtmf_player.$(OBJEXT) freq_gen.$(OBJEXT) g711.$(OBJEXT) \
+	g721.$(OBJEXT) g723_24.$(OBJEXT) g723_40.$(OBJEXT) \
+	g72x.$(OBJEXT) media_buffer.$(OBJEXT) \
 	rtp_telephone_event.$(OBJEXT) tone_gen.$(OBJEXT) \
 	twinkle_rtp_session.$(OBJEXT)
 libaudio_a_OBJECTS = $(am_libaudio_a_OBJECTS)
@@ -307,10 +309,13 @@ INCLUDES = -I $(top_builddir)/src -I $(includedir)
 noinst_LIBRARIES = libaudio.a
 libaudio_a_SOURCES = \
 	audio_device.cpp\
+	audio_encoder.cpp\
         audio_codecs.cpp\
         audio_rx.cpp\
         audio_session.cpp\
         audio_tx.cpp\
+        dtmf_player.cpp\
+        freq_gen.cpp\
         g711.cpp\
         g721.cpp\
         g723_24.cpp\
@@ -321,10 +326,13 @@ libaudio_a_SOURCES = \
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
         audio_device.h\
+        audio_encoder.h\
         audio_codecs.h\
         audio_rx.h\
         audio_session.h\
         audio_tx.h\
+        dtmf_player.h\
+        freq_gen.h\
         g711.h\
         g72x.h\
         media_buffer.h\
@@ -383,9 +391,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_codecs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_device.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_rx.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_tx.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dtmf_player.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/freq_gen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g711.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g721.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/g723_24.Po@am__quote@

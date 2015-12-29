@@ -17,6 +17,7 @@
 */
 
 #include "parse_ctrl.h"
+#include "protocol.h"
 #include "audits/memman.h"
 
 // Interface to Bison
@@ -83,6 +84,25 @@ t_sip_message *t_parser::parse(const string &s) {
 	}
 
 	return msg;
+}
+
+t_sip_message *t_parser::parse_headers(const string &s) {
+	string msg("INVITE sip:fake@fake.invalid SIP/2.0");
+	msg += CRLF;
+	
+	list<t_parameter> hdr_list = str2param_list(s);
+	for (list<t_parameter>::iterator i = hdr_list.begin();
+	     i != hdr_list.end(); i++)
+	{
+		msg += i->name;
+		msg += ": ";
+		msg += i->value;
+		msg += CRLF;
+	}
+	
+	msg += CRLF;
+	
+	return parse(msg);
 }
 
 void t_parser::enter_ctx_comment(void) {

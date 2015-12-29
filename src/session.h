@@ -23,11 +23,13 @@
 #define _SESSION_H
 
 #include <list>
+#include <map>
 #include <string>
 #include "dialog.h"
 #include "user.h"
 #include "sdp/sdp.h"
 #include "parser/sip_message.h"
+#include "audio/audio_codecs.h"
 #include "audio/audio_session.h"
 
 // Forward declarations
@@ -55,6 +57,26 @@ private:
 	// Indicates if session is put on-hold, i.e. no RTP should be sent
 	// or received for this session.
 	bool			is_on_hold;
+	
+	// Mapping from audio codecs to RTP payload numbers for receiving
+	// and sending directions.
+	map<t_audio_codec, unsigned short>	recv_ac2payload;
+	map<t_audio_codec, unsigned short>	send_ac2payload;
+	
+	// Mapping from RTP payload numbers to audio codecs for receiving
+	// and sending directions.
+	map<unsigned short, t_audio_codec>	recv_payload2ac;
+	map<unsigned short, t_audio_codec>	send_payload2ac;
+	
+	// Set the list of received codecs from the SDP.
+	// Create the send_ac2paylaod and send_payload2ac mappings.
+	void set_recvd_codecs(t_sdp *sdp);
+	
+	// Returns if this session is part of a 3-way conference
+	bool is_3way(void) const;
+	
+	// Returns the peer session of a 3-way conference
+	t_session *get_peer_3way (void) const;
 
 public:
 	// Audio session information
@@ -74,9 +96,9 @@ public:
 	// Direction of the audio stream from this phone's point of view
 	t_sdp_media_direction	direction;
 
-	list<unsigned short>	offer_codecs;	// codecs to offer in outgoing INVITE
-	list<unsigned short>	recvd_codecs;	// codecs received from far-end
-	unsigned short		use_codec;	// codec to be used
+	list<t_audio_codec>	offer_codecs;	// codecs to offer in outgoing INVITE
+	list<t_audio_codec>	recvd_codecs;	// codecs received from far-end
+	t_audio_codec		use_codec;	// codec to be used
 	unsigned short		ptime;		// payload size (ms)
 	bool			recvd_offer;  	// offer received?
 	bool			recvd_answer; 	// answer received?
@@ -139,7 +161,7 @@ public:
 	bool equal_audio(const t_session &s) const;
 
 	// Send DTMF digit
-	void send_dtmf(char digit);
+	void send_dtmf(char digit, bool inband);
 
 	// Get the line that belongs to this session
 	t_line *get_line(void) const;

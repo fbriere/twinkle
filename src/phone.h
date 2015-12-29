@@ -122,7 +122,7 @@ private:
 	void activate_line(unsigned short l);
 
 	// Send a DTMF digit
-	void send_dtmf(char digit);
+	void send_dtmf(char digit, bool inband);
 
 	void set_active_line(unsigned short l);
 	t_line *get_line(unsigned short lineno) const;
@@ -197,7 +197,7 @@ public:
 	void pub_refer(const t_url &uri, const string &display);
 	void mute(bool enable);
 	void pub_activate_line(unsigned short l);
-	void pub_send_dtmf(char digit);
+	void pub_send_dtmf(char digit, bool inband);
 
 	// Join 2 lines in a 3-way conference. Returns false if 3-way cannot
 	// be setup
@@ -290,6 +290,9 @@ public:
 	
 	// Indicates if STUN is used
 	bool use_stun(t_user *user);
+	
+	// Indicates if a NAT keepalive mechanism is used
+	bool use_nat_keepalive(t_user *user);
 	
 	// Disable STUN for a user
 	void disable_stun(t_user *user);

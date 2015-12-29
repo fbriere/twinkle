@@ -16,43 +16,33 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef _PARAMETER_H
-#define _PARAMETER_H
+// Frequency generator
+//
+// This file contains definitions of the frequency generator.
+// The frequency generator generates tones build from a list of
+// frequencies.
 
-#include <string>
-#include <list>
+#ifndef _FREQ_GEN_H
+#define _FREQ_GEN_H
+
+#include <vector>
+#include <cc++/config.h>
 
 using namespace std;
 
-class t_parameter {
+class t_freq_gen {
+private:
+	vector<uint16>	_frequencies;
+	int16		_amplitude;
+	
 public:
-enum t_param_type{
-	NOVALUE,	// a parameter without a value
-	VALUE		// parameter having a value (default)
+	t_freq_gen(vector<uint16> frequencies, int8 db_level);
+	t_freq_gen(uint8 dtmf, int8 db_level);
+	
+	// Get sound sample on a particular timestamp in us.
+	int16 get_sample(uint32 ts_usec) const;
+	void get_samples(int16 *sample_buf, uint16 buf_len, 
+			uint32 ts_start, double interval) const;
 };
-
-	t_param_type	type;	// type of parameter
-	string		name;	// name of parameter
-	string		value;	// value of parameter if type is VALUE
-
-	t_parameter();
-
-	// Construct a NOVALUE parameter with name = n
-	t_parameter(const string &n);
-
-	// Construct a VALUE parameter with name = n, value = v
-	t_parameter(const string &n, const string &v);
-
-	string encode(void) const;
-};
-
-// Decode a parameter
-t_parameter str2param(const string &s);
-
-// Encode a parameter list
-string param_list2str(const list<t_parameter> &l);
-
-// Decode a parameter list
-list<t_parameter> str2param_list(const string &s);
 
 #endif

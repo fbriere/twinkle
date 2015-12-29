@@ -23,7 +23,6 @@
 #include "sdp_parse_ctrl.h"
 #include "sdp.h"
 #include "util.h"
-#include "audio/audio_codecs.h"
 #include "parser/hdr_warning.h"
 #include "audits/memman.h"
 
@@ -92,33 +91,35 @@ string sdp_media_type2str(t_sdp_media_type m) {
 	}
 }
 
-string get_rtpmap(unsigned short format, unsigned short format_dtmf) {
+string get_rtpmap(unsigned format, t_audio_codec codec) {
 	string rtpmap;
+	
+	rtpmap = int2str(format);
+	rtpmap += ' ';
 
-	switch(format) {
-	case SDP_FORMAT_G711_ULAW:
-		rtpmap = int2str(format);
-		rtpmap += ' ';
+	switch(codec) {
+	case CODEC_G711_ULAW:
 		rtpmap += SDP_RTPMAP_G711_ULAW;
 		break;
-	case SDP_FORMAT_G711_ALAW:
-		rtpmap = int2str(format);
-		rtpmap += ' ';
+	case CODEC_G711_ALAW:
 		rtpmap += SDP_RTPMAP_G711_ALAW;
 		break;
-	case SDP_FORMAT_GSM:
-		rtpmap = int2str(format);
-		rtpmap += ' ';
+	case CODEC_GSM:
 		rtpmap += SDP_RTPMAP_GSM;
 		break;
+	case CODEC_SPEEX_NB:
+		rtpmap += SDP_RTPMAP_SPEEX_NB;
+		break;
+	case CODEC_SPEEX_WB:
+		rtpmap += SDP_RTPMAP_SPEEX_WB;
+		break;
+	case CODEC_SPEEX_UWB:
+		rtpmap += SDP_RTPMAP_SPEEX_UWB;
+		break;
+	case CODEC_TELEPHONE_EVENT:
+		rtpmap += SDP_RTPMAP_TELEPHONE_EV;
+		break;
 	default:
-		if (format = format_dtmf) {
-			rtpmap = int2str(format);
-			rtpmap += ' ';
-			rtpmap += SDP_RTPMAP_TELEPHONE_EV;
-			break;
-		}
-
 		assert(false);
 	}
 
@@ -240,22 +241,26 @@ t_sdp_media::t_sdp_media() {
 }
 
 t_sdp_media::t_sdp_media(t_sdp_media_type _media_type,
-			 unsigned short _port, list<unsigned short> _formats,
-			 unsigned short _format_dtmf)
+			 unsigned short _port, const list<t_audio_codec> &_formats,
+			 unsigned short _format_dtmf,
+			 const map<t_audio_codec, unsigned short> &ac2format)
 {
 	media_type = sdp_media_type2str(_media_type);
 	port = _port;
 	transport = SDP_TRANS_RTP;
 	format_dtmf = _format_dtmf;
 
-	for (list<unsigned short>::const_iterator i = _formats.begin();
+	for (list<t_audio_codec>::const_iterator i = _formats.begin();
 	     i != _formats.end(); i++)
 	{
-		add_format(*i);
+		map<t_audio_codec, unsigned short>::const_iterator it;
+		it = ac2format.find(*i);
+		assert(it != ac2format.end());
+		add_format(it->second, *i);
 	}
 
 	if (format_dtmf > 0) {
-		add_format(format_dtmf);
+		add_format(format_dtmf, CODEC_TELEPHONE_EVENT);
 	}
 }
 
@@ -288,12 +293,12 @@ string t_sdp_media::encode(void) const {
 	return s;
 }
 
-void t_sdp_media::add_format(unsigned short f) {
+void t_sdp_media::add_format(unsigned short f, t_audio_codec codec) {
 	formats.push_back(f);
 
 	// RFC 3264 5.1
 	// All media descriptions SHOULD contain an rtpmap
-	string rtpmap = get_rtpmap(f, format_dtmf);
+	string rtpmap = get_rtpmap(f, codec);
 	attributes.push_back(t_sdp_attr("rtpmap", rtpmap));
 
 	// RFC 2833 3.9
@@ -358,18 +363,20 @@ t_sdp::t_sdp() : t_sip_body() {
 	version = 0;
 }
 
-t_sdp::t_sdp(string user, string sess_id, string sess_version, string user_host,
-	     string media_host, unsigned short media_port,
-	     list<unsigned short> formats, unsigned short format_dtmf) :
+t_sdp::t_sdp(const string &user, const string &sess_id, const string &sess_version, 
+	     const string &user_host, const string &media_host, unsigned short media_port,
+	     const list<t_audio_codec> &formats, unsigned short format_dtmf,
+	     const map<t_audio_codec, unsigned short> &ac2format) :
 		origin(user, sess_id, sess_version, user_host),
 		connection(media_host)
 {
 	version = 0;
-	media.push_back(t_sdp_media(SDP_AUDIO, media_port, formats, format_dtmf));
+	media.push_back(t_sdp_media(SDP_AUDIO, media_port, formats, format_dtmf,
+				ac2format));
 }
 
-t_sdp::t_sdp(string user, string sess_id, string sess_version, string user_host,
-		string media_host) :
+t_sdp::t_sdp(const string &user, const string &sess_id, const string &sess_version, 
+		const string &user_host, const string &media_host) :
 			origin(user, sess_id, sess_version, user_host),
 			connection(media_host)
 {
@@ -556,11 +563,89 @@ string t_sdp::get_codec_description(t_sdp_media_type media_type,
 	return "";
 }
 
+t_audio_codec t_sdp::get_rtpmap_codec(const string &rtpmap) const {
+	if (rtpmap.empty()) return CODEC_NULL;
+	
+	list<string> rtpmap_elems = split(rtpmap, '/');
+	if (rtpmap_elems.size() < 2) {
+		// RFC 2327	
+		// The rtpmap should at least contain the encoding name
+		// and sample rate
+		return CODEC_UNSUPPORTED;
+	}
+		
+	string codec_name = trim(rtpmap_elems.front());
+	rtpmap_elems.pop_front();
+	int sample_rate = atoi(trim(rtpmap_elems.front()).c_str());
+	
+	if (cmp_nocase(codec_name, SDP_AC_NAME_G711_ULAW) == 0 && sample_rate == 8000) {
+		return CODEC_G711_ULAW;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_G711_ALAW) == 0 && sample_rate == 8000) {
+		return CODEC_G711_ALAW;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_GSM) == 0 && sample_rate == 8000) {
+		return CODEC_GSM;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_SPEEX) == 0 && sample_rate == 8000) {
+		return CODEC_SPEEX_NB;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_SPEEX) == 0 && sample_rate == 16000) {
+		return CODEC_SPEEX_WB;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_SPEEX) == 0 && sample_rate == 32000) {
+		return CODEC_SPEEX_UWB;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_TELEPHONE_EV) == 0) {
+		return CODEC_TELEPHONE_EVENT;
+	}
+	
+	return CODEC_UNSUPPORTED;
+}
+
+t_audio_codec t_sdp::get_codec(t_sdp_media_type media_type,
+		unsigned short codec) const
+{
+	string rtpmap = get_codec_description(media_type, codec);
+	
+	// If there is no rtpmap description then use the static
+	// payload definition as defined by RFC 3551
+	if (rtpmap.empty()) {
+		switch(codec) {
+		case SDP_FORMAT_G711_ULAW:
+			return CODEC_G711_ULAW;
+		case SDP_FORMAT_G711_ALAW:
+			return CODEC_G711_ALAW;
+		case SDP_FORMAT_GSM:
+			return CODEC_GSM;
+		default:
+			return CODEC_UNSUPPORTED;
+		}
+	}
+	
+	// Use the rtpmap description to map the payload number
+	// to a codec
+	return get_rtpmap_codec(rtpmap);
+}
+
 t_sdp_media_direction t_sdp::get_direction(t_sdp_media_type media_type) const {
 	const t_sdp_media *m = get_first_media(media_type);
 	assert(m != NULL);
 
 	return m->get_direction();
+}
+
+string t_sdp::get_fmtp(t_sdp_media_type media_type, unsigned short codec) const {
+	t_sdp_media *m = const_cast<t_sdp_media *>(get_first_media(media_type));
+	assert(m != NULL);
+
+	const list<t_sdp_attr *> attrs = m->get_attributes("fmtp");
+	if (attrs.empty()) return "";
+
+	for (list<t_sdp_attr *>::const_iterator i = attrs.begin();
+	     i != attrs.end(); i++)
+	{
+		list<string> l = split_ws((*i)->value);
+		if (atoi(l.front().c_str()) == codec) {
+			return l.back();
+		}
+	}
+
+	return "";
 }
 
 unsigned short t_sdp::get_ptime(t_sdp_media_type media_type) const {
@@ -585,6 +670,17 @@ void t_sdp::set_direction(t_sdp_media_type media_type, t_sdp_media_direction dir
 	assert(m != NULL);
 
 	t_sdp_attr a(sdp_media_direction2str(direction));
+	m->attributes.push_back(a);
+}
+
+void t_sdp::set_fmtp(t_sdp_media_type media_type, unsigned short codec, const string &fmtp) {
+	t_sdp_media *m = const_cast<t_sdp_media *>(get_first_media(media_type));
+	assert(m != NULL);
+	
+	string s = int2str(codec);
+	s += ' ';
+	s += fmtp;
+	t_sdp_attr a("fmtp", s);
 	m->attributes.push_back(a);
 }
 

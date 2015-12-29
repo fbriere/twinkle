@@ -33,8 +33,8 @@ class t_call_record {
 public:
 
 enum t_rel_cause {
-	CS_A_PARTY,
-	CS_B_PARTY,
+	CS_LOCAL_USER,
+	CS_REMOTE_USER,
 	CS_FAILURE
 };
 
@@ -86,8 +86,14 @@ public:
 	// Record successful call answer
 	void answer_call(const t_response *resp);
 	
-	// Record end of a successful call
+	// Record end of a successful call with an explicit cause
 	void end_call(t_rel_cause cause);
+	
+	// Record end of a successful call
+	// If far_end is true, then the far-end ended the call, otherwise
+	// the near-end ended the call. This indication together with the
+	// direction determines the correct cause of the call end.
+	void end_call(bool far_end);
 	
 	string get_rel_cause(void) const;
 	string get_direction(void) const;

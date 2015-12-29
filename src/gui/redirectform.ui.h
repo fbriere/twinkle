@@ -55,9 +55,19 @@ void RedirectForm::destroy()
 	}
 }
 
-void RedirectForm::show(t_user *user)
+void RedirectForm::show(t_user *user, const list<string> &contacts)
 {
 	user_config = user;
+	
+	int num = 0;
+	for (list<string>::const_iterator i = contacts.begin();
+	i != contacts.end(); i++, num++)
+	{
+		if (num == 0) contact1LineEdit->setText(i->c_str());
+		if (num == 1) contact2LineEdit->setText(i->c_str());
+		if (num == 2) contact3LineEdit->setText(i->c_str());
+	}
+	
 	QDialog::show();
 }
 

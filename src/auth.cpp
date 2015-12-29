@@ -112,6 +112,10 @@ void t_auth::remove_credentials(t_request *r, const t_challenge &c,
 	}
 }
 
+t_auth::t_auth() {
+	re_register = false;
+}
+
 bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 	string username;
 	string passwd;
@@ -164,7 +168,7 @@ bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 	}
 
 	// Ask user for username/password
-	if (username == "" && passwd == "") {
+	if ((username == "" || passwd == "") && !re_register) {
 		if (!ui->cb_ask_credentials(user_config, dc.realm, username, passwd)) {
 			log_file->write_report("Asking user name and password failed.",
 						"t_auth::authorize");
@@ -216,4 +220,12 @@ void t_auth::remove_from_cache(const string &realm) {
 			cache.erase(i);
 		}
 	}
+}
+
+void t_auth::set_re_register(bool on) {
+	re_register = on;
+}
+
+bool t_auth::get_re_register(void) const {
+	return re_register;
 }

@@ -307,6 +307,10 @@ string t_sys_settings::get_options_built(void) const {
 	if (!options_built.empty()) options_built += ", ";
 	options_built += "KDE";
 #endif
+#ifdef HAVE_SPEEX
+	if (!options_built.empty()) options_built += ", ";
+	options_built += "Speex";
+#endif
 	return options_built;
 }
 

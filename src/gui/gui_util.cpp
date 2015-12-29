@@ -16,25 +16,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-// Twinkle listens on a local socket for external commands.
-// Currently only a call command can be given
+#include "gui_util.h"
 
-#define CMD_SOCKNAME	".cmdsock"
-
-#ifndef _H_CMD_SOCKET
-#define _H_CMD_SOCKET
-
-#include <string>
-
-using namespace std;
-
-// Create the local socket and listen for commands
-void *listen_cmd(void *arg);
-
-// Send a command to the local socket
-void cmd_call(const string &destination, bool immediate);
-
-// Send a CLI command to the local socket
-void cmd_cli(const string &cli_command, bool immediate);
-
-#endif
+QString str2qstr(const string &s) {
+	return QString::fromUtf8(s.c_str());
+}

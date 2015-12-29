@@ -421,3 +421,110 @@ string bool2yesno(bool b) {
 	return (b ? "yes" : "no");
 }
 
+string str2dtmf(const string &s) {
+	string result;
+	string to_convert = tolower(s);
+	
+	for (int i = 0; i < to_convert.size(); i++) {
+		switch (to_convert[i]) {
+		case '1':
+			result += '1';
+			break;
+		case '2':
+		case 'a':
+		case 'b':
+		case 'c':
+			result += '2';
+			break;
+		case '3':
+		case 'd':
+		case 'e':
+		case 'f':
+			result += '3';
+			break;
+		case '4':
+		case 'g':
+		case 'h':
+		case 'i':
+			result += '4';
+			break;
+		case '5':
+		case 'j':
+		case 'k':
+		case 'l':
+			result += '5';
+			break;
+		case '6':
+		case 'm':
+		case 'n':
+		case 'o':
+			result += '6';
+			break;
+		case '7':
+		case 'p':
+		case 'q':
+		case 'r':
+		case 's':
+			result += '7';
+			break;
+		case '8':
+		case 't':
+		case 'u':
+		case 'v':
+			result += '8';
+			break;
+		case '9':
+		case 'w':
+		case 'x':
+		case 'y':
+		case 'z':
+			result += '9';
+			break;
+		case '0':
+		case ' ':
+			result += '0';
+			break;
+		case '#':
+		case '*':
+			result += to_convert[i];
+			break;
+		}
+	}
+	
+	return result;
+}
+
+bool looks_like_phone(const string &s, const string &special_symbols) {
+	string phone_symbols= special_symbols + "0123456789*#+ \t";
+	string t;
+	
+	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+		if (phone_symbols.find(*i) == string::npos) return false;
+	}
+
+	return true;
+}
+
+string remove_symbols(const string &s, const string &special_symbols) {
+	string result;
+	
+	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+		if (special_symbols.find(*i) == string::npos) {
+			result += *i;
+		}
+	}
+
+	return result;
+}
+
+string remove_white_space(const string &s) {
+	string result;
+	
+	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+		if (*i != ' ' && *i != '\t') {
+			result += *i;
+		}
+	}
+	
+	return result;
+}

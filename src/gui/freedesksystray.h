@@ -23,8 +23,6 @@
 #ifndef FREEDESKSYSTEMTRAY_H
 #define FREEDESKTSYSTEMTRAY_H
 
-#ifndef HAVE_KDE
-
 #include <qlabel.h>
 #include <qpixmap.h>
 #include <qpopupmenu.h>
@@ -37,13 +35,6 @@
 #include <qimage.h>
 #include <qtimer.h>
 #include <qrect.h>
-//#include <qpaintevent.h>
-
-#include <X11/Xutil.h>
-#include <X11/cursorfont.h>
-//#include <Xmu/WinUtil.h>
-
-#include <X11/xpm.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -98,9 +89,6 @@ private:
     QRect mainWindowGeometry;    
     QPoint windowPos;
 };
-
-// ifndef HAVE KDE
-#endif
 
 // ifndef FREEDESKSYSTEMTRAY_H
 #endif

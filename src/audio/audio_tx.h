@@ -21,15 +21,22 @@
 
 // Receive RTP and send audio to soundcard
 
+#include <map>
 #include <string>
 #include "audio_codecs.h"
 #include "audio_rx.h"
 #include "media_buffer.h"
 #include "rtp_telephone_event.h"
+#include "user.h"
 #include "threads/mutex.h"
 #include "gsm/inc/gsm.h"
 #include "audio_device.h"
 #include "twinkle_rtp_session.h"
+#include "twinkle_config.h"
+
+#ifdef HAVE_SPEEX
+#include <speex/speex.h>
+#endif
 
 using namespace std;
 using namespace ost;
@@ -42,10 +49,15 @@ class t_audio_tx {
 private:
 	// audio_session owning this audio transmitter
 	t_audio_session *audio_session;
+	
+	// User profile of user using the line
+	// This is a pointer to the user_config owned by a phone user.
+	// So this pointer should never be deleted.
+	t_user		*user_config;
 
 	// file descriptor audio capture device
-	t_audio_io			*playback_device;
-	t_twinkle_rtp_session *rtp_session;
+	t_audio_io		*playback_device;
+	t_twinkle_rtp_session 	*rtp_session;
 
 	// Indicates if this transmitter is part of a 3-way conference
 	bool		is_3way;
@@ -76,10 +88,29 @@ private:
 
 	// Codec information
 	t_audio_codec	codec;
+	map<unsigned short, t_audio_codec> payload2codec;
 	unsigned short	ptime;	// in milliseconds
+	
+	// Sample rate of sound card.
+	// The sample rate of the sound card is set to the sample rate
+	// used for the initial codec. The far end may dynamically switch
+	// to a codec with another sample rate. This will not change the
+	// sample rate of the sound card! (capture and playback cannot
+	// be done at different sampling rates).
+	unsigned short	sc_sample_rate;
 
 	// GSM decoder
 	gsm		gsm_decoder;
+	
+#ifdef HAVE_SPEEX
+	// Speex decoder
+	SpeexBits	speex_nb_bits;
+	SpeexBits	speex_wb_bits;
+	SpeexBits	speex_uwb_bits;
+	void		*speex_nb_dec_state;
+	void		*speex_wb_dec_state;
+	void		*speex_uwb_dec_state;
+#endif
 
 	// Buffer to store PCM samples of a received RTP packet
 	unsigned char	*sample_buf;
@@ -145,7 +176,9 @@ public:
 	// _ptime = 0 means use default ptime value for the codec
 	t_audio_tx(t_audio_session *_audio_session, t_audio_io *_playback_device,
 		   t_twinkle_rtp_session *_rtp_session,
-	           t_audio_codec _codec, unsigned short _ptime = 0);
+	           t_audio_codec _codec, 
+	           const map<unsigned short, t_audio_codec> &_payload2codec,
+	           unsigned short _ptime = 0);
 
 	~t_audio_tx();
 	
@@ -178,7 +211,8 @@ public:
 	void stop_3way(void);
 
 	// Post media from the peer transmitter for a 3-way mixer.
-	void post_media_peer_tx_3way(unsigned char *media, int len);
+	void post_media_peer_tx_3way(unsigned char *media, int len, 
+		unsigned short peer_sample_rate);
 
 	// Returns if this transmitter is the mixer in a 3-way
 	bool get_is_3way_mixer(void) const;

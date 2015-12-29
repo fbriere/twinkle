@@ -270,7 +270,7 @@
     <signal>destinations(const list&lt;t_display_url&gt; &amp;)</signal>
 </signals>
 <slots>
-    <slot>show( t_user * user )</slot>
+    <slot>show( t_user * user, const list&lt;string&gt; &amp; contacts )</slot>
     <slot>validate()</slot>
     <slot>showAddressBook()</slot>
     <slot>showAddressBook1()</slot>

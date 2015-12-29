@@ -28,7 +28,11 @@ enum t_audio_codec {
 	CODEC_UNSUPPORTED,
 	CODEC_G711_ALAW,
 	CODEC_G711_ULAW,
-	CODEC_GSM
+	CODEC_GSM,
+	CODEC_SPEEX_NB,
+	CODEC_SPEEX_WB,
+	CODEC_SPEEX_UWB,
+	CODEC_TELEPHONE_EVENT
 };
 
 // Default ptime values (ms) for audio codecs
@@ -39,7 +43,6 @@ enum t_audio_codec {
 #define MAX_PTIME		80
 
 // Audio sample settings
-#define AUDIO_SAMPLE_RATE	8000
 #define AUDIO_SAMPLE_SIZE	16
 
 
@@ -67,7 +70,29 @@ enum t_audio_codec {
 #define MAX_OUT_AUDIO_DELAY_MS	160
 
 // Buffer sizes
-#define JITTER_BUF_SIZE (JITTER_BUF_MS * AUDIO_SAMPLE_RATE/1000 * AUDIO_SAMPLE_SIZE/8)
+#define JITTER_BUF_SIZE(sample_rate) (JITTER_BUF_MS * (sample_rate)/1000 * AUDIO_SAMPLE_SIZE/8)
+
+// Log speex errors
+#define LOG_SPEEX_ERROR(func, spxfunc, spxerr) {\
+	log_file->write_header((func), LOG_NORMAL, LOG_DEBUG);\
+	log_file->write_raw("Speex error: ");\
+	log_file->write_raw((spxfunc));\
+	log_file->write_raw(" returned ");\
+	log_file->write_raw((spxerr));\
+	log_file->write_footer(); }
+
+// Return the sampling rate for a codec
+unsigned short audio_sample_rate(t_audio_codec codec);
+
+// Returns true if the codec is a speex codec
+bool is_speex_codec(t_audio_codec codec);
+
+// Resample the input buffer to the output buffer
+// Returns the number of samples put in the output buffer
+// If the output buffer is too small, the number of samples will be
+// truncated.
+int resample(short *input_buf, int input_len, int input_sample_rate,
+	short *output_buf, int output_len, int output_sample_rate);
 
 // Mix 2 16 bits signed linear PCM values
 short mix_linear_pcm(short pcm1, short pcm2);

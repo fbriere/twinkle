@@ -37,9 +37,23 @@ void TermCapForm::init()
 #endif
 }
 
-void TermCapForm::show()
+void TermCapForm::show(t_user *user_config, const QString &dest)
 {
 	((t_gui *)ui)->fill_user_combo(fromComboBox);
+	
+	// Select from user
+	if (user_config) {
+		for (int i = 0; i < fromComboBox->count(); i++) {
+			if (fromComboBox->text(i) == 
+			    user_config->get_profile_name().c_str())
+			{
+				fromComboBox->setCurrentItem(i);
+				break;
+			}
+		}
+	}
+	
+	partyLineEdit->setText(dest);
 	QDialog::show();
 }
 

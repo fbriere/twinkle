@@ -28,6 +28,47 @@
 extern string user_host;
 extern t_phone *phone;
 
+///////////
+// PRIVATE
+///////////
+
+void t_session::set_recvd_codecs(t_sdp *sdp) {
+	recvd_codecs.clear();
+	send_ac2payload.clear();
+	send_payload2ac.clear();
+	list<unsigned short> payloads = sdp->get_codecs(SDP_AUDIO);
+	for (list<unsigned short>::iterator i = payloads.begin(); 
+	     i != payloads.end(); i++)
+	{
+		t_audio_codec ac = sdp->get_codec(SDP_AUDIO, *i);
+		if (ac > CODEC_UNSUPPORTED) {
+			recvd_codecs.push_back(ac);
+			send_ac2payload[ac] = *i;
+			send_payload2ac[*i] = ac;
+		}
+	}
+}
+
+bool t_session::is_3way(void) const {
+	t_line *l = get_line();
+	t_phone *p = l->get_phone();
+
+	return p->part_of_3way(l->get_line_number());
+}
+
+t_session *t_session::get_peer_3way(void) const {
+	t_line *l = get_line();
+	t_phone *p = l->get_phone();
+
+	t_line *peer_line = p->get_3way_peer_line(l->get_line_number());
+
+	return peer_line->get_session();
+}
+
+///////////
+// PUBLIC
+///////////
+
 t_session::t_session(t_dialog *_dialog, string _receive_host,
 		  unsigned short _receive_port)
 {
@@ -41,7 +82,7 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	receive_port = _receive_port;
 	src_sdp_version = int2str(rand());
 	src_sdp_id = int2str(rand());
-	use_codec = 0;
+	use_codec = CODEC_NULL;
 	recv_dtmf_pt = user_config->dtmf_payload_type;
 	send_dtmf_pt = 0;
 
@@ -55,6 +96,26 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 
 	audio_rtp_session = NULL;
 	is_on_hold = false;
+	
+	// Initialize audio codec to payload mappings
+	recv_ac2payload[CODEC_G711_ULAW] = SDP_FORMAT_G711_ULAW;
+	recv_ac2payload[CODEC_G711_ALAW] = SDP_FORMAT_G711_ALAW;
+	recv_ac2payload[CODEC_GSM] = SDP_FORMAT_GSM;
+	recv_ac2payload[CODEC_SPEEX_NB] = user_config->speex_nb_payload_type;
+	recv_ac2payload[CODEC_SPEEX_WB] = user_config->speex_wb_payload_type;
+	recv_ac2payload[CODEC_SPEEX_UWB] = user_config->speex_uwb_payload_type;
+	recv_ac2payload[CODEC_TELEPHONE_EVENT] = user_config->dtmf_payload_type;
+	send_ac2payload.clear();
+	
+	// Initialize pauload to audio codec mappings
+	recv_payload2ac[SDP_FORMAT_G711_ULAW] = CODEC_G711_ULAW;
+	recv_payload2ac[SDP_FORMAT_G711_ALAW] = CODEC_G711_ALAW;
+	recv_payload2ac[SDP_FORMAT_GSM] = CODEC_GSM;
+	recv_payload2ac[user_config->speex_nb_payload_type] = CODEC_SPEEX_NB;
+	recv_payload2ac[user_config->speex_wb_payload_type] = CODEC_SPEEX_WB;
+	recv_payload2ac[user_config->speex_uwb_payload_type] = CODEC_SPEEX_UWB;
+	recv_payload2ac[user_config->dtmf_payload_type] = CODEC_TELEPHONE_EVENT;
+	send_payload2ac.clear();
 }
 
 t_session::~t_session() {
@@ -75,6 +136,11 @@ t_session *t_session::create_new_version(void) {
 
 	// Do not copy the RTP session
 	s->set_audio_session(NULL);
+	
+	// Clear the codec to payload mappings as a new response must
+	// be received from the far end
+	s->send_ac2payload.clear();
+	s->send_payload2ac.clear();
 
 	return s;
 }
@@ -95,6 +161,12 @@ t_session *t_session::create_call_hold(void) {
 	} else {
 		assert(false);
 	}
+	
+	// Prevent RTP from being started for this session as long
+	// as the call is put on hold. Without this, the RTP sessions
+	// will get started when a re-INVITE is received from the far-end
+	// while the call is still locally on-hold.
+	s->hold();
 
 	return s;
 }
@@ -122,10 +194,10 @@ t_session *t_session::create_call_retrieve(void) {
 t_session *t_session::create_clean_copy(void) {
 	t_session *s = new t_session(*this);
 	MEMMAN_NEW(s);
-	dst_sdp_version = "";
-	dst_sdp_id = "";
-	dst_rtp_host = "";
-	dst_rtp_port = 0;
+	s->dst_sdp_version = "";
+	s->dst_sdp_id = "";
+	s->dst_rtp_host = "";
+	s->dst_rtp_port = 0;
 	s->recvd_codecs.clear();
 	s->recvd_offer = false;
 	s->recvd_answer = false;
@@ -133,6 +205,11 @@ t_session *t_session::create_clean_copy(void) {
 
 	// Do not copy the RTP session
 	s->set_audio_session(NULL);
+	
+	// Clear the codec to payload mappings as a new response must
+	// be received from the far end
+	s->send_ac2payload.clear();
+	s->send_payload2ac.clear();
 
 	return s;
 }
@@ -146,7 +223,7 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 	dst_sdp_id = sdp->origin.session_id;
 	dst_rtp_host = sdp->get_rtp_host(SDP_AUDIO);
 	dst_rtp_port = sdp->get_rtp_port(SDP_AUDIO);
-	recvd_codecs = sdp->get_codecs(SDP_AUDIO);
+	set_recvd_codecs(sdp);
 	recvd_sdp_offer = *sdp;
 
 	// The direction in the SDP is from the point of view of the
@@ -157,23 +234,35 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 		direction = SDP_INACTIVE;
 		break;
 	case SDP_SENDONLY:
-		direction = SDP_RECVONLY;
+		if (is_on_hold && user_config->hold_variant == HOLD_RFC3264) {
+			// The phone is put on-hold. We don't want to
+			// receive media.
+			direction = SDP_INACTIVE;
+		} else {
+			direction = SDP_RECVONLY;
+		}
 		break;
 	case SDP_RECVONLY:
 		direction = SDP_SENDONLY;
 		break;
 	case SDP_SENDRECV:
-		direction = SDP_SENDRECV;
+		if (is_on_hold && user_config->hold_variant == HOLD_RFC3264) {
+			// The phone is put on-hold. We don't want to
+			// receive media.
+			direction = SDP_SENDONLY;
+		} else {
+			direction = SDP_SENDRECV;
+		}
 		break;
 	default:
 		assert(false);
 	}
 
-	// Check if the list of received codec has at least 1 codec
+	// Check if the list of received codecs has at least 1 codec
 	// in common with the list of codecs we can offer. If there
 	// is no common codec, then no call can be established.
 	bool supported_codec = false;
-	for (list<unsigned short>::const_iterator i = recvd_codecs.begin();
+	for (list<t_audio_codec>::const_iterator i = recvd_codecs.begin();
 	     i != recvd_codecs.end(); i++)
 	{
 		if (!supported_codec &&
@@ -183,12 +272,15 @@ bool t_session::process_sdp_offer(t_sdp *sdp, int &warn_code,
 			// Codec supported
 			supported_codec = true;
 			use_codec = *i; // this codec goes into answer
-		} else if (cmp_nocase(sdp->get_codec_description(SDP_AUDIO, *i),
-						SDP_RTPMAP_TELEPHONE_EV) == 0)
-		{
+			
+			// Use the payload to codec bindings as signalled in the
+			// offer by the far end.
+			recv_payload2ac[send_ac2payload[use_codec]] = use_codec;
+			recv_ac2payload[use_codec] = send_ac2payload[use_codec];
+		} else if (*i == CODEC_TELEPHONE_EVENT) {
 			// telephone-event payload is supported
-			send_dtmf_pt = *i;
-			recv_dtmf_pt = *i; // this goes into answer as well
+			send_dtmf_pt = send_ac2payload[*i];
+			recv_dtmf_pt = send_dtmf_pt; // this goes into answer as well
 		}
 	}
 
@@ -213,7 +305,7 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 	dst_sdp_id = sdp->origin.session_id;
 	dst_rtp_host = sdp->get_rtp_host(SDP_AUDIO);
 	dst_rtp_port = sdp->get_rtp_port(SDP_AUDIO);
-	recvd_codecs = sdp->get_codecs(SDP_AUDIO);
+	set_recvd_codecs(sdp);
 
 	// Find the first codec in the received codecs list that
 	// is supported.
@@ -222,7 +314,7 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 	// in the answer though.
 	bool codec_found = false;
 
-	for (list<unsigned short>::const_iterator i = recvd_codecs.begin();
+	for (list<t_audio_codec>::const_iterator i = recvd_codecs.begin();
 	     i != recvd_codecs.end(); i++)
 	{
 		if (!codec_found &&
@@ -231,11 +323,9 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 		{
 			use_codec = *i;
 			codec_found = true;
-		} else if (cmp_nocase(sdp->get_codec_description(SDP_AUDIO, *i),
-						SDP_RTPMAP_TELEPHONE_EV) == 0)
-		{
+		} else if (*i == CODEC_TELEPHONE_EVENT) {
 			// telephone-event payload is supported
-			send_dtmf_pt = *i;
+			send_dtmf_pt = send_ac2payload[*i];
 		}
 	}
 
@@ -253,7 +343,7 @@ bool t_session::process_sdp_answer(t_sdp *sdp, int &warn_code,
 }
 
 void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
-	list<unsigned short>::iterator it_g711a, it_g711u;
+	list<t_audio_codec>::iterator it_g711a, it_g711u;
 
 	// Delete old body if present
 	if (m->body) {
@@ -262,13 +352,14 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	}
 
 	m->body = new t_sdp(user, src_sdp_id, src_sdp_version, USER_HOST(user_config),
-			receive_host, receive_port, offer_codecs, recv_dtmf_pt);
+			receive_host, receive_port, offer_codecs, recv_dtmf_pt,
+			recv_ac2payload);
 	MEMMAN_NEW(m->body);
 
 
 	// Set ptime for G711 codecs
-	it_g711a = find(offer_codecs.begin(), offer_codecs.end(), SDP_FORMAT_G711_ALAW);
-	it_g711u = find(offer_codecs.begin(), offer_codecs.end(), SDP_FORMAT_G711_ULAW);
+	it_g711a = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ALAW);
+	it_g711u = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ULAW);
 	if (it_g711a != offer_codecs.end() || it_g711u != offer_codecs.end()) {
 		((t_sdp *)m->body)->set_ptime(SDP_AUDIO, ptime);
 	}
@@ -289,7 +380,7 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 		delete m->body;
 	}
 
-	list<unsigned short> answer_codecs;
+	list<t_audio_codec> answer_codecs;
 	answer_codecs.push_back(use_codec);
 
 	// RFC 3264 6
@@ -309,7 +400,8 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 		{
 			// Accept the first audio stream
 			((t_sdp *)m->body)->add_media(t_sdp_media(
-				SDP_AUDIO, receive_port, answer_codecs, recv_dtmf_pt));
+				SDP_AUDIO, receive_port, answer_codecs, recv_dtmf_pt,
+				send_ac2payload));
 			audio_answered = true;
 		}
 		else
@@ -322,8 +414,8 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) const {
 	}
 
 	// Set ptime for G711 codecs
-	if (use_codec == SDP_FORMAT_G711_ALAW ||
-	    use_codec == SDP_FORMAT_G711_ULAW)
+	if (use_codec == CODEC_G711_ALAW ||
+	    use_codec == CODEC_G711_ULAW)
 	{
 		((t_sdp *)m->body)->set_ptime(SDP_AUDIO, ptime);
 	}
@@ -352,25 +444,11 @@ void t_session::start_rtp(void) {
 		return;
 	}
 
-	switch (use_codec) {
-	case SDP_FORMAT_G711_ULAW:
-		codec = CODEC_G711_ULAW;
-		break;
-	case SDP_FORMAT_G711_ALAW:
-		codec = CODEC_G711_ALAW;
-		break;
-	case SDP_FORMAT_GSM:
-		codec = CODEC_GSM;
-		break;
-	default:
-		assert(false);
-	}
-
 	// Inform user about the codecs
-	get_line()->ci_set_send_codec(codec);
-	get_line()->ci_set_recv_codec(codec);
-	ui->cb_send_codec_changed(get_line()->get_line_number(), codec);
-	ui->cb_recv_codec_changed(get_line()->get_line_number(), codec);
+	get_line()->ci_set_send_codec(use_codec);
+	get_line()->ci_set_recv_codec(use_codec);
+	ui->cb_send_codec_changed(get_line()->get_line_number(), use_codec);
+	ui->cb_recv_codec_changed(get_line()->get_line_number(), use_codec);
 
 	// Start the RTP streams
 	if (dst_rtp_host == "0.0.0.0" || dst_rtp_port == 0 ||
@@ -378,7 +456,8 @@ void t_session::start_rtp(void) {
 	{
 		// Local hold -> do not send RTP
 		audio_rtp_session = new t_audio_session(this,
-				LOCAL_IP, get_line()->get_rtp_port(), "", 0, codec, ptime);
+				LOCAL_IP, get_line()->get_rtp_port(), "", 0, use_codec, ptime,
+				recv_payload2ac, send_ac2payload);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 	else if (receive_host == "0.0.0.0" || receive_port == 0 ||
@@ -396,7 +475,8 @@ void t_session::start_rtp(void) {
 		// Bi-directional audio
 		audio_rtp_session = new t_audio_session(this,
 				LOCAL_IP, get_line()->get_rtp_port(),
-				dst_rtp_host, dst_rtp_port, codec, ptime);
+				dst_rtp_host, dst_rtp_port, use_codec, ptime,
+				recv_payload2ac, send_ac2payload);
 		MEMMAN_NEW(audio_rtp_session);
 	}
 
@@ -410,15 +490,49 @@ void t_session::start_rtp(void) {
 
 	// Set dynamic payload type for DTMF events
 	if (recv_dtmf_pt > 0) {
-		audio_rtp_session->set_pt_in_dtmf(recv_dtmf_pt, send_dtmf_pt);
+		unsigned short alt_dtmf_pt;
+		if (recv_payload2ac.find(send_dtmf_pt) == recv_payload2ac.end()) {
+			// Allow the payload type as signalled by the far end
+			// as an alternative to the payload as signalled by Twinkle.
+			alt_dtmf_pt = send_dtmf_pt;
+		} else {
+			// The payload type as signalled by the far end for DTMF
+			// is already in use by Twinkle for another codec, so it
+			// cannot be used as an alternative.
+			alt_dtmf_pt = recv_dtmf_pt;
+		}
+		audio_rtp_session->set_pt_in_dtmf(recv_dtmf_pt, alt_dtmf_pt);
 	}
 
 	if (send_dtmf_pt > 0) {
 		audio_rtp_session->set_pt_out_dtmf(send_dtmf_pt);
-		get_line()->ci_set_dtmf_supported(true);
+		
+		switch (user_config->dtmf_transport) {
+		case DTMF_AUTO:
+		case DTMF_RFC2833:
+			get_line()->ci_set_dtmf_supported(true, false);
+			break;
+		case DTMF_INBAND:
+			get_line()->ci_set_dtmf_supported(true, true);
+			break;
+		default:
+			assert(false);
+		}
+		
 		ui->cb_dtmf_supported(get_line()->get_line_number());
 	} else {
-		get_line()->ci_set_dtmf_supported(false);
+		switch (user_config->dtmf_transport) {
+		case DTMF_AUTO:
+		case DTMF_INBAND:
+			get_line()->ci_set_dtmf_supported(true, true);
+			break;
+		case DTMF_RFC2833:
+			get_line()->ci_set_dtmf_supported(false);
+			break;
+		default:
+			assert(false);
+		}
+		
 		ui->cb_line_state_changed();
 	}
 
@@ -442,19 +556,23 @@ void t_session::set_audio_session(t_audio_session *as) {
 }
 
 bool t_session::equal_audio(const t_session &s) const {
-	// According to RFC 2327, the SDP version in the o= line
+	// According to RFC 3264 6, the SDP version in the o= line
 	// must be updated when the SDP is changed.
+	// We check for more changes to interoperate with SIP
+	// devices that do not adhere fully to RFC 3264
 	return (receive_host == s.receive_host &&
 		receive_port == s.receive_port &&
 		dst_rtp_host == s.dst_rtp_host &&
 		dst_rtp_port == s.dst_rtp_port &&
 		direction == s.direction &&
 		src_sdp_version == s.src_sdp_version &&
-		dst_sdp_version == s.dst_sdp_version);
+		dst_sdp_version == s.dst_sdp_version &&
+		src_sdp_id == s.src_sdp_id &&
+		dst_sdp_id == s.dst_sdp_id);
 }
 
-void t_session::send_dtmf(char digit) {
-	if (audio_rtp_session) audio_rtp_session->send_dtmf(digit);
+void t_session::send_dtmf(char digit, bool inband) {
+	if (audio_rtp_session) audio_rtp_session->send_dtmf(digit, inband);
 }
 
 t_line *t_session::get_line(void) const {

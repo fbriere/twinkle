@@ -26,7 +26,7 @@
 
 using namespace std;
 
-#define AUTH_CACHE_SIZE	10
+#define AUTH_CACHE_SIZE	50
 
 class t_cr_cache_entry {
 public:
@@ -43,6 +43,9 @@ public:
 // An object of this class authorizes a request given some credentials
 class t_auth {
 private:
+	// Indicates if the current registration request is a re-register
+	bool re_register;
+
 	// LRU cache credentials for a destination.
 	// The first entry in the list is the least recently used.
 	list<t_cr_cache_entry>	cache;
@@ -73,12 +76,17 @@ private:
 		bool proxy=false) const;
 
 public:
+	t_auth();
+	
 	// Authorize the request based on the challenge in the response
 	// Returns false if authorization fails.
 	bool authorize(t_user *user_config, t_request *r, t_response *resp);
 	
 	// Remove credentials for a particular realm from cache.
 	void remove_from_cache(const string &realm);
+	
+	void set_re_register(bool on);
+	bool get_re_register(void) const;
 };
 
 #endif

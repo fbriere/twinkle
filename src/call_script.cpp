@@ -34,6 +34,7 @@
 #define SCR_ACTION		"action"
 #define SCR_REASON		"reason"
 #define SCR_CONTACT		"contact"
+#define SCR_CALLER_NAME		"caller_name"
 #define SCR_RINGTONE		"ringtone"
 #define SCR_INTERNAL_ERROR	"internal_error"
 
@@ -70,6 +71,8 @@ t_script_result::t_action t_script_result::str2action(const string action_string
 void t_script_result::clear(void) {
 	action = ACTION_CONTINUE;
 	reason.clear();
+	contact.clear();
+	caller_name.clear();
 	ringtone.clear();
 }
 
@@ -84,6 +87,8 @@ void t_script_result::set_parameter(const string &parameter, const string &value
 		}
 	} else if (parameter == SCR_CONTACT) {
 		contact = value;
+	} else if (parameter == SCR_CALLER_NAME) {
+		caller_name = value;
 	} else if (parameter == SCR_RINGTONE) {
 		ringtone = value;
 	}

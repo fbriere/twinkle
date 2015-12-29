@@ -26,6 +26,7 @@
 #include <list>
 #include "log.h"
 #include "phone.h"
+#include "twinkle_config.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
@@ -58,6 +59,17 @@ extern t_phone		*phone;
 // AUDIO fields
 #define FLD_CODECS			"codecs"
 #define FLD_PTIME			"ptime"
+#define FLD_SPEEX_NB_PAYLOAD_TYPE	"speex_nb_payload_type"
+#define FLD_SPEEX_WB_PAYLOAD_TYPE	"speex_wb_payload_type"
+#define FLD_SPEEX_UWB_PAYLOAD_TYPE	"speex_uwb_payload_type"
+#define FLD_SPEEX_BIT_RATE_TYPE		"speex_bit_rate_type"
+#define FLD_SPEEX_ABR_NB		"speex_abr_nb"
+#define FLD_SPEEX_ABR_WB		"speex_abr_wb"
+#define FLD_SPEEX_VAD			"speex_vad"
+#define FLD_SPEEX_DTX			"speex_dtx"
+#define FLD_SPEEX_PENH			"speex_penh"
+#define FLD_SPEEX_COMPLEXITY		"speex_complexity"
+#define FLD_DTMF_TRANSPORT		"dtmf_transport"
 #define FLD_DTMF_PAYLOAD_TYPE		"dtmf_payload_type"
 #define FLD_DTMF_DURATION		"dtmf_duration"
 #define FLD_DTMF_PAUSE			"dtmf_pause"
@@ -70,6 +82,7 @@ extern t_phone		*phone;
 #define FLD_REGISTRATION_TIME_IN_CONTACT	"registration_time_in_contact"
 #define FLD_COMPACT_HEADERS		"compact_headers"
 #define FLD_USE_DOMAIN_IN_CONTACT	"use_domain_in_contact"
+#define FLD_ALLOW_SDP_CHANGE		"allow_sdp_change"
 #define FLD_ALLOW_REDIRECTION		"allow_redirection"
 #define FLD_ASK_USER_TO_REDIRECT	"ask_user_to_redirect"
 #define FLD_MAX_REDIRECTIONS		"max_redirections"
@@ -91,6 +104,8 @@ extern t_phone		*phone;
 // ADDRESS FORMAT fields
 #define FLD_DISPLAY_USERONLY_PHONE	"display_useronly_phone"
 #define FLD_NUMERICAL_USER_IS_PHONE	"numerical_user_is_phone"
+#define FLD_REMOVE_SPECIAL_PHONE_SYM	"remove_special_phone_symbols"
+#define FLD_SPECIAL_PHONE_SYMBOLS	"special_phone_symbols"
 
 // Ring tone settings
 #define FLD_USER_RINGTONE_FILE		"ringtone_file"
@@ -129,6 +144,41 @@ string t_user::ext_support2str(t_ext_support e) const {
 	return "";
 }
 
+t_bit_rate_type t_user::str2bit_rate_type(const string &s) const {
+	if (s == "cbr") return BIT_RATE_CBR;
+	if (s == "vbr") return BIT_RATE_VBR;
+	if (s == "abr") return BIT_RATE_ABR;
+	return BIT_RATE_INVALID;
+}
+
+string t_user::bit_rate_type2str(t_bit_rate_type b) const {
+	switch (b) {
+	case BIT_RATE_INVALID:	return "invalid";
+	case BIT_RATE_CBR:	return "cbr";
+	case BIT_RATE_VBR:	return "vbr";
+	case BIT_RATE_ABR:	return "abr";
+	default:
+		assert(false);
+	}
+}
+
+t_dtmf_transport t_user::str2dtmf_transport(const string &s) const {
+	if (s == "inband") return DTMF_INBAND;
+	if (s == "rfc2833") return DTMF_RFC2833;
+	if (s == "auto") return DTMF_AUTO;
+	return DTMF_AUTO;
+}
+
+string t_user::dtmf_transport2str(t_dtmf_transport d) const {
+	switch (d) {
+	case DTMF_INBAND:	return "inband";
+	case DTMF_RFC2833:	return "rfc2833";
+	case DTMF_AUTO:		return "auto";
+	default:
+		assert(false);
+	}
+}
+
 string t_user::expand_filename(const string &filename) {
 	string f;
 
@@ -157,9 +207,13 @@ t_user::t_user() {
 	non_resolvable_to_proxy = false;
 	use_registrar = false;
 	registration_time = 3600;
-	codecs.push_back(SDP_FORMAT_G711_ALAW);
-	codecs.push_back(SDP_FORMAT_G711_ULAW);
-	codecs.push_back(SDP_FORMAT_GSM);
+#ifdef HAVE_SPEEX
+	codecs.push_back(CODEC_SPEEX_WB);
+	codecs.push_back(CODEC_SPEEX_NB);
+#endif
+	codecs.push_back(CODEC_G711_ALAW);
+	codecs.push_back(CODEC_G711_ULAW);
+	codecs.push_back(CODEC_GSM);
 	ptime = 20;
 	hold_variant = HOLD_RFC3264;
 	use_nat_public_ip = false;
@@ -169,19 +223,33 @@ t_user::t_user() {
 	allow_missing_contact_reg = true;
 	compact_headers = false;
 	registration_time_in_contact = true;
-	use_domain_in_contact = true;
+	use_domain_in_contact = false;
+	allow_sdp_change = false;
 	allow_redirection = true;
 	ask_user_to_redirect = true;
 	max_redirections = 5;
 	timer_noanswer = 30;
 	timer_nat_keepalive = DUR_NAT_KEEPALIVE;
 	ext_100rel = EXT_SUPPORTED;
+	speex_nb_payload_type = 97;
+	speex_wb_payload_type = 98;
+	speex_uwb_payload_type = 99;
+	speex_bit_rate_type = BIT_RATE_CBR;
+	speex_abr_nb = 0;
+	speex_abr_wb = 0;
+	speex_vad = true;
+	speex_dtx = false;
+	speex_penh = true;
+	speex_complexity = 2;
+	dtmf_transport = DTMF_AUTO;
 	dtmf_duration = 100;
 	dtmf_pause = 40;
 	dtmf_payload_type = 101;
 	dtmf_volume = 10;
 	display_useronly_phone = true;
 	numerical_user_is_phone = false;
+	remove_special_phone_symbols = true;
+	special_phone_symbols = SPECIAL_PHONE_SYMBOLS;
 	referee_hold = false;
 	referrer_hold = true;
 	allow_refer = true;
@@ -330,11 +398,19 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			{
 				string codec = trim(*i);
 				if (codec == "g711a") {
-					codecs.push_back(SDP_FORMAT_G711_ALAW);
+					codecs.push_back(CODEC_G711_ALAW);
 				} else if (codec == "g711u") {
-					codecs.push_back(SDP_FORMAT_G711_ULAW);
+					codecs.push_back(CODEC_G711_ULAW);
 				} else if (codec == "gsm") {
-					codecs.push_back(SDP_FORMAT_GSM);
+					codecs.push_back(CODEC_GSM);
+#ifdef HAVE_SPEEX
+				} else if (codec == "speex-nb") {
+					codecs.push_back(CODEC_SPEEX_NB);
+				} else if (codec == "speex-wb") {
+					codecs.push_back(CODEC_SPEEX_WB);
+				} else if (codec == "speex-uwb") {
+					codecs.push_back(CODEC_SPEEX_UWB);
+#endif
 				} else {
 					error_msg = "Syntax error in file ";
 					error_msg += f;
@@ -370,6 +446,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			allow_missing_contact_reg = yesno2bool(value);
 		} else if (parameter == FLD_USE_DOMAIN_IN_CONTACT) {
 			use_domain_in_contact = yesno2bool(value);
+		} else if (parameter == FLD_ALLOW_SDP_CHANGE) {
+			allow_sdp_change = yesno2bool(value);
 		} else if (parameter == FLD_ALLOW_REDIRECTION) {
 			allow_redirection = yesno2bool(value);
 		} else if (parameter == FLD_ASK_USER_TO_REDIRECT) {
@@ -425,6 +503,48 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			}
 		} else if (parameter == FLD_COMPACT_HEADERS) {
 			compact_headers = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_NB_PAYLOAD_TYPE) {
+			speex_nb_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_SPEEX_WB_PAYLOAD_TYPE) {
+			speex_wb_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_SPEEX_UWB_PAYLOAD_TYPE) {
+			speex_uwb_payload_type = atoi(value.c_str());
+		} else if (parameter == FLD_SPEEX_BIT_RATE_TYPE) {
+			speex_bit_rate_type = str2bit_rate_type(value);
+			if (speex_bit_rate_type == BIT_RATE_INVALID) {
+				error_msg = "Syntax error in file ";
+				error_msg += f;
+				error_msg += "\n";
+				error_msg += "Invalid value for speex bit rate type: ";
+				error_msg += value;
+				log_file->write_report(error_msg, "t_user::read_config",
+					LOG_NORMAL, LOG_CRITICAL);
+				return false;		
+			}
+		} else if (parameter == FLD_SPEEX_ABR_NB) {
+			speex_abr_nb = atoi(value.c_str());
+		} else if (parameter == FLD_SPEEX_ABR_WB) {
+			speex_abr_wb = atoi(value.c_str());
+		} else if (parameter == FLD_SPEEX_VAD) {
+			speex_vad = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_DTX) {
+			speex_dtx = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_PENH) {
+			speex_penh = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_COMPLEXITY) {
+			speex_complexity = atoi(value.c_str());
+			if (speex_complexity < 1 || speex_complexity > 10) {
+				error_msg = "Syntax error in file ";
+				error_msg += f;
+				error_msg += "\n";
+				error_msg += "Invalid value for speex complexity: ";
+				error_msg += value;
+				log_file->write_report(error_msg, "t_user::read_config",
+					LOG_NORMAL, LOG_CRITICAL);
+				return false;	
+			}
+		} else if (parameter == FLD_DTMF_TRANSPORT) {
+			dtmf_transport = str2dtmf_transport(value);	
 		} else if (parameter == FLD_DTMF_PAYLOAD_TYPE) {
 			dtmf_payload_type = atoi(value.c_str());
 		} else if (parameter == FLD_DTMF_DURATION) {
@@ -437,6 +557,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			display_useronly_phone = yesno2bool(value);
 		} else if (parameter == FLD_NUMERICAL_USER_IS_PHONE) {
 			numerical_user_is_phone = yesno2bool(value);
+		} else if (parameter == FLD_REMOVE_SPECIAL_PHONE_SYM) {
+			remove_special_phone_symbols = yesno2bool(value);
+		} else if (parameter == FLD_SPECIAL_PHONE_SYMBOLS) {
+			special_phone_symbols = value;
 		} else if (parameter == FLD_USER_RINGTONE_FILE) {
 			ringtone_file = value;
 		} else if (parameter == FLD_USER_RINGBACK_FILE) {
@@ -546,19 +670,28 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	// Write AUDIO settings
 	config << "# RTP AUDIO\n";
 	config << FLD_CODECS << '=';
-	for (list<unsigned short>::iterator i = codecs.begin();
+	for (list<t_audio_codec>::iterator i = codecs.begin();
 	     i != codecs.end(); i++)
 	{
 		if (i != codecs.begin()) config << ',';
 		switch(*i) {
-		case SDP_FORMAT_G711_ALAW:
+		case CODEC_G711_ALAW:
 			config << "g711a";
 			break;
-		case SDP_FORMAT_G711_ULAW:
+		case CODEC_G711_ULAW:
 			config << "g711u";
 			break;
-		case SDP_FORMAT_GSM:
+		case CODEC_GSM:
 			config << "gsm";
+			break;
+		case CODEC_SPEEX_NB:
+			config << "speex-nb";
+			break;
+		case CODEC_SPEEX_WB:
+			config << "speex-wb";
+			break;
+		case CODEC_SPEEX_UWB:
+			config << "speex-uwb";
 			break;
 		default:
 			assert(false);
@@ -566,6 +699,18 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	}
 	config << endl;
 	config << FLD_PTIME << '=' << ptime << endl;
+	config << FLD_SPEEX_NB_PAYLOAD_TYPE << '=' << speex_nb_payload_type << endl;
+	config << FLD_SPEEX_WB_PAYLOAD_TYPE << '=' << speex_wb_payload_type << endl;
+	config << FLD_SPEEX_UWB_PAYLOAD_TYPE << '=' << speex_uwb_payload_type << endl;
+	config << FLD_SPEEX_BIT_RATE_TYPE << '=';
+	// config << FLD_SPEEX_ABR_NB << '=' << speex_abr_nb << endl;
+	// config << FLD_SPEEX_ABR_WB << '=' << speex_abr_wb << endl;
+	config << bit_rate_type2str(speex_bit_rate_type) << endl;
+	config << FLD_SPEEX_VAD << '=' << bool2yesno(speex_vad) << endl;
+	config << FLD_SPEEX_DTX << '=' << bool2yesno(speex_dtx) << endl;
+	config << FLD_SPEEX_PENH << '=' << bool2yesno(speex_penh) << endl;
+	config << FLD_SPEEX_COMPLEXITY << '=' << speex_complexity << endl;
+	config << FLD_DTMF_TRANSPORT << '=' << dtmf_transport2str(dtmf_transport) << endl;
 	config << FLD_DTMF_PAYLOAD_TYPE << '=' << dtmf_payload_type << endl;
 	config << FLD_DTMF_DURATION << '=' << dtmf_duration << endl;
 	config << FLD_DTMF_PAUSE << '=' << dtmf_pause << endl;
@@ -595,6 +740,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_COMPACT_HEADERS << '=' << bool2yesno(compact_headers) << endl;
 	config << FLD_USE_DOMAIN_IN_CONTACT << '=';
 	config << bool2yesno(use_domain_in_contact) << endl;
+	config << FLD_ALLOW_SDP_CHANGE << '=' << bool2yesno(allow_sdp_change) << endl;
 	config << FLD_ALLOW_REDIRECTION << '=' << bool2yesno(allow_redirection);
 	config << endl;
 	config << FLD_ASK_USER_TO_REDIRECT << '=';
@@ -637,6 +783,9 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(display_useronly_phone) << endl;
 	config << FLD_NUMERICAL_USER_IS_PHONE << '=';
 	config << bool2yesno(numerical_user_is_phone) << endl;
+	config << FLD_REMOVE_SPECIAL_PHONE_SYM << '=';
+	config << bool2yesno(remove_special_phone_symbols) << endl;
+	config << FLD_SPECIAL_PHONE_SYMBOLS << '=' << special_phone_symbols << endl;
 	config << endl;
 	
 	// Write RING TONE settings
@@ -769,8 +918,7 @@ string t_user::create_user_contact(void) {
 		s += int2str(PUBLIC_SIP_UDP_PORT(this));
 	}
 
-	if (numerical_user_is_phone &&
-	    t_url::looks_like_phone(name))
+	if (numerical_user_is_phone && looks_like_phone(name, special_phone_symbols))
 	{
 		// RFC 3261 19.1.1
 		// If the URI contains a telephone number it SHOULD contain
@@ -790,8 +938,7 @@ string t_user::create_user_uri(void) {
 	s += '@';
 	s += domain;
 
-	if (numerical_user_is_phone &&
-	    t_url::looks_like_phone(name))
+	if (numerical_user_is_phone && looks_like_phone(name, special_phone_symbols))
 	{
 		// RFC 3261 19.1.1
 		// If the URI contains a telephone number it SHOULD contain

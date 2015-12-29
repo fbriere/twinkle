@@ -67,6 +67,7 @@ public:
 	t_action	action;		// How to proceed with call
 	string		reason;		// Reason if call is not continued
 	string		contact;	// Redirect destination for redirect action
+	string		caller_name;	// Name of caller (can be used to override display name)
 	string		ringtone;	// Wav file for ring tone
 	
 	t_script_result();

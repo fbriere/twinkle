@@ -18,10 +18,6 @@
 
 #include "twinkle_config.h"
 
-#ifdef HAVE_KDE
-#include <kpassivepopup.h>
-#endif
-
 #include <iostream>
 #include <cstdlib>
 #include <qapplication.h>
@@ -38,6 +34,7 @@
 #include "selectnicform.h"
 #include "selectprofileform.h"
 #include "twinklesystray.h"
+#include "util.h"
 #include "qcombobox.h"
 #include "qlabel.h"
 #include "qlistbox.h"
@@ -51,7 +48,12 @@
 
 extern string user_host;
 extern pthread_t thread_id_main;
+
+// External commands
 extern QString callto_destination;
+extern QString cli_command;
+extern bool cmd_immediate_mode;
+extern QString cmd_set_profile;
 
 QString str2html(const QString &s)
 {
@@ -156,12 +158,362 @@ void t_gui::displayCodecInfo(int line) {
 }
 
 /////////////////////////////////////////////////
+// PROTECTED
+/////////////////////////////////////////////////
+bool t_gui::do_invite(const string &destination, const string &display, 
+			const string &subject, bool immediate)
+{
+	lock();
+	if (mainWindow->callInvite->isEnabled()) {
+		if (immediate) {
+			t_user *user = phone->ref_user_profile(
+				mainWindow->userComboBox->currentText().ascii());
+			t_url dst_url(expand_destination(user, destination));
+			if (dst_url.is_valid()) {
+				mainWindow->do_phoneInvite(user, 
+						display.c_str(), dst_url, subject.c_str());
+			}
+		} else {
+			t_url dest_url(destination);
+			t_display_url du(dest_url, display);
+			mainWindow->phoneInvite(du.encode().c_str(), subject.c_str());
+		}
+	}
+	unlock();
+	
+	return true;
+}
+
+void t_gui::do_redial(void) {
+	lock();
+	if (mainWindow->callRedial->isEnabled()) {
+		mainWindow->phoneRedial();
+	}
+	unlock();
+}
+
+void t_gui::do_answer(void) {
+	lock();
+	if (mainWindow->callAnswer->isEnabled()) {
+		mainWindow->phoneAnswer();
+	}
+	unlock();
+}
+
+void t_gui::do_reject(void) {
+	lock();
+	if (mainWindow->callReject->isEnabled()) {
+		mainWindow->phoneReject();
+	}
+	unlock();
+}
+
+void t_gui::do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
+		bool action_present, bool enable, int num_redirections,
+		const list<string> &dest_strlist, bool immediate)
+{
+	if (show_status) {
+		// Show status not supported in GUI
+		return;
+	}
+	
+	t_user *user = phone->ref_user_profile(mainWindow->
+				userComboBox->currentText().ascii());
+	
+	list<t_display_url> dest_list;
+	for (list<string>::const_iterator i = dest_strlist.begin();
+	     i != dest_strlist.end(); i++)
+	{
+		t_display_url du;
+		du.url = expand_destination(user, *i);
+		du.display.clear();
+		if (!du.is_valid()) return;
+		dest_list.push_back(du);
+	}
+	
+	// Enable/disable permanent redirections
+	if (type_present) {
+		lock();
+		if (enable) {
+			phone->ref_service(user)->enable_cf(cf_type, dest_list);
+		} else {
+			phone->ref_service(user)->disable_cf(cf_type);
+		}
+		mainWindow->updateServicesStatus();
+		unlock();
+		
+		return;
+	} else {
+		if (action_present) {
+			if (!enable) {
+				lock();
+				phone->ref_service(user)->disable_cf(CF_ALWAYS);
+				phone->ref_service(user)->disable_cf(CF_BUSY);
+				phone->ref_service(user)->disable_cf(CF_NOANSWER);
+				mainWindow->updateServicesStatus();
+				unlock();
+			}
+			
+			return;
+		}
+	}
+	
+	lock();
+	if (mainWindow->callRedirect->isEnabled()) {
+		if (immediate) {
+			mainWindow->do_phoneRedirect(dest_list);
+		} else {
+			mainWindow->phoneRedirect(dest_strlist);
+		}
+	}
+	unlock();
+	
+	return;
+}
+
+void t_gui::do_dnd(bool show_status, bool toggle, bool enable) {
+	if (show_status) {
+		// Show status not supported in GUI
+		return;
+	}
+	
+	lock();
+	if (phone->ref_users().size() == 1) {
+		if (toggle) {
+			enable = !mainWindow->serviceDnd->isOn();
+		}
+		mainWindow->srvDnd(enable);
+		mainWindow->serviceDnd->setOn(enable);
+	} else {
+		t_user *user = phone->ref_user_profile(mainWindow->
+				userComboBox->currentText().ascii());
+		list<t_user *> l;
+		l.push_back(user);
+		if (toggle) {
+			enable = !phone->ref_service(user)->is_dnd_active();
+		}
+		
+		if (enable) {
+			mainWindow->do_srvDnd_enable(l);
+		} else {
+			mainWindow->do_srvDnd_disable(l);
+		}
+	}
+	unlock();
+}
+
+void t_gui::do_auto_answer(bool show_status, bool toggle, bool enable) {
+	if (show_status) {
+		// Show status not supported in GUI
+		return;
+	}
+	
+	lock();
+	if (phone->ref_users().size() == 1) {
+		if (toggle) {
+			enable = !mainWindow->serviceAutoAnswer->isOn();
+		}
+		mainWindow->srvAutoAnswer(enable);
+		mainWindow->serviceAutoAnswer->setOn(enable);
+	} else {
+		t_user *user = phone->ref_user_profile(mainWindow->
+				userComboBox->currentText().ascii());
+		list<t_user *> l;
+		l.push_back(user);
+		if (toggle) {
+			enable = !phone->ref_service(user)->
+				 is_auto_answer_active();
+		}
+
+		if (enable) {
+			mainWindow->do_srvAutoAnswer_enable(l);
+		} else {
+			mainWindow->do_srvAutoAnswer_disable(l);
+		}
+	}
+	unlock();
+}
+
+void t_gui::do_bye(void) {
+	lock();
+	if (mainWindow->callBye->isEnabled()) {
+		mainWindow->phoneBye();
+	}
+	unlock();
+}
+
+void t_gui::do_hold(void) {
+	lock();
+	if (mainWindow->callHold->isEnabled() && !mainWindow->callHold->isOn()) {
+		mainWindow->phoneHold(true);
+	}
+	unlock();
+}
+
+void t_gui::do_retrieve(void) {
+	lock();
+	if (mainWindow->callHold->isEnabled() && mainWindow->callHold->isOn()) {
+		mainWindow->phoneHold(false);
+	}
+	unlock();
+}
+
+bool t_gui::do_refer(const string &destination, bool immediate) {
+	lock();
+	if (mainWindow->callTransfer->isEnabled()) {
+		if (immediate) {
+			t_display_url du;
+			t_user *user = phone->ref_user_profile(mainWindow->
+				userComboBox->currentText().ascii());
+			du.url = expand_destination(user, destination);
+			
+			if (du.is_valid()) {
+				mainWindow->do_phoneTransfer(du);
+			}
+		} else {
+			mainWindow->phoneTransfer(destination);
+		}
+	}
+	unlock();
+	
+	return true;
+}
+
+void t_gui::do_conference(void) {
+	lock();
+	if (mainWindow->callConference->isEnabled()) {
+		mainWindow->phoneConference();
+	}
+	unlock();
+}
+
+void t_gui::do_mute(bool show_status, bool toggle, bool enable) {
+	if (show_status) {
+		// Show status not supported in GUI
+		return;
+	}
+	
+	lock();
+	if (mainWindow->callMute->isEnabled()) {
+		if (toggle) enable = !phone->is_line_muted(phone->get_active_line());
+		mainWindow->phoneMute(enable);
+	}
+	unlock();
+}
+
+void t_gui::do_dtmf(const string &digits) {
+	lock();
+	if (mainWindow->callDTMF->isEnabled()) {
+		mainWindow->sendDTMF(digits.c_str());
+	}
+	unlock();
+}
+
+void t_gui::do_register(bool reg_all_profiles) {
+	lock();
+	list<t_user *> l;
+	
+	if (reg_all_profiles) {
+		l = phone->ref_users();
+	} else {
+		t_user *user = phone->ref_user_profile(mainWindow->
+			userComboBox->currentText().ascii());
+		l.push_back(user);
+	}
+	
+	mainWindow->do_phoneRegister(l);
+	unlock();
+}
+
+void t_gui::do_deregister(bool dereg_all_profiles, bool dereg_all_devices) {
+	lock();
+	list<t_user *> l;
+	
+	if (dereg_all_profiles) {
+		l = phone->ref_users();
+	} else {
+		t_user *user = phone->ref_user_profile(mainWindow->
+			userComboBox->currentText().ascii());
+		l.push_back(user);
+	}
+	
+	if (dereg_all_devices) {
+		mainWindow->do_phoneDeregisterAll(l);
+	} else {
+		mainWindow->do_phoneDeregister(l);
+	}
+	unlock();
+}
+
+void t_gui::do_fetch_registrations(void) {
+	lock();
+	mainWindow->phoneShowRegistrations();
+	unlock();
+}
+
+bool t_gui::do_options(bool dest_set, const string &destination, bool immediate) {
+	lock();
+	// In-dialog OPTIONS request
+	int line = phone->get_active_line();
+	if (phone->get_line_substate(line) == LSSUB_ESTABLISHED) {
+		((t_gui *)ui)->action_options();
+		return true;
+	}
+	
+	if (immediate) {
+		t_user *user = phone->ref_user_profile(mainWindow->
+			userComboBox->currentText().ascii());
+		t_url dst_url(expand_destination(user, destination));
+		
+		if (dst_url.is_valid()) {
+			mainWindow->do_phoneTermCap(user, dst_url);
+		}
+	} else {
+		mainWindow->phoneTermCap(destination.c_str());
+	}
+	unlock();
+	
+	return true;
+}
+
+void t_gui::do_line(int line) {
+	phone->pub_activate_line(line - 1);
+}
+
+void t_gui::do_user(const string &profile_name) {
+	lock();
+	for (int i = 0; i < mainWindow->userComboBox->count(); i++) {
+		if (mainWindow->userComboBox->text(i) == profile_name.c_str()) 
+		{
+			mainWindow->userComboBox->setCurrentItem(i);
+		}
+	}
+	unlock();
+}
+
+void t_gui::do_quit(void) {
+	lock();
+	mainWindow->fileExit();
+	unlock();
+}
+
+void t_gui::do_help(const list<t_command_arg> &al) {
+	// Nothing to do in GUI mode
+	return;
+}
+
+
+/////////////////////////////////////////////////
 // PUBLIC
 /////////////////////////////////////////////////
 
 t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
+	use_stdout = false;
 	lastFileBrowsePath = DIR_HOME;
 	mainWindow = new MphoneForm();
+#ifdef HAVE_KDE
+	sys_tray_popup = NULL;
+#endif
 	MEMMAN_NEW(mainWindow);
 	qApp->setMainWidget(mainWindow);
 }
@@ -222,10 +574,21 @@ void t_gui::run(void) {
 		mainWindow->show();
 	}
 	
-	// Open call window if a callto destination was specified on the
+	// Activate a profile is the --set-profile option was given on the command
+	// line.
+	if (!cmd_set_profile.isEmpty()) {
+		cmd_cli(string("user ") + cmd_set_profile.ascii(), true);
+	}
+	
+	// Execute the call command if a callto destination was specified on the
 	// command line
 	if (!callto_destination.isEmpty()) {
-		mainWindow->phoneInvite(callto_destination, "");
+		cmd_call(callto_destination.ascii(), cmd_immediate_mode);
+	}
+	
+	// Execute a CLI command if one was given on the command line
+	if (!cli_command.isEmpty()) {
+		cmd_cli(cli_command.ascii(), cmd_immediate_mode);
 	}
 	
 	// Start Qt application
@@ -400,25 +763,7 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	}
 	displaySubject(s);
 	
-	// Play ringtone if the call is received on the active line.
-	if (line == phone->get_active_line() &&
-	    !phone->is_line_auto_answered(line))
-	{
-		cb_play_ringtone(line);	
-	}
-	
-	// Pop up sys tray balloon if main window is hidden
-	if (mainWindow->isHidden()) {
-#ifdef HAVE_KDE
-		t_twinkle_sys_tray *tray = mainWindow->getSysTray();
-		if (tray) {
-			QString s("Incoming call: ");
-			s.append(fromParty.left(40));
-			if (fromParty.length() > 40) s.append("...");
-			KPassivePopup::message(s, tray);
-		}
-#endif
-	}
+	cb_notify_call(line, fromParty.ascii());
 	
 	unlock();
 }
@@ -437,7 +782,7 @@ void t_gui::cb_call_cancelled(int line) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -456,7 +801,7 @@ void t_gui::cb_far_end_hung_up(int line) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -469,7 +814,7 @@ void t_gui::cb_answer_timeout(int line) {
 	
 	setLineFields(line);
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -493,7 +838,7 @@ void t_gui::cb_sdp_answer_not_supported(int line, const string &reason) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -513,7 +858,7 @@ void t_gui::cb_sdp_answer_missing(int line) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -538,7 +883,7 @@ void t_gui::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -558,7 +903,7 @@ void t_gui::cb_ack_timeout(int line) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -578,7 +923,7 @@ void t_gui::cb_100rel_timeout(int line) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -602,7 +947,7 @@ void t_gui::cb_prack_failed(int line, const t_response *r) {
 	mainWindow->display(s);
 	
 	clearLineFields(line);
-	cb_stop_tone(line);
+	cb_stop_call_notification(line);
 	
 	unlock();
 }
@@ -1060,6 +1405,56 @@ void t_gui::cb_redirecting_request(t_user *user_config, const t_contact_param &c
 	unlock();
 }
 
+void t_gui::cb_notify_call(int line, string from_party) {
+	lock();
+	
+	// Play ringtone if the call is received on the active line.
+	if (line == phone->get_active_line() &&
+	    !phone->is_line_auto_answered(line))
+	{
+		cb_play_ringtone(line);
+	}
+	
+	// Pop up sys tray balloon if main window is hidden
+	if (mainWindow->isHidden() || mainWindow->isMinimized()) {
+#ifdef HAVE_KDE
+		t_twinkle_sys_tray *tray = mainWindow->getSysTray();
+		if (tray && !sys_tray_popup) {
+			QString fromParty(from_party.c_str());
+			QString s("<p>");
+			s.append(str2html(fromParty.left(40)));
+			if (fromParty.length() > 40) s.append("...");
+			s.append("</p>");
+			sys_tray_popup = KPassivePopup::message(
+				"<H2>Incoming Call</H2>", s, 
+				QPixmap::fromMimeSource("twinkle32.png"), 
+				tray, 0, 0);
+			sys_tray_popup->setAutoDelete(false);
+			MEMMAN_NEW(sys_tray_popup);
+			QObject::connect(sys_tray_popup, SIGNAL(clicked()),
+				sys_tray_popup, SLOT(hide()));
+		}
+#endif
+	}
+	
+	unlock();
+}
+
+void t_gui::cb_stop_call_notification(int line) {
+	lock();
+	cb_stop_tone(line);
+	
+#ifdef HAVE_KDE
+	if (sys_tray_popup) {
+		sys_tray_popup->hide();
+		MEMMAN_DELETE(sys_tray_popup);
+		delete sys_tray_popup;
+		sys_tray_popup = NULL;
+	}
+	unlock();
+#endif
+}
+
 void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
 	if (line >= NUM_USER_LINES) return;
 	
@@ -1417,7 +1812,8 @@ bool t_gui::cb_ask_user_to_redirect_request(t_user *user_config,
 bool t_gui::cb_ask_credentials(t_user *user_config, const string &realm, string &username,
 			       string &password)
 {
-	QString user, passwd;
+	QString user(username.c_str());
+	QString passwd(password.c_str());
 	
 	lock();
 	
@@ -1573,9 +1969,23 @@ bool t_gui::cb_nat_discovery_cancelled(void) {
 	return natDiscoveryProgressDialog->wasCancelled();
 }
 
-void t_gui::cmd_call(const string &destination) {
+void t_gui::cmd_call(const string &destination, bool immediate) {
+	string subject;
+	string dst_no_headers;
+	t_display_url du;
+	
+	t_user *user = phone->ref_user_profile(
+			mainWindow->userComboBox->currentText().ascii());
+	expand_destination(user, destination, du, subject, dst_no_headers);
+	if (!du.is_valid()) return;
+	
 	lock();
-	mainWindow->phoneInvite(destination.c_str(), "");
+	if (immediate) {
+		mainWindow->do_phoneInvite(user, du.display.c_str(), du.url, 
+					   subject.c_str());
+	} else {
+		mainWindow->phoneInvite(dst_no_headers.c_str(), subject.c_str());
+	}
 	unlock();
 }
 
@@ -1643,7 +2053,7 @@ void t_gui::action_invite(t_user *user_config, const t_url &destination,
 }
 
 void t_gui::action_answer(void) {
-	cb_stop_tone(phone->get_active_line());
+	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_answer();
 }
 
@@ -1654,7 +2064,7 @@ void t_gui::action_bye(void) {
 void t_gui::action_reject(void) {
 	QString s;
 	
-	cb_stop_tone(phone->get_active_line());
+	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_reject();
 	
 	int line = phone->get_active_line();
@@ -1669,7 +2079,7 @@ void t_gui::action_reject(void) {
 void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	QString s;
 	
-	cb_stop_tone(phone->get_active_line());
+	cb_stop_call_notification(phone->get_active_line());
 	phone->pub_redirect(contacts, 302);
 	
 	int line = phone->get_active_line();
@@ -1712,11 +2122,14 @@ void t_gui::action_options(t_user *user_config, const t_url &contact) {
 }
 
 void t_gui::action_dtmf(const string &digits) {
+	const t_call_info call_info = phone->get_call_info(phone->get_active_line());
 	throttle_dtmf_not_supported = false;
+	
+	if (!call_info.dtmf_supported) return;
 	
 	for (string::const_iterator i = digits.begin(); i != digits.end(); i++) {
 		if (VALID_DTMF_SYM(*i)) {
-			phone->pub_send_dtmf(*i);
+			phone->pub_send_dtmf(*i, call_info.dtmf_inband);
 		}
 	}
 }

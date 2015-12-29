@@ -46,6 +46,7 @@ public:
 	virtual int get_buffer_size(bool is_recording_buffer) = 0;
 	virtual int read(unsigned char* buf, int len) = 0;
 	virtual int write(const unsigned char* buf, int len) = 0;
+	virtual int get_sample_rate(void) const;
 	
 	static t_audio_io* open(const t_audio_device& dev, bool playback, 
 		bool capture, bool blocking, int channels, t_audio_sampleformat format, 
@@ -53,7 +54,10 @@ public:
 protected:
 	virtual bool open(const string& device, bool playback, bool capture, 
 		bool blocking, int channels, t_audio_sampleformat format, 
-		int sample_rate, bool short_latency) = 0;
+		int sample_rate, bool short_latency);
+		
+private:
+	int _sample_rate;
 	
 };
 
@@ -66,7 +70,7 @@ public:
 	int get_buffer_space(bool is_recording_buffer);
 	int get_buffer_size(bool is_recording_buffer);
 	int read(unsigned char* buf, int len);
-	int write(const unsigned char* buf, int len) ;
+	int write(const unsigned char* buf, int len);
 protected:
 	bool open(const string& device, bool playback, bool capture, bool blocking, 
 		int channels, t_audio_sampleformat format, int sample_rate, 
@@ -86,7 +90,7 @@ public:
 	int get_buffer_space(bool is_recording_buffer);
 	int get_buffer_size(bool is_recording_buffer);
 	int read(unsigned char* buf, int len);
-	int write(const unsigned char* buf, int len) ;
+	int write(const unsigned char* buf, int len);
 protected:
 	bool open(const string& device, bool playback, bool capture, bool blocking, 
 		int channels, t_audio_sampleformat format, int sample_rate, 

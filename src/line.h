@@ -51,6 +51,7 @@ public:
 	string			to_organization;
 	string			subject;
 	bool			dtmf_supported;
+	bool			dtmf_inband; // DTMF must be sent inband
 	t_hdr_referred_by	hdr_referred_by;
 
 	// The reason phrase of the last received provisional response
@@ -159,7 +160,7 @@ public:
 	void reject(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void end_call(void);
-	void send_dtmf(char digit);
+	void send_dtmf(char digit, bool inband);
 
 	// OPTIONS inside dialog
 	void options(void);
@@ -247,8 +248,9 @@ public:
 	// Unseize the line
 	void unseize(void);
 
-	// Return the audio session belonging to this line.
-	// Returns NULL if there is no audio session
+	// Return the (audio) session belonging to this line.
+	// Returns NULL if there is no (audio) session
+	t_session *get_session(void) const;
 	t_audio_session *get_audio_session(void) const;
 
 	void notify_refer_progress(t_response *r);
@@ -263,7 +265,7 @@ public:
 
 	// Get the call info record
 	t_call_info get_call_info(void) const;
-	void ci_set_dtmf_supported(bool supported);
+	void ci_set_dtmf_supported(bool supported, bool inband = false);
 	void ci_set_last_provisional_reason(const string &reason);
 	void ci_set_send_codec(t_audio_codec codec);
 	void ci_set_recv_codec(t_audio_codec codec);

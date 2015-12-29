@@ -19,6 +19,8 @@
 #ifndef _GUI_H
 #define _GUI_H
 
+#include "twinkle_config.h"
+
 #include "userintf.h"
 #include "qaction.h"
 #include "qcombobox.h"
@@ -27,6 +29,10 @@
 #include "qprogressdialog.h"
 #include "qtoolbutton.h"
 #include "qwidget.h"
+
+#ifdef HAVE_KDE
+#include <kpassivepopup.h>
+#endif
 
 using namespace std;
 
@@ -64,6 +70,11 @@ private:
 	QLineEdit	*subjectLabel;
 	QLabel		*codecLabel;
 	
+#ifdef HAVE_KDE
+	// Popup window on system tray for incoming call notification
+	KPassivePopup	*sys_tray_popup;
+#endif
+	
 	// Last dir path browsed by the user with a file dialog
 	QString		lastFileBrowsePath;
 	
@@ -81,6 +92,34 @@ private:
 	
 	// Display the codecs in use for the line
 	void displayCodecInfo(int line);
+	
+protected:
+	// The do_* methods perform the commands parsed by the exec_* methods.
+	virtual bool do_invite(const string &destination, const string &display, 
+			const string &subject, bool immediate);
+	virtual void do_redial(void);
+	virtual void do_answer(void);
+	virtual void do_reject(void);
+	virtual void do_redirect(bool show_status, bool type_present, t_cf_type cf_type, 
+		bool action_present, bool enable, int num_redirections,
+		const list<string> &dest_strlist, bool immediate);
+	virtual void do_dnd(bool show_status, bool toggle, bool enable);
+	virtual void do_auto_answer(bool show_status, bool toggle, bool enable);
+	virtual void do_bye(void);
+	virtual void do_hold(void);
+	virtual void do_retrieve(void);
+	virtual bool do_refer(const string &destination, bool immediate);
+	virtual void do_conference(void);
+	virtual void do_mute(bool show_status, bool toggle, bool enable);
+	virtual void do_dtmf(const string &digits);
+	virtual void do_register(bool reg_all_profiles);
+	virtual void do_deregister(bool dereg_all_profiles, bool dereg_all_devices);
+	virtual void do_fetch_registrations(void);
+	virtual bool do_options(bool dest_set, const string &destination, bool immediate);
+	virtual void do_line(int line);
+	virtual void do_user(const string &profile_name);
+	virtual void do_quit(void);
+	virtual void do_help(const list<t_command_arg> &al);
 	
 public:
 	t_gui(t_phone *_phone);
@@ -139,6 +178,8 @@ public:
 	void cb_register_inprog(t_user *user_config, t_register_type register_type);
 	void cb_redirecting_request(t_user *user_config, int line, const t_contact_param &contact);
 	void cb_redirecting_request(t_user *user_config, const t_contact_param &contact);
+	void cb_notify_call(int line, string from_party);
+	void cb_stop_call_notification(int line);
 	void cb_dtmf_detected(int line, char dtmf_event);
 	void cb_dtmf_not_supported(int line);
 	void cb_dtmf_supported(int line);
@@ -194,7 +235,7 @@ public:
 	bool cb_nat_discovery_cancelled(void);
 	
 	// Execute external commands
-	void cmd_call(const string &destination);
+	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
 	
 	// Actions

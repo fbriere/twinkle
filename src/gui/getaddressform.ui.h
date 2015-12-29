@@ -41,7 +41,7 @@
 void GetAddressForm::init() 
 {
 #ifdef HAVE_KDE
-	addrBook = (void *)KABC::StdAddressBook::self(true);
+	addrBook = (void *)KABC::StdAddressBook::self(false);
 	loadAddresses();
 	
 	connect(ABOOK, 
@@ -49,6 +49,20 @@ void GetAddressForm::init()
 		this, SLOT(loadAddresses()));
 	
 	sipOnlyCheckBox->setChecked(sys_config->ab_show_sip_only);
+#endif
+}
+
+void GetAddressForm::reload()
+{
+#ifdef HAVE_KDE
+	ABOOK->disconnect();
+	KABC::StdAddressBook::close();
+	addrBook = (void *)KABC::StdAddressBook::self(false);
+	loadAddresses();
+	
+	connect(ABOOK, 
+		SIGNAL(addressBookChanged(AddressBook *)),
+		this, SLOT(loadAddresses()));
 #endif
 }
 
@@ -73,7 +87,9 @@ void GetAddressForm::show()
 void GetAddressForm::loadAddresses()
 {
 #ifdef HAVE_KDE
-	if (!ABOOK->load()) return;
+	// Explicit loading of address book is not needed as it is 
+	// automatically loaded.
+	// if (!ABOOK->load()) return;
 	
 	addressListView->clear();
 	for (KABC::AddressBook::Iterator i = ABOOK->begin(); i != ABOOK->end(); i++)
@@ -115,36 +131,12 @@ void GetAddressForm::selectAddress()
 		QString name(item->text(colName));
 		QString phone(item->text(colPhone));
 		phone = phone.stripWhiteSpace();
-		
-		// Remove special symbols from a phone number
-		QRegExp rePhone("(sip:)?\\+?[0-9\\-\\s\\(\\)/]*");
-		if (rePhone.exactMatch(phone)) {
-			phone.remove(' ');
-			phone.remove('\t');
-			phone.remove('-');
-			phone.remove('(');
-			phone.remove(')');
-			phone.remove('/');
-		}
-		
+			
 		emit address(name, phone);
 		
-		QString s;
-		if (!name.isNull()) {
-			if (must_quote(name.ascii())) s = '"';
-			s += name;
-			if (must_quote(name.ascii())) s += '"';
-			s += " <";
-		}
-		
-		s += phone;
-		
-		if (!name.isNull()) {
-			s += ">";
-		}
-		
 		// Signal display name and url combined.
-		emit address(s);
+		t_display_url du(t_url(phone.ascii()), name.ascii());
+		emit address(du.encode().c_str());
 	}
 	
 	accept();

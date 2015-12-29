@@ -92,7 +92,8 @@ t_user *t_phone_user::get_user_profile(void) {
 	return user_config;
 }
 
-void t_phone_user::registration(t_register_type register_type, unsigned long expires)
+void t_phone_user::registration(t_register_type register_type, bool re_register,
+		unsigned long expires)
 {
 	// If STUN is enabled, then do a STUN query before registering if not
 	// done so already.
@@ -217,6 +218,7 @@ void t_phone_user::registration(t_register_type register_type, unsigned long exp
         }
 
         // Send REGISTER
+        authorizor.set_re_register(re_register);
 	ui->cb_register_inprog(user_config, register_type);
         phone->send_request(user_config, req, tuid);
 	MEMMAN_DELETE(req);
@@ -342,7 +344,8 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 		MEMMAN_DELETE(r_register);
 		delete r_register;
 		r_register = NULL;
-		if (re_register) registration(REG_REGISTER, registration_time);
+		if (re_register) registration(REG_REGISTER, authorizor.get_re_register(), 
+				registration_time);
 		return;
 	}
 
@@ -408,7 +411,7 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
                 MEMMAN_DELETE(r_stun);
                 delete r_stun;
                 r_stun = NULL;
-                registration(REG_REGISTER, registration_time);
+                registration(REG_REGISTER, false, registration_time);
                 return;
 	}
 	
@@ -635,7 +638,7 @@ void t_phone_user::timeout(t_phone_timer timer) {
 		if (is_registered || last_reg_failed) {
 			// Re-register if no register is pending
 			if (!r_register) {
-				registration(REG_REGISTER, registration_time);
+				registration(REG_REGISTER, true, registration_time);
 			}
 		}
 		break;

@@ -738,7 +738,9 @@ void *timekeeper_sigwait(void *arg) {
 	sigaddset(&sigset, SIGALRM);
 
 	while (true) {
-		sigwait(&sigset, &sig);
+		// When SIGCONT is received after SIGSTOP, sigwait returns
+		// with EINTR ??
+		if (sigwait(&sigset, &sig) == EINTR) continue;
 		evq_timekeeper->interrupt();
 	}
 }

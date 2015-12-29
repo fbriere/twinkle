@@ -646,13 +646,13 @@ void MphoneForm::updateRegStatus()
 	} else if (num_registered > 0) {
 		// Some users are registered
 		statRegLabel->setPixmap(QPixmap::fromMimeSource(
-				"twinkle16-disabled.png"));
+				"twinkle16.png"));
 	} else if (num_failed > 0) {
 		// Some users failed, none are registered
-		statRegLabel->setPixmap(QPixmap::fromMimeSource("reg_failed-disabled.png"));
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("reg_failed.png"));
 	} else {
 		// No users are registered, no users failed
-		statRegLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+		statRegLabel->setPixmap(QPixmap::fromMimeSource("twinkle16-disabled.png"));
 	}
 	
 	// Set tool tip with detailed info.
@@ -660,6 +660,8 @@ void MphoneForm::updateRegStatus()
 	
 	if (num_registered > 0 || num_failed > 0) {
 		QToolTip::add(statRegLabel, toolTip);
+	} else {
+		QToolTip::add(statRegLabel, "No users are registered.");
 	}
 	
 	updateSysTrayStatus();
@@ -702,10 +704,10 @@ void MphoneForm::updateServicesStatus()
 		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel.png"));
 	} else if (num_dnd > 0) {
 		// Some users enabled dnd
-		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel-disabled.png"));
+		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel.png"));
 	} else {
 		// No users enabeld dnd
-		statDndLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+		statDndLabel->setPixmap(QPixmap::fromMimeSource("cancel-disabled.png"));
 	}
 	
 	if (num_cf == user_list.size()) {
@@ -713,10 +715,10 @@ void MphoneForm::updateServicesStatus()
 		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf.png"));
 	} else if (num_cf > 0) {
 		// Some users enabled redirection
-		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf-disabled.png"));
+		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf.png"));
 	} else {
 		// No users enabled redirection
-		statCfLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+		statCfLabel->setPixmap(QPixmap::fromMimeSource("cf-disabled.png"));
 	}
 	
 	if (num_auto_answer == user_list.size()) {
@@ -725,10 +727,11 @@ void MphoneForm::updateServicesStatus()
 	} else if (num_auto_answer > 0) {
 		// Some users enabled auto answer
 		statAaLabel->setPixmap(QPixmap::fromMimeSource(
-				"auto_answer-disabled.png"));
+				"auto_answer.png"));
 	} else {
 		// No users enabeld auto answer
-		statAaLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+		statAaLabel->setPixmap(QPixmap::fromMimeSource(
+				"auto_answer-disabled.png"));
 	}
 	
 	// Set tool tip with detailed info for multiple users.
@@ -736,9 +739,23 @@ void MphoneForm::updateServicesStatus()
 	QToolTip::remove(statCfLabel);
 	QToolTip::remove(statAaLabel);
 
-	if (num_dnd > 0) QToolTip::add(statDndLabel, tipDnd);
-	if (num_cf > 0) QToolTip::add(statCfLabel, tipCf);
-	if (num_auto_answer > 0) QToolTip::add(statAaLabel, tipAa);
+	if (num_dnd > 0) {
+		QToolTip::add(statDndLabel, tipDnd);
+	} else {
+		QToolTip::add(statDndLabel, "Do not disturb is not active.");
+	}		
+	
+	if (num_cf > 0) {
+		QToolTip::add(statCfLabel, tipCf);
+	} else {
+		QToolTip::add(statCfLabel, "Redirection is not active.");
+	}
+	
+	if (num_auto_answer > 0) {
+		QToolTip::add(statAaLabel, tipAa);
+	} else {
+		QToolTip::add(statAaLabel, "Auto answer is not active.");
+	}
 	
 	updateSysTrayStatus();
 }
@@ -748,7 +765,8 @@ void MphoneForm::updateMissedCallStatus(int num_missed_calls)
 	QToolTip::remove(statMissedLabel);
 	
 	if (num_missed_calls == 0) {
-		statMissedLabel->setPixmap(QPixmap::fromMimeSource("no-indication.png"));
+		statMissedLabel->setPixmap(QPixmap::fromMimeSource("missed-disabled.png"));
+		QToolTip::add(statMissedLabel, "You have no missed calls.");
 	} else {
 		statMissedLabel->setPixmap(
 			QPixmap::fromMimeSource("missed.png"));
@@ -1072,7 +1090,7 @@ void MphoneForm::phoneReject()
 
 
 // Show the semi-modal redirect form
-void MphoneForm::phoneRedirect()
+void MphoneForm::phoneRedirect(const list<string> &contacts)
 {
 	int active_line = phone->get_active_line();
 	t_user *user_config = phone->get_line_user(active_line);
@@ -1087,7 +1105,13 @@ void MphoneForm::phoneRedirect()
 	connect(redirectForm, SIGNAL(destinations(const list<t_display_url> &)),
 		this, SLOT(do_phoneRedirect(const list<t_display_url> &)));
 	
-	redirectForm->show(user_config);
+	redirectForm->show(user_config, contacts);
+}
+
+void MphoneForm::phoneRedirect()
+{
+	const list<string> l;
+	phoneRedirect(l);
 }
 
 // Execute the redirect action.
@@ -1098,7 +1122,7 @@ void MphoneForm::do_phoneRedirect(const list<t_display_url> &destinations)
 }
 
 // Show the semi-modal call transfer window
-void MphoneForm::phoneTransfer()
+void MphoneForm::phoneTransfer(const string &dest)
 {
 	int active_line = phone->get_active_line();
 	t_user *user_config = phone->get_line_user(active_line);
@@ -1118,8 +1142,13 @@ void MphoneForm::phoneTransfer()
 	connect(transferForm, SIGNAL(destination(const t_display_url &)),
 		this, SLOT(do_phoneTransfer(const t_display_url &)));
 	
-	transferForm->show(user_config);
+	transferForm->show(user_config, dest);
 	updateState();
+}
+
+void MphoneForm::phoneTransfer()
+{
+	phoneTransfer("");
 }
 
 // Execute the transfer action. This slot is connected to the destination
@@ -1153,7 +1182,7 @@ void MphoneForm::phoneMute(bool on)
 	updateState();
 }
 
-void MphoneForm::phoneTermCap()
+void MphoneForm::phoneTermCap(const QString &dest)
 {
 	// In-dialog OPTIONS request
 	int line = phone->get_active_line();
@@ -1173,7 +1202,13 @@ void MphoneForm::phoneTermCap()
 	connect(termCapForm, SIGNAL(destination(t_user *, const t_url &)),
 		this, SLOT(do_phoneTermCap(t_user *, const t_url &)));
 	
-	termCapForm->show();
+	t_user *user = phone->ref_user_profile(userComboBox->currentText().ascii());
+	termCapForm->show(user, dest);
+}
+
+void MphoneForm::phoneTermCap()
+{
+	phoneTermCap("");
 }
 
 void MphoneForm::do_phoneTermCap(t_user *user_config, const t_url &destination)
@@ -1652,7 +1687,18 @@ void MphoneForm::quickCall()
 // Add a destination to the list of callComboBox
 void MphoneForm::addToCallComboBox(const QString &destination)
 {
+	// Remove duplicate entries
+	for (int i = callComboBox->count() - 1; i >= 0; i--) {
+		if (callComboBox->text(i) == destination) {
+			callComboBox->removeItem(i);
+		}
+	}
+	
+	// Add entry
 	callComboBox->insertItem(destination, 0);
+	callComboBox->setCurrentItem(0);
+	
+	// Remove last entry is list exceeds maximum size
 	if (callComboBox->count() > SIZE_REDIAL_LIST) {
 		callComboBox->removeItem(callComboBox->count() - 1);
 	}
@@ -1788,17 +1834,44 @@ void MphoneForm::keyPressEvent(QKeyEvent *e)
 	}
 }
 
+// QLabels do not have mouse click events. I want the status labels
+// to be clickable however. Explicitly check here if a status label has
+// been clicked.
 void MphoneForm::mouseReleaseEvent(QMouseEvent *e)
 {
-	// Open the history form, when the user clicks on the missed calls
-	// indication.
-	if (e->button() == Qt::LeftButton &&
-	    e->type() == QEvent::MouseButtonRelease &&
-	    statMissedLabel->hasMouse()) 
+	// Only process left mouse button release events
+	if (e->button() != Qt::LeftButton ||
+	    e->type() != QEvent::MouseButtonRelease)
 	{
-		if (call_history->get_num_missed_calls() > 0) {
-			viewHistory();
+		e->ignore();
+		return;
+	}
+	
+	if (statAaLabel->hasMouse()) {
+		if (phone->ref_users().size() == 1) {
+			bool enable = !serviceAutoAnswer->isOn();
+			srvAutoAnswer(enable);
+			serviceAutoAnswer->setOn(enable);
+		} else {
+			srvAutoAnswer();
 		}
+	} else if (statDndLabel->hasMouse()) {
+		if (phone->ref_users().size() == 1) {
+			bool enable = !serviceDnd->isOn();
+			srvDnd(enable);
+			serviceDnd->setOn(enable);
+		} else {
+			srvDnd();
+		}
+	} else if (statCfLabel->hasMouse()) {
+		srvRedirect();
+	} else if (statMissedLabel->hasMouse()) {
+		// Open the history form, when the user clicks on the 
+		// missed calls indication.
+		viewHistory();
+	} else if (statRegLabel->hasMouse()) {
+		// Fetch registration status
+		phoneShowRegistrations();
 	} else {
 		e->ignore();
 	}

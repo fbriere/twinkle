@@ -4,10 +4,13 @@ noinst_LIBRARIES = libaudio.a
 
 libaudio_a_SOURCES =\
 	audio_device.cpp\
+	audio_encoder.cpp\
         audio_codecs.cpp\
         audio_rx.cpp\
         audio_session.cpp\
         audio_tx.cpp\
+        dtmf_player.cpp\
+        freq_gen.cpp\
         g711.cpp\
         g721.cpp\
         g723_24.cpp\
@@ -18,10 +21,13 @@ libaudio_a_SOURCES =\
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
         audio_device.h\
+        audio_encoder.h\
         audio_codecs.h\
         audio_rx.h\
         audio_session.h\
         audio_tx.h\
+        dtmf_player.h\
+        freq_gen.h\
         g711.h\
         g72x.h\
         media_buffer.h\

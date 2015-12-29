@@ -49,6 +49,7 @@
 #include "sockets/socket.h"
 #include "threads/thread.h"
 #include "audits/memman.h"
+#include "qtextcodec.h"
 
 using namespace std;
 
@@ -128,6 +129,16 @@ t_call_history		*call_history;
 // SIP URI to be called passed via the --call command line parameter
 QString			callto_destination;
 
+// CLI command passed via the --cmd command line parameter
+QString			cli_command;
+
+// Indicates if the --call or --cmd must be performed immediately
+bool			cmd_immediate_mode;
+
+// Indicates the profile that should be made active before performing
+// --call or --cmd
+QString			cmd_set_profile;
+
 // Thread id of main thread
 pthread_t		thread_id_main;
 
@@ -145,9 +156,9 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << "Usage: twinkle [options]\n\n";
 			cout << "Options:\n";
 			cout << " -c";
-			cout << "\t\tRun in command line interface mode\n";
+			cout << "\t\tRun in command line interface (CLI) mode\n";
 			cout << endl;
-			cout << " -share <dir>";
+			cout << " --share <dir>";
 			cout << "\tSet the share directory.\n";
 			cout << endl;
 			cout << " -f <profile>";
@@ -167,6 +178,40 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << "\t\tThe address may be a full or partial SIP URI. A partial SIP URI\n";
 			cout << "\t\twill be completed with the information from the user profile.\n";
 			cout << endl;
+			cout << "\t\tA subject may be passed by appending '?subject=<subject>'\n";
+			cout << "\t\tto the address.\n";
+			cout << endl;
+			cout << "\t\tExamples:\n";
+			cout << "\t\ttwinkle --call 123456\n";
+			cout << "\t\ttwinkle --call sip:example@example.com?subject=hello\n";
+			cout << endl;
+			cout << " --cmd <cli command>\n";
+			cout << "\t\tInstruct Twinkle to execute the CLI command. You can run\n";
+			cout << "\t\tall commands from the command line interface mode.\n";
+			cout << "\t\tWhen Twinkle is already running, this will instruct the running\n";
+			cout << "\t\tprocess to execute the CLI command.\n";
+			cout << endl;
+			cout << "\t\tExamples:\n";
+			cout << "\t\ttwinkle --cmd answer\n";
+			cout << "\t\ttwinkle --cmd mute\n";
+			cout << "\t\ttwinkle --cmd 'transfer 12345'\n";
+			cout << endl;
+			cout << " --immediate\n";
+			cout << "\t\tThis option can be used in conjunction with --call or --cmd\n";
+			cout << "\t\tIt indicates the the command or call is to be performed\n";
+			cout << "\t\timmediately without asking the user for any confirmation.\n";
+			cout << endl;
+			cout << " --set-profile <profile>\n";
+			cout << "\t\tMake <profile> the active profile.\n";
+			cout << "\t\tWhen using this option in conjuction with --call and --cmd,\n";
+			cout << "\t\tthen the profile is activated before executing --call or \n";
+			cout << "\t\t--cmd.\n";
+			cout << endl;
+			cout << " --help-cli [cli command]\n";
+			cout << "\t\tWithout a cli command this option lists all available CLI\n";
+			cout << "\t\tcommands. With a CLI command this option prints help on\n";
+			cout << "\t\tthe CLI command.\n";
+			cout << endl;
 			cout << " --version";
 			cout << "\tGet version information.\n";
 			exit(0);
@@ -178,7 +223,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 		} else if (strcmp(argv[i], "-c") == 0) {
 			// CLI mode
 			cli_mode = true;
-		} else if (strcmp(argv[i], "-share") == 0) {
+		} else if (strcmp(argv[i], "--share") == 0) {
 			if (i < argc - 1 && argv[i+1][0] != '-') {
 				i++;
 				sys_config->set_dir_share(argv[i]);
@@ -231,6 +276,40 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 				cout << "SIP URI missing for option '--call'.\n";
 				exit(0);
 			}
+		} else if (strcmp(argv[i], "--cmd") == 0) {
+			if (i < argc - 1) {
+				i++;
+				// CLI command
+				cli_command = argv[i];
+			} else {
+				cout << argv[0] << ": ";
+				cout << "CLI command missing for option '--cmd'.\n";
+				exit(0);
+			}
+		} else if (strcmp(argv[i], "--immediate") == 0) {
+			cmd_immediate_mode = true;
+		} else if (strcmp(argv[i], "--set-profile") == 0) {
+			if (i < argc - 1) {
+				i++;
+				// CLI command
+				cmd_set_profile = argv[i];
+			} else {
+				cout << argv[0] << ": ";
+				cout << "Profile missing for option '--set-profile'.\n";
+				exit(0);
+			}			
+		} else if (strcmp(argv[i], "--help-cli") == 0) {
+			string cmd_help("help ");
+			if (i < argc -1) {
+				i++;
+				// CLI command
+				cmd_help += argv[i];
+			}
+			
+			t_phone p;
+			t_userintf u(&p);
+			u.exec_command(cmd_help);
+			exit(0);
 		} else {
 			cout << argv[0] << ": ";
 			cout << "Uknown option '" << argv[i] << "'." << endl;
@@ -238,6 +317,12 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, list<string> &config
 			cout << "Use --help to get a list of available command line options.\n";
 			exit(0);
 		}
+	}
+	
+	if (!callto_destination.isEmpty() && !cli_command.isEmpty()) {
+		cout << argv[0] << ": ";
+		cout << "--call and --cmd cannot be used at the same time.\n";
+		exit(0);
 	}
 	
 	return;
@@ -252,6 +337,9 @@ int main( int argc, char ** argv )
 	// Initialize globals
 	end_app = false;
 	callto_destination = "";
+	cli_command = "";
+	cmd_immediate_mode = false;
+	cmd_set_profile = "";
 	
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
@@ -308,11 +396,30 @@ int main( int argc, char ** argv )
 	if (env_check_ok &&
 	    !(lock_created = sys_config->create_lock_file(lock_error_msg, already_running))) 
 	{
+		// Activate a profile in the running Twinkle process.
+		if (already_running && !cmd_set_profile.isEmpty()) {
+			cmd_cli(string("user ") + cmd_set_profile.ascii(), true);
+			// Do not exit as this option may be used in conjuction
+			// with --call or --cmd
+		}
+		
 		// If Twinkle is running already and the --call parameter
 		// is present, then send the call destination to the running
 		// Twinkle process.
 		if (already_running && !callto_destination.isEmpty()) {
-			cmd_call(callto_destination.ascii());
+			cmd_call(callto_destination.ascii(), cmd_immediate_mode);
+			exit(0);
+		}
+		
+		// If the --cmd parameter is present, send the cli command
+		// to the running Twinkle process
+		if (already_running && !cli_command.isEmpty()) {
+			cmd_cli(cli_command.ascii(), cmd_immediate_mode);
+			exit(0);
+		}
+		
+		// Exit if only the --set-profile option was given.
+		if (already_running && !cmd_set_profile.isEmpty()) {
 			exit(0);
 		}
 	}
@@ -372,6 +479,7 @@ int main( int argc, char ** argv )
 		qa = new QApplication(tmp, argv);
 		MEMMAN_NEW(qa);
 #endif
+		QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf8"));
 
 		ui = new t_gui(phone);
 		MEMMAN_NEW(ui);

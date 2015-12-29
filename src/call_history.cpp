@@ -74,7 +74,7 @@ void t_call_record::renew() {
 	referred_by_display.clear();
 	referred_by_uri.set_url("");
 	subject.clear();
-	rel_cause = CS_A_PARTY;
+	rel_cause = CS_LOCAL_USER;
 	invite_resp_code = 0;
 	invite_resp_reason.clear();
 	far_end_device.clear();
@@ -171,12 +171,20 @@ void t_call_record::end_call(t_rel_cause cause) {
 	rel_cause = cause;
 }
 
+void t_call_record::end_call(bool far_end) {
+	if (far_end) {
+		end_call(CS_REMOTE_USER);
+	} else {
+		end_call(CS_LOCAL_USER);
+	}
+}
+
 string t_call_record::get_rel_cause(void) const {
 	switch (rel_cause) {
-	case CS_A_PARTY:
-		return "caller";
-	case CS_B_PARTY:
-		return "callee";
+	case CS_LOCAL_USER:
+		return "local user";
+	case CS_REMOTE_USER:
+		return "remote user";
 	case CS_FAILURE:
 		return "failure";
 	}
@@ -196,10 +204,13 @@ string t_call_record::get_direction(void) const {
 }
 
 bool t_call_record::set_rel_cause(const string &cause) {
-	if (cause == "caller") {
-		rel_cause = CS_A_PARTY;
-	} else if (cause == "callee") {
-		rel_cause = CS_B_PARTY;
+	// NOTE: caller and callee are caused used before version 0.7
+	// They are still checked here for backward compatibility
+
+	if (cause == "caller" || cause == "local user") {
+		rel_cause = CS_LOCAL_USER;
+	} else if (cause == "callee" || cause == "remote user") {
+		rel_cause = CS_REMOTE_USER;
 	} else if (cause == "failure") {
 		rel_cause = CS_FAILURE;
 	} else {

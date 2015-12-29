@@ -22,6 +22,7 @@
 #include <string>
 #include <list>
 #include "sys_settings.h"
+#include "audio/audio_codecs.h"
 #include "sockets/url.h"
 
 // Forward declaration
@@ -38,6 +39,8 @@ class t_request;
 #define USER_HOST(u)		phone->get_ip_sip(u)
 #define LOCAL_IP		user_host
 
+#define SPECIAL_PHONE_SYMBOLS	"-()/."
+
 using namespace std;
 
 enum t_hold_variant {
@@ -53,6 +56,19 @@ enum t_ext_support {
 	EXT_REQUIRED
 };
 
+enum t_bit_rate_type {
+	BIT_RATE_INVALID,
+	BIT_RATE_CBR,	// Constant
+	BIT_RATE_VBR,	// Variable
+	BIT_RATE_ABR	// Average
+};
+
+enum t_dtmf_transport {
+	DTMF_INBAND,
+	DTMF_RFC2833,
+	DTMF_AUTO
+};
+
 class t_user {
 private:
 	string			config_filename;
@@ -62,6 +78,10 @@ private:
 
 	t_ext_support str2ext_support(const string &s) const;
 	string ext_support2str(t_ext_support e) const;
+	t_bit_rate_type str2bit_rate_type(const string &s) const;
+	string bit_rate_type2str(t_bit_rate_type b) const;
+	t_dtmf_transport str2dtmf_transport(const string &s) const;
+	string dtmf_transport2str(t_dtmf_transport d) const;
 
 public:
 	// USER
@@ -116,8 +136,25 @@ public:
 
 	// AUDIO
 
-	list<unsigned short>	codecs; // in order of preference
+	list<t_audio_codec>	codecs; // in order of preference
 	unsigned short		ptime; // ptime (ms) for G.711
+	
+	// RTP dynamic payload types for speex
+	unsigned short		speex_nb_payload_type;
+	unsigned short		speex_wb_payload_type;
+	unsigned short		speex_uwb_payload_type;
+	
+	// Speex options
+	t_bit_rate_type		speex_bit_rate_type;
+	int			speex_abr_nb;
+	int			speex_abr_wb;
+	bool			speex_vad;
+	bool			speex_dtx;
+	bool			speex_penh;
+	unsigned short		speex_complexity;
+	
+	// Transport mode for DTMF
+	t_dtmf_transport	dtmf_transport;
 
 	// RTP dynamic payload type for out-of-band DTMF.
 	unsigned short		dtmf_payload_type;
@@ -166,6 +203,14 @@ public:
 	// the domain name: username_domain
 	// If false then the SIP user name is used as contact name
 	bool			use_domain_in_contact;
+	
+	// Allow SDP to change in different INVITE responses. 
+	// According to RFC 3261 13.2.1, if SDP is received in a 1XX response,
+	// then SDP received in subsequent responses should be ignored.
+	// Some SIP proxies do send different SDP in 1XX and 200 though.
+	// E.g. first SDP is to play ring tone, second SDP is to create
+	// an end-to-end media path.
+	bool			allow_sdp_change;
 
 	// Redirections
 	// Allow redirection of a request when a 3XX is received.
@@ -248,6 +293,12 @@ public:
 	// to be a telephone number regardless of the presence of the
 	// user=phone parameter.
 	bool			numerical_user_is_phone;
+	
+	// Remove special symbols from numerical dial strings
+	bool			remove_special_phone_symbols;
+	
+	// Special symbols that must be removed from telephone numbers
+	string			special_phone_symbols;
 	
 	// RING TONES
 	string		ringtone_file;

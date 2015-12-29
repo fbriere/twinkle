@@ -33,6 +33,9 @@ int AuthenticationForm::exec(t_user *user_config, const QString &realm, QString 
 	profileValueTextLabel->setText(user_config->get_profile_name().c_str());
 	userValueTextLabel->setText(user_config->get_display_uri().c_str());
 	realmTextLabel->setText(realm);
+	usernameLineEdit->setText(username);
+	passwordLineEdit->setText(password);
+	if (!username.isEmpty()) passwordLineEdit->setFocus();
 	retval = QDialog::exec();
 	username = usernameLineEdit->text();
 	password = passwordLineEdit->text();

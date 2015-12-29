@@ -123,4 +123,19 @@ bool is_ipaddr(const string &s);
 bool yesno2bool(const string &yesno);
 string bool2yesno(bool b);
 
+// Convert a text string to DTMF digits
+// Characters that cannot be converted will be removed
+string str2dtmf(const string &s);
+
+// Return true if string s looks like a phone number
+// A string looks like a phone number if it consists of digits,
+// *, #, special symbols and white space
+bool looks_like_phone(const string &s, const string &special_symbols);
+
+// Remove all special symbols from a string
+string remove_symbols(const string &s, const string &special_symbols);
+
+// Remove spaces and tabs from a string
+string remove_white_space(const string &s);
+
 #endif

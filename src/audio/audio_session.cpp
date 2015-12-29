@@ -62,7 +62,8 @@ bool t_audio_session::open_dsp(void) {
 bool t_audio_session::open_dsp_full_duplex(void) {
 
 	// Open audio device
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, true, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
+	speaker = t_audio_io::open(sys_config->dev_speaker, true, true, true, 1, 
+		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -88,7 +89,8 @@ bool t_audio_session::open_dsp_full_duplex(void) {
 
 bool t_audio_session::open_dsp_speaker(void) {
 	
-	speaker = t_audio_io::open(sys_config->dev_speaker, true, false, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
+	speaker = t_audio_io::open(sys_config->dev_speaker, true, false, true, 1, 
+		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -108,7 +110,8 @@ bool t_audio_session::open_dsp_mic(void) {
 	// first try to open the device in non-blocking mode.
 	// If the device is still open by another twinkle thread then that
 	// is a bug, but this way at least non deadlock is caused.
-	mic = t_audio_io::open(sys_config->dev_mic, false, true, true, 1, SAMPLEFORMAT_S16, AUDIO_SAMPLE_RATE, true);
+	mic = t_audio_io::open(sys_config->dev_mic, false, true, true, 1, 
+		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!mic) {
 		string msg("Failed to open sound card: ");
 		msg += strerror(errno);
@@ -138,7 +141,9 @@ bool t_audio_session::open_dsp_mic(void) {
 t_audio_session::t_audio_session(t_session *_session,
 		const string &_recv_host, unsigned short _recv_port,
 	        const string &_dst_host, unsigned short _dst_port,
-		t_audio_codec _codec, unsigned short _ptime)
+		t_audio_codec _codec, unsigned short _ptime,
+		const map<unsigned short, t_audio_codec> &recv_payload2ac,
+		const map<t_audio_codec, unsigned short> &send_ac2payload)
 {
 	valid = false;
 
@@ -195,22 +200,12 @@ t_audio_session::t_audio_session(t_session *_session,
 	}
 
 	// Set payload format for outgoing RTP packets
-	switch(codec) {
-	case CODEC_G711_ALAW:
-		rtp_session->
-			setPayloadFormat(StaticPayloadFormat(sptPCMA));
-		break;
-	case CODEC_G711_ULAW:
-		rtp_session->
-			setPayloadFormat(StaticPayloadFormat(sptPCMU));
-		break;
-	case CODEC_GSM:
-		rtp_session->
-			setPayloadFormat(StaticPayloadFormat(sptGSM));
-		break;
-	default:
-		assert(false);
-	}
+	map<t_audio_codec, unsigned short>::const_iterator it;
+	it = send_ac2payload.find(codec);
+	assert(it != send_ac2payload.end());
+	unsigned short payload_id = it->second;
+	rtp_session->setPayloadFormat(DynamicPayloadFormat(
+			payload_id, audio_sample_rate(codec)));
 
 	// Open and initialize sound card
 	t_audio_session *as_peer;
@@ -224,7 +219,8 @@ t_audio_session::t_audio_session(t_session *_session,
 
 	// Create recorder
 	if (!_recv_host.empty() && _recv_port != 0) {
-		audio_rx = new t_audio_rx(this, mic, rtp_session, codec, ptime);
+		audio_rx = new t_audio_rx(this, mic, rtp_session, codec, 
+				payload_id, ptime);
 		MEMMAN_NEW(audio_rx);
 
 		// Setup 3-way configuration if this audio session is part of
@@ -253,7 +249,8 @@ t_audio_session::t_audio_session(t_session *_session,
 
 	// Create player
 	if (!_dst_host.empty() && _dst_port != 0) {
-		audio_tx = new t_audio_tx(this, speaker, rtp_session, codec, ptime);
+		audio_tx = new t_audio_tx(this, speaker, rtp_session, codec,
+				recv_payload2ac, ptime);
 		MEMMAN_NEW(audio_tx);
 
 		// Setup 3-way configuration if this audio session is part of
@@ -327,6 +324,7 @@ t_audio_session::~t_audio_session() {
 		MEMMAN_DELETE(thr_audio_rx);
 		delete thr_audio_rx;
 	}
+
 	if (thr_audio_tx) {
 		MEMMAN_DELETE(thr_audio_tx);
 		delete thr_audio_tx;
@@ -431,8 +429,8 @@ void t_audio_session::set_pt_in_dtmf(unsigned short pt, unsigned short pt_alt) {
 	if (audio_tx) audio_tx->set_pt_telephone_event(pt, pt_alt);
 }
 
-void t_audio_session::send_dtmf(char digit) {
-	if (audio_rx) audio_rx->push_dtmf(digit);
+void t_audio_session::send_dtmf(char digit, bool inband) {
+	if (audio_rx) audio_rx->push_dtmf(digit, inband);
 }
 
 t_line *t_audio_session::get_line(void) const {
@@ -485,6 +483,12 @@ t_audio_io* t_audio_session::get_dsp_speaker(void) const {
 
 t_audio_io* t_audio_session::get_dsp_mic(void) const {
 	return mic;
+}
+
+bool t_audio_session::matching_sample_rates(void) const {
+	int codec_sample_rate = audio_sample_rate(codec);
+	return (speaker->get_sample_rate() == codec_sample_rate &&
+		mic->get_sample_rate() == codec_sample_rate);
 }
 
 void *main_audio_rx(void *arg) {

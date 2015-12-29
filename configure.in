@@ -10,8 +10,8 @@ AC_ARG_WITH(kde,
 	AC_HELP_STRING([--without-kde], [do not compile KDE features]),
 	[ac_cv_kde=$withval], [ac_cv_kde=yes])
 
-AM_INIT_AUTOMAKE(twinkle,0.6.2)
-AC_DEFINE(VERSION_DATE,["February 26 2006"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,0.7)
+AC_DEFINE(VERSION_DATE,["April 30 2006"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -115,7 +115,6 @@ else
 	include_x11_FALSE="yes"
 	include_ARTS_FALSE="yes"
 	AC_PREFIX_DEFAULT(${prefix:-/usr/local})
-	AC_CHECK_HEADER(X11/xpm.h, [], [AC_MSG_ERROR([X11/xpm.h missing])])
 fi
 
 # Check if sndfile library is available
@@ -131,7 +130,18 @@ AC_CHECK_LIB(asound, main, [
 	AC_DEFINE(HAVE_LIBASOUND, 1, [Define to 1 if you have the <libasound> library.])
 	LIBS="-lasound $LIBS"
 	echo "LIBS += -lasound" >> $QT_INCL_PRO
-	])
+	have_libasound="yes"
+	], [have_libasound="no"])
+	
+# Check if SPEEX is available
+AC_CHECK_LIB(speex, main, [
+	AC_CHECK_HEADER(speex/speex.h, [],
+		[AC_MSG_ERROR([speex header files missing (speex-devel package)])])
+	AC_DEFINE(HAVE_SPEEX, 1, [Define to 1 if you have the <speex> library.])
+	LIBS="-lspeex $LIBS"
+	echo "LIBS += -lspeex" >> $QT_INCL_PRO
+	have_speex="yes"
+	], [have_speex="no"])
 
 $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
 echo "distdir:" >> src/gui/Makefile
@@ -146,3 +156,9 @@ AC_OUTPUT(Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile \
 	src/audits/Makefile src/sdp/Makefile src/parser/Makefile \
 	src/sockets/Makefile src/stun/Makefile src/threads/Makefile \
 	twinkle.spec)
+	
+AC_MSG_RESULT([])
+AC_MSG_RESULT([Configured optional components:])
+AC_MSG_RESULT([KDE support: $have_kde])
+AC_MSG_RESULT([ALSA:        $have_libasound])
+AC_MSG_RESULT([Speex:       $have_speex])
