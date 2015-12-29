@@ -1,0 +1,1852 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include <iostream>
+#include <cstdlib>
+#include "userintf.h"
+#include "util.h"
+#include "user.h"
+#include "audio/rtp_telephone_event.h"
+#include "sockets/interfaces.h"
+#include "audits/memman.h"
+
+#define CLI_PROMPT              "Twinkle> "
+
+extern string user_host;
+
+/////////////////////////////
+// Private
+/////////////////////////////
+
+string t_userintf::expand_destination(const string &dst) {
+	string s = dst;
+
+	// Add sip-scheme if missing
+	if (s.substr(0, 4) != "sip:") {
+		s = "sip:" + s;
+	}
+
+	// Add domain if missing
+	if (s.find('@') == string::npos) {
+		s += '@';
+		s += user_config->domain;
+	}
+
+	// RFC 3261 19.1.1
+	// Add user=phone for telehpone numbers
+	// If the URI contains a telephone number it SHOULD contain
+	// the user=phone parameter.
+	if (user_config->numerical_user_is_phone) {
+		t_url u(s);
+		if (u.user_looks_like_phone()) {
+			s += ";user=phone";
+		}
+	}
+
+	return s;
+}
+
+bool t_userintf::parse_args(const list<string> command_list,
+                            list<t_command_arg> &al)
+{
+	t_command_arg	arg;
+	bool parsed_flag = false;
+
+	al.clear();
+	arg.flag = 0;
+	arg.value = "";
+
+	for (list<string>::const_iterator i = command_list.begin();
+	     i != command_list.end(); i++)
+	{
+		if (i == command_list.begin()) continue;
+
+		const string &s = *i;
+		if (s[0] == '-') {
+			if (s.size() == 1) return false;
+			if (parsed_flag) al.push_back(arg);
+
+			arg.flag = s[1];
+
+			if (s.size() > 2) {
+				arg.value = unquote(s.substr(2));
+				al.push_back(arg);
+				arg.flag = 0;
+				arg.value = "";
+				parsed_flag = false;
+			} else {
+				arg.value = "";
+				parsed_flag = true;
+			}
+		} else {
+			if (parsed_flag) {
+				arg.value = unquote(s);
+			} else {
+				arg.flag = 0;
+				arg.value = unquote(s);
+			}
+
+			al.push_back(arg);
+			parsed_flag = false;
+			arg.flag = 0;
+			arg.value = "";
+		}
+	}
+
+	// Last parsed argument was a flag only
+	if (parsed_flag) al.push_back(arg);
+
+	return true;
+}
+
+bool t_userintf::exec_invite(const list<string> command_list) {
+	list<t_command_arg> al;
+	string display;
+	string subject;
+	t_url destination;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help invite");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 'd':
+			display = i->value;
+			break;
+		case 's':
+			subject = i->value;
+			break;
+		case 0:
+			destination.set_url(expand_destination(i->value));
+			break;
+		default:
+			exec_command("help invite");
+			return false;
+			break;
+		}
+	}
+
+	if (!destination.is_valid()) {
+		exec_command("help invite");
+		return false;
+	}
+
+	// Keep call information for redial
+	last_called_url = destination;
+	last_called_display = display;
+	last_called_subject = subject;
+
+	phone->pub_invite(destination, display, subject);
+
+	return true;
+}
+
+bool t_userintf::exec_answer(const list<string> command_list) {
+	cb_stop_tone(phone->get_active_line());
+	phone->pub_answer();
+	return true;
+}
+
+bool t_userintf::exec_reject(const list<string> command_list) {
+	cb_stop_tone(phone->get_active_line());
+	phone->pub_reject();
+	cout << endl;
+	cout << "Line " << phone->get_active_line() + 1 << ": call rejected.\n";
+	cout << endl;
+	return true;
+}
+
+bool t_userintf::exec_redirect(const list<string> command_list) {
+	list<t_command_arg> al;
+	t_url destination;
+	list<t_url> dest_list;
+	int num_redirections = 0;
+	bool show_status = false;
+	bool action_present = false;
+	bool enable = true;
+	bool type_present = false;
+	t_cf_type cf_type;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help redirect");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 's':
+			show_status = true;
+			break;
+		case 't':
+			if (i->value == "always") {
+				cf_type = CF_ALWAYS;
+			} else if (i->value == "busy") {
+				cf_type = CF_BUSY;
+			} else if (i->value == "noanswer") {
+				cf_type = CF_NOANSWER;
+			} else {
+				exec_command("help redirect");
+				return false;
+			}
+
+			type_present = true;
+			break;
+		case 'a':
+			if (i->value == "on") {
+				enable = true;
+			} else if (i->value == "off") {
+				enable = false;
+			} else {
+				exec_command("help redirect");
+				return false;
+			}
+
+			action_present = true;
+			break;
+		case 0:
+			destination.set_url(expand_destination(i->value));
+			dest_list.push_back(destination);
+			num_redirections++;
+			break;
+		default:
+			exec_command("help redirect");
+			return false;
+			break;
+		}
+	}
+
+	if (show_status) {
+		list<t_url> cf_dest; // call forwarding destinations
+
+		cout << endl;
+
+		cout << "Redirect always: ";
+		if (phone->service.get_cf_active(CF_ALWAYS, cf_dest)) {
+			for (list<t_url>::iterator i = cf_dest.begin();
+			     i != cf_dest.end(); i++)
+			{
+				if (i != cf_dest.begin()) cout << ", ";
+				cout << i->encode();
+			}
+		} else {
+			cout << "not active";
+		}
+		cout << endl;
+
+		cout << "Redirect busy: ";
+		if (phone->service.get_cf_active(CF_BUSY, cf_dest)) {
+			for (list<t_url>::iterator i = cf_dest.begin();
+			     i != cf_dest.end(); i++)
+			{
+				if (i != cf_dest.begin()) cout << ", ";
+				cout << i->encode();
+			}
+		} else {
+			cout << "not active";
+		}
+		cout << endl;
+
+		cout << "Redirect noanswer: ";
+		if (phone->service.get_cf_active(CF_NOANSWER, cf_dest)) {
+			for (list<t_url>::iterator i = cf_dest.begin();
+			     i != cf_dest.end(); i++)
+			{
+				if (i != cf_dest.begin()) cout << ", ";
+				cout << i->encode();
+			}
+		} else {
+			cout << "not active";
+		}
+		cout << endl;
+
+		cout << endl;
+		return true;
+	}
+
+	// Enable/disable permanent redirections
+	if (type_present) {
+		if (enable) {
+			if (num_redirections == 0 || num_redirections > 5) {
+				exec_command("help redirect");
+				return false;
+			}
+
+			phone->service.enable_cf(cf_type, dest_list);
+			cout << "Redirection enabled.\n\n";
+			return true;
+		} else {
+			phone->service.disable_cf(cf_type);
+			cout << "Redirection disabled.\n\n";
+			return true;
+		}
+	} else {
+		if (action_present) {
+			if (!enable) {
+				phone->service.disable_cf(CF_ALWAYS);
+				phone->service.disable_cf(CF_BUSY);
+				phone->service.disable_cf(CF_NOANSWER);
+				cout << "All redirections disabled.\n\n";
+				return true;
+			} else {
+				exec_command("help redirect");
+				return false;
+			}
+		}
+	}
+
+	// Redirect current call
+	if (num_redirections == 0 || num_redirections > 5) {
+		exec_command("help redirect");
+		return false;
+	}
+
+	cb_stop_tone(phone->get_active_line());
+	phone->pub_redirect(dest_list, 302);
+	cout << endl;
+	cout << "Line " << phone->get_active_line() + 1 << ": call redirected.\n";
+	cout << endl;
+	return true;
+}
+
+bool t_userintf::exec_dnd(const list<string> command_list) {
+	list<t_command_arg> al;
+	bool show_status = false;
+	bool enable = true;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help dnd");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 's':
+			show_status = true;
+			break;
+		case 'a':
+			if (i->value == "on") {
+				enable = true;
+			} else if (i->value == "off") {
+				enable = false;
+			} else {
+				exec_command("help dnd");
+				return false;
+			}
+			break;
+		default:
+			exec_command("help dnd");
+			return false;
+			break;
+		}
+	}
+
+	if (show_status) {
+		cout << endl;
+		cout << "Do not disturb: ";
+		if (phone->service.is_dnd_active()) {
+			cout << "active";
+		} else {
+			cout << "not active";
+		}
+		cout << endl;
+		return true;
+	}
+
+	if (enable) {
+		phone->service.enable_dnd();
+		cout << "Do not disturb enabled.\n\n";
+		return true;
+	} else {
+		phone->service.disable_dnd();
+		cout << "Do not disturb disabled.\n\n";
+		return true;
+	}
+}
+
+bool t_userintf::exec_bye(const list<string> command_list) {
+	phone->pub_end_call();
+	return true;
+}
+
+bool t_userintf::exec_hold(const list<string> command_list) {
+	phone->pub_hold();
+	return true;
+}
+
+bool t_userintf::exec_retrieve(const list<string> command_list) {
+	phone->pub_retrieve();
+	return true;
+}
+
+bool t_userintf::exec_conference(const list<string> command_list) {
+	if (phone->join_3way(0, 1)) {
+		cout << endl;
+		cout << "Started 3-way conference.\n";
+		cout << endl;
+	} else {
+		cout << endl;
+		cout << "Failed to start 3-way conference.\n";
+		cout << endl;
+	}
+
+	return true;
+}
+
+bool t_userintf::exec_mute(const list<string> command_list) {
+	list<t_command_arg> al;
+	bool show_status = false;
+	bool enable = true;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help mute");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 's':
+			show_status = true;
+			break;
+		case 'a':
+			if (i->value == "on") {
+				enable = true;
+			} else if (i->value == "off") {
+				enable = false;
+			} else {
+				exec_command("help mute");
+				return false;
+			}
+			break;
+		default:
+			exec_command("help mute");
+			return false;
+			break;
+		}
+	}
+
+	if (show_status) {
+		cout << endl;
+		cout << "Line is ";
+		if (phone->is_line_muted(phone->get_active_line())) {
+			cout << "muted.";
+		} else {
+			cout << "not muted.";
+		}
+		cout << endl;
+		return true;
+	}
+
+	if (enable) {
+		phone->mute(enable);
+		cout << "Line muted.\n\n";
+		return true;
+	} else {
+		phone->mute(enable);
+		cout << "Line unmuted.\n\n";
+		return true;
+	}
+}
+
+bool t_userintf::exec_dtmf(const list<string> command_list) {
+	list<t_command_arg> al;
+	string digits;
+
+	if (phone->get_line_state(phone->get_active_line()) == LS_IDLE) {
+		exec_command("help dtmf");
+		return false;
+	}
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help dtmf");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 0:
+			digits = i->value;
+			break;
+		default:
+			exec_command("help dtmf");
+			return false;
+			break;
+		}
+	}
+
+	if (digits == "") {
+		exec_command("help dtmf");
+		return false;
+	}
+
+	throttle_dtmf_not_supported = false;
+	for (string::iterator i = digits.begin(); i != digits.end(); i++) {
+		if (VALID_DTMF_SYM(*i)) {
+			phone->pub_send_dtmf(*i);
+		}
+	}
+
+	return true;
+}
+
+bool t_userintf::exec_register(const list<string> command_list) {
+	phone->pub_registration(REG_REGISTER, DUR_REGISTRATION);
+	return true;
+}
+
+bool t_userintf::exec_deregister(const list<string> command_list) {
+	list<t_command_arg> al;
+	bool dereg_all = false;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help deregister");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 'a':
+			dereg_all = true;
+			break;
+		default:
+			exec_command("help deregister");
+			return false;
+			break;
+		}
+	}
+
+	if (dereg_all) {
+		phone->pub_registration(REG_DEREGISTER_ALL);
+	} else {
+		phone->pub_registration(REG_DEREGISTER);
+	}
+
+	return true;
+}
+
+bool t_userintf::exec_fetch_registrations(const list<string> command_list) {
+	phone->pub_registration(REG_QUERY);
+	return true;
+}
+
+bool t_userintf::exec_options(const list<string> command_list) {
+	list<t_command_arg> al;
+	t_url destination;
+	bool dest_set = false;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help options");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 0:
+			destination.set_url(expand_destination(i->value));
+			dest_set = true;
+			break;
+		default:
+			exec_command("help options");
+			return false;
+			break;
+		}
+	}
+
+	if (!dest_set) {
+		if (phone->get_line_state(phone->get_active_line()) == LS_IDLE) {
+			exec_command("help options");
+			return false;
+		}
+
+		phone->pub_options();
+		return true;
+	}
+
+	if (!destination.is_valid()) {
+		exec_command("help options");
+		return false;
+	}
+
+	phone->pub_options(destination);
+	return true;
+}
+
+bool t_userintf::exec_line(const list<string> command_list) {
+	list<t_command_arg> al;
+	int line = 0;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help line");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 0:
+			line = atoi(i->value.c_str());
+			break;
+		default:
+			exec_command("help line");
+			return false;
+			break;
+		}
+	}
+
+	if (line == 0) {
+		cout << endl;
+		cout << "Active line is: " << phone->get_active_line()+1 << endl;
+		cout << endl;
+		return true;
+	}
+
+	if (line < 1 || line > 2) {
+		exec_command("help line");
+		return false;
+	}
+
+	int current = phone->get_active_line();
+
+	if (line == current + 1) {
+		cout << endl;
+		cout << "Line " << current + 1 << " is already active.\n";
+		cout << endl;
+		return true;
+	}
+
+	phone->pub_activate_line(line - 1);
+	if (phone->get_active_line() == current) {
+		cout << endl;
+		cout << "Current call cannot be put on-hold.\n";
+		cout << "Cannot switch to another line now.\n";
+		cout << endl;
+	} else {
+		cout << endl;
+		cout << "Line " << phone->get_active_line()+1 << " is now active.\n";
+		cout << endl;
+	}
+
+	return true;
+}
+
+bool t_userintf::exec_quit(const list<string> command_list) {
+	if (phone->get_is_registered()) {
+		cout << "De-registering phone.\n";
+		phone->pub_registration(REG_DEREGISTER);
+	}
+
+	end_interface = true;
+	return true;
+}
+
+bool t_userintf::exec_help(const list<string> command_list) {
+	list<t_command_arg> al;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help help");
+		return false;
+	}
+
+	if (al.size() > 1) {
+		exec_command("help help");
+		return false;
+	}
+
+	if (al.size() == 0) {
+		cout << endl;
+		cout << "invite		Invite someone\n";
+		cout << "answer		Answer an incoming call\n";
+		cout << "reject		Reject an incoming call\n";
+		cout << "redirect	Redirect an incoming call\n";
+		cout << "bye		End a call\n";
+		cout << "hold		Put a call on-hold\n";
+		cout << "retrieve	Retrieve a held call\n";
+		cout << "conference	Join 2 calls in a 3-way conference\n";
+		cout << "mute		Mute a line\n";
+		cout << "dtmf		Send DTMF\n";
+		cout << "register	Register your phone at a registrar\n";
+		cout << "deregister	De-register your phone at a registrar\n";
+		cout << "fetch_reg	Fetch registrations from registrar\n";
+		cout << "options\t\tGet capabilities of another SIP endpoint\n";
+		cout << "line		Toggle between phone lines\n";
+		cout << "dnd		Do not disturb\n";
+		cout << "quit		Quit\n";
+		cout << "help		Get help on a command\n";
+		cout << endl;
+
+		return true;
+	}
+
+	bool ambiguous;
+	string c = complete_command(tolower(al.front().value), ambiguous);
+
+	if (c == "invite") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tinvite [-s subject] [-d display] dst\n";
+		cout << "Description:\n";
+		cout << "\tInvite someone.\n";
+		cout << "Arguments:\n";
+		cout << "\t-s subject	Add a subject header to the INVITE\n";
+		cout << "\t-d display	Add display name to To-header\n";
+		cout << "\tdst		SIP uri of party to invite\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "answer") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tanswer\n";
+		cout << "Description:\n";
+		cout << "\tAnswer an incoming call.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "reject") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\treject\n";
+		cout << "Description:\n";
+		cout << "\tReject an incoming call. A 603 Decline response\n";
+		cout << "\twill be sent.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "redirect") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tredirect [-s] [-t type] [-a on|off] [dst ... dst]\n";
+		cout << "Description:\n";
+		cout << "\tRedirect an incoming call. A 302 Moved Temporarily\n";
+		cout << "\tresponse will be sent.\n";
+		cout << "\tYou can redirect the current incoming call by specifying\n";
+		cout << "\tone or more destinations without any other arguments.\n";
+		cout << "Arguments:\n";
+		cout << "\t-s		Show which redirections are active.\n";
+		cout << "\t-t type\t	Type for permanent redirection of calls.\n";
+		cout << "\t		Values: always, busy, noanswer.\n";
+		cout << "\t-a on|off	Enable/disable permanent redirection.\n";
+		cout << "\t		The default action is 'on'.\n";
+		cout << "\t		You can disable all redirections with the\n";
+		cout << "\t		'off' action and no type.\n";
+		cout << "\tdst		SIP uri where the call should be redirected.\n";
+		cout << "\t		You can specify up to 5 destinations.\n";
+		cout << "\t		The destinations will be tried in sequence.\n";
+		cout << "Examples:\n";
+		cout << "\tRedirect current incoming call to michel@twinklephone.com\n";
+		cout << "\tredirect michel@twinklephone.com\n";
+		cout << endl;
+		cout << "\tRedirect busy calls permanently to michel@twinklephone.com\n";
+		cout << "\tredirect -t busy michel@twinklephone.com\n";
+		cout << endl;
+		cout << "\tDisable redirection of busy calls.\n";
+		cout << "\tredirect -t busy -a off\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "bye") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tbye\n";
+		cout << "Description:\n";
+		cout << "\tEnd a call.\n";
+		cout << "\tFor a stable call a BYE will be sent.\n";
+		cout << "\tIf the invited party did not yet sent a final answer,\n";
+		cout << "\tthen a CANCEL will be sent.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "hold") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\thold\n";
+		cout << "Description:\n";
+		cout << "\tPut the current call on the acitve line on-hold.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "retrieve") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tretrieve\n";
+		cout << "Description:\n";
+		cout << "\tRetrieve a held call on the active line.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "conference") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tconference\n";
+		cout << "Description:\n";
+		cout << "\tJoin 2 calls in a 3-way conference. Before you give this\n";
+		cout << "\tcommand you must have a call on each line.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "mute") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tmute [-s] [-a on|off]\n";
+		cout << "Description:\n";
+		cout << "\tMute/unmute the active line.\n";
+		cout << "\tYou can hear the other side of the line, but they cannot\n";
+		cout << "\thear you.\n";
+		cout << "Arguments:\n";
+		cout << "\t-s		Show if line is muted.\n";
+		cout << "\t-a on|off	Mute/unmute.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "dtmf") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tdtmf digits\n";
+		cout << "Description:\n";
+		cout << "\tSend the digits as out-of-band DTMF telephone events ";
+		cout << "(RFC 2833).\n";
+		cout << "\tThis command can only be given when a call is ";
+		cout << "established.\n";
+		cout << "Arguments:\n";
+		cout << "\tdigits	0-9 | A-D | * | #\n";
+		cout << "Example:\n";
+		cout << "\tdtmf 1234#\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "register") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tregister\n";
+		cout << "Description:\n";
+		cout << "\tRegister your phone at a registrar.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "deregister") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tderegister [-a]\n";
+		cout << "Description:\n";
+		cout << "\tDe-register your phone at a registrar.\n";
+		cout << "Arguments:\n";
+		cout << "\t-a	De-register all your registrations\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "fetch_reg") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tfetch_reg\n";
+		cout << "Description:\n";
+		cout << "\tFetch current registrations from registrar.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "options") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\toptions [dst]\n";
+		cout << "Description:\n";
+		cout << "\tGet capabilities of another SIP endpoint.\n";
+		cout << "\tIf no destination is passed as an argument, then\n";
+		cout << "\tthe capabilities of the far-end in the current call\n";
+		cout << "\ton the active line are requested.\n";
+		cout << "Arguments:\n";
+		cout << "\tdst		SIP uri of end-point\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "line") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tline [lineno]\n";
+		cout << "Description:\n";
+		cout << "\tIf no argument is passed then the current active ";
+		cout << "line is shown\n";
+		cout << "\tOtherwise switch to another line. If the current active\n";
+		cout << "\thas a call, then this call will be put on-hold.\n";
+		cout << "\tIf the new active line has a held call, then this call\n";
+		cout << "\twill be retrieved.\n";
+		cout << "Arguments:\n";
+		cout << "\tlineno		Switch to another line (values = ";
+		cout << "1,2)\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "dnd") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tdnd [-s] [-a on|off]\n";
+		cout << "Description:\n";
+		cout << "\tEnable/disable the do not disturb service.\n";
+		cout << "\tIf dnd is enabled then a 480 Temporarily Unavailable ";
+		cout << "response is given\n";
+		cout << "\ton incoming calls.\n";
+		cout << "Arguments:\n";
+		cout << "\t-s		Show if dnd is active.\n";
+		cout << "\t-a on|off	Enable/disable dnd.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "quit") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tquit\n";
+		cout << "Description:\n";
+		cout << "\tQuit.\n";
+		cout << endl;
+
+		return true;
+	}
+
+	if (c == "help") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\thelp [command]\n";
+		cout << "Description:\n";
+		cout << "\tShow help on a command.\n";
+		cout << "Arguments:\n";
+		cout << "\tcommand		Command you want help with\n";
+		cout << endl;
+
+		return true;
+	}
+
+	cout << endl;
+	cout << "\nUnknown command\n\n";
+	cout << endl;
+	return false;
+}
+
+
+/////////////////////////////
+// Public
+/////////////////////////////
+
+t_userintf::t_userintf(t_phone *_phone) {
+	phone = _phone;
+	end_interface = false;
+	tone_gen = NULL;
+	throttle_dtmf_not_supported = false;
+
+	all_commands.push_back("invite");
+	all_commands.push_back("answer");
+	all_commands.push_back("reject");
+	all_commands.push_back("redirect");
+	all_commands.push_back("bye");
+	all_commands.push_back("hold");
+	all_commands.push_back("retrieve");
+	all_commands.push_back("conference");
+	all_commands.push_back("mute");
+	all_commands.push_back("dtmf");
+	all_commands.push_back("register");
+	all_commands.push_back("deregister");
+	all_commands.push_back("fetch_reg");
+	all_commands.push_back("options");
+	all_commands.push_back("line");
+	all_commands.push_back("dnd");
+	all_commands.push_back("quit");
+	all_commands.push_back("exit");
+	all_commands.push_back("q");
+	all_commands.push_back("x");
+	all_commands.push_back("help");
+	all_commands.push_back("h");
+	all_commands.push_back("?");
+}
+
+t_userintf::~t_userintf() {
+	if (tone_gen) {
+		MEMMAN_DELETE(tone_gen);
+		delete tone_gen;
+	}
+}
+
+string t_userintf::complete_command(const string &c, bool &ambiguous) {
+	ambiguous = false;
+	string full_command;
+
+	for (list<string>::const_iterator i = all_commands.begin();
+	     i != all_commands.end(); i++)
+	{
+
+		// If there is an exact match, then this is the command.
+		// This allows a one command to be a prefix of another command.
+		if (c == *i) {
+			ambiguous = false;
+			return c;
+		}
+
+		if (c.size() < i->size() && c == i->substr(0, c.size())) {
+			if (full_command != "") {
+				ambiguous = true;
+				// Do not return here, as there might still be
+				// an exact match.
+			}
+
+			full_command = *i;
+		}
+	}
+
+	if (ambiguous) return "";
+	return full_command;
+}
+
+bool t_userintf::exec_command(const string &command_line) {
+	list<string> l = split_ws(command_line, true);
+	if (l.size() == 0) return false;
+
+	bool ambiguous;
+	string command = complete_command(tolower(l.front()), ambiguous);
+
+	if (ambiguous) {
+		cout << endl;
+		cout << "Ambiguous command\n";
+		cout << endl;
+		return false;
+	}
+
+	if (command == "invite") return exec_invite(l);
+	if (command == "answer") return exec_answer(l);
+	if (command == "reject") return exec_reject(l);
+	if (command == "redirect") return exec_redirect(l);
+	if (command == "bye") return exec_bye(l);
+	if (command == "hold") return exec_hold(l);
+	if (command == "retrieve") return exec_retrieve(l);
+	if (command == "conference") return exec_conference(l);
+	if (command == "mute") return exec_mute(l);
+	if (command == "dtmf") return exec_dtmf(l);
+	if (command == "register") return exec_register(l);
+	if (command == "deregister") return exec_deregister(l);
+	if (command == "fetch_reg") return exec_fetch_registrations(l);
+	if (command == "options") return exec_options(l);
+	if (command == "line") return exec_line(l);
+	if (command == "dnd") return exec_dnd(l);
+	if (command == "quit") return exec_quit(l);
+	if (command == "exit") return exec_quit(l);
+	if (command == "x") return exec_quit(l);
+	if (command == "q") return exec_quit(l);
+	if (command == "help") return exec_help(l);
+	if (command == "h") return exec_help(l);
+	if (command == "?") return exec_help(l);
+
+	cout << endl;
+	cout << "Unknown command\n";
+	cout << endl;
+	return false;
+}
+
+string t_userintf::format_sip_address(const string &display,
+	                              const t_url &uri) const
+{
+	string s;
+
+	s = display;
+	if (display != "") s += " <";
+
+	if (user_config->display_useronly_phone &&
+	    uri.is_phone(user_config->numerical_user_is_phone))
+	{
+		// Display telephone number only
+		s += uri.get_user();
+	} else {
+		// Display full URI
+		s += uri.encode();
+	}
+
+	if (display != "") s += ">";
+
+	return s;
+}
+
+list<string> t_userintf::format_warnings(const t_hdr_warning &hdr_warning) const {
+	string s;
+	list<string> l;
+
+	for (list<t_warning>::const_iterator i = hdr_warning.warnings.begin();
+	     i != hdr_warning.warnings.end(); i++)
+	{
+		s = "Warning: ";
+		s += int2str(i->code);
+		s += ' ';
+		s += i->text;
+		s += " (";
+		s += i->host;
+		if (i->port > 0) s += int2str(i->port, ":&d");
+		s += ')';
+		l.push_back(s);
+	}
+
+	return l;
+}
+
+string t_userintf::format_codec(t_audio_codec codec) const {
+	switch (codec) {
+	case CODEC_NULL: 	return "null";
+	case CODEC_UNSUPPORTED:	return "???";
+	case CODEC_G711_ALAW:	return "g711a";
+	case CODEC_G711_ULAW:	return "g711u";
+	case CODEC_GSM:		return "gsm";
+	default:		return "???";
+	}
+}
+
+void t_userintf::run(void) {
+	string command_line;
+
+	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
+	cout << endl;
+	cout << "Author: " << PRODUCT_AUTHOR << endl;
+	cout << endl;
+
+	cout << "User:           " << user_config->display;
+	cout << " <sip:" << user_config->name;
+	cout << "@" << user_config->domain << ">\n";
+	cout << "Local IP:       " << user_host << endl;
+
+	cout << "Registrar:      ";
+	if (user_config->use_registrar) {
+		cout << user_config->registrar.encode() << endl;
+	} else {
+		if (user_config->use_outbound_proxy) {
+			cout << user_config->outbound_proxy.encode();
+			cout << endl;
+		} else {
+			cout << user_config->domain << ">\n";
+		}
+	}
+
+	cout << "Outbound proxy: ";
+	if (user_config->use_outbound_proxy) {
+		cout << user_config->outbound_proxy.encode();
+		cout << endl;
+	} else {
+		cout << "none\n";
+	}
+
+	if (user_config->use_nat_public_ip) {
+		cout << endl;
+		cout << "Public IP used inside SIP messages: ";
+		cout << user_config->nat_public_ip;
+		cout << endl;
+		cout << "Configure your NAT such that SIP and RTP can pass.\n";
+		cout << endl;
+	}
+
+	cout << endl;
+
+	// Automatic registration at startup if requested
+	if (user_config->register_at_startup) {
+		cout << endl;
+		cout << "Registering phone.\n";
+		phone->pub_registration(REG_REGISTER, DUR_REGISTRATION);
+	}
+
+	while (!end_interface) {
+		cout << CLI_PROMPT;
+		getline(cin, command_line);
+		exec_command(command_line);
+	}
+
+	// Wait till phone is deregistered.
+	while (phone->get_is_registered()) {
+		sleep(1);
+	}
+}
+
+void t_userintf::lock(void) {
+	// TODO
+}
+
+void t_userintf::unlock(void) {
+	// TODO
+}
+
+string t_userintf::select_network_intf(void) {
+	string ip;
+	list<t_interface> *l = get_interfaces();
+	// As memman has no hooks in the socket routines, report it here.
+	MEMMAN_NEW(l);
+	if (l->size() == 0) {
+		cout << "Cannot find a network interface\n";
+		MEMMAN_DELETE(l);
+		delete l;
+		return "";
+	}
+
+	if (l->size() == 1) {
+		ip = l->front().get_ip_addr();
+	} else {
+		int num = 1;
+		cout << "Multiple network interfaces found.\n";
+		for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
+			cout << num << ") " << i->name << ": ";
+			cout << i->get_ip_addr() << endl;
+			num++;
+		}
+
+		cout << endl;
+
+		int selection = 0;
+		while (selection < 1 || selection > l->size()) {
+			cout << "Which interface do you want to use (enter number): ";
+			string choice;
+			getline(cin, choice);
+			selection = atoi(choice.c_str());
+		}
+
+		num = 1;
+		for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
+			if (num == selection) {
+				ip = i->get_ip_addr();
+				break;
+			}
+			num++;
+		}
+
+	}
+
+	MEMMAN_DELETE(l);
+	delete l;
+	return ip;
+}
+
+bool t_userintf::select_user_config(string &config_file) {
+	// In CLI mode, simply select the default config file
+	config_file = USER_CONFIG_FILE;
+	return true;
+}
+
+void t_userintf::cb_incoming_call(int line, const t_request *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "incoming call\n";
+	cout << "From:\t\t";
+	cout << format_sip_address(r->hdr_from.display, r->hdr_from.uri) << endl;
+
+	if (r->hdr_organization.is_populated()) {
+		cout << "Organization:\t" << r->hdr_organization.name << endl;
+	}
+
+	cout << "To:\t\t";
+	cout << format_sip_address(r->hdr_to.display, r->hdr_to.uri) << endl;
+
+	if (r->hdr_subject.is_populated()) {
+		cout << "Subject:\t" << r->hdr_subject.subject << endl;
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	// Play ringtone if the call is received on the active line.
+	if (line == phone->get_active_line()) {
+		cb_play_ringtone();
+	}
+}
+
+void t_userintf::cb_call_cancelled(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "far end cancelled call.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_far_end_hung_up(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "far end ended call.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_answer_timeout(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "answer timeout.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "SDP answer from far end not supported.\n";
+	cout << reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_sdp_answer_missing(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "SDP answer from far end missing.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "Unsupported content type in answer from far end.\n";
+	cout << r->hdr_content_type.media.type << "/";
+	cout << r->hdr_content_type.media.type << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_ack_timeout(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "no ACK received, call will be terminated.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_100rel_timeout(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "no PRACK received, call will be terminated.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_prack_failed(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": PRACK failed.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+
+	cb_stop_tone(line);
+}
+
+void t_userintf::cb_provisional_resp_invite(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": received ";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_cancel_failed(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": cancel failed.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_call_answered(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": far end answered call.\n";
+	cout << r->code << ' ' << r->reason << endl;
+
+	cout << "To: ";
+	cout << format_sip_address(r->hdr_to.display, r->hdr_to.uri) << endl;
+
+	if (r->hdr_organization.is_populated()) {
+		cout << "Organization: " << r->hdr_organization.name << endl;
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_call_failed(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call failed.\n";
+	cout << r->code << ' ' << r->reason << endl;
+
+	// Warnings
+	if (r->hdr_warning.is_populated()) {
+		list<string> l = format_warnings(r->hdr_warning);
+		for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+			cout << *i << endl;
+		}
+	}
+
+	// Redirection response
+	if (r->get_class() == R_3XX && r->hdr_contact.is_populated()) {
+		list<t_contact_param> l = r->hdr_contact.contact_list;
+		l.sort();
+		cout << "You can try the following contacts:\n";
+		for (list<t_contact_param>::iterator i = l.begin();
+		     i != l.end(); i++)
+		{
+			cout << format_sip_address(i->display, i->uri) << endl;
+		}
+	}
+
+	// Unsupported extensions
+	if (r->code == R_420_BAD_EXTENSION) {
+		cout << r->hdr_unsupported.encode();
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_call_ended(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call ended.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_call_established(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": call established.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_options_response(const t_response *r) {
+	cout << endl;
+	cout << "OPTIONS response received: ";
+	cout << r->code << ' ' << r->reason << endl;
+
+	cout << "Capabilities of " << r->hdr_to.uri.encode() << endl;
+
+	cout << "Accepted body types\n";
+	if (r->hdr_accept.is_populated()) {
+		cout << "\t" << r->hdr_accept.encode();
+	} else {
+		cout << "\tUnknown\n";
+	}
+
+	cout << "Accepted encodings\n";
+	if (r->hdr_accept_encoding.is_populated()) {
+		cout << "\t" << r->hdr_accept_encoding.encode();
+	} else {
+		cout << "\tUnknown\n";
+	}
+
+	cout << "Accepted languages\n";
+	if (r->hdr_accept_language.is_populated()) {
+		cout << "\t" << r->hdr_accept_language.encode();
+	} else {
+		cout << "\tUnknown\n";
+	}
+
+	cout << "Allowed requests\n";
+	if (r->hdr_allow.is_populated()) {
+		cout << "\t" << r->hdr_allow.encode();
+	} else {
+		cout << "\tUnknown\n";
+	}
+
+	cout << "Supported extensions\n";
+	if (r->hdr_supported.is_populated()) {
+		if (r->hdr_supported.features.empty()) {
+			cout << "\tNone\n";
+		} else {
+			cout << "\t" << r->hdr_supported.encode();
+		}
+	} else {
+		cout << "\tUnknown\n";
+	}
+
+	cout << "End point type\n";
+	bool endpoint_known = false;
+	if (r->hdr_server.is_populated()) {
+		cout << "\t" << r->hdr_server.encode();
+		endpoint_known = true;
+	}
+
+	if (r->hdr_user_agent.is_populated()) {
+		// Some end-point put a User-Agent header in the response
+		// instead of a Server header.
+		cout << "\t" << r->hdr_user_agent.encode();
+		endpoint_known = true;
+	}
+
+	if (!endpoint_known) {
+		cout << "\tUnknown\n";
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_reinvite_success(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": re-INVITE successful.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_reinvite_failed(int line, const t_response *r) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": re-INVITE failed.\n";
+	cout << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_invalid_reg_resp(const t_response *r, const string &reason) {
+	cout << endl;
+	cout << "Registration failed: " << r->code << ' ' << r->reason << endl;
+	cout << reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_register_success(const t_response *r, unsigned long expires,
+				     bool first_success)
+{
+	// Only report success if this is the first success in a sequence
+	if (!first_success) return;
+
+	cout << endl;
+	cout << "Registration succeeded (expires = " << expires << " seconds)\n";
+
+	// Date at registrar
+	if (r->hdr_date.is_populated()) {
+		cout << "Registrar ";
+		cout << r->hdr_date.encode() << endl;
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_register_failed(const t_response *r, bool first_failure) {
+	// Only report the first failure in a sequence of failures
+	if (!first_failure) return;
+
+	cout << endl;
+	cout << "Registration failed: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_deregister_success(const t_response *r) {
+	cout << endl;
+	cout << "De-registration succeeded: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_deregister_failed(const t_response *r) {
+	cout << endl;
+	cout << "De-registration failed: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+void t_userintf::cb_fetch_reg_failed(const t_response *r) {
+	cout << endl;
+	cout << "Fetch registrations failed: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_fetch_reg_result(const t_response *r) {
+	cout << endl;
+
+	const list<t_contact_param> &l = r->hdr_contact.contact_list;
+	if (l.size() == 0) {
+		cout << "You are not registered\n";
+	} else {
+		cout << "You have the following registrations:\n";
+		for (list<t_contact_param>::const_iterator i = l.begin();
+		     i != l.end(); i++)
+		{
+			cout << i->encode() << endl;
+		}
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_register_inprog(t_register_type register_type) {
+	switch (register_type) {
+	case REG_REGISTER:
+		// Do not report a register refreshment
+		if (phone->get_is_registered()) return;
+
+		// Do not report an automatic register re-attempt
+		if (phone->get_last_reg_failed()) return;
+
+		cout << "\nRegistering phone...\n";
+		break;
+	case REG_DEREGISTER:
+		cout << "\nDeregistering phone...\n";
+		break;
+	case REG_DEREGISTER_ALL:
+		cout << "\nDeregistering all your phones...\n";
+		break;
+	case REG_QUERY:
+		cout << "\nFetching registrations...\n";
+		break;
+	default:
+		assert(false);
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_redirecting_request(int line, const t_contact_param &contact) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": redirecting request to:\n";
+
+	cout << format_sip_address(contact.display, contact.uri) << endl;
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_redirecting_request(const t_contact_param &contact) {
+	cout << endl;
+	cout << "Redirecting request to: ";
+
+	cout << format_sip_address(contact.display, contact.uri) << endl;
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_play_ringtone(void) {
+	if (tone_gen) {
+		tone_gen->stop();
+		MEMMAN_DELETE(tone_gen);
+		delete tone_gen;
+	}
+
+	tone_gen = new t_tone_gen(FILE_RINGTONE);
+	MEMMAN_NEW(tone_gen);
+	tone_gen->start_play_thread(true, INTERVAL_RINGTONE);
+}
+
+void t_userintf::cb_play_ringback(void) {
+	if (tone_gen) {
+		tone_gen->stop();
+		MEMMAN_DELETE(tone_gen);
+		delete tone_gen;
+	}
+
+	tone_gen = new t_tone_gen(FILE_RINGBACK);
+	MEMMAN_NEW(tone_gen);
+	tone_gen->start_play_thread(true, INTERVAL_RINGBACK);
+}
+
+void t_userintf::cb_stop_tone(int line) {
+	// Only stop the tone if the current line is the active line
+	if (line != phone->get_active_line()) return;
+
+	if (!tone_gen) return;
+	tone_gen->stop();
+	MEMMAN_DELETE(tone_gen);
+	delete tone_gen;
+	tone_gen = NULL;
+}
+
+void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": DTMF telephone event detected: ";
+
+	if (VALID_DTMF_EV(dtmf_event)) {
+		cout << dtmf_ev2char(dtmf_event) << endl;
+	} else {
+		cout << "invalid DTMF telephone event (" << (int)dtmf_event << endl;
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_dtmf_not_supported(int line) {
+	if (throttle_dtmf_not_supported) return;
+
+	cout << endl;
+	cout << "Line " << line + 1 << ": far end does not support DTMF events.\n";
+	cout << endl;
+	cout.flush();
+
+	// Throttle subsequent call backs
+	throttle_dtmf_not_supported = true;
+}
+
+void t_userintf::cb_dtmf_supported(int line) {
+	cout << endl;
+	cout << "Line " << line + 1 << ": far end supports DTMF telephone event.\n";
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_line_state_changed(void) {
+	// Nothing to do for CLI
+}
+
+void t_userintf::cb_send_codec_changed(int line, t_audio_codec codec) {
+	// No feedback in CLI
+}
+
+void t_userintf::cb_recv_codec_changed(int line, t_audio_codec codec) {
+	// No feedback in CLI
+}
+
+
+bool t_userintf::cb_ask_user_to_redirect_invite(const t_url &destination,
+			const string &display)
+{
+	// Cannot ask user for permission in CLI, so deny redirection.
+	return false;
+}
+
+bool t_userintf::cb_ask_user_to_redirect_request(const t_url &destination,
+			const string &display, t_method method)
+{
+	// Cannot ask user for permission in CLI, so deny redirection.
+	return false;
+}
+
+bool t_userintf::cb_ask_credentials(const string &realm, string &username,
+			string &password)
+{
+	// Cannot ask user for username/password in CLI
+	return false;
+}
+
+void t_userintf::cb_show_msg(const string &msg, t_msg_priority prio) {
+	cout << endl;
+
+	switch (prio) {
+	case MSG_INFO:
+		cout << "Info: ";
+		break;
+	case MSG_WARNING:
+		cout << "Warning: ";
+		break;
+	case MSG_CRITICAL:
+		cout << "Critical: ";
+		break;
+	default:
+		cout << "???: ";
+	}
+
+	cout << msg << endl;
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_display_msg(const string &msg, t_msg_priority prio) {
+	// In CLI mode this is the same as cb_show_msg
+	cb_show_msg(msg, prio);
+}
+
+
+bool t_userintf::get_last_call_info(t_url &url, string &display,
+			string &subject) const
+{
+	if (!last_called_url.is_valid()) return false;
+	
+	url = last_called_url;
+	display = last_called_display;
+	subject = last_called_subject;
+}
+
+bool t_userintf::can_redial(void) const {
+	return last_called_url.is_valid();
+}
+

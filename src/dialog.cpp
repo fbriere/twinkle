@@ -1,0 +1,2461 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include <cstdlib>
+#include <assert.h>
+#include <iostream>
+#include "dialog.h"
+#include "exceptions.h"
+#include "line.h"
+#include "log.h"
+#include "user.h"
+#include "util.h"
+#include "userintf.h"
+#include "audits/memman.h"
+
+extern t_event_queue	*evq_sender_udp;
+extern t_event_queue	*evq_trans_mgr;
+extern string		user_host;
+
+////////////////////////////////////////////////////////////
+// class t_client_request
+////////////////////////////////////////////////////////////
+
+t_mutex t_client_request::mtx_next_tuid;
+t_tuid t_client_request::next_tuid = 1;
+
+t_client_request::t_client_request(t_request *r, const t_tid _tid) :
+		redirector(r->uri)
+{
+	request = (t_request *)r->copy();
+	tid = _tid;
+	ref_count = 1;
+
+	mtx_next_tuid.lock();
+	tuid = next_tuid++;
+	if (next_tuid == 65535) next_tuid = 1;
+	mtx_next_tuid.unlock();
+}
+
+t_client_request::~t_client_request() {
+	MEMMAN_DELETE(request);
+	delete request;
+}
+
+t_client_request *t_client_request::copy(void) {
+	t_client_request *cr = new t_client_request(*this);
+	MEMMAN_NEW(cr);
+	cr->request = (t_request *)request->copy();
+	cr->ref_count = 1;
+	return cr;
+}
+
+t_request *t_client_request::get_request(void) const {
+	return request;
+}
+
+t_tuid t_client_request::get_tuid(void) const {
+	return tuid;
+}
+
+t_tid t_client_request::get_tid(void) const {
+	return tid;
+}
+
+void t_client_request::set_tid(t_tid _tid) {
+	tid = _tid;
+}
+
+void t_client_request::renew(t_tid _tid) {
+	mtx_next_tuid.lock();
+	tuid = next_tuid++;
+	if (next_tuid == 65535) next_tuid = 1;
+	mtx_next_tuid.unlock();
+
+	tid = _tid;
+}
+
+int t_client_request::get_ref_count(void) const {
+	return ref_count;
+}
+
+int t_client_request::inc_ref_count(void) {
+	ref_count++;
+	return ref_count;
+}
+
+int t_client_request::dec_ref_count(void) {
+	ref_count--;
+	return ref_count;
+}
+
+////////////////////////////////////////////////////////////
+// class t_dialog
+////////////////////////////////////////////////////////////
+
+// Private
+
+t_mutex t_dialog::mtx_next_id;
+t_dialog_id t_dialog::next_id = 1;
+
+void t_dialog::remove_client_request(t_client_request **cr) {
+	if ((*cr)->dec_ref_count() == 0) {
+		MEMMAN_DELETE(*cr);
+		delete *cr;
+	}
+
+	*cr = NULL;
+}
+
+// Create a request within a dialog
+// RFC 3261 12.2.1.1
+t_request *t_dialog::create_request(t_method m) {
+	assert(state != DS_NULL);
+
+	t_request *r = new t_request(m);
+	MEMMAN_NEW(r);
+
+	// RFC 3261 9.1
+	if (m == CANCEL) {
+		assert(req_out_invite);
+		t_request *orig_req = req_out_invite->get_request();
+		r->hdr_to = orig_req->hdr_to;
+		r->hdr_from = orig_req->hdr_from;
+		r->hdr_call_id = orig_req->hdr_call_id;
+		r->hdr_cseq.set_seqnr(orig_req->hdr_cseq.seqnr);
+		r->hdr_cseq.set_method(CANCEL);
+		r->hdr_via = orig_req->hdr_via; // RFC 3261 8.1.1.7
+		r->hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
+		r->hdr_route = orig_req->hdr_route;
+		SET_HDR_USER_AGENT(r->hdr_user_agent);
+		r->uri = orig_req->uri;
+		return r;
+	}
+
+	// To header
+	r->hdr_to.set_uri(remote_uri);
+	r->hdr_to.set_display(remote_display);
+	r->hdr_to.set_tag(remote_tag);
+
+	// From header
+	r->hdr_from.set_uri(local_uri);
+	r->hdr_from.set_display(local_display);
+	r->hdr_from.set_tag(local_tag);
+
+	// Call-ID header
+	r->hdr_call_id.set_call_id(call_id);
+
+	// CSeq header
+	r->hdr_cseq.set_method(m);
+	switch (m) {
+	case ACK:
+		assert(req_out_invite);
+
+		// ACK has the same sequence number
+		// as the INVITE.
+		r->hdr_cseq.set_seqnr(req_out_invite->get_request()->hdr_cseq.seqnr);
+
+		// RFC 3261 22.1
+		// Authorization and Proxy-Authorization headers in INVITE
+		// must be repeated in ACK
+		r->hdr_authorization = req_out_invite->get_request()->
+					hdr_authorization;
+		r->hdr_proxy_authorization = req_out_invite->get_request()->
+					hdr_proxy_authorization;
+		break;
+	default:
+		r->hdr_cseq.set_seqnr(++local_seqnr);
+		break;
+	}
+
+
+	// Via header
+	t_via via(USER_HOST, user_config->sip_udp_port);
+	r->hdr_via.add_via(via);
+
+	// Set Max-Forwards header
+	r->hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
+
+	// User-Agent
+	SET_HDR_USER_AGENT(r->hdr_user_agent);
+
+	// RFC 3261 12.2.1.1
+	// Request URI and Route header
+        if (route_set.empty()) {
+                r->uri = remote_target_uri;
+        } else {
+                if (route_set.front().uri.get_lr()) {
+			// Loose routing
+                        r->uri = remote_target_uri;
+                        for (list<t_route>::iterator i = route_set.begin();
+                             i != route_set.end(); i++)
+                        {
+                                r->hdr_route.add_route(*i);
+                        }
+                        r->hdr_route.route_to_first_route = true;
+                } else {
+			// Strict routing
+                        r->uri = route_set.front().uri;
+                        for (list<t_route>::iterator i = route_set.begin();
+                             i != route_set.end(); i++)
+                        {
+                                if (i != route_set.begin()) {
+                                        r->hdr_route.add_route(*i);
+                                }
+                        }
+
+                        // Add remote target uri to the route list
+                        t_route route;
+                        route.uri = remote_target_uri;
+                        r->hdr_route.add_route(route);
+                }
+        }
+
+	return r;
+}
+
+// NULL state. Waiting for incoming INVITE
+void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	if (r->method != INVITE) {
+		state = DS_TERMINATED;
+		return;
+	}
+
+	call_id = r->hdr_call_id.call_id;
+
+	// Set local tag
+	if (r->hdr_to.tag.size() == 0) {
+		local_tag = NEW_TAG;
+	} else {
+		local_tag = r->hdr_to.tag;
+	}
+
+	// Initialize local seqnr
+	local_seqnr = NEW_SEQNR;
+	local_resp_nr = NEW_SEQNR;
+
+	remote_tag = r->hdr_from.tag;
+	remote_seqnr = r->hdr_cseq.seqnr;
+	local_uri = r->hdr_to.uri;
+	local_display = r->hdr_to.display;
+	remote_uri = r->hdr_from.uri;
+	remote_display = r->hdr_from.display;
+
+	// Set remote target URI and display name
+	remote_target_uri = r->hdr_contact.contact_list.front().uri;
+	remote_target_display = r->
+			hdr_contact.contact_list.front().display;
+
+	// Set route set
+	if (r->hdr_record_route.is_populated()) {
+		route_set = r->hdr_record_route.route_list;
+	}
+
+	// Media information
+	int warn_code;
+	string warn_text;
+	if (r->body) {
+		switch(r->body->get_type()) {
+		case BODY_SDP:
+			if (session->process_sdp_offer((t_sdp*)r->body,
+					warn_code, warn_text)) {
+				session->recvd_offer = true;
+				break;
+			}
+
+			// Unsupported media
+			resp = r->create_response(
+					R_488_NOT_ACCEPTABLE_HERE);
+			resp->hdr_to.set_tag(local_tag);
+			resp->hdr_warning.add_warning(t_warning(USER_HOST,
+					0, warn_code, warn_text));
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			state = DS_TERMINATED;
+			return;
+		default:
+			// Unsupported body type. Reject call.
+			resp = r->create_response(
+					R_415_UNSUPPORTED_MEDIA_TYPE);
+			resp->hdr_to.set_tag(local_tag);
+
+			// RFC 3261 21.4.13
+			SET_HDR_ACCEPT(resp->hdr_accept);
+
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			state = DS_TERMINATED;
+			return;
+		}
+	}
+
+	ui->cb_incoming_call(line->get_line_number(), r);
+
+	switch (line->get_state()) {
+	case LS_IDLE:
+		resp = r->create_response(R_180_RINGING);
+		resp->hdr_to.set_tag(local_tag);
+
+		// RFC 3262 3
+		// Send 180 response reliable if needed
+		if (r->hdr_require.contains(EXT_100REL) ||
+		    (r->hdr_supported.contains(EXT_100REL) &&
+		     (user_config->ext_100rel == EXT_PREFERRED ||
+		      user_config->ext_100rel == EXT_REQUIRED)))
+		{
+			resp->hdr_require.add_feature(EXT_100REL);
+			resp->hdr_rseq.set_resp_nr(++local_resp_nr);
+
+			// According to RFC 3261 4, a reliable provisional response
+			// must establish a dialog. RFC 3261 12.1.1 tells that
+			// a response that establishes a dialog must contain
+			// a contact header and copy record-route headers from
+			// the request.
+
+			// Copy the Record-Route header from request to response
+			if (r->hdr_record_route.is_populated()) {
+				resp->hdr_record_route = r->hdr_record_route;
+			}
+
+			// Set Contact header
+			t_contact_param contact;
+			contact.uri.set_url(line->create_user_contact());
+			resp->hdr_contact.add_contact(contact);
+
+			// RFC 3262 5
+			// Create SDP offer in first reliable response if no offer
+			// was received in INVITE.
+			// This implentation does not create an answer in an
+			// reliable 1xx response if an offer was received.
+			if (!session->recvd_offer) {
+				session->create_sdp_offer(resp,
+					local_uri.get_user());
+			}
+
+			// Keep a copy of the response for retransmission
+			resp_1xx_invite = (t_response *)resp->copy();
+
+			// Start 100rel timeout and guard timers
+			line->start_timer(LTMR_100REL_GUARD, get_id());
+			line->start_timer(LTMR_100REL_TIMEOUT, get_id());
+		}
+
+		line->send_response(resp, req_in_invite->get_tuid(),
+				req_in_invite->get_tid());
+		MEMMAN_DELETE(resp);
+		delete resp;
+		state = DS_W4ANSWER;
+		break;
+	case LS_BUSY:
+		resp = r->create_response(R_486_BUSY_HERE);
+		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+				req_in_invite->get_tid());
+		MEMMAN_DELETE(resp);
+		delete resp;
+		state = DS_TERMINATED;
+		break;
+	default:
+		assert(false);
+	}
+}
+
+// A provisional answer has been sent. Waiting for user to answer.
+void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	bool tear_down = false;
+	bool answer_call = false;
+
+	switch (r->method) {
+	case CANCEL:
+		// Cancel the request and terminate the dialog.
+		// A response on the CANCEL is already given by dialog::recvd_cancel
+		resp = req_in_invite->get_request()->
+				create_response(R_487_REQUEST_TERMINATED);
+		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+				req_in_invite->get_tid());
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		ui->cb_call_cancelled(line->get_line_number());
+		state = DS_TERMINATED;
+		break;
+	case BYE:
+		// Send 200 on the BYE request
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		// Send a 487 response to terminate the pending request
+		resp = req_in_invite->get_request()->create_response(
+						R_487_REQUEST_TERMINATED);
+		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		ui->cb_far_end_hung_up(line->get_line_number());
+		state = DS_TERMINATED;
+		break;
+	case PRACK:
+		// RFC 3262 3
+		if (respond_prack(r, tuid, tid)) {
+			answer_call = answer_after_prack;
+
+			// RFC 3262 5
+			// If an offer was sent in the 1xx response, then PRACK must
+			// contain an answer
+			if (session->sent_offer && r->body) {
+				int warn_code;
+				string warn_text;
+				if (r->body->get_type() != BODY_SDP) {
+					// Only SDP bodies are supported
+					ui->cb_unsupported_content_type(
+						line->get_line_number(), r);
+					tear_down = true;
+				} else if (session->process_sdp_answer((t_sdp *)r->body,
+						warn_code, warn_text))
+				{
+					session->recvd_answer = true;
+					session->start_rtp();
+				} else {
+					// SDP answer is not supported.
+					// Tear down the call.
+					ui->cb_sdp_answer_not_supported(
+						line->get_line_number(), warn_text);
+					tear_down = true;
+				}
+			}
+
+			if (session->sent_offer && !r->body) {
+				ui->cb_sdp_answer_missing(line->get_line_number());
+				tear_down = true;
+			}
+		}
+
+		if (tear_down) {
+			resp = req_in_invite->get_request()->create_response(
+				R_400_BAD_REQUEST,
+				"SDP answer in PRACK missing or unsupported");
+			resp->hdr_to.set_tag(local_tag);
+			line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+			MEMMAN_DELETE(resp);
+			delete resp;
+			state = DS_TERMINATED;
+		} else if (answer_call) {
+			answer();
+		}
+
+		break;
+	default:
+		// INVITE transaction has not been completed. Deny
+		// other requests within the dialog.
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
+			"Session not yet established");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+}
+
+void t_dialog::state_w4answer(t_line_timer timer) {
+	unsigned long	ipaddr;
+	unsigned short	port;
+	t_response *resp;
+
+	// RFC 3262 3
+	switch(timer) {
+	case LTMR_100REL_TIMEOUT:
+		// Retransmit 1xx response.
+		// Send the response directly to the UDP sender thread
+		// bypassing the transaction layer. As this is a retransmission
+		// from the TU, the transaction layer does not need to know.
+		resp_1xx_invite->hdr_via.get_response_dst(ipaddr, port);
+		if (ipaddr == 0) {
+			// This should not happen. The response has been
+			// sent before so it should be possible to sent
+			// it again. Ignore the timeout. When the 100rel
+			// guard timer expires, the dialog will be
+			// cleaned up.
+			break;
+		}
+		evq_sender_udp->push_network(resp_1xx_invite, ipaddr, port);
+		line->start_timer(LTMR_100REL_TIMEOUT, get_id());
+		break;
+	case LTMR_100REL_GUARD:
+		line->stop_timer(LTMR_100REL_TIMEOUT, get_id());
+
+		// PRACK was not received in time. Tear down the call.
+		resp = req_in_invite->get_request()->create_response(
+			R_500_INTERNAL_SERVER_ERROR, "100rel timeout");
+		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		remove_client_request(&req_in_invite);
+		MEMMAN_DELETE(resp_1xx_invite);
+		delete resp_1xx_invite;
+		resp_1xx_invite = NULL;
+
+		state = DS_TERMINATED;
+		log_file->write_report("LTMR_100REL_GUARD expired.",
+				"t_dialog::state_w4answer");
+
+		ui->cb_100rel_timeout(line->get_line_number());
+		break;
+	default:
+		// Other timeouts are not expected. Ignore.
+		break;
+	}
+}
+
+// 200 OK has been sent. Waiting for ACK
+void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	bool tear_down = false;
+
+	switch(r->method) {
+	case ACK:
+		// Dialog is established now.
+		line->stop_timer(LTMR_ACK_TIMEOUT, get_id());
+		line->stop_timer(LTMR_ACK_GUARD, get_id());
+		remove_client_request(&req_in_invite);
+		MEMMAN_DELETE(resp_invite);
+		delete resp_invite;
+		resp_invite = NULL;
+
+		// If no offer was received in INVITE, then an offer
+		// has been sent in 200 OK or reliable 1xx (RFC 3262).
+		// Therefor an answer must be present in ACK
+		if (!session->recvd_offer && r->body) {
+			int warn_code;
+			string warn_text;
+			if (r->body->get_type() != BODY_SDP) {
+				// Only SDP bodies are supported
+				ui->cb_unsupported_content_type(
+					line->get_line_number(), r);
+				tear_down = true;
+			} else if (session->process_sdp_answer((t_sdp *)r->body,
+					warn_code, warn_text))
+			{
+				session->recvd_answer = true;
+				session->start_rtp();
+			} else {
+				// SDP answer is not supported.
+				// Tear down the call.
+				ui->cb_sdp_answer_not_supported(
+						line->get_line_number(), warn_text);
+				tear_down = true;
+			}
+		}
+
+		if (!session->recvd_offer && !r->body) {
+			ui->cb_sdp_answer_missing(line->get_line_number());
+			tear_down = true;
+		}
+
+		if (end_after_ack) {
+			ui->cb_far_end_hung_up(line->get_line_number());
+			state = DS_TERMINATED;
+		} else {
+			state = DS_CONFIRMED;
+			if (tear_down) send_bye();
+		}
+
+		ui->cb_call_established(line->get_line_number());
+		break;
+	case BYE:
+		// Send 200 on the BYE request
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		// The session will be ended when an ACK has been
+		// received.
+		end_after_ack = true;
+		break;
+	case PRACK:
+		// RFC 3262 3
+		// This is a late PRACK as the call is answered already.
+		// Respond in a normal way to the PRACK
+		respond_prack(r, tuid, tid);
+		break;
+	default:
+		// ACK has not been received. Deny other requests.
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
+			"Waiting for ACK");
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+}
+
+void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+	bool tear_down = false;
+
+	switch(r->method) {
+	case ACK:
+		// re_INVITE is finished now
+		line->stop_timer(LTMR_ACK_TIMEOUT, get_id());
+		line->stop_timer(LTMR_ACK_GUARD, get_id());
+		remove_client_request(&req_in_invite);
+		MEMMAN_DELETE(resp_invite);
+		delete resp_invite;
+		resp_invite = NULL;
+
+		// If no offer was received in INVITE, then an offer
+		// has been sent in 200 OK or reliable 1xx (RFC 3262).
+		// Therefor an answer must be present in ACK
+		if (!session_re_invite->recvd_offer && r->body) {
+			int warn_code;
+			string warn_text;
+
+			if (r->body->get_type() != BODY_SDP) {
+				// Only SDP bodies are supported
+				ui->cb_unsupported_content_type(
+					line->get_line_number(), r);
+				tear_down = true;
+			} else if (session_re_invite->process_sdp_answer(
+				(t_sdp *)r->body, warn_code, warn_text))
+			{
+				session_re_invite->recvd_answer = true;
+			} else {
+				// SDP answer is not supported.
+				// Tear down the call.
+				ui->cb_sdp_answer_not_supported(
+						line->get_line_number(), warn_text);
+				tear_down = true;
+			}
+		}
+
+		if (!session_re_invite->recvd_offer && !r->body) {
+			ui->cb_sdp_answer_missing(line->get_line_number());
+			tear_down = true;
+		}
+
+		if (end_after_ack) {
+			ui->cb_far_end_hung_up(line->get_line_number());
+			state = DS_TERMINATED;
+		} else {
+			state = DS_CONFIRMED;
+			if (tear_down) {
+				send_bye();
+			} else {
+				// Make the new session description current
+				activate_new_session();
+			}
+		}
+		break;
+	case BYE:
+		// Send 200 on the BYE request
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		// The session will be ended when an ACK has been
+		// received.
+		end_after_ack = true;
+		break;
+	default:
+		// ACK has not been received. Handle other incoming request
+		// as if we are in the confirmed state. These incoming requests
+		// should not change state.
+		state_confirmed(r, tuid, tid);
+		assert(state == DS_W4ACK_RE_INVITE);
+		break;
+	}
+}
+
+// RFC 3261 13.3.1.4
+void t_dialog::state_w4ack(t_line_timer timer) {
+	unsigned long	ipaddr;
+	unsigned short	port;
+
+	// NOTE: this code is also executed for re-INVITE ACK time-outs
+	//       timeout handling for INVITE/re-INVITE is the same
+
+	switch(timer) {
+	case LTMR_ACK_TIMEOUT:
+		// Retransmit 2xx response.
+		// Send the response directly to the UDP sender thread
+		// as the INVITE transaction completed already.
+		// (see RFC 3261 17.2.1)
+		resp_invite->hdr_via.get_response_dst(ipaddr, port);
+		if (ipaddr == 0) {
+			// This should not happen. The response has been
+			// sent before so it should be possible to sent
+			// it again. Ignore the timeout. When the ACK
+			// guard timer expires, the dialog will be
+			// cleaned up.
+			break;
+		}
+		evq_sender_udp->push_network(resp_invite, ipaddr, port);
+		line->start_timer(LTMR_ACK_TIMEOUT, get_id());
+		break;
+	case LTMR_ACK_GUARD:
+		line->stop_timer(LTMR_ACK_TIMEOUT, get_id());
+		// Consider dialog as established and tear down call
+		remove_client_request(&req_in_invite);
+		MEMMAN_DELETE(resp_invite);
+		delete resp_invite;
+		resp_invite = NULL;
+		state = DS_CONFIRMED;
+		log_file->write_report("LTMR_ACK_GUARD expired.",
+				"t_dialog::state_w4ack");
+		if (end_after_ack) {
+			state = DS_TERMINATED;
+		} else {
+			send_bye();
+		}
+		ui->cb_ack_timeout(line->get_line_number());
+		break;
+	default:
+		// Other timeouts are not expected. Ignore.
+		break;
+	}
+}
+
+void t_dialog::state_w4ack_re_invite(t_line_timer timer) {
+	state_w4ack(timer);
+}
+
+// In the confirmed state, requests will be responded.
+void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	switch(r->method) {
+	case INVITE:
+		// re-INVITE
+		process_re_invite(r, tuid, tid);
+		break;
+	case BYE:
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		ui->cb_far_end_hung_up(line->get_line_number());
+		state = DS_TERMINATED;
+		break;
+	case ACK:
+		// Ignore ACK
+		break;
+	case OPTIONS:
+		resp = line->create_options_response(r, true);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+	case PRACK:
+		// RFC 3262 3
+		// This is a late PRACK. Respond in a normal way.
+		respond_prack(r, tuid, tid);
+		break;
+	default:
+		resp = r->create_response(R_400_BAD_REQUEST);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+}
+
+void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	session_re_invite = session->create_clean_copy();
+
+	// Media information
+	int warn_code;
+	string warn_text;
+	if (r->body) {
+		switch(r->body->get_type()) {
+		case BODY_SDP:
+			if (session_re_invite->
+					process_sdp_offer((t_sdp*)r->body,
+						warn_code, warn_text))
+			{
+				session_re_invite->recvd_offer = true;
+				break;
+			}
+
+			// Unsupported media
+			resp = r->create_response(
+					R_488_NOT_ACCEPTABLE_HERE);
+			resp->hdr_warning.add_warning(t_warning(USER_HOST,
+					0, warn_code, warn_text));
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+
+			// Stay in the confirmed state. The sender of the
+			// request has to determine if the dialog needs to
+			// be torn donw by sending a BYE.
+			return;
+		default:
+			// Unsupported body type. Reject call.
+			resp = r->create_response(
+					R_415_UNSUPPORTED_MEDIA_TYPE);
+
+			// RFC 3261 21.4.13
+			SET_HDR_ACCEPT(resp->hdr_accept);
+
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+
+			// Stay in the confirmed state.
+			return;
+		}
+	}
+
+	// Refresh target
+	if (r->hdr_contact.is_populated() &&
+	    r->hdr_contact.contact_list.size() > 0)
+	{
+		remote_target_uri = r->hdr_contact.contact_list.front().uri;
+		remote_target_display = r->
+			hdr_contact.contact_list.front().display;
+	}
+
+	// Send 200 OK
+	resp_invite = r->create_response(R_200_OK);
+	resp_invite->hdr_to.set_tag(local_tag);
+
+	// Set Contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact());
+	resp_invite->hdr_contact.add_contact(contact);
+
+	// Set Allow and Supported headers
+	SET_HDR_ALLOW(resp_invite->hdr_allow);
+	SET_HDR_SUPPORTED(resp_invite->hdr_supported);
+
+	// RFC 3261 13.3.1.4
+	// Create SDP offer if no offer was received in INVITE and no offer
+	// was sent in a reliable 1xx response (RFC 3262 5).
+	// Otherwise create an SDP answer.
+	if (!session_re_invite->recvd_offer && !session_re_invite->sent_offer) {
+		session_re_invite->create_sdp_offer(resp_invite,
+						local_uri.get_user());
+	} else {
+		session_re_invite->create_sdp_answer(resp_invite,
+						local_uri.get_user());
+	}
+
+	line->send_response(resp_invite, tuid, tid);
+	line->start_timer(LTMR_ACK_GUARD, get_id());
+	line->start_timer(LTMR_ACK_TIMEOUT, get_id());
+
+	state = DS_W4ACK_RE_INVITE;
+}
+
+// INVITE sent. Waiting for a first non-100 response.
+void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
+	if (r->hdr_cseq.method != INVITE) return;
+
+	// 1XX (except 100) and 2XX establish the dialog.
+	// Update the state for dialog establishment.
+	// RFC 3261 12.1.2
+	switch (r->get_class()) {
+	case R_1XX:
+		if (r->code == R_100_TRYING) break;
+		// fall thru
+	case R_2XX:
+		// Set remote tag
+		remote_tag = r->hdr_to.tag;
+
+		create_route_set(r);
+		create_remote_target(r);
+
+		// Set remote URI and display name
+		remote_uri = r->hdr_to.uri;
+		remote_display = r->hdr_to.display;
+
+		process_1xx_2xx_invite_resp(r);
+		break;
+	default:
+		break;
+	}
+
+	// RFC 3262
+	// Send PRACK if required
+	send_prack_if_required(r);
+
+	switch (r->get_class()) {
+	case R_1XX:
+		// Provisional response received.
+		ui->cb_provisional_resp_invite(line->get_line_number(), r);
+		if (r->code > R_100_TRYING && r->hdr_to.tag.size() > 0) {
+			state = DS_EARLY;
+		} else {
+			state = DS_W4INVITE_RESP2;
+		}
+
+		// User indicated that the request should be cancelled.
+		// Now that the first provional response has been received,
+		// a CANCEL can be sent.
+		if (request_cancelled) {
+			send_cancel(true);
+		}
+
+		break;
+	case R_2XX:
+		// Success received.
+		ack_2xx_invite(r);
+		ui->cb_call_answered(line->get_line_number(), r);
+		state = DS_CONFIRMED;
+
+		// User indicated that the request should be cancelled,
+		// but no response was received yet. A final response
+		// has been received. Instead of CANCEL a BYE will be
+		// sent now.
+		if (request_cancelled) {
+			send_bye();
+		}
+
+		break;
+	case R_3XX:
+	case R_4XX:
+	case R_5XX:
+	case R_6XX:
+	default:
+		// Final response (failure) received.
+		// Treat unknown response classes as failure.
+		ui->cb_stop_tone(line->get_line_number());
+		ui->cb_call_failed(line->get_line_number(), r);
+		remove_client_request(&req_out_invite);
+		state = DS_TERMINATED;
+		break;
+	}
+}
+
+// INVITE response sent. At least 1 provisional response (not 100 Trying)
+// received.
+void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
+	if (r->hdr_cseq.method != INVITE) return;
+
+	switch (r->get_class()) {
+	case R_1XX:
+		// RFC 3262 4
+		// Discard retransmissiona and out-of-sequence reliable
+		// provisional responses.
+		if (must_discard_100rel(r)) return;
+
+		// fall thru
+	case R_2XX:
+		create_route_set(r);
+		create_remote_target(r);
+		process_1xx_2xx_invite_resp(r);
+		break;
+	default:
+		break;
+	}
+
+	// RFC 3262
+	// Send PRACK if required
+	send_prack_if_required(r);
+
+	switch (r->get_class()) {
+	case R_1XX:
+		// Provisional response received.
+		ui->cb_provisional_resp_invite(line->get_line_number(), r);
+
+		if (request_cancelled) {
+			send_cancel(true);
+		}
+
+		break;
+	case R_2XX:
+		// Success received.
+		ack_2xx_invite(r);
+		ui->cb_call_answered(line->get_line_number(), r);
+		state = DS_CONFIRMED;
+
+		// User indicated that the request should be cancelled,
+		// but no response was received yet. A final response
+		// has been received. Instead of CANCEL a BYE will be
+		// sent now.
+		if (request_cancelled) {
+			send_bye();
+		}
+
+		break;
+	case R_3XX:
+	case R_4XX:
+	case R_5XX:
+	case R_6XX:
+	default:
+		// Final response (failure) received.
+		// Treat unknown response classes as failure.
+		ui->cb_stop_tone(line->get_line_number());
+		ui->cb_call_failed(line->get_line_number(), r);
+		remove_client_request(&req_out_invite);
+		state = DS_TERMINATED;
+		break;
+	}
+}
+
+// BYE sent. Waiting for response.
+void t_dialog::state_w4bye_resp(t_response *r, t_tuid tuid, t_tid tid) {
+	if (r->hdr_cseq.method != BYE) return;
+
+	switch (r->get_class()) {
+	case R_1XX:
+		// Provisional response received. Wait for final response.
+		break;
+	default:
+		// All final responses terminate the dialog.
+		ui->cb_call_ended(line->get_line_number(), r);
+		remove_client_request(&req_out);
+		state = DS_TERMINATED;
+		break;
+	}
+}
+
+// Confirmed dialog. Responses are for mid-dialog requests.
+void t_dialog::state_confirmed_resp(t_response *r, t_tuid tuid, t_tid tid) {
+	// 1XX responses are not expected. If they are received
+	// then simply ignore them.
+	if (r->is_provisional()) return;
+
+	switch (r->hdr_cseq.method) {
+	case OPTIONS:
+		ui->cb_options_response(r);
+		remove_client_request(&req_out);
+		break;
+	default:
+		// The received response should match the pending request.
+		// So this point should never be reached.
+		assert(false);
+		break;
+	}
+
+	// RFC 3261 12.2.1.2
+	// If a mid-dialog request is times out, or the call/transaction
+	// does not exist anymore at the server, then terminate the
+	// dialog.
+	if (r->code == R_408_REQUEST_TIMEOUT ||
+	    r->code == R_481_TRANSACTION_NOT_EXIST)
+	{
+		send_bye();
+	}
+}
+
+void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
+	if (r->hdr_cseq.method != INVITE) return;
+
+	switch (r->get_class()) {
+	case R_1XX:
+		if (r->code == R_100_TRYING) break;
+
+		if (state == DS_W4RE_INVITE_RESP2) {
+			// RFC 3262
+			// Discard retransmissions and out-of-order
+			// reliable provisional responses.
+			if (must_discard_100rel(r)) return;
+		}
+
+		// RFC 3262
+		// Send PRACK if required
+		send_prack_if_required(r);
+
+		// fall thru
+	case R_2XX:
+		// Process SDP answer if answer is present and no
+		// answer has been received yet.
+		if (!session_re_invite->recvd_answer && r->body) {
+			int warn_code;
+			string warn_text;
+
+			if (r->body->get_type() != BODY_SDP) {
+				// Only SDP bodies are supported
+				ui->cb_unsupported_content_type(
+					line->get_line_number(), r);
+				request_cancelled = true;
+			} else if (session_re_invite->
+				   process_sdp_answer((t_sdp *)r->body,
+				   	warn_code, warn_text))
+			{
+				session_re_invite->recvd_answer = true;
+			} else {
+				// SDP answer is not supported. Cancel
+				// the INVITE.
+				request_cancelled = true;
+				ui->cb_sdp_answer_not_supported(
+						line->get_line_number(), warn_text);
+				break;
+			}
+		}
+
+		// This implementation always sends an offer in
+		// INVITE. So an answer must be in a 2XX response
+		// as PRACK is not supported.
+		if (r->get_class() == R_2XX && !r->body) {
+			request_cancelled = true;
+			ui->cb_sdp_answer_missing(line->get_line_number());
+			break;
+		}
+
+		// Refresh target URI and display name
+		if (r->get_class() == R_2XX &&
+		    r->hdr_contact.is_populated() &&
+	    	    r->hdr_contact.contact_list.size() > 0)
+		{
+			remote_target_uri = r->
+				hdr_contact.contact_list.front().uri;
+			remote_target_display = r->
+				hdr_contact.contact_list.front().display;
+		}
+
+		break;
+	default:
+		break;
+	}
+
+	switch (r->get_class()) {
+	case R_1XX:
+		// Provisional response received.
+		state = DS_W4RE_INVITE_RESP2;
+
+		// Start re-INVITE guard timer (no RFC requirement)
+		line->start_timer(LTMR_RE_INVITE_GUARD, get_id());
+
+		// User indicated that the request should be cancelled.
+		// Now that the first provional response has been received,
+		// a CANCEL can be sent.
+		if (request_cancelled) {
+			send_cancel(true);
+		}
+
+		break;
+	case R_2XX:
+		// Success received.
+		line->stop_timer(LTMR_RE_INVITE_GUARD, get_id());
+
+		ack_2xx_invite(r);
+		ui->cb_reinvite_success(line->get_line_number(), r);
+		state = DS_CONFIRMED;
+
+		// User indicated that the request should be cancelled,
+		// but no response was received yet. A final response
+		// has been received.
+		if (request_cancelled) {
+			send_bye();
+		} else {
+			// Make the re-INIVTE session info the current info
+			activate_new_session();
+		}
+
+		break;
+	case R_3XX:
+	case R_4XX:
+	case R_5XX:
+	case R_6XX:
+	default:
+		// Final response (failure) received.
+		// Treat unknown response classes as failure.
+		// TODO: automatic retransmit when 491 is received
+		//       RFC 3261 14.1
+		line->stop_timer(LTMR_RE_INVITE_GUARD, get_id());
+		ui->cb_reinvite_failed(line->get_line_number(), r);
+		remove_client_request(&req_out_invite);
+
+		// RFC 3261 14.1
+		// delete re-INVITE session info. Old session info
+		// stays as re-INVITE failed.
+		MEMMAN_DELETE(session_re_invite);
+		delete session_re_invite;
+		session_re_invite = NULL;
+
+		state = DS_CONFIRMED;
+
+		// RFC 3261 14.1
+		if (r->code == R_408_REQUEST_TIMEOUT ||
+		    r->code == R_481_TRANSACTION_NOT_EXIST)
+		{
+			send_bye();
+		}
+		break;
+	}
+}
+
+void t_dialog::state_w4re_invite_resp(t_line_timer timer) {
+	switch(timer) {
+	case LTMR_RE_INVITE_GUARD:
+		// Consider this as if a 408 Timeout response has
+		// been received. Terminate the dialog.
+		send_bye();
+		break;
+	default:
+		break;
+	}
+}
+
+void t_dialog::activate_new_session(void) {
+	t_audio_session *as = NULL;
+
+	if (session->equal_audio(*session_re_invite)) {
+		// Remove the audio session from the current session object
+		as = session->get_audio_session();
+		session->set_audio_session(NULL);
+	}
+
+	MEMMAN_DELETE(session);
+	delete session;
+	session = session_re_invite;
+	session_re_invite = NULL;
+
+	if (as) {
+		// Copy the audio session from the old session object
+		session->set_audio_session(as);
+	} else {
+		session->start_rtp();
+	}
+}
+
+void t_dialog::create_route_set(t_response *r) {
+	if (route_set.empty() && r->hdr_record_route.is_populated())
+	{
+		route_set = r->hdr_record_route.route_list;
+		route_set.reverse();
+	}
+}
+
+void t_dialog::create_remote_target(t_response *r) {
+	if (r->hdr_contact.is_populated()) {
+		remote_target_uri = r->hdr_contact.contact_list.front().uri;
+		remote_target_display = r->hdr_contact.contact_list.front().display;
+	}
+}
+
+void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
+	// Process SDP answer if answer is present and no
+	// answer has been received yet.
+	//
+	// NOTE: in case of forking 1xx with SDP answers from different destinations
+	//       may be received. Only the first 1xx with an SDP answer will create
+	//       a media streams. The others cannot be honored.
+	//       This also leads to a problem when the first 2xx comes from a
+	//       destination different than the destination that sent the first
+	//       1xx with SDP. The SDP in the 2xx will be ignored as SDP in a 1xx
+	//       was already received. This leads to a dead call!!
+	//	 Early media and forking cannot be mixed.
+	//
+	// TODO: maybe as a kludge it can be checked that the 2xx comes from a
+	//       different destination than the 1xx of the early media. If it
+	//       does, then stop the current RTP stream and start a new one.
+	//	 Care must be taken that a 2nd 2xx will not override an already
+	//	 established call though.
+	if (!session->recvd_answer && r->body) {
+		int warn_code;
+		string warn_text;
+
+		if (r->body->get_type() != BODY_SDP) {
+			// Only SDP bodies are supported
+			ui->cb_unsupported_content_type(line->get_line_number(), r);
+			request_cancelled = true;
+		} else if (session->process_sdp_answer((t_sdp *)r->body,
+				warn_code, warn_text))
+		{
+			session->recvd_answer = true;
+
+			if (r->is_provisional()) {
+				log_file->write_report("Starting early media.",
+					"t_dialog::process_1xx_2xx_invite_resp");
+			}
+
+			// Stop locally played tones to free the soundcard
+			// for the voice stream
+			ui->cb_stop_tone(line->get_line_number());
+
+			session->start_rtp();
+		} else {
+			// SDP answer is not supported. Cancel
+			// the INVITE.
+			request_cancelled = true;
+			ui->cb_sdp_answer_not_supported(
+					line->get_line_number(), warn_text);
+		}
+	} else if (r->code == R_180_RINGING &&
+	           !ringing_received && !session->recvd_answer)
+	{
+		// There is no SDP and far-end indicated that it is ringing
+		// so generate ring back tone locally.
+		ui->cb_play_ringback();
+		ringing_received = true;
+	}
+
+	// This implementation always sends an offer in
+	// INVITE. So an answer must be in a 2XX response if
+	// no answer has been received in a provisional response.
+	if (!session->recvd_answer && r->get_class() == R_2XX && !r->body) {
+		request_cancelled = true;
+		ui->cb_sdp_answer_missing(line->get_line_number());
+	}
+}
+
+void t_dialog::ack_2xx_invite(t_response *r) {
+	unsigned long ipaddr;
+	unsigned short port;
+
+	if (ack) {
+		// delete previous cached ACK
+		MEMMAN_DELETE(ack);
+		delete ack;
+	}
+	ack = create_request(ACK);
+	ack->get_destination(ipaddr, port, *user_config);
+
+	// If for some strange reason the destination could
+	// not be computed then wait for a retransmission of
+	// 2XX.
+	if (ipaddr != 0 && port != 0) {
+		evq_sender_udp->push_network(ack, ipaddr, port);
+	}
+
+	remove_client_request(&req_out_invite);
+}
+
+void t_dialog::send_prack_if_required(t_response *r) {
+	// RFC 3262
+	// Send PRACK if needed
+	if (r->get_class() == R_1XX && r->code != R_100_TRYING) {
+		// RFC 3262 4
+		// Send PRACK if the 1xx response is sent reliable and 100rel
+		// is enabled.
+		if (r->hdr_to.tag.size() > 0 &&
+		    r->hdr_require.contains(EXT_100REL) &&
+		    r->hdr_rseq.is_populated() &&
+		    remote_target_uri.is_valid() &&
+		    user_config->ext_100rel != EXT_DISABLED)
+		{
+			t_request *prack = create_request(PRACK);
+			prack->hdr_rack.set_method(r->hdr_cseq.method);
+			prack->hdr_rack.set_cseq_nr(r->hdr_cseq.seqnr);
+			prack->hdr_rack.set_resp_nr(r->hdr_rseq.resp_nr);
+
+			// Delete previous PRACK request if it is still pending
+			if (req_prack) {
+				log_file->write_report("Previous PRACK still pending.",
+					"t_dialog::send_prack_if_needed");
+				remove_client_request(&req_prack);
+			}
+
+			req_prack = new t_client_request(prack, 0);
+			MEMMAN_NEW(req_prack);
+			line->send_request(prack, req_prack->get_tuid());
+			MEMMAN_DELETE(prack);
+			delete prack;
+		}
+	}
+}
+
+bool t_dialog::must_discard_100rel(t_response *r) const {
+	// RFC 3262 4
+	// Discard retransmissiona and out-of-sequence reliable
+	// provisional responses.
+	if (r->code > R_100_TRYING && r->hdr_to.tag.size() > 0 &&
+	    r->hdr_require.contains(EXT_100REL) &&
+	    r->hdr_rseq.is_populated() &&
+	    user_config->ext_100rel != EXT_DISABLED)
+	{
+		if (r->hdr_rseq.resp_nr <= remote_resp_nr) {
+			// This is a retransmission.
+			// PRACK has already been sent. The transaction
+			// layer takes care of retransmitting PRACK
+			// if PRACK got lost.
+			log_file->write_report("Discard 1xx retransmission.",
+				"t_dialog::must_discard_100rel");
+			return true;
+		}
+
+		if (r->hdr_rseq.resp_nr != remote_resp_nr + 1) {
+			// A provisional response has been lost.
+			// Discard this response and wait for a retransmission
+			// of the lost response.
+			log_file->write_report("Discard out-of-order 1xx",
+				"t_dialog::must_discard_100rel");
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool t_dialog::respond_prack(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	// RFC 3262 3
+	if (resp_1xx_invite &&
+	    r->hdr_rack.method == resp_1xx_invite->hdr_cseq.method &&
+	    r->hdr_rack.cseq_nr == resp_1xx_invite->hdr_cseq.seqnr &&
+	    r->hdr_rack.resp_nr == resp_1xx_invite->hdr_rseq.resp_nr)
+	{
+		// The provisional response has been delivered now.
+		line->stop_timer(LTMR_100REL_TIMEOUT, get_id());
+		line->stop_timer(LTMR_100REL_GUARD, get_id());
+		MEMMAN_DELETE(resp_1xx_invite);
+		delete resp_1xx_invite;
+		resp_1xx_invite = NULL;
+
+		// Send 200 on the PRACK request
+		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		return true;
+	} else {
+		// PRACK does not match pending 1xx response
+		// Send a 481 on the PRACK request
+		resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+		line->send_response(resp, tuid, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+
+		return false;
+	}
+}
+
+void t_dialog::resend_request(t_client_request *cr) {
+	t_request *req = cr->get_request();
+
+	// A new sequence number must be assigned
+	req->hdr_cseq.set_seqnr(++local_seqnr);
+
+	// Create a new via-header. Otherwise the
+	// request will be seen as a retransmission
+	req->hdr_via.via_list.clear();
+	t_via via(USER_HOST, user_config->sip_udp_port);
+	req->hdr_via.add_via(via);
+
+	cr->renew(0);
+	line->send_request(req, cr->get_tuid());
+}
+
+
+////////////
+// Public
+////////////
+
+t_dialog::t_dialog(t_line *_line) {
+	mtx_next_id.lock();
+	id = next_id++;
+	if (next_id == 65535) next_id = 1;
+	mtx_next_id.unlock();
+
+	line = _line;
+	req_out = NULL;
+	req_out_invite = NULL;
+	req_in_invite = NULL;
+	req_cancel = NULL;
+	req_prack = NULL;
+
+	request_cancelled = false;
+	end_after_ack = false;
+	answer_after_prack = false;
+	ringing_received = false;
+
+	resp_invite = NULL;
+	resp_1xx_invite = NULL;
+	ack = NULL;
+
+	local_seqnr = 0;
+	remote_seqnr = 0;
+	local_resp_nr = 0;
+	remote_resp_nr = 0;
+
+	state = DS_NULL;
+
+	// Timers
+	dur_ack_timeout = 0;
+	id_ack_timeout = 0;
+	id_ack_guard = 0;
+	id_re_invite_guard = 0;
+
+	// RFC 3262
+	// Timers
+	dur_100rel_timeout = 0;
+	id_100rel_timeout = 0;
+	id_100rel_guard = 0;
+
+	// Create session
+	unsigned short rtp_port = user_config->rtp_port +
+					_line->get_line_number() * 2;
+	session = new t_session(this, USER_HOST, rtp_port);
+	MEMMAN_NEW(session);
+	session_re_invite = NULL;
+}
+
+t_dialog::~t_dialog() {
+	if (req_out) remove_client_request(&req_out);
+	if (req_out_invite) remove_client_request(&req_out_invite);
+	if (req_in_invite) remove_client_request(&req_in_invite);
+	if (req_cancel) remove_client_request(&req_cancel);
+	if (req_prack) remove_client_request(&req_prack);
+	if (resp_invite) { MEMMAN_DELETE(resp_invite); delete resp_invite; }
+	if (resp_1xx_invite) {
+		MEMMAN_DELETE(resp_1xx_invite);
+		delete resp_1xx_invite;
+	}
+	if (ack) { MEMMAN_DELETE(ack); delete ack; }
+	if (session) { MEMMAN_DELETE(session); delete session; }
+	if (session_re_invite) {
+		MEMMAN_DELETE(session_re_invite);
+		delete session_re_invite;
+	}
+}
+
+t_dialog_id t_dialog::get_id(void) const {
+	return id;
+}
+
+// Copy will only be used on the open dialog.
+t_dialog *t_dialog::copy(void) {
+	t_dialog *d = new t_dialog(*this);
+	MEMMAN_NEW(d);
+
+	mtx_next_id.lock();
+	d->id = next_id++;
+	if (next_id == 65535) next_id = 1;
+	mtx_next_id.unlock();
+
+	// Increment reference count on client request
+	if (req_out) d->req_out->inc_ref_count();
+	if (req_out_invite) d->req_out_invite->inc_ref_count();
+	if (req_in_invite) d->req_in_invite->inc_ref_count();
+	if (req_prack) d->req_prack->inc_ref_count();
+
+	// The open dialog will handle the CANCEL, so delete it
+	// from the copy.
+	if (req_cancel) d->req_cancel = NULL;
+
+	if (resp_invite) d->resp_invite = (t_response *)resp_invite->copy();
+	if (resp_1xx_invite) d->resp_1xx_invite = (t_response *)resp_1xx_invite->copy();
+	if (ack) d->ack = (t_request *)ack->copy();
+	dur_ack_timeout = 0;
+	id_ack_timeout = 0;
+	id_ack_guard = 0;
+	dur_100rel_timeout = 0;
+	id_100rel_timeout = 0;
+	id_100rel_guard = 0;
+
+	if (session) {
+		d->session = new t_session(*session);
+		MEMMAN_NEW(d->session);
+		d->session->set_owner(d);
+
+		// If an audio session was already created for early media
+		// then the audio session will be moved to the copy of the
+		// dialog. Only 1 dialog can have an audio session.
+		// See process_1xx_2xx_invite_resp for more information on
+		// early media problems.
+		// Clear a possible audio session in the open dialog.
+		session->set_audio_session(NULL);
+	}
+
+	return d;
+}
+
+void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
+		const string &subject)
+{
+	if (state != DS_NULL) {
+		throw X_DIALOG_ALREADY_ESTABLISHED;
+	}
+
+	t_request invite(INVITE);
+	invite.uri = to_uri;
+
+	// Set Call-ID header
+	call_id = NEW_CALL_ID;
+	invite.hdr_call_id.set_call_id(call_id);
+
+	// Set To header
+	invite.hdr_to.set_uri(to_uri);
+	invite.hdr_to.set_display(to_display);
+
+	// Set From header
+	local_tag = NEW_TAG;
+	local_uri.set_url(line->create_user_uri());
+	local_display = user_config->display;
+	invite.hdr_from.set_uri(local_uri);
+	invite.hdr_from.set_display(local_display);
+	invite.hdr_from.set_tag(local_tag);
+
+	// Set CSeq header
+	local_seqnr = rand() % 1000 + 1;
+	invite.hdr_cseq.set_method(INVITE);
+	invite.hdr_cseq.set_seqnr(local_seqnr);
+
+	// Set Contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact());
+	invite.hdr_contact.add_contact(contact);
+
+	// Set Via header
+	t_via via(USER_HOST, user_config->sip_udp_port);
+	invite.hdr_via.add_via(via);
+
+	// Set Max-Forwards header
+	invite.hdr_max_forwards.set_max_forwards(MAX_FORWARDS);
+
+	// User-Agent
+	SET_HDR_USER_AGENT(invite.hdr_user_agent);
+
+	// RFC 3261 13.2.1
+	// Allow and Supported headers
+	SET_HDR_ALLOW(invite.hdr_allow);
+	SET_HDR_SUPPORTED(invite.hdr_supported);
+
+	// Extensions specific for INVITE
+	if (user_config->ext_100rel != EXT_DISABLED) {
+		invite.hdr_supported.add_feature(EXT_100REL);
+	}
+
+	// Require header
+	switch (user_config->ext_100rel) {
+	case EXT_PREFERRED:
+	case EXT_REQUIRED:
+		invite.hdr_require.add_feature(EXT_100REL);
+		break;
+	default:
+		break;
+	}
+
+	// Subject header
+	if (subject != "") {
+		invite.hdr_subject.set_subject(subject);
+	}
+
+	// Organization
+	SET_HDR_ORGANIZATION(invite.hdr_organization);
+
+	// Create SDP offer
+	session->create_sdp_offer(&invite, local_uri.get_user());
+
+	// Send INVITE
+	req_out_invite = new t_client_request(&invite, 0);
+	MEMMAN_NEW(req_out_invite);
+	line->send_request(&invite, req_out_invite->get_tuid());
+
+	state = DS_W4INVITE_RESP;
+}
+
+bool t_dialog::resend_invite_auth(t_response *resp) {
+	if (!req_out_invite) return false;
+
+	assert(state == DS_W4INVITE_RESP || state == DS_W4INVITE_RESP2);
+
+	t_request *req = req_out_invite->get_request();
+
+	// Add authorization header, increment CSeq and create new branch id
+	if (get_phone()->authorize(req, resp)) {
+		resend_request(req_out_invite);
+
+		// Reset state in case a 100 Trying was received
+		state = DS_W4INVITE_RESP;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool t_dialog::resend_invite_unsupported(t_response *resp) {
+	if (!req_out_invite) return false;
+	if (resp->code != R_420_BAD_EXTENSION) return false;
+	if (!resp->hdr_unsupported.is_populated()) return false;
+	if (resp->hdr_unsupported.features.empty()) return false;
+
+	t_request *req = req_out_invite->get_request();
+
+	// If no extensions were required then return.
+	if (!req->hdr_require.is_populated()) return false;
+	if (req->hdr_require.features.empty()) return false;
+
+	bool removed_ext = false;
+
+	for (list<string>::iterator i = resp->hdr_unsupported.features.begin();
+	     i != resp->hdr_unsupported.features.end(); i++)
+	{
+		if (req->hdr_require.contains(*i)) {
+			if (*i == EXT_100REL) {
+				if (user_config->ext_100rel == EXT_PREFERRED) {
+					req->hdr_require.del_feature(*i);
+				} else {
+					// The 100rel is required.
+					return false;
+				}
+			} else {
+				// There is no specific requirement for
+				// this extension so do not remove it.
+				return false;
+			}
+
+			removed_ext = true;
+		}
+	}
+
+	// Return if none of the unsupported extensions was required.
+	if (!removed_ext) return false;
+
+	if (req->hdr_require.features.empty()) {
+		// There are no required features anymore
+		req->hdr_require.unpopulate();
+	}
+
+	resend_request(req_out_invite);
+
+	// Reset state in case a 100 Trying was received
+	state = DS_W4INVITE_RESP;
+
+	return true;
+}
+
+bool t_dialog::redirect_invite(t_response *resp) {
+	t_contact_param contact;
+
+	if (!req_out_invite) return false;
+
+	// If the response is a 3XX response then add redirection contacts
+	if (resp->get_class() == R_3XX  && resp->hdr_contact.is_populated()) {
+		req_out_invite->redirector.add_contacts(
+					resp->hdr_contact.contact_list);
+	}
+
+	// Get next destination
+	if (!req_out_invite->redirector.get_next_contact(contact)) {
+		// There is no next destination
+		return false;
+	}
+
+	assert(state == DS_W4INVITE_RESP || state == DS_W4INVITE_RESP2);
+
+	t_request *req = req_out_invite->get_request();
+
+	// Ask user for permission to redirect if indicated by user config
+	if (user_config->ask_user_to_redirect) {
+		if(!ui->cb_ask_user_to_redirect_invite(contact.uri, contact.display)) {
+			// User did not permit to redirect
+			return false;
+		}
+	}
+
+	req->uri = contact.uri;
+
+	ui->cb_redirecting_request(line->get_line_number(), contact);
+	resend_request(req_out_invite);
+
+	// Reset state in case a 100 Trying was received
+	state = DS_W4INVITE_RESP;
+
+	return true;
+}
+
+void t_dialog::send_bye(void) {
+	switch (state) {
+	case DS_W4INVITE_RESP2:
+	case DS_EARLY:
+	case DS_CONFIRMED:
+		break;
+	case DS_W4RE_INVITE_RESP:
+	case DS_W4RE_INVITE_RESP2:
+		// send BYE after completion of re-INVITE
+		request_cancelled = true;
+		return;
+	case DS_W4ACK:
+	case DS_W4ACK_RE_INVITE:
+		// send BYE after completion of re-INVITE
+		request_cancelled = true;
+		return;
+	case DS_TERMINATED:
+		// Dialog has already been terminated. Do not send BYE.
+		return;
+	default:
+		throw X_WRONG_STATE;
+	}
+
+	// If a previous request is still pending then remove it.
+	if (req_out) { MEMMAN_DELETE(req_out); delete (req_out); }
+
+	t_request *bye = create_request(BYE);
+	req_out = new t_client_request(bye, 0);
+	MEMMAN_NEW(req_out);
+	line->send_request(bye, req_out->get_tuid());
+	MEMMAN_DELETE(bye);
+	delete bye;
+
+	state = DS_W4BYE_RESP;
+}
+
+void t_dialog::send_options(void) {
+	// Request can only be sent in a confirmed dialog.
+	if (state != DS_CONFIRMED) return;
+
+	// If a previous request is still pending then remove it.
+	if (req_out) { MEMMAN_DELETE(req_out); delete (req_out); }
+
+	t_request *r = create_request(OPTIONS);
+
+	// Accept
+	r->hdr_accept.add_media(t_media("application","sdp"));
+	req_out = new t_client_request(r, 0);
+	MEMMAN_NEW(req_out);
+	line->send_request(r, req_out->get_tuid());
+	MEMMAN_DELETE(r);
+	delete r;
+}
+
+void t_dialog::send_cancel(bool early_dialog_exists) {
+	t_request *cancel;
+
+	switch (state) {
+	case DS_W4INVITE_RESP:
+	case DS_W4RE_INVITE_RESP:
+		if (!early_dialog_exists) {
+			// wait for first response then send CANCEL or BYE
+			request_cancelled = true;
+			break;
+		}
+		// Fall through
+	case DS_W4INVITE_RESP2:
+	case DS_W4RE_INVITE_RESP2:
+	case DS_EARLY:
+		cancel = create_request(CANCEL);
+		req_cancel = new t_client_request(cancel, 0);
+		MEMMAN_NEW(req_cancel);
+		line->send_request(cancel, req_cancel->get_tuid());
+		MEMMAN_DELETE(cancel);
+		delete cancel;
+		break;
+	default:
+		break;
+	}
+}
+
+void t_dialog::send_re_invite(void) {
+	assert(session_re_invite);
+
+	// Request can only be sent in a confirmed dialog.
+	if (state != DS_CONFIRMED) return;
+
+	// Do nothing if a re-INVITE is already in progress
+	if (req_out_invite) return;
+
+	t_request *r = create_request(INVITE);
+
+	// Set Contact header
+	// INVITE must contain a contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact());
+	r->hdr_contact.add_contact(contact);
+
+	// RFC 3261 13.2.1
+	// Allow and Supported headers
+	SET_HDR_ALLOW(r->hdr_allow);
+	SET_HDR_SUPPORTED(r->hdr_supported);
+
+	// Extensions specific for INVITE
+	if (user_config->ext_100rel != EXT_DISABLED) {
+		// If some weird far end implementation wants to send
+		// a reliable provisional then support it.
+		// As a provisional response not needed for a re-INVITE,
+		// do not require the 100rel.
+		r->hdr_supported.add_feature(EXT_100REL);
+	}
+
+	// Create SDP offer
+	session_re_invite->create_sdp_offer(r, local_uri.get_user());
+
+	// Send INVITE
+	req_out_invite = new t_client_request(r, 0);
+	MEMMAN_NEW(req_out_invite);
+	line->send_request(r, req_out_invite->get_tuid());
+	MEMMAN_DELETE(r);
+	delete r;
+
+	state = DS_W4RE_INVITE_RESP;
+}
+
+bool t_dialog::resend_request_auth(t_response *resp) {
+	t_client_request **current_cr;
+
+	if (resp->hdr_cseq.method == INVITE) {
+		// re-INVITE
+		if (!req_out_invite) return false;
+		assert(state == DS_W4RE_INVITE_RESP ||
+		       state == DS_W4RE_INVITE_RESP2);
+		current_cr = &req_out_invite;
+	} else {
+		// non-INVITE
+		if (!req_out) return false;
+		current_cr = &req_out;
+	}
+
+
+	t_request *req = (*current_cr)->get_request();
+
+	// Add authorization header, increment CSeq and create new branch id
+	if (get_phone()->authorize(req, resp)) {
+		resend_request(*current_cr);
+
+		if (resp->hdr_cseq.method == INVITE) {
+			// Reset state in case a 100 Trying was received
+			state = DS_W4RE_INVITE_RESP;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+bool t_dialog::redirect_request(t_response *resp) {
+	t_contact_param contact;
+	t_client_request **current_cr;
+
+	if (resp->hdr_cseq.method == INVITE) {
+		// re-INVITE
+		if (!req_out_invite) return false;
+		assert(state == DS_W4RE_INVITE_RESP ||
+		       state == DS_W4RE_INVITE_RESP2);
+		current_cr = &req_out_invite;
+	} else {
+		// non-INVITE
+		if (!req_out) return false;
+		current_cr = &req_out;
+	}
+
+	// If the response is a 3XX response then add redirection contacts
+	if (resp->get_class() == R_3XX  && resp->hdr_contact.is_populated()) {
+		(*current_cr)->redirector.add_contacts(
+					resp->hdr_contact.contact_list);
+	}
+
+	// Get next destination
+	if (!(*current_cr)->redirector.get_next_contact(contact)) {
+		// There is no next destination
+		return false;
+	}
+
+	t_request *req = (*current_cr)->get_request();
+
+	// Ask user for permission to redirect if indicated by user config
+	if (user_config->ask_user_to_redirect) {
+		if(!ui->cb_ask_user_to_redirect_request(contact.uri, contact.display,
+				resp->hdr_cseq.method)) {
+			// User did not permit to redirect
+			return false;
+		}
+	}
+
+	req->uri = contact.uri;
+
+	ui->cb_redirecting_request(line->get_line_number(), contact);
+	resend_request(*current_cr);
+
+	// Re-INVITE
+	if (resp->hdr_cseq.method == INVITE) {
+		// Reset state in case a 100 Trying was received
+		state = DS_W4RE_INVITE_RESP;
+	}
+
+	return true;
+}
+
+
+void t_dialog::hold(void) {
+	assert(!session_re_invite);
+
+	session_re_invite = session->create_call_hold();
+	send_re_invite();
+
+	// Stop the audio streams now. If we do not stop the stream now
+	// the stream will be stopped when a 200 OK is received on the
+	// re-INVITE. However, when the line is put on-hold because
+	// the user switches to another line that already has a held call
+	// a race condition might occur:
+	//
+	// 1. A re-INVITE on this line is sent to put it on-hold
+	// 2. A re-INVITE on the other line is sent to retrieve the call
+	// 3. If the 200 OK on the second re-INVITE comes in before the
+	//    the 200 OK on the first re-INVITE, then the audio streams
+	//    for the second line will be started already while the first
+	//    line still has the audio device open. On some systems this
+	//    causes a dead lock is the audio device may only be opened
+	//    once.
+	//
+	// Also if the re-INVITE to put the line on-hold fails, the
+	// audio might not be stopped at all. It must be stopped however
+	// as the user has switched to the other line. So stopping the
+	// audio now will make sure the audio device is idle when the
+	// second call is retrieved.
+	if (session) session->stop_rtp();
+}
+
+void t_dialog::retrieve(void) {
+	assert(!session_re_invite);
+
+	session_re_invite = session->create_call_retrieve();
+	send_re_invite();
+}
+
+void t_dialog::send_dtmf(char digit) {
+	if (session) session->send_dtmf(digit);
+}
+
+void t_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
+	if (r->hdr_cseq.method == INVITE &&
+	    tuid == 0 && tid == 0 && !req_out_invite)
+	{
+		unsigned long ipaddr;
+		unsigned short port;
+
+		// Only a retransmission of a 2XX INVITE is allowed.
+		if (r->get_class() != R_2XX) return;
+		if (!ack) return;
+		if (r->hdr_cseq.seqnr != ack->hdr_cseq.seqnr)
+		{
+			// The 2XX response does not match the ACK
+			return;
+		}
+
+		ack->get_destination(ipaddr, port, *user_config);
+		if (ipaddr != 0 && port != 0) {
+			evq_sender_udp->push_network(ack, ipaddr, port);
+		}
+
+		return;
+	}
+
+	if (r->hdr_cseq.method == CANCEL) {
+		if (!req_cancel) return;
+		if (r->is_final()) {
+			remove_client_request(&req_cancel);
+			if (!r->is_success()) {
+				// CANCEL request failed.
+				ui->cb_cancel_failed(line->get_line_number(), r);
+
+				// Abort the INVITE as the user cannot terminate
+				// it in a normal way.
+				if (req_out_invite) {
+					t_tid _tid = req_out_invite->get_tid();
+					if (_tid > 0) {
+						evq_trans_mgr->push_abort_trans(_tid);
+					}
+				}
+			}
+		}
+		return;
+	}
+
+	// No processing done for PRACK responses.
+	if (r->hdr_cseq.method == PRACK) {
+		if (!req_prack) return;
+		t_request *prack = req_prack->get_request();
+
+		if (r->hdr_cseq.seqnr != prack->hdr_cseq.seqnr) {
+			// The response does not match the latest sent PRACK.
+			// It might match a previous sent PRACK. However, when
+			// a previous PRACK fails, then the latest PRACK will also
+			// fail, so the failure will be handled in the end without
+			// the overhead to keep a list of all pending PRACKs which
+			// should be a rare case.
+			return;
+		}
+
+		if (r->is_final()) {
+			// PRACK is finished, so remove request
+			remove_client_request(&req_prack);
+
+			// Tear down the call if PRACK failed and call is
+			// not yet established.
+			if (!r->is_success() && state == DS_EARLY) {
+				log_file->write_header("t_dialog::recvd_response",
+					LOG_NORMAL, LOG_WARNING);
+				log_file->write_raw("PRACK failed: ");
+				log_file->write_raw(r->code);
+				log_file->write_raw(" ");
+				log_file->write_raw(r->reason);
+				log_file->write_endl();
+				log_file->write_raw("Call will be cancelled.\n");
+				log_file->write_footer();
+
+				ui->cb_prack_failed(line->get_line_number(), r);
+				send_cancel(true);
+
+				// Ignore the failure in other states.
+				// The call has been setup, so all seems fine.
+			}
+		}
+
+		return;
+	}
+
+	// Determine if this is an INVITE or non-INVITE response
+	t_client_request *req;
+	if (r->hdr_cseq.method == INVITE) {
+		req = req_out_invite;
+	} else {
+		req = req_out;
+	}
+
+	// Discard response if no request is pending
+	if (!req) {
+		return;
+	}
+
+	// Check cseq
+	if (r->hdr_cseq.method != req->get_request()->method) {
+		return;
+	}
+	if (r->hdr_cseq.seqnr != req->get_request()->hdr_cseq.seqnr) return;
+
+	// Set the transaction identifier. This identifier is needed if the
+	// transaction must be aborted at a later time.
+	req->set_tid(tid);
+
+	switch (state) {
+	case DS_W4INVITE_RESP:
+	case DS_W4INVITE_RESP2:
+		state_w4invite_resp(r, tuid, tid);
+		break;
+	case DS_EARLY:
+		state_early(r, tuid, tid);
+		break;
+	case DS_W4BYE_RESP:
+		state_w4bye_resp(r, tuid, tid);
+		break;
+	case DS_CONFIRMED:
+		state_confirmed_resp(r, tuid, tid);
+		break;
+	case DS_W4RE_INVITE_RESP:
+	case DS_W4RE_INVITE_RESP2:
+		state_w4re_invite_resp(r, tuid, tid);
+		break;
+	default:
+		// No response expected in other states. Discard.
+		break;
+	}
+}
+
+void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
+	t_response *resp;
+
+	// CANCEL will be handled by recvd_cancel()
+
+	switch (r->method) {
+	case ACK:
+		// When ACK is received then the current incoming request
+		// must be INVITE.
+		if (!req_in_invite) return;
+		if (req_in_invite->get_request()->hdr_cseq.seqnr !=
+				r->hdr_cseq.seqnr)
+		{
+			return;
+		}
+		break;
+	case INVITE:
+		if (r->hdr_cseq.seqnr <= remote_seqnr) {
+			// Request received out of sequence. Discard.
+			return;
+		}
+
+		if (req_in_invite) {
+			// Another INVITE is received while the previous
+			// one is not finished.
+			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
+				"Previous INVITE still in progress");
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+		} else if (req_out_invite) {
+			resp = r->create_response(R_491_REQUEST_PENDING);
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+		} else {
+			req_in_invite = new t_client_request(r, tid);
+			MEMMAN_NEW(req_in_invite);
+		}
+		break;
+	default:
+		// Check cseq
+		if (r->hdr_cseq.seqnr <= remote_seqnr) {
+			// Request received out of sequence. Discard.
+			return;
+		}
+	}
+
+	switch (state) {
+	case DS_NULL:
+		state_null(r, tuid, tid);
+		break;
+	case DS_W4ACK:
+		state_w4ack(r, tuid, tid);
+		break;
+	case DS_W4ACK_RE_INVITE:
+		state_w4ack_re_invite(r, tuid, tid);
+		break;
+	case DS_W4ANSWER:
+		state_w4answer(r, tuid, tid);
+		break;
+	case DS_CONFIRMED:
+		state_confirmed(r, tuid, tid);
+		break;
+	default:
+		// No request expected in other states. Discard.
+		break;
+	}
+}
+
+// RFC 3261 9.2
+void t_dialog::recvd_cancel(t_request *r, t_tid cancel_tid,
+		t_tid target_tid)
+{
+	t_response *resp;
+
+	assert(r->method == CANCEL);
+
+	// Send 200 as response to CANCEL
+	resp = r->create_response(R_200_OK);
+	line->send_response(resp, 0, cancel_tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+
+	switch (state) {
+	case DS_W4ANSWER:
+		state_w4answer(r, 0, cancel_tid);
+		break;
+	default:
+		// Ignore CANCEL in other states.
+		break;
+	}
+}
+
+// RFC 3261 13.3.1.4
+void t_dialog::answer(void) {
+	if (!req_in_invite) return;
+
+	t_request *invite_req = req_in_invite->get_request();
+
+	// RFC 3262 3
+	// Delay the final response if we are still waiting for a PRACK
+	// on a 1xx response containing SDP
+	if (resp_1xx_invite && resp_1xx_invite->body) {
+		answer_after_prack = true;
+		return;
+	}
+
+	if (state != DS_W4ANSWER) {
+		throw X_WRONG_STATE;
+	}
+
+	resp_invite = invite_req->create_response(R_200_OK);
+	resp_invite->hdr_to.set_tag(local_tag);
+
+	// Set Organization header
+	SET_HDR_ORGANIZATION(resp_invite->hdr_organization);
+
+	// RFC 3261 12.1.1
+	// Copy the Record-Route header from request to response
+	if (invite_req->hdr_record_route.is_populated()) {
+		resp_invite->hdr_record_route = invite_req->hdr_record_route;
+	}
+
+	// Set Contact header
+	t_contact_param contact;
+	contact.uri.set_url(line->create_user_contact());
+	resp_invite->hdr_contact.add_contact(contact);
+
+	// Set Allow and Supported headers
+	SET_HDR_ALLOW(resp_invite->hdr_allow);
+	SET_HDR_SUPPORTED(resp_invite->hdr_supported);
+
+	// RFC 3261 13.3.1.4
+	// Create SDP offer if no offer was received in INVITE and no offer
+	// was sent in a reliable 1xx response (RFC 3262 5)
+	// Otherwise if no offer was sent in a reliable 1xx, create an SDP answer.
+	if (!session->sent_offer) {
+		if (!session->recvd_offer && !session->sent_offer) {
+			session->create_sdp_offer(resp_invite, local_uri.get_user());
+		} else {
+			session->create_sdp_answer(resp_invite, local_uri.get_user());
+			session->start_rtp();
+		}
+	}
+
+	line->send_response(resp_invite, req_in_invite->get_tuid(),
+					req_in_invite->get_tid());
+	line->start_timer(LTMR_ACK_GUARD, get_id());
+	line->start_timer(LTMR_ACK_TIMEOUT, get_id());
+
+	// Stop 100rel timers if they are running.
+	line->stop_timer(LTMR_100REL_GUARD, get_id());
+	line->stop_timer(LTMR_100REL_TIMEOUT, get_id());
+
+	state = DS_W4ACK;
+}
+
+void t_dialog::reject(int code, string reason) {
+	t_response *resp;
+
+	if (state != DS_W4ANSWER) {
+		throw X_WRONG_STATE;
+	}
+
+	assert(req_in_invite);
+	assert(code >= 400);
+
+	resp = req_in_invite->get_request()->create_response(code, reason);
+	resp->hdr_to.set_tag(local_tag);
+	line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+	MEMMAN_DELETE(resp);
+	delete resp;
+
+	// Stop 100rel timers if they are running.
+	line->stop_timer(LTMR_100REL_GUARD, get_id());
+	line->stop_timer(LTMR_100REL_TIMEOUT, get_id());
+
+	state = DS_TERMINATED;
+}
+
+void t_dialog::redirect(const list<t_url> &destinations, int code, string reason)
+{
+	t_response *resp;
+
+	if (state != DS_W4ANSWER) {
+		throw X_WRONG_STATE;
+	}
+
+	assert(req_in_invite);
+	assert(code >= 300 && code <= 399);
+
+	resp = req_in_invite->get_request()->create_response(code, reason);
+	resp->hdr_to.set_tag(local_tag);
+
+	t_contact_param *contact;
+	float q = 0.9;
+	for (list<t_url>::const_iterator i = destinations.begin();
+	     i != destinations.end(); i++)
+	{
+		contact = new t_contact_param();
+		MEMMAN_NEW(contact);
+		contact->uri = *i;
+		contact->q = q;
+		resp->hdr_contact.add_contact(*contact);
+		MEMMAN_DELETE(contact);
+		delete contact;
+		q = q - 0.1;
+		if (q < 0.1) q = 0.1;
+	}
+
+	line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+	MEMMAN_DELETE(resp);
+	delete resp;
+
+	// Stop 100rel timers if they are running.
+	line->stop_timer(LTMR_100REL_GUARD, get_id());
+	line->stop_timer(LTMR_100REL_TIMEOUT, get_id());
+
+	state = DS_TERMINATED;
+}
+
+bool t_dialog::match_response(t_response *r, t_tuid tuid) {
+	if (tuid != 0) {
+  		if (req_out && req_out->get_tuid() == tuid) return true;
+		if (req_out_invite && req_out_invite->get_tuid() == tuid) {
+			return true;
+		}
+		if (req_cancel && req_cancel->get_tuid() == tuid) {
+			return true;
+		}
+		return false;
+	}
+
+	return (call_id == r->hdr_call_id.call_id &&
+		local_tag == r->hdr_from.tag &&
+		(remote_tag.size() == 0 || remote_tag == r->hdr_to.tag));
+}
+
+bool t_dialog::match_request(t_request *r) {
+	return (call_id == r->hdr_call_id.call_id &&
+		local_tag == r->hdr_to.tag &&
+		remote_tag == r->hdr_from.tag);
+}
+
+bool t_dialog::match_cancel(t_request *r, t_tid target_tid) {
+	return (req_in_invite && req_in_invite->get_tid() == target_tid);
+}
+
+t_dialog_state t_dialog::get_state(void) const {
+	return state;
+}
+
+void t_dialog::timeout(t_line_timer timer) {
+	switch(state) {
+	case DS_W4ACK:
+		state_w4ack(timer);
+		break;
+	case DS_W4ACK_RE_INVITE:
+		state_w4ack_re_invite(timer);
+		break;
+	case DS_W4RE_INVITE_RESP2:
+		state_w4re_invite_resp(timer);
+		break;
+	case DS_W4ANSWER:
+		state_w4answer(timer);
+		break;
+	default:
+		// Timeout not expected in other states. Ignore.
+		break;
+	}
+}
+
+t_phone *t_dialog::get_phone(void) const {
+	return line->get_phone();
+}
+
+t_line *t_dialog::get_line(void) const {
+	return line;
+}
+
+t_audio_session *t_dialog::get_audio_session(void) const {
+	if (!session) return NULL;
+
+	return session->get_audio_session();
+}
+

@@ -1,0 +1,15 @@
+# The Makefile for the Qt-part of the program is created by qmake.
+# That Makefile builts the executable. 
+# So here the executable is defined as a script such that it will
+# only be installed and not built.
+bin_SCRIPTS = src/gui/twinkle
+
+pkgdata_DATA = data/ringback.wav data/ringtone.wav \
+	src/gui/images/twinkle16.png src/gui/images/twinkle32.png \
+	src/gui/images/twinkle48.png
+
+EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
+	src/gui/twinkle.pro src/gui/images/* \
+	data/ringback.wav data/ringtone.wav
+
+SUBDIRS = src

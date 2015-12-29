@@ -1,0 +1,197 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include <assert.h>
+#include <iostream>
+#include "events.h"
+#include "transaction_layer.h"
+#include "userintf.h"
+#include "audits/memman.h"
+
+extern t_event_queue	*evq_trans_mgr;
+extern t_event_queue	*evq_trans_layer;
+
+void t_transaction_layer::recvd_response(t_response *r, t_tuid tuid,
+		t_tid tid)
+{
+	lock();
+
+	switch(r->get_class()) {
+	case R_1XX:
+		recvd_provisional(r, tuid, tid);
+		break;
+	case R_2XX:
+		recvd_success(r, tuid, tid);
+		break;
+	case R_3XX:
+		recvd_redirect(r, tuid, tid);
+		break;
+	case R_4XX:
+		recvd_client_error(r, tuid, tid);
+		break;
+	case R_5XX:
+		recvd_server_error(r, tuid, tid);
+		break;
+	case R_6XX:
+		recvd_global_error(r, tuid, tid);
+		break;
+	default:
+		assert(false);
+		break;
+	}
+
+	unlock();
+}
+
+void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
+		t_tid tid_cancel_target)
+{
+	bool fatal;
+	string reason;
+	t_response *resp;
+
+	lock();
+
+	// Return a 400 response if the SIP headers are wrong
+	if (!r->is_valid(fatal, reason)) {
+		resp = r->create_response(R_400_BAD_REQUEST, reason);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		unlock();
+		return;
+	}
+
+	// Return a 400 response if the SIP body contained a parse error
+	if (r->body && r->body->invalid) {
+		resp = r->create_response(R_400_BAD_REQUEST, "Invalid SIP body.");
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		unlock();
+		return;
+	}
+
+	switch(r->method) {
+	case INVITE:
+		recvd_invite(r, tid);
+		break;
+	case ACK:
+		recvd_ack(r, tid);
+		break;
+	case CANCEL:
+		recvd_cancel(r, tid, tid_cancel_target);
+		break;
+	case BYE:
+		recvd_bye(r, tid);
+		break;
+	case OPTIONS:
+		recvd_options(r, tid);
+		break;
+	case REGISTER:
+		recvd_register(r, tid);
+		break;
+	case PRACK:
+		recvd_prack(r, tid);
+		break;
+	default:
+		resp = r->create_response(R_501_NOT_IMPLEMENTED);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		break;
+	}
+
+	unlock();
+}
+
+void t_transaction_layer::send_request(t_request *r, t_tuid tuid) {
+	evq_trans_mgr->push_user((t_sip_message *)r, tuid, 0);
+}
+
+void t_transaction_layer::send_response(t_response *r, t_tuid tuid,
+		t_tid tid)
+{
+	evq_trans_mgr->push_user((t_sip_message *)r, tuid, tid);
+}
+
+void t_transaction_layer::run(void) {
+	t_event		*event;
+	t_event_user	*ev_user;
+	t_event_failure	*ev_failure;
+	t_sip_message	*msg;
+	t_tid		tid;
+	t_tid		tid_cancel;
+	t_tuid		tuid;
+
+	while (true) {
+		event = evq_trans_layer->pop();
+
+		switch (event->get_type()) {
+		case EV_USER:
+			ev_user = (t_event_user *)event;
+			tid = ev_user->get_tid();
+			tuid = ev_user->get_tuid();
+			tid_cancel = ev_user->get_tid_cancel_target();
+			msg = ev_user->get_msg();
+
+			switch(msg->get_type()) {
+			case MSG_REQUEST:
+				recvd_request((t_request *)msg, tid,
+						tid_cancel);
+				break;
+			case MSG_RESPONSE:
+				recvd_response((t_response *)msg, tuid, tid);
+				break;
+			default:
+				assert(false);
+				break;
+			}
+
+			break;
+		case EV_FAILURE:
+			ev_failure = (t_event_failure *)event;
+			tid = ev_failure->get_tid();
+			lock();
+			failure(ev_failure->get_failure(), tid);
+			unlock();
+			break;
+		default:
+			// other types of event are not expected
+			assert(false);
+			break;
+		}
+
+		MEMMAN_DELETE(event);
+		delete event;
+	}
+}
+
+void t_transaction_layer::lock(void) {
+	// The user interface and transaction layer threads both call
+	// functions on the transaction layer. By locking the UI mutex
+	// first, a deadlock can never occur as the UI also takes the
+	// UI lock first and then the transaction layer lock.
+	ui->lock();
+	tl_mutex.lock();
+}
+
+void t_transaction_layer::unlock(void) {
+	tl_mutex.unlock();
+	ui->unlock();
+}

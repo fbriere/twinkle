@@ -1,0 +1,159 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#ifndef _GUI_H
+#define _GUI_H
+
+#include "userintf.h"
+#include "mphoneform.h"
+#include "qlabel.h"
+
+using namespace std;
+
+class t_gui : public t_userintf {
+private:
+	MphoneForm	*mainWindow;
+	QApplication	*qApplication;
+	
+	// Pointers to line information fields to display information
+	QLabel		*fromLabel;
+	QLabel		*toLabel;
+	QLabel		*subjectLabel;
+	QLabel		*codecLabel;
+	
+	// Codecs currently used
+	t_audio_codec	send_codec[NUM_LINES];
+	t_audio_codec	recv_codec[NUM_LINES];
+	
+	// Last received provisional response reason on a line
+	QString		last_provisional_reason[NUM_LINES];
+	
+	// Set the line information field pointers to the fields for 'line'
+	void setLineFields(int line);
+	
+	// Clear the contents of the line information fields. After clearing
+	// the field pointers point to the fields for 'line'
+	void clearLineFields(int line);
+	
+	// Display the codecs in use for the line
+	void displayCodecInfo(int line);
+	
+public:
+	// DTMF events supported by far end. Set by call back function
+	bool		dtmf_supported[NUM_LINES];
+	
+	t_gui(t_phone *_phone);
+	virtual ~t_gui();
+	
+	// Start the GUI
+	void run(void);
+	
+	// Lock the user interface to synchornize output
+	void lock(void);
+	void unlock(void);
+	
+	// Select network interface to use.
+	string select_network_intf(void);
+	
+	// Select a user configuration file. Returns false if selection failed.
+	bool select_user_config(string &config_file);
+	
+	// Call back functions
+	void cb_incoming_call(int line, const t_request *r);
+	void cb_call_cancelled(int line);
+	void cb_far_end_hung_up(int line);
+	void cb_answer_timeout(int line);
+	void cb_sdp_answer_not_supported(int line, const string &reason);
+	void cb_sdp_answer_missing(int line);
+	void cb_unsupported_content_type(int line, const t_sip_message *r);
+	void cb_ack_timeout(int line);
+	void cb_100rel_timeout(int line);
+	void cb_prack_failed(int line, const t_response *r);
+	void cb_provisional_resp_invite(int line, const t_response *r);
+	void cb_cancel_failed(int line, const t_response *r);
+	void cb_call_answered(int line, const t_response *r);
+	void cb_call_failed(int line, const t_response *r);
+	void cb_call_ended(int line, const t_response *r);
+	void cb_call_established(int line);
+	void cb_options_response(const t_response *r);
+	void cb_reinvite_success(int line, const t_response *r);
+	void cb_reinvite_failed(int line, const t_response *r);
+	void cb_invalid_reg_resp(const t_response *r, const string &reason);
+	void cb_register_success(const t_response *r, unsigned long expires,
+				 bool first_success);
+	void cb_register_failed(const t_response *r, bool first_failure);
+	void cb_deregister_success(const t_response *r);
+	void cb_deregister_failed(const t_response *r);
+	void cb_fetch_reg_failed(const t_response *r);
+	void cb_fetch_reg_result(const t_response *r);
+	void cb_register_inprog(t_register_type register_type);
+	void cb_redirecting_request(int line, const t_contact_param &contact);
+	void cb_redirecting_request(const t_contact_param &contact);
+	void cb_dtmf_detected(int line, char dtmf_event);
+	void cb_dtmf_not_supported(int line);
+	void cb_dtmf_supported(int line);
+	void cb_line_state_changed(void);
+	void cb_send_codec_changed(int line, t_audio_codec codec);
+	void cb_recv_codec_changed(int line, t_audio_codec codec);
+	
+	// Interactive call back functions
+	bool cb_ask_user_to_redirect_invite(const t_url &destination,
+			const string &display);
+	bool cb_ask_user_to_redirect_request(const t_url &destination,
+			const string &display, t_method method);
+	bool cb_ask_credentials(const string &realm, string &username,
+			string &password);
+	
+	// Show an error message to the user. Depending on the interface mode
+	// the user has to acknowledge the error before processing continues.
+	void cb_show_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	
+	// Display an error message.
+	void cb_display_msg(const string &msg, t_msg_priority prio = MSG_INFO);
+	
+	// Actions
+	void action_register(void);
+	void action_deregister(bool dereg_all);
+	void action_show_registrations(void);
+	void action_invite(const t_url &destination, const string &display, 
+			   const string &subject);
+	void action_answer(void);
+	void action_bye(void);
+	void action_reject(void);
+	void action_redirect(const list<t_url> &contacts);
+	void action_hold(void);
+	void action_retrieve(void);
+	void action_conference(void);
+	void action_mute(bool on);
+	void action_options(void);
+	void action_options(const t_url &contact);
+	void action_dtmf(const string &digits);
+	void action_activate_line(unsigned short line);
+	void action_seize(void);
+	void action_unseize(void);
+	
+	// Operations on last provisional response reasons
+	QString get_last_provisional_reason(unsigned short line) const;
+	
+	// Service (de)activation
+	void srv_dnd(bool on);
+	void srv_enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest);
+	void srv_disable_cf(t_cf_type cf_type);
+};
+
+#endif

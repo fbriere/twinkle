@@ -1,0 +1,71 @@
+SOURCES	+= main.cpp \
+	gui.cpp
+HEADERS	+= gui.h
+unix {
+  UI_DIR = .ui
+  MOC_DIR = .moc
+  OBJECTS_DIR = .obj
+}
+
+include( ../../qtccxxincl.pro )
+FORMS	= mphoneform.ui \
+	inviteform.ui \
+	deregisterform.ui \
+	redirectform.ui \
+	termcapform.ui \
+	dtmfform.ui \
+	selectnicform.ui \
+	srvredirectform.ui \
+	authenticationform.ui \
+	userprofileform.ui \
+	selectprofileform.ui \
+	getprofilenameform.ui
+IMAGES	= images/filenew \
+	images/fileopen \
+	images/filesave \
+	images/print \
+	images/undo \
+	images/redo \
+	images/editcut \
+	images/editcopy \
+	images/editpaste \
+	images/searchfind \
+	images/invite.png \
+	images/answer.png \
+	images/bye.png \
+	images/reject.png \
+	images/redirect.png \
+	images/hold.png \
+	images/dtmf.png \
+	images/bye-disabled.png \
+	images/redial.png \
+	images/redial-disabled.png \
+	images/invite-disabled.png \
+	images/answer-disabled.png \
+	images/reject-disabled.png \
+	images/redirect-disabled.png \
+	images/hold-disabled.png \
+	images/dtmf-disabled.png \
+	images/penguin.png \
+	images/package_network.png \
+	images/kmix.png \
+	images/package_system.png \
+	images/yast_babelfish.png \
+	images/clock.png \
+	images/yast_PhoneTTOffhook.png \
+	images/penguin_big.png \
+	images/password.png \
+	images/kcmpci.png \
+	images/penguin-small.png \
+	images/conf.png \
+	images/conf-disabled.png \
+	images/mute.png \
+	images/mute-disabled.png \
+	images/twinkle16.png \
+	images/twinkle48.png \
+	images/twinkle32.png
+TEMPLATE	=app
+CONFIG	+= qt warn_on release thread
+INCLUDEPATH	+= ..
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a
+LANGUAGE	= C++

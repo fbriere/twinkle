@@ -1,0 +1,1234 @@
+<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<class>MphoneForm</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>MphoneForm</cstring>
+    </property>
+    <property name="enabled">
+        <bool>true</bool>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>635</width>
+            <height>558</height>
+        </rect>
+    </property>
+    <property name="sizePolicy">
+        <sizepolicy>
+            <hsizetype>5</hsizetype>
+            <vsizetype>5</vsizetype>
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+        </sizepolicy>
+    </property>
+    <property name="minimumSize">
+        <size>
+            <width>613</width>
+            <height>553</height>
+        </size>
+    </property>
+    <property name="caption">
+        <string>Twinkle</string>
+    </property>
+    <property name="icon">
+        <pixmap>twinkle16.png</pixmap>
+    </property>
+    <property name="rightJustification">
+        <bool>false</bool>
+    </property>
+    <property name="usesBigPixmaps">
+        <bool>false</bool>
+    </property>
+    <property name="usesTextLabel">
+        <bool>true</bool>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout10</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>userTextLabel</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>user.............................................................................................................</string>
+                    </property>
+                </widget>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer4</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>20</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>ipAddrTextLabel</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>255.255.255.255</string>
+                    </property>
+                    <property name="alignment">
+                        <set>AlignVCenter|AlignRight</set>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout13</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QGroupBox">
+                    <property name="name">
+                        <cstring>displayGroupBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>5</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="title">
+                        <string>Display</string>
+                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QTextEdit">
+                            <property name="name">
+                                <cstring>displayTextEdit</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>7</hsizetype>
+                                    <vsizetype>3</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="vScrollBarMode">
+                                <enum>AlwaysOn</enum>
+                            </property>
+                            <property name="textFormat">
+                                <enum>PlainText</enum>
+                            </property>
+                            <property name="text">
+                                <string></string>
+                            </property>
+                            <property name="wordWrap">
+                                <enum>NoWrap</enum>
+                            </property>
+                            <property name="readOnly">
+                                <bool>true</bool>
+                            </property>
+                        </widget>
+                    </vbox>
+                </widget>
+                <widget class="QLayoutWidget">
+                    <property name="name">
+                        <cstring>layout11</cstring>
+                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QGroupBox">
+                            <property name="name">
+                                <cstring>regStatusGroupBox</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>5</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="title">
+                                <string>Registration</string>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>regStatusTextLabel</cstring>
+                                    </property>
+                                    <property name="paletteForegroundColor">
+                                        <color>
+                                            <red>0</red>
+                                            <green>85</green>
+                                            <blue>255</blue>
+                                        </color>
+                                    </property>
+                                    <property name="text">
+                                        <string>Not registered</string>
+                                    </property>
+                                    <property name="textFormat">
+                                        <enum>RichText</enum>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                        <widget class="QGroupBox">
+                            <property name="name">
+                                <cstring>serviceGroupBox</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>5</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="title">
+                                <string>Active services</string>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>dndTextLabel</cstring>
+                                    </property>
+                                    <property name="enabled">
+                                        <bool>true</bool>
+                                    </property>
+                                    <property name="paletteForegroundColor">
+                                        <color>
+                                            <red>0</red>
+                                            <green>85</green>
+                                            <blue>255</blue>
+                                        </color>
+                                    </property>
+                                    <property name="text">
+                                        <string>Do not disturb</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>redirectionTextLabel</cstring>
+                                    </property>
+                                    <property name="enabled">
+                                        <bool>true</bool>
+                                    </property>
+                                    <property name="paletteForegroundColor">
+                                        <color>
+                                            <red>0</red>
+                                            <green>85</green>
+                                            <blue>255</blue>
+                                        </color>
+                                    </property>
+                                    <property name="text">
+                                        <string>Call redirection</string>
+                                    </property>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer3</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Vertical</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>41</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                            </vbox>
+                        </widget>
+                    </vbox>
+                </widget>
+            </hbox>
+        </widget>
+        <widget class="QButtonGroup">
+            <property name="name">
+                <cstring>lineButtonGroup</cstring>
+            </property>
+            <property name="sizePolicy">
+                <sizepolicy>
+                    <hsizetype>5</hsizetype>
+                    <vsizetype>5</vsizetype>
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                </sizepolicy>
+            </property>
+            <property name="title">
+                <string>Lines</string>
+            </property>
+            <property name="exclusive">
+                <bool>true</bool>
+            </property>
+            <grid>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLayoutWidget" row="0" column="1">
+                    <property name="name">
+                        <cstring>layout4</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>status1TextLabel</cstring>
+                            </property>
+                            <property name="minimumSize">
+                                <size>
+                                    <width>200</width>
+                                    <height>0</height>
+                                </size>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>85</green>
+                                    <blue>255</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>idle</string>
+                            </property>
+                            <property name="textFormat">
+                                <enum>RichText</enum>
+                            </property>
+                        </widget>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>codec1TextLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>0</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>170</green>
+                                    <blue>127</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>g711a/g711a</string>
+                            </property>
+                            <property name="alignment">
+                                <set>AlignVCenter|AlignRight</set>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <widget class="QLayoutWidget" row="4" column="1">
+                    <property name="name">
+                        <cstring>layout5</cstring>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>status2TextLabel</cstring>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>85</green>
+                                    <blue>255</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>idle</string>
+                            </property>
+                            <property name="textFormat">
+                                <enum>RichText</enum>
+                            </property>
+                        </widget>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>codec2TextLabel</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>0</hsizetype>
+                                    <vsizetype>5</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="paletteForegroundColor">
+                                <color>
+                                    <red>0</red>
+                                    <green>170</green>
+                                    <blue>127</blue>
+                                </color>
+                            </property>
+                            <property name="text">
+                                <string>g711a/g711a</string>
+                            </property>
+                            <property name="alignment">
+                                <set>AlignVCenter|AlignRight</set>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <widget class="QLabel" row="5" column="1">
+                    <property name="name">
+                        <cstring>from2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>sip:from</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="6" column="1">
+                    <property name="name">
+                        <cstring>to2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>sip:to</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="7" column="1">
+                    <property name="name">
+                        <cstring>subject2Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>subject</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="5" column="0">
+                    <property name="name">
+                        <cstring>fromhead2Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>From:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="6" column="0">
+                    <property name="name">
+                        <cstring>tohead2Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>To:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="7" column="0">
+                    <property name="name">
+                        <cstring>subjecthead2Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>Subject:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QRadioButton" row="0" column="0">
+                    <property name="name">
+                        <cstring>line1RadioButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Line &amp;1:</string>
+                    </property>
+                    <property name="checked">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="1" column="0">
+                    <property name="name">
+                        <cstring>fromhead1Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>From:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="1" column="1">
+                    <property name="name">
+                        <cstring>from1Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>sip:from</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="2" column="0">
+                    <property name="name">
+                        <cstring>tohead1Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>To:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="2" column="1">
+                    <property name="name">
+                        <cstring>to1Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>sip:to</string>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="3" column="0">
+                    <property name="name">
+                        <cstring>subjecthead1Label</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>0</hsizetype>
+                            <vsizetype>5</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>Subject:</string>
+                    </property>
+                    <property name="indent">
+                        <number>21</number>
+                    </property>
+                </widget>
+                <widget class="QLabel" row="3" column="1">
+                    <property name="name">
+                        <cstring>subject1Label</cstring>
+                    </property>
+                    <property name="paletteForegroundColor">
+                        <color>
+                            <red>0</red>
+                            <green>85</green>
+                            <blue>255</blue>
+                        </color>
+                    </property>
+                    <property name="text">
+                        <string>subject</string>
+                    </property>
+                </widget>
+                <widget class="QRadioButton" row="4" column="0">
+                    <property name="name">
+                        <cstring>line2RadioButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Line &amp;2:</string>
+                    </property>
+                </widget>
+            </grid>
+        </widget>
+    </vbox>
+</widget>
+<menubar>
+    <property name="name">
+        <cstring>menubar</cstring>
+    </property>
+    <item text="&amp;File" name="fileMenu">
+        <action name="fileExitAction"/>
+    </item>
+    <item text="&amp;Edit" name="PopupMenu_4">
+        <action name="editUserProfileAction"/>
+    </item>
+    <item text="&amp;Call" name="PopupMenu">
+        <action name="callInvite"/>
+        <action name="callAnswer"/>
+        <action name="callBye"/>
+        <action name="callReject"/>
+        <action name="callRedirect"/>
+        <action name="callHold"/>
+        <action name="callConference"/>
+        <action name="callMute"/>
+        <action name="callDTMF"/>
+        <action name="callRedial"/>
+        <separator/>
+        <action name="callTermCap"/>
+    </item>
+    <item text="&amp;Registration" name="PopupMenu_2">
+        <action name="regRegister"/>
+        <action name="regDeregister"/>
+        <action name="regShow"/>
+    </item>
+    <item text="&amp;Services" name="PopupMenu_3">
+        <action name="serviceDnd"/>
+        <action name="serviceRedirection"/>
+    </item>
+    <item text="&amp;Help" name="helpMenu">
+        <action name="helpAboutAction"/>
+        <action name="helpAboutQtAction"/>
+    </item>
+</menubar>
+<toolbars>
+    <toolbar dock="2">
+        <property name="name">
+            <cstring>callToolbar</cstring>
+        </property>
+        <property name="horizontallyStretchable">
+            <bool>false</bool>
+        </property>
+        <property name="label">
+            <string>Call Toolbar</string>
+        </property>
+        <action name="callInvite"/>
+        <action name="callAnswer"/>
+        <action name="callBye"/>
+        <action name="callReject"/>
+        <action name="callRedirect"/>
+        <action name="callHold"/>
+        <action name="callConference"/>
+        <action name="callMute"/>
+        <action name="callDTMF"/>
+        <action name="callRedial"/>
+    </toolbar>
+</toolbars>
+<actions>
+    <action>
+        <property name="name">
+            <cstring>fileExitAction</cstring>
+        </property>
+        <property name="text">
+            <string>Exit</string>
+        </property>
+        <property name="menuText">
+            <string>E&amp;xit</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpAboutAction</cstring>
+        </property>
+        <property name="text">
+            <string>About</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;About</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callInvite</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>invite.png</iconset>
+        </property>
+        <property name="text">
+            <string>Invite</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Invite...</string>
+        </property>
+        <property name="toolTip">
+            <string>Invite someone to a call</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+I</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callAnswer</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>answer.png</iconset>
+        </property>
+        <property name="text">
+            <string>Answer</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Answer</string>
+        </property>
+        <property name="toolTip">
+            <string>Answer incoming call</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+A</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callBye</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>bye.png</iconset>
+        </property>
+        <property name="text">
+            <string>Bye</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Bye</string>
+        </property>
+        <property name="toolTip">
+            <string>Release call</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+B</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callReject</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>reject.png</iconset>
+        </property>
+        <property name="text">
+            <string>Reject</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Reject</string>
+        </property>
+        <property name="toolTip">
+            <string>Reject incoming call</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+R</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callHold</cstring>
+        </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>hold.png</iconset>
+        </property>
+        <property name="text">
+            <string>Hold</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Hold</string>
+        </property>
+        <property name="toolTip">
+            <string>Put a call on hold, or retrieve a held call</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callRedirect</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>redirect.png</iconset>
+        </property>
+        <property name="text">
+            <string>Redirect</string>
+        </property>
+        <property name="menuText">
+            <string>R&amp;edirect...</string>
+        </property>
+        <property name="toolTip">
+            <string>Redirect incoming call without answering</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callDTMF</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>dtmf.png</iconset>
+        </property>
+        <property name="text">
+            <string>Dtmf</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Dtmf...</string>
+        </property>
+        <property name="toolTip">
+            <string>Open keypad to enter digits for voice menu's</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>regRegister</cstring>
+        </property>
+        <property name="text">
+            <string>Register</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Register</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>regDeregister</cstring>
+        </property>
+        <property name="text">
+            <string>Deregister</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Deregister...</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>regShow</cstring>
+        </property>
+        <property name="text">
+            <string>Show registrations</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Show registrations</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callTermCap</cstring>
+        </property>
+        <property name="text">
+            <string>Terminal capabilities</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Terminal capabilities...</string>
+        </property>
+        <property name="toolTip">
+            <string>Request terminal capabilities from someone</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>serviceDnd</cstring>
+        </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
+        <property name="text">
+            <string>Do not disturb</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Do not disturb</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>serviceRedirection</cstring>
+        </property>
+        <property name="text">
+            <string>Call Redirection</string>
+        </property>
+        <property name="menuText">
+            <string>Call &amp;Redirection...</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callRedial</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>redial.png</iconset>
+        </property>
+        <property name="text">
+            <string>Redial</string>
+        </property>
+        <property name="toolTip">
+            <string>Repeat last call invitation</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpAboutQtAction</cstring>
+        </property>
+        <property name="text">
+            <string>About Qt</string>
+        </property>
+        <property name="menuText">
+            <string>About &amp;Qt</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>editUserProfileAction</cstring>
+        </property>
+        <property name="text">
+            <string>User Profile</string>
+        </property>
+        <property name="menuText">
+            <string>User Profile...</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callConference</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>conf.png</iconset>
+        </property>
+        <property name="text">
+            <string>Conf</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Conference</string>
+        </property>
+        <property name="toolTip">
+            <string>Join two calls in a 3-way conference</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>callMute</cstring>
+        </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
+        <property name="iconSet">
+            <iconset>mute.png</iconset>
+        </property>
+        <property name="text">
+            <string>Mute</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Mute</string>
+        </property>
+        <property name="toolTip">
+            <string>Mute a call</string>
+        </property>
+    </action>
+</actions>
+<connections>
+    <connection>
+        <sender>fileExitAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>fileExit()</slot>
+    </connection>
+    <connection>
+        <sender>line1RadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>line1rbChangedState(bool)</slot>
+    </connection>
+    <connection>
+        <sender>line2RadioButton</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>line2rbChangedState(bool)</slot>
+    </connection>
+    <connection>
+        <sender>callTermCap</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneTermCap()</slot>
+    </connection>
+    <connection>
+        <sender>callAnswer</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneAnswer()</slot>
+    </connection>
+    <connection>
+        <sender>callBye</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneBye()</slot>
+    </connection>
+    <connection>
+        <sender>callDTMF</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDTMF()</slot>
+    </connection>
+    <connection>
+        <sender>callInvite</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneInvite()</slot>
+    </connection>
+    <connection>
+        <sender>callRedirect</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRedirect()</slot>
+    </connection>
+    <connection>
+        <sender>callReject</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneReject()</slot>
+    </connection>
+    <connection>
+        <sender>callHold</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneHold(bool)</slot>
+    </connection>
+    <connection>
+        <sender>regRegister</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRegister()</slot>
+    </connection>
+    <connection>
+        <sender>regDeregister</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneDeregister()</slot>
+    </connection>
+    <connection>
+        <sender>regShow</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneShowRegistrations()</slot>
+    </connection>
+    <connection>
+        <sender>serviceDnd</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>srvDnd(bool)</slot>
+    </connection>
+    <connection>
+        <sender>serviceRedirection</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>srvRedirect()</slot>
+    </connection>
+    <connection>
+        <sender>callRedial</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneRedial()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>about()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutQtAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>aboutQt()</slot>
+    </connection>
+    <connection>
+        <sender>editUserProfileAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>editUserProfile()</slot>
+    </connection>
+    <connection>
+        <sender>callConference</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneConference()</slot>
+    </connection>
+    <connection>
+        <sender>callMute</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneMute(bool)</slot>
+    </connection>
+</connections>
+<includes>
+    <include location="local" impldecl="in declaration">phone.h</include>
+    <include location="local" impldecl="in declaration">dtmfform.h</include>
+    <include location="local" impldecl="in declaration">inviteform.h</include>
+    <include location="local" impldecl="in declaration">redirectform.h</include>
+    <include location="local" impldecl="in declaration">termcapform.h</include>
+    <include location="local" impldecl="in declaration">srvredirectform.h</include>
+    <include location="local" impldecl="in declaration">userprofileform.h</include>
+    <include location="local" impldecl="in implementation">user.h</include>
+    <include location="local" impldecl="in implementation">qtextedit.h</include>
+    <include location="local" impldecl="in implementation">deregisterform.h</include>
+    <include location="local" impldecl="in implementation">qcheckbox.h</include>
+    <include location="local" impldecl="in implementation">qapplication.h</include>
+    <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">qpixmap.h</include>
+    <include location="local" impldecl="in implementation">qiconset.h</include>
+    <include location="local" impldecl="in implementation">qmessagebox.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
+</includes>
+<forwards>
+    <forward>extern t_phone *phone;</forward>
+</forwards>
+<variables>
+    <variable access="private">QStringList displayContents;</variable>
+    <variable access="private">DtmfForm *dtmfForm;</variable>
+    <variable access="private">InviteForm *inviteForm;</variable>
+    <variable access="private">RedirectForm *redirectForm;</variable>
+    <variable access="private">TermCapForm *termCapForm;</variable>
+    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">UserProfileForm *userProfileForm;</variable>
+</variables>
+<slots>
+    <slot>closeEvent( QCloseEvent * )</slot>
+    <slot>fileExit()</slot>
+    <slot>display( const QString &amp; s )</slot>
+    <slot>updateState()</slot>
+    <slot>updateRegStatus()</slot>
+    <slot>updateServicesStatus()</slot>
+    <slot>phoneRegister()</slot>
+    <slot>phoneDeregister()</slot>
+    <slot>phoneShowRegistrations()</slot>
+    <slot>phoneInvite()</slot>
+    <slot>do_phoneInvite( const t_url &amp; destination, const QString &amp; subject )</slot>
+    <slot>phoneRedial( void )</slot>
+    <slot>phoneAnswer()</slot>
+    <slot>phoneBye()</slot>
+    <slot>phoneReject()</slot>
+    <slot>phoneRedirect()</slot>
+    <slot>do_phoneRedirect( const list&lt;t_url&gt; &amp; destinations )</slot>
+    <slot>phoneHold( bool on )</slot>
+    <slot>phoneConference()</slot>
+    <slot>phoneMute( bool on )</slot>
+    <slot>phoneTermCap()</slot>
+    <slot>do_phoneTermCap( const t_url &amp; destination )</slot>
+    <slot>phoneDTMF()</slot>
+    <slot>sendDTMF( const QString &amp; digits )</slot>
+    <slot>line1rbChangedState( bool on )</slot>
+    <slot>line2rbChangedState( bool on )</slot>
+    <slot>srvDnd( bool on )</slot>
+    <slot>srvRedirect()</slot>
+    <slot>do_srvRedirect( const list&lt;t_url&gt; &amp; always, const list&lt;t_url&gt; &amp; busy, const list&lt;t_url&gt; &amp; noanswer )</slot>
+    <slot>about()</slot>
+    <slot>aboutQt()</slot>
+    <slot>editUserProfile()</slot>
+    <slot>displayUser()</slot>
+</slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
+    <function access="private" returnType="QString">lineSubstate2str( int line )</function>
+</functions>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

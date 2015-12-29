@@ -1,0 +1,500 @@
+<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<class>SrvRedirectForm</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>SrvRedirectForm</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>589</width>
+            <height>275</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Twinkle - Call Redirection</string>
+    </property>
+    <vbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QTabWidget">
+            <property name="name">
+                <cstring>cfTabWidget</cstring>
+            </property>
+            <property name="enabled">
+                <bool>true</bool>
+            </property>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>tab</cstring>
+                </property>
+                <attribute name="title">
+                    <string>&amp;Unconditional</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>cfAlwaysCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Redirect all calls</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>cfAlwaysGroupBox</cstring>
+                        </property>
+                        <property name="enabled">
+                            <bool>true</bool>
+                        </property>
+                        <property name="title">
+                            <string>Redirect to</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout34</cstring>
+                                </property>
+                                <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLineEdit" row="0" column="1">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst1LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="1" column="1">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst2LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="0">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst3TextLabel</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;3rd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst3LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="2" column="1">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst3LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst2TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;2nd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst2LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>cfAlwaysDst1TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;1st choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst1LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                        </vbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>tab</cstring>
+                </property>
+                <attribute name="title">
+                    <string>&amp;Busy</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>cfBusyCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Redirect calls when I am busy</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>cfBusyGroupBox</cstring>
+                        </property>
+                        <property name="enabled">
+                            <bool>true</bool>
+                        </property>
+                        <property name="title">
+                            <string>Redirect to</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout24</cstring>
+                                </property>
+                                <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLineEdit" row="1" column="1">
+                                        <property name="name">
+                                            <cstring>cfBusyDst2LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="0">
+                                        <property name="name">
+                                            <cstring>cfBusyDst3TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;3rd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst3LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="2" column="1">
+                                        <property name="name">
+                                            <cstring>cfBusyDst3LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0">
+                                        <property name="name">
+                                            <cstring>cfBusyDst2TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;2nd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst2LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>cfBusyDst1TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;1st choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst1LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="0" column="1">
+                                        <property name="name">
+                                            <cstring>cfBusyDst1LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                        </vbox>
+                    </widget>
+                </vbox>
+            </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>tab</cstring>
+                </property>
+                <attribute name="title">
+                    <string>&amp;No answer</string>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>cfNoanswerCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Redirect calls when I do not answer</string>
+                        </property>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>cfNoanswerGroupBox</cstring>
+                        </property>
+                        <property name="enabled">
+                            <bool>true</bool>
+                        </property>
+                        <property name="title">
+                            <string>Redirect to</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout22_2</cstring>
+                                </property>
+                                <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QLineEdit" row="0" column="1">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst1LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="1" column="1">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst2LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="2" column="0">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst3TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;3rd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst3LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="2" column="1">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst3LineEdit</cstring>
+                                        </property>
+                                        <property name="enabled">
+                                            <bool>true</bool>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst2TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;2nd choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst2LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>cfNoanswerDst1TextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>&amp;1st choice destination:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>cfAlwaysDst1LineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                        </vbox>
+                    </widget>
+                </vbox>
+            </widget>
+        </widget>
+        <spacer>
+            <property name="name">
+                <cstring>spacer14</cstring>
+            </property>
+            <property name="orientation">
+                <enum>Vertical</enum>
+            </property>
+            <property name="sizeType">
+                <enum>Expanding</enum>
+            </property>
+            <property name="sizeHint">
+                <size>
+                    <width>20</width>
+                    <height>20</height>
+                </size>
+            </property>
+        </spacer>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout23</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer13</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>261</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>okPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;OK</string>
+                    </property>
+                    <property name="default">
+                        <bool>true</bool>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+    </vbox>
+</widget>
+<connections>
+    <connection>
+        <sender>cancelPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>cancel()</slot>
+    </connection>
+    <connection>
+        <sender>okPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>validate()</slot>
+    </connection>
+    <connection>
+        <sender>cfAlwaysCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>toggleAlways(bool)</slot>
+    </connection>
+    <connection>
+        <sender>cfBusyCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>toggleBusy(bool)</slot>
+    </connection>
+    <connection>
+        <sender>cfNoanswerCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>SrvRedirectForm</receiver>
+        <slot>toggleNoanswer(bool)</slot>
+    </connection>
+</connections>
+<tabstops>
+    <tabstop>cfTabWidget</tabstop>
+    <tabstop>cfAlwaysCheckBox</tabstop>
+    <tabstop>cfAlwaysDst1LineEdit</tabstop>
+    <tabstop>cfAlwaysDst2LineEdit</tabstop>
+    <tabstop>cfAlwaysDst3LineEdit</tabstop>
+    <tabstop>cfBusyCheckBox</tabstop>
+    <tabstop>cfBusyDst1LineEdit</tabstop>
+    <tabstop>cfBusyDst2LineEdit</tabstop>
+    <tabstop>cfBusyDst3LineEdit</tabstop>
+    <tabstop>cfNoanswerCheckBox</tabstop>
+    <tabstop>cfNoanswerDst1LineEdit</tabstop>
+    <tabstop>cfNoanswerDst2LineEdit</tabstop>
+    <tabstop>cfNoanswerDst3LineEdit</tabstop>
+    <tabstop>okPushButton</tabstop>
+    <tabstop>cancelPushButton</tabstop>
+</tabstops>
+<includes>
+    <include location="local" impldecl="in declaration">sockets/url.h</include>
+    <include location="global" impldecl="in declaration">list</include>
+    <include location="local" impldecl="in declaration">qlineedit.h</include>
+    <include location="local" impldecl="in implementation">phone.h</include>
+    <include location="local" impldecl="in implementation">qgroupbox.h</include>
+    <include location="local" impldecl="in implementation">qcheckbox.h</include>
+    <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">srvredirectform.ui.h</include>
+</includes>
+<variables>
+    <variable access="private">QString oldNoanswerDst3;</variable>
+    <variable access="private">QString oldNoanswerDst2;</variable>
+    <variable access="private">QString oldNoanswerDst1;</variable>
+    <variable access="private">bool oldNoanswerActive;</variable>
+    <variable access="private">QString oldBusyDst3;</variable>
+    <variable access="private">QString oldBusyDst2;</variable>
+    <variable access="private">QString oldBusyDst1;</variable>
+    <variable access="private">bool oldBusyActive;</variable>
+    <variable access="private">QString oldAlwaysDst3;</variable>
+    <variable access="private">QString oldAlwaysDst2;</variable>
+    <variable access="private">QString oldAlwaysDst1;</variable>
+    <variable access="private">bool oldAlwaysActive;</variable>
+</variables>
+<signals>
+    <signal>destinations(const list&lt;t_url&gt; &amp;always, const list&lt;t_url&gt; &amp;busy, const list&lt;t_url&gt; &amp;noanswer)</signal>
+</signals>
+<slots>
+    <slot>show()</slot>
+    <slot>cancel()</slot>
+    <slot>validate()</slot>
+    <slot>toggleAlways( bool on )</slot>
+    <slot>toggleBusy( bool on )</slot>
+    <slot>toggleNoanswer( bool on )</slot>
+</slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function returnType="bool">validate( bool cf_active, QLineEdit * dst1, QLineEdit * dst2, QLineEdit * dst3, list&lt;t_url&gt; &amp; dest_list )</function>
+</functions>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

@@ -1,0 +1,171 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+// SIP message
+
+#ifndef _H_SIP_MESSAGE
+#define _H_SIP_MESSAGE
+
+#include <list>
+#include <string>
+#include "definitions.h"
+#include "hdr_accept.h"
+#include "hdr_accept_encoding.h"
+#include "hdr_accept_language.h"
+#include "hdr_alert_info.h"
+#include "hdr_allow.h"
+#include "hdr_auth_info.h"
+#include "hdr_authorization.h"
+#include "hdr_call_id.h"
+#include "hdr_call_info.h"
+#include "hdr_contact.h"
+#include "hdr_content_disp.h"
+#include "hdr_content_encoding.h"
+#include "hdr_content_language.h"
+#include "hdr_content_length.h"
+#include "hdr_content_type.h"
+#include "hdr_cseq.h"
+#include "hdr_date.h"
+#include "hdr_error_info.h"
+#include "hdr_expires.h"
+#include "hdr_from.h"
+#include "hdr_in_reply_to.h"
+#include "hdr_max_forwards.h"
+#include "hdr_min_expires.h"
+#include "hdr_mime_version.h"
+#include "hdr_organization.h"
+#include "hdr_priority.h"
+#include "hdr_proxy_authenticate.h"
+#include "hdr_proxy_authorization.h"
+#include "hdr_proxy_require.h"
+#include "hdr_rack.h"
+#include "hdr_record_route.h"
+#include "hdr_reply_to.h"
+#include "hdr_require.h"
+#include "hdr_retry_after.h"
+#include "hdr_route.h"
+#include "hdr_rseq.h"
+#include "hdr_server.h"
+#include "hdr_subject.h"
+#include "hdr_supported.h"
+#include "hdr_timestamp.h"
+#include "hdr_to.h"
+#include "hdr_unsupported.h"
+#include "hdr_user_agent.h"
+#include "hdr_via.h"
+#include "hdr_warning.h"
+#include "hdr_www_authenticate.h"
+#include "parameter.h"
+#include "sip_body.h"
+
+// Macro's to access the body of a message, eg msg.sdp_body
+#define sdp_body	((t_sdp *)body)
+#define opaque_body	((t_sip_body_opaque)*body)
+
+using namespace std;
+
+enum t_msg_type {
+	MSG_REQUEST,
+	MSG_RESPONSE
+};
+
+
+class t_sip_message {
+public:
+	string			version;
+
+	// All possible headers
+	t_hdr_accept		hdr_accept;
+	t_hdr_accept_encoding	hdr_accept_encoding;
+	t_hdr_accept_language	hdr_accept_language;
+	t_hdr_alert_info	hdr_alert_info;
+	t_hdr_allow		hdr_allow;
+	t_hdr_auth_info		hdr_auth_info;
+	t_hdr_authorization	hdr_authorization;
+	t_hdr_call_id		hdr_call_id;
+	t_hdr_call_info		hdr_call_info;
+	t_hdr_contact		hdr_contact;
+	t_hdr_content_disp	hdr_content_disp;
+	t_hdr_content_encoding	hdr_content_encoding;
+	t_hdr_content_language	hdr_content_language;
+	t_hdr_content_length	hdr_content_length;
+	t_hdr_content_type	hdr_content_type;
+	t_hdr_cseq		hdr_cseq;
+	t_hdr_date		hdr_date;
+	t_hdr_error_info	hdr_error_info;
+	t_hdr_expires		hdr_expires;
+	t_hdr_from		hdr_from;
+	t_hdr_in_reply_to	hdr_in_reply_to;
+	t_hdr_max_forwards	hdr_max_forwards;
+	t_hdr_min_expires	hdr_min_expires;
+	t_hdr_mime_version	hdr_mime_version;
+	t_hdr_organization	hdr_organization;
+	t_hdr_priority		hdr_priority;
+	t_hdr_proxy_authenticate  hdr_proxy_authenticate;
+	t_hdr_proxy_authorization hdr_proxy_authorization;
+	t_hdr_proxy_require	hdr_proxy_require;
+	t_hdr_rack		hdr_rack;
+	t_hdr_record_route	hdr_record_route;
+	t_hdr_reply_to		hdr_reply_to;
+	t_hdr_require		hdr_require;
+	t_hdr_retry_after	hdr_retry_after;
+	t_hdr_route		hdr_route;
+	t_hdr_rseq		hdr_rseq;
+	t_hdr_server		hdr_server;
+	t_hdr_subject		hdr_subject;
+	t_hdr_supported		hdr_supported;
+	t_hdr_timestamp		hdr_timestamp;
+	t_hdr_to		hdr_to;
+	t_hdr_unsupported	hdr_unsupported;
+	t_hdr_user_agent	hdr_user_agent;
+	t_hdr_via		hdr_via;
+	t_hdr_warning		hdr_warning;
+	t_hdr_www_authenticate	hdr_www_authenticate;
+
+	// Unknown headers are represented by parameters.
+	// Parameter.name = header name
+	// Parameter.value = header value
+	list<t_parameter>	unknown_headers;
+
+	// A SIP message can carry a body
+	t_sip_body		*body;
+
+	t_sip_message();
+	t_sip_message(const t_sip_message& m);
+	virtual ~t_sip_message();
+
+	virtual t_msg_type get_type(void) const = 0;
+	void add_unknown_header(const string &name, const string &value);
+
+	// Check if the message is valid. At this class the
+	// general rules applying to both requests and responses
+	// is checked.
+	// fatal is true if one of the headers mandatory for all
+	// messages is missing (to, from, cseq, call-id, via).
+	// reason contains a reason string if the message is invalid.
+	virtual bool is_valid(bool &fatal, string &reason) const;
+
+	// Return encoded headers
+	// The version should be encode by the subclasses.
+	virtual string encode(void);
+
+	// Create a copy of the message
+	virtual t_sip_message *copy(void) const = 0;
+};
+
+#endif

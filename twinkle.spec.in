@@ -1,0 +1,40 @@
+Summary:	A SIP Soft Phone
+Name:		twinkle
+Version:	@VERSION@
+Release:	1
+License:	GPL
+Group:		Productivity/Telephony/SIP/Clients
+Source:		%{name}-%{version}.tar.gz
+Prefix:		%{_prefix}
+BuildArch:	i586
+BuildRoot:	%{_tmppath}/making_of_%{name}_%{version}
+Packager:	Michel de Boer <michelboer@xs4all.com>
+URL:		http://www.twinklephone.com
+Requires:	commoncpp2 >= 1.3.0 
+Requires:	ccrtp >= 1.3.0
+
+%description
+Twinkle is a SIP based soft phone for making telephone calls
+over IP networks.
+
+%prep
+
+%setup -q
+
+%build
+%configure
+make
+
+%install
+rm -rf %{buildroot}
+%makeinstall
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-, root, root)
+%doc AUTHORS COPYING README ChangeLog
+%{_bindir}/%{name}
+%{_datadir}/%{name}
+

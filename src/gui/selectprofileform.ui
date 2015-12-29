@@ -1,0 +1,229 @@
+<!DOCTYPE UI><UI version="3.1" stdsetdef="1">
+<class>SelectProfileForm</class>
+<widget class="QDialog">
+    <property name="name">
+        <cstring>SelectProfileForm</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>397</width>
+            <height>272</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Twinkle - Select user profile</string>
+    </property>
+    <hbox>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout25</cstring>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QLabel">
+                    <property name="name">
+                        <cstring>selectTextLabel</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>5</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                    <property name="text">
+                        <string>Select your user profile:</string>
+                    </property>
+                    <property name="alignment">
+                        <set>WordBreak|AlignVCenter</set>
+                    </property>
+                </widget>
+                <widget class="QListBox">
+                    <item>
+                        <property name="text">
+                            <string>User_1</string>
+                        </property>
+                        <property name="pixmap">
+                            <pixmap>penguin-small.png</pixmap>
+                        </property>
+                    </item>
+                    <property name="name">
+                        <cstring>profileListBox</cstring>
+                    </property>
+                    <property name="sizePolicy">
+                        <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>1</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                        </sizepolicy>
+                    </property>
+                </widget>
+            </vbox>
+        </widget>
+        <widget class="QLayoutWidget">
+            <property name="name">
+                <cstring>layout21</cstring>
+            </property>
+            <vbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer17</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Vertical</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>20</width>
+                            <height>35</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>newPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;New</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>editPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Edit</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>deletePushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Delete</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>renamePushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Ren&amp;ame</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>runPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Run</string>
+                    </property>
+                    <property name="default">
+                        <bool>false</bool>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>cancelPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Cancel</string>
+                    </property>
+                </widget>
+            </vbox>
+        </widget>
+    </hbox>
+</widget>
+<connections>
+    <connection>
+        <sender>cancelPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>reject()</slot>
+    </connection>
+    <connection>
+        <sender>runPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>runProfile()</slot>
+    </connection>
+    <connection>
+        <sender>profileListBox</sender>
+        <signal>selected(QListBoxItem*)</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>runProfile()</slot>
+    </connection>
+    <connection>
+        <sender>editPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>editProfile()</slot>
+    </connection>
+    <connection>
+        <sender>newPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>newProfile()</slot>
+    </connection>
+    <connection>
+        <sender>deletePushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>deleteProfile()</slot>
+    </connection>
+    <connection>
+        <sender>renamePushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>renameProfile()</slot>
+    </connection>
+</connections>
+<tabstops>
+    <tabstop>profileListBox</tabstop>
+    <tabstop>newPushButton</tabstop>
+    <tabstop>editPushButton</tabstop>
+    <tabstop>deletePushButton</tabstop>
+    <tabstop>runPushButton</tabstop>
+</tabstops>
+<includes>
+    <include location="local" impldecl="in implementation">qdir.h</include>
+    <include location="local" impldecl="in implementation">user.h</include>
+    <include location="local" impldecl="in implementation">qstringlist.h</include>
+    <include location="local" impldecl="in implementation">qmessagebox.h</include>
+    <include location="local" impldecl="in implementation">qlistbox.h</include>
+    <include location="local" impldecl="in implementation">protocol.h</include>
+    <include location="local" impldecl="in implementation">gui.h</include>
+    <include location="local" impldecl="in implementation">userprofileform.h</include>
+    <include location="local" impldecl="in implementation">getprofilenameform.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
+    <include location="local" impldecl="in implementation">selectprofileform.ui.h</include>
+</includes>
+<variables>
+    <variable access="public">QString selectedProfile;</variable>
+</variables>
+<slots>
+    <slot returnType="int">exec()</slot>
+    <slot>runProfile()</slot>
+    <slot>editProfile()</slot>
+    <slot>newProfile()</slot>
+    <slot>deleteProfile()</slot>
+    <slot>renameProfile()</slot>
+</slots>
+<pixmapinproject/>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

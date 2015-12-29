@@ -1,0 +1,86 @@
+/*
+    Copyright (C) 2005  Michel de Boer <michelboer@xs4all.nl>
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "hdr_from.h"
+#include "definitions.h"
+#include "parse_ctrl.h"
+
+t_hdr_from::t_hdr_from() : t_header() {}
+
+void t_hdr_from::set_display(const string &d) {
+	populated = true;
+	display = d;
+}
+
+void t_hdr_from::set_uri(const string &u) {
+	populated = true;
+	uri.set_url(u);
+}
+
+void t_hdr_from::set_uri(const t_url &u) {
+	populated = true;
+	uri = u;
+}
+
+void t_hdr_from::set_tag(const string &t) {
+	populated = true;
+	tag = t;
+}
+
+void t_hdr_from::set_params(const list<t_parameter> &l) {
+	populated = true;
+	params = l;
+}
+
+void t_hdr_from::add_param(const t_parameter &p) {
+	populated = true;
+	params.push_back(p);
+}
+
+string t_hdr_from::encode(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	if (t_parser::compact_headers) {
+		s = "f: ";
+	} else {
+		s = "From: ";
+	}
+
+	if (display.size() > 0) {
+		s += '"';
+		s += display;
+		s += '"';
+		s += ' ';
+	}
+
+	s += '<';
+	s += uri.encode();
+	s += '>';
+
+	if (tag != "") {
+		s += ";tag=";
+		s += tag;
+	}
+
+	s += param_list2str(params);
+	s += CRLF;
+
+	return s;
+}
