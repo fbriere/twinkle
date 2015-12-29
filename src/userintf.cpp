@@ -1513,6 +1513,7 @@ t_userintf::t_userintf(t_phone *_phone) {
 	active_user = NULL;
 	use_stdout = true;
 	throttle_dtmf_not_supported = false;
+	thr_process_events = NULL;
 
 	all_commands.push_back("invite");
 	all_commands.push_back("call");
@@ -1549,6 +1550,13 @@ t_userintf::~t_userintf() {
 	if (tone_gen) {
 		MEMMAN_DELETE(tone_gen);
 		delete tone_gen;
+	}
+	
+	if (thr_process_events) {
+		thr_process_events->cancel();
+		thr_process_events->join();
+		MEMMAN_DELETE(thr_process_events);
+		delete thr_process_events;
 	}
 }
 
@@ -1700,6 +1708,10 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 void t_userintf::run(void) {
 	string command_line;
 	
+	// Start asynchronous event processor
+	thr_process_events = new t_thread(process_events_main, NULL);
+	MEMMAN_NEW(thr_process_events);
+	
 	list<t_user *> user_list = phone->ref_users();
 	active_user = user_list.front();
 
@@ -1736,6 +1748,18 @@ void t_userintf::run(void) {
 	cout << endl;
 }
 
+void t_userintf::process_events(void) {
+	t_event_ui	*event;
+	
+	while (true) {
+		event = dynamic_cast<t_event_ui *>(evq_ui_events.pop());
+		assert(event);
+		event->exec(this);
+		MEMMAN_DELETE(event);
+		delete event;
+	}
+}
+
 void t_userintf::save_state(void) {
 	string err_msg;
 	
@@ -1755,11 +1779,12 @@ void t_userintf::restore_state(void) {
 }
 
 void t_userintf::lock(void) {
-	// TODO
+	assert(!is_prohibited_thread());
+	// TODO: lock for CLI
 }
 
 void t_userintf::unlock(void) {
-	// TODO
+	// TODO: lock for CLI
 }
 
 string t_userintf::select_network_intf(void) {
@@ -2401,7 +2426,7 @@ void t_userintf::cb_notify_call(int line, string from_party) {
 }
 
 void t_userintf::cb_stop_call_notification(int line) {
-	cb_stop_call_notification(line);
+	cb_stop_tone(line);
 }
 
 void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
@@ -2417,6 +2442,28 @@ void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
+}
+
+void t_userintf::cb_async_dtmf_detected(int line, char dtmf_event) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_DTMF_DETECTED);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	event->set_dtmf_event(dtmf_event);	
+	evq_ui_events.push(event);
+}
+
+void t_userintf::cb_send_dtmf(int line, char dtmf_event) {
+	// No feed back in CLI
+}
+
+void t_userintf::cb_async_send_dtmf(int line, char dtmf_event) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_SEND_DTMF);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	event->set_dtmf_event(dtmf_event);	
+	evq_ui_events.push(event);
 }
 
 void t_userintf::cb_dtmf_not_supported(int line) {
@@ -2449,6 +2496,15 @@ void t_userintf::cb_send_codec_changed(int line, t_audio_codec codec) {
 
 void t_userintf::cb_recv_codec_changed(int line, t_audio_codec codec) {
 	// No feedback in CLI
+}
+
+void t_userintf::cb_async_recv_codec_changed(int line, t_audio_codec codec) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_RECV_CODEC_CHANGED);
+	MEMMAN_NEW(event);
+	
+	event->set_line(line);
+	event->set_codec(codec);	
+	evq_ui_events.push(event);
 }
 
 void t_userintf::cb_notify_recvd(int line, const t_request *r) {
@@ -2685,4 +2741,8 @@ void t_userintf::cmd_quit(void) {
 
 void t_userintf::cmd_cli(const string &command, bool immediate) {
 	exec_command(command, immediate);
+}
+
+void *process_events_main(void *arg) {
+	ui->process_events();
 }

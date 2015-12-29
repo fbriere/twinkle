@@ -21,10 +21,12 @@
 
 #include <list>
 #include <string>
+#include "events.h"
 #include "phone.h"
 #include "parser/request.h"
 #include "parser/response.h"
 #include "audio/tone_gen.h"
+#include "threads/thread.h"
 
 #include "twinkle_config.h"
 
@@ -53,7 +55,7 @@ struct t_command_arg {
         string  value;
 };
 
-class t_userintf {
+class t_userintf : public i_prohibit_thread {
 private:
         bool            end_interface; // indicates if interface loop should quit
         list<string>    all_commands;  // list of all commands
@@ -100,6 +102,10 @@ private:
 
 protected:
         t_phone         *phone;
+        
+        // Asynchronous event queue
+        t_event_queue	evq_ui_events;
+        t_thread	*thr_process_events;
         
         // Indicates if commands should print output to stdout
         bool		use_stdout;
@@ -179,6 +185,9 @@ public:
         // Run the user interface
         virtual void run(void);
         
+        // This method executes asynchronous uier interface events
+        virtual void process_events(void);
+        
         // Save user interface state to system settings
         virtual void save_state(void);
         
@@ -239,11 +248,15 @@ public:
         virtual void cb_notify_call(int line, string from_party);
         virtual void cb_stop_call_notification(int line);
 	virtual void cb_dtmf_detected(int line, char dtmf_event);
+	virtual void cb_async_dtmf_detected(int line, char dtmf_event);
+	virtual void cb_send_dtmf(int line, char dtmf_event);
+	virtual void cb_async_send_dtmf(int line, char dtmf_event);
 	virtual void cb_dtmf_not_supported(int line);
 	virtual void cb_dtmf_supported(int line);
 	virtual void cb_line_state_changed(void);
 	virtual void cb_send_codec_changed(int line, t_audio_codec codec);
 	virtual void cb_recv_codec_changed(int line, t_audio_codec codec);
+	virtual void cb_async_recv_codec_changed(int line, t_audio_codec codec);
 	virtual void cb_notify_recvd(int line, const t_request *r);
 	virtual void cb_refer_failed(int line, const t_response *r);
 	virtual void cb_refer_result_success(int line);
@@ -309,6 +322,8 @@ public:
 	virtual void cmd_quit(void);
 	virtual void cmd_cli(const string &command, bool immeidate);
 };
+
+void *process_events_main(void *arg);
 
 extern t_userintf *ui;
 

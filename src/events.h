@@ -22,12 +22,16 @@
 #include <queue>
 #include "timekeeper.h"
 #include "stun/stun.h"
+#include "audio/audio_codecs.h"
 #include "parser/sip_message.h"
 #include "sockets/socket.h"
 #include "threads/mutex.h"
 #include "threads/sema.h"
 
 using namespace std;
+
+// Forward declarations
+class t_userintf;
 
 // Different types of events
 enum t_event_type {
@@ -43,6 +47,7 @@ enum t_event_type {
 	EV_STUN_RESPONSE,	// Received STUN response
 	EV_NAT_KEEPALIVE,	// Send a NAT keep alive packet
 	EV_ICMP,		// ICMP error
+	EV_UI,			// User interface event
 };
 
 ///////////////////////////////////////////////////////////////
@@ -280,6 +285,33 @@ public:
 	t_event_icmp(const t_icmp_msg &m);
 	t_event_type get_type(void) const;
 	t_icmp_msg get_icmp(void) const;
+};
+
+///////////////////////////////////////////////////////////////
+// User interface event
+///////////////////////////////////////////////////////////////
+enum t_ui_event_type {
+	TYPE_UI_CB_DTMF_DETECTED,
+	TYPE_UI_CB_SEND_DTMF,
+	TYPE_UI_CB_RECV_CODEC_CHANGED,
+};
+
+class t_event_ui : public t_event {
+private:
+	t_ui_event_type	type;
+	
+	// Parameters for call back functions
+	int		line;
+	t_audio_codec	codec;
+	char		dtmf_event;
+
+public:
+	t_event_ui(t_ui_event_type _type);
+	t_event_type get_type(void) const;
+	void set_line(int _line);
+	void set_codec(t_audio_codec _codec);
+	void set_dtmf_event(char _dtmf_event);
+	void exec(t_userintf *user_intf);
 };
 
 ///////////////////////////////////////////////////////////////

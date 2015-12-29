@@ -20,6 +20,7 @@
 #define _TRANSACTION_LAYER_H
 
 #include "events.h"
+#include "prohibit_thread.h"
 #include "transaction.h"
 #include "parser/request.h"
 #include "parser/response.h"
@@ -28,11 +29,11 @@
 
 typedef unsigned short	t_tuid;
 
-class t_transaction_layer {
+class t_transaction_layer : public i_prohibit_thread {
 private:
 	// Mutex to guarantee that only 1 thread at a time is
 	// accessing the transaction layer.
-	t_recursive_mutex	 tl_mutex;
+	t_recursive_mutex	tl_mutex;
 
 	void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_request(t_request *r, t_tid tid, t_tid tid_cancel_target);

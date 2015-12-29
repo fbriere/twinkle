@@ -36,8 +36,8 @@ DIGIT		[0-9]
 ALPHA		[a-zA-Z]
 CAPITALS	[A-Z]
 ALNUM		[a-zA-Z0-9]
-TOKEN_SYM	[[:alnum:]\-\.!%\*_\+\'~]
-WORD_SYM	[[:alnum:]\-\.!%\*_\+\'~\(\)<>:\\\"\/\[\]\?\{\}]
+TOKEN_SYM	[[:alnum:]\-\.!%\*_\+\`\'~]
+WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 
 %x C_URI
 %x C_URI_SPECIAL

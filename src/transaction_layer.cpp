@@ -218,6 +218,9 @@ void t_transaction_layer::run(void) {
 }
 
 void t_transaction_layer::lock(void) {
+	// Prohibited threads may not lock the transaction layer
+	assert(!is_prohibited_thread());
+
 	// The user interface and transaction layer threads both call
 	// functions on the transaction layer. By locking the UI mutex
 	// first, a deadlock can never occur as the UI also takes the

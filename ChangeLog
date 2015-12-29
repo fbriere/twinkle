@@ -1,3 +1,18 @@
+07 may 2006 - Release 0.7.1
+===========================
+- Check that --call and --cmd arguments are not empty
+- When DTMF transport is "inband", then do not signal RFC2833 support in SDP
+
+Bug fixes
+---------
+- CLI and non-KDE version hang when stopping ring tone
+- The GUI allowed payload type 96-255 for DTMF and Speex, while
+  maximum value is only 127
+- When a dynamic codec change takes place at the same time as a re-INVITE
+  Twinkle sometimes freezes.
+- Sending RFC 2833 DTMF events fails when codec is speex-wb or speex-uwb
+
+
 29 apr 2006 - Release 0.7
 =========================
 - Speex support (narrow, wide and ultra wide band)

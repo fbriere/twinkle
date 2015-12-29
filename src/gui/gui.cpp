@@ -524,6 +524,10 @@ t_gui::~t_gui() {
 }
 
 void t_gui::run(void) {
+	// Start asynchronous event processor
+	thr_process_events = new t_thread(process_events_main, NULL);
+	MEMMAN_NEW(thr_process_events);
+	
 	QString s;
 	list<t_user *> user_list = phone->ref_users();
 	
@@ -638,12 +642,14 @@ void t_gui::lock(void) {
 	// is used. The main thread running the Qt event loop takes the
 	// application lock itself already. So take the lock if this is not the
 	// main thread.
+	t_userintf::lock();
 	if (!t_thread::is_self(thread_id_main)) {
 		qApp->lock();
 	}
 }
 
 void t_gui::unlock(void) {
+	t_userintf::lock();
 	if (!t_thread::is_self(thread_id_main)) {
 		qApp->unlock();
 	}
@@ -1451,8 +1457,8 @@ void t_gui::cb_stop_call_notification(int line) {
 		delete sys_tray_popup;
 		sys_tray_popup = NULL;
 	}
-	unlock();
 #endif
+	unlock();
 }
 
 void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
@@ -1473,6 +1479,24 @@ void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
 		s.append(QString().setNum((int)dtmf_event));
 	}
 	
+	mainWindow->display(s);
+	
+	unlock();
+}
+
+void t_gui::cb_send_dtmf(int line, char dtmf_event) {
+	if (line >= NUM_USER_LINES) return;
+	
+	lock();
+	QString s;
+	
+	if (!VALID_DTMF_EV(dtmf_event)) return;
+	
+	mainWindow->displayHeader();
+	s = "Line ";
+	s.append(QString().setNum(line + 1));
+	s.append(":\tsend DTMF ");
+	s.append(dtmf_ev2char(dtmf_event));
 	mainWindow->display(s);
 	
 	unlock();
@@ -1516,13 +1540,17 @@ void t_gui::cb_line_state_changed(void) {
 void t_gui::cb_send_codec_changed(int line, t_audio_codec codec) {
 	if (line >= NUM_USER_LINES) return;
 	
+	lock();
 	displayCodecInfo(line);
+	unlock();
 }
 
 void t_gui::cb_recv_codec_changed(int line, t_audio_codec codec) {
 	if (line >= NUM_USER_LINES) return;
 	
+	lock();
 	displayCodecInfo(line);
+	unlock();
 }
 
 void t_gui::cb_notify_recvd(int line, const t_request *r) {

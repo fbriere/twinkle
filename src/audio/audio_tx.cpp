@@ -24,9 +24,12 @@
 #include <sys/time.h>
 #include "audio_tx.h"
 #include "log.h"
+#include "phone.h"
 #include "userintf.h"
 #include "line.h"
 #include "audits/memman.h"
+
+extern t_phone *phone;
 
 #define SAMPLE_BUF_SIZE (MAX_PTIME * sc_sample_rate/1000 * AUDIO_SAMPLE_SIZE/8)
 
@@ -167,6 +170,10 @@ t_audio_tx::t_audio_tx(t_audio_session *_audio_session,
 	peer_tx_3way = NULL;
 	peer_rx_3way = NULL;
 	mix_buf_3way = NULL;
+	
+	// Initialize telephone event settings
+	pt_telephone_event = -1;
+	pt_telephone_event_alt = 1;
 }
 
 t_audio_tx::~t_audio_tx() {
@@ -460,6 +467,11 @@ void t_audio_tx::run(void) {
 
 	unsigned long rtp_timestamp;
 	
+	// This thread may not take the lock on the transaction layer to
+	// prevent dead locks
+	phone->add_prohibited_thread();
+	ui->add_prohibited_thread();
+	
 	while (true) {
 		do {
 			adu = NULL;
@@ -539,7 +551,7 @@ void t_audio_tx::run(void) {
 			if (codec != recvd_codec) {
 				codec = recvd_codec;
 				get_line()->ci_set_recv_codec(codec);
-				ui->cb_recv_codec_changed(get_line()->get_line_number(),
+				ui->cb_async_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
 				log_file->write_header("t_audio_tx::run", 
@@ -563,7 +575,7 @@ void t_audio_tx::run(void) {
 			if (codec != CODEC_UNSUPPORTED) {
 				codec = CODEC_UNSUPPORTED;
 				get_line()->ci_set_recv_codec(codec);
-				ui->cb_recv_codec_changed(get_line()->get_line_number(),
+				ui->cb_async_recv_codec_changed(get_line()->get_line_number(),
 					codec);
 
 				log_file->write_header("t_audio_tx::run", 
@@ -596,7 +608,7 @@ void t_audio_tx::run(void) {
 				dtmf_previous_timestamp = rtp_timestamp;
 				t_rtp_telephone_event *e =
 					(t_rtp_telephone_event *)adu->getData();
-				ui->cb_dtmf_detected(get_line()->get_line_number(),
+				ui->cb_async_dtmf_detected(get_line()->get_line_number(),
 					e->get_event());
 
 				// Log DTMF event
@@ -876,6 +888,8 @@ void t_audio_tx::run(void) {
 		// crack in the sound.
 	}
 
+	phone->remove_prohibited_thread();
+	ui->remove_prohibited_thread();
 	is_running = false;
 }
 

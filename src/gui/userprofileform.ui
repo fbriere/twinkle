@@ -1088,7 +1088,7 @@ This field is mandatory.</string>
                                             <cstring>spxUwbPayloadSpinBox</cstring>
                                         </property>
                                         <property name="maxValue">
-                                            <number>255</number>
+                                            <number>127</number>
                                         </property>
                                         <property name="minValue">
                                             <number>96</number>
@@ -1127,7 +1127,7 @@ This field is mandatory.</string>
                                             <cstring>spxWbPayloadSpinBox</cstring>
                                         </property>
                                         <property name="maxValue">
-                                            <number>255</number>
+                                            <number>127</number>
                                         </property>
                                         <property name="minValue">
                                             <number>96</number>
@@ -1141,7 +1141,7 @@ This field is mandatory.</string>
                                             <cstring>spxNbPayloadSpinBox</cstring>
                                         </property>
                                         <property name="maxValue">
-                                            <number>255</number>
+                                            <number>127</number>
                                         </property>
                                         <property name="minValue">
                                             <number>96</number>
@@ -1257,7 +1257,7 @@ This field is mandatory.</string>
                                             </size>
                                         </property>
                                         <property name="maxValue">
-                                            <number>255</number>
+                                            <number>127</number>
                                         </property>
                                         <property name="minValue">
                                             <number>96</number>

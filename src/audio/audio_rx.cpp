@@ -157,6 +157,8 @@ bool t_audio_rx::get_dtmf_event(void) {
 	dtmf_queue.pop();
 	mtx_dtmf_q.unlock();
 	
+	ui->cb_async_send_dtmf(get_line()->get_line_number(), dtmf_event.dtmf_tone);
+	
 	// Create DTMF player
 	if (dtmf_event.inband) {
 		dtmf_player = new t_inband_dtmf_player(this, audio_encoder, user_config,
@@ -172,6 +174,11 @@ bool t_audio_rx::get_dtmf_event(void) {
 		log_file->write_endl();
 		log_file->write_footer();
 	} else {
+		// The telephone events may have a different sampling rate than
+		// the audio codec. Change nsamples accordingly.
+		nsamples = audio_sample_rate(CODEC_TELEPHONE_EVENT)/1000 *
+				audio_encoder->get_ptime();
+		
 		dtmf_player = new t_rtp_event_dtmf_player(this, audio_encoder, user_config,
 				dtmf_event.dtmf_tone, timestamp, nsamples);
 		MEMMAN_NEW(dtmf_player);
@@ -189,8 +196,13 @@ bool t_audio_rx::get_dtmf_event(void) {
 		log_file->write_footer();
 
 		// Set RTP payload format
+		// HACK: the sample rate for telephone events is 8000, but the
+		//       ccRTP stack does not handle it well when the sample rate
+		//       changes. When the sample rate of the audio codec is kept
+		//       on the ccRTP session settings, then all works fine.
 		rtp_session->setPayloadFormat(DynamicPayloadFormat(pt_telephone_event,
-				audio_sample_rate(CODEC_TELEPHONE_EVENT)));
+				audio_encoder->get_sample_rate()));
+				// should be this: audio_sample_rate(CODEC_TELEPHONE_EVENT)
 	
 		// As all RTP event contain the same timestamp, the ccRTP stack will
 		// discard packets when the timestamp gets to old.
@@ -203,6 +215,7 @@ bool t_audio_rx::get_dtmf_event(void) {
 }
 
 void t_audio_rx::set_sound_payload_format(void) {
+	nsamples = audio_encoder->get_sample_rate()/1000 * audio_encoder->get_ptime();
 	rtp_session->setPayloadFormat(DynamicPayloadFormat(audio_encoder->get_payload_id(),
 			audio_encoder->get_sample_rate()));
 }
@@ -341,6 +354,9 @@ void t_audio_rx::run(void) {
 	struct timeval debug_timer;
 	unsigned short sound_payload_size;
 	uint32 dtmf_rtp_timestamp;
+	
+	phone->add_prohibited_thread();
+	ui->add_prohibited_thread();
 	
 	// This flag indicates if we are currently in a silence period.
 	// The start of a new stream is assumed to start in silence, such
@@ -501,6 +517,8 @@ void t_audio_rx::run(void) {
 		}			
 	}
 
+	phone->remove_prohibited_thread();
+	ui->remove_prohibited_thread();
 	is_running = false;
 }
 

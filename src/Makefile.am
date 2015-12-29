@@ -35,6 +35,7 @@ libtwinkle_a_SOURCES =\
         log.cpp\
         phone.cpp\
         phone_user.cpp\
+        prohibit_thread.cpp\
         redirect.cpp\
         sender.cpp\
         service.cpp\
@@ -61,6 +62,7 @@ libtwinkle_a_SOURCES =\
         log.h\
         phone.h\
         phone_user.h\
+        prohibit_thread.h\
 	protocol.h\
         redirect.h\
         sender.h\

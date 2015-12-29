@@ -181,6 +181,7 @@ public:
 	void cb_notify_call(int line, string from_party);
 	void cb_stop_call_notification(int line);
 	void cb_dtmf_detected(int line, char dtmf_event);
+	void cb_send_dtmf(int line, char dtmf_event);
 	void cb_dtmf_not_supported(int line);
 	void cb_dtmf_supported(int line);
 	void cb_line_state_changed(void);
