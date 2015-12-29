@@ -3,6 +3,5 @@
 # Compulsory line, this is a version 3 file
 version=3
 
-opts=uversionmangle=s/beta/~beta/ \
-   http://www.xs4all.nl/~mfnboer/twinkle/download/twinkle-(.*)\.tar\.gz debian svn-upgrade
-
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/twinkle-$1\.tar\.gz/ \
+  https://github.com/LubosD/twinkle/tags .*/v?(\d\S*)\.tar\.gz

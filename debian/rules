@@ -18,3 +18,6 @@ override_dh_installman:
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
+
+get-orig-source:
+	uscan --noconf --verbose --rename --destdir=$(CURDIR) --check-dirname-level=0 --force-download --download-current-version
