@@ -30,11 +30,12 @@
 #include "user.h"
 #include "sockets/url.h"
 #include "threads/mutex.h"
+#include "utils/record_file.h"
 
 using namespace std;
 
 /** A single address card. */
-class t_address_card {
+class t_address_card : public utils::t_record {
 public:
 	string		name_last;	/**< Last name. */
 	string		name_first;	/**< First name. */
@@ -48,19 +49,8 @@ public:
 	 */
 	string get_display_name(void) const;
 	
-	/**
-	 * Create a record for write to a file.
-	 * @return The file record.
-	 */
-	string create_file_record(void) const;
-	
-	/**
-	 * Populate from a file record.
-	 * @param record The file record.
-	 * @return true, if populated succesfully.
-	 * @return false, if file record could not be parsed.
-	 */
-	bool populate_from_file_record(const string &record);
+	virtual bool create_file_record(vector<string> &v) const;
+	virtual bool populate_from_file_record(const vector<string> &v);
 	
 	/** Equality check. */
 	bool operator==(const t_address_card other) const;
@@ -70,17 +60,8 @@ public:
  * A book containing address cards. The user can
  * create different address books.
  */
-class t_address_book {
+class t_address_book : public utils::t_record_file<t_address_card> {
 private:
-	/** Full file name for call history file. */
-	string		filename;
-	
-	/** Mutex to protect concurrent access/ */
-	mutable t_recursive_mutex	mtx_ab;
-	
-	/** List of address cards. */
-	list<t_address_card>	address_list;
-	
 	/** @name Cache for last searched name/url mapping */
 	//@{
 	mutable t_url		last_url;	/**< Last URL. */
@@ -89,8 +70,8 @@ private:
 	
 	/**
 	 * Find a matching address for a url and cache the display name.
-	 * @param user_config The user profile.
-	 * @param u The url to find.
+	 * @param user_config [in] The user profile.
+	 * @param u [in] The url to find.
 	 * @post If a matching address is found, then the URL and name are
 	 * put in the cache. Otherwise the cache is cleared.
 	 */
@@ -102,7 +83,7 @@ public:
 
 	/**
 	 * Add an address.
-	 * @param address The address to be added.
+	 * @param address [in] The address to be added.
 	 */
 	void add_address(const t_address_card &address);
 	
@@ -115,8 +96,8 @@ public:
 
 	/**
 	 * Update an address.
-	 * @param old_address The address to be updated.
-	 * @param new_address The updated address information.
+	 * @param old_address [in] The address to be updated.
+	 * @param new_address [in] The updated address information.
 	 * @return true, if the update was successful.
 	 * @return false, if the old address does not exist.
 	 */
@@ -125,30 +106,12 @@ public:
 		
 	/**
 	 * Find the display name for a SIP URL.
-	 * @param user_config The user profile.
-	 * @param u The SIP URL.
+	 * @param user_config [in] The user profile.
+	 * @param u [in] The SIP URL.
 	 * @return The display name if a match was found.
 	 * @return Empty string if no match can be found.
 	 */
 	string find_name(t_user *user_config, const t_url &u) const;
-	
-	/**
-	 * Read an address book file.
-	 * @param error_msg Error message on failure return.
-	 * @return true, if file was read succesfully.
-	 * @return false, if it fails. error_msg is an error to be given to
-	 * the user.
-	 */
-	bool read_address_book(string &error_msg);
-
-	/**
-	 * Write an address book file.
-	 * @param error_msg Error message on failure return.
-	 * @return true, if file was written succesfully.
-	 * @return false, if it fails. error_msg is an error to be given to
-	 * the user.
-	 */
-	bool write_address_book(string &error_msg) const;
 
 	/**
 	 * Get the list of addresses.

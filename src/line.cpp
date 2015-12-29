@@ -1543,26 +1543,6 @@ void t_line::recvd_cancel(t_request *r, t_tid cancel_tid,
 
 void t_line::recvd_bye(t_request *r, t_tid tid) {
 	if (active_dialog && active_dialog->match_request(r)) {
-		/*
-		// TEST ONLY
-		// Test code to test INVITE authentication
-		if (!r->hdr_authorization.is_populated()) {
-			t_response *resp =
-				r->create_response(R_401_UNAUTHORIZED);
-			t_challenge c;
-			c.auth_scheme = AUTH_DIGEST;
-			c.digest_challenge.realm = "mtel.nl";
-			c.digest_challenge.nonce = "0123456789abcdef";
-			c.digest_challenge.opaque = "secret";
-			c.digest_challenge.algorithm = ALG_MD5;
-			c.digest_challenge.qop_options.push_back(QOP_AUTH);
-			c.digest_challenge.qop_options.push_back(QOP_AUTH_INT);
-			resp->hdr_www_authenticate.set_challenge(c);
-			send_response(resp, 0, tid);
-			return;
-		}
-		*/
-
 		active_dialog->recvd_request(r, 0, tid);
 	} else {
 		// Should not get here as phone already checked that
@@ -1617,6 +1597,17 @@ void t_line::recvd_notify(t_request *r, t_tid tid) {
 }
 
 void t_line::recvd_info(t_request *r, t_tid tid) {
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_request(r, 0, tid);
+	} else {
+		// Should not get here as phone already checked that
+		// the request matched with this line
+		assert(false);
+	}
+	cleanup();
+}
+
+void t_line::recvd_message(t_request *r, t_tid tid) {
 	if (active_dialog && active_dialog->match_request(r)) {
 		active_dialog->recvd_request(r, 0, tid);
 	} else {

@@ -1255,6 +1255,94 @@ void t_userintf::do_zrtp(t_zrtp_cmd zrtp_cmd) {
 	}
 }
 
+bool t_userintf::exec_message(const list<string> command_list) {
+	list<t_command_arg> al;
+	string display;
+	string destination;
+	string text;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help message");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 'd':
+			display = i->value;
+			break;
+		case 0:
+			if (destination.empty()) {
+				destination = i->value;
+			} else {
+				text = i->value;
+			}
+			break;
+		default:
+			exec_command("help message");
+			return false;
+			break;
+		}
+	}
+	
+	if (destination.empty() || text.empty()) {
+		exec_command("help message");
+		return false;
+	}
+
+	return do_message(destination, display, text);
+}
+
+bool t_userintf::do_message(const string &destination, const string &display,
+		const string &text)
+{
+	t_url dest_url(expand_destination(active_user, destination));
+	
+	if (!dest_url.is_valid()) {
+		exec_command("help message");
+		return false;
+	}
+
+	phone->pub_send_message(active_user, dest_url, display, text);
+	return true;
+}
+
+bool t_userintf::exec_presence(const list<string> command_list) {
+	list<t_command_arg> al;
+	t_presence_state::t_basic_state basic_state;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help presence");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 'b':
+			if (i->value == "online") {
+				basic_state = t_presence_state::ST_BASIC_OPEN;
+			} else if (i->value == "offline") {
+				basic_state = t_presence_state::ST_BASIC_CLOSED;
+			} else {
+				exec_command("help presence");
+				return false;
+			}
+			break;
+		default:
+			exec_command("help presence");
+			return false;
+			break;
+		}
+	}
+
+	do_presence(basic_state);
+}
+
+void t_userintf::do_presence(t_presence_state::t_basic_state basic_state)
+{
+	phone->pub_publish_presence(active_user, basic_state);
+}
+
 bool t_userintf::exec_quit(const list<string> command_list) {
 	do_quit();
 	return true;
@@ -1308,6 +1396,8 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 #ifdef HAVE_ZRTP
 		cout << "zrtp		ZRTP command for voice encryption\n";
 #endif
+		cout << "message\t\tSend an instant message\n";
+		cout << "presence	Publish your presence state\n";
 		cout << "quit		Quit\n";
 		cout << "help		Get help on a command\n";
 		cout << endl;
@@ -1662,6 +1752,35 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 		return;
 	}
 #endif
+	
+	if (c == "message") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tmessage [-d display] dst text\n";
+		cout << "Description:\n";
+		cout << "\tSend an instant message.\n";
+		cout << "Arguments:\n";
+		cout << "\t-d display	Add display name to To-header\n";
+		cout << "\tdst		SIP uri of party to message\n";
+		cout << "\ttext		Message text to send. Surround with double quotes\n";
+		cout << "\t\t\twhen your text contains whitespace.\n";
+		cout << endl;
+		
+		return;
+	}
+	
+	if (c == "presence") {
+		cout << endl;
+		cout << "Usage:\n";
+		cout << "\tpresence -b [online|offline]\n";
+		cout << "Description:\n";
+		cout << "\tPublish your presence state to a presence agent\n";
+		cout << "Arguments:\n";
+		cout << "\t-b		A basic presence state: online or offline\n";
+		cout << endl;
+		
+		return;
+	}
 
 	if (c == "quit") {
 		cout << endl;
@@ -1732,6 +1851,8 @@ t_userintf::t_userintf(t_phone *_phone) {
 #ifdef HAVE_ZRTP
 	all_commands.push_back("zrtp");
 #endif
+	all_commands.push_back("message");
+	all_commands.push_back("presence");
 	all_commands.push_back("quit");
 	all_commands.push_back("exit");
 	all_commands.push_back("q");
@@ -1832,6 +1953,8 @@ bool t_userintf::exec_command(const string &command_line, bool immediate) {
 #ifdef HAVE_ZRTP
 	if (command == "zrtp") return exec_zrtp(l);
 #endif
+	if (command == "message") return exec_message(l);
+	if (command == "presence") return exec_presence(l);
 	if (command == "quit") return exec_quit(l);
 	if (command == "exit") return exec_quit(l);
 	if (command == "x") return exec_quit(l);
@@ -3172,6 +3295,58 @@ void t_userintf::cb_mwi_terminated(t_user *user_config, const string &reason) {
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
+}
+
+bool t_userintf::cb_message_request(t_user *user_config, t_request *r) {
+	cout << endl;
+	cout << "Received message\n";
+	cout << "From:\t\t";
+	
+	string from_party = format_sip_address(user_config, 
+		r->hdr_from.get_display_presentation(), r->hdr_from.uri);
+	cout << from_party << endl;
+
+	if (r->hdr_organization.is_populated()) {
+		cout << "Organization:\t" << r->hdr_organization.name << endl;
+	}
+
+	cout << "To:\t\t";
+	cout << format_sip_address(user_config, r->hdr_to.display, r->hdr_to.uri) << endl;
+
+	if (r->hdr_subject.is_populated()) {
+		cout << "Subject:\t" << r->hdr_subject.subject << endl;
+	}
+	
+	cout << endl;
+	if (r->body && r->body->get_type() == BODY_PLAIN_TEXT)
+	{
+		t_sip_body_plain_text *sb = dynamic_cast<t_sip_body_plain_text *>(r->body);
+		cout << sb->text << endl;
+	} else if (r->body && r->body->get_type() == BODY_HTML_TEXT) {
+		t_sip_body_html_text *sb = dynamic_cast<t_sip_body_html_text *>(r->body);
+		cout << sb->text << endl;
+	} else {
+		cout << "Unsupported content type.\n";
+	}
+
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+	
+	// There are no session in CLI mode, so all messages are accepted.
+	return true;
+}
+
+void t_userintf::cb_message_response(t_user *user_config, t_response *r) {
+	if (r->is_success()) return;
+	
+	cout << endl;
+	cout << "Failed to send MESSAGE.\n";
+	cout << r->code << " " << r->reason << endl;
+	
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();	
 }
 
 bool t_userintf::get_last_call_info(t_url &url, string &display,

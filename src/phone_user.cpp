@@ -21,6 +21,7 @@
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
+#include "presence/presence_epa.h"
 
 extern t_phone 		*phone;
 extern t_event_queue	*evq_timekeeper;
@@ -58,7 +59,7 @@ void t_phone_user::cleanup_stun_data(void) {
 	if (!use_stun) return;
 	
 	if (!stun_binding_inuse_registration &&
-	    !stun_binding_inuse_mwi)
+	    !stun_binding_inuse_mwi && stun_binding_inuse_presence == 0)
 	{
 		stun_public_ip_sip = 0;
 		stun_public_port_sip = 0;
@@ -81,10 +82,33 @@ void t_phone_user::cleanup_registration_data(void) {
 	cleanup_nat_keepalive();
 }
 
-t_phone_user::t_phone_user(const t_user &profile) {
+t_phone_user::t_phone_user(const t_user &profile)
+{
 	user_config = profile.copy();
+	
 	service = new t_service(user_config);
 	MEMMAN_NEW(service);
+	
+	buddy_list = new t_buddy_list(this);
+	MEMMAN_NEW(buddy_list);
+	
+	presence_epa = new t_presence_epa(this);
+	MEMMAN_NEW(presence_epa);
+	
+	string err_msg;
+	if (buddy_list->load(err_msg)) {
+		log_file->write_header("t_phone_user::t_phone_user");
+		log_file->write_raw(user_config->get_profile_name());
+		log_file->write_raw(": buddy list loaded.\n");
+		log_file->write_footer();
+	} else {
+		log_file->write_header("t_phone_user::t_phone_user", LOG_NORMAL, LOG_CRITICAL);
+		log_file->write_raw(user_config->get_profile_name());
+		log_file->write_raw(": falied to load buddy list.\n");
+		log_file->write_raw(err_msg);
+		log_file->write_endl();
+		log_file->write_footer();
+	}
 	
 	active = true;
 
@@ -92,6 +116,7 @@ t_phone_user::t_phone_user(const t_user &profile) {
 	r_register = NULL;
 	r_deregister = NULL;
 	r_query_register = NULL;
+	r_message = NULL;
 	r_stun = NULL;
 	
 	// Initialize registration data
@@ -107,8 +132,10 @@ t_phone_user::t_phone_user(const t_user &profile) {
 	stun_public_port_sip = 0;
 	stun_binding_inuse_registration = false;
 	stun_binding_inuse_mwi = false;
+	stun_binding_inuse_presence = 0;
 	register_after_stun = false;
 	mwi_subscribe_after_stun = false;
+	presence_subscribe_after_stun = false;
 	use_stun = false;
 	use_nat_keepalive = false;
 	
@@ -144,9 +171,20 @@ t_phone_user::~t_phone_user() {
 		MEMMAN_DELETE(r_query_register);
 		delete r_query_register;
 	}
+	if (r_message) {
+		MEMMAN_DELETE(r_message);
+		delete r_message;
+	}
 	if (r_stun) {
 		MEMMAN_DELETE(r_stun);
 		delete r_stun;
+	}
+	
+	for (list<t_request *>::iterator it = pending_messages.begin();
+	     it != pending_messages.end(); ++it)
+	{
+		MEMMAN_DELETE(*it);
+		delete *it;
 	}
 	
 	if (mwi_dialog) {
@@ -156,12 +194,25 @@ t_phone_user::~t_phone_user() {
 	
 	MEMMAN_DELETE(service);
 	delete service;
+	MEMMAN_DELETE(presence_epa);
+	delete presence_epa;
+	MEMMAN_DELETE(buddy_list);
+	delete buddy_list;
+	buddy_list = NULL;
 	MEMMAN_DELETE(user_config);
 	delete user_config;
 }
 
 t_user *t_phone_user::get_user_profile(void) {
 	return user_config;
+}
+
+t_buddy_list *t_phone_user::get_buddy_list(void) {
+	return buddy_list;
+}
+
+t_presence_epa *t_phone_user::get_presence_epa(void) {
+	return presence_epa;
 }
 
 void t_phone_user::registration(t_register_type register_type, bool re_register,
@@ -329,6 +380,7 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_t
 	t_client_request **current_cr;
 	t_request *req;
 	bool is_register = false;
+	t_buddy *buddy;
 
 	if (r_register && r_register->get_tuid() == tuid) {
 		current_cr = &r_register;
@@ -341,12 +393,24 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_t
 		is_register = true;
 	} else if (r_options && r_options->get_tuid() == tuid) {
 		current_cr = &r_options;
+	} else if (r_message && r_message->get_tuid() == tuid) {
+		current_cr = &r_message;
 	} else if (mwi_dialog && mwi_dialog->match_response(r, tuid)) {
 		mwi_dialog->recvd_response(r, tuid, tid);
 		cleanup_mwi_dialog();
 		return;
+	} else if (presence_epa && presence_epa->match_response(r, tuid)) {
+		presence_epa->recv_response(r, tuid, tid);
+		return;
+	} else if (buddy_list->match_response(r, tuid, &buddy)) {
+		buddy->recvd_response(r, tuid, tid);
+		if (buddy->must_delete_now()) buddy_list->del_buddy(*buddy);
+		return;
 	} else {
 		// Response does not match any pending request.
+		log_file->write_report("Response does not match any pending request.",
+			"t_phone_user::handle_response_out_of_dialog",
+			LOG_NORMAL, LOG_WARNING);
 		return;
 	}
 
@@ -447,6 +511,27 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_t
 		r_options = NULL;
 		return;
 	}
+	
+	// MESSAGE
+	if (r_message && r_message->get_tuid() == tuid) {
+		handle_response_message(r);
+		MEMMAN_DELETE(r_message);
+		delete r_message;
+		r_message = NULL;
+		
+		// Send next pending MESSAGE
+		if (!pending_messages.empty()) {
+			t_request *req = pending_messages.front();
+			pending_messages.pop_front();
+			r_message = new t_client_request(user_config, req, 0);
+			MEMMAN_NEW(r_message);
+			phone->send_request(user_config, req, r_message->get_tuid());
+			MEMMAN_DELETE(req);
+			delete req;			
+		}
+		
+		return;
+	}
 
 	// Response does not match any pending request. Do nothing.
 }
@@ -493,6 +578,11 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
                 	subscribe_mwi();
                 }
                 
+                if (presence_subscribe_after_stun) {
+                	presence_subscribe_after_stun = false;
+                	buddy_list->stun_completed();
+                }
+                
                 return;
 	}
 	
@@ -523,6 +613,11 @@ void t_phone_user::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
         	// Retry MWI subscription later
         	start_resubscribe_mwi_timer(DUR_MWI_FAILURE * 1000);
         	mwi_subscribe_after_stun = false;
+        }
+        
+        if (presence_subscribe_after_stun) {
+        	buddy_list->stun_failed();
+        	presence_subscribe_after_stun = false;
         }
 }
 
@@ -617,6 +712,18 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 		if (user_config->get_mwi_sollicited() && !mwi_auto_resubscribe) {
 			subscribe_mwi();
 		}
+		
+		// Publish presence state if not yet published.
+		if (user_config->get_pres_publish_startup() && 
+		    presence_epa->get_epa_state() == t_epa::EPA_UNPUBLISHED)
+		{
+			publish_presence(t_presence_state::ST_BASIC_OPEN);
+		}
+		
+		// Subscribe to buddy list presence if not done so.
+		if (!buddy_list->get_is_subscribed()) {
+			subscribe_presence();
+		}
 
                 break;
         case R_4XX:
@@ -626,7 +733,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                 if (r->code == R_423_INTERVAL_TOO_BRIEF) {
                         if (!r->hdr_min_expires.is_populated()) {
                                 // Violation of RFC 3261 10.3 item 7
-				log_file->write_report("Expires header missing from 423 response.",
+				log_file->write_report("Min-Expires header missing from 423 response.",
 					"t_phone_user::handle_response_register",
 					LOG_NORMAL, LOG_WARNING);
                                 ui->cb_invalid_reg_resp(user_config, r,
@@ -710,6 +817,10 @@ void t_phone_user::handle_response_query_register(t_response *r) {
 
 void t_phone_user::handle_response_options(t_response *r) {
 	ui->cb_options_response(r);
+}
+
+void t_phone_user::handle_response_message(t_response *r) {
+	ui->cb_message_response(user_config, r);
 }
 
 void t_phone_user::subscribe_mwi(void) {
@@ -819,6 +930,96 @@ void t_phone_user::handle_mwi_unsollicited(t_request *r, t_tid tid) {
 	ui->cb_update_mwi();
 }
 
+void t_phone_user::subscribe_presence(void) {
+	assert(buddy_list);
+	buddy_list->subscribe_presence();
+}
+
+void t_phone_user::unsubscribe_presence(void) {
+	assert(buddy_list);
+	buddy_list->unsubscribe_presence();
+}
+
+void t_phone_user::publish_presence(t_presence_state::t_basic_state basic_state) {
+	assert(presence_epa);
+	presence_epa->publish_presence(basic_state);
+}
+
+void t_phone_user::unpublish_presence(void) {
+	assert(presence_epa);
+	presence_epa->unpublish();
+}
+
+bool t_phone_user::is_presence_terminated(void) const {
+	assert(buddy_list);
+	return buddy_list->is_presence_terminated();
+}
+
+void t_phone_user::send_message(const t_url &to_uri, const string &to_display, 
+		const string &text)
+{
+	t_request *req = create_request(MESSAGE, to_uri);
+	
+	// To
+	req->hdr_to.set_uri(to_uri);
+	req->hdr_to.set_display(to_display);
+
+	// Call-ID
+	req->hdr_call_id.set_call_id(NEW_CALL_ID(user_config));
+
+	// CSeq
+	req->hdr_cseq.set_method(MESSAGE);
+	req->hdr_cseq.set_seqnr(NEW_SEQNR);
+	
+	// Body
+	req->set_body_plain_text(text, MSG_TEXT_CHARSET);
+	
+	// Store and send request
+	// Delete a possible pending options request
+	if (r_message) {
+		// RFC 3428 8
+		// Send only 1 message at a time.
+		// Store the message. It will be sent if the previous
+		// message transaction is finished.
+		pending_messages.push_back(req);
+	} else {
+		r_message = new t_client_request(user_config, req, 0);
+		MEMMAN_NEW(r_message);
+		phone->send_request(user_config, req, r_message->get_tuid());
+		MEMMAN_DELETE(req);
+		delete req;
+	}
+}
+
+void t_phone_user::recvd_message(t_request *r, t_tid tid) {
+	t_response *resp;
+	
+	if (!r->body ||
+	    (r->body->get_type() != BODY_PLAIN_TEXT &&
+	     r->body->get_type() != BODY_HTML_TEXT))
+	{
+		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
+		// RFC 3261 21.4.13
+		SET_MESSAGE_HDR_ACCEPT(resp->hdr_accept);
+		phone->send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		return;
+	}
+	
+	bool accepted = ui->cb_message_request(user_config, r);
+	if (accepted) {
+		resp = r->create_response(R_200_OK);
+	} else {
+		resp = r->create_response(R_486_BUSY_HERE);
+	}
+	
+	phone->send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
 void t_phone_user::recvd_notify(t_request *r, t_tid tid) {
 	bool partial_match = false;
 	
@@ -843,17 +1044,22 @@ void t_phone_user::recvd_notify(t_request *r, t_tid tid) {
 		return;
 	}
 	
+	t_buddy *buddy;
+	if (buddy_list->match_request(r, &buddy)) {
+		buddy->recvd_request(r, 0, tid);
+		if (buddy->must_delete_now()) buddy_list->del_buddy(*buddy);
+		return;
+	}
+	
 	// RFC 3265 4.4.9
 	// A SUBSCRIBE request may have forked. So multiple NOTIFY's
 	// can be received. Twinkle simply rejects additional NOTIFY's with
 	// a 481. This should terminate the forked dialog, such that only
-	// on dialog will remain.
+	// one dialog will remain.
 	t_response *resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
 	phone->send_response(resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
-	
-	ui->cb_update_mwi();
 }
 
 void t_phone_user::send_stun_request(void) {
@@ -922,10 +1128,15 @@ void t_phone_user::timeout(t_phone_timer timer) {
 
 void t_phone_user::timeout_sub(t_subscribe_timer timer, t_object_id id_timer) 
 {
+	t_buddy *buddy;
+	
 	switch (timer) {
 	case STMR_SUBSCRIPTION:
 		if (mwi_dialog && mwi_dialog->match_timer(timer, id_timer)) {
 			mwi_dialog->timeout(timer);
+		} else if (buddy_list->match_timer(timer, id_timer, &buddy)) {
+			buddy->timeout(timer, id_timer);
+			if (buddy->must_delete_now()) buddy_list->del_buddy(*buddy);
 		} else if (id_timer == id_resubscribe_mwi) {
 			// Try to subscribe to MWI
 			id_resubscribe_mwi = 0;
@@ -937,13 +1148,38 @@ void t_phone_user::timeout_sub(t_subscribe_timer timer, t_object_id id_timer)
 	}
 }
 
+void t_phone_user::timeout_publish(t_publish_timer timer, t_object_id id_timer) {
+	switch (timer) {
+	case PUBLISH_TMR_PUBLICATION:
+		if (presence_epa->match_timer(timer, id_timer)) {
+			presence_epa->timeout(timer);
+		}
+		break;
+	default:
+		assert(false);
+	}
+}
+
 bool t_phone_user::match_subscribe_timer(t_subscribe_timer timer, t_object_id id_timer) const 
 {
-	if (mwi_dialog) {
-		return (mwi_dialog->match_timer(timer, id_timer));
+	t_buddy *buddy;
+	
+	if (mwi_dialog && mwi_dialog->match_timer(timer, id_timer)) {
+		return true;
+	}
+	
+	t_phone_user *self = const_cast<t_phone_user *>(this);
+	if (self->buddy_list->match_timer(timer, id_timer, &buddy)) {
+		return true;
 	}
 	
 	return id_timer == id_resubscribe_mwi;
+}
+
+bool t_phone_user::match_publish_timer(t_publish_timer timer, t_object_id id_timer) const 
+{
+	assert(presence_epa);
+	return presence_epa->match_timer(timer, id_timer);
 }
 
 void t_phone_user::start_resubscribe_mwi_timer(unsigned long duration) {
@@ -1052,6 +1288,8 @@ unsigned short t_phone_user::get_public_port_sip(void) const {
 }
 
 bool t_phone_user::match(t_response *r, t_tuid tuid) const {
+	t_buddy *dummy;
+
 	if (r_register && r_register->get_tuid() == tuid) {
 		return true;
 	} else if (r_deregister && r_deregister->get_tuid() == tuid) {
@@ -1060,7 +1298,13 @@ bool t_phone_user::match(t_response *r, t_tuid tuid) const {
 		return true;
 	} else if (r_options && r_options->get_tuid() == tuid) {
 		return true;
+	} else if (r_message && r_message->get_tuid() == tuid) {
+		return true;
 	} else if (mwi_dialog && mwi_dialog->match_response(r, tuid)) {
+		return true;
+	} else if (presence_epa && presence_epa->match_response(r, tuid)) {
+		return true;
+	} else if (buddy_list && buddy_list->match_response(r, tuid, &dummy)) {
 		return true;
 	} else {
 		// Response does not match any pending request.
@@ -1075,6 +1319,9 @@ bool t_phone_user::match(t_request *r) const {
 			bool partial_match = false;
 			if (mwi_dialog->match_request(r, partial_match)) return true;
 			if (partial_match) return true;
+		} else if (buddy_list) {
+			t_buddy *dummy;
+			if (buddy_list->match_request(r, &dummy)) return true;
 		} else {
 			return false;
 		}
@@ -1110,6 +1357,10 @@ bool t_phone_user::authorize(t_request *r, t_response *resp) {
 		return true;
 	}
 	return false;
+}
+
+void t_phone_user::resend_request(t_request *req, t_client_request *cr) {
+	return resend_request(req, false, cr);
 }
 
 void t_phone_user::remove_cached_credentials(const string &realm) {
@@ -1158,9 +1409,14 @@ void t_phone_user::deactivate(void) {
 	}
 	mwi.set_status(t_mwi::MWI_UNKNOWN);
 	
+	// Clear presence state
+	// presence_epa->clear();
+	buddy_list->clear_presence();
+	
 	// Clear STUN
 	stun_binding_inuse_registration = false;
 	stun_binding_inuse_mwi = false;
+	stun_binding_inuse_presence = 0;
 	cleanup_registration_data();
 	cleanup_stun_data();
 	

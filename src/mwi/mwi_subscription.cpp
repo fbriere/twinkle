@@ -18,15 +18,15 @@
 
 #include "mwi_subscription.h"
 
+#include <cassert>
+
 #include "userintf.h"
 #include "audits/memman.h"
 #include "parser/hdr_event.h"
 
 t_request *t_mwi_subscription::create_subscribe(unsigned long expires) const {
 	t_request *r = t_subscription::create_subscribe(expires);
-	
-	// Indicate support for simple-message-summary format
-	r->hdr_accept.add_media(t_media("application", "simple-message-summary"));
+	SET_MWI_HDR_ACCEPT(r->hdr_accept);
 	
 	return r;
 }
@@ -39,12 +39,15 @@ t_mwi_subscription::t_mwi_subscription(t_mwi_dialog *_dialog, t_mwi *_mwi) :
 bool t_mwi_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 	if (t_subscription::recv_notify(r, tuid, tid)) return true;
 	
+	bool unsupported_body = false;
+	
 	// NOTE: if the subscription is still pending (RFC 3265 3.2.4), then the
 	//       information in the body has no meaning.
 	if (r->body && r->body->get_type() == BODY_SIMPLE_MSG_SUM &&
 	    !is_pending()) 
 	{
 		t_simple_msg_sum_body *body = dynamic_cast<t_simple_msg_sum_body *>(r->body);
+		assert(body);
 		mwi->set_msg_waiting(body->get_msg_waiting());
 		
 		t_msg_summary summary;
@@ -53,6 +56,11 @@ bool t_mwi_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 		}
 		
 		mwi->set_status(t_mwi::MWI_KNOWN);
+	}
+	
+	// Verify if there is an usupported body.
+	if (r->body && r->body->get_type() != BODY_SIMPLE_MSG_SUM) {
+		unsupported_body = true;
 	}
 	
 	if (state == SS_TERMINATED && !may_resubscribe) {
@@ -64,7 +72,13 @@ bool t_mwi_subscription::recv_notify(t_request *r, t_tuid tuid, t_tid tid) {
 		ui->cb_mwi_terminated(user_config, get_reason_termination());
 	}
 	
-	t_response *resp = r->create_response(R_200_OK);
+	t_response *resp;
+	if (unsupported_body) {
+		resp = r->create_response(R_415_UNSUPPORTED_MEDIA_TYPE);
+		SET_MWI_HDR_ACCEPT(r->hdr_accept);
+	} else {
+		resp = r->create_response(R_200_OK);
+	}
 	send_response(user_config, resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;

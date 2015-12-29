@@ -72,9 +72,9 @@ private:
 
 	/**
 	 * Find a cache entry that matches the realm.
-	 * @param _to Destination for which authentication is needed.
-	 * @param realm The authentication realm.
-	 * @param proxy Indicates if proxy authentication was requested.
+	 * @param _to [in] Destination for which authentication is needed.
+	 * @param realm [in] The authentication realm.
+	 * @param proxy [in] Indicates if proxy authentication was requested.
 	 * @return An iterator to the cached credentials if found.
 	 * @return The end iterator if not found.
 	 */
@@ -89,9 +89,9 @@ private:
 	 * recently used entry will be removed.
 	 * If the cache already contains an entry for credentials, then
 	 * this entry will be moved to the end of the list.
-	 * @param to Destination for which authentication is needed.
-	 * @param cr Credentials to update.
-	 * @param passwd The password to store.
+	 * @param to [in] Destination for which authentication is needed.
+	 * @param cr [in] Credentials to update.
+	 * @param passwd [in] The password to store.
 	 * @param proxy Indicates if proxy authentication was requested.
 	 */
 	void update_cache(const t_url &to, const t_credentials &cr,
@@ -111,9 +111,9 @@ private:
 	/**
 	 * Remove existing credentials for this challenge from the
 	 * authorization or proxy-authorization header.
-	 * @param r The request from which the credentials must be removed.
-	 * @param c The challenge for which the credentials must be removed.
-	 * @param proxy Indicates if proxy authentication was requested.
+	 * @param r [in] The request from which the credentials must be removed.
+	 * @param c [in] The challenge for which the credentials must be removed.
+	 * @param proxy [in] Indicates if proxy authentication was requested.
 	 */
 	void remove_credentials(t_request *r, const t_challenge &c,
 		bool proxy=false) const;
@@ -124,9 +124,9 @@ public:
 	
 	/**
 	 * Authorize the request based on the challenge in the response
-	 * @param user_config The user profile.
-	 * @param r The request to be authorized.
-	 * @param resp The response containing the challenge.
+	 * @param user_config [in] The user profile.
+	 * @param r [in] The request to be authorized.
+	 * @param resp [in] The response containing the challenge.
 	 * @return true, if authorization succeeds.
 	 * @return false, if authorization fails.
 	 * @post On succesful authorization, the credentials has been added to
@@ -136,13 +136,13 @@ public:
 	
 	/**
 	 * Remove credentials for a particular realm from cache.
-	 * @param realm The authentication realm.
+	 * @param realm [in] The authentication realm.
 	 */
 	void remove_from_cache(const string &realm);
 	
 	/**
 	 * Set the re-REGISTER indication.
-	 * @param on Value to set.
+	 * @param on [in] Value to set.
 	 */
 	void set_re_register(bool on);
 	

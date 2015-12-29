@@ -1,7 +1,9 @@
-/* A Bison parser, made by GNU Bison 1.875.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Skeleton parser for Yacc-like parsing with Bison,
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002 Free Software Foundation, Inc.
+/* Skeleton interface for Bison's Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,13 +17,21 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA.  */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
-/* As a special exception, when this file is copied by Bison into a
-   Bison output file, you may use that output file without restriction.
-   This special exception was added by the Free Software Foundation
-   in version 1.24 of Bison.  */
+/* As a special exception, you may create a larger work that contains
+   part or all of the Bison parser skeleton and distribute that work
+   under terms of your choice, so long as that work isn't itself a
+   parser generator using the skeleton or a modified version thereof
+   as a parser skeleton.  Alternatively, if you modify or redistribute
+   the parser skeleton itself, you may (at your option) remove this
+   special exception, which will cause the skeleton and the resulting
+   Bison output files to be licensed under the GNU General Public
+   License without this special exception.
+
+   This special exception was added by the Free Software Foundation in
+   version 2.2 of Bison.  */
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -94,22 +104,25 @@
      T_HDR_ROUTE = 320,
      T_HDR_RSEQ = 321,
      T_HDR_SERVER = 322,
-     T_HDR_SUBJECT = 323,
-     T_HDR_SUBSCRIPTION_STATE = 324,
-     T_HDR_SUPPORTED = 325,
-     T_HDR_TIMESTAMP = 326,
-     T_HDR_TO = 327,
-     T_HDR_UNSUPPORTED = 328,
-     T_HDR_USER_AGENT = 329,
-     T_HDR_VIA = 330,
-     T_HDR_WARNING = 331,
-     T_HDR_WWW_AUTHENTICATE = 332,
-     T_HDR_UNKNOWN = 333,
-     T_CRLF = 334,
-     T_ERROR = 335,
-     T_NULL = 336
+     T_HDR_SIP_ETAG = 323,
+     T_HDR_SIP_IF_MATCH = 324,
+     T_HDR_SUBJECT = 325,
+     T_HDR_SUBSCRIPTION_STATE = 326,
+     T_HDR_SUPPORTED = 327,
+     T_HDR_TIMESTAMP = 328,
+     T_HDR_TO = 329,
+     T_HDR_UNSUPPORTED = 330,
+     T_HDR_USER_AGENT = 331,
+     T_HDR_VIA = 332,
+     T_HDR_WARNING = 333,
+     T_HDR_WWW_AUTHENTICATE = 334,
+     T_HDR_UNKNOWN = 335,
+     T_CRLF = 336,
+     T_ERROR = 337,
+     T_NULL = 338
    };
 #endif
+/* Tokens.  */
 #define T_NUM 258
 #define T_TOKEN 259
 #define T_QSTRING 260
@@ -175,27 +188,30 @@
 #define T_HDR_ROUTE 320
 #define T_HDR_RSEQ 321
 #define T_HDR_SERVER 322
-#define T_HDR_SUBJECT 323
-#define T_HDR_SUBSCRIPTION_STATE 324
-#define T_HDR_SUPPORTED 325
-#define T_HDR_TIMESTAMP 326
-#define T_HDR_TO 327
-#define T_HDR_UNSUPPORTED 328
-#define T_HDR_USER_AGENT 329
-#define T_HDR_VIA 330
-#define T_HDR_WARNING 331
-#define T_HDR_WWW_AUTHENTICATE 332
-#define T_HDR_UNKNOWN 333
-#define T_CRLF 334
-#define T_ERROR 335
-#define T_NULL 336
+#define T_HDR_SIP_ETAG 323
+#define T_HDR_SIP_IF_MATCH 324
+#define T_HDR_SUBJECT 325
+#define T_HDR_SUBSCRIPTION_STATE 326
+#define T_HDR_SUPPORTED 327
+#define T_HDR_TIMESTAMP 328
+#define T_HDR_TO 329
+#define T_HDR_UNSUPPORTED 330
+#define T_HDR_USER_AGENT 331
+#define T_HDR_VIA 332
+#define T_HDR_WARNING 333
+#define T_HDR_WWW_AUTHENTICATE 334
+#define T_HDR_UNKNOWN 335
+#define T_CRLF 336
+#define T_ERROR 337
+#define T_NULL 338
 
 
 
 
-#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+typedef union YYSTYPE
 #line 49 "parser.yxx"
-typedef union YYSTYPE {
+{
 	int			yyt_int;
 	ulong			yyt_ulong;
 	float			yyt_float;
@@ -219,15 +235,14 @@ typedef union YYSTYPE {
 	t_credentials		*yyt_credentials;
 	t_digest_challenge	*yyt_dig_chlg;
 	t_challenge		*yyt_challenge;
-} YYSTYPE;
-/* Line 1249 of yacc.c.  */
-#line 224 "parser.h"
+}
+/* Line 1529 of yacc.c.  */
+#line 241 "parser.h"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE yylval;
-
-
 

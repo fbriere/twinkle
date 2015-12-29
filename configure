@@ -710,6 +710,8 @@ EXTLIBS
 PKG_CONFIG
 CCRTP_CFLAGS
 CCRTP_LIBS
+XML2_CFLAGS
+XML2_LIBS
 QT_CFLAGS
 QT_LIBS
 LIBUTIL
@@ -2422,7 +2424,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION="1.0.1"
+ VERSION="1.1"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -2570,7 +2572,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "May 19 2007"
+#define VERSION_DATE "July 21 2007"
 _ACEOF
 
 ac_ext=c
@@ -5994,6 +5996,345 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
+{ echo "$as_me:$LINENO: checking whether strerror_r is declared" >&5
+echo $ECHO_N "checking whether strerror_r is declared... $ECHO_C" >&6; }
+if test "${ac_cv_have_decl_strerror_r+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+#ifndef strerror_r
+  char *p = (char *) strerror_r;
+  return !p;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_have_decl_strerror_r=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_have_decl_strerror_r=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_have_decl_strerror_r" >&5
+echo "${ECHO_T}$ac_cv_have_decl_strerror_r" >&6; }
+if test $ac_cv_have_decl_strerror_r = yes; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRERROR_R 1
+_ACEOF
+
+
+else
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRERROR_R 0
+_ACEOF
+
+
+fi
+
+
+
+for ac_func in strerror_r
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$ac_func || defined __stub___$ac_func
+choke me
+#endif
+
+int
+main ()
+{
+return $ac_func ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ac_var=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+{ echo "$as_me:$LINENO: checking whether strerror_r returns char *" >&5
+echo $ECHO_N "checking whether strerror_r returns char *... $ECHO_C" >&6; }
+if test "${ac_cv_func_strerror_r_char_p+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+    ac_cv_func_strerror_r_char_p=no
+    if test $ac_cv_have_decl_strerror_r = yes; then
+      cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+
+	  char buf[100];
+	  char x = *strerror_r (0, buf, sizeof buf);
+	  char *p = strerror_r (0, buf, sizeof buf);
+	  return !p || x;
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_cxx_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_strerror_r_char_p=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+    else
+      # strerror_r is not declared.  Choose between
+      # systems that have relatively inaccessible declarations for the
+      # function.  BeOS and DEC UNIX 4.0 fall in this category, but the
+      # former has a strerror_r that returns char*, while the latter
+      # has a strerror_r that returns `int'.
+      # This test should segfault on the DEC system.
+      if test "$cross_compiling" = yes; then
+  :
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+	extern char *strerror_r ();
+int
+main ()
+{
+char buf[100];
+	  char x = *strerror_r (0, buf, sizeof buf);
+	  return ! isalpha (x);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_strerror_r_char_p=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+    fi
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_func_strerror_r_char_p" >&5
+echo "${ECHO_T}$ac_cv_func_strerror_r_char_p" >&6; }
+if test $ac_cv_func_strerror_r_char_p = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define STRERROR_R_CHAR_P 1
+_ACEOF
+
+fi
+
 
 
 
@@ -6472,6 +6813,108 @@ echo "$as_me: error: Library requirements (libccrtp1 >= 1.5.0) not met; consider
    { (exit 1); exit 1; }; }
   fi
 
+
+
+  succeeded=no
+
+  if test -z "$PKG_CONFIG"; then
+    # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_PKG_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { echo "$as_me:$LINENO: result: $PKG_CONFIG" >&5
+echo "${ECHO_T}$PKG_CONFIG" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  fi
+
+  if test "$PKG_CONFIG" = "no" ; then
+     echo "*** The pkg-config script could not be found. Make sure it is"
+     echo "*** in your path, or set the PKG_CONFIG environment variable"
+     echo "*** to the full path to pkg-config."
+     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  else
+     PKG_CONFIG_MIN_VERSION=0.9.0
+     if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+        { echo "$as_me:$LINENO: checking for libxml-2.0" >&5
+echo $ECHO_N "checking for libxml-2.0... $ECHO_C" >&6; }
+
+        if $PKG_CONFIG --exists "libxml-2.0" ; then
+            { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+            succeeded=yes
+
+            { echo "$as_me:$LINENO: checking XML2_CFLAGS" >&5
+echo $ECHO_N "checking XML2_CFLAGS... $ECHO_C" >&6; }
+            XML2_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0"`
+            { echo "$as_me:$LINENO: result: $XML2_CFLAGS" >&5
+echo "${ECHO_T}$XML2_CFLAGS" >&6; }
+
+            { echo "$as_me:$LINENO: checking XML2_LIBS" >&5
+echo $ECHO_N "checking XML2_LIBS... $ECHO_C" >&6; }
+            XML2_LIBS=`$PKG_CONFIG --libs "libxml-2.0"`
+            { echo "$as_me:$LINENO: result: $XML2_LIBS" >&5
+echo "${ECHO_T}$XML2_LIBS" >&6; }
+        else
+            XML2_CFLAGS=""
+            XML2_LIBS=""
+            ## If we have a custom action on failure, don't print errors, but
+            ## do set a variable so people can do so.
+            XML2_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libxml-2.0"`
+            echo $XML2_PKG_ERRORS
+        fi
+
+
+
+     else
+        echo "*** Your version of pkg-config is too old. You need version $PKG_CONFIG_MIN_VERSION or newer."
+        echo "*** See http://www.freedesktop.org/software/pkgconfig"
+     fi
+  fi
+
+  if test $succeeded = yes; then
+     :
+  else
+     { { echo "$as_me:$LINENO: error: Library requirements (libxml-2.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&5
+echo "$as_me: error: Library requirements (libxml-2.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+# AC_CHECK_HEADER(libxml/tree.h, [],
+#	[AC_MSG_ERROR([libxml2 header files missing (libxml2-devel package)])])
 
 if test "x$ac_cv_qt_check" = "xyes"
 then
@@ -15159,7 +15602,7 @@ for i in $jpeg_incdirs;
 do
   for j in jpeglib.h;
   do
-    echo "configure: 15162: $i/$j" >&5
+    echo "configure: 15605: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       jpeg_incdir=$i
@@ -15467,7 +15910,7 @@ for i in $qt_incdirs;
 do
   for j in $kde_qt_header;
   do
-    echo "configure: 15470: $i/$j" >&5
+    echo "configure: 15913: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       qt_incdir=$i
@@ -16276,6 +16719,7 @@ echo "$as_me: creating $QT_INCL_PRO (include project file for Qt)" >&6;}
 echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
 echo "LIBS += `$CCGNU2_CONFIG --stdlibs`" >> $QT_INCL_PRO
 echo "LIBS += $CCRTP_LIBS" >> $QT_INCL_PRO
+echo "LIBS += $XML2_LIBS" >> $QT_INCL_PRO
 
 # Check if KDE is available
 if test "x$ac_cv_kde" = "xyes"
@@ -16755,7 +17199,7 @@ for i in $kde_incdirs;
 do
   for j in $kde_check_header;
   do
-    echo "configure: 16758: $i/$j" >&5
+    echo "configure: 17202: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_incdir=$i
@@ -16785,7 +17229,7 @@ for i in $kde_libdirs;
 do
   for j in $kde_check_lib;
   do
-    echo "configure: 16788: $i/$j" >&5
+    echo "configure: 17232: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_libdir=$i
@@ -16803,7 +17247,7 @@ for i in $kde_libdirs;
 do
   for j in "kde3/plugins/designer/kdewidgets.la";
   do
-    echo "configure: 16806: $i/$j" >&5
+    echo "configure: 17250: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_widgetdir=$i
@@ -18303,7 +18747,7 @@ for i in $kde_sharedirs;
 do
   for j in apps/ksgmltools2/customization/kde-chunk.xsl;
   do
-    echo "configure: 18306: $i/$j" >&5
+    echo "configure: 18750: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       KDE_XSL_STYLESHEET=$i
@@ -20176,7 +20620,7 @@ echo "distdir:" >> src/gui/Makefile
 PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile src/gui/lang/Makefile src/mwi/Makefile twinkle.spec"
+ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile src/gui/lang/Makefile src/mwi/Makefile src/im/Makefile src/patterns/Makefile src/utils/Makefile src/presence/Makefile twinkle.spec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -20776,6 +21220,10 @@ do
     "src/threads/Makefile") CONFIG_FILES="$CONFIG_FILES src/threads/Makefile" ;;
     "src/gui/lang/Makefile") CONFIG_FILES="$CONFIG_FILES src/gui/lang/Makefile" ;;
     "src/mwi/Makefile") CONFIG_FILES="$CONFIG_FILES src/mwi/Makefile" ;;
+    "src/im/Makefile") CONFIG_FILES="$CONFIG_FILES src/im/Makefile" ;;
+    "src/patterns/Makefile") CONFIG_FILES="$CONFIG_FILES src/patterns/Makefile" ;;
+    "src/utils/Makefile") CONFIG_FILES="$CONFIG_FILES src/utils/Makefile" ;;
+    "src/presence/Makefile") CONFIG_FILES="$CONFIG_FILES src/presence/Makefile" ;;
     "twinkle.spec") CONFIG_FILES="$CONFIG_FILES twinkle.spec" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
@@ -20990,6 +21438,8 @@ EXTLIBS!$EXTLIBS$ac_delim
 PKG_CONFIG!$PKG_CONFIG$ac_delim
 CCRTP_CFLAGS!$CCRTP_CFLAGS$ac_delim
 CCRTP_LIBS!$CCRTP_LIBS$ac_delim
+XML2_CFLAGS!$XML2_CFLAGS$ac_delim
+XML2_LIBS!$XML2_LIBS$ac_delim
 QT_CFLAGS!$QT_CFLAGS$ac_delim
 QT_LIBS!$QT_LIBS$ac_delim
 LIBUTIL!$LIBUTIL$ac_delim
@@ -21072,8 +21522,6 @@ kde_sounddir!$kde_sounddir$ac_delim
 kde_datadir!$kde_datadir$ac_delim
 kde_locale!$kde_locale$ac_delim
 kde_confdir!$kde_confdir$ac_delim
-kde_kcfgdir!$kde_kcfgdir$ac_delim
-kde_mimedir!$kde_mimedir$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21115,6 +21563,8 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+kde_kcfgdir!$kde_kcfgdir$ac_delim
+kde_mimedir!$kde_mimedir$ac_delim
 kde_wallpaperdir!$kde_wallpaperdir$ac_delim
 kde_bindir!$kde_bindir$ac_delim
 xdg_appsdir!$xdg_appsdir$ac_delim
@@ -21151,7 +21601,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 34; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 36; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

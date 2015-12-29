@@ -26,17 +26,19 @@
 
 
 // Indices of categories in the category list box
-#define idxCatUser		0
+#define idxCatUser	0
 #define idxCatSipServer	1
 #define idxCatVoiceMail	2
-#define idxCatRtpAudio	3
-#define idxCatSipProtocol	4
-#define idxCatNat		5
-#define idxCatAddrFmt	6
-#define idxCatTimers	7
-#define idxCatRingTones	8
-#define idxCatScripts	9
-#define idxCatSecurity	10
+#define idxCatIM		3
+#define idxCatPresence	4
+#define idxCatRtpAudio	5
+#define idxCatSipProtocol	6
+#define idxCatNat	7
+#define idxCatAddrFmt	8
+#define idxCatTimers	9
+#define idxCatRingTones	10
+#define idxCatScripts	11
+#define idxCatSecurity	12
 
 // Indices of call hold variants in the call hold variant list box
 #define idxHoldRfc2543	0
@@ -148,6 +150,10 @@ void UserProfileForm::showCategory( int index )
 		settingsWidgetStack->raiseWidget(pageSipServer);
 	} else if (index == idxCatVoiceMail) {
 		settingsWidgetStack->raiseWidget(pageVoiceMail);
+	} else if (index == idxCatIM) {
+		settingsWidgetStack->raiseWidget(pageIM);
+	} else if (index == idxCatPresence) {
+		settingsWidgetStack->raiseWidget(pagePresence);
 	} else if (index == idxCatRtpAudio) {
 		settingsWidgetStack->raiseWidget(pageRtpAudio);
 	} else if (index == idxCatSipProtocol) {
@@ -318,6 +324,14 @@ void UserProfileForm::populate()
 				   get_mwi_server().encode_noscheme().c_str());
 	mwiViaProxyCheckBox->setChecked(current_profile->get_mwi_via_proxy());
 	mwiDurationSpinBox->setValue(current_profile->get_mwi_subscription_time());
+	
+	// INSTANT MESSAGE
+	imMaxSessionsSpinBox->setValue(current_profile->get_im_max_sessions());
+	
+	// PRESENCE
+	presPublishCheckBox->setChecked(current_profile->get_pres_publish_startup());
+	presPublishTimeSpinBox->setValue(current_profile->get_pres_publication_time());
+	presSubscribeTimeSpinBox->setValue(current_profile->get_pres_subscription_time());
 	
 	// RTP AUDIO
 	// Codecs
@@ -899,6 +913,12 @@ bool UserProfileForm::validateValues()
 	if (mustTriggerMWISubscribe) {
 		emit mwiChangeSubscribe(current_profile);
 	}
+	
+	// INSTANT MESSAGE
+	current_profile->set_im_max_sessions(imMaxSessionsSpinBox->value());
+	current_profile->set_pres_publish_startup(presPublishCheckBox->isChecked());
+	current_profile->set_pres_publication_time(presPublishTimeSpinBox->value());
+	current_profile->set_pres_subscription_time(presSubscribeTimeSpinBox->value());
 	
 	// RTP AUDIO
 	// Codecs

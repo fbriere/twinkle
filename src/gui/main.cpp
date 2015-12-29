@@ -435,8 +435,7 @@ bool open_sip_socket(bool cli_mode) {
 			   .arg(sys_config->get_sip_udp_port()).ascii();
 		}
 		msg += "\n";
-		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
-		msg += strerror(err);
+		msg += get_error_str(err);
 		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_show_msg(msg, MSG_CRITICAL);
 		return false;
@@ -776,7 +775,7 @@ int main( int argc, char ** argv )
 	MEMMAN_NEW(call_history);
 	
 	// Read call history
-	if (!call_history->read_history(error_msg)) {
+	if (!call_history->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 	
@@ -785,7 +784,7 @@ int main( int argc, char ** argv )
 	MEMMAN_NEW(ab_local);
 	
 	// Read local address book
-	if (!ab_local->read_address_book(error_msg)) {
+	if (!ab_local->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 		ui->cb_show_msg(error_msg, MSG_WARNING);
 	}
@@ -862,7 +861,7 @@ int main( int argc, char ** argv )
 		string log_msg = "Failed to create local socket: ";
 		log_msg += cmd_sock_name;
 		log_msg += "\n";
-		log_msg += strerror(e);
+		log_msg += get_error_str(e);
 		log_msg += "\n";
 		log_file->write_report(log_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}

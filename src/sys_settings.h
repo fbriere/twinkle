@@ -183,9 +183,12 @@ private:
 	// History of latest dialed addresses
 	list<string>	dial_history;
 	
-	// GUI view settings
+	/** @name GUI view settings */
+	//@{
 	bool		show_display;
 	bool		compact_line_status;
+	bool		show_buddy_list;
+	//@}
 	
 	// One time warnings
 	bool		warn_hide_user; // Warn use that provider may not support hiding.
@@ -237,6 +240,7 @@ public:
 	list<string> get_dial_history(void) const;
 	bool get_show_display(void) const;
 	bool get_compact_line_status(void) const;
+	bool get_show_buddy_list(void) const;
 	bool get_warn_hide_user(void) const;
 	
 	// Setters
@@ -285,6 +289,7 @@ public:
 	void set_dial_history(const list<string> &history);
 	void set_show_display(bool b);
 	void set_compact_line_status(bool b);
+	void set_show_buddy_list(bool b);
 	void set_warn_hide_user(bool b);
 	
 	// Return "about" text

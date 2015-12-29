@@ -91,37 +91,38 @@ enum t_sip_timer {
 #define DURATION_J	(64 * DURATION_T1)
 #define DURATION_K	DURATION_T4
 
-// UA (phone) timers
+/** UA (phone) timers */
 enum t_phone_timer {
-	PTMR_REGISTRATION,	// Registration (failure) timeout
-	PTMR_NAT_KEEPALIVE,	// NAT binding refresh timeout for STUN
+	PTMR_REGISTRATION,	/**< Registration (failure) timeout */
+	PTMR_NAT_KEEPALIVE,	/**< NAT binding refresh timeout for STUN */
 };
 
-// UA (line) timers
+/** UA (line) timers */
 enum t_line_timer {
-	LTMR_ACK_TIMEOUT,	// Waiting for ACK
-	LTMR_ACK_GUARD,		// After this timer ACK is lost for good
-	LTMR_INVITE_COMP,	// After this timer INVITE transiction is
-				// considered complete.
-	LTMR_NO_ANSWER,		// This timer expires if the callee does
-				// not answer. The call will be torn down.
-	LTMR_RE_INVITE_GUARD,	// re-INVITE timeout
-	LTMR_100REL_TIMEOUT,	// Waiting for PRACK
-	LTMR_100REL_GUARD,	// After this timer PRACK is lost for good
-	LTMR_GLARE_RETRY,	// Waiting before retry re-INVITE after glare
-	LTMR_CANCEL_GUARD,	// Guard for situation where CANCEL has been 
-				// responded to, but 487 on INVITE is never
-				// received.
+	LTMR_ACK_TIMEOUT,	/**< Waiting for ACK */
+	LTMR_ACK_GUARD,		/**< After this timer ACK is lost for good */
+	LTMR_INVITE_COMP,	/**< After this timer INVITE transiction is considered complete. */
+	LTMR_NO_ANSWER,		/**< This timer expires if the callee does not answer. The call will be torn down. */
+	LTMR_RE_INVITE_GUARD,	/**< re-INVITE timeout */
+	LTMR_100REL_TIMEOUT,	/**< Waiting for PRACK */
+	LTMR_100REL_GUARD,	/**< After this timer PRACK is lost for good */
+	LTMR_GLARE_RETRY,	/**< Waiting before retry re-INVITE after glare */
+	LTMR_CANCEL_GUARD,	/**< Guard for situation where CANCEL has been responded to, but 487 on INVITE is never received. */
 };
 
-// Subscription timers
+/** Subscription timers. */
 enum t_subscribe_timer {
-	STMR_SUBSCRIPTION,	// Subscription timeout
+	STMR_SUBSCRIPTION,	/**< Subscription timeout */
 };
 
-// STUN timers
+/** Publication timers. */
+enum t_publish_timer {
+	PUBLISH_TMR_PUBLICATION,	/**< Publication timeout */
+};
+
+/** STUN timers. */
 enum t_stun_timer {
-	STUN_TMR_REQ_TIMEOUT,	// Waiting for response
+	STUN_TMR_REQ_TIMEOUT,	/**< Waiting for response */
 };
 
 
@@ -150,6 +151,10 @@ enum t_stun_timer {
 // MWI timers (s)
 #define DUR_MWI(u)		((u)->get_mwi_subscription_time())
 #define DUR_MWI_FAILURE		30
+
+// Presence timers (s)
+#define DUR_PRESENCE(u)		((u)->get_pres_subscription_time())
+#define DUR_PRESENCE_FAILURE	30
 
 // RFC 3261 14.1
 // Maximum values (10th of sec) for timers for retrying a re-INVITE after
@@ -225,6 +230,15 @@ enum t_stun_timer {
 // Create a cnonce
 #define NEW_CNONCE	random_hexstr(CNONCE_LEN)
 
+/** Length of tuple id in PIDF documents. */
+#define PIDF_TUPLE_ID_LEN	6
+
+/** Create a new PIDF tuple id. */
+#define NEW_PIDF_TUPLE_ID	random_token(PIDF_TUPLE_ID_LEN)
+
+// Character set encoding for outgoing text messages
+#define MSG_TEXT_CHARSET	"utf-8"
+
 // Set Allow header with methods that can be handled by the phone
 #define SET_HDR_ALLOW(h, u)	{ (h).add_method(INVITE); \
 				  (h).add_method(ACK); \
@@ -238,6 +252,7 @@ enum t_stun_timer {
 				  (h).add_method(NOTIFY); \
 				  (h).add_method(SUBSCRIBE); \
 				  (h).add_method(INFO); \
+				  (h).add_method(MESSAGE); \
 				}
 
 // Set Supported header with supported extensions
@@ -250,10 +265,26 @@ enum t_stun_timer {
 // Set Accept header with accepted body types
 #define SET_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
 				  "sdp")); }
+				 
+/** Set Accept header with accepted body types for messaging. */
+#define SET_MESSAGE_HDR_ACCEPT(h)	{ (h).add_media(t_media("text", "plain"));\
+					  (h).add_media(t_media("text", "html")); }
 
-// Set Accept-Encoding header with accepted encodings
+/** Set Accept header with accepted body types for presence. */
+#define SET_PRESENCE_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
+				  "pidf+xml")); }
+				  
+/** Set Accept header with accepted body types for MWI. */
+#define SET_MWI_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
+				  "simple-message-summary")); }
+
+/** Set Accept-Encoding header with accepted encodings. */
 #define SET_HDR_ACCEPT_ENCODING(h)\
 				{ (h).add_coding(t_coding("identity")); }
+				
+/** Check if content encoding is supported */
+#define CONTENT_ENCODING_SUPPORTED(ce)\
+				(cmp_nocase(ce, "identity") == 0)
 
 // Set Accept-Language header with accepted languages
 #define SET_HDR_ACCEPT_LANGUAGE(h)\
@@ -273,10 +304,12 @@ enum t_stun_timer {
 
 // Check if an event is supported by Twinkle				
 #define SIP_EVENT_SUPPORTED(e)	((e) == SIP_EVENT_REFER ||\
-				 (e) == SIP_EVENT_MSG_SUMMARY)
+				 (e) == SIP_EVENT_MSG_SUMMARY ||\
+				 (e) == SIP_EVENT_PRESENCE)
 
 // Add the supported events to the Allow-Events header
 #define ADD_SUPPORTED_SIP_EVENTS(h)	{ (h).add_event_type(SIP_EVENT_REFER);\
-					  (h).add_event_type(SIP_EVENT_MSG_SUMMARY); }
+					  (h).add_event_type(SIP_EVENT_MSG_SUMMARY);\
+					  (h).add_event_type(SIP_EVENT_PRESENCE); }
 
 #endif

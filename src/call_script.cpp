@@ -279,7 +279,7 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 		log_file->write_header("t_call_script::exec_action",
 			LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("Failed to create pipe: ");
-		log_file->write_raw(strerror(errno));
+		log_file->write_raw(get_error_str(errno));
 		log_file->write_endl();
 		log_file->write_footer();
 		return;
@@ -292,7 +292,7 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 		log_file->write_header("t_call_script::exec_action",
 			LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("Failed to fork child process: ");
-		log_file->write_raw(strerror(errno));
+		log_file->write_raw(get_error_str(errno));
 		log_file->write_endl();
 		log_file->write_footer();
 		
@@ -320,7 +320,7 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 		if (execve(argv[0], argv, env) == -1) {
 			// Failed to execute script. Report error to parent.
 			string err_msg;
-			err_msg = strerror(errno);
+			err_msg = get_error_str(errno);
 			err_msg += ": ";
 			err_msg += argv[0];
 			cout << SCR_INTERNAL_ERROR << '=' << err_msg << endl;
@@ -343,7 +343,7 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 			log_file->write_header("t_call_script::exec_action",
 				LOG_NORMAL, LOG_WARNING);
 			log_file->write_raw("Failed to open pipe to child: ");
-			log_file->write_raw(strerror(errno));
+			log_file->write_raw(get_error_str(errno));
 			log_file->write_endl();
 			log_file->write_footer();
 			
@@ -424,7 +424,7 @@ void t_call_script::exec_notify(t_sip_message *m) const
 		log_file->write_header("t_call_script::exec_notify",
 			LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("Failed to fork child process: ");
-		log_file->write_raw(strerror(errno));
+		log_file->write_raw(get_error_str(errno));
 		log_file->write_endl();
 		log_file->write_footer();
 

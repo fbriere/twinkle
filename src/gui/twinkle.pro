@@ -3,7 +3,7 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a -lsndfile
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a -lsndfile
 
 DEFINES	+= QT_NO_STL
 
@@ -18,7 +18,9 @@ HEADERS	+= gui.h \
 	core_strings.h \
 	addresslistviewitem.h \
 	yesnodialog.h \
-	command_args.h
+	command_args.h \
+	messageformview.h \
+	buddylistview.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
@@ -27,7 +29,9 @@ SOURCES	+= main.cpp \
 	twinklesystray.cpp \
 	address_finder.cpp \
 	addresslistviewitem.cpp \
-	yesnodialog.cpp
+	yesnodialog.cpp \
+	messageformview.cpp \
+	buddylistview.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -49,7 +53,9 @@ FORMS	= mphoneform.ui \
 	historyform.ui \
 	selectuserform.ui \
 	numberconversionform.ui \
-	addresscardform.ui
+	addresscardform.ui \
+	messageform.ui \
+	buddyform.ui
 
 IMAGES	= images/filenew \
 	images/filesave \
@@ -145,7 +151,6 @@ IMAGES	= images/filenew \
 	images/knotify.png \
 	images/fileopen.png \
 	images/fileopen-disabled.png \
-	images/edit.png \
 	images/cf.png \
 	images/auto_answer.png \
 	images/auto_answer-disabled.png \
@@ -190,11 +195,23 @@ IMAGES	= images/filenew \
 	images/sys_mwi.png \
 	images/sys_mwi_dis.png \
 	images/mwi_none.png \
-	images/mwi_failure16.png
+	images/mwi_failure16.png \
+	images/presence_offline.png \
+	images/presence_online.png \
+	images/presence_failed.png \
+	images/presence_rejected.png \
+	images/presence_unknown.png \
+	images/edit16.png \
+	images/message.png \
+	images/edit.png \
+	images/buddy.png \
+	images/message32.png \
+	images/presence.png
 
 TRANSLATIONS	= lang/twinkle_nl.ts \
 	lang/twinkle_de.ts \
-	lang/twinkle_cs.ts
+	lang/twinkle_cs.ts \
+	lang/twinkle_fr.ts
 
 unix {
   UI_DIR = .ui

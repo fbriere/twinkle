@@ -1,5 +1,33 @@
-19 may 2007 - 1.01
-==================
+16 july 2007 - 1.1alpha2
+========================
+- French translation
+- Presence
+- Instant messaging
+- New CLI commands: presence, message
+
+Bug fixes
+---------
+- If a session was on-hold and Twinkle received a re-INVITE without
+  SDP, it would offer SDP on-hold in the 200 OK, instead of a brand 
+  new SDP offer.
+- Twinkle refused to change to another profile with the same user name
+  as the current active profile.
+- ICMP processing did not work most times (uninitialized data).
+- Replace strerror by strerror_r (caused rare SIGSEGV crashes)
+- Fix deadlock in timekeeper (caused rare freezes)
+
+New RFC's
+---------
+RFC 3428 - Session Initiation Protocol (SIP) Extension for Instant Messaging
+RFC 3856 - A Presence Event Package for the Session Initiation Protocol (SIP)
+RFC 3863 - Presence Information Data Format (PIDF)
+RFC 3903 - Session Initiation Protocol (SIP) Extension 
+           for Event State Publication
+
+
+19 may 2007 - 1.0.1
+===================
+- Czech translation
 - Check on user profiles having the same contact name at startup.
 - When comparing an incoming INVITE request-URI with the contact-name,
   ignore the host part to avoid NAT problems.

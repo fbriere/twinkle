@@ -24,10 +24,15 @@
 #ifndef _EXCEPTIONS_H
 #define _EXCEPTIONS_H
 
+#include <exception>
+
 /** Exception tupe. */
 enum t_exception {
 	X_DIALOG_ALREADY_ESTABLISHED,	/**< Dialog is already established. */
 	X_WRONG_STATE			/**< State machine is in wrong state. */
+};
+
+class empty_list_exception : public std::exception {
 };
 
 #endif

@@ -308,6 +308,7 @@
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="global" impldecl="in implementation">cstring</include>
     <include location="local" impldecl="in implementation">service.h</include>
+    <include location="local" impldecl="in implementation">presence/buddy.h</include>
     <include location="local" impldecl="in implementation">selectprofileform.ui.h</include>
 </includes>
 <forwards>

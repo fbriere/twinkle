@@ -372,15 +372,16 @@
     <tabstop>closePushButton</tabstop>
 </tabstops>
 <includes>
+    <include location="local" impldecl="in declaration">user.h</include>
+    <include location="local" impldecl="in declaration">phone.h</include>
+    <include location="local" impldecl="in declaration">qpopupmenu.h</include>
     <include location="local" impldecl="in implementation">call_history.h</include>
     <include location="local" impldecl="in implementation">util.h</include>
     <include location="local" impldecl="in implementation">gui.h</include>
     <include location="local" impldecl="in implementation">qlistview.h</include>
     <include location="local" impldecl="in implementation">historylistview.h</include>
-    <include location="local" impldecl="in implementation">qpopupmenu.h</include>
     <include location="local" impldecl="in implementation">qiconset.h</include>
-    <include location="local" impldecl="in declaration">user.h</include>
-    <include location="local" impldecl="in declaration">phone.h</include>
+    <include location="local" impldecl="in implementation">audits/memman.h</include>
     <include location="local" impldecl="in implementation">historyform.ui.h</include>
 </includes>
 <forwards>
@@ -388,6 +389,8 @@
 </forwards>
 <variables>
     <variable access="private">time_t timeLastViewed;</variable>
+    <variable access="private">QPopupMenu *histPopupMenu;</variable>
+    <variable access="private">int itemCall;</variable>
 </variables>
 <signals>
     <signal>call(t_user *, const QString &amp;, const QString &amp;, bool)</signal>
@@ -401,10 +404,12 @@
     <slot>popupMenu( QListViewItem * item, const QPoint &amp; pos )</slot>
     <slot>call( QListViewItem * item )</slot>
     <slot>call( void )</slot>
+    <slot>deleteEntry( void )</slot>
     <slot>clearHistory()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
 </functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>

@@ -177,4 +177,11 @@ string dotted_truncate(const string &s, int len);
 // all non-printable chars into dots
 string to_printable(const string &s);
 
+/**
+ * Get the error message describing an error number.
+ * @param errnum [in] The error number.
+ * @return The error message.
+ */
+string get_error_str(int errnum);
+
 #endif

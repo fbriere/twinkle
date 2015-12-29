@@ -74,6 +74,7 @@ protected:
 	virtual void recvd_notify(t_request *r, t_tid tid) = 0;
 	virtual void recvd_refer(t_request *r, t_tid tid) = 0;
 	virtual void recvd_info(t_request *r, t_tid tid) = 0;
+	virtual void recvd_message(t_request *r, t_tid tid) = 0;
 	
 	// General post processing for all requests
 	virtual void post_process_request(t_request *r, t_tid cancel_tid,
@@ -87,6 +88,12 @@ protected:
 	
 	// The user has granted or rejected an incoming REFER request.
 	virtual void recvd_refer_permission(bool permission) = 0;
+	
+	/**
+	 * Handle timeout event.
+	 * @param e [in] Timeout event.
+	 */
+	virtual void handle_event_timeout(t_event_timeout *e) = 0;
 
 public:
 	virtual ~t_transaction_layer() {};

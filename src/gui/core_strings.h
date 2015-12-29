@@ -4,12 +4,6 @@
 
 #define _ZAP(s)
 
-// address_book.cpp
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for reading: %1"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while reading file %1 ."))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for writing: %1"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while writing file %1 ."))
-
 // userintf.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Anonymous"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Warning:"))
@@ -90,7 +84,7 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot set sound card to 16 bits playing.
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot set sound card sample rate to %1"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Opening ALSA driver failed"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM playback"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM playback"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM capture"))
 
 // stun_transaction.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot resolve STUN server: %1"))
@@ -102,4 +96,10 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "If you are behind a firewall then you nee
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Port %1 (SIP signaling)"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Ports %1-%2 (RTP/RTCP)"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "NAT type discovery via STUN failed."))
+
+// record_file.hpp
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for reading: %1"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while reading file %1 ."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for writing: %1"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while writing file %1 ."))
 

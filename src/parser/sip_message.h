@@ -70,6 +70,8 @@
 #include "hdr_route.h"
 #include "hdr_rseq.h"
 #include "hdr_server.h"
+#include "hdr_sip_etag.h"
+#include "hdr_sip_if_match.h"
 #include "hdr_subject.h"
 #include "hdr_subscription_state.h"
 #include "hdr_supported.h"
@@ -154,6 +156,8 @@ public:
 	t_hdr_route		hdr_route;
 	t_hdr_rseq		hdr_rseq;
 	t_hdr_server		hdr_server;
+	t_hdr_sip_etag		hdr_sip_etag;
+	t_hdr_sip_if_match	hdr_sip_if_match;
 	t_hdr_subject		hdr_subject;
 	t_hdr_subscription_state hdr_subscription_state;
 	t_hdr_supported		hdr_supported;
@@ -208,6 +212,15 @@ public:
 
 	// Create a copy of the message
 	virtual t_sip_message *copy(void) const;
+	
+	/**
+	 * Set a plain text body in the message.
+	 * @param text [in] The text.
+	 * @param charset [in] The character set used for encoding.
+	 * @post The Content-Type header is set to "text/plain".
+	 * @post If a body was already present then it is deleted.
+	 */
+	void set_body_plain_text(const string &text, const string &charset);
 };
 
 #endif

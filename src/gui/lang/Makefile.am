@@ -1,9 +1,9 @@
 pkglangdir = $(pkgdatadir)/lang
 
-pkglang_DATA = twinkle_nl.qm twinkle_de.qm twinkle_cs.qm
+pkglang_DATA = twinkle_nl.qm twinkle_de.qm twinkle_cs.qm twinkle_fr.qm
 CLEANFILES = $(pkglang_DATA)
 
-EXTRA_DIST = twinkle_nl.ts twinkle_de.ts twinkle_cs.ts
+EXTRA_DIST = twinkle_nl.ts twinkle_de.ts twinkle_cs.ts twinkle_fr.ts
 
 twinkle_nl.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
 	lrelease twinkle_nl.ts
@@ -13,3 +13,6 @@ twinkle_de.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.p
 
 twinkle_cs.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
 	lrelease twinkle_cs.ts
+
+twinkle_fr.qm: $(top_builddir)/src/gui/twinkle $(top_builddir)/src/gui/twinkle.pro
+	lrelease twinkle_fr.ts

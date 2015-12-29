@@ -138,6 +138,8 @@ void yyerror(const char *s);
 %token			T_HDR_ROUTE
 %token			T_HDR_RSEQ
 %token			T_HDR_SERVER
+%token			T_HDR_SIP_ETAG
+%token			T_HDR_SIP_IF_MATCH
 %token			T_HDR_SUBJECT
 %token			T_HDR_SUBSCRIPTION_STATE
 %token			T_HDR_SUPPORTED
@@ -361,6 +363,8 @@ header:		  hd_accept hdr_accept T_CRLF
 		| hd_route hdr_route T_CRLF
 		| hd_rseq hdr_rseq T_CRLF
 		| hd_server hdr_server T_CRLF
+		| hd_sip_etag hdr_sip_etag T_CRLF
+		| hd_sip_if_match hdr_sip_if_match T_CRLF
 		| hd_subject hdr_subject T_CRLF
 		| hd_subscription_state hdr_subscription_state T_CRLF
 		| hd_supported hdr_supported T_CRLF
@@ -467,6 +471,10 @@ header:		  hd_accept hdr_accept T_CRLF
 			{ PARSE_ERROR("RSeq"); }
 		| hd_server error T_CRLF
 			{ PARSE_ERROR("Server"); }
+		| hd_sip_etag error T_CRLF
+			{ PARSE_ERROR("SIP-ETag"); }
+		| hd_sip_if_match error T_CRLF
+			{ PARSE_ERROR("SIP-If-Match"); }
 		| hd_subject error T_CRLF
 			{ PARSE_ERROR("Subject"); }
 		| hd_subscription_state error T_CRLF
@@ -589,6 +597,10 @@ hd_route:		T_HDR_ROUTE ':' { CTXT_URI; }
 hd_rseq:		T_HDR_RSEQ ':' { CTXT_NUM; }
 ;
 hd_server:		T_HDR_SERVER ':'
+;
+hd_sip_etag:		T_HDR_SIP_ETAG ':'
+;
+hd_sip_if_match:	T_HDR_SIP_IF_MATCH ':'
 ;
 hd_subject:		T_HDR_SUBJECT ':' { CTXT_LINE; }
 ;
@@ -1347,6 +1359,7 @@ digest_response:  parameter {
 			}
 			MEMMAN_DELETE($1); delete $1; }
 		| digest_response ',' parameter {
+			$$ = $1;
 			if (!$$->set_attr(*$3)) {
 				YYERROR;
 			}
@@ -1359,6 +1372,7 @@ auth_params:	  parameter {
 			$$->push_back(*$1);
 			MEMMAN_DELETE($1); delete $1; }
 		| auth_params ',' parameter {
+			$$ = $1;
 			$$->push_back(*$3);
 			MEMMAN_DELETE($3); delete $3; }
 ;
@@ -1392,6 +1406,7 @@ digest_challenge: parameter {
 			}
 			MEMMAN_DELETE($1); delete $1; }
 		| digest_challenge ',' parameter {
+			$$ = $1;
 			if (!$$->set_attr(*$3)) {
 				YYERROR;
 			}
@@ -1520,6 +1535,17 @@ hdr_refer_sub:	  T_TOKEN parameters {
 			MSG->hdr_refer_sub.set_extensions(*$2);
 			MEMMAN_DELETE($1); delete $1;
 			MEMMAN_DELETE($2); delete $2; }
+;
+
+hdr_sip_etag:	  T_TOKEN {
+			MSG->hdr_sip_etag.set_etag(*$1);
+			MEMMAN_DELETE($1); delete $1; }
+;
+			
+hdr_sip_if_match: T_TOKEN {
+			MSG->hdr_sip_if_match.set_etag(*$1);
+			MEMMAN_DELETE($1); delete $1; }
+;
 
 %%
 

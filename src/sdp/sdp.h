@@ -202,6 +202,7 @@ public:
 	string encode(void) const;
 	t_sip_body *copy(void) const;
 	t_body_type get_type(void) const;
+	t_media get_media(void) const;
 
 	// Return true if the current SDP is supported:
 	// version is 0

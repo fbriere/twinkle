@@ -351,7 +351,7 @@ void *stun_listen_main(void *arg) {
 			data_size = sock->recv(buf, STUN_MAX_MESSAGE_SIZE + 1);
 		} catch (int err) {
 			string msg("Failed to receive STUN response for media.\n");
-			msg += strerror(err);
+			msg += get_error_str(err);
 			log_file->write_report(msg, "::stun_listen_main",
 				LOG_NORMAL, LOG_CRITICAL);
 				
@@ -557,7 +557,7 @@ void t_media_stun_trans::retransmit(void) {
 			m, msg_size);
 	} catch (int err) {
 		string msg("Failed to send STUN request for media.\n");
-		msg += strerror(err);
+		msg += get_error_str(err);
 		log_file->write_report(msg, "::t_media_stun_trans::retransmit",
 			LOG_NORMAL, LOG_CRITICAL);
 			
@@ -589,8 +589,7 @@ t_media_stun_trans::t_media_stun_trans(t_user *user, StunMessage *r,
 		string msg("Failed to create a UDP socket (STUN) on port ");
 		msg += int2str(src_port);
 		msg += "\n";
-		// NOTE: I tried to use strerror_r, but it fails with Illegal seek
-		msg += strerror(err);
+		msg += get_error_str(err);
 		log_file->write_report(msg, "t_media_stun_trans::t_media_stun_trans", LOG_NORMAL, 
 			LOG_CRITICAL);
 		delete sock;
@@ -616,7 +615,7 @@ t_media_stun_trans::t_media_stun_trans(t_user *user, StunMessage *r,
 		sock->send(m, msg_size);
 	} catch (int err) {
 		string msg("Failed to send STUN request for media.\n");
-		msg += strerror(err);
+		msg += get_error_str(err);
 		log_file->write_report(msg, "::t_media_stun_trans::t_media_stun_trans",
 			LOG_NORMAL, LOG_CRITICAL);
 

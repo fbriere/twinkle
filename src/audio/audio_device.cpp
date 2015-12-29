@@ -132,7 +132,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		fd = ::open(device.c_str(), mode | O_NONBLOCK);
 		if (fd == -1) {
 			string msg("OSS audio device open failed: ");
-			msg += strerror(errno);
+			msg += get_error_str(errno);
 			log_file->write_report(msg, "t_oss_io::open",
 				LOG_NORMAL, LOG_CRITICAL);
 			return false;
@@ -145,7 +145,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	fd = ::open(device.c_str(), mode);
 	if (fd < 0) {
 		string msg("OSS audio device open failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		return false;
@@ -156,7 +156,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		status = ioctl(fd, SNDCTL_DSP_SETDUPLEX, 0);
 		if (status == -1) {
 			string msg("SNDCTL_DSP_SETDUPLEX ioctl failed: ");
-			msg += strerror(errno);
+			msg += get_error_str(errno);
 			log_file->write_report(msg, "t_oss_io::open",
 				LOG_NORMAL, LOG_CRITICAL);
 			ui->cb_display_msg(TRANSLATE("Sound card cannot be set to full duplex."),
@@ -193,7 +193,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	status = ioctl(fd, SNDCTL_DSP_SETFRAGMENT, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_FRAGMENT ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(TRANSLATE("Cannot set buffer size on sound card."),
@@ -206,7 +206,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	status = ioctl(fd, SNDCTL_DSP_CHANNELS, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_CHANNELS ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		msg = TRANSLATE("Sound card cannot be set to %1 channels.");
@@ -254,7 +254,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	status = ioctl(fd, SNDCTL_DSP_SETFMT, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETFMT ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(TRANSLATE("Cannot set sound card to 16 bits recording."),
@@ -266,7 +266,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
   	status = ioctl(fd, SOUND_PCM_WRITE_BITS, &arg);
 	if (status == -1) {
 		string msg("SOUND_PCM_WRITE_BITS ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(TRANSLATE("Cannot set sound card to 16 bits playing."),
@@ -279,7 +279,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	status = ioctl(fd, SNDCTL_DSP_SPEED, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SPEED ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		msg = TRANSLATE("Cannot set sound card sample rate to %1");
@@ -301,7 +301,7 @@ void t_oss_io::enable(bool enable_playback, bool enable_recording) {
 	status = ioctl(fd, SNDCTL_DSP_SETTRIGGER, &arg);
 	if (status == -1) {
 		string msg("SNDCTL_DSP_SETTRIGGER ioctl failed: ");
-		msg += strerror(errno);
+		msg += get_error_str(errno);
 		log_file->write_report(msg, "t_oss_io::enable",
 			LOG_NORMAL, LOG_CRITICAL);
 	}
@@ -434,7 +434,7 @@ open_again:
 		if (playback) {
 			msg = TRANSLATE("Cannot open ALSA driver for PCM playback");
 		} else {
-			msg = TRANSLATE("Cannot open ALSA driver for PCM playback");
+			msg = TRANSLATE("Cannot open ALSA driver for PCM capture");
 		}
 		msg += ": ";
 		msg += snd_strerror(err);

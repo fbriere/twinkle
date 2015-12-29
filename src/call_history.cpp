@@ -33,7 +33,7 @@
 #define CALL_HISTORY_FILE	"twinkle.ch";
 
 // Field seperator in call history file
-#define REC_SEPERATOR		'|'
+#define REC_SEPARATOR		'|'
 
 ////////////////////////
 // class t_call_record
@@ -257,55 +257,34 @@ bool t_call_record::set_direction(const string &dir) {
 	return true;
 }
 
-string t_call_record::create_file_record(void) const {
-	string record;
+bool t_call_record::create_file_record(vector<string> &v) const {
+	v.clear();
 	
-	record += ulong2str(time_start);
-	record += REC_SEPERATOR;
-	record += ulong2str(time_answer);
-	record += REC_SEPERATOR;
-	record += ulong2str(time_end);
-	record += REC_SEPERATOR;
-	record += get_direction_internal();
-	record += REC_SEPERATOR;
-	record += escape(from_display, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(from_uri.encode(), REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(from_organization, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(to_display, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(to_uri.encode(), REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(to_organization, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(reply_to_display, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(reply_to_uri.encode(), REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(referred_by_display, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(referred_by_uri.encode(), REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(subject, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += get_rel_cause_internal();
-	record += REC_SEPERATOR;
-	record += int2str(invite_resp_code);
-	record += REC_SEPERATOR;
-	record += escape(invite_resp_reason, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(far_end_device, REC_SEPERATOR);
-	record += REC_SEPERATOR;
-	record += escape(user_profile, REC_SEPERATOR);
+	v.push_back(ulong2str(time_start));
+	v.push_back(ulong2str(time_answer));
+	v.push_back(ulong2str(time_end));
+	v.push_back(get_direction_internal());
+	v.push_back(from_display);
+	v.push_back(from_uri.encode());
+	v.push_back(from_organization);
+	v.push_back(to_display);
+	v.push_back(to_uri.encode());
+	v.push_back(to_organization);
+	v.push_back(reply_to_display);
+	v.push_back(reply_to_uri.encode());
+	v.push_back(referred_by_display);
+	v.push_back(referred_by_uri.encode());
+	v.push_back(subject);
+	v.push_back(get_rel_cause_internal());
+	v.push_back(int2str(invite_resp_code));
+	v.push_back(invite_resp_reason);
+	v.push_back(far_end_device);
+	v.push_back(user_profile);
 	
-	return record;
+	return true;
 }
 
-bool t_call_record::populate_from_file_record(const string &record) {
-	vector<string> v = split_escaped(record, REC_SEPERATOR);
-	
+bool t_call_record::populate_from_file_record(const vector<string> &v) {
 	// Check number of fields
 	if (v.size() != 20) return false;
 	
@@ -315,30 +294,30 @@ bool t_call_record::populate_from_file_record(const string &record) {
 	
 	if (!set_direction(v[3])) return false;
 	
-	from_display = unescape(v[4]);
-	from_uri.set_url(unescape(v[5]));
+	from_display = v[4];
+	from_uri.set_url(v[5]);
 	if (!from_uri.is_valid()) return false;
-	from_organization = unescape(v[6]);
+	from_organization = v[6];
 	
-	to_display = unescape(v[7]);
-	to_uri.set_url(unescape(v[8]));
+	to_display = v[7];
+	to_uri.set_url(v[8]);
 	if (!to_uri.is_valid()) return false;
-	to_organization = unescape(v[9]);
+	to_organization = v[9];
 	
-	reply_to_display = unescape(v[10]);
-	reply_to_uri.set_url(unescape(v[11]));
+	reply_to_display = v[10];
+	reply_to_uri.set_url(v[11]);
 	
-	referred_by_display = unescape(v[12]);
-	referred_by_uri.set_url(unescape(v[13]));
+	referred_by_display = v[12];
+	referred_by_uri.set_url(v[13]);
 	
-	subject = unescape(v[14]);
+	subject = v[14];
 	
 	if (!set_rel_cause(v[15])) return false;
 	
 	invite_resp_code = atoi(v[16].c_str());
-	invite_resp_reason = unescape(v[17]);
-	far_end_device = unescape(v[18]);
-	user_profile = unescape(v[19]);
+	invite_resp_reason = v[17];
+	far_end_device = v[18];
+	user_profile = v[19];
 	
 	return true;
 }
@@ -358,12 +337,21 @@ unsigned short t_call_record::get_id(void) const {
 // class t_call_history
 ////////////////////////
 
-t_call_history::t_call_history() {
-	filename = string(DIR_HOME);
-	filename += "/";
-	filename += USER_DIR;
-	filename += "/";
-	filename += CALL_HISTORY_FILE;
+t_call_history::t_call_history() : utils::t_record_file<t_call_record>() {
+	set_header("time_start|time_answer|time_end|direction|from_display|from_uri|"
+	      "from_organization|to_display|to_uri|to_organization|"
+	      "reply_to_display|reply_to_uri|referred_by_display|referred_by_uri|"
+	      "subject|rel_cause|invite_resp_code|invite_resp_reason|"
+	      "far_end_device|user_profile");
+	      
+	set_separator(REC_SEPARATOR);
+	
+	string s(DIR_HOME);
+	s += "/";
+	s += USER_DIR;
+	s += "/";
+	s += CALL_HISTORY_FILE;
+	set_filename(s);
 	
 	num_missed_calls = 0;
 }
@@ -375,12 +363,12 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 		return;
 	}
 	
-	mtx_ch.lock();
+	mtx_records.lock();
 
-	call_records.push_back(call_record);
+	records.push_back(call_record);
 	
-	while (call_records.size() > sys_config->get_ch_max_size()) {
-		call_records.pop_front();
+	while (records.size() > sys_config->get_ch_max_size()) {
+		records.pop_front();
 	}
 	
 	// Increment missed calls counter
@@ -391,11 +379,11 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 		ui->cb_missed_call(num_missed_calls);
 	}
 	
-	mtx_ch.unlock();
+	mtx_records.unlock();
 	
 	if (write) {
 		string msg;
-		if (!write_history(msg)) {
+		if (!save(msg)) {
 			log_file->write_report(msg, "t_call_history::add_call_record",
 				LOG_NORMAL, LOG_WARNING);
 		}
@@ -406,20 +394,20 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 }
 
 void t_call_history::delete_call_record(unsigned short id, bool write) {
-	mtx_ch.lock();
-	for (list<t_call_record>::iterator i = call_records.begin();
-	     i != call_records.end(); i++)
+	mtx_records.lock();
+	for (list<t_call_record>::iterator i = records.begin();
+	     i != records.end(); i++)
 	{
 		if (i->get_id() == id) {
-			call_records.erase(i);
+			records.erase(i);
 			break;
 		}
 	}
-	mtx_ch.unlock();
+	mtx_records.unlock();
 	
 	if (write) {
 		string msg;
-		if (!write_history(msg)) {
+		if (!save(msg)) {
 			log_file->write_report(msg, "t_call_history::delete_call_record",
 				LOG_NORMAL, LOG_WARNING);
 		}
@@ -429,17 +417,18 @@ void t_call_history::delete_call_record(unsigned short id, bool write) {
 	ui->cb_call_history_updated();
 }
 
+/*
 bool t_call_history::read_history(string &error_msg) {
 	struct stat stat_buf;
 	
-	mtx_ch.lock();
+	mtx_records.lock();
 	
-	call_records.clear();
+	records.clear();
 	
 	// Check if call history file exists
 	if (stat(filename.c_str(), &stat_buf) != 0) {
 		// There is no call history file.
-		mtx_ch.unlock();
+		mtx_records.unlock();
 		return true;
 	}
 	
@@ -448,7 +437,7 @@ bool t_call_history::read_history(string &error_msg) {
 	if (!ch) {
 		error_msg = TRANSLATE("Cannot open file for reading: %1");
 		error_msg = replace_first(error_msg, "%1", filename);
-		mtx_ch.unlock();
+		mtx_records.unlock();
 		return false;
 	}
 	
@@ -463,7 +452,7 @@ bool t_call_history::read_history(string &error_msg) {
 		if (!ch.good() && !ch.eof()) {
 			error_msg = TRANSLATE("File system error while reading file %1 .");
 			error_msg = replace_first(error_msg, "%1", filename);
-			mtx_ch.unlock();
+			mtx_records.unlock();
 			return false;
 		}
 
@@ -481,7 +470,7 @@ bool t_call_history::read_history(string &error_msg) {
 		}
 	}
 	
-	mtx_ch.unlock();
+	mtx_records.unlock();
 	
 	// Clear the number of missed calls as reading the history
 	// will have increased the number of missed calls for each
@@ -495,14 +484,14 @@ bool t_call_history::write_history(string &error_msg) const {
 	
 	t_call_history *self = const_cast<t_call_history *>(this);
 	
-	self->mtx_ch.lock();
+	self->mtx_records.lock();
 	
 	// Open file
 	ofstream ch(filename.c_str());
 	if (!ch) {
 		error_msg = TRANSLATE("Cannot open file for writing: %1");
 		error_msg = replace_first(error_msg, "%1", filename);
-		self->mtx_ch.unlock();
+		self->mtx_records.unlock();
 		return false;
 	}
 	
@@ -515,14 +504,14 @@ bool t_call_history::write_history(string &error_msg) const {
 	ch << endl;
 	      
 	// Write records
-	for (list<t_call_record>::const_iterator i = call_records.begin();
-	     i != call_records.end(); i++)
+	for (list<t_call_record>::const_iterator i = records.begin();
+	     i != records.end(); i++)
 	{
 		ch << i->create_file_record();
 		ch << endl;
 	}
 	
-	self->mtx_ch.unlock();
+	self->mtx_records.unlock();
 	 
 	if (!ch.good()) {
 		error_msg = TRANSLATE("File system error while writing file %1 .");
@@ -532,21 +521,22 @@ bool t_call_history::write_history(string &error_msg) const {
 	
 	return true;
 }
+*/
 
 void t_call_history::get_history(list<t_call_record> &history) {
-	mtx_ch.lock();
-	history = call_records;
-	mtx_ch.unlock();
+	mtx_records.lock();
+	history = records;
+	mtx_records.unlock();
 }
 
 void t_call_history::clear(bool write) {
-	mtx_ch.lock();
-	call_records.clear();
-	mtx_ch.unlock();
+	mtx_records.lock();
+	records.clear();
+	mtx_records.unlock();
 	
 	if (write) {
 		string msg;
-		if (!write_history(msg)) {
+		if (!save(msg)) {
 			log_file->write_report(msg, "t_call_history::clear",
 				LOG_NORMAL, LOG_WARNING);
 		}
@@ -563,9 +553,9 @@ int t_call_history::get_num_missed_calls(void) const {
 }
 
 void t_call_history::clear_num_missed_calls(void) {
-	mtx_ch.lock();
+	mtx_records.lock();
 	num_missed_calls = 0;
-	mtx_ch.unlock();
+	mtx_records.unlock();
 	
 	ui->cb_missed_call(0);
 }

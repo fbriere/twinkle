@@ -141,6 +141,116 @@
     </message>
 </context>
 <context>
+    <name>BuddyForm</name>
+    <message>
+        <source>Twinkle - Buddy</source>
+        <translation>Twinkle - Buddy</translation>
+    </message>
+    <message>
+        <source>Address book</source>
+        <translation>Adressbuch</translation>
+    </message>
+    <message>
+        <source>Select an address from the address book.</source>
+        <translation>Name und Rufnummer/SIP-Adresse aus Adressbuch kopieren.</translation>
+    </message>
+    <message>
+        <source>&amp;Phone:</source>
+        <translation>&amp;Telefon:</translation>
+    </message>
+    <message>
+        <source>Name of your buddy.</source>
+        <translation>Lokaler Name für Buddy-Eintrag.</translation>
+    </message>
+    <message>
+        <source>&amp;Show availability</source>
+        <translation>Online-&amp;Status anzeigen</translation>
+    </message>
+    <message>
+        <source>Alt+S</source>
+        <translation>Alt+S</translation>
+    </message>
+    <message>
+        <source>Check this option if you want to see the availability of your buddy. This will only work if your provider offers a presence agent.</source>
+        <translation>Wenn aktiviert, erfragt Twinkle den Online-Status (Erreichbarkeit) des Buddy. Diese Funktion muss vom Provider des Buddy und gegebenenfalls auch von Ihrem Provider durch bereitstellen eines &quot;presence agent&quot; im Netz unterstützt werden, um zu funktionieren.</translation>
+    </message>
+    <message>
+        <source>&amp;Name:</source>
+        <translation>&amp;Name:</translation>
+    </message>
+    <message>
+        <source>SIP address your buddy.</source>
+        <translation>SIP-Adresse des  Buddy.</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation>Alt+O</translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>Abbruch (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation>Alt+C</translation>
+    </message>
+    <message>
+        <source>You must fill in a name.</source>
+        <translation>Sie müssen einen Namen angeben.</translation>
+    </message>
+    <message>
+        <source>Invalid phone.</source>
+        <translation>Unzulässige SIP-Adresse.</translation>
+    </message>
+    <message>
+        <source>Failed to save buddy list: %1</source>
+        <translation>Fehler beim Speichern der Buddyliste: &quot;%1&quot;</translation>
+    </message>
+</context>
+<context>
+    <name>BuddyList</name>
+    <message>
+        <source>Availability</source>
+        <translation>Online-Status</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>unbekannt</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>offline</translation>
+    </message>
+    <message>
+        <source>online</source>
+        <translation>online</translation>
+    </message>
+    <message>
+        <source>request rejected</source>
+        <translation>Abfrage nicht angenommen</translation>
+    </message>
+    <message>
+        <source>not published</source>
+        <translation>nicht bekanntgegeben</translation>
+    </message>
+    <message>
+        <source>failed to publish</source>
+        <translation>Bekanntgeben nicht möglich</translation>
+    </message>
+    <message>
+        <source>request failed</source>
+        <translation>Abfrage fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Click right to add a buddy.</source>
+        <translation>Mit Rechtsklick Buddy hinzufügen.</translation>
+    </message>
+</context>
+<context>
     <name>CoreAudio</name>
     <message>
         <source>Failed to open sound card</source>
@@ -773,11 +883,11 @@ Nutzen Sie zum Anlegen und Bearbeiten Ihrer systemweiten Adressinformationen das
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation>&amp;Bearbeiten</translation>
+        <translation>B&amp;earbeiten</translation>
     </message>
     <message>
         <source>Alt+E</source>
-        <translation>Alt+B</translation>
+        <translation>Alt+E</translation>
     </message>
     <message>
         <source>Edit a contact from the local address book.</source>
@@ -879,7 +989,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Alt+I</source>
-        <translation></translation>
+        <translation>Alt+I</translation>
     </message>
     <message>
         <source>Check this option to show incoming calls.</source>
@@ -903,7 +1013,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Alt+A</source>
-        <translation></translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Check this option to show answered calls.</source>
@@ -927,7 +1037,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Alt+U</source>
-        <translation></translation>
+        <translation>Alt+U</translation>
     </message>
     <message>
         <source>Check this option to show only calls associated with this user profile.</source>
@@ -939,7 +1049,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Alt+L</source>
-        <translation></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>&lt;p&gt;Clear the complete call history.&lt;/p&gt;
@@ -1037,7 +1147,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Alt+S</source>
-        <translation></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>&amp;Call</source>
@@ -1142,6 +1252,65 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Clear the log window. This does &lt;b&gt;not&lt;/b&gt; clear the log file itself.</source>
         <translation>Die Anzeige des Fensters löschen. Die Logdatei selbst wird &lt;b&gt;nicht&lt;/b&gt; gelöscht oder geleert.</translation>
+    </message>
+</context>
+<context>
+    <name>MessageForm</name>
+    <message>
+        <source>Twinkle - Instant message</source>
+        <translation>Twinkle - Instant Message</translation>
+    </message>
+    <message>
+        <source>&amp;To:</source>
+        <translation>&amp;An (Adr):</translation>
+    </message>
+    <message>
+        <source>The user that will send the message.</source>
+        <translation>Als Absender verwendetes Benutzerprofil.</translation>
+    </message>
+    <message>
+        <source>The address of the user that you want to send a message. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</source>
+        <translation>Die Adresse/Nummer der Gegenstelle, an die Sie eine Instant Message senden möchten. Wie immer bei Twinkle kann dies eine vollständige Adresse oder ein Username sein. Wenn Sie nur den Usernamen angeben, ergänzt Twinkle die Domain aus dem verwendeten Absender-Benutzerprofil.</translation>
+    </message>
+    <message>
+        <source>Address book</source>
+        <translation>Adressbuch</translation>
+    </message>
+    <message>
+        <source>Select an address from the address book.</source>
+        <translation>Adresse/Nr aus dem KDE-Adressbuch auswählen.</translation>
+    </message>
+    <message>
+        <source>&amp;User profile:</source>
+        <translation>Ben&amp;utzerprofil:</translation>
+    </message>
+    <message>
+        <source>Conversation</source>
+        <translation>Dialog</translation>
+    </message>
+    <message>
+        <source>The exchanged messages.</source>
+        <translation>Die gesendeten und empfangenen Nachrichten. Gesendete schwarz, empfangene blau.</translation>
+    </message>
+    <message>
+        <source>Type your message here and then press &quot;send&quot; to send it.</source>
+        <translation>Schreiben Sie hier Ihre Nachricht und klicken Sie &quot;senden&quot; oder drücken Sie &quot;Enter&quot; zum abschicken.</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>&amp;Senden</translation>
+    </message>
+    <message>
+        <source>Alt+S</source>
+        <translation>Alt+S</translation>
+    </message>
+    <message>
+        <source>Send the message.</source>
+        <translation>Nachricht senden.</translation>
+    </message>
+    <message>
+        <source>Delivery failure</source>
+        <translation>Übertragungsfehler</translation>
     </message>
 </context>
 <context>
@@ -1353,7 +1522,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation>&amp;Bearbeiten</translation>
+        <translation>B&amp;earbeiten</translation>
     </message>
     <message>
         <source>C&amp;all</source>
@@ -1369,11 +1538,11 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>&amp;Services</source>
-        <translation>&amp;Dienste</translation>
+        <translation>Dien&amp;ste</translation>
     </message>
     <message>
         <source>&amp;View</source>
-        <translation>An&amp;sicht</translation>
+        <translation>Ans&amp;icht</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -1385,11 +1554,11 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Quit</source>
-        <translation>Beenden</translation>
+        <translation>Abmelden und Twinkle beenden</translation>
     </message>
     <message>
         <source>&amp;Quit</source>
-        <translation>&amp;Beenden</translation>
+        <translation>B&amp;eenden</translation>
     </message>
     <message>
         <source>Ctrl+Q</source>
@@ -1445,7 +1614,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Register</source>
-        <translation>Anmelden</translation>
+        <translation>Anmelden beim SIP-Sever</translation>
     </message>
     <message>
         <source>&amp;Register</source>
@@ -1457,7 +1626,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>&amp;Deregister</source>
-        <translation>A&amp;bmelden</translation>
+        <translation>Abmel&amp;den</translation>
     </message>
     <message>
         <source>Deregister this device</source>
@@ -1465,7 +1634,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Show registrations</source>
-        <translation>Anmeldungen zeigen</translation>
+        <translation>Anmeldungen bei den Servern abfragen</translation>
     </message>
     <message>
         <source>&amp;Show registrations</source>
@@ -1513,7 +1682,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>User profile</source>
-        <translation>Benutzerprofil</translation>
+        <translation>Benutzerprofil bearbeiten</translation>
     </message>
     <message>
         <source>&amp;User profile...</source>
@@ -1533,7 +1702,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>System settings</source>
-        <translation>Systemeinstellungen</translation>
+        <translation>Systemeinstellungen bearbeiten</translation>
     </message>
     <message>
         <source>&amp;System settings...</source>
@@ -1545,7 +1714,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Deregister &amp;all</source>
-        <translation>Abmel&amp;den alle Endger.</translation>
+        <translation>&amp;Abmelden alle Endger.</translation>
     </message>
     <message>
         <source>Deregister all your registered devices</source>
@@ -1561,7 +1730,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Log</source>
-        <translation></translation>
+        <translation>SystemLog anzeigen</translation>
     </message>
     <message>
         <source>&amp;Log...</source>
@@ -1569,7 +1738,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Call history</source>
-        <translation>Liste aller Anrufe</translation>
+        <translation>Liste der letzen Anrufe anzeigen</translation>
     </message>
     <message>
         <source>Call &amp;history...</source>
@@ -1593,7 +1762,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>What&apos;s This?</source>
-        <translation>Was ist das?</translation>
+        <translation>&quot;Was ist das?&quot;-Kontexthilfe</translation>
     </message>
     <message>
         <source>What&apos;s &amp;This?</source>
@@ -1840,7 +2009,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     <message>
         <source>&amp;Call...</source>
         <comment>call menu text</comment>
-        <translation>Anrufen (&amp;Call)...</translation>
+        <translation>Anruf+...  (&amp;Call)</translation>
     </message>
     <message>
         <source>Answer</source>
@@ -1895,7 +2064,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     <message>
         <source>Dtmf</source>
         <comment>toolbar text</comment>
-        <translation>MFV</translation>
+        <translation>DTMF</translation>
     </message>
     <message>
         <source>&amp;Dtmf...</source>
@@ -1950,7 +2119,7 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Voice mail</source>
-        <translation>Anrufbeantworter{   1}</translation>
+        <translation>Anrufbeantworter</translation>
     </message>
     <message>
         <source>&amp;Voice mail</source>
@@ -1958,11 +2127,80 @@ Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sic
     </message>
     <message>
         <source>Access voice mail</source>
-        <translation>Voice-Mail abrufen</translation>
+        <translation>Voice-Mailbox abfragen</translation>
     </message>
     <message>
         <source>F11</source>
         <translation></translation>
+    </message>
+    <message>
+        <source>Buddy list</source>
+        <translation>Buddyliste</translation>
+    </message>
+    <message>
+        <source>&amp;Message</source>
+        <translation>&amp;Mitteilung</translation>
+    </message>
+    <message>
+        <source>Msg</source>
+        <translation>Msg</translation>
+    </message>
+    <message>
+        <source>Instant &amp;message...</source>
+        <translation>Instant &amp;Message...</translation>
+    </message>
+    <message>
+        <source>Instant message</source>
+        <translation>Instant Message senden</translation>
+    </message>
+    <message>
+        <source>&amp;Call...</source>
+        <translation>Anrufen (&amp;Call)...</translation>
+    </message>
+    <message>
+        <source>&amp;Edit...</source>
+        <translation>B&amp;earbeiten...</translation>
+    </message>
+    <message>
+        <source>&amp;Delete</source>
+        <translation>&amp;Löschen</translation>
+    </message>
+    <message>
+        <source>O&amp;ffline</source>
+        <translation>O&amp;ffline</translation>
+    </message>
+    <message>
+        <source>&amp;Online</source>
+        <translation>&amp;Online</translation>
+    </message>
+    <message>
+        <source>&amp;Change availability</source>
+        <translation>Online-&amp;Status ändern</translation>
+    </message>
+    <message>
+        <source>&amp;Add buddy...</source>
+        <translation>Neuen Buddy &amp;anlegen...</translation>
+    </message>
+    <message>
+        <source>Failed to save buddy list: %1</source>
+        <translation>Fehler beim Speichern der Buddyliste: &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>You can create a separate buddy list for each user profile. You can only see availability of your buddies and publish your own availability if your provider offers a presence server.</source>
+        <translation>Die Liste Ihrer &lt;b&gt;Benutzerprofile (fett)&lt;/b&gt; und Buddies &lt;i&gt;(deutsch: &quot;Kumpels&quot;. Ihre wichtigen Kontakte)&lt;/i&gt; für die einzelnen Profile.&lt;br&gt;
+Über das Kontextmenü des einzelnen Benutzerprofils erzeugen Sie neue Buddy-Einträge und stellen Ihren eigenen Online-Status ein.&lt;br&gt;
+Der Online-Status der Buddies wird durch gelbe (=online) und graue (=offline) Icons dargestellt. Details erscheinen, wenn Sie den Cursor über das Icon stellen.&lt;br&gt;
+&lt;br&gt;
+Um Ihren eigenen Online-Status zu veröffentlichen, brauchen Sie die Unterstützung durch einen öffentlichen &quot;presence server&quot; &lt;i&gt;Ihres&lt;/i&gt; Providers.&lt;br&gt;
+Um den Online-Status eines Buddies abzufragen, muss &lt;i&gt;dessen&lt;/i&gt; Provider einen &quot;presence server&quot; im Netz ereichbar halten, und dieser muss Ihre Abfrage gestatten. Es ist daher sinnvoll, Buddies mit einem bestimmten Provider (thomas@&lt;b&gt;DerProvider.de&lt;/b&gt;) unter einem gültigen eigenen Benutzerprofil mit dem selben Provider (ich.selber@&lt;b&gt;DerProvider.de&lt;/b&gt;) anzulegen, da viele &quot;presence server&quot; nur dann die Abfrage gestatten.</translation>
+    </message>
+    <message>
+        <source>&amp;Buddy list</source>
+        <translation>&amp;Buddyliste </translation>
+    </message>
+    <message>
+        <source>&amp;Display</source>
+        <translation>&amp;Detailanzeige</translation>
     </message>
 </context>
 <context>
@@ -2294,11 +2532,11 @@ Please select a profile.</source>
     </message>
     <message>
         <source>&amp;Select all</source>
-        <translation>Alle &amp;auswählen</translation>
+        <translation>Alle au&amp;swählen</translation>
     </message>
     <message>
         <source>Alt+S</source>
-        <translation>Alt+A</translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>&amp;OK</source>
@@ -2406,7 +2644,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Alt+R</source>
-        <translation>Alt-A</translation>
+        <translation>Alt+A</translation>
     </message>
     <message>
         <source>Activate the unconditional redirection service.</source>
@@ -2733,7 +2971,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>S&amp;tartup hidden in system tray</source>
-        <translation>Minimiert in &amp;Systemabschnitt starten</translation>
+        <translation>Minimiert im Sys&amp;temabschnitt starten</translation>
     </message>
     <message>
         <source>Next time you start Twinkle it will immediately hide in the system tray. This works best when you also select a default user profile.</source>
@@ -3213,7 +3451,7 @@ Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
     </message>
     <message>
         <source>Translated to english by &lt;your name&gt;</source>
-        <translation>Deutsche Übersetzung: ©20070510 Reisenweber tech+it-consult&lt;br&gt;
+        <translation>Deutsche Übersetzung: ©20070721-2112 Reisenweber tech+it-consult&lt;br&gt;
 joerg.twinklephone(AT)gmx.de</translation>
     </message>
     <message>
@@ -3367,6 +3605,10 @@ In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lo
     <message>
         <source>Cannot access the microphone (%1).</source>
         <translation>&quot;%1&quot;, Audiodevice f. Mikrofon nicht zugreifbar.</translation>
+    </message>
+    <message>
+        <source>Cannot open ALSA driver for PCM capture</source>
+        <translation>ALSA-Treiber kann nicht für PCM-Aufnahme geöffnet werden</translation>
     </message>
 </context>
 <context>
@@ -3561,7 +3803,7 @@ Werte kleiner 120 sind nicht zu empfehlen. Standard: 3600 (=1h).</translation>
     </message>
     <message>
         <source>Alt+G</source>
-        <translation>Alt-P</translation>
+        <translation>Alt+P</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should automatically register when you run this user profile. You should disable this when you want to do direct IP phone to IP phone communication without a SIP proxy.</source>
@@ -5069,6 +5311,56 @@ Asterisk unterstützt im allg. &quot;unsollicited message waiting indication&quo
         <source>%1 converts to %2</source>
         <translation>Vor     Konvertierung: &lt;b&gt;%1&lt;/b&gt;&lt;br&gt;
 Nach  Konvertierung: &lt;b&gt;%2&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <source>Instant message</source>
+        <translation>Instant Message</translation>
+    </message>
+    <message>
+        <source>Presence</source>
+        <translation>Online-Status</translation>
+    </message>
+    <message>
+        <source>&amp;Maximum number of sessions:</source>
+        <translation>&amp;Max. Anzahl IM-Fenster:</translation>
+    </message>
+    <message>
+        <source>When you have this number of instant message sessions open, new incoming message sessions will be rejected.</source>
+        <translation>Hier können Sie die Anzahl gleichzeitig offener IM-Fenster für dieses Benutzerprofil als Empfänger begrenzen.&lt;br&gt;
+Bei Erreichen der Obergrenze erhält jeder weitere Absender einer Instant Message den Hinweis &quot;468 Besetzt&quot;. &lt;br&gt;
+Sie können diese Einstellung auf 0 setzen, wenn Sie keine ankommenden Instant Messages wünschen.</translation>
+    </message>
+    <message>
+        <source>Your presence</source>
+        <translation>Ihr Online-Status</translation>
+    </message>
+    <message>
+        <source>&amp;Publish availability at startup</source>
+        <translation>Erreichbarkeit beim Start &amp;veröffentlichen</translation>
+    </message>
+    <message>
+        <source>Publish your availability at startup.</source>
+        <translation>Wenn aktiviert, veröffentlicht Twinkle Ihren Online-Status als &quot;online&quot;, sobald das Benutzerprofil aktivieren. Beachten Sie, dass Sie trotz allem solange nicht erreichbar sind, bis Sie sich bei, SIP-Server angemeldet haben - siehe Menü &quot;Anmeldung&quot;, sowie hier &quot;SIP Server&quot; &quot;Bei Profilstart anmelden&quot;.</translation>
+    </message>
+    <message>
+        <source>Buddy presence</source>
+        <translation>Buddy Online-Status</translation>
+    </message>
+    <message>
+        <source>Publication &amp;refresh interval (sec):</source>
+        <translation>Erneut ve&amp;röffentlichen nach (Sek.):</translation>
+    </message>
+    <message>
+        <source>Refresh rate of presence publications.</source>
+        <translation>Die Refreshzeit für die Veröffentlichung des Online-Status in Sekunden. Damit der &quot;presence server&quot; z.B. eine unterbrochene Verbindung schnell bemerkt, kann es sinnvoll sein, hier wesentlich kürzere Werte als den Standard &quot;3600&quot; einzutragen.</translation>
+    </message>
+    <message>
+        <source>&amp;Subscription refresh interval (sec):</source>
+        <translation>&quot;&amp;Subscribe&quot; erneut nach (Sek.):</translation>
+    </message>
+    <message>
+        <source>Refresh rate of presence subscriptions.</source>
+        <translation>Die Refreshzeit für die Anmeldung durch &quot;SUBSCRIBE&quot; zum Erhalten von Online-Status-Mitteilungen über die Ereichbarkeit der Buddies unter diesem Benutzerprofil. Standard &quot;3600&quot;.</translation>
     </message>
 </context>
 <context>

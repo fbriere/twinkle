@@ -18,7 +18,7 @@
 
 /**
  * @file
- * Subscription dialog.
+ * Subscription dialog (RFC 3265)
  */
 
 #ifndef _SUBSCRIPTION_DIALOG_H
@@ -56,25 +56,25 @@ protected:
 	
 	/**
 	 * Process a received SUBSCRIBE request.
-	 * @param r The request.
-	 * @param tuid Transaction user id.
-	 * @param tid Transaction id.
+	 * @param r [in] The request.
+	 * @param tuid [in] Transaction user id.
+	 * @param tid [in] Transaction id.
 	 */
 	virtual void process_subscribe(t_request *r, t_tuid tuid, t_tid tid);
 	
 	/**
 	 * Process a received NOTIFY request.
-	 * @param r The request.
-	 * @param tuid Transaction user id.
-	 * @param tid Transaction id.
+	 * @param r [in] The request.
+	 * @param tuid [in] Transaction user id.
+	 * @param tid [in] Transaction id.
 	 */
 	virtual void process_notify(t_request *r, t_tuid tuid, t_tid tid);
 	
 	/**
 	 * Process the response to the initial SUBSCRIBE.
-	 * @param r The response.
-	 * @param tuid Transaction user id.
-	 * @param tid Transaction id.
+	 * @param r [in] The response.
+	 * @param tuid [in] Transaction user id.
+	 * @param tid [in] Transaction id.
 	 * @return true, if no further processing is needed. This happens, when a
 	 * 423 Interval too brief response is received. Then this method sends a
 	 * new SUBSCRIBE.
@@ -102,8 +102,8 @@ public:
 	
 	/**
 	 * Match request with dialog and subscription.
-	 * @param r The request.
-	 * @param partial Indicates if there is a partial match on return.
+	 * @param r [in] The request.
+	 * @param partial [out] Indicates if there is a partial match on return.
 	 * @return true, if the request matches.
 	 * @return false, if the request does not match. In this case the request
 	 * may match partially, i.e. the from-tag matches, but the to-tag does not.
@@ -138,7 +138,7 @@ public:
 	
 	/**
 	 * Process timeout.
-	 * @param timer The timer that expired.
+	 * @param timer [in] The timer that expired.
 	 * @return true, if processing is finished.
 	 * @return false, if subsclass needs to do further processing.
 	 */
@@ -146,8 +146,8 @@ public:
 	
 	/**
 	 * Match a timer id with a running timer.
-	 * @param timer The running timer.
-	 * @param id_time The timer id.
+	 * @param timer [in] The running timer.
+	 * @param id_timer [in] The timer id.
 	 * @return true, if timer id matches with timer.
 	 * @return false, otherwise.
 	 */
@@ -155,10 +155,10 @@ public:
 	
 	/**
 	 * Subscribe to an event (send SUBSCRIBE).
-	 * @param epxires The subscription interval in seconds.
-	 * @param req_uri The request-URI for the SUBSCRIBE.
-	 * @param to_uri The URI for the To header in the SUBSCRIBE.
-	 * @param to_display The display name for the To header in the SUBSCRIBE.
+	 * @param epxires [in] The subscription interval in seconds.
+	 * @param req_uri [in] The request-URI for the SUBSCRIBE.
+	 * @param to_uri [in] The URI for the To header in the SUBSCRIBE.
+	 * @param to_display [in] The display name for the To header in the SUBSCRIBE.
 	 */
 	virtual void subscribe(unsigned long expires, const t_url &req_uri, 
 			const t_url &to_uri, const string &to_display);

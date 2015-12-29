@@ -56,6 +56,7 @@ using namespace std;
 #define	R_407_PROXY_AUTH_REQUIRED 407
 #define	R_408_REQUEST_TIMEOUT 408
 #define	R_410_GONE 410
+#define R_412_CONDITIONAL_REQUEST_FAILED 412
 #define	R_413_REQ_ENTITY_TOO_LARGE 413
 #define	R_414_REQ_URI_TOO_LARGE 414
 #define	R_415_UNSUPPORTED_MEDIA_TYPE 415
@@ -125,6 +126,7 @@ using namespace std;
 #define REASON_407 "Proxy Authentication Required"
 #define REASON_408 "Request Timeout"
 #define REASON_410 "Gone"
+#define REASON_412 "Conditional Request Failed"
 #define REASON_413 "Request Entity Too Large"
 #define REASON_414 "Request-URI Too Large"
 #define REASON_415 "Unsupported Media Type"

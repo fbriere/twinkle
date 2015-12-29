@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ilbc-cpp,
 	AC_HELP_STRING([--enable-ilbc-cpp], [your ilbc library is built for C++ instead of C]),
 	[ac_cv_ilbc_cpp=$enableval], [ac_cv_ilbc_cpp=no])
 
-AM_INIT_AUTOMAKE(twinkle,"1.0.1")
-AC_DEFINE(VERSION_DATE,["May 19 2007"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,"1.1")
+AC_DEFINE(VERSION_DATE,["July 21 2007"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -37,6 +37,7 @@ AC_PROG_LEX
 AC_PROG_YACC
 AC_C_BIGENDIAN
 AC_LANG(C++)
+AC_FUNC_STRERROR_R
 
 AC_CHECK_HEADERS([linux/types.h])
 AC_CHECK_HEADERS([linux/errqueue.h],[],[],[
@@ -66,6 +67,10 @@ fi
 export PKG_CONFIG_PATH
 
 PKG_CHECK_MODULES(CCRTP, libccrtp1 >= 1.5.0)
+
+PKG_CHECK_MODULES(XML2, libxml-2.0)
+# AC_CHECK_HEADER(libxml/tree.h, [],
+#	[AC_MSG_ERROR([libxml2 header files missing (libxml2-devel package)])])
 
 if test "x$ac_cv_qt_check" = "xyes"
 then
@@ -113,6 +118,7 @@ AC_MSG_NOTICE([creating $QT_INCL_PRO (include project file for Qt)])
 echo "INCLUDEPATH += `$CCGNU2_CONFIG --includes`" | sed -e s/-I//g > $QT_INCL_PRO
 echo "LIBS += `$CCGNU2_CONFIG --stdlibs`" >> $QT_INCL_PRO
 echo "LIBS += $CCRTP_LIBS" >> $QT_INCL_PRO
+echo "LIBS += $XML2_LIBS" >> $QT_INCL_PRO
 
 # Check if KDE is available
 if test "x$ac_cv_kde" = "xyes"
@@ -240,7 +246,8 @@ AC_SUBST(PARSER_CXXFLAGS)
 AC_OUTPUT(Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile \
 	src/audits/Makefile src/sdp/Makefile src/parser/Makefile \
 	src/sockets/Makefile src/stun/Makefile src/threads/Makefile \
-	src/gui/lang/Makefile src/mwi/Makefile \
+	src/gui/lang/Makefile src/mwi/Makefile src/im/Makefile \
+	src/patterns/Makefile src/utils/Makefile src/presence/Makefile \
 	twinkle.spec)
 	
 AC_MSG_RESULT([])

@@ -31,11 +31,12 @@
 #include "parser/response.h"
 #include "sockets/url.h"
 #include "threads/mutex.h"
+#include "utils/record_file.h"
 
 using namespace std;
 
 /** Call detail record. */
-class t_call_record {
+class t_call_record : public utils::t_record {
 public:
 
 /** Release cause of a call. */
@@ -90,27 +91,27 @@ public:
 	
 	/**
 	 * Record call start.
-	 * @param invite The INVITE request starting the call.
-	 * @param dir Call direction.
-	 * @param _user_profile The user profile.
+	 * @param invite [in] The INVITE request starting the call.
+	 * @param dir [in] Call direction.
+	 * @param _user_profile [in] The user profile.
 	 */
 	void start_call(const t_request *invite, t_direction dir, const string &_user_profile);
 	
 	/**
 	 * Record call failure. This is also the end of the call.
-	 * @param resp The failure response.
+	 * @param resp [in] The failure response.
 	 */
 	void fail_call(const t_response *resp);
 	
 	/**
 	 * Record successful call answer.
-	 * @param resp The 2XX INVITE response.
+	 * @param resp [in] The 2XX INVITE response.
 	 */
 	void answer_call(const t_response *resp);
 	
 	/**
 	 * Record end of a successful call with an explicit cause.
-	 * @param cause The release cause.
+	 * @param cause [in] The release cause.
 	 */
 	void end_call(t_rel_cause cause);
 	
@@ -119,7 +120,7 @@ public:
 	 * If far_end is true, then the far-end ended the call, otherwise
 	 * the near-end ended the call. This indication together with the
 	 * direction determines the correct cause of the call end.
-	 * @param far_end Indicates if the far end released the call.
+	 * @param far_end [in] Indicates if the far end released the call.
 	 */
 	void end_call(bool far_end);
 	
@@ -153,31 +154,20 @@ public:
 	
 	/**
 	 * Set the release cause from an internal description.
-	 * @param cause Internal release cause description.
+	 * @param cause [in] Internal release cause description.
 	 * @return Indication if operation succeeded.
 	 */
 	bool set_rel_cause(const string &cause);
 	
 	/**
 	 * Set the direction from an internal description.
-	 * @param cause Internal direction description.
+	 * @param cause [in] Internal direction description.
 	 * @return Indication if operation succeeded.
 	 */
 	bool set_direction(const string &dir);
 	
-	/**
-	 * Create a record to write to a file.
-	 * @return File record.
-	 */
-	string create_file_record(void) const;
-	
-	/**
-	 * Populate from a file record.
-	 * @param record File record.
-	 * @return true, if record is succesfully populated.
-	 * @return false, if file record could not be parsed.
-	 */
-	bool populate_from_file_record(const string &record);
+	virtual bool create_file_record(vector<string> &v) const;
+	virtual bool populate_from_file_record(const vector<string> &v);
 	
 	/**
 	 * Check if this call record represents a valid call.
@@ -190,17 +180,8 @@ public:
 };
 
 /** History of calls. */
-class t_call_history {
+class t_call_history : public utils::t_record_file<t_call_record> {
 private:
-	/** Full file name for call history file. */
-	string		filename;
-	
-	/** Mutex to protect concurrent access. */
-	t_recursive_mutex	mtx_ch;
-	
-	/** List of historic call record. */
-	list<t_call_record>	call_records;
-	
 	/** Number of missed calls since this counter was cleared. */
 	int		num_missed_calls;
 	
@@ -210,38 +191,27 @@ public:
 	
 	/**
 	 * Add a call record to the history.
-	 * @param call_record The call record to be added.
-	 * @param write Indicates if history must be written to file after adding.
+	 * @param call_record [in] The call record to be added.
+	 * @param write [in] Indicates if history must be written to file after adding.
 	 */
 	void add_call_record(const t_call_record &call_record, bool write = true);
 	
 	/**
 	 * Delete record with a given id.
-	 * @param id The record id that must be deleted.
-	 * @param write Indicates if history must be written to file after deleting.
+	 * @param id [in] The record id that must be deleted.
+	 * @param write [in] Indicates if history must be written to file after deleting.
 	 */
 	void delete_call_record(unsigned short id, bool write = true);
 	
-	/**
-	 * Read call history file.
-	 * @param error_msg An error message that can be give to the user if reading failed.
-	 * @returns Indication if operation succeeded.
+	/** 
+	 * Get list of historic call records.
+	 * @param history [out] List of historic call records.
 	 */
-	bool read_history(string &error_msg);
-	
-	/**
-	 * Write call history file.
-	 * @param error_msg An error message that can be give to the user if writing failed.
-	 * @returns Indication if operation succeeded.
-	 */
-	bool write_history(string &error_msg) const;
-	
-	/** Get list of historic call records. */
 	void get_history(list<t_call_record> &history);
 	
 	/** 
 	 * Clear call history file.
-	 * @param write Indicates if history must be written to file after adding.
+	 * @param write [in] Indicates if history must be written to file after adding.
 	 */
 	void clear(bool write = true);
 	

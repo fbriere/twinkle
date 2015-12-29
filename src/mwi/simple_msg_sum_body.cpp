@@ -110,6 +110,10 @@ t_body_type t_simple_msg_sum_body::get_type(void) const {
 	return BODY_SIMPLE_MSG_SUM;
 }
 
+t_media t_simple_msg_sum_body::get_media(void) const {
+	return t_media("application", "simple-message-summary");
+}
+
 void t_simple_msg_sum_body::add_msg_summary(const string &context, const t_msg_summary summary) {
 	msg_summary.insert(make_pair(context, summary));
 }

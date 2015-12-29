@@ -126,7 +126,7 @@ void exec_cmd(t_socket_local &sock_client) {
 	}
 	catch (int e) {
 		log_msg = "Failed to read from socket.\n";
-		log_msg += strerror(e);
+		log_msg += get_error_str(e);
 		log_msg += "\n";
 		log_file->write_report(log_msg, "cmdsocket::exec_cmd", LOG_NORMAL, LOG_WARNING);
 	}
@@ -144,7 +144,7 @@ void *listen_cmd(void *arg) {
 		}
 		catch (int e) {
 			log_msg = "Accept failed on socket.\n";
-			log_msg += strerror(e);
+			log_msg += get_error_str(e);
 			log_msg += "\n";
 			log_file->write_report(log_msg, "cmdsocket::listen_cmd", LOG_NORMAL, 
 				LOG_WARNING);
@@ -177,7 +177,7 @@ void write_cmd_to_socket(t_cmd_code opcode, bool immediate, const string &args) 
 		// case this process does not have a log file. So write
 		// errors to stderr
 		cerr << "Failed to send " << cmd_code2str(opcode) << " command to " << name << endl;
-		cerr << strerror(e) << endl;
+		cerr << get_error_str(e) << endl;
 	}
 }
 

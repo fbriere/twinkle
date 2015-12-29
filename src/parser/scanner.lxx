@@ -119,6 +119,8 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^Route/:		{ return T_HDR_ROUTE; }
 ^RSeq/:			{ return T_HDR_RSEQ; }
 ^Server/:		{ return T_HDR_SERVER; }
+^SIP-ETag/:		{ return T_HDR_SIP_ETAG; }
+^SIP-If-Match/:		{ return T_HDR_SIP_IF_MATCH; }
 ^(Subject)|s/:		{ return T_HDR_SUBJECT; }
 ^Subscription-State/:	{ return T_HDR_SUBSCRIPTION_STATE; }
 ^(Supported)|k/:	{ return T_HDR_SUPPORTED; }

@@ -18,6 +18,7 @@ Requires:	kdelibs3 >= 3.2.0
 Requires:	libsndfile
 Requires:	speex
 Requires:	boost
+Requires:	libxml2
 BuildRequires:	alsa-devel
 BuildRequires:	qt3-devel
 BuildRequires:	update-desktop-files
@@ -28,10 +29,11 @@ BuildRequires:  kdelibs3-devel
 BuildRequires:	libsndfile-devel
 BuildRequires:	speex-devel
 BuildRequires:	boost-devel
+BuildRequires:	libxml2-devel
 
 %description
-Twinkle is a SIP based soft phone for making telephone calls
-over IP networks.
+Twinkle is a SIP based softphone for making telephone calls
+and instant messaging over IP networks.
 
 %prep
 

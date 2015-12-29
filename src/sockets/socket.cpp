@@ -18,6 +18,7 @@
 
 #include <cstdio>
 #include <cerrno>
+#include <cstring>
 #include <sys/un.h>
 #include "twinkle_config.h"
 #include "socket.h"
@@ -184,6 +185,7 @@ bool t_socket_udp::get_icmp(t_icmp_msg &icmp) {
 	
 	// Initialize message header to receive the ancillary data for
 	// an ICMP message.
+	memset(&msgh, 0, sizeof(struct msghdr));
 	msgh.msg_control = buf;
 	msgh.msg_controllen = 256;
 	msgh.msg_name = &dest_addr;

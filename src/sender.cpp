@@ -69,7 +69,7 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		log_msg += "\nSocket error: ";
 		log_msg += int2str(err);
 		log_msg += " ";
-		log_msg += strerror(err);
+		log_msg += get_error_str(err);
 		log_file->write_report(log_msg, "::hanlde_socket_err", LOG_NORMAL);
 	
 		ev_icmp = new t_event_icmp(icmp);
@@ -94,7 +94,7 @@ static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short ds
 		log_msg += "Error code: ";
 		log_msg += int2str(err);
 		log_msg += "\n";
-		log_msg += strerror(err);
+		log_msg += get_error_str(err);
 		log_file->write_report(log_msg, "::handle_socket_err");
 		
 		num_non_icmp_errors++;
@@ -133,6 +133,7 @@ static void send_sip_udp(t_event *event) {
 	log_file->write_raw(e->dst_port);
 	log_file->write_endl();
 	log_file->write_raw(m);
+	log_file->write_endl();
 	log_file->write_footer();
 		
 	bool msg_sent = false;

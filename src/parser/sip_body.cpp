@@ -56,11 +56,15 @@ t_body_type t_sip_body_opaque::get_type(void) const {
 	return BODY_OPAQUE;
 }
 
+t_media t_sip_body_opaque::get_media(void) const {
+	return t_media("application", "octet-stream");
+}
+
 ////////////////////////////////////
 // class t_sip_body_sipfrag
 ////////////////////////////////////
 
-t_sip_body_sipfrag::t_sip_body_sipfrag(t_sip_message *m) {
+t_sip_body_sipfrag::t_sip_body_sipfrag(t_sip_message *m) : t_sip_body() {
 	sipfrag = m->copy();
 }
 
@@ -83,11 +87,15 @@ t_body_type t_sip_body_sipfrag::get_type(void) const {
 	return BODY_SIPFRAG;
 }
 
+t_media t_sip_body_sipfrag::get_media(void) const {
+	return t_media("message", "sipfrag");
+}
+
 ////////////////////////////////////
 // class t_sip_body_dtmf_relay
 ////////////////////////////////////
 
-t_sip_body_dtmf_relay::t_sip_body_dtmf_relay() {
+t_sip_body_dtmf_relay::t_sip_body_dtmf_relay() : t_sip_body() {
 	signal = '0';
 	duration = 250;
 }
@@ -116,6 +124,10 @@ t_sip_body *t_sip_body_dtmf_relay::copy(void) const {
 
 t_body_type t_sip_body_dtmf_relay::get_type(void) const {
 	return BODY_DTMF_RELAY;
+}
+
+t_media t_sip_body_dtmf_relay::get_media(void) const {
+	return t_media("application", "dtmf-relay");
 }
 
 bool t_sip_body_dtmf_relay::parse(const string &s) {
@@ -148,4 +160,58 @@ bool t_sip_body_dtmf_relay::parse(const string &s) {
 	}
 	
 	return valid;
+}
+
+////////////////////////////////////
+// class t_sip_body_plain_text
+////////////////////////////////////
+
+t_sip_body_plain_text::t_sip_body_plain_text(const string &_text) :
+	t_sip_body(),
+	text(_text)
+{}
+
+string t_sip_body_plain_text::encode(void) const {
+	return text;
+}
+
+t_sip_body *t_sip_body_plain_text::copy(void) const {
+	t_sip_body *sb = new t_sip_body_plain_text(*this);
+	MEMMAN_NEW(sb);
+	return sb;
+}
+
+t_body_type t_sip_body_plain_text::get_type(void) const {
+	return BODY_PLAIN_TEXT;
+}
+
+t_media t_sip_body_plain_text::get_media(void) const {
+	return t_media("text", "plain");
+}
+
+////////////////////////////////////
+// class t_sip_body_html_text
+////////////////////////////////////
+
+t_sip_body_html_text::t_sip_body_html_text(const string &_text) :
+	t_sip_body(),
+	text(_text)
+{}
+
+string t_sip_body_html_text::encode(void) const {
+	return text;
+}
+
+t_sip_body *t_sip_body_html_text::copy(void) const {
+	t_sip_body *sb = new t_sip_body_html_text(*this);
+	MEMMAN_NEW(sb);
+	return sb;
+}
+
+t_body_type t_sip_body_html_text::get_type(void) const {
+	return BODY_HTML_TEXT;
+}
+
+t_media t_sip_body_html_text::get_media(void) const {
+	return t_media("text", "html");
 }

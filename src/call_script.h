@@ -28,8 +28,16 @@
  * 
 @verbatim
    TWINKLE_USER_PROFILE=<user profile name>
+   TWINKLE_TRIGGER=<trigger type>
+   TWINKLE_LINE=<line number (starting at 1) associated with the call>
    SIPREQUEST_METHOD=<method>
    SIPREQUEST_URI=<request uri>
+   SIPSTATUS_CODE=<status code of a response>
+   SIPSTATUS_REASON=<reason phrase of a response>
+   SIP_FROM_USER=<user name of From header>
+   SIP_FROM_HOST=<host part of From header>
+   SIP_TO_USER=<user name of To header>
+   SIP_TO_HOST=<host part of To header>
    SIP_<header_name>=<header value>
 @endverbatim
  * 
@@ -43,6 +51,9 @@
    reason=<reason phrase>, for reject and dnd actions
    contact=<sip uri>, for redirect ation
    ringtone=<name of wav file>, for continue action
+   caller_name=<name to override the display name of the caller>
+   display_msg=<msg to show in Twinkle's display> (may occur multiple times)
+   end This parameter makes Twinkle stop waiting for the script to complete.
 @endverbatim
  * 
  * If no action is returned, the "continue" action is performed.
@@ -88,7 +99,7 @@ public:
 	
 	/**
 	 * Convert string representation to an action.
-	 * @param action_string String representation of an action.
+	 * @param action_string [in] String representation of an action.
 	 * @return The action.
 	 */
 	static t_action str2action(const string action_string);
@@ -98,8 +109,8 @@ public:
 	
 	/**
 	 * Set output parameter from values read from the result output of a script.
-	 * @param parameter Name of the parameter to set,
-	 * @param value The value to set.
+	 * @param parameter [in] Name of the parameter to set,
+	 * @param value [in] The value to set.
 	 */
 	void set_parameter(const string &parameter, const string &value);
 };
@@ -134,7 +145,7 @@ private:
 	
 	/**
 	 * Convert a trigger type value to a string.
-	 * @param t Trigger
+	 * @param t [in] Trigger
 	 * @return String representation for the trigger.
 	 */
 	string trigger2str(t_trigger t) const;
@@ -142,7 +153,7 @@ private:
 	/**
 	 * Create environment for the process running the script.
 	 * The environment contains the header values of a SIP message.
-	 * @param m The SIP message.
+	 * @param m [in] The SIP message.
 	 * @return The environment.
 	 * @note This function creates the env array without registering
 	 *       the memory allocation to MEMMAN.
@@ -164,23 +175,23 @@ protected:
 public:
 	/** 
 	 * Constructor. 
-	 * @param _user_config User profile associated with the trigger.
-	 * @param _trigger The trigger type.
-	 * @param _line_number Line associated with the trigger (0 if no line
+	 * @param _user_config [in] User profile associated with the trigger.
+	 * @param _trigger [in] The trigger type.
+	 * @param _line_number [in] Line associated with the trigger (0 if no line
 	 * is associated).
 	 */
 	t_call_script(t_user *_user_config, t_trigger _trigger, uint16 _line_number);
 	
 	/**
 	 * Execute call script resulting in an action.
-	 * @param result Contains the result on return.
-	 * @param m The SIP message triggering this call script.
+	 * @param result [out] Contains the result on return.
+	 * @param m [in] The SIP message triggering this call script.
 	 */
 	void exec_action(t_script_result &result, t_sip_message *m) const;
 	
 	/**
 	 * Execute notification call script.
-	 * @param m The SIP message triggering this call script.
+	 * @param m [in] The SIP message triggering this call script.
 	 */
 	void exec_notify(t_sip_message *m) const;
 };

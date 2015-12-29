@@ -405,9 +405,24 @@ private:
 	
 	// The voice mail address to call to access messages
 	string		mwi_vm_address;
-		
-	// Expand file name to a fully qualified file name
-	string expand_filename(const string &filename);
+	
+	/** @name INSTANT MESSAGE */
+	//@{
+	/** Maximum number of simultaneous IM sessions. */
+	unsigned short	im_max_sessions;
+	//@}
+	
+	/** @name PRESENCE */
+	//@{
+	/** Requested presence subscription duration in seconds. */
+	unsigned long	pres_subscription_time;
+	
+	/** Requested presence publication duration in seconds. */
+	unsigned long	pres_publication_time;
+	
+	/** Publish online presence state at startup */
+	bool		pres_publish_startup;
+	//@}
 
 	t_ext_support str2ext_support(const string &s) const;
 	string ext_support2str(t_ext_support e) const;
@@ -433,7 +448,8 @@ public:
 	
 	t_user *copy(void) const;
 	
-	// Getters
+	/** @name Getters */
+	//@{
 	string get_name(void) const;
 	string get_domain(void) const;
 	string get_display(bool anonymous) const;	
@@ -526,9 +542,15 @@ public:
 	bool get_mwi_via_proxy(void) const;
 	unsigned long get_mwi_subscription_time(void) const;
 	string get_mwi_vm_address(void) const;
+	unsigned short get_im_max_sessions(void) const;
+	unsigned long get_pres_subscription_time(void) const;
+	unsigned long get_pres_publication_time(void) const;
+	bool get_pres_publish_startup(void) const;
+	//@}
 
 	
-	// Setters
+	/** @name Setters */
+	//@{
 	void set_name(const string &_name);
 	void set_domain(const string &_domain);
 	void set_display(const string &_display);	
@@ -621,6 +643,11 @@ public:
 	void set_mwi_via_proxy(bool b);
 	void set_mwi_subscription_time(unsigned long t);
 	void set_mwi_vm_address(const string &address);
+	void set_im_max_sessions(unsigned short max_sessions);
+	void set_pres_subscription_time(unsigned long t);
+	void set_pres_publication_time(unsigned long t);
+	void set_pres_publish_startup(bool b);
+	//@}
 
 	// Read and parse a config file into the user object.
 	// Returns false if it fails. error_msg is an error message that can
@@ -636,6 +663,9 @@ public:
 
 	// Get the name of the profile (filename without extension)
 	string get_profile_name(void) const;
+	
+	// Expand file name to a fully qualified file name
+	string expand_filename(const string &filename);
 	
 	// The contact name is created from the name and domain values.
 	// Just the name value is not unique when multiple user profiles are

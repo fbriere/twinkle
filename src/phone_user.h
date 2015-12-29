@@ -33,11 +33,13 @@
 #include "parser/request.h"
 #include "parser/response.h"
 #include "stun/stun.h"
+#include "presence/buddy.h"
 
 using namespace std;
 
 // Forward declarations
 class t_client_request;
+class t_presence_epa;
 
 class t_phone_user {
 private:
@@ -54,9 +56,20 @@ private:
 	t_client_request	*r_register;
 	t_client_request	*r_deregister;
 	t_client_request	*r_query_register;
+	t_client_request	*r_message;
 	
 	// STUN request
 	t_client_request	*r_stun;
+	
+	/**
+	 * Pending MESSAGE requests.
+	 * Twinkle will only send one message at a time per user.
+	 * This satisfies the requirements in RFC 3428 8.
+	 * NOTE: as an optimization a message queue per destination
+	 * could be kept. This way a pending message for one destination
+	 * will not block a message for another destination.
+	 */
+	list<t_request *> pending_messages;
 
 	// Registration data
 	string			register_call_id;
@@ -67,12 +80,6 @@ private:
 	unsigned long		register_ipaddr; // Dest IP addr of last REGISTER
 	unsigned short		register_port; // Dest port of last REGISTER
 	
-	// STUN data
-	unsigned long		stun_public_ip_sip; // Public IP for SIP
-	unsigned short		stun_public_port_sip; // Public port for SIP
-	bool			stun_binding_inuse_registration;
-	bool			stun_binding_inuse_mwi;
-	
 	// A STUN request can be triggered by the following events:
 	//
 	// * Registration
@@ -81,8 +88,10 @@ private:
 	// These events should take place after the STUN transaction has
 	// finished. The following indicators indicate which events should
 	// take place.
-	bool			register_after_stun;
-	bool			mwi_subscribe_after_stun;
+	bool		register_after_stun;
+	bool		mwi_subscribe_after_stun;
+	bool		stun_binding_inuse_registration;
+	bool		stun_binding_inuse_mwi;
 	
 	// Authorizor
 	t_auth			authorizor;
@@ -90,64 +99,125 @@ private:
 	// MWI dialog
 	t_mwi_dialog		*mwi_dialog;
 	
-	// Indicates if MWI must be automatically resubscribed to, if the
-	// subscription terminates with a reason telling that resubscription
-	// is possible.
+	/**
+	 * Indicates if MWI must be automatically resubscribed to, if the
+	 * subscription terminates with a reason telling that resubscription
+	 * is possible.
+	 */
 	bool			mwi_auto_resubscribe;
 	
-	// Resend the request: a new sequence number will be assigned and a new via
-	// header created (new transaction).
-	// is_register indicates if this request is a register
-	// cr is the current client request for this request.
+	/** Buddy list for presence susbcriptions. */
+	t_buddy_list		*buddy_list;
+	
+	/** Event publication agent for presence */
+	t_presence_epa		*presence_epa;
+	
+	/**
+	 * Resend the request: a new sequence number will be assigned and a new via
+	 * header created (new transaction).
+	 * @param req [in] The request to resend.
+	 * @param is_register [in] indicates if this request is a register
+	 * @param cr [in] is the current client request wrapper for this request.
+	 * @note In case of a REGISTER, the internal register seqnr will be increased.
+	 */
 	void resend_request(t_request *req, bool is_register, t_client_request *cr);
 
-	// Handle REGISTER repsonses. On return the re-register indicates
-	// if an automatic re-registration needs to be done.
+	/** @name Handle responses. */
+	//@{
+	/**
+	 * Process a repsonse on a registration request. 
+	 * @param r [in] The response.
+	 * @param re_register [out] Indicates if an automatic re-registration needs
+	 * to be done.
+	 */
 	void handle_response_register(t_response *r, bool &re_register);
+	
+	/**
+	 * Process a response on a de-registration request.
+	 * @param r [in] The response.
+	 */
 	void handle_response_deregister(t_response *r);
+	
+	/**
+	 * Process a response on a registration query request.
+	 * @param r [in] The response.
+	 */
 	void handle_response_query_register(t_response *r);
 
+	/**
+	 * Process a response on an OPTIONS request.
+	 * @param r [in] The response.
+	 */
 	void handle_response_options(t_response *r);
 	
-	// Send STUN request
-	void send_stun_request(void);
+	/**
+	 * Process a response on a MESSAGE request.
+	 * @param r [in] The response.
+	 */
+	void handle_response_message(t_response *r);
+	//@}
 	
-	// Send a NAT keep alive packet
+	/** Send a NAT keep alive packet. */
 	void send_nat_keepalive(void);
 	
-	// Handle MWI dialog termination
+	/** Handle MWI dialog termination. */
 	void cleanup_mwi_dialog(void);
 	
-	// Cleanup STUN data if not in use anymore
-	void cleanup_stun_data(void);
-	
-	// Stop sending NAT keep alives when not necessary anymore
-	void cleanup_nat_keepalive(void);
-	
-	// Cleanup registration data for STUN and NAT keep alive
+	/** Cleanup registration data for STUN and NAT keep alive. */
 	void cleanup_registration_data(void);
 	
 public:
-	// Timers
-	unsigned short		id_registration;
-	unsigned short		id_nat_keepalive;
-	unsigned short		id_resubscribe_mwi; // re-subscribe after failure
+	/** @name Timers */
+	//@{
+	unsigned short		id_registration;	/**< Registration timeout */
+	unsigned short		id_nat_keepalive;	/**< NAT keepalive interval */
+	unsigned short		id_resubscribe_mwi; 	/**< MWI re-subscribe after failure */
+	//@}
 	
-	// Supplementary services
+	/** Supplementary services */
 	t_service	*service;
 	
-	// MWI
+	/** Message Waiting Indication data. */
 	t_mwi		mwi;
 	
-	// STUN
-	bool		use_stun; // Indicates if STUN must be used
-	bool		use_nat_keepalive; // Send NAT keepalive ?
+	/** @name STUN data */
+	//@{
+	bool		use_stun; 		/**< Indicates if STUN must be used. */
+	bool		use_nat_keepalive; 	/**< Send NAT keepalive ? */
+	unsigned long	stun_public_ip_sip; 	/**< Public IP for SIP */
+	unsigned short	stun_public_port_sip; 	/**< Public port for SIP */
 	
-	// The constructor will create a copy of profile.
+	/** Number of presence subscriptions using the STUN binding. */
+	unsigned short	stun_binding_inuse_presence;	
+	
+	/**< Subscribe to presence after STUN transaction completed. */
+	bool		presence_subscribe_after_stun;	
+	//@}
+	
+	/** 
+	 * The constructor will create a copy of profile.
+	 * @param profile [in] User profile of this phone user.
+	 */
 	t_phone_user(const t_user &profile);
+	
+	/** Destructor. */
 	~t_phone_user();
 	
+	/** Send STUN request. */
+	void send_stun_request(void);
+	
+	/** Cleanup STUN data if not in use anymore. */
+	void cleanup_stun_data(void);
+	
+	/** Stop sending NAT keep alives when not necessary anymore. */
+	void cleanup_nat_keepalive(void);
+	
+	/** @name Getters */
+	//@{
 	t_user *get_user_profile(void);
+	t_buddy_list *get_buddy_list(void);
+	t_presence_epa *get_presence_epa(void);
+	//@}
 	
 	// Handle responses for out-of-dialog requests
 	void handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid);
@@ -159,37 +229,140 @@ public:
 	// OPTIONS outside dialog
 	void options(const t_url &to_uri, const string &to_display = "");
 	
-	// MWI
+	/** @name MWI */
+	//@{
+	/** Subscribe to MWI. */
 	void subscribe_mwi(void);
+	
+	/** Unsusbcribe to MWI. */
 	void unsubscribe_mwi(void);
 	
-	// Returns true is an MWI subscription is established
+	/**
+	 * Check if an MWI subscription is established.
+	 * @return true, if an MWI subscription is established.
+	 * @return false, otherwise
+	 */
 	bool is_mwi_subscribed(void) const;
 	
-	// Returns true if there is no MWI subscription
+	/**
+	 * Check if an MWI dialog does exist.
+	 * @return true, if there is no MWI subscription dialog.
+	 * @return false, otherwise
+	 */
 	bool is_mwi_terminated(void) const;
 	
-	// Proces an unsollicited NOTIFY for MWI
+	/**
+	 * Process an unsollicited NOTIFY for MWI.
+	 * @param r [in] The NOTIFY request.
+	 * @param tid [in] Transaction identifier of the NOTIFY transaction.
+	 */
 	void handle_mwi_unsollicited(t_request *r, t_tid tid);
+	//@}
 	
-	// Subscriptions
+	/** @name Presence */
+	//@{
+	/** Subscribe to presence of buddies in buddy list. */
+	void subscribe_presence(void);
+	
+	/** Unsusbcribe to presence of buddies in buddy list. */
+	void unsubscribe_presence(void);
+	
+	/**
+	 * Check if all presence subscriptions are terminated.
+	 * @return true, if all presence subscriptions are terminated.
+	 * @return false, otherwise
+	 */
+	bool is_presence_terminated(void) const;
+	
+	/**
+	 * Publish presence.
+	 * @param basic_state [in] The basic presence state to publish.
+	 */
+	void publish_presence(t_presence_state::t_basic_state basic_state);
+	
+	/** Unpublish presence. */
+	void unpublish_presence(void);
+	//@}
+	
+	/**
+	 * Send a text message.
+	 * @param to_uri [in] Destination URI of recipient.
+	 * @param to_display [in] Display name of recipient.
+	 * @param text [in] The text to send.
+	 */
+	void send_message(const t_url &to_uri, const string &to_display, const string &text);
+	
+	/**
+	 * Process incoming MESSAGE request.
+	 * @param r [in] The MESSAGE request.
+	 * @param tid [in] Transaction id of the request transaction.
+	 */
+	void recvd_message(t_request *r, t_tid tid);
+	
+	/**
+	 * Process incoming NOTIFY reqeust.
+	 * @param r [in] The NOTIFY request.
+	 * @param tid [in] Transaction id of the request transaction.
+	 */
 	void recvd_notify(t_request *r, t_tid tid);
 	
-	// Process timeout
+	/** @name Process timeouts */
+	//@{
+	/** 
+	 * Process phone timer expiry.
+	 * @param timer [in] Type of expired phone timer.
+	 */
 	void timeout(t_phone_timer timer);
+	
+	/**
+	 * Proces subscribe timer expiry.
+	 * @param timer [in] Type of expired subscribe timer.
+	 * @param id_timer [in] Id of expired timer.
+	 */
 	void timeout_sub(t_subscribe_timer timer, t_object_id id_timer);
 	
-	// Match subscribe timeout with a subcription
+	/**
+	 * Proces publish timer expiry.
+	 * @param timer [in] Type of expired subscribe timer.
+	 * @param id_timer [in] Id of expired timer.
+	 */
+	void timeout_publish(t_publish_timer timer, t_object_id id_timer);
+	//@}
+	
+	/** Match subscribe timeout with a subcription
+	 * @param timer [in] Type of expired subscribe timer.
+	 * @param id_timer [in] Id of expired timer.
+	 * @return True if timer matches a subscription owned by the phone user.
+	 * @return False, otherwise.
+	 */
 	bool match_subscribe_timer(t_subscribe_timer timer, t_object_id id_timer) const;
 	
-	// Start the re-subscribe timer after an MWI subscription failure
+	/** Match publish timeout with a subcription
+	 * @param timer [in] Type of expired publish timer.
+	 * @param id_timer [in] Id of expired timer.
+	 * @return True if timer matches a publication owned by the phone user.
+	 * @return False, otherwise.
+	 */
+	bool match_publish_timer(t_publish_timer timer, t_object_id id_timer) const;
+	
+	/**
+	 * Start the re-subscribe timer after an MWI subscription failure.
+	 * @param duration [in] Duration before trying a re-subscribe (s)
+	 */
 	void start_resubscribe_mwi_timer(unsigned long duration);
 	
-	// Stop MWI resubscribe timer
+	/** Stop MWI re=subscribe timer. */
 	void stop_resubscribe_mwi_timer(void);
 	
-	// Create request. Headers that are the same for each request
-	// are already populated.
+	/**
+	 * Create request. 
+	 * Headers that are the same for each request
+	 * are already populated: Via, From, Max-Forwards, User-Agent.
+	 * All possible destinations for a failover are calculated.
+	 * @param m [in] Request method.
+	 * @param request_uri [in] Request-URI.
+	 * @return The created request.
+	 */
 	t_request *create_request(t_method m, const t_url &request_uri) const;
 	
 	// Create a response to an OPTIONS request
@@ -211,15 +384,47 @@ public:
 	bool match(t_request *r) const;
 	bool match(StunMessage *r, t_tuid tuid) const;
 	
-	// Authorize the request based on the challenge in the response
-	// Returns false if authorization fails.
+	/**
+	 * Authorize the request based on the challenge in the response
+	 * @param r [inout] The request to be authorized.
+	 * @param resp [in] The response containing the challenge (401/407).
+	 * @param True if authorization succeeds, false otherwise.
+	 * @post On succesful return the request r contains the correct authorization
+	 * header (based on 401/407 response).
+	 */
 	bool authorize(t_request *r, t_response *resp);
 	
-	// Remove cached credentials for a particular realm
+	/**
+	 * Resend the request: a new sequence number will be assigned and a new via
+	 * header created (new transaction).
+	 * @param req [in] The request to resend.
+	 * @param cr [in] is the current client request wrapper for this request.
+	 * @note In case of a REGISTER, the internal register seqnr will be increased.
+	 */
+	void resend_request(t_request *req, t_client_request *cr);
+	
+	/**
+	 * Remove cached credentials for a particular realm.
+	 * @param realm [in] The realm.
+	 */
 	void remove_cached_credentials(const string &realm);
 	
+	/**
+	 * Check if this phone user is active.
+	 * @return True if phone user is active, false otherwise.
+	 */
 	bool is_active(void) const;
+	
+	/**
+	 * Activate phone user.
+	 * @param user [in] The user profile of the user.
+	 * @note The passed user profile will replace the current user profile
+	 * owned by phone user. During the deactivated state the profile may
+	 * have been update.
+	 */
 	void activate(const t_user &user);
+	
+	/** Deactivate phone user. */
 	void deactivate(void);
 };
 

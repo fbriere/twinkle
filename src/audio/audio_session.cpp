@@ -75,8 +75,6 @@ bool t_audio_session::open_dsp_full_duplex(void) {
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
-		msg += ": ";
-		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_full_duplex",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
@@ -103,8 +101,6 @@ bool t_audio_session::open_dsp_speaker(void) {
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!speaker) {
 		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
-		msg += ": ";
-		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_speaker",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
@@ -125,8 +121,6 @@ bool t_audio_session::open_dsp_mic(void) {
 		SAMPLEFORMAT_S16, audio_sample_rate(codec), true);
 	if (!mic) {
 		string msg(TRANSLATE2("CoreAudio", "Failed to open sound card"));
-		msg += ": ";
-		msg += strerror(errno);
 		log_file->write_report(msg, "t_audio_session::open_dsp_mic",
 			LOG_NORMAL, LOG_CRITICAL);
 		ui->cb_display_msg(msg, MSG_CRITICAL);

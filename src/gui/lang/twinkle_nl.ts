@@ -141,6 +141,116 @@
     </message>
 </context>
 <context>
+    <name>BuddyForm</name>
+    <message>
+        <source>Twinkle - Buddy</source>
+        <translation>Twinkle - Vriend</translation>
+    </message>
+    <message>
+        <source>Address book</source>
+        <translation>Adresboek</translation>
+    </message>
+    <message>
+        <source>Select an address from the address book.</source>
+        <translation>Kies een adres uit het adresboek.</translation>
+    </message>
+    <message>
+        <source>&amp;Phone:</source>
+        <translation>&amp;Telefoon:</translation>
+    </message>
+    <message>
+        <source>Name of your buddy.</source>
+        <translation>Naam van uw vriend.</translation>
+    </message>
+    <message>
+        <source>&amp;Show availability</source>
+        <translation>&amp;Toon beschikbaarheid</translation>
+    </message>
+    <message>
+        <source>Alt+S</source>
+        <translation>Alt+T</translation>
+    </message>
+    <message>
+        <source>Check this option if you want to see the availability of your buddy. This will only work if your provider offers a presence agent.</source>
+        <translation>Vink deze optie aan als u de beschikbaarheid van uw vriend wilt zien. Dit werkt alleen als uw provider een presence agent heeft.</translation>
+    </message>
+    <message>
+        <source>&amp;Name:</source>
+        <translation>&amp;Naam:</translation>
+    </message>
+    <message>
+        <source>SIP address your buddy.</source>
+        <translation>SIP adres van uw vriend.</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>Ann&amp;uleren</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation>Alt+U</translation>
+    </message>
+    <message>
+        <source>You must fill in a name.</source>
+        <translation>U moet een naam invullen.</translation>
+    </message>
+    <message>
+        <source>Invalid phone.</source>
+        <translation>Foutief telefoonnummer.</translation>
+    </message>
+    <message>
+        <source>Failed to save buddy list: %1</source>
+        <translation>Opslaan van vriendenlijst is mislukt: %1</translation>
+    </message>
+</context>
+<context>
+    <name>BuddyList</name>
+    <message>
+        <source>Availability</source>
+        <translation>Beschikbaarheid</translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation>onbekend</translation>
+    </message>
+    <message>
+        <source>offline</source>
+        <translation>offline</translation>
+    </message>
+    <message>
+        <source>online</source>
+        <translation>online</translation>
+    </message>
+    <message>
+        <source>request rejected</source>
+        <translation>verzoek geweigerd</translation>
+    </message>
+    <message>
+        <source>not published</source>
+        <translation>niet gepubliceerd</translation>
+    </message>
+    <message>
+        <source>failed to publish</source>
+        <translation>publicatie mislukt</translation>
+    </message>
+    <message>
+        <source>request failed</source>
+        <translation>verzoel mislukt</translation>
+    </message>
+    <message>
+        <source>Click right to add a buddy.</source>
+        <translation>Klik rechts om een vriend toe te voegen.</translation>
+    </message>
+</context>
+<context>
     <name>CoreAudio</name>
     <message>
         <source>Failed to open sound card</source>
@@ -1147,6 +1257,65 @@ Met deze optie verzoekt u uw SIP provider om uw identiteit verborgen te houden v
     </message>
 </context>
 <context>
+    <name>MessageForm</name>
+    <message>
+        <source>Twinkle - Instant message</source>
+        <translation>Twinkle - Instant bericht</translation>
+    </message>
+    <message>
+        <source>&amp;To:</source>
+        <translation>&amp;Aan:</translation>
+    </message>
+    <message>
+        <source>The user that will send the message.</source>
+        <translation>De gebruiker die het bericht stuurt.</translation>
+    </message>
+    <message>
+        <source>The address of the user that you want to send a message. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</source>
+        <translation>Het adres van de persoon aan wie u een bericht wilt sturen. Dit kan een volledig SIP adres zijn zoals &lt;b&gt;sip:example@example.com&lt;/b&gt; of een een telefoonnummer. Als u geen volledig adres opgeeft, dan zal Twinkle dit adres compleet maken door de domeinnaam uit uw gebruikersprofiel toe te voegen.</translation>
+    </message>
+    <message>
+        <source>Address book</source>
+        <translation>Adresboek</translation>
+    </message>
+    <message>
+        <source>Select an address from the address book.</source>
+        <translation>Kies een adres uit het adresboek.</translation>
+    </message>
+    <message>
+        <source>&amp;User profile:</source>
+        <translation>&amp;Gebruikersprofiel:</translation>
+    </message>
+    <message>
+        <source>Conversation</source>
+        <translation>Conversatie</translation>
+    </message>
+    <message>
+        <source>The exchanged messages.</source>
+        <translation>De uitgewisselde berichten.</translation>
+    </message>
+    <message>
+        <source>Type your message here and then press &quot;send&quot; to send it.</source>
+        <translation>Typ uw bericht en druk op &quot;zend&quot; om het te verzenden.</translation>
+    </message>
+    <message>
+        <source>&amp;Send</source>
+        <translation>&amp;Zend</translation>
+    </message>
+    <message>
+        <source>Alt+S</source>
+        <translation>Alt+Z</translation>
+    </message>
+    <message>
+        <source>Send the message.</source>
+        <translation>Zend het bericht.</translation>
+    </message>
+    <message>
+        <source>Delivery failure</source>
+        <translation>Afleverfout</translation>
+    </message>
+</context>
+<context>
     <name>MphoneForm</name>
     <message>
         <source>Twinkle</source>
@@ -1960,6 +2129,70 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
     <message>
         <source>Message waiting indication.</source>
         <translation>Voice mail status.</translation>
+    </message>
+    <message>
+        <source>Buddy list</source>
+        <translation>Vrienden</translation>
+    </message>
+    <message>
+        <source>&amp;Message</source>
+        <translation>&amp;Bericht</translation>
+    </message>
+    <message>
+        <source>Msg</source>
+        <translation>Bericht</translation>
+    </message>
+    <message>
+        <source>Instant &amp;message...</source>
+        <translation>Instant &amp;bericht...</translation>
+    </message>
+    <message>
+        <source>Instant message</source>
+        <translation>Instant bericht</translation>
+    </message>
+    <message>
+        <source>&amp;Call...</source>
+        <translation>&amp;Bel...</translation>
+    </message>
+    <message>
+        <source>&amp;Edit...</source>
+        <translation>Be&amp;werk...</translation>
+    </message>
+    <message>
+        <source>&amp;Delete</source>
+        <translation>&amp;Verwijderen</translation>
+    </message>
+    <message>
+        <source>O&amp;ffline</source>
+        <translation>O&amp;ffline</translation>
+    </message>
+    <message>
+        <source>&amp;Online</source>
+        <translation>&amp;Online</translation>
+    </message>
+    <message>
+        <source>&amp;Change availability</source>
+        <translation>&amp;Wijzig beschikbaarheid</translation>
+    </message>
+    <message>
+        <source>&amp;Add buddy...</source>
+        <translation>&amp;Vriend toevoegen...</translation>
+    </message>
+    <message>
+        <source>Failed to save buddy list: %1</source>
+        <translation>Opslaan van vriendenlijst is mislukt: %1</translation>
+    </message>
+    <message>
+        <source>You can create a separate buddy list for each user profile. You can only see availability of your buddies and publish your own availability if your provider offers a presence server.</source>
+        <translation>Voor elk gebruikersprofiel kunt u een vriendenlijst aanleggen. Om de beschikbaarheid van uw vrienden te zien en uw eigen beschikbaarheid te publiceren, moet uw provider over een presence server beschikken.</translation>
+    </message>
+    <message>
+        <source>&amp;Buddy list</source>
+        <translation>&amp;Vrienden</translation>
+    </message>
+    <message>
+        <source>&amp;Display</source>
+        <translation>&amp;Scherm</translation>
     </message>
 </context>
 <context>
@@ -3368,6 +3601,10 @@ en creëer de volgende statische UDP mapping in uw NAT.</translation>
     <message>
         <source>Cannot access the microphone (%1).</source>
         <translation>Microfoon niet beschikbaar (%1).</translation>
+    </message>
+    <message>
+        <source>Cannot open ALSA driver for PCM capture</source>
+        <translation>ALSA stuurapparaat kan niet geopend worden voor openemen</translation>
     </message>
 </context>
 <context>
@@ -5048,6 +5285,54 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
     <message>
         <source>%1 converts to %2</source>
         <translation>%1 wordt geconverteerd naar %2</translation>
+    </message>
+    <message>
+        <source>Instant message</source>
+        <translation>Instant bericht</translation>
+    </message>
+    <message>
+        <source>Presence</source>
+        <translation>Beschikbaarheid</translation>
+    </message>
+    <message>
+        <source>&amp;Maximum number of sessions:</source>
+        <translation>&amp;Maximum aantal sessies:</translation>
+    </message>
+    <message>
+        <source>When you have this number of instant message sessions open, new incoming message sessions will be rejected.</source>
+        <translation>Als u het maximum aantal berichtensessies actief heeft, dan zullen inkomende berichten voor nieuwe sessies geweigerd worden.</translation>
+    </message>
+    <message>
+        <source>Your presence</source>
+        <translation>Uw beschikbaarheid</translation>
+    </message>
+    <message>
+        <source>&amp;Publish availability at startup</source>
+        <translation>&amp;Publiceer beschikbaarheid bij opstarten</translation>
+    </message>
+    <message>
+        <source>Publish your availability at startup.</source>
+        <translation>Publiceer uw beschikbaarheid bij opstarten.</translation>
+    </message>
+    <message>
+        <source>Buddy presence</source>
+        <translation>Beschikbaarheid van vrienden</translation>
+    </message>
+    <message>
+        <source>Publication &amp;refresh interval (sec):</source>
+        <translation>Publicatie &amp;interval (sec):</translation>
+    </message>
+    <message>
+        <source>Refresh rate of presence publications.</source>
+        <translation>Verversingssnelheid van beschikbaarheidspublicaties.</translation>
+    </message>
+    <message>
+        <source>&amp;Subscription refresh interval (sec):</source>
+        <translation>Aan&amp;meldingsinterval (sec):</translation>
+    </message>
+    <message>
+        <source>Refresh rate of presence subscriptions.</source>
+        <translation>Verversingsnelheid van beschikbaarheidsaanmeldingen.</translation>
     </message>
 </context>
 <context>
