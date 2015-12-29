@@ -33,7 +33,7 @@ t_presence_state::t_basic_state t_presence_epa::get_basic_state(void) const {
 }
 
 bool t_presence_epa::recv_response(t_response *r, t_tuid tuid, t_tid tid) {
-	(void)t_epa::recv_response(r, tuid, tid);
+	t_epa::recv_response(r, tuid, tid);
 	
 	// Notify observers so they can get the latest publication state.
 	notify();

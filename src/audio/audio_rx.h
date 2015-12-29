@@ -133,8 +133,11 @@ private:
 	unsigned long timestamp;
 
 #ifdef HAVE_SPEEX
-	// Speex preprocessor state
+	/** Speex preprocessor state */
 	SpeexPreprocessState *speex_preprocess_state;
+	
+	/** Speex VAD enabled? */
+	bool speex_dsp_vad;
 #endif
 
 	// Get sound samples for 1 RTP packet from the soundcard.

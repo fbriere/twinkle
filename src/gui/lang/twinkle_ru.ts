@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="ru">
+<!DOCTYPE TS><TS>
 <defaultcodec></defaultcodec>
 <context>
     <name>AddressCardForm</name>
@@ -315,6 +314,74 @@
     <message>
         <source>&amp;Cancel</source>
         <translation>&amp;Отмена</translation>
+    </message>
+</context>
+<context>
+    <name>DiamondcardProfileForm</name>
+    <message>
+        <source>Twinkle - Diamondcard User Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Diamondcard account ID.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is just your full name, e.g. John Doe. It is used as a display name. When you make a call, this display name might be shown to the called party.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Account ID:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;PIN code:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Your name:</source>
+        <translation type="unfinished">&amp;Ваше имя:</translation>
+    </message>
+    <message>
+        <source>&lt;p align=&quot;center&quot;&gt;&lt;u&gt;Sign up for a Diamondcard account&lt;/u&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation type="unfinished">&amp;Отмена</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill in your account ID.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill in your PIN code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A user profile with name %1 already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Diamondcard PIN code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;With a Diamondcard account you can make worldwide calls to regular and cell phones and send SMS messages. To sign up for a Diamondcard account click on the &quot;sign up&quot; link below. Once you have signed up you receive an account ID and PIN code. Enter the account ID and PIN code below to create a Twinkle user profile for your Diamondcard account.&lt;/p&gt;
+&lt;p&gt;For call rates see the sign up web page that will be shown to you when you click on the &quot;sign up&quot; link.&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -785,6 +852,18 @@
         <source>Failed to save message attachment: %1</source>
         <translation>Ошибка сохранения вложения сообщения: %1</translation>
     </message>
+    <message>
+        <source>Transferred by: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open web browser: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configure your web browser in the system settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1160,6 +1239,18 @@ To remember your profiles easily you could use your SIP user name as a profile n
         <source>Re:</source>
         <translation>Ответ:</translation>
     </message>
+    <message>
+        <source>Number of calls:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>###</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total call duration:</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InviteForm</name>
@@ -1232,6 +1323,10 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Not all SIP providers support identity hiding. Make sure your SIP provider supports it if you really need it.</source>
         <translation>Не все SIP провайдеры поддерживают анонимные звонки. Уточните у своего провайдера действительно ли он поддерживает это.</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1366,6 +1461,14 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>%1 is typing a message.</source>
         <translation>%1 пишет сообщение.</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2245,6 +2348,58 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <source>Failed to save buddy list: %1</source>
         <translation>Ошибка сохранения списка друзей: %1</translation>
     </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Diamondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sign up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Sign up...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recharge...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balance history...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Call history...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Admin center...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recharge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balance history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Admin center</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NumberConversionForm</name>
@@ -2339,6 +2494,18 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <source>&amp;Cancel</source>
         <translation>&amp;Отмена</translation>
     </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>F12</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>F11</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SelectNicForm</name>
@@ -2411,11 +2578,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>&amp;New</source>
-        <translation>&amp;Новый</translation>
-    </message>
-    <message>
-        <source>Alt+N</source>
-        <translation></translation>
+        <translation type="obsolete">&amp;Новый</translation>
     </message>
     <message>
         <source>Create a new profile with the profile editor.</source>
@@ -2519,7 +2682,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
-        <translation>&lt;html&gt;Для создания нового профиля вы можете использовать редактор профилей. В редакторе профилей вы можете гибко изменить настройки для SIP протокола, RTP и множество других тонких настроек.&lt;br&gt;&lt;br&gt;Как альтернативу вы можете использовать мастер для быстрой настройки. Мастер спросит у вас только самые необходимые настройки. Если вы создаёте профиль мастером, то позже сможете редактировать его редактором профилей.&lt;br&gt;&lt;br&gt;Выберите метод который вы будете использовать.&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;Для создания нового профиля вы можете использовать редактор профилей. В редакторе профилей вы можете гибко изменить настройки для SIP протокола, RTP и множество других тонких настроек.&lt;br&gt;&lt;br&gt;Как альтернативу вы можете использовать мастер для быстрой настройки. Мастер спросит у вас только самые необходимые настройки. Если вы создаёте профиль мастером, то позже сможете редактировать его редактором профилей.&lt;br&gt;&lt;br&gt;Выберите метод который вы будете использовать.&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&amp;Profile editor</source>
@@ -2558,6 +2721,46 @@ Please select a profile.</source>
     <message>
         <source>Cannot find .twinkle directory in your home directory.</source>
         <translation>Не могу найти .twinkle папку в вашей домашней директории.</translation>
+    </message>
+    <message>
+        <source>Create profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ed&amp;itor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+I</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dia&amp;mondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+M</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modify profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Startup profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Diamondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a profile for a Diamondcard account. With a Diamondcard account you can make worldwide calls to regular and cell phones and send SMS messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;You can create a Diamondcard account to make worldwide calls to regular and cell phones and send SMS messages.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2808,6 +3011,18 @@ Please select a profile.</source>
     <message>
         <source>You have entered an invalid destination.</source>
         <translation>Вы ввели не верное направление</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>F11</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>F12</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3283,16 +3498,12 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default IP address combo</comment>
-        <translation>нету</translation>
+        <translation type="obsolete">нету</translation>
     </message>
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default network interface combo</comment>
-        <translation>нету</translation>
-    </message>
-    <message>
-        <source>Either choose a default IP address or a default network interface.</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">нету</translation>
     </message>
     <message>
         <source>Ring tones</source>
@@ -3312,6 +3523,14 @@ Depending on your SIP provider the network might provide ring back tone or an an
         <source>Choose ring back tone</source>
         <translation>Выберите гудок вызова</translation>
     </message>
+    <message>
+        <source>W&amp;eb browser command:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command to start your web browser. If you leave this field empty Twinkle will try to figure out your default web browser.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SysTrayPopup</name>
@@ -3322,6 +3541,10 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>Reject</source>
         <translation>Отклонить</translation>
+    </message>
+    <message>
+        <source>Incoming Call</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3361,6 +3584,10 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>&amp;Cancel</source>
         <translation>&amp;Отмена</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3440,6 +3667,10 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>&amp;Cancel</source>
         <translation>&amp;Отмена</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3538,7 +3769,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
     </message>
     <message>
         <source>Lock file %1 already exist, but cannot be opened.</source>
-        <translation>Файл блокировки %1 уже существует и не может быть открыт.</translation>
+        <translation type="obsolete">Файл блокировки %1 уже существует и не может быть открыт.</translation>
     </message>
     <message>
         <source>%1 is already running.
@@ -3552,7 +3783,7 @@ Lock file %2 already exists.</source>
     </message>
     <message>
         <source>Cannot write to %1 .</source>
-        <translation>Не могу записать %1 .</translation>
+        <translation type="obsolete">Не могу записать %1 .</translation>
     </message>
     <message>
         <source>Syntax error in file %1 .</source>
@@ -3676,6 +3907,10 @@ and create the following static bindings (UDP) in your NAT.</source>
     <message>
         <source>Failed to send message.</source>
         <translation>Ошибка отправки сообщения.</translation>
+    </message>
+    <message>
+        <source>Cannot lock %1 .</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4470,10 +4705,6 @@ This format is what most SIP phones use.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Allow call &amp;transfer (incoming REFER)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Alt+T</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4746,14 +4977,6 @@ Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
     </message>
     <message>
         <source>Test how a number is converted by the number conversion rules.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>for STUN</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep alive timer for the STUN protocol. If you have enabled STUN, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5339,6 +5562,30 @@ This could be the hostname or IP address of your PC if you want direct PC to PC 
     <message>
         <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
         <translation>Twinkle посылает оповещения при наборе сообщения. Получатель будет видеть когда вы печатате.</translation>
+    </message>
+    <message>
+        <source>Accept call &amp;transfer request (incoming REFER)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow call transfer while consultation in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When you perform an attended call transfer, you normally transfer the call after you established a consultation call. If you enable this option you can transfer the call while the consultation call is still in progress. This is a non-standard implementation and may not work with all SIP devices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable NAT &amp;keep alive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send UDP NAT keep alive packets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you have enabled STUN or NAT keep alive, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

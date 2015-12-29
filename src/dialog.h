@@ -558,6 +558,7 @@ public:
 	 * @param hdr_referred_by The Reffered-By header to be put in the INVITE.
 	 * @param hdr_replaces The Replaces header to be put in the INVITE.
 	 * @param hdr_require Required extensions to be put in the Require header.
+	 * @param hdr_request_disposition Request-Disposition header to be put in the INVITE.
 	 * @param anonymous Inidicates if the INVITE should be sent anonymous.
 	 *
 	 * @pre Dialog is in @ref DS_NULL state.
@@ -565,7 +566,9 @@ public:
 	void send_invite(const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by,
 		const t_hdr_replaces &hdr_replaces, 
-		const t_hdr_require &hdr_require, bool anonymous);
+		const t_hdr_require &hdr_require, 
+		const t_hdr_request_disposition &hdr_request_disposition,
+		bool anonymous);
 
 	/**
 	 * Resend the INVITE with an authorization header containing credentials

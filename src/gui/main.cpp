@@ -595,7 +595,7 @@ int main( int argc, char ** argv )
 	bool lock_created = false;
 	string lock_error_msg;	
 	if (env_check_ok &&
-	    !(lock_created = sys_config->create_lock_file(lock_error_msg, already_running))) 
+	    !(lock_created = sys_config->create_lock_file(false, lock_error_msg, already_running))) 
 	{
 		bool must_exit = false;
 		
@@ -668,7 +668,7 @@ int main( int argc, char ** argv )
 		string msg;
 		// Call create lock file once more to get proper translation of
 		// error message.
-		if (!sys_config->create_lock_file(msg, already_running)) {
+		if (!sys_config->create_lock_file(false, msg, already_running)) {
 			if (already_running) {
 				if (!cli_mode) {
 					msg += "\n\n";
@@ -677,7 +677,7 @@ int main( int argc, char ** argv )
 				}
 				if (override_lock_file || ui->cb_ask_msg(msg, MSG_WARNING)) {
 					sys_config->delete_lock_file();
-					if (!sys_config->create_lock_file(msg, 
+					if (!sys_config->create_lock_file(true, msg, 
 						already_running))
 					{
 						ui->cb_show_msg(msg, MSG_CRITICAL);
@@ -846,18 +846,6 @@ int main( int argc, char ** argv )
 	if (!mime_database->load(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
-	
-#if 0
-	// DEPRECATED
-	// Pick network interface
-	if (user_host.empty()) {
-		user_host = ui->select_network_intf();
-		if (user_host.empty()) {
-			sys_config->delete_lock_file();
-			exit(1);
-		}
-	}
-#endif
 	
 	// Discover NAT type if STUN is enabled
 	list<t_user *> user_list = phone->ref_users();

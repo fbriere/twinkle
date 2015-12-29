@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>456</width>
-            <height>360</height>
+            <width>501</width>
+            <height>513</height>
         </rect>
     </property>
     <property name="caption">
@@ -62,7 +62,7 @@
         </widget>
         <widget class="QLayoutWidget" row="0" column="1" rowspan="2" colspan="1">
             <property name="name">
-                <cstring>layout8</cstring>
+                <cstring>layout78</cstring>
             </property>
             <vbox>
                 <property name="name">
@@ -81,110 +81,163 @@
                     <property name="sizeHint">
                         <size>
                             <width>20</width>
-                            <height>16</height>
+                            <height>20</height>
                         </size>
                     </property>
                 </spacer>
-                <widget class="QPushButton">
+                <widget class="QGroupBox">
                     <property name="name">
-                        <cstring>newPushButton</cstring>
+                        <cstring>newProfileGroupBox</cstring>
                     </property>
-                    <property name="text">
-                        <string>&amp;New</string>
+                    <property name="title">
+                        <string>Create profile</string>
                     </property>
-                    <property name="accel">
-                        <string>Alt+N</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Create a new profile with the profile editor.</string>
-                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>newPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Ed&amp;itor</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+I</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Create a new profile with the profile editor.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>wizardPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Wizard</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+W</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Create a new profile with the wizard.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>diamondcardPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Dia&amp;mondcard</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+M</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Create a profile for a Diamondcard account. With a Diamondcard account you can make worldwide calls to regular and cell phones and send SMS messages.</string>
+                            </property>
+                        </widget>
+                    </vbox>
                 </widget>
-                <widget class="QPushButton">
+                <widget class="QGroupBox">
                     <property name="name">
-                        <cstring>wizardPushButton</cstring>
+                        <cstring>modifyProfileGroupBox</cstring>
                     </property>
-                    <property name="text">
-                        <string>&amp;Wizard</string>
+                    <property name="title">
+                        <string>Modify profile</string>
                     </property>
-                    <property name="accel">
-                        <string>Alt+W</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Create a new profile with the wizard.</string>
-                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>editPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Edit</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+E</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Edit the highlighted profile.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>deletePushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Delete</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+D</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Delete the highlighted profile.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>renamePushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Ren&amp;ame</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+A</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Rename the highlighted profile.</string>
+                            </property>
+                        </widget>
+                    </vbox>
                 </widget>
-                <widget class="QPushButton">
+                <widget class="QGroupBox">
                     <property name="name">
-                        <cstring>editPushButton</cstring>
+                        <cstring>startupProfileGroupBox</cstring>
                     </property>
-                    <property name="text">
-                        <string>&amp;Edit</string>
+                    <property name="title">
+                        <string>Startup profile</string>
                     </property>
-                    <property name="accel">
-                        <string>Alt+E</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Edit the highlighted profile.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>deletePushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Delete</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+D</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Delete the highlighted profile.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>renamePushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>Ren&amp;ame</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+A</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Rename the highlighted profile.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>defaultPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Set as default</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+S</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Make the selected profiles the default profiles. The next time you start Twinkle, these profiles will be automatically run.</string>
-                    </property>
-                </widget>
-                <widget class="QPushButton">
-                    <property name="name">
-                        <cstring>runPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>&amp;Run</string>
-                    </property>
-                    <property name="accel">
-                        <string>Alt+R</string>
-                    </property>
-                    <property name="default">
-                        <bool>false</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Run Twinkle with the selected profiles.</string>
-                    </property>
+                    <vbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>defaultPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Set as default</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+S</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Make the selected profiles the default profiles. The next time you start Twinkle, these profiles will be automatically run.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>runPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>&amp;Run</string>
+                            </property>
+                            <property name="accel">
+                                <string>Alt+R</string>
+                            </property>
+                            <property name="default">
+                                <bool>true</bool>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Run Twinkle with the selected profiles.</string>
+                            </property>
+                        </widget>
+                    </vbox>
                 </widget>
                 <widget class="QPushButton">
                     <property name="name">
@@ -276,10 +329,18 @@
         <receiver>SelectProfileForm</receiver>
         <slot>toggleItem(QListViewItem*)</slot>
     </connection>
+    <connection>
+        <sender>diamondcardPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>diamondcardProfile()</slot>
+    </connection>
 </connections>
 <tabstops>
+    <tabstop>profileListView</tabstop>
     <tabstop>newPushButton</tabstop>
     <tabstop>wizardPushButton</tabstop>
+    <tabstop>diamondcardPushButton</tabstop>
     <tabstop>editPushButton</tabstop>
     <tabstop>deletePushButton</tabstop>
     <tabstop>renamePushButton</tabstop>
@@ -287,7 +348,6 @@
     <tabstop>runPushButton</tabstop>
     <tabstop>sysPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
-    <tabstop>profileListView</tabstop>
 </tabstops>
 <includes>
     <include location="global" impldecl="in declaration">list</include>
@@ -309,6 +369,7 @@
     <include location="global" impldecl="in implementation">cstring</include>
     <include location="local" impldecl="in implementation">service.h</include>
     <include location="local" impldecl="in implementation">presence/buddy.h</include>
+    <include location="local" impldecl="in implementation">diamondcardprofileform.h</include>
     <include location="local" impldecl="in implementation">selectprofileform.ui.h</include>
 </includes>
 <forwards>
@@ -336,6 +397,8 @@
     <slot>setAsDefault()</slot>
     <slot>wizardProfile()</slot>
     <slot>wizardProfile( bool exec_mode )</slot>
+    <slot>diamondcardProfile()</slot>
+    <slot>diamondcardProfile( bool exec_mode )</slot>
     <slot>sysSettings()</slot>
     <slot>fillProfileListView( const QStringList &amp; profiles )</slot>
     <slot>toggleItem( QListViewItem * item )</slot>

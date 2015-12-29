@@ -76,6 +76,13 @@ void t_phone_user::cleanup_nat_keepalive(void) {
 	}
 }
 
+void t_phone_user::sync_nat_keepalive(void) {
+	if (user_config->get_enable_nat_keepalive() && !id_nat_keepalive) {
+		send_nat_keepalive();
+		phone->start_timer(PTMR_NAT_KEEPALIVE, this);
+	}
+}
+
 void t_phone_user::cleanup_tcp_ping(void) {
 	if (register_ip_port.ipaddr == 0 && register_ip_port.port == 0) {
 		if (id_tcp_ping) phone->stop_timer(PTMR_TCP_PING, this);

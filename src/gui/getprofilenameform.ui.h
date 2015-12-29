@@ -48,7 +48,7 @@ void GetProfileNameForm::validate()
 	}
 	
 	QString filename = profileLineEdit->text();
-	filename.append(".cfg");
+	filename.append(USER_FILE_EXT);
 	QString fullname = d.filePath(filename);
 	if (QFile::exists(fullname)) {
 		QMessageBox::warning(this, PRODUCT_NAME,

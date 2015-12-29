@@ -207,14 +207,14 @@ void t_phone::cleanup_3way(void) {
 }
 
 void t_phone::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
-		const string &subject, bool anonymous)
+		const string &subject, bool no_fork, bool anonymous)
 {
 	// Ignore if active line is not idle
 	if (lines[active_line]->get_state() != LS_IDLE) {
 		return;
 	}
 
-	lines[active_line]->invite(pu, to_uri, to_display, subject, anonymous);
+	lines[active_line]->invite(pu, to_uri, to_display, subject, no_fork, anonymous);
 }
 
 void t_phone::answer(void) {
@@ -323,11 +323,20 @@ void t_phone::refer(unsigned short lineno_from, unsigned short lineno_to)
 	// If 'replaces' is not supported, then a transfer with consultation
 	// is done. First hang up the consultation call, then transfer the
 	// line.
+	// HACK: if the call is in progress, then assume that Replaces is
+	//       supported. We don't know if it is as the call is not established
+	//       yet. An in-progress call can only be replaced if the user
+	//       deliberately allowed this (allow_transfer_consultation_inprog).
 	if (lines.at(lineno_to)->remote_extension_supported(EXT_REPLACES)) {
 		log_file->write_report("Remote end supports 'replaces'.\n"\
 			"Attended transfer.",
 			"t_phone::refer");
 		refer_attended(lineno_from, lineno_to);
+	} else if (get_line_substate(lineno_to) == LSSUB_OUTGOING_PROGRESS) {
+		log_file->write_report("Call transfer while consultation in progress.\n"\
+			"Attended transfer.",
+			"t_phone::refer");
+		refer_attended(lineno_from, lineno_to);	
 	} else {
 		log_file->write_report("Remote end does not support 'replaces'.\n"\
 			"Transfer with consultation.",
@@ -342,9 +351,29 @@ void t_phone::refer_attended(unsigned short lineno_from, unsigned short lineno_t
 {
 	t_line *line = lines.at(lineno_to);
 	
-	if (line->get_substate() != LSSUB_ESTABLISHED) {
+	switch (line->get_substate())
+	{
+	case LSSUB_ESTABLISHED:
+		// Transfer allowed
+		break;
+	case LSSUB_OUTGOING_PROGRESS:
+		{
+			unsigned short dummy;
+			t_user *user_config = get_line_user(lineno_to);
+			if (!user_config->get_allow_transfer_consultation_inprog() ||
+			    !is_line_transfer_consult(lineno_to, dummy))
+			{
+				// Transfer not allowed
+				return;
+			}
+		}
+		
+		// Transfer allowed
+		break;
+	default:
+		// Transfer not allowed
 		return;
-	}
+	};
 	
 	t_user *user_config = get_line_user(lineno_from);
 	
@@ -354,19 +383,38 @@ void t_phone::refer_attended(unsigned short lineno_from, unsigned short lineno_t
 	// may be used alternatively.
 	t_url uri;
 	string display;
-	if (user_config->get_attended_refer_to_aor()) {
-		uri = line->get_remote_uri();
-		display = line->get_remote_target_display();
+	if (user_config->get_attended_refer_to_aor()) 
+	{
+		if (line->get_substate() == LSSUB_OUTGOING_PROGRESS) {
+			uri = line->get_remote_uri_pending();
+			display = line->get_remote_target_display_pending();
+		} else {
+			uri = line->get_remote_uri();
+			display = line->get_remote_target_display();
+		}
 	} else {
-		uri = line->get_remote_target_uri();
-		display = line->get_remote_target_display();
+		if (line->get_substate() == LSSUB_OUTGOING_PROGRESS) {
+			uri = line->get_remote_target_uri_pending();
+			display = line->get_remote_target_display_pending();
+		} else {
+			uri = line->get_remote_target_uri();
+			display = line->get_remote_target_display();
+		}
 	}
 
 	// Create Replaces header for replacing the call on lineno_to
 	t_hdr_replaces hdr_replaces;
-	hdr_replaces.set_call_id(line->get_call_id());
-	hdr_replaces.set_from_tag(line->get_local_tag());
-	hdr_replaces.set_to_tag(line->get_remote_tag());
+	
+	if (line->get_substate() == LSSUB_OUTGOING_PROGRESS) {
+		hdr_replaces.set_call_id(line->get_call_id_pending());
+		hdr_replaces.set_from_tag(line->get_local_tag_pending());
+		hdr_replaces.set_to_tag(line->get_remote_tag_pending());
+	} else {
+		hdr_replaces.set_call_id(line->get_call_id());
+		hdr_replaces.set_from_tag(line->get_local_tag());
+		hdr_replaces.set_to_tag(line->get_remote_tag());
+	}
+	
 	uri.add_header(hdr_replaces);
 	
 	// draft-ietf-sipping-cc-transfer-07 section 7.3
@@ -433,7 +481,31 @@ void t_phone::setup_consultation_call(const t_url &uri, const string &display) {
 				get_remote_display(xfer_line), 
 				get_remote_uri(xfer_line)));
 			
-	invite(pu, uri, display, subject, false);
+	bool no_fork = false;
+	if (user_config->get_allow_transfer_consultation_inprog()) {
+		// If the configuration allows a call to be transferred
+		// while the consultation call is still in progress, then
+		// we send a no-fork request disposition in the INVTE
+		// to setup the consultation call. This way we know that
+		// the call has not been forked and it should be possible
+		// to replace the early dialog.
+		// 
+		// The scenario is:
+		// A calls B
+		// B sets up a consultation call to C (no-fork)
+		// B sends a REFER with replaces to A
+		// A sends an INVITE with replaces to C.
+		//
+		// NOTE: this is a non-standard implementation. RFC 3891
+		//       does not allow to replace an early dialog not
+		//       setup by the UA. In this case the REFER from A to C
+		//       intends to replace the dialog from B to C, but C
+		//       did not setup the B-C dialog itself.
+		no_fork = true;
+	}
+	
+	invite(pu, uri, display, subject, no_fork, false);
+	
 	lines.at(consult_line)->set_is_transfer_consult(true, xfer_line);
 	lines.at(xfer_line)->set_to_be_transferred(true, consult_line);
 	
@@ -851,10 +923,15 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 	int replace_line = -1;
 	if (r->hdr_replaces.is_populated() && user_config->get_ext_replaces()) {
 		bool early_matched = false;
+		bool no_fork_req_disposition =
+			r->hdr_request_disposition.is_populated() &&
+			r->hdr_request_disposition.fork_directive == t_hdr_request_disposition::NO_FORK;
+		
 		for (size_t i = 0; i < lines.size(); i++) {
 			if (lines.at(i)->match_replaces(r->hdr_replaces.call_id,
 				r->hdr_replaces.to_tag,
 				r->hdr_replaces.from_tag,
+				no_fork_req_disposition,
 				early_matched))
 			{
 				replace_line = i;
@@ -1130,12 +1207,21 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 	}
 	
 	// RFC 3891
+	bool auto_answer_replace_call = false;
 	if (replace_line >= 0) {
 		// This call replaces an existing call. Tear down this existing
 		// call. This will clear the active line.
 		log_file->write_report("End call due to Replaces header.",
 				"t_phone::recvd_initial_invite");
-		lines.at(replace_line)->end_call();
+				
+		if (lines.at(replace_line)->get_substate() == LSSUB_INCOMING_PROGRESS) {
+			ui->cb_stop_call_notification(replace_line);
+			lines.at(replace_line)->reject();
+		} else {
+			lines.at(replace_line)->end_call();
+			auto_answer_replace_call = true;
+		}
+		
 		move_line_to_background(replace_line);
 	}
 
@@ -1143,9 +1229,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 	if (hunted_line == active_line) {
 		// Auto-answer is only applicable to the active line.
 		
-		if (replace_line >= 0) {
+		if (replace_line >= 0 && auto_answer_replace_call) {
 			// RFC 3891
-			// This call replaces an existing call, answer immediate.
+			// This call replaces an existing established call, answer immediate.
 			lines.at(active_line)->set_auto_answer(true);
 		} else if (pu->service->is_auto_answer_active() ||
 			script_result.action == t_script_result::ACTION_AUTOANSWER) 
@@ -1796,7 +1882,8 @@ void t_phone::recvd_refer_permission(bool permission) {
 	lines[i]->invite(pu, 
 		r->hdr_refer_to.uri.copy_without_headers(),
 		r->hdr_refer_to.display, "", r->hdr_referred_by, 
-		hdr_replaces, hdr_require, hide_user);
+		hdr_replaces, hdr_require, t_hdr_request_disposition(),
+		hide_user);
 	lines[i]->open_dialog->is_referred_call = true;
 	
 	MEMMAN_DELETE(incoming_refer_data);
@@ -2081,7 +2168,7 @@ void t_phone::pub_invite(t_user *user,
 	
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
-		invite(pu, to_uri, to_display, subject, anonymous);
+		invite(pu, to_uri, to_display, subject, false, anonymous);
 	} else {
 		log_file->write_header("t_phone::pub_invite", LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("User profile not active: ");
@@ -3139,27 +3226,41 @@ void t_phone::disable_stun(t_user *user) {
 	unlock();
 }
 
+void t_phone::sync_nat_keepalive(t_user *user) {
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) pu->sync_nat_keepalive();
+	unlock();
+}
+
 bool t_phone::stun_discover_nat(list<string> &msg_list) {
 	bool retval = true;
 	
 	lock();
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
-	     i != phone_users.end(); i++)
+	     i != phone_users.end(); ++i)
 	{
 		if (!(*i)->is_active()) continue;
 		t_user *user_config = (*i)->get_user_profile();
-		if (user_config->get_use_stun() && 
-		    (user_config->get_sip_transport() == SIP_TRANS_UDP ||
-		     user_config->get_sip_transport() == SIP_TRANS_AUTO))
+		
+		if (user_config->get_sip_transport() == SIP_TRANS_UDP ||
+		    user_config->get_sip_transport() == SIP_TRANS_AUTO)
 		{
-			string msg;
-			if (!::stun_discover_nat(*i, msg)) {
-				string s("User profile: ");
-				s + user_config->get_profile_name();
-				s += "\n\n";
-				s += msg;
-				msg_list.push_back(s);
-				retval = false;
+			if (user_config->get_use_stun())
+			{
+				string msg;
+				if (!::stun_discover_nat(*i, msg)) {
+					string s("User profile: ");
+					s + user_config->get_profile_name();
+					s += "\n\n";
+					s += msg;
+					msg_list.push_back(s);
+					retval = false;
+				}
+			}
+			else
+			{
+				(*i)->use_nat_keepalive = user_config->get_enable_nat_keepalive();
 			}
 		}
 	}
@@ -3172,10 +3273,16 @@ bool t_phone::stun_discover_nat(t_user *user, string &msg) {
 	bool retval = true;
 	
 	lock();
-	if (user->get_use_stun()) {
+	if (user->get_sip_transport() == SIP_TRANS_UDP ||
+	    user->get_sip_transport() == SIP_TRANS_AUTO)
+	{
 		t_phone_user *pu = find_phone_user(user->get_profile_name());
-		if (pu) {
-			retval = ::stun_discover_nat(pu, msg);
+		if (user->get_use_stun()) {
+			if (pu) retval = ::stun_discover_nat(pu, msg);
+		}
+		else
+		{
+			if (pu) pu->use_nat_keepalive = user->get_enable_nat_keepalive();
 		}
 	}
 	unlock();

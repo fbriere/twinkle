@@ -159,9 +159,20 @@ private:
 	// cleanup the 3way conference data.
 	void cleanup_3way(void);
 
-	// Actions
+	/** @name Actions */
+	//@{
+	/**
+	 * Send an INVITE
+	 * @param pu The phone user making this call.
+	 * @param to_uri The URI to be used a request-URI and To header URI
+	 * @param to_display Display name for To header.
+	 * @param subject If not empty, this string will go into the Subject header.
+	 * @param no_fork If true, put a no-fork request disposition in the outgoing INVITE
+	 * @param anonymous Inidicates if the INVITE should be sent anonymous.
+	 */
 	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
-		const string &subject, bool anonymous);
+		const string &subject, bool no_fork, bool anonymous);
+		
 	void answer(void);
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void reject(void);
@@ -169,6 +180,7 @@ private:
 	void end_call(void);
 	void registration(t_phone_user *pu, t_register_type register_type,
 					unsigned long expires = 0);
+	//@}
 
 	// OPTIONS outside dialog
 	void options(t_phone_user *pu, const t_url &to_uri, const string &to_display = "");
@@ -621,14 +633,17 @@ public:
 	 */ 
 	unsigned short get_public_port_sip(const t_user *user) const;
 	
-	// Indicates if STUN is used
+	/** Indicates if STUN is used. */
 	bool use_stun(t_user *user);
 	
 	// Indicates if a NAT keepalive mechanism is used
 	bool use_nat_keepalive(t_user *user);
 	
-	// Disable STUN for a user
+	/** Disable STUN for a user. */
 	void disable_stun(t_user *user);
+	
+	/** Synchronize sending of NAT keep alives with user configuration settings. */
+	void sync_nat_keepalive(t_user *user);
 	
 	// Perform NAT discovery for all users having STUN enabled.
 	// If NAT discovery indicates that STUN cannot be used for 1 or more

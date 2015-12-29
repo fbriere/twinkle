@@ -84,6 +84,7 @@ t_sip_message::t_sip_message(const t_sip_message& m) :
 		hdr_replaces(m.hdr_replaces),
 		hdr_reply_to(m.hdr_reply_to),
 		hdr_require(m.hdr_require),
+		hdr_request_disposition(m.hdr_request_disposition),
 		hdr_retry_after(m.hdr_retry_after),
 		hdr_route(m.hdr_route),
 		hdr_rseq(m.hdr_rseq),
@@ -242,6 +243,7 @@ string t_sip_message::encode(bool add_content_length) {
 	s += hdr_replaces.encode();
 	s += hdr_reply_to.encode();
 	s += hdr_require.encode();
+	s += hdr_request_disposition.encode();
 	s += hdr_retry_after.encode();
 	s += hdr_rseq.encode();
 	s += hdr_server.encode();
@@ -348,6 +350,7 @@ list<string> t_sip_message::encode_env(void) {
 	l.push_back(hdr_replaces.encode_env());
 	l.push_back(hdr_reply_to.encode_env());
 	l.push_back(hdr_require.encode_env());
+	l.push_back(hdr_request_disposition.encode_env());
 	l.push_back(hdr_retry_after.encode_env());
 	l.push_back(hdr_rseq.encode_env());
 	l.push_back(hdr_server.encode_env());

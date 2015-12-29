@@ -79,17 +79,18 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
-        hdr_service_route.cpp\
         hdr_refer_sub.cpp\
 	hdr_refer_to.cpp\
 	hdr_referred_by.cpp\
 	hdr_replaces.cpp\
         hdr_reply_to.cpp\
         hdr_require.cpp\
+        hdr_request_disposition.cpp\
         hdr_retry_after.cpp\
         hdr_route.cpp\
         hdr_rseq.cpp\
         hdr_server.cpp\
+        hdr_service_route.cpp\
         hdr_sip_etag.cpp\
         hdr_sip_if_match.cpp\
         hdr_subject.cpp\
@@ -156,17 +157,18 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
-        hdr_service_route.h\
         hdr_refer_sub.h\
 	hdr_refer_to.h\
 	hdr_referred_by.h\
 	hdr_replaces.h\
         hdr_reply_to.h\
         hdr_require.h\
+        hdr_request_disposition.h\
         hdr_retry_after.h\
         hdr_route.h\
         hdr_rseq.h\
         hdr_server.h\
+        hdr_service_route.h\
         hdr_sip_etag.h\
         hdr_sip_if_match.h\
         hdr_subject.h\

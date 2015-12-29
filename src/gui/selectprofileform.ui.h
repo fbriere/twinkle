@@ -59,7 +59,7 @@ int SelectProfileForm::execForm()
 			"Before you can use Twinkle, you must create a user "\
 			"profile.<br>Click OK to create a profile.</html>"));
 		
-		int useWizard = QMessageBox::question(this, PRODUCT_NAME, tr(
+		int newProfileMethod = QMessageBox::question(this, PRODUCT_NAME, tr(
 			"<html>"\
 			"You can use the profile editor to create a profile. "\
 			"With the profile editor you can change many settings "\
@@ -69,14 +69,22 @@ int SelectProfileForm::execForm()
 			"settings. If you create a user profile with the wizard you "\
 			"can still edit the full profile with the profile editor at a later "\
 			"time.<br><br>"\
+			"You can create a Diamondcard account to make worldwide "\
+			"calls to regular and cell phones and send SMS messages.<br><br>"\
 			"Choose what method you wish to use.</html>"),
-			tr("&Wizard"), tr("&Profile editor"), QString::null);
+			tr("&Wizard"), tr("&Profile editor"), tr("&Diamondcard"));
 		
-		if (useWizard == 0) {
+		switch (newProfileMethod) {
+		case 0:
 			wizardProfile(true);
-		} else if (useWizard == 1) {
+			break;
+		case 1:
 			newProfile(true);
-		} else {
+			break;
+		case 2:
+			diamondcardProfile(true);
+			break;
+		default:
 			return QDialog::Rejected;
 		}
 		
@@ -542,6 +550,34 @@ void SelectProfileForm::wizardProfile(bool exec_mode)
 		f->show(user_config);
 	}
 }
+
+void SelectProfileForm::diamondcardProfile()
+{
+	diamondcardProfile(false);
+}
+
+void SelectProfileForm::diamondcardProfile(bool exec_mode)
+{
+	// Create a new user config
+	if (user_config) {
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+	}	
+	user_config = new t_user();
+	MEMMAN_NEW(user_config);
+	
+	// Show the diamondcard profile form (modal dialog)
+	DiamondcardProfileForm *f = new DiamondcardProfileForm(this, "diamondcard",
+							       true, Qt::WDestructiveClose);
+	connect(f, SIGNAL(success()), this, SLOT(newProfileCreated()));
+	
+	if (exec_mode) {
+		f->exec(user_config);
+	} else {
+		f->show(user_config);
+	}
+}
+
 
 void SelectProfileForm::sysSettings()
 {

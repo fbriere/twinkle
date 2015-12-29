@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 #include <list>
+#include "diamondcard.h"
 #include "log.h"
 #include "phone.h"
 #include "twinkle_config.h"
@@ -115,6 +116,7 @@ extern t_phone		*phone;
 #define FLD_ASK_USER_TO_REFER		"ask_user_to_refer"
 #define FLD_AUTO_REFRESH_REFER_SUB	"auto_refresh_refer_sub"
 #define FLD_ATTENDED_REFER_TO_AOR	"attended_refer_to_aor"
+#define FLD_ALLOW_XFER_CONSULT_INPROG	"allow_xfer_consult_inprog"
 #define FLD_SEND_P_PREFERRED_ID		"send_p_preferred_id"
 
 // Transport/NAT fields
@@ -123,6 +125,7 @@ extern t_phone		*phone;
 #define FLD_NAT_PUBLIC_IP		"nat_public_ip"
 #define FLD_STUN_SERVER			"stun_server"
 #define FLD_PERSISTENT_TCP		"persistent_tcp"
+#define FLD_ENABLE_NAT_KEEPALIVE	"enable_nat_keepalive"
 
 // TIMER fields
 #define FLD_TIMER_NOANSWER		"timer_noanswer"
@@ -372,6 +375,7 @@ t_user::t_user() {
 	use_nat_public_ip = false;
 	use_stun = false;
 	persistent_tcp = true;
+	enable_nat_keepalive = false;
 	register_at_startup = true;
 	reg_add_qvalue = false;
 	reg_qvalue = 1.0;
@@ -428,6 +432,7 @@ t_user::t_user() {
 	ask_user_to_refer = true;
 	auto_refresh_refer_sub = false;
 	attended_refer_to_aor = false;
+	allow_transfer_consultation_inprog = false;
 	send_p_preferred_id = false;
 	sip_transport = SIP_TRANS_AUTO;
 	sip_transport_udp_threshold = 1300; // RFC 3261 18.1.1
@@ -531,6 +536,7 @@ t_user::t_user(const t_user &u) {
 	ask_user_to_refer = u.ask_user_to_refer;
 	auto_refresh_refer_sub = u.auto_refresh_refer_sub;
 	attended_refer_to_aor = u.attended_refer_to_aor;
+	allow_transfer_consultation_inprog = u.allow_transfer_consultation_inprog;
 	send_p_preferred_id = u.send_p_preferred_id;
 	sip_transport = u.sip_transport;
 	sip_transport_udp_threshold = u.sip_transport_udp_threshold;
@@ -539,6 +545,7 @@ t_user::t_user(const t_user &u) {
 	use_stun = u.use_stun;
 	stun_server = u.stun_server;
 	persistent_tcp = u.persistent_tcp;
+	enable_nat_keepalive = u.enable_nat_keepalive;
 	timer_noanswer = u.timer_noanswer;
 	timer_nat_keepalive = u.timer_nat_keepalive; 
 	timer_tcp_ping = u.timer_tcp_ping;
@@ -1084,51 +1091,38 @@ bool t_user::get_ext_replaces(void) const {
 }
 
 bool t_user::get_referee_hold(void) const {
-	bool result;
-	mtx_user.lock();
-	result = referee_hold;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return referee_hold;
 }
 
 bool t_user::get_referrer_hold(void) const {
-	bool result;
-	mtx_user.lock();
-	result = referrer_hold;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return referrer_hold;
 }
 
 bool t_user::get_allow_refer(void) const {
-	bool result;
-	mtx_user.lock();
-	result = allow_refer;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return allow_refer;
 }
 
 bool t_user::get_ask_user_to_refer(void) const {
-	bool result;
-	mtx_user.lock();
-	result = ask_user_to_refer;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return ask_user_to_refer;
 }
 
 bool t_user::get_auto_refresh_refer_sub(void) const {
-	bool result;
-	mtx_user.lock();
-	result = auto_refresh_refer_sub;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return auto_refresh_refer_sub;
 }
 
 bool t_user::get_attended_refer_to_aor(void) const {
-	bool result;
-	mtx_user.lock();
-	result = attended_refer_to_aor;
-	mtx_user.unlock();
-	return result;
+	t_mutex_guard guard(mtx_user);
+	return attended_refer_to_aor;
+}
+
+bool t_user::get_allow_transfer_consultation_inprog(void) const {
+	t_mutex_guard guard(mtx_user);
+	return allow_transfer_consultation_inprog;
 }
 
 bool t_user::get_send_p_preferred_id(void) const {
@@ -1184,6 +1178,11 @@ t_url t_user::get_stun_server(void) const {
 bool t_user::get_persistent_tcp(void) const {
 	t_mutex_guard guard(mtx_user);
 	return persistent_tcp;
+}
+
+bool t_user::get_enable_nat_keepalive(void) const {
+	t_mutex_guard guard(mtx_user);
+	return enable_nat_keepalive;
 }
 
 unsigned short t_user::get_timer_noanswer(void) const {
@@ -1827,9 +1826,8 @@ void t_user::set_ext_replaces(bool b) {
 }
 
 void t_user::set_referee_hold(bool b) {
-	mtx_user.lock();
+	t_mutex_guard guard(mtx_user);
 	referee_hold = b;
-	mtx_user.unlock();
 }
 
 void t_user::set_referrer_hold(bool b) {
@@ -1839,27 +1837,28 @@ void t_user::set_referrer_hold(bool b) {
 }
 
 void t_user::set_allow_refer(bool b) {
-	mtx_user.lock();
+	t_mutex_guard guard(mtx_user);
 	allow_refer = b;
-	mtx_user.unlock();
 }
 
 void t_user::set_ask_user_to_refer(bool b) {
-	mtx_user.lock();
+	t_mutex_guard guard(mtx_user);
 	ask_user_to_refer = b;
-	mtx_user.unlock();
 }
 
 void t_user::set_auto_refresh_refer_sub(bool b) {
-	mtx_user.lock();
+	t_mutex_guard guard(mtx_user);
 	auto_refresh_refer_sub = b;
-	mtx_user.unlock();
 }
 
 void t_user::set_attended_refer_to_aor(bool b) {
-	mtx_user.lock();
+	t_mutex_guard guard(mtx_user);
 	attended_refer_to_aor = b;
-	mtx_user.unlock();
+}
+
+void t_user::set_allow_transfer_consultation_inprog(bool b) {
+	t_mutex_guard guard(mtx_user);
+	allow_transfer_consultation_inprog = b;
 }
 
 void t_user::set_send_p_preferred_id(bool b) {
@@ -1905,6 +1904,11 @@ void t_user::set_stun_server(const t_url &url) {
 void t_user::set_persistent_tcp(bool b) {
 	t_mutex_guard guard(mtx_user);
 	persistent_tcp = b;
+}
+
+void t_user::set_enable_nat_keepalive(bool b) {
+	t_mutex_guard guard(mtx_user);
+	enable_nat_keepalive = b;
 }
 
 void t_user::set_timer_noanswer(unsigned short timer) {
@@ -2307,6 +2311,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			auto_refresh_refer_sub = yesno2bool(value);
 		} else if (parameter == FLD_ATTENDED_REFER_TO_AOR) {
 			attended_refer_to_aor = yesno2bool(value);
+		} else if (parameter == FLD_ALLOW_XFER_CONSULT_INPROG) {
+			allow_transfer_consultation_inprog = yesno2bool(value);
 		} else if (parameter == FLD_SEND_P_PREFERRED_ID) {
 			send_p_preferred_id = yesno2bool(value);
 		} else if (parameter == FLD_SIP_TRANSPORT) {
@@ -2321,6 +2327,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			use_stun = set_server_value(stun_server, "stun", value);
 		} else if (parameter == FLD_PERSISTENT_TCP) {
 			persistent_tcp = yesno2bool(value);
+		} else if (parameter == FLD_ENABLE_NAT_KEEPALIVE) {
+			enable_nat_keepalive = yesno2bool(value);
 		} else if (parameter == FLD_TIMER_NOANSWER) {
 			timer_noanswer = atoi(value.c_str());
 		} else if (parameter == FLD_TIMER_NAT_KEEPALIVE) {
@@ -2741,6 +2749,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << bool2yesno(auto_refresh_refer_sub) << endl;
 	config << FLD_ATTENDED_REFER_TO_AOR << '=';
 	config << bool2yesno(attended_refer_to_aor) << endl;
+	config << FLD_ALLOW_XFER_CONSULT_INPROG << '=';
+	config << bool2yesno(allow_transfer_consultation_inprog) << endl;
 	config << FLD_SEND_P_PREFERRED_ID << '=';
 	config << bool2yesno(send_p_preferred_id) << endl;
 	config << endl;
@@ -2761,6 +2771,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 		config << FLD_STUN_SERVER << '=' << endl;
 	}
 	config << FLD_PERSISTENT_TCP << '=' << bool2yesno(persistent_tcp) << endl;
+	config << FLD_ENABLE_NAT_KEEPALIVE << '=' << bool2yesno(enable_nat_keepalive) << endl;
 	config << endl;
 
 	// Write TIMER settings
@@ -2880,10 +2891,15 @@ string t_user::get_filename(void) const {
 	return result;
 }
 
-void t_user::set_config(string filename) {
-	mtx_user.lock();
+bool t_user::set_config(string filename) {
+	t_mutex_guard guard(mtx_user);
+	
+	struct stat stat_buf;
+
 	config_filename = filename;
-	mtx_user.unlock();
+	string fullpath = expand_filename(filename);
+	
+	return (stat(fullpath.c_str(), &stat_buf) != 0);
 }
 
 string t_user::get_profile_name(void) const {
@@ -3118,4 +3134,14 @@ t_url t_user::get_mwi_uri(void) const {
 	u.set_user(mwi_user);
 	
 	return u;
+}
+
+bool t_user::is_diamondcard_account(void) const {
+	// A profile is a Diamondcard account if the end configured domain
+	// is equal to the DIAMONDCARD_DOMAIN
+	size_t domain_len = strlen(DIAMONDCARD_DOMAIN);
+	if (domain.size() < domain_len) return false;
+	
+	size_t pos = domain.size() - domain_len;
+	return (domain.substr(pos) == DIAMONDCARD_DOMAIN);
 }

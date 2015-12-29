@@ -73,22 +73,23 @@ am_libsipparser_a_OBJECTS = challenge.$(OBJEXT) coding.$(OBJEXT) \
 	hdr_proxy_authenticate.$(OBJEXT) \
 	hdr_proxy_authorization.$(OBJEXT) hdr_proxy_require.$(OBJEXT) \
 	hdr_rack.$(OBJEXT) hdr_record_route.$(OBJEXT) \
-	hdr_service_route.$(OBJEXT) hdr_refer_sub.$(OBJEXT) \
-	hdr_refer_to.$(OBJEXT) hdr_referred_by.$(OBJEXT) \
-	hdr_replaces.$(OBJEXT) hdr_reply_to.$(OBJEXT) \
-	hdr_require.$(OBJEXT) hdr_retry_after.$(OBJEXT) \
+	hdr_refer_sub.$(OBJEXT) hdr_refer_to.$(OBJEXT) \
+	hdr_referred_by.$(OBJEXT) hdr_replaces.$(OBJEXT) \
+	hdr_reply_to.$(OBJEXT) hdr_require.$(OBJEXT) \
+	hdr_request_disposition.$(OBJEXT) hdr_retry_after.$(OBJEXT) \
 	hdr_route.$(OBJEXT) hdr_rseq.$(OBJEXT) hdr_server.$(OBJEXT) \
-	hdr_sip_etag.$(OBJEXT) hdr_sip_if_match.$(OBJEXT) \
-	hdr_subject.$(OBJEXT) hdr_subscription_state.$(OBJEXT) \
-	hdr_supported.$(OBJEXT) hdr_timestamp.$(OBJEXT) \
-	hdr_to.$(OBJEXT) hdr_unsupported.$(OBJEXT) \
-	hdr_user_agent.$(OBJEXT) hdr_via.$(OBJEXT) \
-	hdr_warning.$(OBJEXT) hdr_www_authenticate.$(OBJEXT) \
-	header.$(OBJEXT) identity.$(OBJEXT) media_type.$(OBJEXT) \
-	milenage.$(OBJEXT) parameter.$(OBJEXT) parse_ctrl.$(OBJEXT) \
-	parser.$(OBJEXT) request.$(OBJEXT) response.$(OBJEXT) \
-	rijndael.$(OBJEXT) route.$(OBJEXT) scanner.$(OBJEXT) \
-	sip_body.$(OBJEXT) sip_message.$(OBJEXT)
+	hdr_service_route.$(OBJEXT) hdr_sip_etag.$(OBJEXT) \
+	hdr_sip_if_match.$(OBJEXT) hdr_subject.$(OBJEXT) \
+	hdr_subscription_state.$(OBJEXT) hdr_supported.$(OBJEXT) \
+	hdr_timestamp.$(OBJEXT) hdr_to.$(OBJEXT) \
+	hdr_unsupported.$(OBJEXT) hdr_user_agent.$(OBJEXT) \
+	hdr_via.$(OBJEXT) hdr_warning.$(OBJEXT) \
+	hdr_www_authenticate.$(OBJEXT) header.$(OBJEXT) \
+	identity.$(OBJEXT) media_type.$(OBJEXT) milenage.$(OBJEXT) \
+	parameter.$(OBJEXT) parse_ctrl.$(OBJEXT) parser.$(OBJEXT) \
+	request.$(OBJEXT) response.$(OBJEXT) rijndael.$(OBJEXT) \
+	route.$(OBJEXT) scanner.$(OBJEXT) sip_body.$(OBJEXT) \
+	sip_message.$(OBJEXT)
 libsipparser_a_OBJECTS = $(am_libsipparser_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -418,17 +419,18 @@ libsipparser_a_SOURCES = \
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
-        hdr_service_route.cpp\
         hdr_refer_sub.cpp\
 	hdr_refer_to.cpp\
 	hdr_referred_by.cpp\
 	hdr_replaces.cpp\
         hdr_reply_to.cpp\
         hdr_require.cpp\
+        hdr_request_disposition.cpp\
         hdr_retry_after.cpp\
         hdr_route.cpp\
         hdr_rseq.cpp\
         hdr_server.cpp\
+        hdr_service_route.cpp\
         hdr_sip_etag.cpp\
         hdr_sip_if_match.cpp\
         hdr_subject.cpp\
@@ -495,17 +497,18 @@ libsipparser_a_SOURCES = \
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
-        hdr_service_route.h\
         hdr_refer_sub.h\
 	hdr_refer_to.h\
 	hdr_referred_by.h\
 	hdr_replaces.h\
         hdr_reply_to.h\
         hdr_require.h\
+        hdr_request_disposition.h\
         hdr_retry_after.h\
         hdr_route.h\
         hdr_rseq.h\
         hdr_server.h\
+        hdr_service_route.h\
         hdr_sip_etag.h\
         hdr_sip_if_match.h\
         hdr_subject.h\
@@ -628,6 +631,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_referred_by.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_replaces.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_reply_to.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_request_disposition.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_require.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_retry_after.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_route.Po@am__quote@

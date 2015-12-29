@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="cs">
+<!DOCTYPE TS><TS>
 <defaultcodec></defaultcodec>
 <context>
     <name>AddressCardForm</name>
@@ -315,6 +314,74 @@
     <message>
         <source>&amp;Cancel</source>
         <translation>Zrušit (Es&amp;c)</translation>
+    </message>
+</context>
+<context>
+    <name>DiamondcardProfileForm</name>
+    <message>
+        <source>Twinkle - Diamondcard User Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Diamondcard account ID.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is just your full name, e.g. John Doe. It is used as a display name. When you make a call, this display name might be shown to the called party.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Account ID:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;PIN code:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Your name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p align=&quot;center&quot;&gt;&lt;u&gt;Sign up for a Diamondcard account&lt;/u&gt;&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation type="unfinished">Zrušit (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill in your account ID.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fill in your PIN code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A user profile with name %1 already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Diamondcard PIN code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;With a Diamondcard account you can make worldwide calls to regular and cell phones and send SMS messages. To sign up for a Diamondcard account click on the &quot;sign up&quot; link below. Once you have signed up you receive an account ID and PIN code. Enter the account ID and PIN code below to create a Twinkle user profile for your Diamondcard account.&lt;/p&gt;
+&lt;p&gt;For call rates see the sign up web page that will be shown to you when you click on the &quot;sign up&quot; link.&lt;/p&gt;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -790,6 +857,18 @@ Pokud se připojíte k nějaké síti později, musíte Twinkle spustit znovu. T
         <source>Failed to save message attachment: %1</source>
         <translation>Selhalo uložení přílohy zprávy: %1</translation>
     </message>
+    <message>
+        <source>Transferred by: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open web browser: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Configure your web browser in the system settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1168,6 +1247,18 @@ Ke snadnému zapamatování si profilu je možné použít k označení profilu 
         <source>Call selected address.</source>
         <translation>Volat vybranou adresu.</translation>
     </message>
+    <message>
+        <source>Number of calls:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>###</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total call duration:</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InviteForm</name>
@@ -1236,6 +1327,10 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Not all SIP providers support identity hiding. Make sure your SIP provider supports it if you really need it.</source>
         <translation>Ne všichni VoIP poskytovatelé umožňují skrytí identity. Ujistěte se o tom, pokud se na tuto funkci chcete spolehnout.</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
     </message>
 </context>
 <context>
@@ -1366,6 +1461,14 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>%1 is typing a message.</source>
         <translation>%1 píše zprávu.</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2257,6 +2360,58 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
         <source>&amp;Display</source>
         <translation>&amp;Stavové hlášky</translation>
     </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
+    </message>
+    <message>
+        <source>Diamondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Manual</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sign up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Sign up...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recharge...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balance history...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Call history...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Admin center...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recharge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Balance history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Admin center</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NumberConversionForm</name>
@@ -2351,6 +2506,18 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
         <source>&amp;Cancel</source>
         <translation>Zrušit (Es&amp;c)</translation>
     </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
+    </message>
+    <message>
+        <source>F12</source>
+        <translation type="unfinished">F12</translation>
+    </message>
+    <message>
+        <source>F11</source>
+        <translation type="unfinished">F11</translation>
+    </message>
 </context>
 <context>
     <name>SelectNicForm</name>
@@ -2423,11 +2590,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>&amp;New</source>
-        <translation>&amp;nový</translation>
-    </message>
-    <message>
-        <source>Alt+N</source>
-        <translation></translation>
+        <translation type="obsolete">&amp;nový</translation>
     </message>
     <message>
         <source>Create a new profile with the profile editor.</source>
@@ -2531,7 +2694,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
-        <translation>&lt;html&gt;Pro vytvoření uživatelského profilu můžete použít editor profilu. Tento vám umožní změnit veškerá nastavení týkající se  SIP protokolu, RTP jakož i dalších parametrů programu.&lt;br&gt;&lt;br&gt;Popřípadě použijte Wizard pro rychlé a jednoduché nastavení základních paramtrů ke zvolenému uživatelskému profilu. Wizard se vás dotáže jen na nejzákladnější údaje, které vám váš SIP poskytovatel dá při zaregistrování. Pro některé poskytovatele vám budou dokonce některé z těchto údajů přímo wizardem nabídnuty. I přesto, že profil založíte pomocí wizardu ho budete moci později upravovat pomocí editoru.&lt;br&gt;&lt;br&gt;Nápovědu získáte kdekoliv v Twinkle stiskem klávesové ombinace &quot;Shift + F1&quot;, přes kontextovou nápovědu pomocí stisku pravého tlačítka na myši nebo stiskem na symbol &quot;?&quot; v pravém horním rohu okna.&lt;br&gt;&lt;br&gt;Vyberte si jakým způsobem má být uživatelský profil založen.&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;Pro vytvoření uživatelského profilu můžete použít editor profilu. Tento vám umožní změnit veškerá nastavení týkající se  SIP protokolu, RTP jakož i dalších parametrů programu.&lt;br&gt;&lt;br&gt;Popřípadě použijte Wizard pro rychlé a jednoduché nastavení základních paramtrů ke zvolenému uživatelskému profilu. Wizard se vás dotáže jen na nejzákladnější údaje, které vám váš SIP poskytovatel dá při zaregistrování. Pro některé poskytovatele vám budou dokonce některé z těchto údajů přímo wizardem nabídnuty. I přesto, že profil založíte pomocí wizardu ho budete moci později upravovat pomocí editoru.&lt;br&gt;&lt;br&gt;Nápovědu získáte kdekoliv v Twinkle stiskem klávesové ombinace &quot;Shift + F1&quot;, přes kontextovou nápovědu pomocí stisku pravého tlačítka na myši nebo stiskem na symbol &quot;?&quot; v pravém horním rohu okna.&lt;br&gt;&lt;br&gt;Vyberte si jakým způsobem má být uživatelský profil založen.&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;Next you may adjust the system settings. You can change these settings always at a later time.&lt;br&gt;&lt;br&gt;Click OK to view and adjust the system settings.&lt;/html&gt;</source>
@@ -2569,6 +2732,46 @@ Please select a profile.</source>
     <message>
         <source>&amp;Profile editor</source>
         <translation>&amp;Editor profilu</translation>
+    </message>
+    <message>
+        <source>Create profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ed&amp;itor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+I</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dia&amp;mondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+M</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modify profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Startup profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Diamondcard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create a profile for a Diamondcard account. With a Diamondcard account you can make worldwide calls to regular and cell phones and send SMS messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;You can create a Diamondcard account to make worldwide calls to regular and cell phones and send SMS messages.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2829,6 +3032,18 @@ Please select a profile.</source>
         <source>You have entered an invalid destination.</source>
         <translation>Neplatná cílová adresa.</translation>
     </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
+    </message>
+    <message>
+        <source>F11</source>
+        <translation type="unfinished">F11</translation>
+    </message>
+    <message>
+        <source>F12</source>
+        <translation type="unfinished">F12</translation>
+    </message>
 </context>
 <context>
     <name>SysSettingsForm</name>
@@ -2902,7 +3117,7 @@ Please select a profile.</source>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
-        <translation>Speciální potlačení &amp;rušení z mikrofonu</translation>
+        <translation type="obsolete">Speciální potlačení &amp;rušení z mikrofonu</translation>
     </message>
     <message>
         <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
@@ -3284,16 +3499,16 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default IP address combo</comment>
-        <translation>auto</translation>
+        <translation type="obsolete">auto</translation>
     </message>
     <message>
         <source>none</source>
         <comment>This is the &apos;none&apos; in default network interface combo</comment>
-        <translation>auto</translation>
+        <translation type="obsolete">auto</translation>
     </message>
     <message>
         <source>Either choose a default IP address or a default network interface.</source>
-        <translation>Vybrat buď standardní IP adresu nebo standardní síťové rozhraní.</translation>
+        <translation type="obsolete">Vybrat buď standardní IP adresu nebo standardní síťové rozhraní.</translation>
     </message>
     <message>
         <source>Ring tones</source>
@@ -3371,6 +3586,14 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         <source>Maximum allowed size (0-4294967295) in bytes of an incoming SIP message over TCP.</source>
         <translation>Maximálně povolená velikost příchozí SIP zprávy přes TCP,  v Bajtech (0-4294967295).</translation>
     </message>
+    <message>
+        <source>W&amp;eb browser command:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command to start your web browser. If you leave this field empty Twinkle will try to figure out your default web browser.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SysTrayPopup</name>
@@ -3381,6 +3604,10 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     <message>
         <source>Reject</source>
         <translation>Odmítnout</translation>
+    </message>
+    <message>
+        <source>Incoming Call</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3420,6 +3647,10 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     <message>
         <source>&amp;Cancel</source>
         <translation>Zrušit (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
     </message>
 </context>
 <context>
@@ -3499,6 +3730,10 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     <message>
         <source>Connect the remote party on the active line with the remote party on the other line.</source>
         <translation>Propojit obě protistrany na lince 1 a 2. Protistrana, která je právě na aktivní lince bude ta, která bude hovor přesměrovat.</translation>
+    </message>
+    <message>
+        <source>F10</source>
+        <translation type="unfinished">F10</translation>
     </message>
 </context>
 <context>
@@ -3589,7 +3824,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Lock file %1 already exist, but cannot be opened.</source>
-        <translation>Zamykací soubor &quot;%1&quot; již existuje, ale nemůže být otevřen.</translation>
+        <translation type="obsolete">Zamykací soubor &quot;%1&quot; již existuje, ale nemůže být otevřen.</translation>
     </message>
     <message>
         <source>%1 is already running.
@@ -3603,7 +3838,7 @@ Zamykací soubor &quot;%2&quot; již existuje.</translation>
     </message>
     <message>
         <source>Cannot write to %1 .</source>
-        <translation>Nelze zapisovat do &quot;%1&quot;.</translation>
+        <translation type="obsolete">Nelze zapisovat do &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Syntax error in file %1 .</source>
@@ -3739,6 +3974,10 @@ nasměrované na lokální porty na vašem počítači.</translation>
     <message>
         <source>Failed to send message.</source>
         <translation>Selhalo odeslání zprávy.</translation>
+    </message>
+    <message>
+        <source>Cannot lock %1 .</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4128,7 +4367,7 @@ V závislosti od nastavení při kompilaci mohou být některé kodeky nepříst
     </message>
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
-        <translation>Pokud je aktivováno, testuje systém VAD (Voice Activity Detection), jestli je právě mluveno nebo je v hovoru pauza. Zvuky které nejsou rozpoznány jako hovor jsou nahrazeny jen několika málo bity napodobující šum pozadí. To vede k redukci přenášených dat. 
+        <translation type="obsolete">Pokud je aktivováno, testuje systém VAD (Voice Activity Detection), jestli je právě mluveno nebo je v hovoru pauza. Zvuky které nejsou rozpoznány jako hovor jsou nahrazeny jen několika málo bity napodobující šum pozadí. To vede k redukci přenášených dat. 
 Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translation>
     </message>
     <message>
@@ -4501,7 +4740,7 @@ Toto nastavení ovlivňuje chování při &quot;early media&quot; (např. při z
     </message>
     <message>
         <source>Allow call &amp;transfer (incoming REFER)</source>
-        <translation>Povolit protistraně přesměrování &amp;volání (příchozí REFER)</translation>
+        <translation type="obsolete">Povolit protistraně přesměrování &amp;volání (příchozí REFER)</translation>
     </message>
     <message>
         <source>Alt+T</source>
@@ -4774,11 +5013,11 @@ Poznámka: Toto pravidlo nelze nastavit jednoduše jako třetí pravidlo ke dvou
     </message>
     <message>
         <source>for STUN</source>
-        <translation>pro STUN</translation>
+        <translation type="obsolete">pro STUN</translation>
     </message>
     <message>
         <source>Keep alive timer for the STUN protocol. If you have enabled STUN, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</source>
-        <translation>Časový signál pro STUN protokol. Pokud je STUN aktivován, bude Twinkle posílat pravidelně v zadaném časovém odstupu datové STUN-keep-alive pakety. Cílem je, aby nedošlo na routeru ke smazání příslušnosti mezi externí a interní IP adresou z adresní NAT tabulky a docházelo k pravidelnému prodlužování platnosti záznamu. Tato hodnota je proto závislá od konkrétního NATu a neměla by být příliš velká.</translation>
+        <translation type="obsolete">Časový signál pro STUN protokol. Pokud je STUN aktivován, bude Twinkle posílat pravidelně v zadaném časovém odstupu datové STUN-keep-alive pakety. Cílem je, aby nedošlo na routeru ke smazání příslušnosti mezi externí a interní IP adresou z adresní NAT tabulky a docházelo k pravidelnému prodlužování platnosti záznamu. Tato hodnota je proto závislá od konkrétního NATu a neměla by být příliš velká.</translation>
     </message>
     <message>
         <source>When an incoming call is received, this timer is started. If the user answers the call, the timer is stopped. If the timer expires before the user answers the call, then Twinkle will reject the call with a &quot;480 User Not Responding&quot;.</source>
@@ -5625,6 +5864,30 @@ Asterisk podporuje &quot;unsollicited message waiting indication&quot;.
     <message>
         <source>Expand a dialed telephone number to a tel-URI instead of a sip-URI.</source>
         <translation>Rozšířit vytáčené telefonní číslo o tel-URI namísto sip-URI.</translation>
+    </message>
+    <message>
+        <source>Accept call &amp;transfer request (incoming REFER)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow call transfer while consultation in progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When you perform an attended call transfer, you normally transfer the call after you established a consultation call. If you enable this option you can transfer the call while the consultation call is still in progress. This is a non-standard implementation and may not work with all SIP devices.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable NAT &amp;keep alive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send UDP NAT keep alive packets.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If you have enabled STUN or NAT keep alive, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

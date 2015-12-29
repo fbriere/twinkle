@@ -55,6 +55,11 @@ void MessageForm::init()
 	_getAddressForm = 0;
 	_remotePartyComplete = false;
 	
+	// Add label to display size of typed message
+	_msgSizeLabel = new QLabel(this);
+	statusBar()->addWidget(_msgSizeLabel);
+	showMessageSize();
+	
 	// Set toolbutton icons for disabled options.
 	setDisabledIcon(addressToolButton, "kontact_contacts-disabled.png");
 	
@@ -343,7 +348,8 @@ void MessageForm::addMessage(const im::t_msg &msg, const QString &name)
 #ifdef HAVE_KDE		
 			KIconLoader iconLoader;
 			QString iconName = KMimeType::iconForURL(
-					msg.attachment_filename.c_str());						s += iconLoader.iconPath(iconName, KIcon::Desktop);
+					msg.attachment_filename.c_str());
+			s += iconLoader.iconPath(iconName, KIcon::Desktop);
 #else
 			// Set icon based on main mime type
 			s += "mime_";
@@ -459,7 +465,7 @@ void MessageForm::showAttachmentPopupMenu(const QString &attachment) {
 	attachmentPopupMenu->popup(QCursor::pos());
 }
 
-void MessageForm::attachmentPopupActivated(unsigned int id) {
+void MessageForm::attachmentPopupActivated(int id) {
 #ifdef HAVE_KDE
 	vector<KService::Ptr> *serviceMap = (vector<KService::Ptr> *)_serviceMap;
 	assert(serviceMap);
@@ -595,4 +601,16 @@ void MessageForm::keyPressEvent(QKeyEvent *e)
 void MessageForm::toAddressChanged(const QString &address)
 {
 	sendFileAction->setEnabled(!address.isEmpty());
+}
+
+/** Show the size of the typed message */
+void MessageForm::showMessageSize()
+{
+	uint len = msgLineEdit->text().length();
+	
+	QString s(tr("Size"));
+	s += ": ";
+	s += QString().setNum(len);
+	
+	_msgSizeLabel->setText(s);
 }

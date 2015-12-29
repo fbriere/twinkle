@@ -116,6 +116,7 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 ^Replaces		{ return T_HDR_REPLACES; }
 ^Reply-To		{ return T_HDR_REPLY_TO; }
 ^Require		{ return T_HDR_REQUIRE; }
+^(Request-Disposition)|d {return T_HDR_REQUEST_DISPOSITION; }
 ^Retry-After		{ return T_HDR_RETRY_AFTER; }
 ^Route			{ return T_HDR_ROUTE; }
 ^RSeq			{ return T_HDR_RSEQ; }

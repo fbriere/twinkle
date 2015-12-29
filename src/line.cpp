@@ -559,16 +559,26 @@ void t_line::stop_timer(t_line_timer timer, t_object_id did) {
 }
 
 void t_line::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
-		const string &subject, bool anonymous)
+		const string &subject, bool no_fork, bool anonymous)
 {
+	t_hdr_request_disposition hdr_request_disposition;
+	
+	if (no_fork) {
+		hdr_request_disposition.set_fork_directive(
+			t_hdr_request_disposition::NO_FORK);
+	}
+
 	invite(pu, to_uri, to_display, subject, t_hdr_referred_by(), 
-			t_hdr_replaces(), t_hdr_require(), anonymous);
+			t_hdr_replaces(), t_hdr_require(), hdr_request_disposition,
+			anonymous);
 }
 
 void t_line::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by,
 		const t_hdr_replaces &hdr_replaces,
-		const t_hdr_require &hdr_require, bool anonymous)
+		const t_hdr_require &hdr_require, 
+		const t_hdr_request_disposition &hdr_request_disposition,
+		bool anonymous)
 {
 	assert(pu);
 	
@@ -608,7 +618,8 @@ void t_line::invite(t_phone_user *pu, const t_url &to_uri, const string &to_disp
 	open_dialog = new t_dialog(this);
 	MEMMAN_NEW(open_dialog);
 	open_dialog->send_invite(to_uri, to_display, subject, hdr_referred_by, 
-			hdr_replaces, hdr_require, anonymous);
+			hdr_replaces, hdr_require, hdr_request_disposition,
+			anonymous);
 
 	cleanup();
 }
@@ -1845,7 +1856,8 @@ bool t_line::match(StunMessage *r, t_tuid tuid) const {
 }
 
 bool t_line::match_replaces(const string &call_id, const string &to_tag, 
-		const string &from_tag, bool &early_matched) const
+		const string &from_tag, bool no_fork_req_disposition,
+		bool &early_matched) const
 {
 	if (active_dialog && active_dialog->match(call_id, to_tag, from_tag)) {
 		early_matched = false;
@@ -1853,10 +1865,16 @@ bool t_line::match_replaces(const string &call_id, const string &to_tag,
 	}
 
 	// RFC 3891 3
-	// And early dialog only matches when it was created by the UA
+	// An early dialog only matches when it was created by the UA
+	// As an exception to this rule we accept a match when the incoming
+	// request contained a no-fork request disposition. This disposition
+	// indicated that the request did not fork. The reason why RFC 3891 3
+	// does not allow a match is to avoid problems with forked requests.
+	// With this exception, call transfer scenario's during ringing can
+	// be implemented.
 	t_dialog *d;
-	if ((d = match_call_id_tags(call_id, to_tag, from_tag, 
-		pending_dialogs)) != NULL && d->is_call_id_owner()) 
+	if ((d = match_call_id_tags(call_id, to_tag, from_tag, pending_dialogs)) != NULL &&
+	    (d->is_call_id_owner() || no_fork_req_disposition)) 
 	{
 		early_matched = true;
 		return true;
@@ -1979,9 +1997,19 @@ t_url t_line::get_remote_target_uri(void) const {
 	return active_dialog->get_remote_target_uri();
 }
 
+t_url t_line::get_remote_target_uri_pending(void) const {
+	if (pending_dialogs.empty()) return t_url();
+	return pending_dialogs.front()->get_remote_target_uri();
+}
+
 string t_line::get_remote_target_display(void) const {
 	if (!active_dialog) return "";
 	return active_dialog->get_remote_target_display();
+}
+
+string t_line::get_remote_target_display_pending(void) const {
+	if (pending_dialogs.empty()) return "";
+	return pending_dialogs.front()->get_remote_target_display();
 }
 
 t_url t_line::get_remote_uri(void) const {
@@ -1989,9 +2017,19 @@ t_url t_line::get_remote_uri(void) const {
 	return active_dialog->get_remote_uri();
 }
 
+t_url t_line::get_remote_uri_pending(void) const {
+	if (pending_dialogs.empty()) return t_url();
+	return pending_dialogs.front()->get_remote_uri();
+}
+
 string t_line::get_remote_display(void) const {
 	if (!active_dialog) return "";
 	return active_dialog->get_remote_display();
+}
+
+string t_line::get_remote_display_pending(void) const {
+	if (pending_dialogs.empty()) return "";
+	return pending_dialogs.front()->get_remote_display();
 }
 
 string t_line::get_call_id(void) const {
@@ -1999,14 +2037,29 @@ string t_line::get_call_id(void) const {
 	return active_dialog->get_call_id();
 }
 
+string t_line::get_call_id_pending(void) const {
+	if (pending_dialogs.empty()) return "";
+	return pending_dialogs.front()->get_call_id();
+}
+
 string t_line::get_local_tag(void) const {
 	if (!active_dialog) return "";
 	return active_dialog->get_local_tag();
 }
 
+string t_line::get_local_tag_pending(void) const {
+	if (pending_dialogs.empty()) return "";
+	return pending_dialogs.front()->get_local_tag();
+}
+
 string t_line::get_remote_tag(void) const {
 	if (!active_dialog) return "";
 	return active_dialog->get_remote_tag();
+}
+
+string t_line::get_remote_tag_pending(void) const {
+	if (pending_dialogs.empty()) return "";
+	return pending_dialogs.front()->get_remote_tag();
 }
 
 bool t_line::remote_extension_supported(const string &extension) const {

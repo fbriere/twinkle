@@ -165,14 +165,20 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 	}
 
 	// preprocessing
-	preprocessing_silence = speex_preprocess_run(speex_preprocess_state, sb);
+	preprocessing_silence = !speex_preprocess_run(speex_preprocess_state, sb);
+	
+	// According to the speex API documentation the return value
+	// from speex_preprocess_run() is only defined when VAD is
+	// enabled. So to be safe, reset the return value, if VAD is
+	// disabled.
+	if (!speex_dsp_vad) preprocessing_silence = false;
 #endif
 
 	// encoding
 	sound_payload_size = audio_encoder->encode(sb, nsamples, payload, payload_size, silence);	
 
 	// recognizing silence (both from preprocessing and encoding)
-	silence = silence || !preprocessing_silence;
+	silence = silence || preprocessing_silence;
 
 	return true;
 }
@@ -380,6 +386,7 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 
 	// Voice activity detection
 	arg = (user_config->get_speex_dsp_vad() ? 1 : 0);
+	speex_dsp_vad = (bool)arg;
 	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &arg);
 
 	// Acoustic echo cancellation 

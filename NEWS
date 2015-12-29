@@ -1,3 +1,34 @@
+25 february 2009 - 1.4.2
+========================
+- Integration with Diamondcard Worldwide Communication Service
+  (worldwide calls to regular and cell phones and SMS).
+- Show number of calls and total call duration in call history.
+- Show message size while typing an instant message.
+- Show "referred by" party for an incoming transferred call in systray popup.
+- Option to allow call transfer while consultation call is still in progress.
+- Improved lock file checking. No more stale lock files.
+
+Bug fixes:
+----------
+- Opening an IM attachment did not work anymore.
+
+Build fixes:
+------------
+- Link with ncurses library
+
+
+31 january 2009 - 1.4.1
+=======================
+Bug fixes:
+----------
+- No sound when Twinkle is compiled without speex support.
+
+Build fixes:
+------------
+- Compiling without KDE sometimes failed (cannot find -lqt-mt).
+- Configure script did not correctly check for the readline-devel package.
+
+
 25 january 2009 - 1.4
 =====================
 - Service route discovery during registration.

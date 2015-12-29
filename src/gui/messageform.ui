@@ -243,6 +243,12 @@
         <receiver>MessageForm</receiver>
         <slot>toAddressChanged(const QString&amp;)</slot>
     </connection>
+    <connection>
+        <sender>msgLineEdit</sender>
+        <signal>textChanged(const QString&amp;)</signal>
+        <receiver>MessageForm</receiver>
+        <slot>showMessageSize()</slot>
+    </connection>
 </connections>
 <includes>
     <include location="local" impldecl="in declaration">getaddressform.h</include>
@@ -280,6 +286,7 @@
     <variable access="private">QString clickedAttachment;</variable>
     <variable access="private">void *_serviceMap;</variable>
     <variable access="private">QLabel *_isComposingLabel;</variable>
+    <variable access="private">QLabel *_msgSizeLabel;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * e )</slot>
@@ -294,7 +301,7 @@
     <slot>displayDeliveryNotification( const QString &amp; notification )</slot>
     <slot>setRemotePartyCaption( void )</slot>
     <slot>showAttachmentPopupMenu( const QString &amp; attachment )</slot>
-    <slot>attachmentPopupActivated( unsigned int id )</slot>
+    <slot>attachmentPopupActivated( int id )</slot>
     <slot>saveAttachment()</slot>
     <slot>chooseFileToSend()</slot>
     <slot>setComposingIndication( const QString &amp; name )</slot>
@@ -302,6 +309,7 @@
     <slot>setLocalComposingIndicationActive()</slot>
     <slot>keyPressEvent( QKeyEvent * e )</slot>
     <slot>toAddressChanged( const QString &amp; address )</slot>
+    <slot>showMessageSize()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

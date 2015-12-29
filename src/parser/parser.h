@@ -101,26 +101,27 @@
      T_HDR_REPLACES = 317,
      T_HDR_REPLY_TO = 318,
      T_HDR_REQUIRE = 319,
-     T_HDR_RETRY_AFTER = 320,
-     T_HDR_ROUTE = 321,
-     T_HDR_RSEQ = 322,
-     T_HDR_SERVER = 323,
-     T_HDR_SIP_ETAG = 324,
-     T_HDR_SIP_IF_MATCH = 325,
-     T_HDR_SUBJECT = 326,
-     T_HDR_SUBSCRIPTION_STATE = 327,
-     T_HDR_SUPPORTED = 328,
-     T_HDR_TIMESTAMP = 329,
-     T_HDR_TO = 330,
-     T_HDR_UNSUPPORTED = 331,
-     T_HDR_USER_AGENT = 332,
-     T_HDR_VIA = 333,
-     T_HDR_WARNING = 334,
-     T_HDR_WWW_AUTHENTICATE = 335,
-     T_HDR_UNKNOWN = 336,
-     T_CRLF = 337,
-     T_ERROR = 338,
-     T_NULL = 339
+     T_HDR_REQUEST_DISPOSITION = 320,
+     T_HDR_RETRY_AFTER = 321,
+     T_HDR_ROUTE = 322,
+     T_HDR_RSEQ = 323,
+     T_HDR_SERVER = 324,
+     T_HDR_SIP_ETAG = 325,
+     T_HDR_SIP_IF_MATCH = 326,
+     T_HDR_SUBJECT = 327,
+     T_HDR_SUBSCRIPTION_STATE = 328,
+     T_HDR_SUPPORTED = 329,
+     T_HDR_TIMESTAMP = 330,
+     T_HDR_TO = 331,
+     T_HDR_UNSUPPORTED = 332,
+     T_HDR_USER_AGENT = 333,
+     T_HDR_VIA = 334,
+     T_HDR_WARNING = 335,
+     T_HDR_WWW_AUTHENTICATE = 336,
+     T_HDR_UNKNOWN = 337,
+     T_CRLF = 338,
+     T_ERROR = 339,
+     T_NULL = 340
    };
 #endif
 /* Tokens.  */
@@ -186,26 +187,27 @@
 #define T_HDR_REPLACES 317
 #define T_HDR_REPLY_TO 318
 #define T_HDR_REQUIRE 319
-#define T_HDR_RETRY_AFTER 320
-#define T_HDR_ROUTE 321
-#define T_HDR_RSEQ 322
-#define T_HDR_SERVER 323
-#define T_HDR_SIP_ETAG 324
-#define T_HDR_SIP_IF_MATCH 325
-#define T_HDR_SUBJECT 326
-#define T_HDR_SUBSCRIPTION_STATE 327
-#define T_HDR_SUPPORTED 328
-#define T_HDR_TIMESTAMP 329
-#define T_HDR_TO 330
-#define T_HDR_UNSUPPORTED 331
-#define T_HDR_USER_AGENT 332
-#define T_HDR_VIA 333
-#define T_HDR_WARNING 334
-#define T_HDR_WWW_AUTHENTICATE 335
-#define T_HDR_UNKNOWN 336
-#define T_CRLF 337
-#define T_ERROR 338
-#define T_NULL 339
+#define T_HDR_REQUEST_DISPOSITION 320
+#define T_HDR_RETRY_AFTER 321
+#define T_HDR_ROUTE 322
+#define T_HDR_RSEQ 323
+#define T_HDR_SERVER 324
+#define T_HDR_SIP_ETAG 325
+#define T_HDR_SIP_IF_MATCH 326
+#define T_HDR_SUBJECT 327
+#define T_HDR_SUBSCRIPTION_STATE 328
+#define T_HDR_SUPPORTED 329
+#define T_HDR_TIMESTAMP 330
+#define T_HDR_TO 331
+#define T_HDR_UNSUPPORTED 332
+#define T_HDR_USER_AGENT 333
+#define T_HDR_VIA 334
+#define T_HDR_WARNING 335
+#define T_HDR_WWW_AUTHENTICATE 336
+#define T_HDR_UNKNOWN 337
+#define T_CRLF 338
+#define T_ERROR 339
+#define T_NULL 340
 
 
 
@@ -239,7 +241,7 @@ typedef union YYSTYPE
 	t_challenge		*yyt_challenge;
 }
 /* Line 1529 of yacc.c.  */
-#line 243 "parser.h"
+#line 245 "parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
