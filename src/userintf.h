@@ -46,6 +46,7 @@ using namespace std;
 
 // Message prioritoes
 enum t_msg_priority {
+	MSG_NO_PRIO,
 	MSG_INFO,
 	MSG_WARNING,
 	MSG_CRITICAL
@@ -367,6 +368,12 @@ public:
 	virtual void cmd_quit(void);
 	void cmd_quit_async(void);
 	virtual void cmd_cli(const string &command, bool immeidate);
+	
+	/** Execute the SHOW command. */
+	virtual void cmd_show(void);
+	
+	/** Execute the HIDE command. */
+	virtual void cmd_hide(void);
 	
 	// Lookup a URL in the address book
 	virtual string get_name_from_abook(t_user *user_config, const t_url &u);

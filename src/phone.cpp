@@ -647,6 +647,24 @@ t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid, bool active
 	return NULL;
 }
 
+int t_phone::hunt_line(void) {
+	// Send incoming call to active line if it is idle.
+	if (lines.at(active_line)->get_substate() == LSSUB_IDLE) {
+		return active_line;
+	}
+	
+	if (sys_config->get_call_waiting() || all_lines_idle()) {
+		// Send the INVITE to the first idle unseized line
+		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
+			if (lines[i]->get_substate() == LSSUB_IDLE) {
+				return i;
+			}
+		}
+	}
+	
+	return -1;
+}
+
 //////////////
 // Protected
 //////////////
@@ -861,6 +879,14 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		}
 	}
 	
+	// Hunt for an idle line to handle the call.
+	int hunted_line = -1;
+	if (replace_line >= 0) {
+		hunted_line = replace_line;
+	} else {
+		hunted_line = hunt_line();
+	}
+	
 	t_display_url display_url;
 	list<t_display_url> cf_dest; // call forwarding destinations
 	
@@ -875,11 +901,12 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
-		t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL);
+		t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL, hunted_line + 1);
 		script.exec_action(script_result, r);
 		
-		if (!script_result.display_msg.empty()) {
-			ui->cb_display_msg(script_result.display_msg, MSG_INFO);
+		if (!script_result.display_msgs.empty()) {
+			string text(join_strings(script_result.display_msgs, "\n"));
+			ui->cb_display_msg(text, MSG_NO_PRIO);
 		}
 		
 		// Override display name with caller name returned by script
@@ -893,6 +920,8 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 			log_file->write_footer();
 		}
 	}
+	
+	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED, 0);
 	
 	// Lookup address in address book.
 	if (script_result.caller_name.empty() &&
@@ -940,6 +969,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -956,6 +988,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 			user_config->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
 		
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -985,6 +1020,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -1000,6 +1038,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 			user_config->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
 		
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -1024,6 +1065,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 			user_config->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
 	
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -1048,6 +1092,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -1063,38 +1110,31 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		move_line_to_background(replace_line);
 	}
 
-	// Send the INVITE to the active line if it is idle
-	if (lines[active_line]->get_substate() == LSSUB_IDLE) {
+	// Auto answer
+	if (hunted_line == active_line) {
+		// Auto-answer is only applicable to the active line.
+		
 		if (replace_line >= 0) {
 			// RFC 3891
 			// This call replaces an existing call, answer immediate.
-			lines[active_line]->set_auto_answer(true);
+			lines.at(active_line)->set_auto_answer(true);
 		} else if (pu->service->is_auto_answer_active() ||
 			script_result.action == t_script_result::ACTION_AUTOANSWER) 
 		{
 			// Auto answer
 			log_file->write_report("Auto answer",
 				"t_phone::recvd_invite");
-			lines[active_line]->set_auto_answer(true);
-		}	
-	
-		lines[active_line]->recvd_invite(user_config, r, tid,
-			script_result.ringtone);
-		
-		return;
-	}
-
-	if (sys_config->get_call_waiting() || all_lines_idle()) {
-		// Send the INVITE to the first idle unseized line
-		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
-			if (lines[i]->get_substate() == LSSUB_IDLE) {
-				lines[i]->recvd_invite(user_config, r, tid,
-					script_result.ringtone);
-				return;
-			}
+			lines.at(active_line)->set_auto_answer(true);
 		}
 	}
-
+	
+	// Send INVITE to hunted line
+	if (hunted_line >= 0) {
+		lines.at(hunted_line)->recvd_invite(user_config, r, tid,
+			script_result.ringtone);
+		return;
+	}
+	
 	// The phone is busy
 	// Call forwarding busy
 	if (pu->service->get_cf_active(CF_BUSY, cf_dest)) {
@@ -1110,6 +1150,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
 		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
@@ -1124,6 +1167,9 @@ void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
 		user_config->get_profile_name());
 	call_record.fail_call(resp);
 	call_history->add_call_record(call_record);
+	
+	// Trigger call script
+	script_in_call_failed.exec_notify(resp);
 		
 	MEMMAN_DELETE(resp);
 	delete resp;
@@ -2510,8 +2556,10 @@ bool t_phone::join_3way(unsigned short lineno1, unsigned short lineno2) {
 	// talking line is on-hold too!
 	if (talking_line->get_is_on_hold()) {
 		// Retrieve the held call
+		// As the 3-way indication (is_3way) is set, the audio sessions
+		// will automatically connect to each other.
 		talking_line->retrieve();
-	} else {
+	} else {	
 		// Start the 3-way on the talking line
 		t_audio_session *as_talking = talking_line->get_audio_session();
 		if (as_talking) as_talking->start_3way();
@@ -2646,6 +2694,16 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 			unlock();
 			return false;
 		}
+		
+		// Check if there is already another profile having
+		// the same contact name.
+		if (user->get_contact_name() == user_config.get_contact_name() &&
+		    USER_HOST(user) == USER_HOST(&user_config))
+		{
+			*dup_user = user;
+			unlock();
+			return false;
+		}
 	}
 	
 	// Add the user
@@ -2720,7 +2778,7 @@ t_service *t_phone::ref_service(t_user *user) {
 	return srv;
 }
 
-string t_phone::get_ip_sip(t_user *user) {
+string t_phone::get_ip_sip(const t_user *user) const {
 	string result;
 
 	lock();
@@ -2735,7 +2793,7 @@ string t_phone::get_ip_sip(t_user *user) {
 	return result;
 }
 
-unsigned short t_phone::get_public_port_sip(t_user *user) {
+unsigned short t_phone::get_public_port_sip(const t_user *user) const {
 	unsigned short result;
 	
 	lock();

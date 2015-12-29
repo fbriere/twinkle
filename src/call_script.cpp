@@ -83,7 +83,7 @@ void t_script_result::clear(void) {
 	contact.clear();
 	caller_name.clear();
 	ringtone.clear();
-	display_msg.clear();
+	display_msgs.clear();
 }
 
 void t_script_result::set_parameter(const string &parameter, const string &value) {
@@ -102,7 +102,7 @@ void t_script_result::set_parameter(const string &parameter, const string &value
 	} else if (parameter == SCR_RINGTONE) {
 		ringtone = value;
 	} else if (parameter == SCR_DISPLAY_MSG) {
-		display_msg = value;
+		display_msgs.push_back(value);
 	}
 	// Unknown parameters are ignored
 }
@@ -167,7 +167,7 @@ char **t_call_script::create_env(t_sip_message *m) const {
 		
 		// Number of Twinkle environment variables
 		int start_twinkle_env = environ_size; // Position of Twinkle variables
-		environ_size += 2;
+		environ_size += 3;
 		
 		// MEMMAN not called on purpose
 		char **env = new char *[environ_size + 1];
@@ -191,6 +191,10 @@ char **t_call_script::create_env(t_sip_message *m) const {
 		var_twinkle = "TWINKLE_TRIGGER=";
 		var_twinkle += trigger2str(trigger);
 		env[start_twinkle_env + 1] = strdup(var_twinkle.c_str());
+		
+		var_twinkle = "TWINKLE_LINE=";
+		var_twinkle += ulong2str(line_number);
+		env[start_twinkle_env + 2] = strdup(var_twinkle.c_str());
 		
 		// Terminate array with NULL
 		env[environ_size] = NULL;
@@ -216,9 +220,10 @@ char **t_call_script::create_argv(void) const {
 		return argv;
 }
 
-t_call_script::t_call_script(t_user *_user_config, t_trigger _trigger) :
+t_call_script::t_call_script(t_user *_user_config, t_trigger _trigger, uint16 _line_number) :
 	user_config(_user_config),
-	trigger(_trigger)
+	trigger(_trigger),
+	line_number(_line_number)
 {
 	switch (trigger) {
 	case TRIGGER_IN_CALL:
@@ -262,6 +267,8 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 	log_file->write_raw(script_command);
 	log_file->write_raw("\nTrigger: ");
 	log_file->write_raw(trigger2str(trigger));
+	log_file->write_raw("\nLine: ");
+	log_file->write_raw(line_number);
 	log_file->write_endl();
 	log_file->write_footer();
 	

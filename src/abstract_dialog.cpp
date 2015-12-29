@@ -241,9 +241,20 @@ t_abstract_dialog::t_abstract_dialog(t_user *user) :
 	
 	remote_ipaddr = 0;
 	remote_port = 0;
+	
+	log_file->write_header("t_abstract_dialog::t_abstract_dialog", LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("Created dialog, id=");
+	log_file->write_raw(get_object_id());
+	log_file->write_endl();
+	log_file->write_footer();
 }
 
 t_abstract_dialog::~t_abstract_dialog() {
+	log_file->write_header("t_abstract_dialog::~t_abstract_dialog", LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("Destroy dialog, id=");
+	log_file->write_raw(get_object_id());
+	log_file->write_endl();
+	log_file->write_footer();
 }
 
 t_user *t_abstract_dialog::get_user(void) const {

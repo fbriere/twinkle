@@ -500,3 +500,19 @@ void SysSettingsForm::devMicSelected(int idx) {
 	otherMicTextLabel->setEnabled(b);
 	otherMicLineEdit->setEnabled(b);
 }
+
+void SysSettingsForm::playRingToneCheckBoxToggles(bool on) {
+	if (on) {
+		ringtoneLineEdit->setEnabled(customRingtoneRadioButton->isChecked());
+	} else {
+		ringtoneLineEdit->setEnabled(false);
+	}
+}
+
+void SysSettingsForm::playRingBackToneCheckBoxToggles(bool on) {
+	if (on) {
+		ringbackLineEdit->setEnabled(customRingbackRadioButton->isChecked());
+	} else {
+		ringbackLineEdit->setEnabled(false);
+	}
+}

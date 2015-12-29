@@ -18,16 +18,24 @@
 
 #include "address_finder.h"
 #include "gui.h"
+#include "log.h"
 
 t_address_finder *t_address_finder::instance = NULL;
 t_mutex t_address_finder::mtx_instance;
 
 t_address_finder::t_address_finder() {
 #ifdef HAVE_KDE
-	abook = KABC::StdAddressBook::self(false);
+	// Load KAddressbook asynchronously. An LDAP address book
+	// may take a while to load completely. This should not block
+	// an incoming call. For the first call it may happen that an
+	// address cannot be found as loading is still in progress.
+	// This is an inconvenience, but will not harm the call.
+	abook = KABC::StdAddressBook::self(true);
 	connect(abook, 
 		SIGNAL(addressBookChanged(AddressBook *)),
 		this, SLOT(invalidate_cache()));
+	
+	log_file->write_report("Preload KAddressbook.", "t_address_finder::t_address_finder");
 #endif
 }
 
@@ -72,6 +80,12 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 #endif
 }
 
+void t_address_finder::preload(void) {
+	// The address book is preloaded on creation of the
+	// singleton instance.
+	(void)t_address_finder::get_instance();
+}
+
 t_address_finder *t_address_finder::get_instance(void) {
 	mtx_instance.lock();
 	if (!instance) {
@@ -104,4 +118,7 @@ void t_address_finder::invalidate_cache(void) {
 	mtx_finder.lock();
 	last_url.set_url("");
 	mtx_finder.unlock();
+	log_file->write_report("Address finder cache invalidated.",
+			       " t_address_finder::invalidate_cache",
+			       LOG_NORMAL, LOG_DEBUG);
 }

@@ -1387,11 +1387,17 @@ The noise reduction algorithm is very simplistic. Sound is captured as 16 bits s
                                         <property name="name">
                                             <cstring>openRingtoneToolButton</cstring>
                                         </property>
+                                        <property name="focusPolicy">
+                                            <enum>TabFocus</enum>
+                                        </property>
                                         <property name="text">
                                             <string></string>
                                         </property>
                                         <property name="iconSet">
                                             <iconset>fileopen.png</iconset>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Select ring tone file.</string>
                                         </property>
                                     </widget>
                                 </hbox>
@@ -1496,11 +1502,17 @@ Depending on your SIP provider the network might provide ring back tone or an an
                                         <property name="name">
                                             <cstring>openRingbackToolButton</cstring>
                                         </property>
+                                        <property name="focusPolicy">
+                                            <enum>TabFocus</enum>
+                                        </property>
                                         <property name="text">
                                             <string></string>
                                         </property>
                                         <property name="iconSet">
                                             <iconset>fileopen.png</iconset>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Select ring back tone file.</string>
                                         </property>
                                     </widget>
                                 </hbox>
@@ -1679,8 +1691,8 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <connection>
         <sender>playRingtoneCheckBox</sender>
         <signal>toggled(bool)</signal>
-        <receiver>ringtoneLineEdit</receiver>
-        <slot>setEnabled(bool)</slot>
+        <receiver>SysSettingsForm</receiver>
+        <slot>playRingToneCheckBoxToggles(bool)</slot>
     </connection>
     <connection>
         <sender>playRingtoneCheckBox</sender>
@@ -1703,8 +1715,8 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <connection>
         <sender>playRingbackCheckBox</sender>
         <signal>toggled(bool)</signal>
-        <receiver>ringbackLineEdit</receiver>
-        <slot>setEnabled(bool)</slot>
+        <receiver>SysSettingsForm</receiver>
+        <slot>playRingBackToneCheckBoxToggles(bool)</slot>
     </connection>
     <connection>
         <sender>playRingbackCheckBox</sender>
@@ -1787,8 +1799,12 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>autoShowCheckBox</tabstop>
     <tabstop>autoShowTimeoutSpinBox</tabstop>
     <tabstop>ringtoneComboBox</tabstop>
+    <tabstop>otherRingtoneLineEdit</tabstop>
     <tabstop>speakerComboBox</tabstop>
+    <tabstop>otherSpeakerLineEdit</tabstop>
     <tabstop>micComboBox</tabstop>
+    <tabstop>otherMicLineEdit</tabstop>
+    <tabstop>validateAudioCheckBox</tabstop>
     <tabstop>reduceNoiseMicCheckBox</tabstop>
     <tabstop>ossFragmentComboBox</tabstop>
     <tabstop>alsaPlayPeriodComboBox</tabstop>
@@ -1796,9 +1812,14 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>playRingtoneCheckBox</tabstop>
     <tabstop>defaultRingtoneRadioButton</tabstop>
     <tabstop>ringtoneLineEdit</tabstop>
+    <tabstop>openRingtoneToolButton</tabstop>
     <tabstop>playRingbackCheckBox</tabstop>
     <tabstop>defaultRingbackRadioButton</tabstop>
     <tabstop>ringbackLineEdit</tabstop>
+    <tabstop>openRingbackToolButton</tabstop>
+    <tabstop>abLookupNameCheckBox</tabstop>
+    <tabstop>abOverrideDisplayCheckBox</tabstop>
+    <tabstop>abLookupPhotoCheckBox</tabstop>
     <tabstop>sipUdpPortSpinBox</tabstop>
     <tabstop>rtpPortSpinBox</tabstop>
     <tabstop>logMaxSizeSpinBox</tabstop>
@@ -1810,9 +1831,6 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>cancelPushButton</tabstop>
     <tabstop>customRingtoneRadioButton</tabstop>
     <tabstop>customRingbackRadioButton</tabstop>
-    <tabstop>abLookupNameCheckBox</tabstop>
-    <tabstop>abOverrideDisplayCheckBox</tabstop>
-    <tabstop>abLookupPhotoCheckBox</tabstop>
 </tabstops>
 <includes>
     <include location="local" impldecl="in declaration">sys_settings.h</include>
@@ -1854,6 +1872,8 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <slot>devRingtoneSelected( int idx )</slot>
     <slot>devSpeakerSelected( int idx )</slot>
     <slot>devMicSelected( int idx )</slot>
+    <slot>playRingToneCheckBoxToggles( bool on )</slot>
+    <slot>playRingBackToneCheckBoxToggles( bool on )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

@@ -49,6 +49,7 @@ void t_media_buffer::add(unsigned char *data, int len) {
 		return;
 	}
 
+	int current_size_content = size_content();
 	if (empty) {
 		data_start = 0;
 		data_end = len - 1;
@@ -71,7 +72,7 @@ void t_media_buffer::add(unsigned char *data, int len) {
 	// Check if the new data wrapped over the start of the old data.
 	// If so, then advance the start of the old data behind the end of the new
 	// data as new data has erased the oldest data.
-	if (buf_size - size_content() < len) {
+	if (buf_size - current_size_content < len) {
 		pos_start =  (data_end + 1) % buf_size;
 	}
 

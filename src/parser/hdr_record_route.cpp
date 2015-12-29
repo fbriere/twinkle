@@ -19,6 +19,7 @@
 #include "definitions.h"
 #include "hdr_record_route.h"
 #include "parse_ctrl.h"
+#include "util.h"
 
 void t_route::add_param(const t_parameter &p) {
 	params.push_back(p);
@@ -33,7 +34,7 @@ string t_route::encode(void) const {
 
 	if (display.size() > 0) {
 		s += '"';
-		s += display;
+		s += escape(display, '"');
 		s += '"';
 		s += ' ';
 	}

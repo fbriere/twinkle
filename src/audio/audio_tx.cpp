@@ -27,6 +27,7 @@
 #include "phone.h"
 #include "userintf.h"
 #include "line.h"
+#include "sequence_number.h"
 #include "audits/memman.h"
 
 extern t_phone *phone;
@@ -437,7 +438,7 @@ void t_audio_tx::run(void) {
 				    	ptime * (audio_sample_rate(codec) / 1000) * 2)
 				{
 					// Fill the sample buffer with silence
-					int len = ptime * (audio_sample_rate(codec) / 1000);
+					int len = ptime * (audio_sample_rate(codec) / 1000) * 2;
 					memset(sample_buf, 0, len);
 					play_pcm(sample_buf, len, true);
 				}
@@ -509,7 +510,7 @@ void t_audio_tx::run(void) {
 				log_file->write_raw(": SSRC received (");
 				log_file->write_raw(adu->getSource().getID());
 				log_file->write_raw(") has unsupported codec ");
-				log_file->write_raw(ui->format_codec(codec));
+				log_file->write_raw(adu->getType());
 				log_file->write_endl();
 				log_file->write_footer();
 				
@@ -638,11 +639,11 @@ void t_audio_tx::run(void) {
 		// This must be done before decoding the received samples as the
 		// speex decoder has its own PLC algorithm for which it needs the decoding
 		// state before decoding the new samples.
-		if (adu->getSeqNum() != (last_seqnum + 1) % 65536 && last_seqnum != -1) {
+		seq16_t seq_recvd(adu->getSeqNum());
+		seq16_t seq_last(static_cast<uint16>(last_seqnum));
+		if (last_seqnum != -1 && seq_recvd - seq_last > 1) {
 			// Packets have been lost
-			int num_lost = adu->getSeqNum() - last_seqnum - 1;
-			if (num_lost < 0) num_lost += 65536; // seqnum wrapped around
-
+			uint16 num_lost = (seq_recvd - seq_last) - 1;
 			log_file->write_header("t_audio_tx::run", LOG_NORMAL, LOG_DEBUG);
 			log_file->write_raw("Audio tx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);

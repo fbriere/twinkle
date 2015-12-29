@@ -17,7 +17,8 @@ HEADERS	+= gui.h \
 	qt_translator.h \
 	core_strings.h \
 	addresslistviewitem.h \
-	yesnodialog.h
+	yesnodialog.h \
+	command_args.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
@@ -192,7 +193,8 @@ IMAGES	= images/filenew \
 	images/mwi_failure16.png
 
 TRANSLATIONS	= lang/twinkle_nl.ts \
-	lang/twinkle_de.ts
+	lang/twinkle_de.ts \
+	lang/twinkle_cs.ts
 
 unix {
   UI_DIR = .ui

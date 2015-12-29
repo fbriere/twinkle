@@ -39,6 +39,9 @@ class t_audio_session {
 private:
 	// SIP session owning this audio session
 	t_session	*session;
+	
+	/** Mutex for concurrent access to the session. */
+	mutable t_mutex	mtx_session;
 
 	// This flag indicates if the created audio session is valid.
 	// It might be invalid because, the RTP session could not be created
@@ -91,6 +94,12 @@ public:
 	~t_audio_session();
 
 	void run(void);
+	
+	/**
+	 * Change the owning session.
+	 * @param _session New session owning this audio session.
+	 */
+	void set_session(t_session *_session);
 
 	// Set outgoing/incoming DTMF dynamic payload types
 	void set_pt_out_dtmf(unsigned short pt);

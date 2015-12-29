@@ -16,107 +16,172 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * Call scripting interface.
+ * A call script is called by Twinkle during call processing.
+ * Currently only when a call comes in (INVITE received).
+ * Twinkle calls the script and based of the output of the script, the
+ * call is further handled.
+ * 
+ * The following environment variables are passed to the script:
+ * 
+@verbatim
+   TWINKLE_USER_PROFILE=<user profile name>
+   SIPREQUEST_METHOD=<method>
+   SIPREQUEST_URI=<request uri>
+   SIP_<header_name>=<header value>
+@endverbatim
+ * 
+ * The header name is in capitals and dashed are replaced by underscores
+ * 
+ * The script can return on stdout how the call should be further
+ * processed. The following output parameters are recognized:
+ * 
+@verbatim
+   action=[continue|reject|dnd|redirect]
+   reason=<reason phrase>, for reject and dnd actions
+   contact=<sip uri>, for redirect ation
+   ringtone=<name of wav file>, for continue action
+@endverbatim
+ * 
+ * If no action is returned, the "continue" action is performed.
+ * Invalid output will be skipped.
+ */
+
 #ifndef _H_CALL_SCRIPT
 #define _H_CALL_SCRIPT
 
+#include <vector>
 #include <string>
+#include <cc++/config.h>
 #include "user.h"
 #include "parser/request.h"
 
 using namespace std;
 
-/*
-   A call script is called by Twinkle during call processing.
-   Currently only when a call comes in (INVITE received).
-   Twinkle calls the script and based of the output of the script, the
-   call is further handled.
-   
-   The following environment variables are passed to the script:
-   
-     TWINKLE_USER_PROFILE=<user profile name>
-     SIPREQUEST_METHOD=<method>
-     SIPREQUEST_URI=<request uri>
-     SIP_<header_name>=<header value>
-   
-   The header name is in capitals and dashed are replaced by underscores
-   
-   The script can return on stdout how the call should be further
-   processed. The following output parameters are recognized:
-   
-     action=[continue|reject|dnd|redirect]
-     reason=<reason phrase>, for reject and dnd actions
-     contact=<sip uri>, for redirect ation
-     ringtone=<name of wav file>, for continue action
-   
-   If no action is returned, the "continue" action is performed.
-   Invalid output will be skipped.
-*/
-
-// Results of the incoming call script
+/** Results of the incoming call script. */
 class t_script_result {
 public:
+	/** Action to perform. */
 	enum t_action {
-		ACTION_CONTINUE, 	// Continue with incoming call
-		ACTION_REJECT, 		// Reject incoming call with 603 response
-		ACTION_DND,		// Do not disturb, send 480 response
-		ACTION_REDIRECT,	// Redirect call (302 response)
-		ACTION_AUTOANSWER,	// Auto answer incoming call
-		ACTION_ERROR		// Fail call due to error (500 response)
+		ACTION_CONTINUE, 	/**< Continue with incoming call */
+		ACTION_REJECT, 		/**< Reject incoming call with 603 response */
+		ACTION_DND,		/**< Do not disturb, send 480 response */
+		ACTION_REDIRECT,	/**< Redirect call (302 response) */
+		ACTION_AUTOANSWER,	/**< Auto answer incoming call */
+		ACTION_ERROR		/**< Fail call due to error (500 response) */
 	};
 	
-	t_action	action;		// How to proceed with call
-	string		reason;		// Reason if call is not continued
-	string		contact;	// Redirect destination for redirect action
-	string		caller_name;	// Name of caller (can be used to override display name)
-	string		ringtone;	// Wav file for ring tone
-	string		display_msg;	// Message to show on display
+	/** @name Output parameters */
+	//@{
+	t_action	action;		/**< How to proceed with call */
+	string		reason;		/**< Reason if call is not continued */
+	string		contact;	/**< Redirect destination for redirect action */
+	string		caller_name;	/**< Name of caller (can be used to override display name) */
+	string		ringtone;	/**< Wav file for ring tone */
+	vector<string>	display_msgs;	/**< Message (multi line) to show on display */
+	//@}
 	
+	/** Constructor. */
 	t_script_result();
+	
+	/**
+	 * Convert string representation to an action.
+	 * @param action_string String representation of an action.
+	 * @return The action.
+	 */
 	static t_action str2action(const string action_string);
+	
+	/** Clear the results. */
 	void clear(void);
 	
-	// Set parameter from values read from the result output of a script
+	/**
+	 * Set output parameter from values read from the result output of a script.
+	 * @param parameter Name of the parameter to set,
+	 * @param value The value to set.
+	 */
 	void set_parameter(const string &parameter, const string &value);
 };
 
+/** Call script definition. */
 class t_call_script {
 public:
+	/** Trigger type. */
 	enum t_trigger {
-		TRIGGER_IN_CALL,
-		TRIGGER_IN_CALL_ANSWERED,
-		TRIGGER_IN_CALL_FAILED,
-		TRIGGER_OUT_CALL,
-		TRIGGER_OUT_CALL_ANSWERED,
-		TRIGGER_OUT_CALL_FAILED,
-		TRIGGER_LOCAL_RELEASE,
-		TRIGGER_REMOTE_RELEASE
+		TRIGGER_IN_CALL,		/**< Incoming call. */
+		TRIGGER_IN_CALL_ANSWERED,	/**< Incoming call answered. */
+		TRIGGER_IN_CALL_FAILED,		/**< Incoming call failed. */
+		TRIGGER_OUT_CALL,		/**< Outgoing call made. */
+		TRIGGER_OUT_CALL_ANSWERED,	/**< Outgoing call answered. */
+		TRIGGER_OUT_CALL_FAILED,	/**< Outgoing call failed. */
+		TRIGGER_LOCAL_RELEASE,		/**< Call released by local party. */
+		TRIGGER_REMOTE_RELEASE		/**< Call released by remotre party. */
 	};
 	
 private:
-	t_user		*user_config;
-	string		script_command;
-	t_trigger	trigger;
+	t_user		*user_config;		/**< The user profile. */
+	string		script_command;		/**< The script to execute. */
+	t_trigger	trigger;		/**< Trigger point for this script. */
 	
+	/**
+	 * Number of the line associated with the call causing the trigger.
+	 * The line numbers start at 1. For some triggers a line number does not
+	 * apply, e.g. incoming call and all lines are busy. In that case the
+	 * line number is 0.
+	 */
+	uint16		line_number;
+	
+	/**
+	 * Convert a trigger type value to a string.
+	 * @param t Trigger
+	 * @return String representation for the trigger.
+	 */
 	string trigger2str(t_trigger t) const;
 	
-	// Create environment for the process running the script.
-	// NOTE: this function creates the env array without registering
-	//       the memory allocation to MEMMAN
+	/**
+	 * Create environment for the process running the script.
+	 * The environment contains the header values of a SIP message.
+	 * @param m The SIP message.
+	 * @return The environment.
+	 * @note This function creates the env array without registering
+	 *       the memory allocation to MEMMAN.
+	 */
 	char **create_env(t_sip_message *m) const;
 	
-	// Create script command argument list
-	// NOTE: this function creates the env array without registering
-	//       the memory allocation to MEMMAN
+	/**
+	 * Create script command argument list.
+	 * @return The argument list.
+	 * @note This function creates the argv array without registering
+	 *       the memory allocation to MEMMAN.
+	 */
 	char **create_argv(void) const;
 	
 protected:
+	/** Cannot use this constructor. */
 	t_call_script() {};
 	
 public:
-	t_call_script(t_user *_user_config, t_trigger _trigger);
+	/** 
+	 * Constructor. 
+	 * @param _user_config User profile associated with the trigger.
+	 * @param _trigger The trigger type.
+	 * @param _line_number Line associated with the trigger (0 if no line
+	 * is associated).
+	 */
+	t_call_script(t_user *_user_config, t_trigger _trigger, uint16 _line_number);
 	
-	// Execute call script
+	/**
+	 * Execute call script resulting in an action.
+	 * @param result Contains the result on return.
+	 * @param m The SIP message triggering this call script.
+	 */
 	void exec_action(t_script_result &result, t_sip_message *m) const;
+	
+	/**
+	 * Execute notification call script.
+	 * @param m The SIP message triggering this call script.
+	 */
 	void exec_notify(t_sip_message *m) const;
 };
 

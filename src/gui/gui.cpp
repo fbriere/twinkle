@@ -25,6 +25,7 @@
 #include "line.h"
 #include "sys_settings.h"
 #include "user.h"
+#include "cmd_socket.h"
 #include "audio/rtp_telephone_event.h"
 #include "sockets/interfaces.h"
 #include "threads/thread.h"
@@ -37,6 +38,7 @@
 #include "util.h"
 #include "address_finder.h"
 #include "yesnodialog.h"
+#include "command_args.h"
 
 #include "qcombobox.h"
 #include "qhbox.h"
@@ -57,11 +59,8 @@
 extern string user_host;
 extern pthread_t thread_id_main;
 
-// External commands
-extern QString callto_destination;
-extern QString cli_command;
-extern bool cmd_immediate_mode;
-extern QString cmd_set_profile;
+// External command arguments
+extern t_command_args g_cmd_args;
 
 QString str2html(const QString &s)
 {
@@ -586,6 +585,7 @@ void t_gui::do_help(const list<t_command_arg> &al) {
 t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
 	use_stdout = false;
 	lastFileBrowsePath = DIR_HOME;
+	
 	mainWindow = new MphoneForm();
 #ifdef HAVE_KDE
 	sys_tray_popup = NULL;
@@ -612,6 +612,14 @@ void t_gui::run(void) {
 	
 	QString s;
 	list<t_user *> user_list = phone->ref_users();
+	
+	// The Qt event loop is not running yet. Explicitly take the Qt lock
+	// to avoid race conditions with other threads that may call GUI call
+	// backs.
+	// NOTE: the t_gui::lock() method cannot be used as this method
+	// will not lock from the main thread and we are running in the
+	// main thread (a bit of a kludge).
+	qApp->lock();
 	
 	// Set configuration file name in titlebar
 	s = PRODUCT_NAME;
@@ -655,7 +663,9 @@ void t_gui::run(void) {
 	mainWindow->resize(sizeMainWin);
 	
 	// Start QApplication/KApplication
-	if (sys_config->get_start_hidden()) {
+	if ((sys_config->get_start_hidden() && !g_cmd_args.cmd_show) ||
+	    g_cmd_args.cmd_hide)
+	{
 		mainWindow->hide();
 	} else {
 		mainWindow->show();
@@ -663,20 +673,25 @@ void t_gui::run(void) {
 	
 	// Activate a profile if the --set-profile option was given on the command
 	// line.
-	if (!cmd_set_profile.isEmpty()) {
-		cmd_cli(string("user ") + cmd_set_profile.ascii(), true);
+	if (!g_cmd_args.cmd_set_profile.isEmpty()) {
+		cmdsocket::cmd_cli(string("user ") + 
+				   g_cmd_args.cmd_set_profile.ascii(), true);
 	}
 	
 	// Execute the call command if a callto destination was specified on the
 	// command line
-	if (!callto_destination.isEmpty()) {
-		cmd_call(callto_destination.ascii(), cmd_immediate_mode);
+	if (!g_cmd_args.callto_destination.isEmpty()) {
+		cmdsocket::cmd_call(g_cmd_args.callto_destination.ascii(), 
+			 g_cmd_args.cmd_immediate_mode);
 	}
 	
 	// Execute a CLI command if one was given on the command line
-	if (!cli_command.isEmpty()) {
-		cmd_cli(cli_command.ascii(), cmd_immediate_mode);
+	if (!g_cmd_args.cli_command.isEmpty()) {
+		cmdsocket::cmd_cli(g_cmd_args.cli_command.ascii(), 
+			g_cmd_args.cmd_immediate_mode);
 	}
+	
+	qApp->unlock();
 	
 	// Start Qt application
 	qApp->exec();
@@ -734,6 +749,8 @@ void t_gui::lock(void) {
 	// is used. The main thread running the Qt event loop takes the
 	// application lock itself already. So take the lock if this is not the
 	// main thread.
+	// If the Qt event loop has not been started yet, then the lock
+	// should also be taken from the main thread.
 	t_userintf::lock();
 	if (!t_thread::is_self(thread_id_main)) {
 		qApp->lock();
@@ -2090,7 +2107,7 @@ bool t_gui::cb_ask_msg(const string &msg, t_msg_priority prio) {
 bool t_gui::cb_ask_msg(QWidget *parent, const string &msg, t_msg_priority prio) {
 	lock();
 	
-	int button = 1;
+	int button = QMessageBox::No;
 	switch (prio) {
 	case MSG_INFO:
 		button = QMessageBox::information(parent, PRODUCT_NAME, msg.c_str(),
@@ -2112,7 +2129,7 @@ bool t_gui::cb_ask_msg(QWidget *parent, const string &msg, t_msg_priority prio) 
 	
 	unlock();
 	
-	return (button == 0);
+	return (button == QMessageBox::Yes);
 }
 
 void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
@@ -2121,6 +2138,8 @@ void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
 	lock();
 	
 	switch (prio) {
+	case MSG_NO_PRIO:
+		break;
 	case MSG_INFO:
 		s = qApp->translate("GUI", "Info:");
 		break;
@@ -2133,7 +2152,11 @@ void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
 		break;
 	}	
 	
-	s.append(" ").append(msg.c_str());
+	if (prio == MSG_NO_PRIO) {
+		s = msg.c_str();
+	} else {
+		s.append(" ").append(msg.c_str());
+	}
 	mainWindow->displayHeader();
 	mainWindow->display(s);
 	
@@ -2312,6 +2335,29 @@ void t_gui::cmd_quit(void) {
 	unlock();
 }
 
+void t_gui::cmd_show(void) {
+	lock();
+	if (mainWindow->isMinimized()) {
+		mainWindow->setWindowState(mainWindow->windowState() & ~Qt::WindowMinimized | Qt::WindowActive);
+		mainWindow->raise();
+	} else {
+		mainWindow->show();
+		mainWindow->raise();
+		mainWindow->setActiveWindow();
+	}
+	unlock();
+}
+
+void t_gui::cmd_hide(void) {
+	lock();
+	if (sys_config->get_gui_use_systray()) {
+		mainWindow->hide();
+	} else {
+		mainWindow->setWindowState(mainWindow->windowState() | Qt::WindowMinimized);
+	}
+	unlock();
+}
+
 string t_gui::get_name_from_abook(t_user *user_config, const t_url &u) {
 	string name;
 	
@@ -2363,12 +2409,15 @@ void t_gui::action_invite(t_user *user_config, const t_url &destination,
 	int line = phone->get_active_line();
 	if (phone->get_line_state(line) == LS_BUSY) return;
 	
-	// Store call info for redial
-	last_called_url = destination;
-	last_called_display = display;
-	last_called_subject = subject;
-	last_called_profile = user_config->get_profile_name();
-	last_called_hide_user = anonymous;
+	t_url vm_url(expand_destination(user_config, user_config->get_mwi_vm_address()));
+	if (destination != vm_url) {
+		// Store call info for redial
+		last_called_url = destination;
+		last_called_display = display;
+		last_called_subject = subject;
+		last_called_profile = user_config->get_profile_name();
+		last_called_hide_user = anonymous;
+	}
 	
 	setLineFields(line);
 	

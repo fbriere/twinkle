@@ -112,6 +112,7 @@ void HistoryForm::show()
 {
 	if (isShown()) {
 		raise();
+		setActiveWindow();
 		return;
 	}
 	
@@ -126,7 +127,13 @@ void HistoryForm::closeEvent( QCloseEvent *e )
 	
 	gettimeofday(&t, NULL);
 	timeLastViewed = t.tv_sec;
-	call_history->clear_num_missed_calls();
+	
+	// If Twinkle is terminated while the history window is
+	// shown, then the call_history object is destroyed, before this
+	// window is closed.
+	if (call_history) {
+		call_history->clear_num_missed_calls();
+	}
 	QDialog::closeEvent(e);
 }
 
@@ -304,6 +311,12 @@ void HistoryForm::call(QListViewItem *item)
 		}
 		emit call(user_config, item->text(HISTCOL_FROMTO), subject, hide_user);
 	}
+}
+
+void HistoryForm::call(void)
+{
+	QListViewItem *item = historyListView->currentItem();
+	if (item) call(item);
 }
 
 void HistoryForm::clearHistory()

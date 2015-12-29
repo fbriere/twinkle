@@ -72,6 +72,14 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Excessive number of socket errors."))
 // phone.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Call transfer - %1"))
 
+// audio_session.cpp
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to open sound card"))
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to open sound card"))
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to open sound card"))
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to create a UDP socket (RTP) on port %1"))
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to create audio receiver thread."))
+_ZAP(QT_TRANSLATE_NOOP("CoreAudio", "Failed to create audio transmitter thread."))
+
 // audio_device.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Sound card cannot be set to full duplex."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot set buffer size on sound card."))

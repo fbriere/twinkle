@@ -18,9 +18,12 @@
 
 #include <iostream>
 #include <cstdio>
+#include <ctime>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <cc++/config.h>
+
 #include "audio_rx.h"
 #include "log.h"
 #include "phone.h"
@@ -28,8 +31,7 @@
 #include "userintf.h"
 #include "line.h"
 #include "sys_settings.h"
-#include <ctime>
-#include <cstdlib>
+#include "sequence_number.h"
 #include "audits/memman.h"
 
 extern t_phone *phone;
@@ -79,7 +81,12 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 			nanosleep(&sleeptimer, NULL);
 			return false;
 		}
+		
+		mtx_3way.unlock();
 	} else {
+		// Don't keep the 3way mutex locked while waiting for the DSP.
+		mtx_3way.unlock();
+		
 		// Get the sound samples from the DSP
 		status = input_device->read(sample_buf, SAMPLE_BUF_SIZE);
 		if (status != SAMPLE_BUF_SIZE) {
@@ -97,7 +104,6 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 				logged_capture_failure = true;
 			}
 			stop_running = true;
-			mtx_3way.unlock();
 			return false;
 		}
 
@@ -117,6 +123,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 		pcm_reduce_noise(sb, SAMPLE_BUF_SIZE / 2);
 	}
 
+	mtx_3way.lock();
 	if (is_3way) {
 		// Send the sound samples to the other receiver if we
 		// are the main receiver.
@@ -480,7 +487,8 @@ void t_audio_rx::run(void) {
 		// the timestamp. This will happen if the DSP delivers more
 		// sound samples than the set sample rate. To compensate for this
 		// samples must be dropped.
-		if (timestamp <= rtp_session->getCurrentTimestamp() + nsamples) {
+		uint32 current_timestamp = rtp_session->getCurrentTimestamp();
+		if (seq32_t(timestamp) <= seq32_t(current_timestamp + nsamples)) {
 			if (dtmf_player) {
 				// Send DTMF payload
 				rtp_session->putData(dtmf_rtp_timestamp, payload,
@@ -507,6 +515,15 @@ void t_audio_rx::run(void) {
 			log_file->write_raw("Audio rx line ");
 			log_file->write_raw(get_line()->get_line_number()+1);
 			log_file->write_raw(": discarded surplus of sound samples.\n");
+			log_file->write_raw("Timestamp: ");
+			log_file->write_raw(timestamp);
+			log_file->write_endl();
+			log_file->write_raw("Current timestamp: ");
+			log_file->write_raw(current_timestamp);
+			log_file->write_endl();
+			log_file->write_raw("nsamples: ");
+			log_file->write_raw(nsamples);
+			log_file->write_endl();
 			log_file->write_footer();
 		}
 
@@ -528,8 +545,9 @@ void t_audio_rx::run(void) {
 		// stack. It might get behind if the sound cards samples a bit
 		// slower than the set sample rate. Advance the timestamp to get
 		// in sync again.
-		if (timestamp <= rtp_session->getCurrentTimestamp() - 
-			(JITTER_BUF_MS / audio_encoder->get_ptime()) * nsamples)
+		current_timestamp = rtp_session->getCurrentTimestamp();
+		if (seq32_t(timestamp) <= seq32_t(current_timestamp - 
+			(JITTER_BUF_MS / audio_encoder->get_ptime()) * nsamples))
 		{
 			timestamp += nsamples * (JITTER_BUF_MS / audio_encoder->get_ptime());
 			log_file->write_header("t_audio_rx::run", LOG_NORMAL, LOG_DEBUG);
@@ -538,6 +556,15 @@ void t_audio_rx::run(void) {
 			log_file->write_raw(": timestamp forwarded by ");
 			log_file->write_raw(nsamples * (JITTER_BUF_MS /
 					audio_encoder->get_ptime()));
+			log_file->write_endl();
+			log_file->write_raw("Timestamp: ");
+			log_file->write_raw(timestamp);
+			log_file->write_endl();
+			log_file->write_raw("Current timestamp: ");
+			log_file->write_raw(current_timestamp);
+			log_file->write_endl();
+			log_file->write_raw("nsamples: ");
+			log_file->write_raw(nsamples);
 			log_file->write_endl();
 			log_file->write_footer();
 		}			

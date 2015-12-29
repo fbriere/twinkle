@@ -16,35 +16,49 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * Objects with a unique object id.
+ */
+
 #ifndef _ID_OBJECT_H
 #define _ID_OBJECT_H
 
 #include "threads/mutex.h"
 
+/**
+ * Object identifier.
+ */
 typedef unsigned short		t_object_id;
 
-/*
+/**
  * Parent class for objects that need a unique object id.
  */
 class t_id_object {
 private:
-	// Mutex for concurrent object id creation.
+	/** Mutex for concurrent object id creation. */
 	static t_mutex		mtx_next_id;
 	
-	// Id for the next object
+	/** Id for the next object. */
 	static t_object_id	next_id;
 	
-	// Unique object identifier.
+	/** Unique object identifier. */
 	t_object_id		id;
 	
 public:
+	/** Constructor */
 	t_id_object();
 	
-	// Get the object id
+	/** 
+	 * Get the object id.
+	 * @return Object id.
+	 */
 	t_object_id get_object_id();
 	
-	// Generate a new object identifier. This can be useful
-	// after making a copy of an object.
+	/**
+	 * Generate a new object identifier. This can be useful
+	 * after making a copy of an object.
+	 */
 	void generate_new_id();
 };
 

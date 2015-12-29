@@ -68,7 +68,7 @@ private:
 class t_oss_io : public t_audio_io {
 public:
 	t_oss_io();
-	~t_oss_io();
+	virtual ~t_oss_io();
 	void enable(bool enable_playback, bool enable_recording);
 	void flush(bool playback_buffer, bool recording_buffer);
 	int get_buffer_space(bool is_recording_buffer);
@@ -88,7 +88,7 @@ private:
 class t_alsa_io : public t_audio_io {
 public:
 	t_alsa_io();
-	~t_alsa_io();
+	virtual ~t_alsa_io();
 	void enable(bool enable_playback, bool enable_recording);
 	void flush(bool playback_buffer, bool recording_buffer);
 	int get_buffer_space(bool is_recording_buffer);

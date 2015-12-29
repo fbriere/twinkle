@@ -19,6 +19,7 @@
 #include "hdr_from.h"
 #include "definitions.h"
 #include "parse_ctrl.h"
+#include "util.h"
 
 t_hdr_from::t_hdr_from() : t_header("From", "f") {}
 
@@ -59,7 +60,7 @@ string t_hdr_from::encode_value(void) const {
 
 	if (display.size() > 0) {
 		s += '"';
-		s += display;
+		s += escape(display, '"');
 		s += '"';
 		s += ' ';
 	}

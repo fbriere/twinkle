@@ -137,6 +137,7 @@ void MphoneForm::init()
 		serviceDnd->addTo(menu);
 		serviceRedirection->addTo(menu);
 		serviceAutoAnswer->addTo(menu);
+		servicesVoice_mailAction->addTo(menu);
 		
 		menu->insertSeparator();
 		
@@ -2572,6 +2573,11 @@ void MphoneForm::popupMenuVoiceMail(const QPoint &pos)
 		ui->cb_show_msg(msg.arg(selectedUser->get_mwi_vm_address().c_str()).ascii(),
 				MSG_CRITICAL);
 	}
+}
+
+void MphoneForm::popupMenuVoiceMail(void)
+{
+	popupMenuVoiceMail(QCursor::pos());
 }
 
 void MphoneForm::showDisplay(bool on)

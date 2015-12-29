@@ -209,6 +209,12 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 			resp->hdr_warning.add_warning(t_warning(USER_HOST(user_config),
 					0, warn_code, warn_text));
 			line->send_response(resp, tuid, tid);
+			
+			// Create call history record
+			line->call_hist_record.start_call(r, t_call_record::DIR_IN,
+				user_config->get_profile_name());
+			line->call_hist_record.fail_call(resp);
+			
 			MEMMAN_DELETE(resp);
 			delete resp;
 			state = DS_TERMINATED;
@@ -221,6 +227,11 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 
 			// RFC 3261 21.4.13
 			SET_HDR_ACCEPT(resp->hdr_accept);
+			
+			// Create call history record
+			line->call_hist_record.start_call(r, t_call_record::DIR_IN,
+				user_config->get_profile_name());
+			line->call_hist_record.fail_call(resp);
 
 			line->send_response(resp, tuid, tid);
 			MEMMAN_DELETE(resp);
@@ -294,7 +305,8 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 	bool tear_down = false;
 	bool answer_call = false;
 	
-	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	switch (r->method) {
 	case CANCEL:
@@ -303,13 +315,13 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp = req_in_invite->get_request()->
 				create_response(R_487_REQUEST_TERMINATED);
 		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+				req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		
 		// Trigger call script
 		script_in_call_failed.exec_notify(resp);
 		
-		line->send_response(resp, req_in_invite->get_tuid(),
-				req_in_invite->get_tid());
-		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -327,13 +339,13 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp = req_in_invite->get_request()->create_response(
 						R_487_REQUEST_TERMINATED);
 		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		
 		// Trigger call script
 		script_in_call_failed.exec_notify(resp);
 		
-		line->send_response(resp, req_in_invite->get_tuid(),
-						req_in_invite->get_tid());
-		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -380,15 +392,16 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 			resp = req_in_invite->get_request()->create_response(
 				R_400_BAD_REQUEST,
 				"SDP answer in PRACK missing or unsupported");
-			resp->hdr_to.set_tag(local_tag);
-			
-			// Trigger call script
-			t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
-			script.exec_notify(resp);
-		
+			resp->hdr_to.set_tag(local_tag);		
 			line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
 			line->call_hist_record.fail_call(resp);
+			
+			// Trigger call script
+			t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
+					line->get_line_number() + 1);
+			script.exec_notify(resp);
+			
 			MEMMAN_DELETE(resp);
 			delete resp;
 			state = DS_TERMINATED;
@@ -414,7 +427,8 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 	unsigned short	port;
 	t_response *resp;
 	
-	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	// RFC 3262 3
 	switch(timer) {
@@ -442,13 +456,13 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 		resp = req_in_invite->get_request()->create_response(
 			R_500_INTERNAL_SERVER_ERROR, "100rel timeout");
 		resp->hdr_to.set_tag(local_tag);
+		line->send_response(resp, req_in_invite->get_tuid(),
+						req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		
 		// Trigger call script
 		script_in_call_failed.exec_notify(resp);
 		
-		line->send_response(resp, req_in_invite->get_tuid(),
-						req_in_invite->get_tid());
-		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -475,7 +489,8 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 	bool tear_down = false;
 	t_client_request *cr;
 	
-	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	switch(r->method) {
 	case ACK:
@@ -532,11 +547,11 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 	case BYE:
 		// Send 200 on the BYE request
 		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
 		
 		// Trigger call script
 		script_out_call_failed.exec_notify(resp);
 		
-		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
@@ -574,7 +589,8 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	bool tear_down = false;
 	
-	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	switch(r->method) {
 	case ACK:
@@ -632,11 +648,11 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	case BYE:
 		// Send 200 on the BYE request
 		resp = r->create_response(R_200_OK);
+		line->send_response(resp, tuid, tid);
 		
 		// Trigger call script
 		script_out_call_failed.exec_notify(resp);
 		
-		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		
@@ -713,16 +729,17 @@ void t_dialog::state_w4ack_re_invite(t_line_timer timer) {
 void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	
-	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE);
+	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE,
+			line->get_line_number() + 1);
 
 	switch(r->method) {
 	case BYE:
-		resp = r->create_response(R_200_OK);
+		resp = r->create_response(R_200_OK);		
+		line->send_response(resp, tuid, tid);
 		
 		// Trigger call script
 		script_remote_release.exec_notify(r);
 		
-		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
@@ -771,7 +788,8 @@ void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	
-	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE);
+	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE,
+			line->get_line_number() + 1);
 
 	switch(r->method) {
 	case INVITE:
@@ -779,12 +797,12 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		process_re_invite(r, tuid, tid);
 		break;
 	case BYE:
-		resp = r->create_response(R_200_OK);
-
+		resp = r->create_response(R_200_OK);		
+		line->send_response(resp, tuid, tid);
+		
 		// Trigger call script
 		script_remote_release.exec_notify(r);
 		
-		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
@@ -893,21 +911,6 @@ void t_dialog::state_confirmed_sub(t_request *r, t_tuid tuid, t_tid tid) {
 	}
 }
 
-void t_dialog::state_conf_retr_stun(t_request *r, t_tuid tuid, t_tid tid) {
-	t_response *resp;
-	
-	if (r->method == INVITE) {
-		resp = r->create_response(R_491_REQUEST_PENDING);
-		line->send_response(resp, tuid, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
-	} else {
-		// All other requests should be handled as in the confirmed
-		// state.
-		state_confirmed(r, tuid, tid);
-	}
-}
-
 void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 
@@ -942,7 +945,7 @@ void t_dialog::process_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 
 			// Stay in the confirmed state. The sender of the
 			// request has to determine if the dialog needs to
-			// be torn donw by sending a BYE.
+			// be torn down by sending a BYE.
 			return;
 		default:
 			// Unsupported body type. Reject call.
@@ -1271,7 +1274,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		if (r->code == R_100_TRYING) break;
 		
 		// RFC 3262 4
-		// Discard retransmissiona and out-of-sequence reliable
+		// Discard retransmissions and out-of-sequence reliable
 		// provisional responses.
 		if (must_discard_100rel(r)) return;
 
@@ -1297,8 +1300,12 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	// Send PRACK if required
 	send_prack_if_required(r);
 	
-	t_call_script script_out_call_answered(user_config, t_call_script::TRIGGER_OUT_CALL_ANSWERED);
-	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
+	t_call_script script_out_call_answered(user_config,
+			t_call_script::TRIGGER_OUT_CALL_ANSWERED,
+			line->get_line_number() + 1);
+	t_call_script script_out_call_failed(user_config, 
+			t_call_script::TRIGGER_OUT_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	switch (r->get_class()) {
 	case R_1XX:
@@ -1432,8 +1439,12 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	// Send PRACK if required
 	send_prack_if_required(r);
 	
-	t_call_script script_out_call_answered(user_config, t_call_script::TRIGGER_OUT_CALL_ANSWERED);
-	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
+	t_call_script script_out_call_answered(user_config, 
+			t_call_script::TRIGGER_OUT_CALL_ANSWERED,
+			line->get_line_number() + 1);
+	t_call_script script_out_call_failed(user_config, 
+			t_call_script::TRIGGER_OUT_CALL_FAILED,
+			line->get_line_number() + 1);
 
 	switch (r->get_class()) {
 	case R_1XX:
@@ -1873,21 +1884,6 @@ void t_dialog::activate_new_session(void) {
 void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 	// Process SDP answer if answer is present and no
 	// answer has been received yet.
-	//
-	// NOTE: in case of forking 1xx with SDP answers from different destinations
-	//       may be received. Only the first 1xx with an SDP answer will create
-	//       a media streams. The others cannot be honored.
-	//       This also leads to a problem when the first 2xx comes from a
-	//       destination different than the destination that sent the first
-	//       1xx with SDP. The SDP in the 2xx will be ignored as SDP in a 1xx
-	//       was already received. This leads to a dead call!!
-	//	 Early media and forking cannot be mixed.
-	//
-	// TODO: maybe as a kludge it can be checked that the 2xx comes from a
-	//       different destination than the 1xx of the early media. If it
-	//       does, then stop the current RTP stream and start a new one.
-	//	 Care must be taken that a 2nd 2xx will not override an already
-	//	 established call though.
 	if (r->body) {
 		int warn_code;
 		string warn_text;
@@ -1914,16 +1910,58 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 				
 				session->recvd_answer = true;
 	
-				if (r->is_provisional()) {
-					log_file->write_report("Starting early media.",
-						"t_dialog::process_1xx_2xx_invite_resp");
+				// The following code part handles the ugly interaction
+				// between forking and early media (Vonage uses this).
+				// In case of forking 1xx responses with SDP may com
+				// from different destinations. Only the first 1xx will
+				// create a media stream. Media streams on other legs cannot
+				// be created as that would give sound conflicts.
+				// When a 2xx response with SDP is received, an early media
+				// stream on another leg must be killed.
+				// Due to forking multiple 2xx repsonses from different
+				// destinations may be received. Only the first 2xx response
+				// will create a media session. The other dialogs receiving
+				// a 2xx will be released immediately anyway (see line.cpp).
+				bool start_media = true;
+				t_dialog *d = line->get_dialog_with_active_session();
+				if (d != NULL) {
+					if (r->get_class() == R_2XX &&
+					    d->get_state() != DS_CONFIRMED)
+					{
+						log_file->write_header(
+							"t_dialog::process_1xx_2xx_invite_resp");
+						log_file->write_raw(
+							"Kill early media on another dialog, id=");
+						log_file->write_raw(d->get_object_id());
+						log_file->write_endl();
+						log_file->write_footer();
+						
+						d->kill_rtp();
+					} else {
+						log_file->write_header(
+							"t_dialog::process_1xx_2xx_invite_resp");
+						log_file->write_raw(
+							"Cannot start media as another dialog (id=");
+						log_file->write_raw(d->get_object_id());
+						log_file->write_raw(") already has media.\n");
+						log_file->write_footer();
+					
+						start_media = false;
+					}
 				}
-	
-				// Stop locally played tones to free the soundcard
-				// for the voice stream
-				ui->cb_stop_call_notification(line->get_line_number());
-	
-				session->start_rtp();
+				
+				if (start_media) {
+					if (r->is_provisional()) {
+						log_file->write_report("Starting early media.",
+							"t_dialog::process_1xx_2xx_invite_resp");
+					}
+		
+					// Stop locally played tones to free the soundcard
+					// for the voice stream
+					ui->cb_stop_call_notification(line->get_line_number());
+		
+					session->start_rtp();
+				}
 			} else {
 				// SDP answer is not supported. Cancel
 				// the INVITE.
@@ -2103,7 +2141,7 @@ void t_dialog::send_request(t_request *r, t_tuid tuid) {
 // Public
 ////////////
 
-t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) :
+t_dialog::t_dialog(t_line *_line) :
 	t_abstract_dialog(_line->get_user())
 {
 	line = _line;
@@ -2127,17 +2165,7 @@ t_dialog::t_dialog(t_line *_line, t_dialog_type _dialog_type) :
 	resp_1xx_invite = NULL;
 	ack = NULL;
 
-	dialog_type = _dialog_type;
-	switch(dialog_type) {
-	case DT_INVITE:
-		state = DS_NULL;
-		break;
-	case DT_SUBSCRIPTION:
-		state = DS_NULL_SUB;
-		break;
-	default:
-		assert(false);
-	}
+	state = DS_NULL;
 
 	// Timers
 	dur_ack_timeout = 0;
@@ -2237,8 +2265,22 @@ t_dialog *t_dialog::copy(void) {
 		// See process_1xx_2xx_invite_resp for more information on
 		// early media problems.
 		// Clear a possible audio session in the open dialog.
-		session->set_audio_session(NULL);
+		t_audio_session *as = session->get_audio_session();
+		if (as) {
+			as->set_session(d->session);
+			session->set_audio_session(NULL);
+			log_file->write_report(
+				"An audio session was created on an open dialog.",
+				"t_dialog::copy",
+				LOG_NORMAL, LOG_DEBUG);
+		}
 	}
+	
+	log_file->write_header("t_dialog::copy", LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("Created dialog through copy, id=");
+	log_file->write_raw(d->get_object_id());
+	log_file->write_endl();
+	log_file->write_footer();
 
 	return d;
 }
@@ -2369,7 +2411,8 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	MEMMAN_NEW(req_out_invite);
 	
 	// Trigger call script
-	t_call_script script(user_config, t_call_script::TRIGGER_OUT_CALL);
+	t_call_script script(user_config, t_call_script::TRIGGER_OUT_CALL,
+			line->get_line_number() + 1);
 	script.exec_notify(&invite);
 	
 	line->send_request(&invite, req_out_invite->get_tuid());
@@ -2556,7 +2599,8 @@ void t_dialog::send_bye(void) {
 	MEMMAN_NEW(req_out);
 	
 	// Trigger call script
-	t_call_script script(user_config, t_call_script::TRIGGER_LOCAL_RELEASE);
+	t_call_script script(user_config, t_call_script::TRIGGER_LOCAL_RELEASE,
+			line->get_line_number() + 1);
 	script.exec_notify(bye);
 	
 	line->send_request(bye, req_out->get_tuid());
@@ -3388,7 +3432,8 @@ void t_dialog::answer(void) {
 	}
 	
 	// Trigger call script
-	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_ANSWERED);
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_ANSWERED,
+			line->get_line_number() + 1);
 	script.exec_notify(resp_invite);
 
 	line->call_hist_record.answer_call(resp_invite);
@@ -3418,7 +3463,8 @@ void t_dialog::reject(int code, string reason) {
 	resp->hdr_to.set_tag(local_tag);
 	
 	// Trigger call script
-	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
+			line->get_line_number() + 1);
 	script.exec_notify(resp);
 		
 	line->send_response(resp, req_in_invite->get_tuid(),
@@ -3466,7 +3512,8 @@ void t_dialog::redirect(const list<t_display_url> &destinations, int code, strin
 	}
 	
 	// Trigger call script
-	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED,
+			line->get_line_number() + 1);
 	script.exec_notify(resp);
 
 	line->send_response(resp, req_in_invite->get_tuid(),
@@ -3638,6 +3685,12 @@ t_audio_session *t_dialog::get_audio_session(void) const {
 	if (!session) return NULL;
 
 	return session->get_audio_session();
+}
+
+bool t_dialog::has_active_session(void) const {
+	if (session) return session->is_rtp_active();
+	
+	return false;
 }
 
 // RFC 3515

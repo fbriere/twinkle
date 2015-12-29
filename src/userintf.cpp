@@ -269,20 +269,22 @@ bool t_userintf::exec_invite(const list<string> command_list, bool immediate) {
 bool t_userintf::do_invite(const string &destination, const string &display,
 		const string &subject, bool immediate, bool anonymous)
 {
-	t_url dest_url;
-	dest_url.set_url(expand_destination(active_user, destination));
+	t_url dest_url(expand_destination(active_user, destination));
 	
 	if (!dest_url.is_valid()) {
 		exec_command("help call");
 		return false;
 	}
 
-	// Keep call information for redial
-	last_called_url = dest_url;
-	last_called_display = display;
-	last_called_subject = subject;
-	last_called_profile = active_user->get_profile_name();
-	last_called_hide_user = anonymous;
+	t_url vm_url(expand_destination(active_user, active_user->get_mwi_vm_address()));
+	if (dest_url != vm_url) {
+		// Keep call information for redial
+		last_called_url = dest_url;
+		last_called_display = display;
+		last_called_subject = subject;
+		last_called_profile = active_user->get_profile_name();
+		last_called_hide_user = anonymous;
+	}
 
 	phone->pub_invite(active_user, dest_url, display, subject, anonymous);
 	return true;
@@ -2996,6 +2998,8 @@ void t_userintf::cb_show_msg(const string &msg, t_msg_priority prio) {
 	cout << endl;
 
 	switch (prio) {
+	case MSG_NO_PRIO:
+		break;
 	case MSG_INFO:
 		cout << "Info: ";
 		break;
@@ -3207,6 +3211,14 @@ void t_userintf::cmd_quit_async(void) {
 
 void t_userintf::cmd_cli(const string &command, bool immediate) {
 	exec_command(command, immediate);
+}
+
+void t_userintf::cmd_show(void) {
+	// Do nothing in CLI mode.
+}
+
+void t_userintf::cmd_hide(void) {
+	// Do nothing in CLI mode.
 }
 
 string t_userintf::get_name_from_abook(t_user *user_config, const t_url &u) {

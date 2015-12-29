@@ -16,7 +16,7 @@ pkgdata_DATA = data/ringback.wav data/ringtone.wav \
 EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
 	src/gui/twinkle.pro src/gui/images/* \
 	data/ringback.wav data/ringtone.wav data/providers.csv \
-	sip.protocol twinkle.desktop.in
+	sip.protocol twinkle.desktop.in Doxyfile
 
 SUBDIRS = src
 

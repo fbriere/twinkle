@@ -36,7 +36,7 @@ string t_contact_param::encode(void) const {
 
 	if (display.size() > 0) {
 		s += '"';
-		s += display;
+		s += escape(display, '"');
 		s += '"';
 		s += ' ';
 	}

@@ -15,11 +15,11 @@
     <property name="caption">
         <string>Twinkle - Call History</string>
     </property>
-    <grid>
+    <vbox>
         <property name="name">
             <cstring>unnamed</cstring>
         </property>
-        <widget class="QListView" row="0" column="0">
+        <widget class="QListView">
             <column>
                 <property name="text">
                     <string>Time</string>
@@ -88,7 +88,7 @@
                 <enum>LastColumn</enum>
             </property>
         </widget>
-        <widget class="QLayoutWidget" row="1" column="0">
+        <widget class="QLayoutWidget">
             <property name="name">
                 <cstring>layout37</cstring>
             </property>
@@ -214,9 +214,9 @@
                 </widget>
             </hbox>
         </widget>
-        <widget class="QLayoutWidget" row="2" column="0">
+        <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout10</cstring>
+                <cstring>layout39</cstring>
             </property>
             <hbox>
                 <property name="name">
@@ -249,7 +249,7 @@
                     </property>
                     <property name="sizeHint">
                         <size>
-                            <width>590</width>
+                            <width>540</width>
                             <height>20</height>
                         </size>
                     </property>
@@ -259,7 +259,24 @@
                         <cstring>closePushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;Close</string>
+                        <string>Clo&amp;se</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+S</string>
+                    </property>
+                    <property name="default">
+                        <bool>false</bool>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Close this window.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
+                        <cstring>callPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Call</string>
                     </property>
                     <property name="accel">
                         <string>Alt+C</string>
@@ -268,12 +285,12 @@
                         <bool>true</bool>
                     </property>
                     <property name="whatsThis" stdset="0">
-                        <string>Close this window.</string>
+                        <string>Call selected address.</string>
                     </property>
                 </widget>
             </hbox>
         </widget>
-    </grid>
+    </vbox>
 </widget>
 <connections>
     <connection>
@@ -336,6 +353,12 @@
         <receiver>HistoryForm</receiver>
         <slot>clearHistory()</slot>
     </connection>
+    <connection>
+        <sender>callPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>HistoryForm</receiver>
+        <slot>call()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>historyListView</tabstop>
@@ -377,6 +400,7 @@
     <slot>showCallDetails( QListViewItem * item )</slot>
     <slot>popupMenu( QListViewItem * item, const QPoint &amp; pos )</slot>
     <slot>call( QListViewItem * item )</slot>
+    <slot>call( void )</slot>
     <slot>clearHistory()</slot>
 </slots>
 <functions>

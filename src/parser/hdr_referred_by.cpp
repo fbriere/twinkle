@@ -19,6 +19,7 @@
 #include "hdr_referred_by.h"
 #include "definitions.h"
 #include "parse_ctrl.h"
+#include "util.h"
 
 t_hdr_referred_by::t_hdr_referred_by() : t_header("Referred-By", "b") {}
 
@@ -59,7 +60,7 @@ string t_hdr_referred_by::encode_value(void) const {
 
 	if (display.size() > 0) {
 		s += '"';
-		s += display;
+		s += escape(display, '"');
 		s += '"';
 		s += ' ';
 	}

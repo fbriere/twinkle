@@ -39,6 +39,7 @@
 #include <unistd.h>
 
 #include "address_book.h"
+#include "address_finder.h"
 #include "call_history.h"
 #include "cmd_socket.h"
 #include "events.h"
@@ -52,6 +53,7 @@
 #include "phone.h"
 #include "gui.h"
 #include "qt_translator.h"
+#include "command_args.h"
 #include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
@@ -139,23 +141,8 @@ t_call_history		*call_history;
 // Local address book
 t_address_book		*ab_local;
 
-// SIP URI to be called passed via the --call command line parameter
-QString			callto_destination;
-
-// CLI command passed via the --cmd command line parameter
-QString			cli_command;
-
-// Indicates if the --call or --cmd must be performed immediately
-bool			cmd_immediate_mode;
-
-// Indicates the profile that should be made active before performing
-// --call or --cmd
-QString			cmd_set_profile;
-
-// If a port number is passed by the user on the command line, then
-// that port number overrides the port from the system settings.
-unsigned short		g_override_sip_udp_port = 0;
-unsigned short		g_override_rtp_port = 0;
+/** Command arguments. */
+t_command_args g_cmd_args;
 
 // Thread id of main thread
 pthread_t		thread_id_main;
@@ -233,8 +220,8 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			cout << "\t\ttwinkle --cmd mute\n";
 			cout << "\t\ttwinkle --cmd 'transfer 12345'\n";
 			cout << endl;
-			cout << " --immediate\n";
-			cout << "\t\tThis option can be used in conjunction with --call or --cmd\n";
+			cout << " --immediate";
+			cout << "\tThis option can be used in conjunction with --call or --cmd\n";
 			cout << "\t\tIt indicates the the command or call is to be performed\n";
 			cout << "\t\timmediately without asking the user for any confirmation.\n";
 			cout << endl;
@@ -243,6 +230,14 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			cout << "\t\tWhen using this option in conjuction with --call and --cmd,\n";
 			cout << "\t\tthen the profile is activated before executing --call or \n";
 			cout << "\t\t--cmd.\n";
+			cout << endl;
+			cout << " --show";
+			cout << "\t\tInstruct a running instance of Twinkle to show the main window\n";
+			cout << "\t\tand take focus.\n";
+			cout << endl;
+			cout << " --hide";
+			cout << "\t\tInstruct a running instance of Twinkle to hide in the sytem tray.\n";
+			cout << "\t\tIf no system tray is used, then Twinkle will minimize.\n";
 			cout << endl;
 			cout << " --help-cli [cli command]\n";
 			cout << "\t\tWithout a cli command this option lists all available CLI\n";
@@ -307,7 +302,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 		} else if (strcmp(argv[i], "--sip-port") == 0) {
 			if (i < argc - 1) {
 				i++;
-				g_override_sip_udp_port = atoi(argv[i]);
+				g_cmd_args.override_sip_udp_port = atoi(argv[i]);
 			} else {
 				cout << argv[0] << ": ";
 				cout << "Port missing for option '--sip-port'\n";
@@ -315,7 +310,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 		} else if (strcmp(argv[i], "--rtp-port") == 0) {
 			if (i < argc - 1) {
 				i++;
-				g_override_rtp_port = atoi(argv[i]);
+				g_cmd_args.override_rtp_port = atoi(argv[i]);
 			} else {
 				cout << argv[0] << ": ";
 				cout << "Port missing for option '--rtp-port'\n";
@@ -343,9 +338,9 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			if (i < argc - 1) {
 				i++;
 				// SIP URI
-				callto_destination = argv[i];
+				g_cmd_args.callto_destination = argv[i];
 				
-				if (callto_destination.isEmpty()) {
+				if (g_cmd_args.callto_destination.isEmpty()) {
 					cout << argv[0] << ": ";
 					cout << "--call argument may not be empty.\n";
 					exit(0);
@@ -359,9 +354,9 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			if (i < argc - 1) {
 				i++;
 				// CLI command
-				cli_command = argv[i];
+				g_cmd_args.cli_command = argv[i];
 				
-				if (cli_command.isEmpty()) {
+				if (g_cmd_args.cli_command.isEmpty()) {
 					cout << argv[0] << ": ";
 					cout << "--cmd argument may not be empty.\n";
 					exit(0);
@@ -373,17 +368,23 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			}
 		} else if (strcmp(argv[i], "--immediate") == 0) {
 			// Immediate mode
-			cmd_immediate_mode = true;
+			g_cmd_args.cmd_immediate_mode = true;
 		} else if (strcmp(argv[i], "--set-profile") == 0) {
 			if (i < argc - 1) {
 				i++;
 				// Set profile
-				cmd_set_profile = argv[i];
+				g_cmd_args.cmd_set_profile = argv[i];
 			} else {
 				cout << argv[0] << ": ";
 				cout << "Profile missing for option '--set-profile'.\n";
 				exit(0);
-			}			
+			}	
+		} else if (strcmp(argv[i], "--show") == 0) {
+			// Show main window
+			g_cmd_args.cmd_show = true;
+		} else if (strcmp(argv[i], "--hide") == 0) {
+			// Hide main window
+			g_cmd_args.cmd_hide = true;
 		} else if (strcmp(argv[i], "--help-cli") == 0) {
 			string cmd_help("help ");
 			if (i < argc -1) {
@@ -405,7 +406,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 		}
 	}
 	
-	if (!callto_destination.isEmpty() && !cli_command.isEmpty()) {
+	if (!g_cmd_args.callto_destination.isEmpty() && !g_cmd_args.cli_command.isEmpty()) {
 		cout << argv[0] << ": ";
 		cout << "--call and --cmd cannot be used at the same time.\n";
 		exit(0);
@@ -510,10 +511,6 @@ int main( int argc, char ** argv )
 	
 	// Initialize globals
 	end_app = false;
-	callto_destination = "";
-	cli_command = "";
-	cmd_immediate_mode = false;
-	cmd_set_profile = "";
 	
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
@@ -547,6 +544,8 @@ int main( int argc, char ** argv )
 	
 	// Parse command line arguments
 	parse_main_args(argc, argv, cli_mode, override_lock_file, config_files);
+	sys_config->set_override_sip_udp_port(g_cmd_args.override_sip_udp_port);
+	sys_config->set_override_rtp_port(g_cmd_args.override_rtp_port);
 	
 	// Checking the environment and creating the lock is done at
 	// this early stage to improve performance of the --call parameter.
@@ -567,30 +566,47 @@ int main( int argc, char ** argv )
 	if (env_check_ok &&
 	    !(lock_created = sys_config->create_lock_file(lock_error_msg, already_running))) 
 	{
+		bool must_exit = false;
+		
+		// Show the main window of the running Twinkle process.
+		if (already_running && g_cmd_args.cmd_show) {
+			cmdsocket::cmd_show();
+			must_exit = true;
+		}
+		
+		// Hide the main window of the running Twinkle process.
+		if (already_running && g_cmd_args.cmd_hide) {
+			cmdsocket::cmd_hide();
+			must_exit = true;
+		}
+		
 		// Activate a profile in the running Twinkle process.
-		if (already_running && !cmd_set_profile.isEmpty()) {
-			cmd_cli(string("user ") + cmd_set_profile.ascii(), true);
-			// Do not exit as this option may be used in conjuction
+		if (already_running && !g_cmd_args.cmd_set_profile.isEmpty()) {
+			cmdsocket::cmd_cli(string("user ") + g_cmd_args.cmd_set_profile.ascii(), true);
+			// Do not exit now as this option may be used in conjuction
 			// with --call or --cmd
+			must_exit = true;
 		}
 		
 		// If Twinkle is running already and the --call parameter
 		// is present, then send the call destination to the running
 		// Twinkle process.
-		if (already_running && !callto_destination.isEmpty()) {
-			cmd_call(callto_destination.ascii(), cmd_immediate_mode);
+		if (already_running && !g_cmd_args.callto_destination.isEmpty()) {
+			cmdsocket::cmd_call(g_cmd_args.callto_destination.ascii(), 
+					    g_cmd_args.cmd_immediate_mode);
 			exit(0);
 		}
 		
 		// If the --cmd parameter is present, send the cli command
 		// to the running Twinkle process
-		if (already_running && !cli_command.isEmpty()) {
-			cmd_cli(cli_command.ascii(), cmd_immediate_mode);
+		if (already_running && !g_cmd_args.cli_command.isEmpty()) {
+			cmdsocket::cmd_cli(g_cmd_args.cli_command.ascii(), 
+					   g_cmd_args.cmd_immediate_mode);
 			exit(0);
 		}
 		
-		// Exit if only the --set-profile option was given.
-		if (already_running && !cmd_set_profile.isEmpty()) {
+		// Exit if an instruction for a running instance was given.
+		if (must_exit) {
 			exit(0);
 		}
 	}
@@ -706,8 +722,6 @@ int main( int argc, char ** argv )
 					} else {
 						error_msg = qApp->translate("GUI", "The following profiles are both for user %1").arg(user_config.get_name().c_str()).ascii();
 					}
-					error_msg += '@';
-					error_msg += user_config.get_domain();
 					error_msg += ":\n\n";
 					error_msg += user_config.get_profile_name();
 					error_msg += "\n";
@@ -715,8 +729,16 @@ int main( int argc, char ** argv )
 					error_msg += "\n\n";
 					if (cli_mode) {
 						error_msg += QString("You can only run multiple profiles for different users.").ascii();
+						error_msg += "\n";
+						error_msg += QString("If these are users for different domains, then enable the following option in your user profile (SIP protocol):");
+						error_msg += "\n";
+						error_msg += QString("Use domain name to create a unique contact header");
 					} else {
 						error_msg += qApp->translate("GUI", "You can only run multiple profiles for different users.").ascii();
+						error_msg += "\n";
+						error_msg += qApp->translate("GUI", "If these are users for different domains, then enable the following option in your user profile (SIP protocol)");
+						error_msg += ":\n";
+						error_msg += qApp->translate("GUI", "Use domain name to create a unique contact header");
 					}
 					ui->cb_show_msg(error_msg, MSG_CRITICAL);
 					profile_selected = false;
@@ -766,6 +788,11 @@ int main( int argc, char ** argv )
 	if (!ab_local->read_address_book(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 		ui->cb_show_msg(error_msg, MSG_WARNING);
+	}
+	
+	// Preload the address finder (KABC is only available in GUI mode)
+	if (!cli_mode) {
+		t_address_finder::preload();
 	}
 	
 	// Pick network interface
@@ -906,7 +933,7 @@ int main( int argc, char ** argv )
 		
 		// External command listener thread
 		if (sock_cmd) {
-			thr_listen_cmd = new t_thread(listen_cmd, sock_cmd);
+			thr_listen_cmd = new t_thread(cmdsocket::listen_cmd, sock_cmd);
 			MEMMAN_NEW(thr_listen_cmd);
 		}
 	} catch (int) {
@@ -1015,6 +1042,7 @@ int main( int argc, char ** argv )
 	delete ab_local;
 	MEMMAN_DELETE(call_history);
 	delete call_history;
+	call_history = NULL;
 
 	MEMMAN_DELETE(ui);
 	delete ui;

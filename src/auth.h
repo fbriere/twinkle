@@ -16,6 +16,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+/**
+ * @file
+ * SIP authentication
+ */
+
 #ifndef _AUTH_H
 #define _AUTH_H
 
@@ -26,66 +31,122 @@
 
 using namespace std;
 
+/** Size of the credentials cache. */
 #define AUTH_CACHE_SIZE	50
 
+/** Credentials cache entry. */
 class t_cr_cache_entry {
 public:
-	t_url		to; // this is not used for SIP authentication
+	/**
+	 * Destination for which credentials are cached.
+	 * This is not used for the SIP authentication itself.
+	 */
+	t_url		to;
+	
+	/** The credentials. */
 	t_credentials	credentials;
+	
+	/** Password. */
 	string 		passwd;
+	
+	/** Indicates if proxy authentication was requested. */
 	bool		proxy;
 
+	/** Constructor. */
 	t_cr_cache_entry(const t_url &_to, const t_credentials &_cr,
 		const string &_passwd, bool _proxy);
 };
 
 
-// An object of this class authorizes a request given some credentials
+/** An object of this class authorizes a request given some credentials. */
 class t_auth {
 private:
-	// Indicates if the current registration request is a re-register
+	/** Indicates if the current registration request is a re-REGISTER. */
 	bool re_register;
 
-	// LRU cache credentials for a destination.
-	// The first entry in the list is the least recently used.
+	/**
+	 * LRU cache credentials for a destination.
+	 * The first entry in the list is the least recently used.
+	 */
 	list<t_cr_cache_entry>	cache;
 
-	// Find a cache entry that matches the realm
+	/**
+	 * Find a cache entry that matches the realm.
+	 * @param _to Destination for which authentication is needed.
+	 * @param realm The authentication realm.
+	 * @param proxy Indicates if proxy authentication was requested.
+	 * @return An iterator to the cached credentials if found.
+	 * @return The end iterator if not found.
+	 */
 	list<t_cr_cache_entry>::iterator find_cache_entry(const t_url &_to, 
 		const string &realm, bool proxy=false);
 
-	// If the cache does not contain the credentials already
-	// then it will be added to the end of the list. If the cache
-	// already contains the maximum number of entries, then the least
-	// recently used entry will be removed.
-	// If the cache already contains an entry for credentials, then
-	// this entry will be moved to the end of the list.
+	/**
+	 * Update cached credentials.
+	 * If the cache does not contain the credentials already
+	 * then it will be added to the end of the list. If the cache
+	 * already contains the maximum number of entries, then the least
+	 * recently used entry will be removed.
+	 * If the cache already contains an entry for credentials, then
+	 * this entry will be moved to the end of the list.
+	 * @param to Destination for which authentication is needed.
+	 * @param cr Credentials to update.
+	 * @param passwd The password to store.
+	 * @param proxy Indicates if proxy authentication was requested.
+	 */
 	void update_cache(const t_url &to, const t_credentials &cr,
 		const string &passwd, bool proxy);
 
-	// Return true if authorization failed.
-	// Authorization failed if the challenge is for a realm for which
-	// the request already contains an authorization header and the
-	// challenge is not stale.
+	/**
+	 * Check if authorization failed.
+	 * Authorization failed if the challenge is for a realm for which
+	 * the request already contains an authorization header and the
+	 * challenge is not stale.
+	 * @return true, if authorization failed.
+	 * @return false, otherwise.
+	 */
 	bool auth_failed(t_request *r, const t_challenge &c,
 		bool proxy=false) const;
 
-	// Remove existing credentials for this challenge from the
-	// authorization or proxy-authorization header.
+	/**
+	 * Remove existing credentials for this challenge from the
+	 * authorization or proxy-authorization header.
+	 * @param r The request from which the credentials must be removed.
+	 * @param c The challenge for which the credentials must be removed.
+	 * @param proxy Indicates if proxy authentication was requested.
+	 */
 	void remove_credentials(t_request *r, const t_challenge &c,
 		bool proxy=false) const;
 
 public:
+	/** Constructor. */
 	t_auth();
 	
-	// Authorize the request based on the challenge in the response
-	// Returns false if authorization fails.
+	/**
+	 * Authorize the request based on the challenge in the response
+	 * @param user_config The user profile.
+	 * @param r The request to be authorized.
+	 * @param resp The response containing the challenge.
+	 * @return true, if authorization succeeds.
+	 * @return false, if authorization fails.
+	 * @post On succesful authorization, the credentials has been added to
+	 * the request in the proper header (Authorization or Proxy-Authorization).
+	 */
 	bool authorize(t_user *user_config, t_request *r, t_response *resp);
 	
-	// Remove credentials for a particular realm from cache.
+	/**
+	 * Remove credentials for a particular realm from cache.
+	 * @param realm The authentication realm.
+	 */
 	void remove_from_cache(const string &realm);
 	
+	/**
+	 * Set the re-REGISTER indication.
+	 * @param on Value to set.
+	 */
 	void set_re_register(bool on);
+	
+	/** Get the re-REGISTER indication. */
 	bool get_re_register(void) const;
 };
 

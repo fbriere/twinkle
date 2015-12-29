@@ -141,6 +141,25 @@
     </message>
 </context>
 <context>
+    <name>CoreAudio</name>
+    <message>
+        <source>Failed to open sound card</source>
+        <translation>Openen geluidskaart mislukt</translation>
+    </message>
+    <message>
+        <source>Failed to create a UDP socket (RTP) on port %1</source>
+        <translation>UDP socket (RTP) creatie op port %1 mislukt</translation>
+    </message>
+    <message>
+        <source>Failed to create audio receiver thread.</source>
+        <translation>Creatie van audio receiver thread mislukt.</translation>
+    </message>
+    <message>
+        <source>Failed to create audio transmitter thread.</source>
+        <translation>Creatie van audio transmitter thread mislukt.</translation>
+    </message>
+</context>
+<context>
     <name>CoreCallHistory</name>
     <message>
         <source>local user</source>
@@ -638,6 +657,14 @@
         <source>Request to transfer call received.</source>
         <translation>Verzoek om gesprek door te verbinden.</translation>
     </message>
+    <message>
+        <source>If these are users for different domains, then enable the following option in your user profile (SIP protocol)</source>
+        <translation>Als dit gebruikers in verschillende domeinen zijn, dan moet u de volgende optie in uw gebruikersprofiel (SIP protocol) aanzetten</translation>
+    </message>
+    <message>
+        <source>Use domain name to create a unique contact header</source>
+        <translation>Gebruik domeinnaam voor een unieke contact header</translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -915,10 +942,6 @@ Om uw gebruikersprofielen makkelijk uit elkaar te houden kunt u uw SIP gebruiker
 &lt;p&gt;&lt;b&gt;Noot:&lt;/b&gt; hiermee wist u &lt;b&gt;alle&lt;/b&gt; gespreksgegevens, ook gegevens die niet getoond worden afhankelijk van de toon-opties.&lt;/p&gt;</translation>
     </message>
     <message>
-        <source>&amp;Close</source>
-        <translation>&amp;Sluiten</translation>
-    </message>
-    <message>
         <source>Alt+C</source>
         <translation>Alt+S</translation>
     </message>
@@ -1001,6 +1024,22 @@ Om uw gebruikersprofielen makkelijk uit elkaar te houden kunt u uw SIP gebruiker
     <message>
         <source>In/Out</source>
         <translation>In/Uit</translation>
+    </message>
+    <message>
+        <source>Call selected address.</source>
+        <translation>Bel geselecteerd adres.</translation>
+    </message>
+    <message>
+        <source>Clo&amp;se</source>
+        <translation>&amp;Sluiten</translation>
+    </message>
+    <message>
+        <source>Alt+S</source>
+        <translation>Alt+S</translation>
+    </message>
+    <message>
+        <source>&amp;Call</source>
+        <translation>&amp;Bel</translation>
     </message>
 </context>
 <context>
@@ -1901,6 +1940,26 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <source>Trans&amp;fer...</source>
         <comment>menu text</comment>
         <translation>&amp;Doorverbinden...</translation>
+    </message>
+    <message>
+        <source>Voice mail</source>
+        <translation>Voice mail</translation>
+    </message>
+    <message>
+        <source>&amp;Voice mail</source>
+        <translation>&amp;Voice mail</translation>
+    </message>
+    <message>
+        <source>Access voice mail</source>
+        <translation>Bel voice mail</translation>
+    </message>
+    <message>
+        <source>F11</source>
+        <translation>F11</translation>
+    </message>
+    <message>
+        <source>Message waiting indication.</source>
+        <translation>Voice mail status.</translation>
     </message>
 </context>
 <context>
@@ -2953,6 +3012,14 @@ Als voor het beantwoorden van een inkomend gesprek, de microfoon of speaker onbe
     <message>
         <source>On an incoming call, Twinkle will try to find the name belonging to the incoming SIP address in your address book. This name will be displayed.</source>
         <translation>Bij een inkomend gesprek, probeert Twinkle de naam van de beller op te zoeken in het adresboek. Deze naam wordt dan getoond.</translation>
+    </message>
+    <message>
+        <source>Select ring tone file.</source>
+        <translation>Selecteer ring tone bestand.</translation>
+    </message>
+    <message>
+        <source>Select ring back tone file.</source>
+        <translation>Selecteer ring back tone bestand.</translation>
     </message>
 </context>
 <context>
@@ -4965,6 +5032,22 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
     <message>
         <source>Use domain &amp;name to create a unique contact header value</source>
         <translation>&amp;Gebruik domeinnaam voor een unieke contact header</translation>
+    </message>
+    <message>
+        <source>Select ring back tone file.</source>
+        <translation>Selecteer ring back tone bestand.</translation>
+    </message>
+    <message>
+        <source>Select ring tone file.</source>
+        <translation>Selecteer ring tone bestand.</translation>
+    </message>
+    <message>
+        <source>Select script file.</source>
+        <translation>Selecteer script bestand.</translation>
+    </message>
+    <message>
+        <source>%1 converts to %2</source>
+        <translation>%1 wordt geconverteerd naar %2</translation>
     </message>
 </context>
 <context>
