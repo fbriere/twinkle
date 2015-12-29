@@ -1,5 +1,3 @@
 debian/bug/* usr/share/bug/twinkle/
-debian/twinkle-16x16.xpm usr/share/pixmaps/
-debian/twinkle-32x32.xpm usr/share/pixmaps/
 sip.protocol usr/share/services
 twinkle.desktop usr/share/applications
