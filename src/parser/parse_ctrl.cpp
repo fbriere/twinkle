@@ -18,6 +18,7 @@
 
 #include "parse_ctrl.h"
 #include "protocol.h"
+#include "util.h"
 #include "audits/memman.h"
 
 // Interface to Bison
@@ -95,9 +96,9 @@ t_sip_message *t_parser::parse_headers(const string &s) {
 	for (list<t_parameter>::iterator i = hdr_list.begin();
 	     i != hdr_list.end(); i++)
 	{
-		msg += i->name;
+		msg += unescape_hex(i->name);
 		msg += ": ";
-		msg += i->value;
+		msg += unescape_hex(i->value);
 		msg += CRLF;
 	}
 	

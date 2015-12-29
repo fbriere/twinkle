@@ -19,23 +19,11 @@
 #include "hdr_accept_encoding.h"
 #include "definitions.h"
 
-t_hdr_accept_encoding::t_hdr_accept_encoding() : t_header() {};
+t_hdr_accept_encoding::t_hdr_accept_encoding() : t_header("Accept-Encoding") {};
 
 void t_hdr_accept_encoding::add_coding(const t_coding &coding) {
 	populated = true;
 	coding_list.push_back(coding);
-}
-
-string t_hdr_accept_encoding::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Accept-Encoding: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_accept_encoding::encode_value(void) const {
@@ -46,18 +34,9 @@ string t_hdr_accept_encoding::encode_value(void) const {
 	for (list<t_coding>::const_iterator i = coding_list.begin();
 	     i != coding_list.end(); i++)
 	{
-		if (i != coding_list.begin()) s += ", ";
+		if (i != coding_list.begin()) s += ",";
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_accept_encoding::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ACCEPT_ENCODING=";
-	s += encode_value();
-	
 	return s;
 }

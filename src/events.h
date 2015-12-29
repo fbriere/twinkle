@@ -35,6 +35,7 @@ class t_userintf;
 
 // Different types of events
 enum t_event_type {
+	EV_QUIT,		// Generic quit event
 	EV_NETWORK,		// Network event, eg. SIP message from/to network
 	EV_USER,		// User event, eg. SIP message from/to user
 	EV_TIMEOUT,		// Timer expiry
@@ -48,6 +49,7 @@ enum t_event_type {
 	EV_NAT_KEEPALIVE,	// Send a NAT keep alive packet
 	EV_ICMP,		// ICMP error
 	EV_UI,			// User interface event
+	EV_ASYNC_RESPONSE,	// Response on an asynchronous question
 };
 
 ///////////////////////////////////////////////////////////////
@@ -57,6 +59,15 @@ class t_event {
 public:
 	virtual ~t_event() {}
 	virtual t_event_type get_type(void) const = 0;
+};
+
+///////////////////////////////////////////////////////////////
+// Generic quit event
+///////////////////////////////////////////////////////////////
+class t_event_quit : public t_event {
+public:
+	virtual ~t_event_quit();
+	virtual t_event_type get_type(void) const;
 };
 
 ///////////////////////////////////////////////////////////////
@@ -325,6 +336,28 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////
+// Asynchronous response event
+///////////////////////////////////////////////////////////////
+class t_event_async_response : public t_event {
+public:
+	enum t_response_type {
+		RESP_REFER_PERMISSION
+	};
+	
+private:
+	t_response_type		response_type;
+	bool			bool_response;
+	
+public:
+	t_event_async_response(t_response_type type);
+	t_event_type get_type(void) const;
+	void set_bool_response(bool b);
+	t_response_type get_response_type(void) const;
+	bool get_bool_response(void) const;
+};
+
+
+///////////////////////////////////////////////////////////////
 // Event queue
 ///////////////////////////////////////////////////////////////
 //
@@ -348,6 +381,9 @@ public:
 
 	// Push an event into the queue
 	void push(t_event *e);
+	
+	// Push a quit event into the queue
+	void push_quit(void);
 
 	// Create a network event and push it into the queue
 	void push_network(t_sip_message *m, unsigned long ipaddr,
@@ -399,6 +435,9 @@ public:
 	
 	// Create ICMP event
 	void push_icmp(const t_icmp_msg &m);
+	
+	// Create a REFER pemission response event
+	void push_refer_permission_response(bool permission);
 
 	// Pop an event from the queue. If the queue is empty
 	// then the thread will be blocked until an event arrives.

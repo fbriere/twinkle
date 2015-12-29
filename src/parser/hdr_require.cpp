@@ -19,11 +19,23 @@
 #include "definitions.h"
 #include "hdr_require.h"
 
-t_hdr_require::t_hdr_require() : t_header() {};
+t_hdr_require::t_hdr_require() : t_header("Require") {};
 
 void t_hdr_require::add_feature(const string &f) {
 	populated = true;
-	features.push_back(f);
+	if (!contains(f)) {
+		features.push_back(f);
+	}
+}
+
+void t_hdr_require::add_features(const list<string> &l) {
+	if (l.empty()) return;
+	
+	for (list<string>::const_iterator i = l.begin(); i != l.end(); i++)
+	{
+		add_feature(*i);
+	}
+	populated = true;
 }
 
 void t_hdr_require::del_feature(const string &f) {
@@ -42,18 +54,6 @@ bool t_hdr_require::contains(const string &f) const {
 	return false;
 }
 
-string t_hdr_require::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Require: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_require::encode_value(void) const {
 	string s;
 
@@ -66,15 +66,6 @@ string t_hdr_require::encode_value(void) const {
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_require::encode_env(void) const {
-	string s;
-	
-	s = "SIP_REQUIRE=";
-	s += encode_value();
-	
 	return s;
 }
 

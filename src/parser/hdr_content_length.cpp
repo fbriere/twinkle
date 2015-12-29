@@ -21,7 +21,7 @@
 #include "parse_ctrl.h"
 #include "util.h"
 
-t_hdr_content_length::t_hdr_content_length() : t_header() {
+t_hdr_content_length::t_hdr_content_length() : t_header("Content-Length", "l") {
 	length = 0;
 }
 
@@ -30,39 +30,11 @@ void t_hdr_content_length::set_length(int l) {
 	length = l;
 }
 
-string t_hdr_content_length::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "l: ";
-	} else {
-		s = "Content-Length: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_content_length::encode_value(void) const {
 	string s;
 
 	if (!populated) return s;
 
 	s = int2str(length);
-	return s;
-}
-
-string t_hdr_content_length::encode_env(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "SIP_CONTENT_LENGTH=";
-	s += encode_value();
-	
 	return s;
 }

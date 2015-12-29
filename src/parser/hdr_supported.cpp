@@ -20,11 +20,23 @@
 #include "hdr_supported.h"
 #include "parse_ctrl.h"
 
-t_hdr_supported::t_hdr_supported() : t_header() {};
+t_hdr_supported::t_hdr_supported() : t_header("Supported", "k") {};
 
 void t_hdr_supported::add_feature(const string &f) {
 	populated = true;
-	features.push_back(f);
+	if (!contains(f)) {
+		features.push_back(f);
+	}
+}
+
+void t_hdr_supported::add_features(const list<string> &l) {
+	if (l.empty()) return;
+	
+	for (list<string>::const_iterator i = l.begin(); i != l.end(); i++)
+	{
+		add_feature(*i);
+	}
+	populated = true;
 }
 
 void t_hdr_supported::set_empty(void) {
@@ -44,23 +56,6 @@ bool t_hdr_supported::contains(const string &f) const {
 	return false;
 }
 
-string t_hdr_supported::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "k: ";
-	} else {
-		s = "Supported: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_supported::encode_value(void) const {
 	string s;
 
@@ -69,18 +64,9 @@ string t_hdr_supported::encode_value(void) const {
 	for (list<string>::const_iterator i = features.begin();
 	     i != features.end(); i++)
 	{
-		if (i != features.begin()) s += ", ";
+		if (i != features.begin()) s += ",";
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_supported::encode_env(void) const {
-	string s;
-	
-	s = "SIP_SUPPORTED=";
-	s += encode_value();
-	
 	return s;
 }

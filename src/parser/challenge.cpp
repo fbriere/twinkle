@@ -118,8 +118,8 @@ bool t_digest_challenge::set_attr(const t_parameter &p) {
 	else if (p.name == "algorithm")
 		algorithm = p.value;
 	else if (p.name == "domain") {
-		list<string> l = split_ws(p.value);
-		for (list<string>::iterator i = l.begin();
+		vector<string> l = split_ws(p.value);
+		for (vector<string>::iterator i = l.begin();
 		     i != l.end(); i++)
 		{
 			t_url u(*i);
@@ -128,8 +128,8 @@ bool t_digest_challenge::set_attr(const t_parameter &p) {
 		}
 	}
 	else if (p.name == "qop") {
-		list<string> l = split(p.value, ',');
-		for (list<string>::iterator i = l.begin();
+		vector<string> l = split(p.value, ',');
+		for (vector<string>::iterator i = l.begin();
 		     i != l.end(); i++)
 		{
 			qop_options.push_back(trim(*i));

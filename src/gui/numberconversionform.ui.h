@@ -28,6 +28,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+void NumberConversionForm::init()
+{
+	QRegExp rxNoAtSign("[^@]*");
+	
+	exprLineEdit->setValidator(new QRegExpValidator(rxNoAtSign, this));
+	replaceLineEdit->setValidator(new QRegExpValidator(rxNoAtSign, this));
+}
+
 int NumberConversionForm::exec(QString &expr, QString &replace)
 {
 	exprLineEdit->setText(expr);
@@ -49,7 +57,7 @@ void NumberConversionForm::validate()
 	
 	if (expr.isEmpty()) {
 		((t_gui *)ui)->cb_show_msg(this,  
-			"Match expression may not be empty.", MSG_CRITICAL);
+			tr("Match expression may not be empty.").ascii(), MSG_CRITICAL);
 		exprLineEdit->setFocus();
 		exprLineEdit->selectAll();
 		return;
@@ -57,7 +65,7 @@ void NumberConversionForm::validate()
 	
 	if (replace.isEmpty()) {
 		((t_gui *)ui)->cb_show_msg(this,  
-			"Replace value may not be empty.", MSG_CRITICAL);
+			tr("Replace value may not be empty.").ascii(), MSG_CRITICAL);
 		replaceLineEdit->setFocus();
 		replaceLineEdit->selectAll();
 		return;
@@ -67,7 +75,7 @@ void NumberConversionForm::validate()
 		boost::regex re(expr.ascii());
 	} catch (boost::bad_expression) {
 		((t_gui *)ui)->cb_show_msg(this,  
-			"Invalid regular expression.", MSG_CRITICAL);
+			tr("Invalid regular expression.").ascii(), MSG_CRITICAL);
 		exprLineEdit->setFocus();
 		return;
 	}

@@ -26,11 +26,8 @@
     <property name="minimumSize">
         <size>
             <width>571</width>
-            <height>639</height>
+            <height>643</height>
         </size>
-    </property>
-    <property name="cursor">
-        <cursor>0</cursor>
     </property>
     <property name="caption">
         <string>Twinkle</string>
@@ -53,7 +50,7 @@
         </property>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout7</cstring>
+                <cstring>layout76</cstring>
             </property>
             <grid>
                 <property name="name">
@@ -65,54 +62,80 @@
                     </property>
                     <property name="text">
                         <string>&amp;Call:</string>
+                        <comment>Label in front of combobox to enter address</comment>
                     </property>
                     <property name="buddy" stdset="0">
                         <cstring>callComboBox</cstring>
                     </property>
                 </widget>
-                <widget class="QComboBox" row="1" column="1">
+                <widget class="QLayoutWidget" row="1" column="1">
                     <property name="name">
-                        <cstring>callComboBox</cstring>
+                        <cstring>layout71</cstring>
                     </property>
-                    <property name="sizePolicy">
-                        <sizepolicy>
-                            <hsizetype>5</hsizetype>
-                            <vsizetype>0</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                        </sizepolicy>
-                    </property>
-                    <property name="editable">
-                        <bool>true</bool>
-                    </property>
-                    <property name="maxCount">
-                        <number>10</number>
-                    </property>
-                    <property name="insertionPolicy">
-                        <enum>NoInsertion</enum>
-                    </property>
-                    <property name="autoCompletion">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>The address that you want to call. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</string>
-                    </property>
-                </widget>
-                <widget class="QComboBox" row="0" column="1">
-                    <property name="name">
-                        <cstring>userComboBox</cstring>
-                    </property>
-                    <property name="sizePolicy">
-                        <sizepolicy>
-                            <hsizetype>3</hsizetype>
-                            <vsizetype>0</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                        </sizepolicy>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>The user that will make the call.</string>
-                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QComboBox">
+                            <property name="name">
+                                <cstring>callComboBox</cstring>
+                            </property>
+                            <property name="sizePolicy">
+                                <sizepolicy>
+                                    <hsizetype>3</hsizetype>
+                                    <vsizetype>0</vsizetype>
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                </sizepolicy>
+                            </property>
+                            <property name="editable">
+                                <bool>true</bool>
+                            </property>
+                            <property name="maxCount">
+                                <number>10</number>
+                            </property>
+                            <property name="insertionPolicy">
+                                <enum>NoInsertion</enum>
+                            </property>
+                            <property name="autoCompletion">
+                                <bool>true</bool>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>The address that you want to call. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</string>
+                            </property>
+                        </widget>
+                        <widget class="QToolButton">
+                            <property name="name">
+                                <cstring>addressToolButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string></string>
+                            </property>
+                            <property name="iconSet">
+                                <iconset>kontact_contacts.png</iconset>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Address book</string>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Select an address from the address book.</string>
+                            </property>
+                        </widget>
+                        <widget class="QPushButton">
+                            <property name="name">
+                                <cstring>callPushButton</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Dial</string>
+                            </property>
+                            <property name="default">
+                                <bool>true</bool>
+                            </property>
+                            <property name="whatsThis" stdset="0">
+                                <string>Dial the address.</string>
+                            </property>
+                        </widget>
+                    </hbox>
                 </widget>
                 <widget class="QLabel" row="0" column="0">
                     <property name="name">
@@ -125,172 +148,195 @@
                         <cstring>userComboBox</cstring>
                     </property>
                 </widget>
-                <widget class="QPushButton" row="1" column="3">
+                <widget class="QLayoutWidget" row="0" column="1">
                     <property name="name">
-                        <cstring>callPushButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string>Dial</string>
-                    </property>
-                    <property name="default">
-                        <bool>true</bool>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Dial the address.</string>
-                    </property>
-                </widget>
-                <widget class="QToolButton" row="1" column="2">
-                    <property name="name">
-                        <cstring>addressToolButton</cstring>
-                    </property>
-                    <property name="text">
-                        <string></string>
-                    </property>
-                    <property name="iconSet">
-                        <iconset>kontact_contacts.png</iconset>
-                    </property>
-                    <property name="toolTip" stdset="0">
-                        <string>Address book</string>
-                    </property>
-                    <property name="whatsThis" stdset="0">
-                        <string>Select an address from the address book.</string>
-                    </property>
-                </widget>
-                <widget class="QLayoutWidget" row="0" column="2" rowspan="1" colspan="2">
-                    <property name="name">
-                        <cstring>layout8</cstring>
+                        <cstring>layout75</cstring>
                     </property>
                     <hbox>
                         <property name="name">
                             <cstring>unnamed</cstring>
                         </property>
-                        <widget class="QLabel">
+                        <widget class="QComboBox">
                             <property name="name">
-                                <cstring>statAaLabel</cstring>
+                                <cstring>userComboBox</cstring>
                             </property>
                             <property name="sizePolicy">
                                 <sizepolicy>
-                                    <hsizetype>0</hsizetype>
+                                    <hsizetype>3</hsizetype>
                                     <vsizetype>0</vsizetype>
                                     <horstretch>0</horstretch>
                                     <verstretch>0</verstretch>
                                 </sizepolicy>
                             </property>
-                            <property name="cursor">
-                                <cursor>13</cursor>
-                            </property>
-                            <property name="frameShadow">
-                                <enum>Plain</enum>
-                            </property>
-                            <property name="text">
-                                <string></string>
-                            </property>
-                            <property name="pixmap">
-                                <pixmap>auto_answer.png</pixmap>
-                            </property>
                             <property name="whatsThis" stdset="0">
-                                <string>Auto answer indication.</string>
+                                <string>The user that will make the call.</string>
                             </property>
                         </widget>
-                        <widget class="QLabel">
+                        <widget class="QLayoutWidget">
                             <property name="name">
-                                <cstring>statCfLabel</cstring>
+                                <cstring>layout74</cstring>
                             </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>0</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="cursor">
-                                <cursor>13</cursor>
-                            </property>
-                            <property name="text">
-                                <string></string>
-                            </property>
-                            <property name="pixmap">
-                                <pixmap>cf.png</pixmap>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>Call redirect indication.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>statDndLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>0</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="cursor">
-                                <cursor>13</cursor>
-                            </property>
-                            <property name="text">
-                                <string></string>
-                            </property>
-                            <property name="pixmap">
-                                <pixmap>cancel.png</pixmap>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>Do not disturb indication.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>statMissedLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>0</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="cursor">
-                                <cursor>13</cursor>
-                            </property>
-                            <property name="text">
-                                <string></string>
-                            </property>
-                            <property name="pixmap">
-                                <pixmap>missed.png</pixmap>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>Missed call indication.</string>
-                            </property>
-                        </widget>
-                        <widget class="QLabel">
-                            <property name="name">
-                                <cstring>statRegLabel</cstring>
-                            </property>
-                            <property name="sizePolicy">
-                                <sizepolicy>
-                                    <hsizetype>0</hsizetype>
-                                    <vsizetype>0</vsizetype>
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                </sizepolicy>
-                            </property>
-                            <property name="cursor">
-                                <cursor>13</cursor>
-                            </property>
-                            <property name="text">
-                                <string></string>
-                            </property>
-                            <property name="pixmap">
-                                <pixmap>twinkle16.png</pixmap>
-                            </property>
-                            <property name="whatsThis" stdset="0">
-                                <string>Registration status.</string>
-                            </property>
+                            <hbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statAaLabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="frameShadow">
+                                        <enum>Plain</enum>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>auto_answer.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Auto answer indication.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statCfLabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>cf.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Call redirect indication.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statDndLabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>cancel.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Do not disturb indication.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statMWILabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="frameShadow">
+                                        <enum>Plain</enum>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>mwi_none16.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Auto answer indication.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statMissedLabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>missed.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Missed call indication.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>statRegLabel</cstring>
+                                    </property>
+                                    <property name="sizePolicy">
+                                        <sizepolicy>
+                                            <hsizetype>0</hsizetype>
+                                            <vsizetype>0</vsizetype>
+                                            <horstretch>0</horstretch>
+                                            <verstretch>0</verstretch>
+                                        </sizepolicy>
+                                    </property>
+                                    <property name="cursor">
+                                        <cursor>13</cursor>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>twinkle16.png</pixmap>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>Registration status.</string>
+                                    </property>
+                                </widget>
+                            </hbox>
                         </widget>
                     </hbox>
                 </widget>
@@ -341,6 +387,9 @@
                     </property>
                     <property name="readOnly">
                         <bool>true</bool>
+                    </property>
+                    <property name="autoFormatting">
+                        <set>AutoAll</set>
                     </property>
                 </widget>
             </vbox>
@@ -514,16 +563,7 @@
                                                 <pixmap>stat_ringing.png</pixmap>
                                             </property>
                                             <property name="whatsThis" stdset="0">
-                                                <string>&lt;p&gt;
-The padlock indicates that your voice is encrypted during transport over the network.
-&lt;/p&gt;
-&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
-&lt;p&gt;
-Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel is probably compromised by a man-in-the-middle attack (MitM).
-&lt;/p&gt;
-&lt;p&gt;
-If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same person.
-&lt;/p&gt;</string>
+                                                <string>Visual indication of line state.</string>
                                             </property>
                                         </widget>
                                         <widget class="QLabel">
@@ -547,6 +587,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>idle</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="textFormat">
                                                 <enum>RichText</enum>
@@ -745,6 +786,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>sas</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="whatsThis" stdset="0">
                                                 <string>Short authentication string</string>
@@ -771,6 +813,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>g711a/g711a</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="alignment">
                                                 <set>AlignVCenter|AlignRight</set>
@@ -828,6 +871,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>sip:from</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="alignment">
                                         <set>AlignAuto</set>
@@ -859,6 +903,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>sip:to</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="readOnly">
                                         <bool>true</bool>
@@ -887,6 +932,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>subject</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="readOnly">
                                         <bool>true</bool>
@@ -923,6 +969,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                             </property>
                             <property name="text">
                                 <string>photo</string>
+                                <comment>No need to translate</comment>
                             </property>
                         </widget>
                     </hbox>
@@ -1071,16 +1118,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                                 <pixmap>stat_ringing.png</pixmap>
                                             </property>
                                             <property name="whatsThis" stdset="0">
-                                                <string>&lt;p&gt;
-The padlock indicates that your voice is encrypted during transport over the network.
-&lt;/p&gt;
-&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
-&lt;p&gt;
-Both ends of an encrypted voice channel receive the same SAS on the first call. If the SAS is different at each end, your voice channel is probably compromised by a man-in-the-middle attack (MitM).
-&lt;/p&gt;
-&lt;p&gt;
-If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same person.
-&lt;/p&gt;</string>
+                                                <string>Visual indication of line state.</string>
                                             </property>
                                         </widget>
                                         <widget class="QLabel">
@@ -1104,6 +1142,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>idle</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="textFormat">
                                                 <enum>RichText</enum>
@@ -1302,6 +1341,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>sas</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="whatsThis" stdset="0">
                                                 <string>Short authentication string</string>
@@ -1328,6 +1368,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                             </property>
                                             <property name="text">
                                                 <string>g711a/g711a</string>
+                                                <comment>No need to translate</comment>
                                             </property>
                                             <property name="alignment">
                                                 <set>AlignVCenter|AlignRight</set>
@@ -1385,6 +1426,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>sip:from</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="readOnly">
                                         <bool>true</bool>
@@ -1413,6 +1455,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>sip:to</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="readOnly">
                                         <bool>true</bool>
@@ -1441,6 +1484,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                                     </property>
                                     <property name="text">
                                         <string>subject</string>
+                                        <comment>No need to translate</comment>
                                     </property>
                                     <property name="readOnly">
                                         <bool>true</bool>
@@ -1477,6 +1521,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
                             </property>
                             <property name="text">
                                 <string>photo</string>
+                                <comment>No need to translate</comment>
                             </property>
                         </widget>
                     </hbox>
@@ -1503,9 +1548,6 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <action name="callAnswer"/>
         <action name="callBye"/>
         <action name="callReject"/>
-        <item text="&amp;Reject" name="popupMenu_9" accel="F8">
-            <action name="actionLine1"/>
-        </item>
         <action name="callRedirect"/>
         <action name="callTransfer"/>
         <action name="callHold"/>
@@ -1516,7 +1558,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <separator/>
         <action name="callTermCap"/>
         <action name="callActivate_LineAction"/>
-        <item text="Activate line" name="popupMenu_20" accel="">
+        <item text="Activate line" name="popupMenu_19" accel="">
             <action name="actionLine1"/>
             <action name="actionLine2"/>
         </item>
@@ -1616,6 +1658,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         </property>
         <property name="menuText">
             <string>&amp;Call...</string>
+            <comment>Menu item in Call menu</comment>
         </property>
         <property name="toolTip">
             <string>Call someone</string>
@@ -1661,7 +1704,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <string>Release call</string>
         </property>
         <property name="accel">
-            <string>F7</string>
+            <string>Esc</string>
         </property>
     </action>
     <action>
@@ -1822,7 +1865,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <iconset>cf.png</iconset>
         </property>
         <property name="text">
-            <string>Call &amp;redirection...</string>
+            <string>Call redirection</string>
         </property>
         <property name="menuText">
             <string>Call &amp;redirection...</string>
@@ -1870,7 +1913,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <iconset>penguin-small.png</iconset>
         </property>
         <property name="text">
-            <string>&amp;User profile...</string>
+            <string>User profile</string>
         </property>
         <property name="menuText">
             <string>&amp;User profile...</string>
@@ -1917,6 +1960,9 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <property name="name">
             <cstring>callTransfer</cstring>
         </property>
+        <property name="toggleAction">
+            <bool>true</bool>
+        </property>
         <property name="iconSet">
             <iconset>transfer.png</iconset>
         </property>
@@ -1938,7 +1984,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <iconset>settings.png</iconset>
         </property>
         <property name="text">
-            <string>&amp;System settings...</string>
+            <string>System settings</string>
         </property>
         <property name="menuText">
             <string>&amp;System settings...</string>
@@ -2011,7 +2057,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
             <iconset>missed.png</iconset>
         </property>
         <property name="text">
-            <string>Call &amp;history...</string>
+            <string>Call history</string>
         </property>
         <property name="menuText">
             <string>Call &amp;history...</string>
@@ -2175,12 +2221,6 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <slot>editSysSettings()</slot>
     </connection>
     <connection>
-        <sender>callTransfer</sender>
-        <signal>activated()</signal>
-        <receiver>MphoneForm</receiver>
-        <slot>phoneTransfer()</slot>
-    </connection>
-    <connection>
         <sender>callMute</sender>
         <signal>toggled(bool)</signal>
         <receiver>MphoneForm</receiver>
@@ -2324,6 +2364,12 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <receiver>MphoneForm</receiver>
         <slot>showDisplay(bool)</slot>
     </connection>
+    <connection>
+        <sender>callTransfer</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>phoneTransfer()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>callComboBox</tabstop>
@@ -2372,33 +2418,37 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <include location="global" impldecl="in implementation">sys/time.h</include>
     <include location="local" impldecl="in implementation">qframe.h</include>
     <include location="local" impldecl="in implementation">qcursor.h</include>
+    <include location="local" impldecl="in implementation">qregexp.h</include>
+    <include location="local" impldecl="in implementation">qvalidator.h</include>
     <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
 </includes>
 <forwards>
     <forward>extern t_phone *phone;</forward>
 </forwards>
 <variables>
-    <variable access="private">bool viewCompactLineStatus;</variable>
-    <variable access="private">bool viewDisplay;</variable>
-    <variable access="private">QTimer *hideLineTimer2;</variable>
-    <variable access="private">QTimer *hideLineTimer1;</variable>
-    <variable access="private">QTimer *lineTimer2;</variable>
-    <variable access="private">QTimer *lineTimer1;</variable>
-    <variable access="private">t_twinkle_sys_tray *sysTray;</variable>
-    <variable access="private">LogViewForm *logViewForm;</variable>
-    <variable access="private">QStringList displayContents;</variable>
-    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
-    <variable access="private">DtmfForm *dtmfForm;</variable>
-    <variable access="private">InviteForm *inviteForm;</variable>
-    <variable access="private">RedirectForm *redirectForm;</variable>
-    <variable access="private">TermCapForm *termCapForm;</variable>
-    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
-    <variable access="private">UserProfileForm *userProfileForm;</variable>
-    <variable access="private">TransferForm *transferForm;</variable>
-    <variable access="private">HistoryForm *historyForm;</variable>
-    <variable access="private">SelectUserForm *selectUserForm;</variable>
-    <variable access="private">SelectProfileForm *selectProfileForm;</variable>
+    <variable access="private">QTimer tmrFlashMWI;</variable>
     <variable access="private">GetAddressForm *getAddressForm;</variable>
+    <variable access="private">SelectProfileForm *selectProfileForm;</variable>
+    <variable access="private">SelectUserForm *selectUserForm;</variable>
+    <variable access="private">HistoryForm *historyForm;</variable>
+    <variable access="private">TransferForm *transferForm;</variable>
+    <variable access="private">UserProfileForm *userProfileForm;</variable>
+    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">TermCapForm *termCapForm;</variable>
+    <variable access="private">RedirectForm *redirectForm;</variable>
+    <variable access="private">InviteForm *inviteForm;</variable>
+    <variable access="private">DtmfForm *dtmfForm;</variable>
+    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
+    <variable access="private">QStringList displayContents;</variable>
+    <variable access="private">LogViewForm *logViewForm;</variable>
+    <variable access="private">t_twinkle_sys_tray *sysTray;</variable>
+    <variable access="private">QTimer *lineTimer1;</variable>
+    <variable access="private">QTimer *lineTimer2;</variable>
+    <variable access="private">QTimer *hideLineTimer1;</variable>
+    <variable access="private">QTimer *hideLineTimer2;</variable>
+    <variable access="private">bool viewDisplay;</variable>
+    <variable access="private">bool viewCompactLineStatus;</variable>
+    <variable access="private">bool mwiFlashStatus;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * e )</slot>
@@ -2413,6 +2463,8 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>updateLineStatus( int line )</slot>
     <slot>updateState()</slot>
     <slot>updateRegStatus()</slot>
+    <slot>flashMWI()</slot>
+    <slot>updateMwi()</slot>
     <slot>updateServicesStatus()</slot>
     <slot>updateMissedCallStatus( int num_missed_calls )</slot>
     <slot>updateSysTrayStatus()</slot>
@@ -2424,10 +2476,10 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>phoneDeregisterAll()</slot>
     <slot>do_phoneDeregisterAll( list&lt;t_user *&gt; user_list )</slot>
     <slot>phoneShowRegistrations()</slot>
-    <slot>phoneInvite( t_user * user_config, const QString &amp; dest, const QString &amp; subject )</slot>
-    <slot>phoneInvite( const QString &amp; dest, const QString &amp; subject )</slot>
+    <slot>phoneInvite( t_user * user_config, const QString &amp; dest, const QString &amp; subject, bool anonymous )</slot>
+    <slot>phoneInvite( const QString &amp; dest, const QString &amp; subject, bool anonymous )</slot>
     <slot>phoneInvite()</slot>
-    <slot>do_phoneInvite( t_user * user_config, const QString &amp; display, const t_url &amp; destination, const QString &amp; subject )</slot>
+    <slot>do_phoneInvite( t_user * user_config, const QString &amp; display, const t_url &amp; destination, const QString &amp; subject, bool anonymous )</slot>
     <slot>phoneRedial( void )</slot>
     <slot>phoneAnswer()</slot>
     <slot>phoneAnswerFromSystrayPopup()</slot>
@@ -2437,9 +2489,10 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>phoneRedirect( const list&lt;string&gt; &amp; contacts )</slot>
     <slot>phoneRedirect()</slot>
     <slot>do_phoneRedirect( const list&lt;t_display_url&gt; &amp; destinations )</slot>
-    <slot>phoneTransfer( const string &amp; dest )</slot>
+    <slot>phoneTransfer( const string &amp; dest, t_transfer_type transfer_type )</slot>
     <slot>phoneTransfer()</slot>
-    <slot>do_phoneTransfer( const t_display_url &amp; destination )</slot>
+    <slot>do_phoneTransfer( const t_display_url &amp; destination, t_transfer_type transfer_type )</slot>
+    <slot>do_phoneTransferLine()</slot>
     <slot>phoneHold( bool on )</slot>
     <slot>phoneConference()</slot>
     <slot>phoneMute( bool on )</slot>
@@ -2479,6 +2532,8 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>updateRtpPorts()</slot>
     <slot>updateStunSettings( t_user * user_config )</slot>
     <slot>updateAuthCache( t_user * user_config, const string &amp; realm )</slot>
+    <slot>unsubscribeMWI( t_user * user_config )</slot>
+    <slot>subscribeMWI( t_user * user_config )</slot>
     <slot>viewLog()</slot>
     <slot>updateLog( bool log_zapped )</slot>
     <slot>viewHistory()</slot>
@@ -2493,6 +2548,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <slot>processLeftMouseButtonRelease( QMouseEvent * e )</slot>
     <slot>processRightMouseButtonRelease( QMouseEvent * e )</slot>
     <slot>processCryptLabelClick( int line )</slot>
+    <slot>popupMenuVoiceMail( const QPoint &amp; pos )</slot>
     <slot>showDisplay( bool on )</slot>
     <slot>showCompactLineStatus( bool on )</slot>
 </slots>
@@ -2500,6 +2556,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <function access="private" specifier="non virtual">init()</function>
     <function access="private" specifier="non virtual">destroy()</function>
     <function access="private" returnType="QString">lineSubstate2str( int line )</function>
+    <function returnType="QString">getMWIStatus( const t_mwi &amp; mwi, bool &amp; msg_waiting ) const</function>
     <function returnType="t_twinkle_sys_tray *">getSysTray()</function>
     <function returnType="bool">getViewDisplay()</function>
     <function returnType="bool">getViewCompactLineStatus()</function>

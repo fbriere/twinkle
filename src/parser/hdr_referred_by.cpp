@@ -20,7 +20,7 @@
 #include "definitions.h"
 #include "parse_ctrl.h"
 
-t_hdr_referred_by::t_hdr_referred_by() : t_header() {}
+t_hdr_referred_by::t_hdr_referred_by() : t_header("Referred-By", "b") {}
 
 void t_hdr_referred_by::set_display(const string &d) {
 	populated = true;
@@ -52,23 +52,6 @@ void t_hdr_referred_by::add_param(const t_parameter &p) {
 	params.push_back(p);
 }
 
-string t_hdr_referred_by::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "b: ";
-	} else {
-		s = "Referred-By: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-
-	return s;
-}
-
 string t_hdr_referred_by::encode_value(void) const {
 	string s;
 
@@ -92,14 +75,5 @@ string t_hdr_referred_by::encode_value(void) const {
 
 	s += param_list2str(params);
 
-	return s;
-}
-
-string t_hdr_referred_by::encode_env(void) const {
-	string s;
-	
-	s = "SIP_REFERRED_BY=";
-	s += encode_value();
-	
 	return s;
 }

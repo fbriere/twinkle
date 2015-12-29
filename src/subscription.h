@@ -25,7 +25,7 @@
 
 #include <queue>
 #include <string>
-#include "dialog.h"
+#include "abstract_dialog.h"
 
 enum t_subscription_role {
 	SR_SUBSCRIBER,
@@ -35,16 +35,31 @@ enum t_subscription_role {
 enum t_subscription_state {
 	SS_NULL,		// Initial state
 	SS_ESTABLISHED,		// Subscription is in place
+	SS_UNSUBSCRIBING,	// A request to unsubscribe has been sent
 	SS_UNSUBSCRIBED,	// An outoging unsubscribe was succesful.
 				// Waiting for the final NOTIFY.
 	SS_TERMINATED,		// Subscription ended
 };
 
+string t_subscription_state2str(t_subscription_state state);
+
 class t_subscription {
 protected:
 	t_subscription_role	role;
 	t_subscription_state	state;
-	t_dialog		*dialog; // dialog owning the subscription
+	
+	// When a subscriber subscription is terminated, this reason indicates
+	// the reason conveyed in the NOTIFY, if any.
+	string			reason_termination;
+	
+	// If the NOTIFY indicated that the subscriber may retry subscription at
+	// a later time, then resubscribe_after indicates the number of seconds to wait.
+	unsigned long		resubscribe_after;
+	
+	// Indicates if a re-subscribe may be done after a failure.
+	bool			may_resubscribe;
+	
+	t_abstract_dialog	*dialog; // dialog owning the subscription
 	string			event_type;
 	string			event_id;
 	
@@ -65,9 +80,18 @@ protected:
 	// when the subscription timer expires. If not, then the subscription
 	// terminates at expiry.
 	bool			auto_refresh;
+	
+	// Subcription expiry for a SUBSCRIBE request
+	unsigned long		subscription_expiry;
+	
+	// Default duration for a subscription
+	unsigned long		default_duration;
 
 	// Protect constructor from being used
 	t_subscription() {};
+	
+	// Write event type and id to log file
+	void log_event() const;
 
 	// Remove a pending request. Pass one of the client request pointers.
 	void remove_client_request(t_client_request **cr);
@@ -93,22 +117,33 @@ public:
 	// answered.
 	queue<t_request *>	queue_notify;
 
-	t_subscription(t_dialog *_dialog, t_subscription_role _role);
-	t_subscription(t_dialog *_dialog, t_subscription_role _role,
-			const string &_event_id);
+	t_subscription(t_abstract_dialog *_dialog, t_subscription_role _role,
+			const string &_event_type);
+	t_subscription(t_abstract_dialog *_dialog, t_subscription_role _role,
+			const string &_event_type, const string &_event_id);
 	virtual ~t_subscription();
 
 	t_subscription_role get_role(void) const;
 	t_subscription_state get_state(void) const;
+	string get_reason_termination(void) const;
+	unsigned long get_resubscribe_after(void) const;
+	bool get_may_resubscribe(void) const;
 	string get_event_type(void) const;
 	string get_event_id(void) const;
+	unsigned long get_expiry(void) const;
 
 	// Receive requests
 	// The return value indicates if processing is finished.
 	// This way a subclass can first call the parent class method.
 	// If the parent indicates that process is finished, then the child
 	// does not need to further process.
+	// Note that recv_subscribe return false if the SUBSCRIBE is valid. The
+	// subscription timer will be started, but no response is sent. The subclass
+	// MUST further handle the SUBSCRIBE, i.e. send a response and a NOTIFY.
 	virtual bool recv_subscribe(t_request *r, t_tuid tuid, t_tid tid);
+	
+	// When the NOTIFY is valid, false is returned. The subclass MUST further
+	// handle the NOTIFY, i.e. send a response.
 	virtual bool recv_notify(t_request *r, t_tuid tuid, t_tid tid);
 
 	// Receive responses
@@ -120,14 +155,23 @@ public:
 	// Process timeouts
 	// The return value indicates if processing is finished.
 	virtual bool timeout(t_subscribe_timer timer);
-
+	
+	// Match timer id with a running timer
+	virtual bool match_timer(t_subscribe_timer timer, t_object_id id_timer) const;
+	
 	// Does incoming request match with event type and id?
 	virtual bool match(t_request *r) const;
 
 	bool is_pending(void) const;
 
+	// Subscribe. If expires == 0, then the default duration is used.
+	virtual void subscribe(unsigned long expires);
+	
+	// Unsubscribe
 	virtual void unsubscribe(void);
-	virtual void refresh_subscribe(unsigned long expires);
+	
+	// Refresh subscription
+	virtual void refresh_subscribe(void);
 };
 
 #endif

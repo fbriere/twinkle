@@ -50,7 +50,7 @@ string t_server::encode(void) const {
 	return s;
 }
 
-t_hdr_server::t_hdr_server() : t_header() {};
+t_hdr_server::t_hdr_server() : t_header("Server") {};
 
 void t_hdr_server::add_server(const t_server &s) {
 	populated = true;
@@ -70,29 +70,8 @@ string t_hdr_server::get_server_info(void) const {
 	return s;
 }
 
-string t_hdr_server::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Server: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_server::encode_value(void) const {
 	if (!populated) return "";
 
 	return get_server_info();
-}
-
-string t_hdr_server::encode_env(void) const {
-	string s;
-	
-	s = "SIP_SERVER=";
-	s += encode_value();
-	
-	return s;
 }

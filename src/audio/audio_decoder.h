@@ -182,6 +182,7 @@ private:
 	struct g72x_state	_state;
 	t_bit_rate		_bit_rate;
 	uint8			_bits_per_sample;
+	t_g726_packing		_packing;
 	
 public:
 	t_g726_audio_decoder(t_bit_rate bit_rate, uint16 default_ptime, t_user *user_config);

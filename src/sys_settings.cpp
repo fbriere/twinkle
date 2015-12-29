@@ -26,6 +26,7 @@
 #include <iostream>
 #include <cstring>
 #include "sys_settings.h"
+#include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
@@ -44,6 +45,7 @@
 #define FLD_DEV_RINGTONE	"dev_ringtone"
 #define FLD_DEV_SPEAKER		"dev_speaker"
 #define FLD_DEV_MIC		"dev_mic"
+#define FLD_VALIDATE_AUDIO_DEV	"validate_audio_dev"
 #define FLD_AU_REDUCE_NOISE_MIC	"au_reduce_noise_mic"
 #define FLD_ALSA_PLAY_PERIOD_SIZE	"alsa_play_period_size"
 #define FLD_ALSA_CAPTURE_PERIOD_SIZE	"alsa_capture_period_size"
@@ -97,9 +99,14 @@
 #define FLD_REDIAL_DISPLAY	"redial_display"
 #define FLD_REDIAL_SUBJECT	"redial_subject"
 #define FLD_REDIAL_PROFILE	"redial_profile"
+#define FLD_REDIAL_HIDE_USER	"redial_hide_user"
 #define FLD_DIAL_HISTORY	"dial_history"
 #define FLD_SHOW_DISPLAY	"show_display"
 #define FLD_COMPACT_LINE_STATUS	"compact_line_status"
+#define FLD_WARN_HIDE_USER	"warn_hide_user"
+
+extern unsigned short g_override_sip_udp_port;
+extern unsigned short g_override_rtp_port;
 
 /////////////////////////
 // class t_audio_device
@@ -166,6 +173,7 @@ t_sys_settings::t_sys_settings() {
 	dev_ringtone = audio_device();
 	dev_speaker = audio_device();
 	dev_mic = audio_device();
+	validate_audio_dev = true;
 	au_reduce_noise_mic = true;
 	alsa_play_period_size = 128;
 	alsa_capture_period_size = 32;
@@ -211,9 +219,11 @@ t_sys_settings::t_sys_settings() {
 	redial_display.clear();
 	redial_subject.clear();
 	redial_profile.clear();
+	redial_hide_user = false;
 	dial_history.clear();
 	show_display = true;
 	compact_line_status = false;
+	warn_hide_user = true;
 }
 
 // Getters
@@ -237,6 +247,14 @@ t_audio_device t_sys_settings::get_dev_mic(void) const {
 	t_audio_device result;
 	mtx_sys.lock();
 	result = dev_mic;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_validate_audio_dev(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = validate_audio_dev;
 	mtx_sys.unlock();
 	return result;	
 }
@@ -444,7 +462,11 @@ unsigned short t_sys_settings::get_config_sip_udp_port(void) const {
 unsigned short t_sys_settings::get_rtp_port(void) const {
 	unsigned short result;
 	mtx_sys.lock();
-	result = rtp_port;
+	if (g_override_rtp_port > 0) {
+		result = g_override_rtp_port;
+	} else {
+		result = rtp_port;
+	}
 	mtx_sys.unlock();
 	return result;	
 }
@@ -521,6 +543,14 @@ string t_sys_settings::get_redial_profile(void) const {
 	return result;	
 }
 
+bool t_sys_settings::get_redial_hide_user(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = redial_hide_user;
+	mtx_sys.unlock();
+	return result;
+}
+
 list<string> t_sys_settings::get_dial_history(void) const {
 	list<string> result;
 	mtx_sys.lock();
@@ -545,6 +575,14 @@ bool t_sys_settings::get_compact_line_status(void) const {
 	return result;
 }
 
+bool t_sys_settings::get_warn_hide_user(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = warn_hide_user;
+	mtx_sys.unlock();
+	return result;
+}
+
 
 // Setters
 void t_sys_settings::set_dev_ringtone(const t_audio_device &dev) {
@@ -562,6 +600,12 @@ void t_sys_settings::set_dev_speaker(const t_audio_device &dev) {
 void t_sys_settings::set_dev_mic(const t_audio_device &dev) {
 	mtx_sys.lock();
 	dev_mic = dev;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_validate_audio_dev(bool b) {
+	mtx_sys.lock();
+	validate_audio_dev = b;
 	mtx_sys.unlock();
 }
 
@@ -775,6 +819,12 @@ void t_sys_settings::set_redial_profile(const string &profile) {
 	mtx_sys.unlock();
 }
 
+void t_sys_settings::set_redial_hide_user(const bool b) {
+	mtx_sys.lock();
+	redial_hide_user = b;
+	mtx_sys.unlock();
+}
+
 void t_sys_settings::set_dial_history(const list<string> &history) {
 	mtx_sys.lock();
 	dial_history = history;
@@ -793,13 +843,19 @@ void t_sys_settings::set_compact_line_status(bool b) {
 	mtx_sys.unlock();
 }
 
+void t_sys_settings::set_warn_hide_user(bool b) {
+	mtx_sys.lock();
+	warn_hide_user = b;
+	mtx_sys.unlock();
+}
+
 
 string t_sys_settings::about(bool html) const {
 	string s = PRODUCT_NAME;
 	s += ' ';
 	s += PRODUCT_VERSION;
 	s += " - ";
-	s += PRODUCT_DATE;
+	s += get_product_date();
 	if (html) s += "<BR>";
 	s += "\n";
 	
@@ -814,13 +870,14 @@ string t_sys_settings::about(bool html) const {
 	
 	string options_built = get_options_built();
 	if (!options_built.empty()) {
-		s += "Built with support for: ";
+		s += TRANSLATE("Built with support for:");
+		s += " ";
 		s += options_built;
 		if (html) s += "<BR><BR>";
 		s += "\n\n";
 	}
 	
-	s += "Contributions:";
+	s += TRANSLATE("Contributions:");
 	if (html) s += "<BR>";
 	s += "\n";
 	
@@ -835,36 +892,36 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR><BR>";
 	s += "\n\n";
 
-	s += "This software contains the following software from 3rd parties:";		
+	s += TRANSLATE("This software contains the following software from 3rd parties:");		
 	if (html) s += "<BR>";
 	s += "\n";
 
-	s += "* GSM codec from Jutta Degener and Carsten Bormann, University of Berlin";
+	s += TRANSLATE("* GSM codec from Jutta Degener and Carsten Bormann, University of Berlin");
 	if (html) s += "<BR>";
 	s += "\n";
 
-	s += "* G.711/G.726 codecs from Sun Microsystems (public domain)";	
+	s += TRANSLATE("* G.711/G.726 codecs from Sun Microsystems (public domain)");	
 	if (html) s += "<BR>";
 	s += "\n";
 	
 #ifdef HAVE_ILBC
-	s += "* iLBC implementation from RFC 3951 (www.ilbcfreeware.org)";	
+	s += TRANSLATE("* iLBC implementation from RFC 3951 (www.ilbcfreeware.org)");	
 	if (html) s += "<BR>";
 	s += "\n";
 #endif
 	
-	s += "* Parts of the STUN project at http://sourceforge.net/projects/stun";
+	s += TRANSLATE("* Parts of the STUN project at http://sourceforge.net/projects/stun");
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "* Parts of libsrv at http://libsrv.sourceforge.net/";
+	s += TRANSLATE("* Parts of libsrv at http://libsrv.sourceforge.net/");
 	if (html) s += "<BR>";
 	s += "\n";
 	
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "For RTP the following dynamic libraries are linked:";
+	s += TRANSLATE("For RTP the following dynamic libraries are linked:");
 	if (html) s += "<BR>";
 	s += "\n";
 	
@@ -875,6 +932,14 @@ string t_sys_settings::about(bool html) const {
 	s += "* GNU CommonC++ - http://www.gnu.org/software/commoncpp";
 	if (html) s += "<BR><BR>";
 	s += "\n\n";
+	
+	// Display information about translator only on non-english version.
+	string translated_by = TRANSLATE("Translated to english by <your name>");
+	if (translated_by != "Translated to english by <your name>") {
+		s += translated_by;
+		if (html) s += "<BR><BR>";
+		s += "\n\n";
+	}
 	
 	s += PRODUCT_NAME;
 	s += " comes with ABSOLUTELY NO WARRANTY.";
@@ -898,6 +963,23 @@ string t_sys_settings::about(bool html) const {
 	s += "\n";
 	
 	return s;
+}
+
+string t_sys_settings::get_product_date(void) const {
+	struct tm t;
+	t.tm_sec = 0;
+	t.tm_min = 0;
+	t.tm_hour = 0;
+	
+	vector<string> l = split(PRODUCT_DATE, ' ');
+	assert(l.size() == 3);
+	t.tm_mon = str2month_full(l[0]);
+	t.tm_mday = atoi(l[1].c_str());
+	t.tm_year = atoi(l[2].c_str()) - 1900;
+	
+	char buf[64];
+	strftime(buf, 64, "%d %B %Y", &t);
+	return string(buf);
 }
 
 string t_sys_settings::get_options_built(void) const {
@@ -934,9 +1016,8 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 
 	// Check if share directory exists
 	if (stat(dir_share.c_str(), &stat_buf) != 0) {
-		error_msg = "Directory ";
-		error_msg += dir_share;
-		error_msg += " does not exist.";
+		error_msg = TRANSLATE("Directory %1 does not exist.");
+		error_msg = replace_first(error_msg, "%1", dir_share);
 		mtx_sys.unlock();
 		return false;
 	}
@@ -947,8 +1028,8 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 	filename += FILE_RINGTONE;
 	ifstream f_ringtone(filename.c_str());
 	if (!f_ringtone) {
-		error_msg = "Cannot open file ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file %1 .");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_sys.unlock();
 		return false;
 	}
@@ -959,22 +1040,23 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 	filename += FILE_RINGBACK;
 	ifstream f_ringback(filename.c_str());
 	if (!f_ringback) {
-		error_msg = "Cannot open file ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file %1 .");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_sys.unlock();
 		return false;
 	}
 
 	// Check if $HOME is set correctly
 	if (string(DIR_HOME) == "") {
-		error_msg = "$HOME is not set to your home directory.";
+		error_msg = TRANSLATE("%1 is not set to your home directory.");
+		error_msg = replace_first(error_msg, "%1", "$HOME");
 		mtx_sys.unlock();
 		return false;
 	}
 	if (stat(DIR_HOME, &stat_buf) != 0) {
-		error_msg = "Directory ";
-		error_msg += DIR_HOME;
-		error_msg += " ($HOME) does not exist.";
+		error_msg = TRANSLATE("Directory %1 (%2) does not exist.");
+		error_msg = replace_first(error_msg, "%1", DIR_HOME);
+		error_msg = replace_first(error_msg, "%2", "$HOME");	
 		mtx_sys.unlock();
 		return false;
 	}
@@ -987,8 +1069,8 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 		// User directory does not exist. Create it now.
 		if (mkdir(dirname.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
 			// Failed to create the user directory
-			error_msg = "Cannot create directory ";
-			error_msg += dirname;
+			error_msg = TRANSLATE("Cannot create directory %1 .");
+			error_msg = replace_first(error_msg, "%1", dirname);
 			mtx_sys.unlock();
 			return false;
 		}
@@ -1009,6 +1091,12 @@ string t_sys_settings::get_dir_share(void) const {
 	mtx_sys.lock();
 	result = dir_share;
 	mtx_sys.unlock();
+	return result;
+}
+
+string t_sys_settings::get_dir_lang(void) const {
+	string result = get_dir_share();
+	result += "/lang";
 	return result;
 }
 
@@ -1035,10 +1123,8 @@ bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) 
 	if (stat(lck_filename.c_str(), &stat_buf) == 0) {
 		ifstream f(lck_filename.c_str());
 		if (!f) {
-			error_msg = "Lock file ";
-			error_msg += lck_filename;
-			error_msg += " already exists.\n";
-			error_msg += "File cannot be opened however.";
+			error_msg =  TRANSLATE("Lock file %1 already exist, but cannot be opened.");
+			error_msg = replace_first(error_msg, "%1", lck_filename);
 			return false;
 		}
 
@@ -1049,11 +1135,9 @@ bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) 
 			// The pid in the lock file exists, so Twinkle is
 			// already running.
 			already_running = true;
-			error_msg = PRODUCT_NAME;
-			error_msg += " is already running.\n";
-			error_msg += "Lock file ";
-			error_msg += lck_filename;
-			error_msg += " already exists.";
+			error_msg = TRANSLATE("%1 is already running.\nLock file %2 already exists.");
+			error_msg = replace_first(error_msg, "%1", PRODUCT_NAME);
+			error_msg = replace_first(error_msg, "%2", lck_filename);
 			return false;
 		}
 
@@ -1065,15 +1149,15 @@ bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) 
 	// Create lock file
 	ofstream f(lck_filename.c_str());
 	if (!f) {
-		error_msg = "Cannot create ";
-		error_msg += lck_filename;
+		error_msg = TRANSLATE("Cannot create %1 .");
+		error_msg = replace_first(error_msg, "%1", lck_filename);
 		return false;
 	}
 
 	f << getpid();
 	if (!f.good()) {
-		error_msg = "Cannot write to ";
-		error_msg += lck_filename;
+		error_msg = TRANSLATE("Cannot write to %1 .");
+		error_msg = replace_first(error_msg, "%1", lck_filename);
 		return false;
 	}
 
@@ -1106,8 +1190,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 	// Open config file
 	ifstream config(filename.c_str());
 	if (!config) {
-		error_msg = "Cannot open file for reading: ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file for reading: %1");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_sys.unlock();
 		return false;
 	}
@@ -1119,8 +1203,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 
 		// Check if read operation succeeded
 		if (!config.good() && !config.eof()) {
-			error_msg = "File system error while reading file ";
-			error_msg += filename;
+			error_msg = TRANSLATE("File system error while reading file %1 .");
+			error_msg = replace_first(error_msg, "%1", filename);
 			mtx_sys.unlock();
 			return false;
 		}
@@ -1133,18 +1217,18 @@ bool t_sys_settings::read_config(string &error_msg) {
 		// Skip comment lines
 		if (line[0] == '#') continue;
 
-		list<string> l = split_on_first(line, '=');
+		vector<string> l = split_on_first(line, '=');
 		if (l.size() != 2) {
-			error_msg = "Syntax error in file ";
-			error_msg += filename;
+			error_msg = TRANSLATE("Syntax error in file %1 .");
+			error_msg = replace_first(error_msg, "%1", filename);
 			error_msg += "\n";
 			error_msg += line;
 			mtx_sys.unlock();
 			return false;
 		}
 
-		string parameter = trim(l.front());
-		string value = trim(l.back());
+		string parameter = trim(l[0]);
+		string value = trim(l[1]);
 
 		if (parameter == FLD_DEV_RINGTONE) {
 			dev_ringtone = audio_device(value);
@@ -1152,6 +1236,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			dev_speaker = audio_device(value);
 		} else if (parameter == FLD_DEV_MIC) {
 			dev_mic = audio_device(value);
+		} else if (parameter == FLD_VALIDATE_AUDIO_DEV) {
+			validate_audio_dev = yesno2bool(value);
 		} else if (parameter == FLD_AU_REDUCE_NOISE_MIC) {
 			au_reduce_noise_mic = yesno2bool(value);
 		} else if (parameter == FLD_ALSA_PLAY_PERIOD_SIZE) {
@@ -1225,12 +1311,16 @@ bool t_sys_settings::read_config(string &error_msg) {
 			redial_subject = value;
 		} else if (parameter == FLD_REDIAL_PROFILE) {
 			redial_profile = value;
+		} else if (parameter == FLD_REDIAL_HIDE_USER) {
+			redial_hide_user = yesno2bool(value);
 		} else if (parameter == FLD_DIAL_HISTORY) {
 			dial_history.push_back(value);
 		} else if (parameter == FLD_SHOW_DISPLAY) {
 			show_display = yesno2bool(value);
 		} else if (parameter == FLD_COMPACT_LINE_STATUS) {
 			//compact_line_status = yesno2bool(value);
+		} else if (parameter == FLD_WARN_HIDE_USER) {
+			warn_hide_user = yesno2bool(value);
 		}
 			
 		// Unknown field names are skipped.
@@ -1251,10 +1341,9 @@ bool t_sys_settings::write_config(string &error_msg) {
 	if (stat(filename.c_str(), &stat_buf) == 0) {
 		if (rename(filename.c_str(), f_backup.c_str()) != 0) {
 			char *err = strerror(errno);
-			error_msg = "Failed to backup ";
-			error_msg += filename;
-			error_msg += " to ";
-			error_msg += f_backup;
+			error_msg = TRANSLATE("Failed to backup %1 to %2");
+			error_msg = replace_first(error_msg, "%1", filename);
+			error_msg = replace_first(error_msg, "%2", f_backup);
 			error_msg += "\n";
 			error_msg += err;
 			mtx_sys.unlock();
@@ -1265,8 +1354,8 @@ bool t_sys_settings::write_config(string &error_msg) {
 	// Open file
 	ofstream config(filename.c_str());
 	if (!config) {
-		error_msg = "Cannot open file for writing: ";
-		error_msg += filename;
+		error_msg = TRANSLATE("Cannot open file for writing: %1");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_sys.unlock();
 		return false;
 	}
@@ -1276,6 +1365,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_DEV_RINGTONE << '=' << dev_ringtone.get_settings_value() << endl;
 	config << FLD_DEV_SPEAKER << '=' << dev_speaker.get_settings_value() << endl;
 	config << FLD_DEV_MIC << '=' << dev_mic.get_settings_value() << endl;
+	config << FLD_VALIDATE_AUDIO_DEV << '=' << bool2yesno(validate_audio_dev) << endl;
 	config << FLD_AU_REDUCE_NOISE_MIC << '=' << bool2yesno(au_reduce_noise_mic) << endl;
 	config << FLD_ALSA_PLAY_PERIOD_SIZE << '=' << alsa_play_period_size << endl;
 	config << FLD_ALSA_CAPTURE_PERIOD_SIZE << '=' << alsa_capture_period_size << endl;
@@ -1352,8 +1442,10 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_REDIAL_DISPLAY << '=' << redial_display << endl; 
 	config << FLD_REDIAL_SUBJECT << '=' << redial_subject << endl;
 	config << FLD_REDIAL_PROFILE << '=' << redial_profile << endl;
+	config << FLD_REDIAL_HIDE_USER << '=' << bool2yesno(redial_hide_user) << endl;
 	config << FLD_SHOW_DISPLAY << '=' << bool2yesno(show_display) << endl;
 	//config << FLD_COMPACT_LINE_STATUS << '=' << bool2yesno(compact_line_status) << endl;
+	config << FLD_WARN_HIDE_USER << '=' << bool2yesno(warn_hide_user) << endl;
 	
 	for (list<string>::iterator i = dial_history.begin();
 	     i != dial_history.end(); i++)
@@ -1369,8 +1461,8 @@ bool t_sys_settings::write_config(string &error_msg) {
 		config.close();
 		rename(f_backup.c_str(), filename.c_str());
 
-		error_msg = "File system error while writing file ";
-		error_msg += filename;
+		error_msg = TRANSLATE("File system error while writing file %1 .");
+		error_msg = replace_first(error_msg, "%1", filename);
 		mtx_sys.unlock();
 		return false;
 	}
@@ -1379,7 +1471,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	return true;
 }
 
-list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
+list<t_audio_device> t_sys_settings::get_oss_devices(bool playback) const {
 	struct stat stat_buf;
 	list<t_audio_device> l;
 	
@@ -1395,7 +1487,14 @@ list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 		oss_dev.device = dev;
 		
 		// Get sound card name
-		int fd = open(dev.c_str(), O_RDONLY | O_NONBLOCK);
+		int fd;
+		
+		if (playback) {
+			fd = open(dev.c_str(), O_WRONLY | O_NONBLOCK);
+		} else {
+			fd = open(dev.c_str(), O_RDONLY | O_NONBLOCK);
+		}
+		
 		if (fd >= 0) {
 			struct mixer_info soundcard_info;
 			if (ioctl(fd, SOUND_MIXER_INFO, &soundcard_info) != -1) {
@@ -1409,7 +1508,10 @@ list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 			close(fd);
 		} else {
 			if (errno == EBUSY) {
-				oss_dev.name = "cannot get name (device is busy)";
+				oss_dev.name = TRANSLATE("unknown name (device is busy)");
+			} else {
+				// Device is not available.
+				continue;
 			}
 		}
 		
@@ -1444,17 +1546,17 @@ list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 
 #ifdef HAVE_LIBASOUND
 // Defined in audio_device.cpp
-void alsa_fill_soundcards(list<t_audio_device>& l);
+void alsa_fill_soundcards(list<t_audio_device>& l, bool playback);
 
-list<t_audio_device> t_sys_settings::get_alsa_devices(void) const {
+list<t_audio_device> t_sys_settings::get_alsa_devices(bool playback) const {
 	t_audio_device defaultDevice;
 	defaultDevice.device = "default";
-	defaultDevice.name = "Default device";
+	defaultDevice.name = TRANSLATE("Default device");
 	defaultDevice.type = t_audio_device::ALSA;
 	list<t_audio_device> l;
 	l.push_back(defaultDevice);
 	
-	alsa_fill_soundcards(l);
+	alsa_fill_soundcards(l, playback);
 	
 	// Add other device option
 	t_audio_device other_dev;
@@ -1466,13 +1568,13 @@ list<t_audio_device> t_sys_settings::get_alsa_devices(void) const {
 }
 #endif
 
-list<t_audio_device> t_sys_settings::get_audio_devices(void) const {
+list<t_audio_device> t_sys_settings::get_audio_devices(bool playback) const {
 	list<t_audio_device> d, d0;
 	
 #ifdef HAVE_LIBASOUND
-	d = get_alsa_devices();
+	d = get_alsa_devices(playback);
 #endif
-	d0 = get_oss_devices();
+	d0 = get_oss_devices(playback);
 	d.insert(d.end(), d0.begin(), d0.end());
 	return d;
 }
@@ -1555,13 +1657,47 @@ t_audio_device t_sys_settings::audio_device(string device) {
 	return d;	
 }
 
+bool t_sys_settings::exec_audio_validation(bool ringtone, bool speaker, bool mic, 
+	string &error_msg) const 
+{
+	error_msg.clear();
+	if (!validate_audio_dev) return true;
+	
+	bool valid = true;
+	bool full_duplex = speaker && mic && equal_audio_dev(dev_speaker, dev_mic);
+	
+	if (ringtone && !t_audio_io::validate(dev_ringtone, true, false)) {
+		string msg = TRANSLATE("Cannot acces the ring tone device (%1).\n");
+		error_msg += replace_first(msg, "%1", dev_ringtone.get_description());
+		valid = false;
+	}
+	if (speaker && !t_audio_io::validate(dev_speaker, true, full_duplex)) {
+		string msg = TRANSLATE("Cannot acces the speaker (%1).\n");
+		error_msg += replace_first(msg, "%1", dev_speaker.get_description());
+		valid = false;
+	}
+	if (mic && !t_audio_io::validate(dev_mic, full_duplex, true)) {
+		string msg = TRANSLATE("Cannot acces the microphone (%1).\n");
+		error_msg += replace_first(msg, "%1", dev_mic.get_description());
+		valid = false;
+	}
+	
+	return valid;
+}
+
 unsigned short t_sys_settings::get_sip_udp_port(bool force_active) {
 	mtx_sys.lock();
 	
 	// The configured port becomes the active port after first
 	// usage of the port.
 	if (!active_sip_udp_port || force_active) {
-		active_sip_udp_port = config_sip_udp_port;
+		if (g_override_sip_udp_port > 0) {
+			// The port provided on the command line overrides
+			// the configured port.
+			active_sip_udp_port = g_override_sip_udp_port;
+		} else {
+			active_sip_udp_port = config_sip_udp_port;
+		}
 	}
 	
 	mtx_sys.unlock();

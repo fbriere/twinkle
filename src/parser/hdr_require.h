@@ -31,11 +31,10 @@ public:
 
 	t_hdr_require();
 	void add_feature(const string &f);
+	void add_features(const list<string> &l);
 	void del_feature(const string &f);
 	bool contains(const string &f) const;
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 	void unpopulate(void);
 };
 

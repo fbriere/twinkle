@@ -16,11 +16,11 @@ AM_LFLAGS = -i
 CXXFLAGS = @PARSER_CXXFLAGS@
 
 # This target is only for testing the parser in isolation
-# noinst_PROGRAMS = sipparse
-
-# sipparse_SOURCES = main.cpp
-
-# sipparse_LDADD = $(top_builddir)/src/util.o\
+#noinst_PROGRAMS = sipparse
+#
+#sipparse_SOURCES = main.cpp
+#
+#sipparse_LDADD = $(top_builddir)/src/util.o\
 #	$(top_builddir)/src/parser/libsipparser.a\
 #	$(top_builddir)/src/sdp/libsdpparser.a\
 #	$(top_builddir)/src/sockets/libsocket.a\
@@ -61,13 +61,18 @@ libsipparser_a_SOURCES =\
         hdr_mime_version.cpp\
         hdr_organization.cpp\
         hdr_priority.cpp\
+        hdr_privacy.cpp\
+        hdr_p_asserted_identity.cpp\
+        hdr_p_preferred_identity.cpp\
         hdr_proxy_authenticate.cpp\
         hdr_proxy_authorization.cpp\
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
+        hdr_refer_sub.cpp\
 	hdr_refer_to.cpp\
 	hdr_referred_by.cpp\
+	hdr_replaces.cpp\
         hdr_reply_to.cpp\
         hdr_require.cpp\
         hdr_retry_after.cpp\
@@ -85,6 +90,7 @@ libsipparser_a_SOURCES =\
         hdr_warning.cpp\
         hdr_www_authenticate.cpp\
         header.cpp\
+        identity.cpp\
         media_type.cpp\
         parameter.cpp\
         parse_ctrl.cpp\
@@ -125,14 +131,19 @@ libsipparser_a_SOURCES =\
         hdr_min_expires.h\
         hdr_mime_version.h\
         hdr_organization.h\
+        hdr_p_asserted_identity.h\
+        hdr_p_preferred_identity.h\
         hdr_priority.h\
+        hdr_privacy.h\
         hdr_proxy_authenticate.h\
         hdr_proxy_authorization.h\
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
+        hdr_refer_sub.h\
 	hdr_refer_to.h\
 	hdr_referred_by.h\
+	hdr_replaces.h\
         hdr_reply_to.h\
         hdr_require.h\
         hdr_retry_after.h\
@@ -150,6 +161,7 @@ libsipparser_a_SOURCES =\
         hdr_warning.h\
         hdr_www_authenticate.h\
         header.h\
+        identity.h\
         media_type.h\
         parameter.h\
         parse_ctrl.h\

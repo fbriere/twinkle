@@ -20,28 +20,11 @@
 #include "hdr_subject.h"
 #include "parse_ctrl.h"
 
-t_hdr_subject::t_hdr_subject() : t_header() {};
+t_hdr_subject::t_hdr_subject() : t_header("Subject", "s") {};
 
 void t_hdr_subject::set_subject(const string &s) {
 	populated = true;
 	subject = s;
-}
-
-string t_hdr_subject::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "s: ";
-	} else {
-		s = "Subject: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_subject::encode_value(void) const {
@@ -49,13 +32,3 @@ string t_hdr_subject::encode_value(void) const {
 
 	return subject;
 }
-
-string t_hdr_subject::encode_env(void) const {
-	string s;
-
-	s = "SIP_SUBJECT=";
-	s += encode_value();
-	
-	return s;
-}
-	

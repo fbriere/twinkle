@@ -57,16 +57,19 @@ AR = ar
 ARFLAGS = cru
 libtwinkle_a_AR = $(AR) $(ARFLAGS)
 libtwinkle_a_LIBADD =
-am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) call_history.$(OBJEXT) \
-	call_script.$(OBJEXT) cmd_socket.$(OBJEXT) dialog.$(OBJEXT) \
-	events.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
+am_libtwinkle_a_OBJECTS = abstract_dialog.$(OBJEXT) \
+	address_book.$(OBJEXT) auth.$(OBJEXT) call_history.$(OBJEXT) \
+	call_script.$(OBJEXT) client_request.$(OBJEXT) \
+	cmd_socket.$(OBJEXT) dialog.$(OBJEXT) events.$(OBJEXT) \
+	id_object.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
 	log.$(OBJEXT) phone.$(OBJEXT) phone_user.$(OBJEXT) \
 	prohibit_thread.$(OBJEXT) redirect.$(OBJEXT) sender.$(OBJEXT) \
 	service.$(OBJEXT) session.$(OBJEXT) sub_refer.$(OBJEXT) \
-	subscription.$(OBJEXT) sys_settings.$(OBJEXT) \
-	timekeeper.$(OBJEXT) transaction.$(OBJEXT) \
-	transaction_layer.$(OBJEXT) transaction_mgr.$(OBJEXT) \
-	user.$(OBJEXT) userintf.$(OBJEXT) util.$(OBJEXT)
+	subscription.$(OBJEXT) subscription_dialog.$(OBJEXT) \
+	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
+	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
+	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
+	util.$(OBJEXT)
 libtwinkle_a_OBJECTS = $(am_libtwinkle_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_twinkle_OBJECTS = main.$(OBJEXT)
@@ -80,7 +83,8 @@ twinkle_DEPENDENCIES = libtwinkle.a \
 	$(top_builddir)/src/audio/libaudio.a \
 	$(top_builddir)/src/audio/gsm/libgsm.a \
 	$(top_builddir)/src/audits/libaudits.a \
-	$(top_builddir)/src/stun/libstun.a $(am__DEPENDENCIES_1)
+	$(top_builddir)/src/stun/libstun.a \
+	$(top_builddir)/src/mwi/libmwi.a $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -337,18 +341,21 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
+        $(top_builddir)/src/mwi/libmwi.a\
 	$(CCRTP_LIBS)\
-	-lresolv\
-	-lsndfile\
-	-lboost_regex
+	-lsndfile
 
 libtwinkle_a_SOURCES = \
+	abstract_dialog.cpp\
+	address_book.cpp\
         auth.cpp\
         call_history.cpp\
         call_script.cpp\
+        client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
         events.cpp\
+        id_object.cpp\
         line.cpp\
         listener.cpp\
         log.cpp\
@@ -361,6 +368,7 @@ libtwinkle_a_SOURCES = \
         session.cpp\
 	sub_refer.cpp\
 	subscription.cpp\
+	subscription_dialog.cpp\
         sys_settings.cpp\
         timekeeper.cpp\
         transaction.cpp\
@@ -369,13 +377,17 @@ libtwinkle_a_SOURCES = \
         user.cpp\
         userintf.cpp\
         util.cpp\
+        abstract_dialog.h\
+        address_book.h\
         auth.h\
         call_history.h\
         call_script.h\
+        client_request.h\
         cmd_socket.h\
         dialog.h\
         events.h\
 	exceptions.h\
+	id_object.h\
         line.h\
         listener.h\
         log.h\
@@ -389,16 +401,18 @@ libtwinkle_a_SOURCES = \
         session.h\
 	sub_refer.h\
 	subscription.h\
+	subscription_dialog.h\
         sys_settings.h\
         timekeeper.h\
         transaction.h\
         transaction_layer.h\
         transaction_mgr.h\
+        translator.h\
         user.h\
         userintf.h\
         util.h
 
-SUBDIRS = audio audits parser sdp sockets stun threads . gui
+SUBDIRS = audio audits mwi parser sdp sockets stun threads . gui gui/lang
 all: twinkle_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
@@ -470,12 +484,16 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/abstract_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/address_book.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/auth.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/call_history.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/call_script.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_request.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd_socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/events.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/id_object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/line.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/listener.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
@@ -489,6 +507,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sub_refer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subscription.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subscription_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sys_settings.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timekeeper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transaction.Po@am__quote@

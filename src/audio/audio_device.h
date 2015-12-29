@@ -51,6 +51,10 @@ public:
 	static t_audio_io* open(const t_audio_device& dev, bool playback, 
 		bool capture, bool blocking, int channels, t_audio_sampleformat format, 
 		int sample_rate, bool short_latency);
+		
+	// Validate if an audio device can be opened.
+	static bool validate(const t_audio_device& dev, bool playback, bool capture);
+
 protected:
 	virtual bool open(const string& device, bool playback, bool capture, 
 		bool blocking, int channels, t_audio_sampleformat format, 

@@ -30,6 +30,7 @@
 #include "threads/thread.h"
 #include "audits/memman.h"
 
+extern t_phone		*phone;
 extern t_event_queue	*evq_trans_mgr;
 extern t_event_queue	*evq_timekeeper;
 extern t_timekeeper	*timekeeper;
@@ -50,21 +51,9 @@ string timer_type2str(t_timer_type t) {
 // class t_timer
 ///////////////////////////////////////////////////////////
 
-unsigned short  t_timer::next_id = 1;
-t_mutex		t_timer::class_mutex;
-
-t_timer::t_timer(long dur) {
+t_timer::t_timer(long dur) : t_id_object() {
 	duration = dur;
 	relative_duration = dur;
-
-	class_mutex.lock();
-	id = next_id++;
-	if (next_id == 65535) next_id = 1;
-	class_mutex.unlock();
-}
-
-unsigned short t_timer::get_id(void) const {
-	return id;
 }
 
 long t_timer::get_duration(void) const {
@@ -140,12 +129,12 @@ string t_tmr_transaction::get_name(void) const {
 t_tmr_phone::t_tmr_phone(long dur, t_phone_timer ptmr, t_phone *p) : t_timer(dur)
 {
 	phone_timer = ptmr;
-	phone = p;
+	the_phone = p;
 }
 
 void t_tmr_phone::expired(void) {
 	// Call timeout method on the phone for a timer expiry
-	phone->timeout(phone_timer, get_id());
+	the_phone->timeout(phone_timer, get_object_id());
 }
 
 t_timer *t_tmr_phone::copy(void) const {
@@ -163,7 +152,7 @@ t_phone_timer t_tmr_phone::get_phone_timer(void) const {
 }
 
 t_phone *t_tmr_phone::get_phone(void) const {
-	return phone;
+	return the_phone;
 }
 
 string t_tmr_phone::get_name(void) const {
@@ -178,17 +167,17 @@ string t_tmr_phone::get_name(void) const {
 ///////////////////////////////////////////////////////////
 // class t_tmr_line
 ///////////////////////////////////////////////////////////
-t_tmr_line::t_tmr_line(long dur, t_line_timer ltmr, t_line *l,
-				t_dialog_id d) : t_timer(dur)
+t_tmr_line::t_tmr_line(long dur, t_line_timer ltmr, t_object_id lid,
+				t_object_id d) : t_timer(dur)
 {
 	line_timer = ltmr;
-	line = l;
+	line_id = lid;
 	dialog_id = d;
 }
 
 void t_tmr_line::expired(void) {
 	// Call timeout method on the line for a timer expiry
-	line->timeout(line_timer, dialog_id);
+	phone->line_timeout(line_id, line_timer, dialog_id);
 }
 
 t_timer *t_tmr_line::copy(void) const {
@@ -205,8 +194,8 @@ t_line_timer t_tmr_line::get_line_timer(void) const {
 	return line_timer;
 }
 
-t_line *t_tmr_line::get_line(void) const {
-	return line;
+t_object_id t_tmr_line::get_line_id(void) const {
+	return line_id;
 }
 
 string t_tmr_line::get_name(void) const {
@@ -228,11 +217,11 @@ string t_tmr_line::get_name(void) const {
 // class t_tmr_subscribe
 ///////////////////////////////////////////////////////////
 t_tmr_subscribe::t_tmr_subscribe(long dur, t_subscribe_timer stmr,
-		t_line *l, t_dialog_id d, const string &event_type,
+		t_object_id lid, t_object_id d, const string &event_type,
 		const string &event_id) : t_timer(dur)
 {
 	subscribe_timer = stmr;
-	line = l;
+	line_id = lid;
 	dialog_id = d;
 	sub_event_type = event_type;
 	sub_event_id = event_id;
@@ -240,7 +229,11 @@ t_tmr_subscribe::t_tmr_subscribe(long dur, t_subscribe_timer stmr,
 
 void t_tmr_subscribe::expired(void) {
 	// Call timeout method on the subscription for a timer expiry
-	line->timeout_sub(subscribe_timer, dialog_id, sub_event_type, sub_event_id);
+	if (line_id == 0) {
+		phone->subscription_timeout(subscribe_timer, get_object_id());
+	} else {
+		phone->line_timeout_sub(line_id, subscribe_timer, dialog_id, sub_event_type, sub_event_id);
+	}
 }
 
 t_timer *t_tmr_subscribe::copy(void) const {
@@ -257,8 +250,8 @@ t_subscribe_timer t_tmr_subscribe::get_subscribe_timer(void) const {
 	return subscribe_timer;
 }
 
-t_line *t_tmr_subscribe::get_line(void) const {
-	return line;
+t_object_id t_tmr_subscribe::get_line_id(void) const {
+	return line_id;
 }
 
 string t_tmr_subscribe::get_name(void) const {
@@ -345,7 +338,7 @@ t_timekeeper::~t_timekeeper() {
 	{
 		log_file->write_raw("\nDeleting timer:\n");
 		log_file->write_raw("Id: ");
-		log_file->write_raw((*i)->get_id());
+		log_file->write_raw((*i)->get_object_id());
 		log_file->write_raw(", Type: ");
 		log_file->write_raw(timer_type2str((*i)->get_type()));
 		log_file->write_raw(", Timer: ");
@@ -469,7 +462,7 @@ void t_timekeeper::start_timer(t_timer *t) {
 	unlock();
 }
 
-void t_timekeeper::stop_timer(unsigned short id) {
+void t_timekeeper::stop_timer(t_object_id id) {
 	struct itimerval	itimer;
 	long			remain_msec;
 
@@ -489,7 +482,7 @@ void t_timekeeper::stop_timer(unsigned short id) {
 	// Find timer
 	list<t_timer *>::iterator i = timer_list.begin();
 	while (i != timer_list.end()) {
-		if ((*i)->get_id() == id) break;
+		if ((*i)->get_object_id() == id) break;
 		i++;
 	}
 
@@ -588,7 +581,7 @@ void t_timekeeper::get_timer_dur(unsigned short id, t_semaphore *sema,
 			remain_msec += (*i)->get_relative_duration();
 		}
 
-		if ((*i)->get_id() == id) break;
+		if ((*i)->get_object_id() == id) break;
 
 		i++;
 	}
@@ -658,7 +651,7 @@ void t_timekeeper::report_expiry(void) {
 	unlock();
 }
 
-unsigned long t_timekeeper::get_remaining_time(unsigned short timer_id) {
+unsigned long t_timekeeper::get_remaining_time(t_object_id timer_id) {
 	t_semaphore sema(0);
 	unsigned long duration;
 
@@ -694,7 +687,8 @@ void t_timekeeper::run(void) {
 		start(timeout_handler);
 	}
 
-	while (true) {
+	bool quit = false;
+	while (!quit) {
 		event = evq_timekeeper->pop(timeout);
 
 		if (timeout) {
@@ -717,6 +711,9 @@ void t_timekeeper::run(void) {
 				ev_get_dur->get_sema(),
 				ev_get_dur->get_duration());
 			break;
+		case EV_QUIT:
+			quit = true;
+			break;
 		default:
 			assert(false);
 		}
@@ -728,6 +725,7 @@ void t_timekeeper::run(void) {
 
 void *timekeeper_main(void *arg) {
 	timekeeper->run();
+	return NULL;
 }
 
 void *timekeeper_sigwait(void *arg) {

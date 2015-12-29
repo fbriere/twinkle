@@ -19,35 +19,15 @@
 #include "hdr_www_authenticate.h"
 #include "definitions.h"
 
-t_hdr_www_authenticate::t_hdr_www_authenticate() : t_header() {}
+t_hdr_www_authenticate::t_hdr_www_authenticate() : t_header("WWW-Authenticate") {}
 
 void t_hdr_www_authenticate::set_challenge(const t_challenge &c) {
 	populated = true;
 	challenge = c;
 }
 
-string t_hdr_www_authenticate::encode(void) const {
-	string s;
-	if (!populated) return s;
-
-	s += "WWW-Authenticate: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
-}
-
 string t_hdr_www_authenticate::encode_value(void) const {
 	if (!populated) return "";
 
 	return challenge.encode();
-}
-
-string t_hdr_www_authenticate::encode_env(void) const {
-	string s;
-	
-	s = "SIP_WWW_AUTHENTICATE=";
-	s += encode_value();
-	
-	return s;
 }

@@ -17,15 +17,49 @@
 */
 
 #include "header.h"
+#include "parse_ctrl.h"
 #include "protocol.h"
 #include "util.h"
 
-t_header::t_header() {
-	populated = false;
+t_header::t_header() :
+	populated(false)
+{}
+
+t_header::t_header(const string &_header_name, const string &_compact_name) :
+	populated(false),
+	header_name(_header_name),
+	compact_name(_compact_name)
+{}
+
+string t_header::encode(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = (t_parser::compact_headers && !compact_name.empty() ? 
+			compact_name : header_name);
+	s += ": ";
+	s += encode_value();
+	s += CRLF;
+	
+	return s;
+}
+
+string t_header::encode_env(void) const {
+	string s("SIP_");
+	s += toupper(replace_char(header_name, '-', '_'));
+	s += '=';
+	s += encode_value();
+	
+	return s;
 }
 
 bool t_header::is_populated() const {
 	return populated;
+}
+
+string t_header::get_name(void) const {
+	return header_name;
 }
 
 string t_header::get_value(void) const {

@@ -25,6 +25,7 @@
 
 string event_type2str(t_event_type t) {
 	switch(t) {
+	case EV_QUIT:		return "EV_QUIT";
 	case EV_NETWORK: 	return "EV_NETWORK";
 	case EV_USER: 		return "EV_USER";
 	case EV_TIMEOUT: 	return "EV_TIMEOUT";
@@ -38,6 +39,7 @@ string event_type2str(t_event_type t) {
 	case EV_NAT_KEEPALIVE:	return "EV_NAT_KEEPALIVE";
 	case EV_ICMP:		return "EV_ICMP";
 	case EV_UI:		return "EV_UI";
+	case EV_ASYNC_RESPONSE:	return "EV_ASYNC_RESPONSE";
 	}
 
 	return "UNKNOWN";
@@ -66,6 +68,16 @@ t_event_type t_event_network::get_type(void) const {
 
 t_sip_message *t_event_network::get_msg(void) const {
 	return msg;
+}
+
+///////////////////////////////////////////////////////////
+// class t_event_quit
+///////////////////////////////////////////////////////////
+
+t_event_quit::~t_event_quit() {}
+
+t_event_type t_event_quit::get_type(void) const {
+	return EV_QUIT;
 }
 
 ///////////////////////////////////////////////////////////
@@ -412,6 +424,30 @@ void t_event_ui::exec(t_userintf *user_intf) {
 }
 
 ///////////////////////////////////////////////////////////
+// class t_event_async_response
+///////////////////////////////////////////////////////////
+
+t_event_async_response::t_event_async_response(t_response_type type) :
+	response_type(type)
+{}
+
+t_event_type t_event_async_response::get_type(void) const {
+	return EV_ASYNC_RESPONSE;
+}
+
+void t_event_async_response::set_bool_response(bool b) {
+	bool_response = b;
+}
+
+t_event_async_response::t_response_type t_event_async_response::get_response_type(void) const {
+	return response_type;
+}
+
+bool t_event_async_response::get_bool_response(void) const {
+	return bool_response;
+}
+
+///////////////////////////////////////////////////////////
 // class t_event_queue
 ///////////////////////////////////////////////////////////
 
@@ -443,6 +479,12 @@ void t_event_queue::push(t_event *e) {
 	ev_queue.push(e);
 	mutex_evq.unlock();
 	sema_evq.up();
+}
+
+void t_event_queue::push_quit(void) {
+	t_event_quit *event = new t_event_quit();
+	MEMMAN_NEW(event);
+	push(event);
 }
 
 void t_event_queue::push_network(t_sip_message *m, unsigned long ipaddr,
@@ -557,6 +599,14 @@ void t_event_queue::push_nat_keepalive(unsigned long ipaddr, unsigned short port
 void t_event_queue::push_icmp(const t_icmp_msg &m) {
 	t_event_icmp *event = new t_event_icmp(m);
 	MEMMAN_NEW(event);
+	push(event);
+}
+
+void t_event_queue::push_refer_permission_response(bool permission) {
+	t_event_async_response *event = new t_event_async_response(
+			t_event_async_response::RESP_REFER_PERMISSION);
+	MEMMAN_NEW(event);
+	event->set_bool_response(permission);
 	push(event);
 }
 

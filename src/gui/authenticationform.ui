@@ -78,6 +78,7 @@
                     </property>
                     <property name="text">
                         <string>user</string>
+                        <comment>No need to translate</comment>
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>The user for which authentication is requested.</string>
@@ -104,6 +105,7 @@
                     </property>
                     <property name="text">
                         <string>profile</string>
+                        <comment>No need to translate</comment>
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>The user profile of the user for which authentication is requested.</string>
@@ -296,6 +298,7 @@
                     </property>
                     <property name="text">
                         <string>realm</string>
+                        <comment>No need to translate</comment>
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>The realm for which you need to authenticate.</string>

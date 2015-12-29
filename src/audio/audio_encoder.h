@@ -165,6 +165,7 @@ private:
 
 	g72x_state	_state;
 	t_bit_rate	_bit_rate;
+	t_g726_packing	_packing;
 	
 public:
 	t_g726_audio_encoder(uint16 payload_id, uint16 ptime, t_bit_rate bit_rate, 

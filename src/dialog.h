@@ -21,7 +21,10 @@
 
 #include <string>
 #include <list>
+#include <set>
 #include <queue>
+#include "abstract_dialog.h"
+#include "client_request.h"
 #include "phone.h"
 #include "transaction_layer.h"
 #include "protocol.h"
@@ -41,53 +44,6 @@ class t_phone;
 class t_line;
 class t_session;
 class t_sub_refer;
-
-class t_client_request {
-private:
-	static t_mutex	mtx_next_tuid; // protect updates on next_tuid
-	static t_tuid	next_tuid;
-
-	// A client request is either a SIP or a STUN request
-	t_request	*request;
-	StunMessage	*stun_request;
-	
-	t_tuid		tuid;
-	t_tid		tid;
-
-	// Number of references to this objects (#dialogs)
-	int		ref_count;
-
-public:
-	// Redirector for 3XX redirections
-	t_redirector	redirector;
-
-	// A copy of the request is stored in the client_request object
-	t_client_request(t_user *user, t_request *r, const t_tid _tid);
-	t_client_request(t_user *user, StunMessage *r, const t_tid _tid);
-	~t_client_request();
-
-	t_client_request *copy(void);
-
-	// Returns the request pointer
-	t_request *get_request(void) const;
-	StunMessage *get_stun_request(void) const;
-
-	t_tuid get_tuid(void) const;
-	t_tid get_tid(void) const;
-	void set_tid(t_tid _tid);
-
-	// Create a new tuid and set tid
-	void renew(t_tid _tid);
-
-	// Get the reference count
-	int get_ref_count(void) const;
-
-	// Increment reference count. Returns the value after increment.
-	int inc_ref_count(void);
-
-	// Decrement reference count. Returns the value after decrement.
-	int dec_ref_count(void);
-};
 
 enum t_dialog_type {
 	DT_INVITE,
@@ -126,45 +82,13 @@ enum t_reinvite_purpose {
 	REINVITE_RETRIEVE,	// Re-invite for call retrieve
 };
 
-class t_dialog {
+class t_dialog : public t_abstract_dialog {
 	friend class t_phone;
 	
-private:
-	static t_mutex		mtx_next_id;
-	static t_dialog_id	next_id;
-
-	t_dialog_id		id;
+protected:
 	t_line			*line;
 	t_dialog_state		state;
 	t_dialog_type		dialog_type;
-	
-	// User profile of user for which this dialog is created.
-	// This is a pointer to the user_config owned by a phone user.
-	// So this pointer should never be deleted.
-	t_user			*user_config;
-
-	// Dialog state information
-	string		call_id;
-	bool		call_id_owner;	// indicates if call_id generated locally
-	string		local_tag;
-	string		remote_tag;
-	unsigned long	local_seqnr;	// last local seqnr issued
-	unsigned long	remote_seqnr;	// last remote seqnr received
-
-	// RFC 3261 allows the CSeq sequence to be 0. So there is no
-	// invalid sequence number. The remote_seqnr_set indicates if
-	// the remote_seqnr is set by the far-end.
-	bool		remote_seqnr_set;
-	
-	t_url		local_uri;
-	string		local_display;
-	t_url		remote_uri;
-	string		remote_display;
-	t_url		remote_target_uri;
-	string		remote_target_display;
-	list<t_route>	route_set;
-	unsigned long	local_resp_nr;	// last local response nr issued
-	unsigned long	remote_resp_nr;	// last remote response nr received
 
 	// Session information
 	t_session	*session;
@@ -204,6 +128,10 @@ private:
 	
 	// Indication if request must be cancelled
 	bool request_cancelled;
+	
+	// Indication that the dialog must be terminated after a 2XX
+	// on an INVITE is received (e.g. when 2XX glares with CANCEL)
+	bool end_after_2xx_invite;
 
 	// Indication that the dialog must be terminated after ACK.
 	bool end_after_ack;
@@ -232,13 +160,6 @@ private:
 	
 	// Queue of DTMF digits to be sent via INFO requests
 	queue<char>		dtmf_queue;
-
-	// Remove a client request. Pass one of the client request
-	// pointers to this member. The reference count of the
-	// request will be decremented. If it becomes zero, then
-	// the request object is deleted.
-	// In all cases the pointer will be set to NULL.
-	void remove_client_request(t_client_request **cr);
 
 	// Process responses
 	void state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid);
@@ -277,12 +198,6 @@ private:
 	// Make the re-INVITE session the current session
 	void activate_new_session(void);
 
-	// Create route set based on an INVITE response.
-	void create_route_set(t_response *r);
-
-	// Create remote target uri and display based on an INVITE response.
-	void create_remote_target(t_response *r);
-
 	// Process SDP answer in 1xx and 2xx responses if present.
 	// Apply ringing tone for a 180 response.
 	// Determine if call should be canceled due to unsupported
@@ -309,27 +224,32 @@ private:
 	// Returns false if an error response was given.
 	bool respond_prack(t_request *r, t_tuid tuid, t_tid tid);
 
-	// Resend an existing client request.
-	// A new Via and CSeq header will be put in the request.
-	void resend_request(t_client_request *cr);
-
+	// Send a request
+	virtual void send_request(t_request *r, t_tuid tuid);
 public:
 	// Timer durations and timer id's
 	unsigned long		dur_ack_timeout;
-	unsigned short		id_ack_timeout;
-	unsigned short		id_ack_guard;
-	unsigned short		id_re_invite_guard;
-	unsigned short		id_glare_retry;
-	unsigned short		id_cancel_guard;
+	t_object_id		id_ack_timeout;
+	t_object_id		id_ack_guard;
+	t_object_id		id_re_invite_guard;
+	t_object_id		id_glare_retry;
+	t_object_id		id_cancel_guard;
 
 	// RFC 3262
 	// 100rel timers
 	unsigned long		dur_100rel_timeout;
-	unsigned short		id_100rel_timeout;
-	unsigned short		id_100rel_guard;
+	t_object_id		id_100rel_timeout;
+	t_object_id		id_100rel_guard;
 
-	bool			refer_accepted;  // last incoming REFER accepted?
-	bool			refer_succeeded; // last outgoing REFER succeeded?
+	// Indicates if last incoming REFER was accepted.
+	bool			refer_accepted;
+	
+	// Indicates if the call transfer triggered by the last outgoing
+	// REFER succeeded.
+	bool			refer_succeeded;
+	
+	// Indicates if the last outgoing REFER request failed.
+	bool			out_refer_req_failed;
 
 	// Indicates if this dialog is setup because the user told to do
 	// so by a REFER.
@@ -339,17 +259,18 @@ public:
 	t_refer_state		refer_state;
 
 	t_dialog(t_line *_line, t_dialog_type _dialog_type = DT_INVITE);
-	~t_dialog();
+	virtual ~t_dialog();
 
 	// Create a request using the stored state information
-	t_request *create_request(t_method m);
+	virtual t_request *create_request(t_method m);
 
-	t_dialog_id get_id(void) const;
-	t_dialog *copy(void);
+	virtual t_dialog *copy(void);
 
 	// Send requests
 	void send_invite(const t_url &to_uri, const string &to_display,
-		const string &subject, const t_hdr_referred_by &hdr_referred_by);
+		const string &subject, const t_hdr_referred_by &hdr_referred_by,
+		const t_hdr_replaces &hdr_replaces, 
+		const t_hdr_require &hdr_require, bool anonymous);
 
 	// Resend the INVITE with an authorization header containing credentials
 	// for the challenge in the response. The response must be a 401 or 407.
@@ -377,6 +298,10 @@ public:
 	// If an early dialog exists, then the CANCEL can be sent
 	// right away as a response has been received for the INVITE.
 	void send_cancel(bool early_dialog_exists);
+	
+	// Indicate that the dialog must be ended if a 2XX is received
+	// on an INVITE
+	void set_end_after_2xx_invite(bool on);
 
 	// Send re-INVITE.
 	// Precondition: session_re_invite attribute contains the session
@@ -387,21 +312,24 @@ public:
 	// credentials for the challenge in the response. The response
 	// must be a 401 or 407.
 	// Returns false if credentials could not be determined.
-	bool resend_request_auth(t_response *resp);
+	virtual bool resend_request_auth(t_response *resp);
 
 	// Redirect mid-dialog request to the next destination
 	// Returns false if there is no next destination.
-	bool redirect_request(t_response *resp);
+	virtual bool redirect_request(t_response *resp);
 	
 	// Failover request to the next destination from DNS lookup.
 	// Returns false if there is no next destination.
-	bool failover_request(t_response *resp);
+	virtual bool failover_request(t_response *resp);
 
 	// Call hold/retrieve (send re-INVITE)
 	// rtponly indicates if only the RTP streams should be stopped and
 	// the soundcard freed without any SIP signaling.
 	void hold(bool rtponly = false);
 	void retrieve(void);
+	
+	// Kill all RTP stream associated with this dialog
+	void kill_rtp(void);
 
 	// Refer a call (send REFER)
 	void send_refer(const t_url &uri, const string &display);
@@ -418,6 +346,12 @@ public:
 	void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid);
+	
+	// Handle the response from the user on the question for refer
+	// permission. This response is received on the dialog that received
+	// the REFER before.
+	// The request (r) is the REFER request that was received.
+	void recvd_refer_permission(bool permission, t_request *r);
 
 	// Answer a call (send 200 OK)
 	void answer(void);
@@ -435,11 +369,10 @@ public:
 	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 
 	// Match response with dialog
-	bool match_response(t_response *r, t_tuid tuid);
+	virtual bool match_response(t_response *r, t_tuid tuid);
 	bool match_response(StunMessage *r, t_tuid tuid);
 
 	// Match request with dialog
-	bool match_request(t_request *r);
 	bool match_cancel(t_request *r, t_tid target_tid);
 
 	// Check if an incoming INVITE is a retransmission
@@ -470,10 +403,9 @@ public:
 
 	// Notify the dialog of the progress of a reference
 	void notify_refer_progress(t_response *r);
-
-	// Returns true if we are the owner of the call id, i.e. the
-	// value is generated locally.
-	bool is_call_id_owner(void) const;
+	
+	// Returns is a dialog will be released.
+	bool will_release(void) const;
 };
 
 #endif

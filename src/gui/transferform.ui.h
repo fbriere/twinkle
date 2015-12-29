@@ -35,10 +35,6 @@ void TransferForm::init()
 	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
 		    QIconSet::Automatic, QIconSet::Disabled);
 	addressToolButton->setIconSet(i);
-	
-#ifndef HAVE_KDE
-	addressToolButton->setEnabled(false);
-#endif
 }
 
 void TransferForm::destroy()
@@ -49,17 +45,74 @@ void TransferForm::destroy()
 	}
 }
 
-void TransferForm::show(t_user *user, const string &dest)
+void TransferForm::initTransferOptions() 
+{
+	// Show possible transfer type options
+	// Basic transfer is always possible.
+	// If a line is idle, then a transfer with consultation is possible.
+	// The line will be seized, so an incoming call cannot occupy it.
+	// If both lines are busy, then the active line can be transferred
+	// to the other line.
+	unsigned short idle_line;
+	if (phone->get_idle_line(idle_line)) {
+		consult_line = (int)idle_line;
+		phone->pub_seize(consult_line);	
+		consultRadioButton->show();
+		consultRadioButton->setChecked(true);
+		otherLineRadioButton->hide();
+	} else {
+		consult_line = -1;
+		consultRadioButton->hide();
+		otherLineRadioButton->show();
+		otherLineRadioButton->setChecked(true);
+	}
+}
+
+void TransferForm::show(t_user *user)
 {
 	user_config = user;
-	toLineEdit->setText(dest.c_str());
+	initTransferOptions();
 	QDialog::show();
+}
+
+void TransferForm::show(t_user *user, const string &dest, t_transfer_type transfer_type)
+{
+	user_config = user;
+	initTransferOptions();
+	toLineEdit->setText(dest.c_str());
+	
+	switch (transfer_type) {
+	case TRANSFER_CONSULT:
+		consultRadioButton->setChecked(true);
+		break;
+	case TRANSFER_OTHER_LINE:
+		otherLineRadioButton->setChecked(true);
+		break;
+	default:
+		basicRadioButton->setChecked(true);
+		break;
+	}
+	
+	QDialog::show();
+}
+
+void TransferForm::hide()
+{
+	if (consult_line > -1) {
+		phone->pub_unseize(consult_line);
+	}
+	
+	QDialog::hide();
 }
 
 void TransferForm::reject()
 {
 	if (user_config->get_referrer_hold()) {
 		((t_gui *)ui)->action_retrieve();
+	}
+	
+	if (consult_line > -1) {
+		phone->pub_unseize(consult_line);
 	}
 	
 	QDialog::reject();
@@ -70,8 +123,21 @@ void TransferForm::validate()
 	t_display_url dest;
 	ui->expand_destination(user_config, toLineEdit->text().stripWhiteSpace().ascii(), dest);
 	
-	if (dest.is_valid()) {
-		emit destination(dest);
+	t_transfer_type transfer_type;
+	if (consultRadioButton->isOn()) {
+		transfer_type = TRANSFER_CONSULT;
+	} else if (otherLineRadioButton->isOn()) {
+		transfer_type = TRANSFER_OTHER_LINE;
+	} else {
+		transfer_type = TRANSFER_BASIC;
+	}
+	
+	
+	if (transfer_type == TRANSFER_OTHER_LINE || dest.is_valid()) {
+		if (consult_line > -1) {
+			phone->pub_unseize(consult_line);
+		}	
+		emit destination(dest, transfer_type);
 		accept();
 	} else {
 		toLineEdit->selectAll();
@@ -101,4 +167,29 @@ void TransferForm::showAddressBook()
 void TransferForm::selectedAddress(const QString &address)
 {
 	toLineEdit->setText(address);
+}
+
+void TransferForm::setOtherLineAddress(bool on)
+{
+	if (on) {
+		previousAddress = toLineEdit->text();
+		unsigned short active_line = phone->get_active_line();
+		unsigned short other_line = (active_line == 0 ? 1 : 0);
+		QString address = ui->format_sip_address(user_config,
+			phone->get_remote_display(other_line),
+			phone->get_remote_uri(other_line)).c_str();
+		toLineEdit->setText(address);
+		toLineEdit->setEnabled(false);
+		toLabel->setEnabled(false);
+#ifdef HAVE_KDE
+		addressToolButton->setEnabled(false);
+#endif
+	} else {
+		toLineEdit->setText(previousAddress);
+		toLineEdit->setEnabled(true);
+		toLabel->setEnabled(true);
+#ifdef HAVE_KDE
+		addressToolButton->setEnabled(true);
+#endif
+	}
 }

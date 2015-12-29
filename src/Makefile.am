@@ -19,18 +19,21 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
+        $(top_builddir)/src/mwi/libmwi.a\
 	$(CCRTP_LIBS)\
-	-lresolv\
-	-lsndfile\
-	-lboost_regex
+	-lsndfile
 
 libtwinkle_a_SOURCES =\
+	abstract_dialog.cpp\
+	address_book.cpp\
         auth.cpp\
         call_history.cpp\
         call_script.cpp\
+        client_request.cpp\
         cmd_socket.cpp\
         dialog.cpp\
         events.cpp\
+        id_object.cpp\
         line.cpp\
         listener.cpp\
         log.cpp\
@@ -43,6 +46,7 @@ libtwinkle_a_SOURCES =\
         session.cpp\
 	sub_refer.cpp\
 	subscription.cpp\
+	subscription_dialog.cpp\
         sys_settings.cpp\
         timekeeper.cpp\
         transaction.cpp\
@@ -51,13 +55,17 @@ libtwinkle_a_SOURCES =\
         user.cpp\
         userintf.cpp\
         util.cpp\
+        abstract_dialog.h\
+        address_book.h\
         auth.h\
         call_history.h\
         call_script.h\
+        client_request.h\
         cmd_socket.h\
         dialog.h\
         events.h\
 	exceptions.h\
+	id_object.h\
         line.h\
         listener.h\
         log.h\
@@ -71,13 +79,15 @@ libtwinkle_a_SOURCES =\
         session.h\
 	sub_refer.h\
 	subscription.h\
+	subscription_dialog.h\
         sys_settings.h\
         timekeeper.h\
         transaction.h\
         transaction_layer.h\
         transaction_mgr.h\
+        translator.h\
         user.h\
         userintf.h\
         util.h
 
-SUBDIRS = audio audits parser sdp sockets stun threads . gui
+SUBDIRS = audio audits mwi parser sdp sockets stun threads . gui gui/lang

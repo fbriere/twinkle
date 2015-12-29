@@ -56,7 +56,7 @@ bool t_contact_param::operator<(const t_contact_param &c) const {
 }
 
 
-t_hdr_contact::t_hdr_contact() : t_header() {
+t_hdr_contact::t_hdr_contact() : t_header("Contact", "m") {
 	any_flag = false;
 }
 
@@ -134,22 +134,6 @@ void t_contact_param::set_expires(unsigned long e) {
 	expires = e;
 }
 
-string t_hdr_contact::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "m: ";
-	} else {
-		s = "Contact: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	return s;
-}
-
 string t_hdr_contact::encode_value(void) const {
 	string s;
 
@@ -167,14 +151,5 @@ string t_hdr_contact::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_contact::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CONTACT=";
-	s += encode_value();
-	
 	return s;
 }

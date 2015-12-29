@@ -34,6 +34,7 @@
 #define SCR_CONTACT		"contact"
 #define SCR_CALLER_NAME		"caller_name"
 #define SCR_RINGTONE		"ringtone"
+#define SCR_DISPLAY_MSG		"display_msg"
 #define SCR_INTERNAL_ERROR	"internal_error"
 
 // Script triggers
@@ -82,6 +83,7 @@ void t_script_result::clear(void) {
 	contact.clear();
 	caller_name.clear();
 	ringtone.clear();
+	display_msg.clear();
 }
 
 void t_script_result::set_parameter(const string &parameter, const string &value) {
@@ -99,6 +101,8 @@ void t_script_result::set_parameter(const string &parameter, const string &value
 		caller_name = value;
 	} else if (parameter == SCR_RINGTONE) {
 		ringtone = value;
+	} else if (parameter == SCR_DISPLAY_MSG) {
+		display_msg = value;
 	}
 	// Unknown parameters are ignored
 }
@@ -131,6 +135,8 @@ string t_call_script::trigger2str(t_trigger t) const {
 }
 
 char **t_call_script::create_env(t_sip_message *m) const {
+		string var_twinkle;
+
 		// Number of existing environment variables
 		int environ_size = 0;
 		for (int i = 0; environ[i] != NULL; i++) {
@@ -140,6 +146,23 @@ char **t_call_script::create_env(t_sip_message *m) const {
 		// Number of SIP environment variables
 		int start_sip_env = environ_size; // Position of SIP variables
 		list<string> l = m->encode_env();
+		
+		var_twinkle = "SIP_FROM_USER=";
+		var_twinkle += m->hdr_from.uri.get_user();
+		l.push_back(var_twinkle);
+		
+		var_twinkle = "SIP_FROM_HOST=";
+		var_twinkle += m->hdr_from.uri.get_host();
+		l.push_back(var_twinkle);
+		
+		var_twinkle = "SIP_TO_USER=";
+		var_twinkle += m->hdr_to.uri.get_user();
+		l.push_back(var_twinkle);
+		
+		var_twinkle = "SIP_TO_HOST=";
+		var_twinkle += m->hdr_to.uri.get_host();
+		l.push_back(var_twinkle);
+		
 		environ_size += l.size();
 		
 		// Number of Twinkle environment variables
@@ -161,7 +184,7 @@ char **t_call_script::create_env(t_sip_message *m) const {
 		}
 		
 		// Add Twinkle specific environment variables
-		string var_twinkle = "TWINKLE_USER_PROFILE=";
+		var_twinkle = "TWINKLE_USER_PROFILE=";
 		var_twinkle += user_config->get_profile_name();
 		env[start_twinkle_env] = strdup(var_twinkle.c_str());
 		
@@ -177,13 +200,13 @@ char **t_call_script::create_env(t_sip_message *m) const {
 
 char **t_call_script::create_argv(void) const {
 		// Determine script agument list
-		list<string> arg_list = split_ws(script_command, true);
+		vector<string> arg_list = split_ws(script_command, true);
 		
 		// MEMMAN not called on purpose
 		char **argv = new char *[arg_list.size() + 1];
 		
 		int idx = 0;
-		for (list<string>::iterator i = arg_list.begin(); 
+		for (vector<string>::iterator i = arg_list.begin(); 
 		     i != arg_list.end(); i++, idx++) 
 		{
 			argv[idx] = strdup(i->c_str());
@@ -347,13 +370,13 @@ void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const
 			// Skip comment lines
 			if (line[0] == '#') continue;
 	
-			list<string> l = split_on_first(line, '=');
+			vector<string> v = split_on_first(line, '=');
 			
 			// SKip invalid lines
-			if (l.size() != 2) continue;
+			if (v.size() != 2) continue;
 	
-			string parameter = trim(l.front());
-			string value = trim(l.back());
+			string parameter = trim(v[0]);
+			string value = trim(v[1]);
 			
 			if (parameter == SCR_INTERNAL_ERROR) {
 				log_file->write_report(value,

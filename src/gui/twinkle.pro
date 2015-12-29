@@ -3,7 +3,7 @@ LANGUAGE	= C++
 
 CONFIG	+= qt warn_off release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a -lresolv -lsndfile -lboost_regex
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audio/gsm/libgsm.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a -lsndfile
 
 DEFINES	+= QT_NO_STL
 
@@ -13,16 +13,20 @@ HEADERS	+= gui.h \
 	historylistview.h \
 	freedesksystray.h \
 	twinklesystray.h \
-	gui_util.h \
-	address_finder.h
+	address_finder.h \
+	qt_translator.h \
+	core_strings.h \
+	addresslistviewitem.h \
+	yesnodialog.h
 
 SOURCES	+= main.cpp \
 	gui.cpp \
 	historylistview.cpp \
 	freedesksystray.cpp \
 	twinklesystray.cpp \
-	gui_util.cpp \
-	address_finder.cpp
+	address_finder.cpp \
+	addresslistviewitem.cpp \
+	yesnodialog.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -43,7 +47,8 @@ FORMS	= mphoneform.ui \
 	getaddressform.ui \
 	historyform.ui \
 	selectuserform.ui \
-	numberconversionform.ui
+	numberconversionform.ui \
+	addresscardform.ui
 
 IMAGES	= images/filenew \
 	images/filesave \
@@ -176,7 +181,18 @@ IMAGES	= images/filenew \
 	images/stat_established_nomedia.png \
 	images/encrypted_verified.png \
 	images/sys_encrypted_verified.png \
-	images/sys_encrypted_verified_dis.png
+	images/sys_encrypted_verified_dis.png \
+	images/consult-xfer.png \
+	images/mwi_new16.png \
+	images/mwi_none16.png \
+	images/mwi_none16_dis.png \
+	images/sys_mwi.png \
+	images/sys_mwi_dis.png \
+	images/mwi_none.png \
+	images/mwi_failure16.png
+
+TRANSLATIONS	= lang/twinkle_nl.ts \
+	lang/twinkle_de.ts
 
 unix {
   UI_DIR = .ui

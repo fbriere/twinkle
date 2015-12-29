@@ -45,6 +45,7 @@ enum t_audio_codec {
 #define PTIME_G711_ULAW		20
 #define PTIME_G726		20
 #define PTIME_GSM		20
+#define PTIME_SPEEX		20
 #define MIN_PTIME		10
 #define MAX_PTIME		80
 

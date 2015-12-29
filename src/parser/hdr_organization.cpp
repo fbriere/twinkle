@@ -19,36 +19,15 @@
 #include "definitions.h"
 #include "hdr_organization.h"
 
-t_hdr_organization::t_hdr_organization() : t_header() {};
+t_hdr_organization::t_hdr_organization() : t_header("Organization") {};
 
 void t_hdr_organization::set_name(const string &n) {
 	populated = true;
 	name = n;
 }
 
-string t_hdr_organization::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Organization: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_organization::encode_value(void) const {
 	if (!populated) return "";
 
 	return name;
-}
-
-string t_hdr_organization::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ORGANIZATION=";
-	s += encode_value();
-	
-	return s;
 }

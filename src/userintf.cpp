@@ -18,8 +18,11 @@
 
 #include <iostream>
 #include <cstdlib>
+#include "address_book.h"
+#include "events.h"
 #include "line.h"
 #include "sys_settings.h"
+#include "translator.h"
 #include "userintf.h"
 #include "util.h"
 #include "user.h"
@@ -31,6 +34,7 @@
 #define CLI_PROMPT              "Twinkle> "
 
 extern string user_host;
+extern t_event_queue *evq_trans_layer;
 
 /////////////////////////////
 // Private
@@ -55,7 +59,7 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 		
 		// Convert number according to the number conversion rules
 		s = user_config->convert_number(s);
-		
+			
 		s += '@';
 		s += user_config->get_domain();
 	}
@@ -148,11 +152,11 @@ void t_userintf::expand_destination(t_user *user_config,
 		// destination may be a short URI.
 		// Split at a '?' to find any headers.
 		// NOTE: this is not fool proof. A user name may contain a '?'
-		list<string> l = split_on_first(dst, '?');
-		dst_no_headers = l.front();
+		vector<string> l = split_on_first(dst, '?');
+		dst_no_headers = l[0];
 		expand_destination(user_config, dst_no_headers, display_url);
 		if (display_url.is_valid() && l.size() == 2) {
-			headers = l.back();
+			headers = l[1];
 		}
 	}
 	
@@ -164,6 +168,8 @@ void t_userintf::expand_destination(t_user *user_config,
 			if (m->hdr_subject.is_populated()) {
 				subject = m->hdr_subject.subject;
 			}
+			MEMMAN_DELETE(m);
+			delete m;
 		} catch (int) {
 			// ignore invalid headers
 		}
@@ -228,6 +234,7 @@ bool t_userintf::exec_invite(const list<string> command_list, bool immediate) {
 	string display;
 	string subject;
 	string destination;
+	bool hide_user = false;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help call");
@@ -242,6 +249,9 @@ bool t_userintf::exec_invite(const list<string> command_list, bool immediate) {
 		case 's':
 			subject = i->value;
 			break;
+		case 'h':
+			hide_user = true;
+			break;
 		case 0:
 			destination = i->value;
 			break;
@@ -252,11 +262,11 @@ bool t_userintf::exec_invite(const list<string> command_list, bool immediate) {
 		}
 	}
 
-	return do_invite(destination, display, subject, immediate);
+	return do_invite(destination, display, subject, immediate, hide_user);
 }
 
 bool t_userintf::do_invite(const string &destination, const string &display,
-		const string &subject, bool immediate)
+		const string &subject, bool immediate, bool anonymous)
 {
 	t_url dest_url;
 	dest_url.set_url(expand_destination(active_user, destination));
@@ -271,8 +281,9 @@ bool t_userintf::do_invite(const string &destination, const string &display,
 	last_called_display = display;
 	last_called_subject = subject;
 	last_called_profile = active_user->get_profile_name();
+	last_called_hide_user = anonymous;
 
-	phone->pub_invite(active_user, dest_url, display, subject);
+	phone->pub_invite(active_user, dest_url, display, subject, anonymous);
 	return true;
 }
 
@@ -288,7 +299,7 @@ bool t_userintf::exec_redial(const list<string> command_list) {
 void t_userintf::do_redial(void) {
 	t_user *user_config = phone->ref_user_profile(last_called_profile);
 	phone->pub_invite(user_config, last_called_url, last_called_display,
-		last_called_subject);
+		last_called_subject, last_called_hide_user);
 }
 
 bool t_userintf::exec_answer(const list<string> command_list) {
@@ -671,6 +682,7 @@ bool t_userintf::exec_refer(const list<string> command_list, bool immediate) {
 	list<t_command_arg> al;
 	string destination;
 	bool dest_set = false;
+	t_transfer_type transfer_type = TRANSFER_BASIC;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help transfer");
@@ -679,6 +691,24 @@ bool t_userintf::exec_refer(const list<string> command_list, bool immediate) {
 	
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
+		case 'c':
+			if (transfer_type != TRANSFER_BASIC) {
+				exec_command("help transfer");
+				return false;
+			}
+			transfer_type = TRANSFER_CONSULT;
+			if (!i->value.empty()) {
+				destination = i->value;
+				dest_set = true;
+			}
+			break;
+		case 'l':
+			if (transfer_type != TRANSFER_BASIC) {
+				exec_command("help transfer");
+				return false;
+			}
+			transfer_type = TRANSFER_OTHER_LINE;
+			break;
 		case 0:
 			destination = i->value;
 			dest_set = true;
@@ -690,24 +720,59 @@ bool t_userintf::exec_refer(const list<string> command_list, bool immediate) {
 		}
 	}
 
-	if (!dest_set) {
+	if (!dest_set && transfer_type == TRANSFER_BASIC) {
 		exec_command("help transfer");
 		return false;
 	}
 
-	return do_refer(destination, immediate);
+	return do_refer(destination, transfer_type, immediate);
 }
 
-bool t_userintf::do_refer(const string &destination, bool immediate) {
+bool t_userintf::do_refer(const string &destination, t_transfer_type transfer_type, 
+		bool immediate) 
+{
 	t_url dest_url;
-	dest_url.set_url(expand_destination(active_user, destination));
 	
-	if (!dest_url.is_valid()) {
-		exec_command("help transfer");
-		return false;
+	if (transfer_type == TRANSFER_BASIC || 
+	    (transfer_type == TRANSFER_CONSULT && !destination.empty())) 
+	{
+		dest_url.set_url(expand_destination(active_user, destination));
+	
+		if (!dest_url.is_valid()) {
+			exec_command("help transfer");
+			return false;
+		}
 	}
 	
-	phone->pub_refer(dest_url, "");
+	unsigned short active_line;
+	unsigned short other_line;
+	unsigned short line_to_be_transferred;
+	
+	switch (transfer_type) {
+	case TRANSFER_BASIC:
+		phone->pub_refer(dest_url, "");
+		break;
+	case TRANSFER_CONSULT:
+		if (destination.empty()) {
+			active_line = phone->get_active_line();
+			if (!phone->is_line_transfer_consult(active_line,
+					line_to_be_transferred)) 
+			{
+				// There is no call to transfer
+				return false;
+			}
+			phone->pub_refer(line_to_be_transferred, active_line);
+		} else {
+			phone->pub_setup_consultation_call(dest_url, "");
+		}
+		break;
+	case TRANSFER_OTHER_LINE:
+		active_line = phone->get_active_line();
+		other_line = (active_line == 0 ? 1 : 0);
+		phone->pub_refer(active_line, other_line);
+		break;
+	}
+	
 	return true;
 }
 
@@ -1099,7 +1164,7 @@ void t_userintf::do_user(const string &profile_name) {
 			
 			cout << (*i)->get_profile_name();
 			cout << "\n    ";
-			cout << (*i)->get_display();
+			cout << (*i)->get_display(false);
 			cout << " <sip:" << (*i)->get_name();
 			cout << "@" << (*i)->get_domain() << ">\n";
 		}
@@ -1253,12 +1318,13 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (c == "call") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\tcall [-s subject] [-d display] dst\n";
+		cout << "\tcall [-s subject] [-d display] [-h] dst\n";
 		cout << "Description:\n";
 		cout << "\tCall someone.\n";
 		cout << "Arguments:\n";
 		cout << "\t-s subject	Add a subject header to the INVITE\n";
 		cout << "\t-d display	Add display name to To-header\n";
+		cout << "\t-h		Hide your identity\n";
 		cout << "\tdst		SIP uri of party to invite\n";
 		cout << endl;
 
@@ -1337,11 +1403,17 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (c == "transfer") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\ttransfer dst\n";
+		cout << "\ttransfer [-c] [-l] [dst]\n";
 		cout << "Description:\n";
 		cout << "\tTransfer a standing call to another destination.\n";
+		cout << "\tFor a transfer with consultation, first use the -c flag with a\n";
+		cout << "\tdestination. This sets up the consultation call. When the\n";
+		cout << "\tconsulted party agrees, give the command with the -c flag once\n";
+		cout << "\tmore, but now without a destination. This transfers the call.\n";
 		cout << "Arguments:\n";
-		cout << "\tdst	SIP uri of refer destination\n";
+		cout << "\t-c	Consult destination before transferring call.\n";
+		cout << "\t-l	Transfer call to party on other line.\n";
+		cout << "\tdst	SIP uri of transfer destination\n";
 		cout << endl;
 
 		return;
@@ -1673,7 +1745,7 @@ t_userintf::~t_userintf() {
 	}
 	
 	if (thr_process_events) {
-		thr_process_events->cancel();
+		evq_ui_events.push_quit();
 		thr_process_events->join();
 		MEMMAN_DELETE(thr_process_events);
 		delete thr_process_events;
@@ -1711,11 +1783,11 @@ string t_userintf::complete_command(const string &c, bool &ambiguous) {
 }
 
 bool t_userintf::exec_command(const string &command_line, bool immediate) {
-	list<string> l = split_ws(command_line, true);
-	if (l.size() == 0) return false;
+	vector<string> v = split_ws(command_line, true);
+	if (v.size() == 0) return false;
 
 	bool ambiguous;
-	string command = complete_command(tolower(l.front()), ambiguous);
+	string command = complete_command(tolower(v[0]), ambiguous);
 
 	if (ambiguous) {
 		if (use_stdout) {
@@ -1726,6 +1798,8 @@ bool t_userintf::exec_command(const string &command_line, bool immediate) {
 		
 		return false;
 	}
+	
+	list<string> l(v.begin(), v.end());
 
 	if (command == "invite") return exec_invite(l, immediate);
 	if (command == "call") return exec_invite(l, immediate);
@@ -1774,6 +1848,10 @@ string t_userintf::format_sip_address(t_user *user_config, const string &display
 	                              const t_url &uri) const
 {
 	string s;
+	
+	if (uri.encode() == ANONYMOUS_URI) {
+		return TRANSLATE("Anonymous");
+	}
 
 	s = display;
 	if (display != "") s += " <";
@@ -1793,7 +1871,7 @@ string t_userintf::format_sip_address(t_user *user_config, const string &display
 		if (username != u.get_user()) {
 			u.set_user(username);
 		}
-		s += u.encode();
+		s += u.encode_no_params_hdrs(false);
 	}
 
 	if (display != "") s += ">";
@@ -1808,13 +1886,14 @@ list<string> t_userintf::format_warnings(const t_hdr_warning &hdr_warning) const
 	for (list<t_warning>::const_iterator i = hdr_warning.warnings.begin();
 	     i != hdr_warning.warnings.end(); i++)
 	{
-		s = "Warning: ";
+		s = TRANSLATE("Warning:");
+		s += " ";
 		s += int2str(i->code);
 		s += ' ';
 		s += i->text;
 		s += " (";
 		s += i->host;
-		if (i->port > 0) s += int2str(i->port, ":&d");
+		if (i->port > 0) s += int2str(i->port, ":%d");
 		s += ')';
 		l.push_back(s);
 	}
@@ -1885,12 +1964,26 @@ void t_userintf::run(void) {
 }
 
 void t_userintf::process_events(void) {
-	t_event_ui	*event;
+	t_event		*event;
+	t_event_ui	*ui_event;
 	
-	while (true) {
-		event = dynamic_cast<t_event_ui *>(evq_ui_events.pop());
-		assert(event);
-		event->exec(this);
+	bool quit = false;
+	while (!quit) {
+		event = evq_ui_events.pop();
+		switch (event->get_type()) {
+		case EV_UI:
+			ui_event = dynamic_cast<t_event_ui *>(event);
+			assert(ui_event);
+			ui_event->exec(this);
+			break;
+		case EV_QUIT:
+			quit = true;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+			
 		MEMMAN_DELETE(event);
 		delete event;
 	}
@@ -1903,6 +1996,7 @@ void t_userintf::save_state(void) {
 	sys_config->set_redial_display(last_called_display);
 	sys_config->set_redial_subject(last_called_subject);
 	sys_config->set_redial_profile(last_called_profile);
+	sys_config->set_redial_hide_user(last_called_hide_user);
 	
 	sys_config->write_config(err_msg);
 }
@@ -1912,6 +2006,7 @@ void t_userintf::restore_state(void) {
 	last_called_display = sys_config->get_redial_display();
 	last_called_subject = sys_config->get_redial_subject();
 	last_called_profile = sys_config->get_redial_profile();
+	last_called_hide_user = sys_config->get_redial_hide_user();
 }
 
 void t_userintf::lock(void) {
@@ -1984,6 +2079,8 @@ bool t_userintf::select_user_config(list<string> &config_files) {
 }
 
 void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "incoming call\n";
@@ -2019,6 +2116,8 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 }
 
 void t_userintf::cb_call_cancelled(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "far end cancelled call.\n";
@@ -2030,6 +2129,8 @@ void t_userintf::cb_call_cancelled(int line) {
 }
 
 void t_userintf::cb_far_end_hung_up(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "far end ended call.\n";
@@ -2041,6 +2142,8 @@ void t_userintf::cb_far_end_hung_up(int line) {
 }
 
 void t_userintf::cb_answer_timeout(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "answer timeout.\n";
@@ -2052,6 +2155,8 @@ void t_userintf::cb_answer_timeout(int line) {
 }
 
 void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "SDP answer from far end not supported.\n";
@@ -2064,6 +2169,8 @@ void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
 }
 
 void t_userintf::cb_sdp_answer_missing(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "SDP answer from far end missing.\n";
@@ -2075,6 +2182,8 @@ void t_userintf::cb_sdp_answer_missing(int line) {
 }
 
 void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "Unsupported content type in answer from far end.\n";
@@ -2088,6 +2197,8 @@ void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
 }
 
 void t_userintf::cb_ack_timeout(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "no ACK received, call will be terminated.\n";
@@ -2099,6 +2210,8 @@ void t_userintf::cb_ack_timeout(int line) {
 }
 
 void t_userintf::cb_100rel_timeout(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "no PRACK received, call will be terminated.\n";
@@ -2110,6 +2223,8 @@ void t_userintf::cb_100rel_timeout(int line) {
 }
 
 void t_userintf::cb_prack_failed(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": PRACK failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2121,6 +2236,8 @@ void t_userintf::cb_prack_failed(int line, const t_response *r) {
 }
 
 void t_userintf::cb_provisional_resp_invite(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": received ";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2130,6 +2247,8 @@ void t_userintf::cb_provisional_resp_invite(int line, const t_response *r) {
 }
 
 void t_userintf::cb_cancel_failed(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": cancel failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2139,6 +2258,8 @@ void t_userintf::cb_cancel_failed(int line, const t_response *r) {
 }
 
 void t_userintf::cb_call_answered(t_user *user_config, int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": far end answered call.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2156,6 +2277,8 @@ void t_userintf::cb_call_answered(t_user *user_config, int line, const t_respons
 }
 
 void t_userintf::cb_call_failed(t_user *user_config, int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2191,6 +2314,8 @@ void t_userintf::cb_call_failed(t_user *user_config, int line, const t_response 
 }
 
 void t_userintf::cb_stun_failed_call_ended(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call failed.\n";
 	cout << endl;
@@ -2198,16 +2323,18 @@ void t_userintf::cb_stun_failed_call_ended(int line) {
 	cout.flush();		
 }
 
-void t_userintf::cb_call_ended(int line, const t_response *r) {
+void t_userintf::cb_call_ended(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call ended.\n";
-	cout << r->code << ' ' << r->reason << endl;
-	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
 }
 
 void t_userintf::cb_call_established(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call established.\n";
 	cout << endl;
@@ -2285,6 +2412,8 @@ void t_userintf::cb_options_response(const t_response *r) {
 }
 
 void t_userintf::cb_reinvite_success(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": re-INVITE successful.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2294,6 +2423,8 @@ void t_userintf::cb_reinvite_success(int line, const t_response *r) {
 }
 
 void t_userintf::cb_reinvite_failed(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": re-INVITE failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2303,6 +2434,8 @@ void t_userintf::cb_reinvite_failed(int line, const t_response *r) {
 }
 
 void t_userintf::cb_retrieve_failed(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	// The status code from the response has already been reported
 	// by cb_reinvite_failed.
 
@@ -2459,6 +2592,8 @@ void t_userintf::cb_register_inprog(t_user *user_config, t_register_type registe
 void t_userintf::cb_redirecting_request(t_user *user_config, 
 		int line, const t_contact_param &contact) 
 {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": redirecting request to:\n";
 
@@ -2567,6 +2702,8 @@ void t_userintf::cb_stop_call_notification(int line) {
 }
 
 void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": DTMF detected: ";
 
@@ -2582,6 +2719,8 @@ void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
 }
 
 void t_userintf::cb_async_dtmf_detected(int line, char dtmf_event) {
+	if (line >= NUM_USER_LINES) return;
+	
 	t_event_ui *event = new t_event_ui(TYPE_UI_CB_DTMF_DETECTED);
 	MEMMAN_NEW(event);
 	
@@ -2604,6 +2743,8 @@ void t_userintf::cb_async_send_dtmf(int line, char dtmf_event) {
 }
 
 void t_userintf::cb_dtmf_not_supported(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	if (throttle_dtmf_not_supported) return;
 
 	cout << endl;
@@ -2616,6 +2757,8 @@ void t_userintf::cb_dtmf_not_supported(int line) {
 }
 
 void t_userintf::cb_dtmf_supported(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": far end supports DTMF telephone event.\n";
 	cout << endl;
@@ -2652,6 +2795,8 @@ void t_userintf::cb_async_recv_codec_changed(int line, t_audio_codec codec) {
 }
 
 void t_userintf::cb_notify_recvd(int line, const t_request *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 <<  ": received notification.\n";
 	cout << "Event:    " << r->hdr_event.event_type << endl;
@@ -2670,6 +2815,8 @@ void t_userintf::cb_notify_recvd(int line, const t_request *r) {
 }
 
 void t_userintf::cb_refer_failed(int line, const t_response *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": refer request failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
@@ -2679,6 +2826,8 @@ void t_userintf::cb_refer_failed(int line, const t_response *r) {
 }
 
 void t_userintf::cb_refer_result_success(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call succesfully referred.\n";
 	cout << endl;
@@ -2687,6 +2836,8 @@ void t_userintf::cb_refer_result_success(int line) {
 }
 
 void t_userintf::cb_refer_result_failed(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call refer failed.\n";
 	cout << endl;
@@ -2695,6 +2846,8 @@ void t_userintf::cb_refer_result_failed(int line) {
 }
 
 void t_userintf::cb_refer_result_inprog(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call refer in progress.\n";
 	cout << "No further notifications will be received.\n";
@@ -2704,6 +2857,8 @@ void t_userintf::cb_refer_result_inprog(int line) {
 }
 
 void t_userintf::cb_call_referred(t_user *user_config, int line, t_request *r) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": transferring call to ";
 	cout << format_sip_address(user_config, r->hdr_refer_to.display,
@@ -2723,6 +2878,8 @@ void t_userintf::cb_call_referred(t_user *user_config, int line, t_request *r) {
 }
 
 void t_userintf::cb_retrieve_referrer(t_user *user_config, int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	const t_call_info call_info = phone->get_call_info(line);
 
 	cout << endl;
@@ -2749,18 +2906,48 @@ void t_userintf::cb_retrieve_referrer(t_user *user_config, int line) {
 	cout.flush();
 }
 
-void t_userintf::cb_stun_failed(int err_code, const string &err_reason) {
+void t_userintf::cb_consultation_call_setup(t_user *user_config, int line) {
+	if (line >= NUM_USER_LINES) return;
+	
+	const t_call_info call_info = phone->get_call_info(line);
+
 	cout << endl;
-	cout << "STUN request failed: ";
+	cout << "Line " << line + 1 << ": setup consultation call.\n";
+	cout << "From:    ";
+	cout << format_sip_address(user_config, call_info.from_display, call_info.from_uri);
+	cout << endl;
+	if (!call_info.from_organization.empty()) {
+		cout << "         " << call_info.from_organization;
+		cout << endl;
+	}
+	cout << "To:      ";
+	cout << format_sip_address(user_config, call_info.to_display, call_info.to_uri);
+	cout << endl;
+	if (!call_info.to_organization.empty()) {
+		cout << "         " << call_info.to_organization;
+		cout << endl;
+	}
+	cout << "Subject: ";
+	cout << call_info.subject;
+	cout << endl << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_stun_failed(t_user *user_config, int err_code, const string &err_reason) {
+	cout << endl;
+	cout << user_config->get_profile_name();
+	cout << ", STUN request failed: ";
 	cout << err_code << " " << err_reason << endl;
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
 }
 
-void t_userintf::cb_stun_failed(void) {
+void t_userintf::cb_stun_failed(t_user *user_config) {
 	cout << endl;
-	cout << "STUN request failed.\n";
+	cout << user_config->get_profile_name();
+	cout << ", STUN request failed.\n";
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
@@ -2788,14 +2975,18 @@ bool t_userintf::cb_ask_credentials(t_user *user_config,
 	return false;
 }
 
-bool t_userintf::cb_ask_user_to_refer(t_user *user_config, 
+void t_userintf::cb_ask_user_to_refer(t_user *user_config, 
 			const t_url &refer_to_uri,
 			const string &refer_to_display,
 			const t_url &referred_by_uri,
 			const string &referred_by_display)
 {
 	// Cannot ask user for permission in CLI, so deny REFER
-	return false;
+	send_refer_permission(false);
+}
+
+void t_userintf::send_refer_permission(bool permission) {
+	evq_trans_layer->push_refer_permission_response(permission);
 }
 
 void t_userintf::cb_show_msg(const string &msg, t_msg_priority prio) {
@@ -2820,6 +3011,13 @@ void t_userintf::cb_show_msg(const string &msg, t_msg_priority prio) {
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();
+}
+
+bool t_userintf::cb_ask_msg(const string &msg, t_msg_priority prio) {
+	// Cannot ask questions in CLI mode.
+	// Print message and return false
+	cb_show_msg(msg, prio);
+	return false;
 }
 
 void t_userintf::cb_display_msg(const string &msg, t_msg_priority prio) {
@@ -2860,6 +3058,8 @@ bool t_userintf::cb_nat_discovery_cancelled(void) {
 }
 
 void t_userintf::cb_line_encrypted(int line, bool encrypted, const string &cipher_mode) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	if (encrypted) {
 		cout << "Line " << line + 1 << ": audio encryption enabled (";
@@ -2883,6 +3083,8 @@ void t_userintf::cb_async_line_encrypted(int line, bool encrypted, const string 
 }
 
 void t_userintf::cb_show_zrtp_sas(int line, const string &sas) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": ZRTP SAS = " << sas << endl;
 	cout << "Confirm the SAS if it is correct.\n";
@@ -2901,6 +3103,8 @@ void t_userintf::cb_async_show_zrtp_sas(int line, const string &sas) {
 }
 
 void t_userintf::cb_zrtp_confirm_go_clear(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": remote user disabled encryption.\n";
 	cout << endl;
@@ -2919,6 +3123,8 @@ void t_userintf::cb_async_zrtp_confirm_go_clear(int line) {
 }
 
 void t_userintf::cb_zrtp_sas_confirmed(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": SAS confirmed.\n";
 	cout << endl;
@@ -2927,6 +3133,8 @@ void t_userintf::cb_zrtp_sas_confirmed(int line) {
 }
 
 void t_userintf::cb_zrtp_sas_confirmation_reset(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	cout << endl;
 	cout << "Line " << line + 1 << ": SAS confirmation reset.\n";
 	cout << endl;
@@ -2934,8 +3142,33 @@ void t_userintf::cb_zrtp_sas_confirmation_reset(int line) {
 	cout.flush();
 }
 
+void t_userintf::cb_update_mwi(void) {
+	// Nothing to do in CLI mode.
+}
+
+void t_userintf::cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure) {
+	// Only report the first failure in a sequence of failures
+	if (!first_failure) return;
+
+	cout << endl;
+	cout << user_config->get_profile_name();
+	cout << ", MWI subscription failed: " << r->code << ' ' << r->reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
+void t_userintf::cb_mwi_terminated(t_user *user_config, const string &reason) {
+	cout << endl;
+	cout << user_config->get_profile_name();
+	cout << ", MWI subscription terminated: " << reason << endl;
+	cout << endl;
+	cout << CLI_PROMPT;
+	cout.flush();
+}
+
 bool t_userintf::get_last_call_info(t_url &url, string &display,
-			string &subject, t_user **user_config) const
+			string &subject, t_user **user_config, bool &hide_user) const
 {
 	if (!last_called_url.is_valid()) return false;
 	
@@ -2943,6 +3176,7 @@ bool t_userintf::get_last_call_info(t_url &url, string &display,
 	display = last_called_display;
 	subject = last_called_subject;
 	*user_config = phone->ref_user_profile(last_called_profile);
+	hide_user = last_called_hide_user;
 	
 	return *user_config != NULL;
 }
@@ -2967,10 +3201,10 @@ void t_userintf::cmd_cli(const string &command, bool immediate) {
 }
 
 string t_userintf::get_name_from_abook(t_user *user_config, const t_url &u) {
-	// No address book in CLI version
-	return "";
+	return ab_local->find_name(user_config, u);
 }
 
 void *process_events_main(void *arg) {
 	ui->process_events();
+	return NULL;
 }

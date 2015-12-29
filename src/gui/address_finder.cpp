@@ -70,8 +70,6 @@ void t_address_finder::find_address(t_user *user_config, const t_url &u)
 		}
 	}
 #endif
-	
-	return;
 }
 
 t_address_finder *t_address_finder::get_instance(void) {

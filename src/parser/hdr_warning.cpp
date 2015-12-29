@@ -66,23 +66,11 @@ string t_warning::encode(void) const {
 	return s;
 }
 
-t_hdr_warning::t_hdr_warning() : t_header() {}
+t_hdr_warning::t_hdr_warning() : t_header("Warning") {}
 
 void t_hdr_warning::add_warning(const t_warning &w) {
 	populated = true;
 	warnings.push_back(w);
-}
-
-string t_hdr_warning::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Warning: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_warning::encode_value(void) const {
@@ -97,14 +85,5 @@ string t_hdr_warning::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_warning::encode_env(void) const {
-	string s;
-
-	s = "SIP_WARNING=";
-	s += encode_value();
-	
 	return s;
 }

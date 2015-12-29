@@ -32,10 +32,10 @@ FreeDeskSysTray::FreeDeskSysTray ( QWidget *pParent , const char *pszName )
 void FreeDeskSysTray::dock ()
 {
   trayMenu->insertSeparator();
-  trayMenu->insertItem("Show/Hide", this, SLOT(slotMenuItemShow())) ;
+  trayMenu->insertItem(tr("Show/Hide"), this, SLOT(slotMenuItemShow())) ;
   
   QIconSet quitIcon(QPixmap::fromMimeSource("exit.png"));
-  trayMenu->insertItem(quitIcon, "Quit", this, SLOT(slotMenuItemQuit())) ;
+  trayMenu->insertItem(quitIcon, tr("Quit"), this, SLOT(slotMenuItemQuit())) ;
   
   Display *dpy = QPaintDevice::x11AppDisplay();
   WId trayWin  = winId();

@@ -37,6 +37,7 @@ private:
 
 	void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
 	void recvd_request(t_request *r, t_tid tid, t_tid tid_cancel_target);
+	void recvd_async_response(t_event_async_response *event);
 
 protected:
 	// Client event handlers
@@ -52,6 +53,10 @@ protected:
 	virtual void recvd_server_error(t_response *r, t_tuid tuid,
 			t_tid tid) = 0;
 	virtual void recvd_global_error(t_response *r, t_tuid tuid,
+			t_tid tid) = 0;
+			
+	// General post processing for all responses
+	virtual void post_process_response(t_response *r, t_tuid tuid,
 			t_tid tid) = 0;
 
 	// Server event handlers
@@ -69,12 +74,19 @@ protected:
 	virtual void recvd_notify(t_request *r, t_tid tid) = 0;
 	virtual void recvd_refer(t_request *r, t_tid tid) = 0;
 	virtual void recvd_info(t_request *r, t_tid tid) = 0;
+	
+	// General post processing for all requests
+	virtual void post_process_request(t_request *r, t_tid cancel_tid,
+				t_tid target_tid) = 0;
 
 	// The transaction failed and is aborted
 	virtual void failure(t_failure failure, t_tid tid) = 0;
 	
 	// STUN event handler
 	virtual void recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) = 0;
+	
+	// The user has granted or rejected an incoming REFER request.
+	virtual void recvd_refer_permission(bool permission) = 0;
 
 public:
 	virtual ~t_transaction_layer() {};

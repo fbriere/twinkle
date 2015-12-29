@@ -46,6 +46,7 @@
 void *tone_gen_play(void *arg) {
 	t_tone_gen *tg = (t_tone_gen *)arg;
 	tg->play();
+	return NULL;
 }
 
 t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) :

@@ -37,8 +37,6 @@ public:
 	t_server(const string &_product, const string &_version,
 		 const string &_comment = "");
 	string encode(void) const;
-	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 class t_hdr_server : public t_header {
@@ -51,9 +49,7 @@ public:
 	// Get a string representation of server_info
 	string get_server_info(void) const;
 	
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

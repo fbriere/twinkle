@@ -19,7 +19,7 @@
 #include "definitions.h"
 #include "hdr_content_disp.h"
 
-t_hdr_content_disp::t_hdr_content_disp() : t_header() {};
+t_hdr_content_disp::t_hdr_content_disp() : t_header("Content-Disposition") {};
 
 void t_hdr_content_disp::set_type(const string &t) {
 	populated = true;
@@ -36,18 +36,6 @@ void t_hdr_content_disp::set_params(const list<t_parameter> &l) {
 	params = l;
 }
 
-string t_hdr_content_disp::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Content-Disposition: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
-}
-
 string t_hdr_content_disp::encode_value(void) const {
 	string s;
 
@@ -56,14 +44,5 @@ string t_hdr_content_disp::encode_value(void) const {
 	s = type;
 	s += param_list2str(params);
 
-	return s;
-}
-
-string t_hdr_content_disp::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CONTENT_DISPOSITION=";
-	s += encode_value();
-	
 	return s;
 }

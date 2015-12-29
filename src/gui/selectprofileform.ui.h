@@ -54,12 +54,12 @@ int SelectProfileForm::execForm()
 	
 	// If there are no profiles then the user has to create one
 	if (profiles.isEmpty()) {
-		QMessageBox::information(this, PRODUCT_NAME,
+		QMessageBox::information(this, PRODUCT_NAME, tr(
 			"<html>"\
 			"Before you can use Twinkle, you must create a user "\
-			"profile.<br>Click OK to create a profile.</html>");
+			"profile.<br>Click OK to create a profile.</html>"));
 		
-		int useWizard = QMessageBox::question(this, PRODUCT_NAME,
+		int useWizard = QMessageBox::question(this, PRODUCT_NAME, tr(
 			"<html>"\
 			"You can use the profile editor to create a profile. "\
 			"With the profile editor you can change many settings "\
@@ -69,7 +69,7 @@ int SelectProfileForm::execForm()
 			"settings. If you create a user profile with the wizard you "\
 			"can still edit the full profile with the profile editor at a later "\
 			"time.<br><br>"\
-			"Choose what method you wish to use.</html>",
+			"Choose what method you wish to use.</html>"),
 			"&Wizard", "&Profile editor", QString::null);
 		
 		if (useWizard == 0) {
@@ -92,12 +92,12 @@ int SelectProfileForm::execForm()
 		selectedProfiles.clear();
 		selectedProfiles.push_back(profile.ascii());
 		
-		QMessageBox::information(this, PRODUCT_NAME,
+		QMessageBox::information(this, PRODUCT_NAME, tr(
 			"<html>"\
 			"Next you may adjust the system settings. "\
 			"You can change these settings always at a later time."\
 			"<br><br>"\
-			"Click OK to view and adjust the system settings.</html>");
+			"Click OK to view and adjust the system settings.</html>"));
 		
 		SysSettingsForm f(this, "system settings", true);
 		f.exec();
@@ -173,9 +173,9 @@ void SelectProfileForm::runProfile()
 	}
 	
 	if (selectedProfiles.empty()) {
-		QMessageBox::warning(this, PRODUCT_NAME,
+		QMessageBox::warning(this, PRODUCT_NAME, tr(
 				"You did not select any user profile to run.\n"\
-				"Please select a profile.");
+				"Please select a profile."));
 		return;
 	}
 	
@@ -201,8 +201,6 @@ void SelectProfileForm::editProfile()
 			UserProfileForm *f = new UserProfileForm(this, 
 						"edit user profile", true, 
 						 Qt::WDestructiveClose);
-			connect(f, SIGNAL(sipUserChanged(t_user *)),
-				mainWindow, SLOT(displayUser(t_user *)));
 			
 			connect(f, SIGNAL(authCredentialsChanged(t_user *, const string&)),
 				mainWindow, 
@@ -308,9 +306,8 @@ void SelectProfileForm::deleteProfile()
 {
 	QCheckListItem *item = (QCheckListItem *)profileListView->currentItem();
 	QString profile = item->text();
-	QString msg = "Are you sure you want to delete profile '";
-	msg.append(profile).append("'?");
-	QMessageBox *mb = new QMessageBox("Delete profile", msg,
+	QString msg = tr("Are you sure you want to delete profile '%1'?").arg(profile);
+	QMessageBox *mb = new QMessageBox(tr("Delete profile"), msg,
 			QMessageBox::Warning,
 			QMessageBox::Yes,
 			QMessageBox::No,
@@ -327,7 +324,7 @@ void SelectProfileForm::deleteProfile()
 		if (!QFile::remove(fullname)) {
 			// Failed to delete file
 			QMessageBox::critical(this, PRODUCT_NAME,
-				"Failed to delete profile.");
+				tr("Failed to delete profile."));
 		} else {
 			// Delete possible backup of the profile
 			QString backupname = fullname;
@@ -404,7 +401,7 @@ void SelectProfileForm::renameProfile()
 	if (!d.rename(oldFilename, newFilename)) {
 		// Failed to delete file
 		QMessageBox::critical(this, PRODUCT_NAME, 
-				      "Failed to rename profile.");
+				      tr("Failed to rename profile."));
 	} else {
 		// If there is a backup of the profile, rename it too.
 		QString oldBackupFilename = oldFilename;
@@ -463,12 +460,12 @@ void SelectProfileForm::setAsDefault()
 	// Only show the information when the default button is
 	// pressed for the first time.
 	if (!defaultSet) {
-		QMessageBox::information(this, PRODUCT_NAME, 
+		QMessageBox::information(this, PRODUCT_NAME, tr(
 			"<p>"
 			"If you want to remove or "
 			"change the default at a later time, you can do that "
 			"via the system settings."
-			"</p>");
+			"</p>"));
 	}
 	
 	defaultSet = true;
@@ -549,7 +546,7 @@ bool SelectProfileForm::getUserProfiles(QStringList &profiles, QString &error)
 	// Find the .twinkle directory in HOME
 	QDir d = QDir::home();
 	if (!d.cd(USER_DIR)) {
-		error = "Cannot find .twinkle directory in your home directory.";
+		error = tr("Cannot find .twinkle directory in your home directory.");
 		return false;
 	}
 	

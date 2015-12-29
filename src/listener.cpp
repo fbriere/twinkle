@@ -20,6 +20,7 @@
 #include "events.h"
 #include "listener.h"
 #include "log.h"
+#include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
@@ -126,6 +127,15 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 		MEMMAN_DELETE(b);
 		delete b;
 		throw -1;
+	} else if (msg->hdr_content_type.media.type == "application" &&
+	           msg->hdr_content_type.media.subtype == "simple-message-summary")
+	{
+		t_simple_msg_sum_body *b = new t_simple_msg_sum_body();
+		MEMMAN_NEW(b);
+		if (b->parse(data)) return b;
+		MEMMAN_DELETE(b);
+		delete b;
+		throw -1;
 	} else {
 		// Pass other bodies unparsed. The upper application
 		// layer will decide what to do.
@@ -170,6 +180,8 @@ void *listen_udp(void *arg) {
 				log_msg += ":";
 				log_msg += int2str(icmp.port);
 				log_msg += "\nSocket error: ";
+				log_msg += int2str(err);
+				log_msg += " ";
 				log_msg += strerror(err);
 				log_file->write_report(log_msg, "::listen_udp", LOG_NORMAL);
 			
@@ -183,17 +195,27 @@ void *listen_udp(void *arg) {
 				//  executed. Sometimes the error is already present on 
 				// the socket, but the ICMP message is not yet queued.
 				log_msg = "Failed to receive from SIP UDP socket.\n";
+				log_msg += "Error code: ";
+				log_msg += int2str(err);
+				log_msg += "\n";
 				log_msg += strerror(err);
 				log_file->write_report(log_msg, "::listen_udp");
 				
 				num_non_icmp_errors++;
+				
+				/*
+				 * non-ICMP errors occur when a destination on the same
+				 * subnet cannot be reached. So this code seems to be
+				 * harmful.
 				if (num_non_icmp_errors > 100) {
 					log_msg = "Excessive number of socket errors.";
 					log_file->write_report(log_msg, "::listen_udp", 
 						LOG_NORMAL, LOG_CRITICAL);
+					log_msg = TRANSLATE("Excessive number of socket errors.");
 					ui->cb_show_msg(log_msg, MSG_CRITICAL);
 					exit(1);
 				}
+				*/
 			}			
 			
 			continue;
@@ -249,7 +271,9 @@ void *listen_udp(void *arg) {
 		catch (int) {
 			// Discard malformed SIP messages.
 			log_msg += "Invalid SIP message.\n";
-			log_msg += "Fatal parse error in headers.\n";
+			log_msg += "Fatal parse error in headers.\n\n";
+			log_msg += to_printable(datagram);
+			log_msg += "\n";
 			log_file->write_report(log_msg, "::listen_udp", LOG_SIP, LOG_DEBUG);
 			continue;
 		}
@@ -278,7 +302,9 @@ void *listen_udp(void *arg) {
 				if (msg->get_type() == MSG_RESPONSE) {
 					log_msg += "Invalid SIP message.\n";
 					log_msg += "Parse error in body.\n";
-					log_file->write_report(log_msg, "::listen_udp", LOG_SIP);
+					log_msg += to_printable(datagram);
+					log_msg += "\n";
+					log_file->write_report(log_msg, "::listen_udp", LOG_SIP, LOG_DEBUG);
 					MEMMAN_DELETE(msg);
 					delete msg;
 					continue;

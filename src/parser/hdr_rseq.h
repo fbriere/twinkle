@@ -35,9 +35,7 @@ public:
 	t_hdr_rseq();
 	void set_resp_nr(unsigned long l);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 
 	bool operator==(const t_hdr_rseq &h) const;
 };

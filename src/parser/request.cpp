@@ -273,11 +273,25 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 			reason = "Event header missing";
 			return false;
 		}
-
-		if (!hdr_subscription_state.is_populated()) {
-			reason = "Subscription-State header missing";
-			return false;
+		
+		// RFC 3265 7.2
+		// Subscription-State header is mandatory
+		// As an exception Twinkle allows an unsollicited NOTIFY for MWI
+		// without a Subscription-State header. Asterisk sends
+		// unsollicited NOTIFY requests.
+		if (!hdr_to.tag.empty() || 
+		    hdr_event.event_type != SIP_EVENT_MSG_SUMMARY)
+		{
+			if (!hdr_subscription_state.is_populated()) {
+				reason = "Subscription-State header missing";
+			 	return false;
+			 }
 		}
+
+		// The Subscription-State header is mandatory.
+		// However, Asterisk uses an expired draft for sending
+		// unsollicitied NOTIFY messages without a Subscription-State
+		// header. As Asterisk is popular, Twinkle allows this.
 		break;
 	case REFER:
 		// RFC 3515 2.4.1
@@ -286,6 +300,14 @@ bool t_request::is_valid(bool &fatal, string &reason) const {
 			return false;
 		}
 		break;
+	}
+	
+	if (hdr_replaces.is_populated()) {
+		// RFC 3891 3
+		if (method != INVITE) {
+			reason = "Replaces header not allowed";
+			return false;
+		}
 	}
 
 	return true;
@@ -298,6 +320,17 @@ void t_request::calc_destinations(const t_user &user_profile) {
 	if (method == REGISTER && user_profile.get_use_registrar()) {
 		destinations = user_profile.get_registrar().get_h_ip_srv("udp");
 		return;
+	}
+	
+	// Bypass the proxy for an out-of-dialog SUBSCRIBE if provisioned.
+	if (method == SUBSCRIBE && hdr_to.tag.empty()) {
+		if (hdr_event.event_type == SIP_EVENT_MSG_SUMMARY) {
+			if (!user_profile.get_mwi_via_proxy()) {
+				// Take Request-URI
+				destinations = uri.get_h_ip_srv("udp");
+				return;
+			}
+		}
 	}
 
 	if (!user_profile.get_use_outbound_proxy() ||

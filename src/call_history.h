@@ -96,7 +96,9 @@ public:
 	void end_call(bool far_end);
 	
 	string get_rel_cause(void) const;
+	string get_rel_cause_internal(void) const;
 	string get_direction(void) const;
+	string get_direction_internal(void) const;
 	bool set_rel_cause(const string &cause);
 	bool set_direction(const string &dir);
 	

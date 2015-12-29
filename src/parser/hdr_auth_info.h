@@ -41,9 +41,7 @@ public:
 	void set_response_auth(const string &ra);
 	void set_cnonce(const string &cn);
 	void set_nonce_count(const unsigned long &nc);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

@@ -20,6 +20,7 @@
 #define _TIMEKEEPER_H
 
 #include <list>
+#include "id_object.h"
 #include "protocol.h"
 #include "transaction.h"
 #include "threads/mutex.h"
@@ -43,15 +44,8 @@ enum t_timer_type {
 // General timer.
 ////////////////////////////////////////////////////////////////
 // Instances should be created from subclasses.
-class t_timer {
+class t_timer : public t_id_object {
 private:
-	static unsigned short	next_id; // next id to be issued
-
-	// Mutex to synchronize updates to static members to allow
-	// concurrent creation of timers.
-	static t_mutex		class_mutex;
-
-	unsigned short		id;
 	long			duration; // milliseconds
 	long			relative_duration; // milliseconds
 
@@ -63,7 +57,6 @@ public:
 	// Subclasses should implent the action to be taken.
 	virtual void expired(void) = 0;
 
-	unsigned short get_id(void) const;
 	long get_duration(void) const;
 	long get_relative_duration(void) const;
 	void set_relative_duration(long d);
@@ -98,7 +91,7 @@ public:
 ////////////////////////////////////////////////////////////////
 class t_tmr_phone : public t_timer {
 private:
-	t_phone		*phone;
+	t_phone		*the_phone;
 	t_phone_timer	phone_timer;
 
 public:
@@ -117,19 +110,19 @@ public:
 ////////////////////////////////////////////////////////////////
 class t_tmr_line : public t_timer {
 private:
-	t_line		*line;
+	t_object_id	line_id;
 	t_line_timer	line_timer;
-	t_dialog_id	dialog_id;
+	t_object_id	dialog_id;
 
 public:
-	t_tmr_line(long dur, t_line_timer ltmr, t_line *l,
-			t_dialog_id d);
+	t_tmr_line(long dur, t_line_timer ltmr, t_object_id lid,
+			t_object_id d);
 
 	void expired(void);
 	t_timer *copy(void) const;
 	t_timer_type get_type(void) const;
 	t_line_timer get_line_timer(void) const;
-	t_line *get_line(void) const;
+	t_object_id get_line_id(void) const;
 	string get_name(void) const;
 };
 
@@ -139,21 +132,21 @@ public:
 class t_tmr_subscribe : public t_timer {
 private:
 	t_subscribe_timer	subscribe_timer;
-	t_line			*line;
-	t_dialog_id		dialog_id;
+	t_object_id		line_id;
+	t_object_id		dialog_id;
 	string			sub_event_type;
 	string			sub_event_id;
 
 
 public:
-	t_tmr_subscribe(long dur, t_subscribe_timer stmr, t_line *l, t_dialog_id d,
+	t_tmr_subscribe(long dur, t_subscribe_timer stmr, t_object_id lid, t_object_id d,
 		const string &event_type, const string &event_id);
 
 	void expired(void);
 	t_timer *copy(void) const;
 	t_timer_type get_type(void) const;
 	t_subscribe_timer get_subscribe_timer(void) const;
-	t_line *get_line(void) const;
+	t_object_id get_line_id(void) const;
 	string get_name(void) const;
 };
 
@@ -222,7 +215,7 @@ private:
 	// is stopped it will be deleted.
 	void start_timer(t_timer *t);
 
-	void stop_timer(unsigned short id);
+	void stop_timer(t_object_id id);
 
 	// Return the remaining time (milliseconds) for a timer
 	// Returns 0 if the timer is not running anymore
@@ -239,7 +232,7 @@ public:
 
 	// Get remaining time of a running timer.
 	// Returns 0 if the timer is not running anymore.
-	unsigned long get_remaining_time(unsigned short timer_id);
+	unsigned long get_remaining_time(t_object_id timer_id);
 
 	// Main loop to be run in a separate thread
 	void run(void);

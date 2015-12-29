@@ -40,9 +40,7 @@ public:
 	void set_uri(const t_url &u);
 	void set_params(const list<t_parameter> &l);
 	void add_param(const t_parameter &p);
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

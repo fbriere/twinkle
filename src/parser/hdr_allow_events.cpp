@@ -19,28 +19,11 @@
 #include "hdr_allow_events.h"
 #include "parse_ctrl.h"
 
-t_hdr_allow_events::t_hdr_allow_events() : t_header() {}
+t_hdr_allow_events::t_hdr_allow_events() : t_header("Allow-Events", "u") {}
 
 void t_hdr_allow_events::add_event_type(const string &t) {
 	populated = true;
 	event_types.push_back(t);
-}
-
-string t_hdr_allow_events::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "u: ";
-	} else {
-		s = "Allow-Events: ";
-	}
-	
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_allow_events::encode_value(void) const {
@@ -51,18 +34,9 @@ string t_hdr_allow_events::encode_value(void) const {
 	for (list<string>::const_iterator i = event_types.begin();
 	     i != event_types.end(); i++)
 	{
-		if (i != event_types.begin()) s += ", ";
+		if (i != event_types.begin()) s += ",";
 		s += *i;
 	}
 
-	return s;
-}
-
-string t_hdr_allow_events::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ALLOW_EVENTS=";
-	s += encode_value();
-	
 	return s;
 }

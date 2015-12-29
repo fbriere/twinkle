@@ -38,9 +38,7 @@ public:
 	// Get string representation of ua_info;
 	string get_ua_info(void) const;
 	
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

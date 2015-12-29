@@ -20,7 +20,7 @@
 #include "hdr_timestamp.h"
 #include "util.h"
 
-t_hdr_timestamp::t_hdr_timestamp() : t_header() {
+t_hdr_timestamp::t_hdr_timestamp() : t_header("Timestamp") {
 	timestamp = 0;
 	delay = 0;
 }
@@ -35,18 +35,6 @@ void t_hdr_timestamp::set_delay(float d) {
 	delay = d;
 }
 
-string t_hdr_timestamp::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Timestamp: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_timestamp::encode_value(void) const {
 	string s;
 
@@ -56,14 +44,5 @@ string t_hdr_timestamp::encode_value(void) const {
 
 	if (delay != 0) s += float2str(delay, " %.3f");
 
-	return s;
-}
-
-string t_hdr_timestamp::encode_env(void) const {
-	string s;
-	
-	s = "SIP_TIMESTAMP=";
-	s += encode_value();
-	
 	return s;
 }

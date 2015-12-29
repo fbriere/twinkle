@@ -34,10 +34,10 @@ void SelectNicForm::setAsDefault(bool setIp)
 	// Only show the information when the default button is
 	// pressed for the first time.
 	if (idxDefault == -1) {
-		QMessageBox::information(this, PRODUCT_NAME,
+		QMessageBox::information(this, PRODUCT_NAME, tr(
 			"If you want to remove or "
 			"change the default at a later time, you can do that "
-			"via the system settings.");
+			"via the system settings."));
 	}
 	
 	// Store current index as the changeItem method also changes

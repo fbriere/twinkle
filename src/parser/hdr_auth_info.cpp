@@ -20,7 +20,7 @@
 #include "definitions.h"
 #include "util.h"
 
-t_hdr_auth_info::t_hdr_auth_info() : t_header() {
+t_hdr_auth_info::t_hdr_auth_info() : t_header("Authentication-Info") {
 	nonce_count = 0;
 }
 
@@ -47,18 +47,6 @@ void t_hdr_auth_info::set_cnonce(const string &cn) {
 void t_hdr_auth_info::set_nonce_count(const unsigned long &nc) {
 	populated = true;
 	nonce_count = nc;
-}
-
-string t_hdr_auth_info::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Authenticate-Info: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_auth_info::encode_value(void) const {
@@ -107,14 +95,5 @@ string t_hdr_auth_info::encode_value(void) const {
 		add_comma = true;
 	}
 
-	return s;
-}
-
-string t_hdr_auth_info::encode_env(void) const {
-	string s;
-	
-	s = "SIP_AUTHENTICATE_INFO=";
-	s += encode_value();
-	
 	return s;
 }

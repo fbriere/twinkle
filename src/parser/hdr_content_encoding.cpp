@@ -20,28 +20,11 @@
 #include "definitions.h"
 #include "parse_ctrl.h"
 
-t_hdr_content_encoding::t_hdr_content_encoding() : t_header() {};
+t_hdr_content_encoding::t_hdr_content_encoding() : t_header("Content-Encoding", "e") {};
 
 void t_hdr_content_encoding::add_coding(const t_coding &coding) {
 	populated = true;
 	coding_list.push_back(coding);
-}
-
-string t_hdr_content_encoding::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "e: ";
-	} else {
-		s = "Content-Encoding: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_content_encoding::encode_value(void) const {
@@ -56,14 +39,5 @@ string t_hdr_content_encoding::encode_value(void) const {
 		s += i->encode();
 	}
 
-	return s;
-}
-
-string t_hdr_content_encoding::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CONTENT_ENCODING=";
-	s += encode_value();
-	
 	return s;
 }

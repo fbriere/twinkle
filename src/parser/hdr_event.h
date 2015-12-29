@@ -27,7 +27,8 @@
 #include "header.h"
 #include "parameter.h"
 
-#define SIP_EVENT_REFER		"refer"		// RFC 3515
+#define SIP_EVENT_REFER		"refer"			// RFC 3515
+#define SIP_EVENT_MSG_SUMMARY	"message-summary"	// RFC 3842
 
 using namespace std;
 
@@ -44,9 +45,7 @@ public:
 	void set_id(const string &s);
 	void add_event_param(const t_parameter &p);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

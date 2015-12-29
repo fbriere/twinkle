@@ -36,6 +36,8 @@
 #include "twinklesystray.h"
 #include "util.h"
 #include "address_finder.h"
+#include "yesnodialog.h"
+
 #include "qcombobox.h"
 #include "qhbox.h"
 #include "qlabel.h"
@@ -107,6 +109,8 @@ void t_gui::setLineFields(int line) {
 }
 
 void t_gui::clearLineFields(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	setLineFields(line);
 	fromLabel->clear();
 	QToolTip::remove(fromLabel);
@@ -138,6 +142,8 @@ void t_gui::displaySubject(const QString &s) {
 }
 
 void t_gui::displayCodecInfo(int line) {
+	if (line > NUM_USER_LINES) return;
+	
 	setLineFields(line);
 	codecLabel->clear();
 	
@@ -188,7 +194,7 @@ void t_gui::displayPhoto(const QImage &photo) {
 // PROTECTED
 /////////////////////////////////////////////////
 bool t_gui::do_invite(const string &destination, const string &display, 
-			const string &subject, bool immediate)
+			const string &subject, bool immediate, bool anonymous)
 {
 	lock();
 	if (mainWindow->callInvite->isEnabled()) {
@@ -198,12 +204,14 @@ bool t_gui::do_invite(const string &destination, const string &display,
 			t_url dst_url(expand_destination(user, destination));
 			if (dst_url.is_valid()) {
 				mainWindow->do_phoneInvite(user, 
-						display.c_str(), dst_url, subject.c_str());
+						display.c_str(), dst_url, subject.c_str(),
+						anonymous);
 			}
 		} else {
 			t_url dest_url(destination);
 			t_display_url du(dest_url, display);
-			mainWindow->phoneInvite(du.encode().c_str(), subject.c_str());
+			mainWindow->phoneInvite(du.encode().c_str(), subject.c_str(),
+						anonymous);
 		}
 	}
 	unlock();
@@ -395,20 +403,28 @@ void t_gui::do_retrieve(void) {
 	unlock();
 }
 
-bool t_gui::do_refer(const string &destination, bool immediate) {
+bool t_gui::do_refer(const string &destination, t_transfer_type transfer_type, bool immediate) {
 	lock();
-	if (mainWindow->callTransfer->isEnabled()) {
+	if (mainWindow->callTransfer->isEnabled() &&
+	    !mainWindow->callTransfer->isOn()) 
+	{
 		if (immediate) {
 			t_display_url du;
 			t_user *user = phone->ref_user_profile(mainWindow->
 				userComboBox->currentText().ascii());
 			du.url = expand_destination(user, destination);
 			
-			if (du.is_valid()) {
-				mainWindow->do_phoneTransfer(du);
+			if (du.is_valid() || transfer_type == TRANSFER_OTHER_LINE) {
+				mainWindow->do_phoneTransfer(du, transfer_type);
 			}
 		} else {
-			mainWindow->phoneTransfer(destination);
+			mainWindow->phoneTransfer(destination, transfer_type);
+		}
+	} else if(mainWindow->callTransfer->isEnabled() &&
+		  mainWindow->callTransfer->isOn())
+	{
+		if (transfer_type != TRANSFER_CONSULT) {
+			mainWindow->do_phoneTransferLine();
 		}
 	}
 	unlock();
@@ -608,7 +624,7 @@ void t_gui::run(void) {
 	// Display product information
 	s = PRODUCT_NAME;
 	s.append(' ').append(PRODUCT_VERSION).append(", ");
-	s.append(PRODUCT_DATE);
+	s.append(sys_config->get_product_date().c_str());
 	mainWindow->display(s);
 	s = "Copyright (C) 2005-2006  ";
 	s.append(PRODUCT_AUTHOR);
@@ -623,6 +639,7 @@ void t_gui::run(void) {
 	// Set controls in correct status
 	mainWindow->updateState();
 	mainWindow->updateRegStatus();
+	mainWindow->updateMwi();
 	mainWindow->updateServicesStatus();
 	mainWindow->updateMissedCallStatus(0);
 	mainWindow->updateMenuStatus();
@@ -644,7 +661,7 @@ void t_gui::run(void) {
 		mainWindow->show();
 	}
 	
-	// Activate a profile is the --set-profile option was given on the command
+	// Activate a profile if the --set-profile option was given on the command
 	// line.
 	if (!cmd_set_profile.isEmpty()) {
 		cmd_cli(string("user ") + cmd_set_profile.ascii(), true);
@@ -737,10 +754,11 @@ string t_gui::select_network_intf(void) {
 	// the allocation here.
 	MEMMAN_NEW(l);
 	if (l->size() == 0) {
-		cb_show_msg("Cannot find a network interface. Twinkle will use "
+		cb_show_msg(qApp->translate("GUI",
+			    "Cannot find a network interface. Twinkle will use "
 			    "127.0.0.1 as the local IP address. When you connect to "
 			    "the network you have to restart Twinkle to use the correct "
-			    "IP address.",
+			    "IP address.").ascii(),
 			    MSG_WARNING);
 		
 		MEMMAN_DELETE(l);
@@ -809,15 +827,15 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	
 	// Incoming call for to-header
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tincoming call for ");
-	s.append(format_sip_address(user_config, r->hdr_to.display, r->hdr_to.uri).c_str());
+	s = qApp->translate("GUI", "Line %1: incoming call for %2").arg(line + 1).arg(
+			format_sip_address(user_config, r->hdr_to.display, r->hdr_to.uri).c_str());
 	mainWindow->display(s);
 	
 	// Is this a transferred call?
 	if (r->hdr_referred_by.is_populated()) {
-		s = "\tCall transferred by ";
-		s.append(format_sip_address(user_config, 
+		s = "Call transferred by ";
+		s = qApp->translate("GUI", "Call transferred by %1").arg(
+				format_sip_address(user_config, 
 					    r->hdr_referred_by.display, 
 					    r->hdr_referred_by.uri).c_str());
 		mainWindow->display(s);
@@ -867,14 +885,10 @@ void t_gui::cb_call_cancelled(int line) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tfar end cancelled call.");
+	s = qApp->translate("GUI", "Line %1: far end cancelled call.").arg(line + 1);
 	mainWindow->display(s);
 	
-	clearLineFields(line);
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -886,14 +900,10 @@ void t_gui::cb_far_end_hung_up(int line) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tfar end released call.");
+	s = qApp->translate("GUI", "Line %1: far end released call.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -904,9 +914,7 @@ void t_gui::cb_answer_timeout(int line) {
 	
 	lock();
 	QString s;
-	
-	setLineFields(line);
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -918,19 +926,13 @@ void t_gui::cb_sdp_answer_not_supported(int line, const string &reason) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tSDP answer from far end not supported.");
+	s = qApp->translate("GUI", "Line %1: SDP answer from far end not supported.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(reason.c_str());
+	s = reason.c_str();
 	mainWindow->display(s);
 	
-	clearLineFields(line);
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -941,16 +943,12 @@ void t_gui::cb_sdp_answer_missing(int line) {
 	
 	lock();
 	QString s;
-	
-	setLineFields(line);
+
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tSDP answer from far end missing.");
+	s = qApp->translate("GUI", "Line %1: SDP answer from far end missing.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -962,20 +960,14 @@ void t_gui::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tUnsupported content type in answer from far end.");
+	s = qApp->translate("GUI", "Line %1: Unsupported content type in answer from far end.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(r->hdr_content_type.media.type.c_str());
+	s = r->hdr_content_type.media.type.c_str();
 	s.append("/").append(r->hdr_content_type.media.subtype.c_str());
 	mainWindow->display(s);
 	
-	clearLineFields(line);
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -987,15 +979,10 @@ void t_gui::cb_ack_timeout(int line) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tno ACK received, call will be terminated.");
+	s = qApp->translate("GUI", "Line %1: no ACK received, call will be terminated.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -1007,15 +994,10 @@ void t_gui::cb_100rel_timeout(int line) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tno PRACK received, call will be terminated.");
+	s = qApp->translate("GUI", "Line %1: no PRACK received, call will be terminated.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -1027,19 +1009,14 @@ void t_gui::cb_prack_failed(int line, const t_response *r) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tPRACK failed.");
+	s = qApp->translate("GUI", "Line %1: PRACK failed.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(QString().setNum(r->code));
+	s = QString().setNum(r->code);
 	s.append(' ').append(r->reason.c_str());
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	cb_stop_call_notification(line);
 	
 	unlock();
@@ -1049,10 +1026,7 @@ void t_gui::cb_provisional_resp_invite(int line, const t_response *r) {
 	if (line >= NUM_USER_LINES) return;
 	
 	lock();
-	QString s;
-	
 	mainWindow->updateState();
-	
 	unlock();
 }
 
@@ -1063,12 +1037,10 @@ void t_gui::cb_cancel_failed(int line, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tfailed to cancel call.");
+	s = qApp->translate("GUI", "Line %1: failed to cancel call.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(QString().setNum(r->code));
+	s = QString().setNum(r->code);
 	s.append(' ').append(r->reason.c_str());
 	mainWindow->display(s);
 	
@@ -1084,8 +1056,7 @@ void t_gui::cb_call_answered(t_user *user_config, int line, const t_response *r)
 	setLineFields(line);
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tfar end answered call.");
+	s = qApp->translate("GUI", "Line %1: far end answered call.").arg(line + 1);
 	mainWindow->display(s);
 	
 	// Put far-end party in line to-field
@@ -1105,15 +1076,11 @@ void t_gui::cb_call_failed(t_user *user_config, int line, const t_response *r) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall failed.");
+	s = qApp->translate("GUI", "Line %1: call failed.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(QString().setNum(r->code));
+	s = QString().setNum(r->code);
 	s.append(' ').append(r->reason.c_str());
 	mainWindow->display(s);
 	
@@ -1121,9 +1088,7 @@ void t_gui::cb_call_failed(t_user *user_config, int line, const t_response *r) {
 	if (r->hdr_warning.is_populated()) {
 		list<string> l = format_warnings(r->hdr_warning);
 		for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
-			s = "\t";
-			s.append(i->c_str());
-			mainWindow->display(s);
+			mainWindow->display(i->c_str());
 		}
 	}
 	
@@ -1131,25 +1096,22 @@ void t_gui::cb_call_failed(t_user *user_config, int line, const t_response *r) {
 	if (r->get_class() == R_3XX && r->hdr_contact.is_populated()) {
 		list<t_contact_param> l = r->hdr_contact.contact_list;
 		l.sort();
-		mainWindow->display("\tThe call can be redirected to:");
+		mainWindow->display(qApp->translate("GUI",
+				"The call can be redirected to:"));
 		for (list<t_contact_param>::iterator i = l.begin();
 		i != l.end(); i++)
 		{
-			s = "\t";
-			s.append(format_sip_address(user_config,
-					i->display, i->uri).c_str());
+			s = format_sip_address(user_config,
+					i->display, i->uri).c_str();
 			mainWindow->display(s);
 		}
 	}
 	
 	// Unsupported extensions
 	if (r->code == R_420_BAD_EXTENSION) {
-		s = "\t";
-		s.append(r->hdr_unsupported.encode().c_str());
-		mainWindow->display(s);
+		mainWindow->display(r->hdr_unsupported.encode().c_str());
 	}
-	
-	clearLineFields(line);
+
 	unlock();
 }
 
@@ -1159,31 +1121,23 @@ void t_gui::cb_stun_failed_call_ended(int line) {
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall failed.");
+	s = qApp->translate("GUI", "Line %1: call failed.").arg(line + 1);
 	mainWindow->display(s);
 	
-	clearLineFields(line);
 	unlock();
 }
 
-void t_gui::cb_call_ended(int line, const t_response *r) {
+void t_gui::cb_call_ended(int line) {
 	if (line >= NUM_USER_LINES) return;
 	
 	lock();
 	QString s;
 	
-	setLineFields(line);
-	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall released.");
+	s = qApp->translate("GUI", "Line %1: call released.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
+
 	unlock();
 }
 
@@ -1194,8 +1148,7 @@ void t_gui::cb_call_established(int line) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall established.");
+	s = qApp->translate("GUI", "Line %1: call established.").arg(line + 1);
 	mainWindow->display(s);
 	
 	unlock();
@@ -1206,9 +1159,8 @@ void t_gui::cb_options_response(const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Response on terminal capability request: ";
-	s.append(QString().setNum(r->code));
-	s.append(' ').append(r->reason.c_str());
+	s = qApp->translate("GUI", "Response on terminal capability request: %1 %2")
+	    .arg(r->code).arg(r->reason.c_str());
 	mainWindow->display(s);
 	
 	if (r->code == R_408_REQUEST_TIMEOUT) {
@@ -1217,55 +1169,54 @@ void t_gui::cb_options_response(const t_response *r) {
 		return;
 	}
 	
-	s = "Terminal capabilities of ";
-	s.append(r->hdr_to.uri.encode().c_str());
+	s = qApp->translate("GUI", "Terminal capabilities of %1").arg(r->hdr_to.uri.encode().c_str());
 	mainWindow->display(s);
 	
-	s = "Accepted body types:\t";
+	s = qApp->translate("GUI", "Accepted body types:").append(" ");
 	if (r->hdr_accept.is_populated()) {
 		s.append(r->hdr_accept.get_value().c_str());
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
-	s = "Accepted encodings:\t";
+	s = qApp->translate("GUI", "Accepted encodings:").append(" ");
 	if (r->hdr_accept_encoding.is_populated()) {
 		s.append(r->hdr_accept_encoding.get_value().c_str());
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
-	s = "Accepted languages:\t";
+	s = qApp->translate("GUI", "Accepted languages:").append(" ");
 	if (r->hdr_accept_language.is_populated()) {
 		s.append(r->hdr_accept_language.get_value().c_str());
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
-	s = "Allowed requests:\t\t";
+	s = qApp->translate("GUI", "Allowed requests:").append(" ");
 	if (r->hdr_allow.is_populated()) {
 		s.append(r->hdr_allow.get_value().c_str());
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
-	s = "Supported extensions:\t";
+	s = qApp->translate("GUI", "Supported extensions:").append(" ");
 	if (r->hdr_supported.is_populated()) {
 		if (r->hdr_supported.features.empty()) {
-			s.append("none");
+			s.append(qApp->translate("GUI", "none"));
 		} else {
 			s.append(r->hdr_supported.get_value().c_str());
 		}
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
-	s = "End point type:\t\t";
+	s = qApp->translate("GUI", "End point type:").append(" ");
 	if (r->hdr_server.is_populated()) {
 		s.append(r->hdr_server.get_value().c_str());
 	} else if (r->hdr_user_agent.is_populated()) {
@@ -1273,7 +1224,7 @@ void t_gui::cb_options_response(const t_response *r) {
 		// instead of a Server header.
 		s.append(r->hdr_user_agent.get_value().c_str());
 	} else {
-		s.append("unknown");
+		s.append(qApp->translate("GUI", "unknown"));
 	}
 	mainWindow->display(s);
 	
@@ -1297,12 +1248,10 @@ void t_gui::cb_retrieve_failed(int line, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall retrieve failed.");
+	s = qApp->translate("GUI", "Line %1: call retrieve failed.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(QString().setNum(r->code));
+	s = QString().setNum(r->code);
 	s.append(' ').append(r->reason.c_str());
 	mainWindow->display(s);
 	
@@ -1315,9 +1264,10 @@ void  t_gui::cb_invalid_reg_resp(t_user *user_config, const t_response *r, const
 	QString s;
 	
 	mainWindow->displayHeader();
-	s= user_config->get_profile_name().c_str();
-	s.append(", registration failed: ");
-	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
+	qApp->translate("GUI", "%1, registration failed: %2 %3")
+			.arg(user_config->get_profile_name().c_str())
+			.arg(r->code)
+			.arg(r->reason.c_str());
 	mainWindow->display(s);
 	mainWindow->display(reason.c_str());
 	
@@ -1333,10 +1283,9 @@ void t_gui::cb_register_success(t_user *user_config, const t_response *r, unsign
 	
 	if (first_success) {
 		mainWindow->displayHeader();
-		s = user_config->get_profile_name().c_str();
-		s += ", registration succeeded (expires = ";
-		s += QString().setNum(expires);
-		s += " seconds)";
+		s = qApp->translate("GUI", "%1, registration succeeded (expires = %2 seconds)")
+		    .arg(user_config->get_profile_name().c_str())
+		    .arg(expires);
 		mainWindow->display(s);
 	}
 	
@@ -1350,9 +1299,10 @@ void t_gui::cb_register_failed(t_user *user_config, const t_response *r, bool fi
 	
 	if (first_failure) {
 		mainWindow->displayHeader();
-		s = user_config->get_profile_name().c_str();
-		s += ", registration failed: ";
-		s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
+		s = qApp->translate("GUI", "%1, registration failed: %2 %3")
+		    .arg(user_config->get_profile_name().c_str())
+		    .arg(r->code)
+		    .arg(r->reason.c_str());
 		mainWindow->display(s);
 	}
 	
@@ -1366,8 +1316,8 @@ void t_gui::cb_register_stun_failed(t_user *user_config, bool first_failure) {
 	
 	if (first_failure) {
 		mainWindow->displayHeader();
-		s = user_config->get_profile_name().c_str();
-		s += ", registration failed: STUN failure";
+		s = qApp->translate("GUI", "%1, registration failed: STUN failure")
+		    .arg(user_config->get_profile_name().c_str());
 		mainWindow->display(s);
 	}
 	
@@ -1380,9 +1330,10 @@ void t_gui::cb_deregister_success(t_user *user_config, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = user_config->get_profile_name().c_str();
-	s += ", de-registration succeeded: ";
-	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
+	s = qApp->translate("GUI", "%1, de-registration succeeded: %2 %3")
+	    .arg(user_config->get_profile_name().c_str())
+	    .arg(r->code)
+	    .arg(r->reason.c_str());
 	mainWindow->display(s);
 	
 	mainWindow->updateRegStatus();
@@ -1394,9 +1345,9 @@ void t_gui::cb_deregister_failed(t_user *user_config, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = user_config->get_profile_name().c_str();
-	s = ", de-registration failed: ";
-	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
+	s = qApp->translate("GUI", "%1, de-registration failed: %1 %2")
+	    .arg(r->code)
+	    .arg(r->reason.c_str());
 	mainWindow->display(s);
 	
 	mainWindow->updateRegStatus();
@@ -1408,9 +1359,10 @@ void t_gui::cb_fetch_reg_failed(t_user *user_config, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = user_config->get_profile_name().c_str();
-	s = ", fetching registrations failed: ";
-	s.append(QString().setNum(r->code)).append(' ').append(r->reason.c_str());
+	s = qApp->translate("GUI", "%1, fetching registrations failed: %2 %3")
+	    .arg(user_config->get_profile_name().c_str())
+	    .arg(r->code)
+	    .arg(r->reason.c_str());
 	mainWindow->display(s);
 	
 	unlock();
@@ -1425,10 +1377,10 @@ void t_gui::cb_fetch_reg_result(t_user *user_config, const t_response *r) {
 	s = user_config->get_profile_name().c_str();
 	const list<t_contact_param> &l = r->hdr_contact.contact_list;
 	if (l.size() == 0) {
-		s += ": you are not registered";
+		s += qApp->translate("GUI", ": you are not registered");
 		mainWindow->display(s);
 	} else {
-		s += ": you have the following registrations";
+		s += qApp->translate("GUI", ": you have the following registrations");
 		mainWindow->display(s);
 		for (list<t_contact_param>::const_iterator i = l.begin();
 		i != l.end(); i++)
@@ -1460,7 +1412,7 @@ void t_gui::cb_register_inprog(t_user *user_config, t_register_type register_typ
 	case REG_QUERY:
 		mainWindow->displayHeader();
 		s = user_config->get_profile_name().c_str();
-		s += ": fetching registrations...";
+		s += qApp->translate("GUI", ": fetching registrations...");
 		mainWindow->display(s);
 		break;
 	}
@@ -1475,12 +1427,10 @@ void t_gui::cb_redirecting_request(t_user *user_config, int line, const t_contac
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tredirecting request to");
+	s = qApp->translate("GUI", "Line %1: redirecting request to").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(format_sip_address(user_config, contact.display, contact.uri).c_str());
+	s = format_sip_address(user_config, contact.display, contact.uri).c_str();
 	mainWindow->display(s);
 	
 	unlock();
@@ -1491,8 +1441,8 @@ void t_gui::cb_redirecting_request(t_user *user_config, const t_contact_param &c
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Redirecting request to: ";
-	s.append(format_sip_address(user_config, contact.display, contact.uri).c_str());
+	s = qApp->translate("GUI", "Redirecting request to: %1").arg(
+			format_sip_address(user_config, contact.display, contact.uri).c_str());
 	mainWindow->display(s);
 	
 	unlock();
@@ -1579,11 +1529,13 @@ void t_gui::cb_notify_call(int line, const QString &from_party, const QString &o
 		
 		QHBox *buttonBox = new QHBox(vb);
 		QIconSet iconAnswer(QPixmap::fromMimeSource("answer.png"));
-		QPushButton *pbAnswer = new QPushButton(iconAnswer, "Answer", buttonBox);
+		QPushButton *pbAnswer = new QPushButton(iconAnswer, 
+			qApp->translate("SysTrayPopup", "Answer"), buttonBox);
 		QObject::connect(pbAnswer, SIGNAL(clicked()), 
 				 mainWindow, SLOT(phoneAnswerFromSystrayPopup()));
 		QIconSet iconReject(QPixmap::fromMimeSource("reject.png"));
-		QPushButton *pbReject = new QPushButton(iconReject, "Reject", buttonBox);
+		QPushButton *pbReject = new QPushButton(iconReject, 
+			qApp->translate("SysTrayPopup", "Reject"), buttonBox);
 		QObject::connect(pbReject, SIGNAL(clicked()), 
 				 mainWindow, SLOT(phoneRejectFromSystrayPopup()));
 		
@@ -1631,15 +1583,13 @@ void t_gui::cb_dtmf_detected(int line, char dtmf_event) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tDTMF detected: ");
+	s = qApp->translate("GUI", "Line %1: DTMF detected:").arg(line + 1).append(" ");
 	
 	if (VALID_DTMF_EV(dtmf_event)) {
 		s.append(dtmf_ev2char(dtmf_event));
 	} else {
-		s.append("invalid DTMF telephone event (");
-		s.append(QString().setNum((int)dtmf_event));
+		s.append(qApp->translate("GUI", "invalid DTMF telephone event (%1)").arg(
+				(int)dtmf_event));
 	}
 	
 	mainWindow->display(s);
@@ -1656,10 +1606,8 @@ void t_gui::cb_send_dtmf(int line, char dtmf_event) {
 	if (!VALID_DTMF_EV(dtmf_event)) return;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tsend DTMF ");
-	s.append(dtmf_ev2char(dtmf_event));
+	s = qApp->translate("GUI", "Line %1: send DTMF %2").arg(line + 1).arg(
+			dtmf_ev2char(dtmf_event));
 	mainWindow->display(s);
 	
 	unlock();
@@ -1675,9 +1623,7 @@ void t_gui::cb_dtmf_not_supported(int line) {
 	lock();
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tfar end does not support DTMF telephone events.");
+	s = qApp->translate("GUI", "Line %1: far end does not support DTMF telephone events.").arg(line + 1);
 	mainWindow->display(s);
 	
 	// Throttle subsequent call backs
@@ -1723,28 +1669,22 @@ void t_gui::cb_notify_recvd(int line, const t_request *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\treceived notification.");
+	s = qApp->translate("GUI", "Line %1: received notification.").arg(line+1);
 	mainWindow->display(s);
 	
-	s = "\tEvent: ";
-	s.append(r->hdr_event.event_type.c_str());
+	s = qApp->translate("GUI", "Event: %1").arg(r->hdr_event.event_type.c_str());
 	mainWindow->display(s);
 	
-	s = "\tState: ";
-	s.append(r->hdr_subscription_state.substate.c_str());
+	s = qApp->translate("GUI", "State: %1").arg(r->hdr_subscription_state.substate.c_str());
 	mainWindow->display(s);
 	
 	if (r->hdr_subscription_state.substate == SUBSTATE_TERMINATED) {
-		s = "\tReason: ";
-		s.append(r->hdr_subscription_state.reason.c_str());
+		s = qApp->translate("GUI", "Reason: %1").arg(r->hdr_subscription_state.reason.c_str());
 		mainWindow->display(s);
 	}
 	
 	t_response *sipfrag = (t_response *)((t_sip_body_sipfrag *)r->body)->sipfrag;
-	s = "\tProgress: ";
-	s.append(QString().setNum(sipfrag->code));
-	s.append(' ').append(sipfrag->reason.c_str());
+	s = qApp->translate("GUI", "Progress: %1 %2").arg(sipfrag->code).arg(sipfrag->reason.c_str());
 	mainWindow->display(s);
 	
 	unlock();
@@ -1757,12 +1697,10 @@ void t_gui::cb_refer_failed(int line, const t_response *r) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall transfer failed.");
+	s = qApp->translate("GUI", "Line %1: call transfer failed.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\t";
-	s.append(QString().setNum(r->code));
+	s = QString().setNum(r->code);
 	s.append(' ').append(r->reason.c_str());
 	mainWindow->display(s);
 	
@@ -1779,8 +1717,7 @@ void t_gui::cb_refer_result_success(int line) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall succesfully transferred.");
+	s = qApp->translate("GUI", "Line %1: call succesfully transferred.").arg(line + 1);
 	mainWindow->display(s);
 	
 	// The refer state has changed, so update the main window.
@@ -1796,8 +1733,7 @@ void t_gui::cb_refer_result_failed(int line) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall transfer failed.");
+	s = qApp->translate("GUI", "Line %1: call transfer failed.").arg(line + 1);
 	mainWindow->display(s);
 	
 	// The refer state has changed, so update the main window.
@@ -1813,11 +1749,10 @@ void t_gui::cb_refer_result_inprog(int line) {
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall transfer still in progress.");
+	s = qApp->translate("GUI", "Line %1: call transfer still in progress.").arg(line + 1);
 	mainWindow->display(s);
 	
-	s = "\tNo further notifications will be received.";
+	s = qApp->translate("GUI", "No further notifications will be received.");
 	mainWindow->display(s);
 	
 	// The refer state has changed, so update the main window.
@@ -1834,16 +1769,14 @@ void t_gui::cb_call_referred(t_user *user_config, int line, t_request *r) {
 	lock();
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\ttransferring call to ");
-	s.append(format_sip_address(user_config,
+	s = qApp->translate("GUI", "Line %1: transferring call to %2").arg(line +1).arg(
+			format_sip_address(user_config,
 			r->hdr_refer_to.display, r->hdr_refer_to.uri).c_str());
 	mainWindow->display(s);
 	
 	if (r->hdr_referred_by.is_populated()) {
-		s = "\tTransfer requested by ";
-		s.append(format_sip_address(user_config,
+		s = qApp->translate("GUI", "Transfer requested by %1").arg(
+				format_sip_address(user_config,
 					    r->hdr_referred_by.display, 
 					    r->hdr_referred_by.uri).c_str());
 		mainWindow->display(s);
@@ -1851,7 +1784,7 @@ void t_gui::cb_call_referred(t_user *user_config, int line, t_request *r) {
 	
 	setLineFields(line);
 	s = format_sip_address(user_config, 
-			       user_config->get_display(),  user_config->create_user_uri()).c_str();
+			       user_config->get_display(false),  user_config->create_user_uri(false)).c_str();
 	displayFrom(s);
 	photoLabel->hide();
 	
@@ -1873,9 +1806,7 @@ void t_gui::cb_retrieve_referrer(t_user *user_config, int line) {
 	lock();
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1));
-	s.append(":\tCall transfer failed. Retrieving original call.");
+	s = qApp->translate("GUI", "Line %1: Call transfer failed. Retrieving original call.").arg(line + 1);
 	mainWindow->display(s);
 	
 	setLineFields(line);
@@ -1897,7 +1828,7 @@ void t_gui::cb_retrieve_referrer(t_user *user_config, int line) {
 		fromPhoto = af->find_photo(user_config, call_info.from_uri);
 	}
 	
-	displayPhoto(fromPhoto);
+	displayPhoto(fromPhoto);	
 	
 	s = format_sip_address(user_config, call_info.to_display, call_info.to_uri).c_str();
 	if (!call_info.to_organization.empty()) {
@@ -1912,24 +1843,59 @@ void t_gui::cb_retrieve_referrer(t_user *user_config, int line) {
 	unlock();
 }
 
-void t_gui::cb_stun_failed(int err_code, const string &err_reason) {
+void t_gui::cb_consultation_call_setup(t_user *user_config, int line) {
+	if (line >= NUM_USER_LINES) return;
+	
+	QString s;
+	
+	lock();
+	
+	setLineFields(line);
+	const t_call_info call_info = phone->get_call_info(line);
+	
+	s = format_sip_address(user_config, call_info.get_from_display_presentation(), 
+			       call_info.from_uri).c_str();
+	if (!call_info.from_organization.empty()) {
+		s += ", ";
+		s += call_info.from_organization.c_str();
+	}
+	displayFrom(s);
+	
+	photoLabel->hide();
+	
+	s = format_sip_address(user_config, call_info.to_display, call_info.to_uri).c_str();
+	if (!call_info.to_organization.empty()) {
+		s += ", ";
+		s += call_info.to_organization.c_str();
+	}
+	displayTo(s);
+	
+	displaySubject(call_info.subject.c_str());
+	codecLabel->clear();
+	
+	unlock();
+}
+
+void t_gui::cb_stun_failed(t_user *user_config, int err_code, const string &err_reason) {
 	lock();
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "STUN request failed: ";
-	s.append(QString().setNum(err_code)).append(' ').append(err_reason.c_str());
+	s = qApp->translate("GUI", "%1, STUN request failed: %2 %3")
+	    .arg(user_config->get_profile_name().c_str())
+	    .arg(err_code).arg(err_reason.c_str());
 	mainWindow->display(s);
 
 	unlock();
 }
 
-void t_gui::cb_stun_failed(void) {
+void t_gui::cb_stun_failed(t_user *user_config) {
 	lock();
 	QString s;
 	
 	mainWindow->displayHeader();
-	s = "STUN request failed.";
+	s = qApp->translate("GUI", "%1, STUN request failed.")
+	    .arg(user_config->get_profile_name().c_str());
 	mainWindow->display(s);
 
 	unlock();
@@ -1944,18 +1910,21 @@ bool t_gui::cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &des
 	lock();
 	
 	title = PRODUCT_NAME;
-	title.append(" - Redirecting call");
+	title.append(" - ").append(qApp->translate("GUI", "Redirecting call"));
 	
-	s = "User profile: <b>";
+	s = qApp->translate("GUI", "User profile:").append(" <b>");
 	s.append(user_config->get_profile_name().c_str());
-	s.append("</b><br>User: <b>");
+	s.append("</b><br>").append(qApp->translate("GUI", "User:")).append(" <b>");
 	s.append(str2html(user_config->get_display_uri().c_str()));
 	s.append("</b><br><br>");
 	
-	s.append("Do you allow the call to be redirected to the following destination?<br><br>");
+	s.append(qApp->translate("GUI", "Do you allow the call to be redirected to the following destination?"));
+	s.append("<br><br>");
 	s.append(str2html(ui->format_sip_address(user_config, display, destination).c_str()));
-	s.append("<br><br>If you don't want to be asked this anymore, then you must change "
-		 "the settings in the SIP protocol section of the user profile.");
+	s.append("<br><br>");
+	s.append(qApp->translate("GUI", 
+		"If you don't want to be asked this anymore, then you must change "
+		"the settings in the SIP protocol section of the user profile."));
 	QMessageBox *mb = new QMessageBox(title, s,
 					  QMessageBox::Warning,
 					  QMessageBox::Yes,
@@ -1982,20 +1951,23 @@ bool t_gui::cb_ask_user_to_redirect_request(t_user *user_config,
 	lock();
 	
 	title = PRODUCT_NAME;
-	title.append(" - Redirecting request");
+	title.append(" - ").append(qApp->translate("GUI", "Redirecting request"));
 	
-	s = "User profile: <b>";
+	s = qApp->translate("GUI", "User profile:").append(" <b>");
 	s.append(user_config->get_profile_name().c_str());
-	s.append("</b><br>User: <b>");
+	s.append("</b><br>").append(qApp->translate("GUI", "User:")).append(" <b>");
 	s.append(str2html(user_config->get_display_uri().c_str()));
 	s.append("</b><br><br>");
 	
-	s.append("Do you allow the ");
-	s.append(method2str(method).c_str());
-	s.append(" request to be redirected to the following destination?<br><br>");
+	s.append(qApp->translate("GUI", 
+		"Do you allow the %1 request to be redirected to the following destination?").arg(
+		method2str(method).c_str()));
+	s.append("<br><br>");
 	s.append(str2html(ui->format_sip_address(user_config, display, destination).c_str()));
-	s.append("<br><br>If you don't want to be asked this anymore, then you must change "
-		 "the settings in the SIP protocol section of the user profile.");
+	s.append("<br><br>");
+	s.append(qApp->translate("GUI",
+		"If you don't want to be asked this anymore, then you must change "
+		"the settings in the SIP protocol section of the user profile."));
 	QMessageBox *mb = new QMessageBox(title, s,
 					  QMessageBox::Warning,
 					  QMessageBox::Yes,
@@ -2039,7 +2011,7 @@ bool t_gui::cb_ask_credentials(t_user *user_config, const string &realm, string 
 	return true;
 }
 
-bool t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
+void t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 				 const string &refer_to_display,
 				 const t_url &referred_by_uri,
 				 const string &referred_by_display)
@@ -2050,43 +2022,41 @@ bool t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 	lock();
 	
 	title = PRODUCT_NAME;
-	title.append(" - Transferring call");
+	title.append(" - ").append(qApp->translate("GUI", "Transferring call"));
 	
-	s = "User profile: <b>";
+	s = qApp->translate("GUI", "User profile:").append(" <b>");
 	s.append(user_config->get_profile_name().c_str());
-	s.append("</b><br>User: <b>");
+	s.append("</b><br>").append(qApp->translate("GUI", "User:")).append(" <b>");
 	s.append(str2html(user_config->get_display_uri().c_str()));
 	s.append("</b><br><br>");
 	
 	if (referred_by_uri.is_valid()) {
-		s.append("Request to transfer call received from:<br>");
+		s.append(qApp->translate("GUI","Request to transfer call received from:"));
+		s.append("<br>");
 		s.append(str2html(format_sip_address(user_config, referred_by_display,
 					    referred_by_uri).c_str()));
 		s.append("<br>");
 	} else {
-		s.append("Request to transfer call received.<br>");
+		s.append(qApp->translate("GUI", "Request to transfer received call."));
+		s.append("<br>");
 	}
 	s.append("<br>");
 	
-	s.append("Do you allow the call to be transferred to the following destination?<br><br>");
+	s.append(qApp->translate("GUI",
+		"Do you allow the call to be transferred to the following destination?"));
+	s.append("<br><br>");
 	s.append(str2html(ui->format_sip_address(user_config, refer_to_display, 
 					refer_to_uri).c_str()));
-	s.append("<br><br>If you don't want to be asked this anymore, then you must change "
-		 "the settings in the SIP protocol section of the user profile.");
-	QMessageBox *mb = new QMessageBox(title, s,
-					  QMessageBox::Warning,
-					  QMessageBox::Yes,
-					  QMessageBox::No,
-					  QMessageBox::NoButton,
-					  mainWindow);
-	MEMMAN_NEW(mb);
-	bool permission = (mb->exec() == QMessageBox::Yes);
-	MEMMAN_DELETE(mb);
-	delete mb;
+	s.append("<br><br>");
+	s.append(qApp->translate("GUI",
+		"If you don't want to be asked this anymore, then you must change "
+		"the settings in the SIP protocol section of the user profile."));
+	
+	ReferPermissionDialog *dialog = new ReferPermissionDialog(mainWindow, title, s);
+	// Do not report to MEMMAN as Qt will auto destruct this dialog on close.
+	dialog->show();
 	
 	unlock();
-	
-	return permission;
 }
 
 void t_gui::cb_show_msg(const string &msg, t_msg_priority prio) {
@@ -2112,6 +2082,38 @@ void t_gui::cb_show_msg(QWidget *parent, const string &msg, t_msg_priority prio)
 	unlock();
 }
 
+bool t_gui::cb_ask_msg(const string &msg, t_msg_priority prio) {
+	return cb_ask_msg(NULL, msg, prio);
+}
+
+bool t_gui::cb_ask_msg(QWidget *parent, const string &msg, t_msg_priority prio) {
+	lock();
+	
+	int button = 1;
+	switch (prio) {
+	case MSG_INFO:
+		button = QMessageBox::information(parent, PRODUCT_NAME, msg.c_str(),
+			QMessageBox::Yes,
+			QMessageBox::No | QMessageBox::Escape | QMessageBox::Default);
+		break;
+	case MSG_WARNING:
+		button = QMessageBox::warning(parent, PRODUCT_NAME, msg.c_str(),
+			QMessageBox::Yes,
+			QMessageBox::No | QMessageBox::Escape | QMessageBox::Default);
+		break;
+	case MSG_CRITICAL:
+	default:
+		button = QMessageBox::critical(parent, PRODUCT_NAME, msg.c_str(),
+			QMessageBox::Yes,
+			QMessageBox::No | QMessageBox::Escape | QMessageBox::Default);
+		break;
+	}
+	
+	unlock();
+	
+	return (button == 0);
+}
+
 void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
 	QString s;
 	
@@ -2119,18 +2121,18 @@ void t_gui::cb_display_msg(const string &msg, t_msg_priority prio) {
 	
 	switch (prio) {
 	case MSG_INFO:
-		s = "Info: ";
+		s = qApp->translate("GUI", "Info:");
 		break;
 	case MSG_WARNING:
-		s = "Warning: ";
+		s = qApp->translate("GUI", "Warning:");
 		break;
 	case MSG_CRITICAL:
 	default:
-		s = "Critical: ";
+		s = qApp->translate("GUI", "Critical:");
 		break;
 	}	
 	
-	s.append(msg.c_str());
+	s.append(" ").append(msg.c_str());
 	mainWindow->displayHeader();
 	mainWindow->display(s);
 	
@@ -2157,7 +2159,9 @@ void  t_gui::cb_missed_call(int num_missed_calls) {
 
 void t_gui::cb_nat_discovery_progress_start(int num_steps) {
 	natDiscoveryProgressDialog = new QProgressDialog(
-			"Firewall / NAT discovery...", "Abort", num_steps, NULL,
+			qApp->translate("GUI", "Firewall / NAT discovery..."), 
+			qApp->translate("GUI", "Abort"), 
+			num_steps, NULL,
 			"nat discovery progress", true);
 	MEMMAN_NEW(natDiscoveryProgressDialog);
 	natDiscoveryProgressDialog->setCaption(PRODUCT_NAME);
@@ -2193,10 +2197,10 @@ void t_gui::cb_show_zrtp_sas(int line, const string &sas) {
 	setLineFields(line);
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tSAS = ").append(sas.c_str());
+	s = qApp->translate("GUI", "Line %1").arg(line + 1);
+	s.append(": SAS = ").append(sas.c_str());
 	mainWindow->display(s);
-	s = "Click the padlock to confirm a correct SAS.";
+	s = qApp->translate("GUI", "Click the padlock to confirm a correct SAS.");
 	mainWindow->display(s);
 	
 	unlock();
@@ -2206,8 +2210,8 @@ void t_gui::cb_zrtp_confirm_go_clear(int line) {
 	t_user *user_config = phone->get_line_user(line);
 	if (!user_config) return;
 	
-	QString msg("The remote user on line ");
-	msg.append(QString().setNum(line + 1)). append(" disabled the encryption.");
+	QString msg(qApp->translate("GUI", "The remote user on line %1 disabled the encryption.")
+			.arg(line + 1));
 	if (user_config->get_zrtp_goclear_warning()) {
 		cb_show_msg(msg.ascii(), MSG_WARNING);
 	} else {
@@ -2224,8 +2228,7 @@ void t_gui::cb_zrtp_sas_confirmed(int line) {
 	setLineFields(line);
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tSAS confirmed.");
+	s = qApp->translate("GUI", "Line %1: SAS confirmed.").arg(line + 1);
 	mainWindow->display(s);
 	
 	unlock();
@@ -2238,10 +2241,47 @@ void t_gui::cb_zrtp_sas_confirmation_reset(int line) {
 	setLineFields(line);
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tSAS confirmation reset.");
+	s = qApp->translate("GUI", "Line %1: SAS confirmation reset.").arg(line + 1);
 	mainWindow->display(s);
 	
+	unlock();
+}
+
+void t_gui::cb_update_mwi(void) {
+	lock();
+	mainWindow->updateMwi();
+	unlock();
+}
+
+void t_gui::cb_mwi_subscribe_failed(t_user *user_config, t_response *r, bool first_failure) {
+	lock();
+	QString s;
+	
+	if (first_failure) {
+		mainWindow->displayHeader();
+		s = qApp->translate("GUI", "%1, voice mail status failure.")
+		    .arg(user_config->get_profile_name().c_str());
+		mainWindow->display(s);
+	}
+	
+	unlock();
+}
+
+void t_gui::cb_mwi_terminated(t_user *user_config, const string &reason) {
+	lock();
+	QString s;
+	
+	if (reason == "EV_REASON_REJECTED") {
+		s = qApp->translate("GUI", "%1, voice mail status rejected.");
+	} else if (reason == "EV_REASON_NORESOURCE") {
+		s = qApp->translate("GUI", "%1, voice mailbox does not exist.");
+	} else {
+		s = qApp->translate("GUI", "%1, voice mail status terminated.");
+	}
+
+	mainWindow->displayHeader();
+	mainWindow->display(s.arg(user_config->get_profile_name().c_str()));
+
 	unlock();
 }
 
@@ -2258,9 +2298,9 @@ void t_gui::cmd_call(const string &destination, bool immediate) {
 	lock();
 	if (immediate) {
 		mainWindow->do_phoneInvite(user, du.display.c_str(), du.url, 
-					   subject.c_str());
+					   subject.c_str(), false);
 	} else {
-		mainWindow->phoneInvite(dst_no_headers.c_str(), subject.c_str());
+		mainWindow->phoneInvite(dst_no_headers.c_str(), subject.c_str(), false);
 	}
 	unlock();
 }
@@ -2272,9 +2312,17 @@ void t_gui::cmd_quit(void) {
 }
 
 string t_gui::get_name_from_abook(t_user *user_config, const t_url &u) {
+	string name;
+	
 	lock();
-	t_address_finder *af = t_address_finder::get_instance();
-	string name = af->find_name(user_config, u);
+	// Search local address book first
+	name = t_userintf::get_name_from_abook(user_config, u);
+	
+	// Search KAddressBook
+	if (name.empty()) {
+		t_address_finder *af = t_address_finder::get_instance();
+		name = af->find_name(user_config, u);
+	}
 	unlock();
 	
 	return name;
@@ -2306,19 +2354,20 @@ void t_gui::action_show_registrations(list<t_user *> user_list) {
 }
 
 void t_gui::action_invite(t_user *user_config, const t_url &destination,
-			  const string &display, const string &subject) 
+			  const string &display, const string &subject, bool anonymous) 
 {
 	QString s;
+	
+	// Call can only be made if line is idle
+	int line = phone->get_active_line();
+	if (phone->get_line_state(line) == LS_BUSY) return;
 	
 	// Store call info for redial
 	last_called_url = destination;
 	last_called_display = display;
 	last_called_subject = subject;
 	last_called_profile = user_config->get_profile_name();
-	
-	// Call can only be made if line is idle
-	int line = phone->get_active_line();
-	if (phone->get_line_state(line) == LS_BUSY) return;
+	last_called_hide_user = anonymous;
 	
 	setLineFields(line);
 	
@@ -2328,13 +2377,13 @@ void t_gui::action_invite(t_user *user_config, const t_url &destination,
 	displayTo(s);
 	
 	s = "";
-	s.append(format_sip_address(user_config, user_config->get_display(), 
-				    user_config->create_user_uri()).c_str());
+	s.append(format_sip_address(user_config, user_config->get_display(false), 
+				    user_config->create_user_uri(false)).c_str());
 	displayFrom(s);
 	
 	displaySubject(subject.c_str());
 	
-	phone->pub_invite(user_config, destination, display, subject.c_str());
+	phone->pub_invite(user_config, destination, display, subject.c_str(), anonymous);
 }
 
 void t_gui::action_answer(void) {
@@ -2354,11 +2403,8 @@ void t_gui::action_reject(void) {
 	
 	int line = phone->get_active_line();
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall rejected.");
+	s = qApp->translate("GUI", "Line %1: call rejected.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
 }
 
 void t_gui::action_reject(unsigned short line) {
@@ -2368,11 +2414,8 @@ void t_gui::action_reject(unsigned short line) {
 	phone->pub_reject(line);
 	
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall rejected.");
+	s = qApp->translate("GUI", "Line %1: call rejected.").arg(line + 1);
 	mainWindow->display(s);
-	
-	clearLineFields(line);
 }
 
 void t_gui::action_redirect(const list<t_display_url> &contacts) {
@@ -2383,15 +2426,20 @@ void t_gui::action_redirect(const list<t_display_url> &contacts) {
 	
 	int line = phone->get_active_line();
 	mainWindow->displayHeader();
-	s = "Line ";
-	s.append(QString().setNum(line + 1)).append(":\tcall redirected.");
+	s = qApp->translate("GUI", "Line %1: call redirected.");
 	mainWindow->display(s);
-	
-	clearLineFields(line);
 }
 
 void t_gui::action_refer(const t_url &destination, const string &display) {
 	phone->pub_refer(destination, display);
+}
+
+void t_gui::action_refer(unsigned short line_from, unsigned short line_to) {
+	phone->pub_refer(line_from, line_to);
+}
+
+void t_gui::action_setup_consultation_call(const t_url &destination, const string &display) {
+	phone->pub_setup_consultation_call(destination, display);
 }
 
 void t_gui::action_hold(void) {
@@ -2404,7 +2452,7 @@ void t_gui::action_retrieve(void) {
 
 void t_gui::action_conference(void) {
 	if (!phone->join_3way(0, 1)) {
-		mainWindow->display("Failed to start conference.");
+		mainWindow->display(qApp->translate("GUI", "Failed to start conference."));
 	}
 }
 

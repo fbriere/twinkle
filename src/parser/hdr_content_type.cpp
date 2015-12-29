@@ -20,27 +20,11 @@
 #include "definitions.h"
 #include "parse_ctrl.h"
 
-t_hdr_content_type::t_hdr_content_type() : t_header() {};
+t_hdr_content_type::t_hdr_content_type() : t_header("Content-Type", "c") {};
 
 void t_hdr_content_type::set_media(const t_media &m) {
 	populated = true;
 	media = m;
-}
-
-string t_hdr_content_type::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "c: ";
-	} else {
-		s = "Content-Type: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-	return s;
 }
 
 string t_hdr_content_type::encode_value(void) const {
@@ -49,14 +33,5 @@ string t_hdr_content_type::encode_value(void) const {
 	if (!populated) return s;
 
 	s = media.encode();
-	return s;
-}
-
-string t_hdr_content_type::encode_env(void) const {
-	string s;
-	
-	s = "SIP_CONTENT_TYPE=";
-	s += encode_value();
-	
 	return s;
 }

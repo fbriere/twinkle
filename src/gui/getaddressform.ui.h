@@ -28,6 +28,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#define TAB_KABC	0
+#define TAB_LOCAL	1
+
 #ifdef HAVE_KDE
 #include <kabc/addressbook.h>
 #include <kabc/addressee.h>
@@ -36,6 +39,10 @@
 #include <kabc/stdaddressbook.h>
 
 #define ABOOK	((KABC::AddressBook *)addrBook)
+
+// Column numbers
+#define AB_COL_NAME	0
+#define AB_COL_PHONE	2
 #endif
 
 void GetAddressForm::init() 
@@ -49,7 +56,10 @@ void GetAddressForm::init()
 		this, SLOT(loadAddresses()));
 	
 	sipOnlyCheckBox->setChecked(sys_config->get_ab_show_sip_only());
+#else
+	tabKABC->hide();
 #endif
+	loadLocalAddresses();
 }
 
 void GetAddressForm::reload()
@@ -72,14 +82,20 @@ void GetAddressForm::show()
 	QDialog::show();
 	
 	if (addressListView->childCount() == 0) {
-		QMessageBox::information(this, PRODUCT_NAME,
-			"<p>"
-			"You seem not to have any contacts with a phone number "
-			"in <b>KAddressbook</b>, KDE's address book application. "
-			"Twinkle retrieves all contacts with a phone number from "
-			"KAddressbook. To manage your contacts you have to "
-			"use KAddressbook."
-			"</p>");
+		if (localListView->childCount() == 0) {
+			QMessageBox::information(this, PRODUCT_NAME, tr(
+				"<p>"
+				"You seem not to have any contacts with a phone number "
+				"in <b>KAddressBook</b>, KDE's address book application. "
+				"Twinkle retrieves all contacts with a phone number from "
+				"KAddressBook. To manage your contacts you have to "
+				"use KAddressBook."
+				"<p>"
+				"As an alternative you may use Twinkle's local address book."
+				"</p>"));
+		} else {
+			addressTabWidget->setCurrentPage(TAB_LOCAL);
+		}
 	}
 #endif
 }
@@ -113,23 +129,36 @@ void GetAddressForm::loadAddresses()
 #endif
 }
 
-void GetAddressForm::selectAddress()
+void GetAddressForm::loadLocalAddresses() 
 {
-#ifdef HAVE_KDE
-	int colName, colPhone;
+	localListView->clear();
+	const list<t_address_card> &address_list = ab_local->get_address_list();
 	
-	for (int i = 0; i < addressListView->columns(); i++) {
-		if (addressListView->columnText(i) == "Name") {
-			colName = i;
-		} else if (addressListView->columnText(i) == "Phone") {
-			colPhone = i;
-		}
+	for(list<t_address_card>::const_iterator i = address_list.begin(); i != address_list.end(); i++)
+	{
+		new AddressListViewItem(localListView, *i);
 	}
 	
+	QListViewItem *first = localListView->firstChild();
+	if (first) localListView->setSelected(first, true);
+}
+
+void GetAddressForm::selectAddress()
+{
+	if (addressTabWidget->currentPageIndex() == TAB_KABC) {
+		selectKABCAddress();
+	} else {
+		selectLocalAddress();
+	}
+}
+
+void GetAddressForm::selectKABCAddress()
+{
+#ifdef HAVE_KDE
 	QListViewItem *item = addressListView->selectedItem();
 	if (item) {
-		QString name(item->text(colName));
-		QString phone(item->text(colPhone));
+		QString name(item->text(AB_COL_NAME));
+		QString phone(item->text(AB_COL_PHONE));
 		phone = phone.stripWhiteSpace();
 			
 		emit address(name, phone);
@@ -141,6 +170,22 @@ void GetAddressForm::selectAddress()
 	
 	accept();
 #endif
+}
+
+void GetAddressForm::selectLocalAddress()
+{
+	AddressListViewItem *item = dynamic_cast<AddressListViewItem *>(
+			localListView->selectedItem());
+	if (item) {
+		t_address_card card = item->getAddressCard();
+		emit(card.get_display_name().c_str(), card.sip_address.c_str());
+		
+		// Signal display name and url combined.
+		t_display_url du(t_url(card.sip_address), card.get_display_name());
+		emit address(du.encode().c_str());
+	}
+	
+	accept();
 }
 
 void GetAddressForm::toggleSipOnly(bool on)
@@ -157,4 +202,57 @@ void GetAddressForm::toggleSipOnly(bool on)
 	
 	loadAddresses();
 #endif
+}
+
+void GetAddressForm::addLocalAddress()
+{
+	t_address_card card;
+	AddressCardForm f;
+	if (f.exec(card)) {
+		ab_local->add_address(card);
+		new AddressListViewItem(localListView, card);
+		
+		string error_msg;
+		if (!ab_local->write_address_book(error_msg)) {
+			ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		}
+	}
+}
+
+void GetAddressForm::deleteLocalAddress()
+{
+	AddressListViewItem *item = dynamic_cast<AddressListViewItem *>(
+			localListView->selectedItem());
+	if (item) {
+		t_address_card card = item->getAddressCard();
+		if (ab_local->del_address(card)) {
+			delete item;
+			
+			string error_msg;
+			if (!ab_local->write_address_book(error_msg)) {
+				ui->cb_show_msg(error_msg, MSG_CRITICAL);
+			}
+		}
+	}
+}
+
+void GetAddressForm::editLocalAddress()
+{
+	AddressListViewItem *item = dynamic_cast<AddressListViewItem *>(
+			localListView->selectedItem());
+	if (!item) return;
+	
+	t_address_card oldCard = item->getAddressCard();
+	t_address_card newCard = oldCard;
+	AddressCardForm f;
+	if (f.exec(newCard)) {
+		if (ab_local->update_address(oldCard, newCard)) {
+			item->update(newCard);
+			
+			string error_msg;
+			if (!ab_local->write_address_book(error_msg)) {
+				ui->cb_show_msg(error_msg, MSG_CRITICAL);
+			}
+		}
+	}
 }

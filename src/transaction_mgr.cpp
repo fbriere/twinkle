@@ -617,31 +617,31 @@ void t_transaction_mgr::handle_event_icmp(t_event_icmp *e) {
 	}
 }
 
-unsigned short t_transaction_mgr::start_timer(long dur, t_sip_timer tmr,
+t_object_id t_transaction_mgr::start_timer(long dur, t_sip_timer tmr,
 			unsigned short tid)
 {
 	t_tmr_transaction *t = new t_tmr_transaction(dur, tmr, tid);
 	MEMMAN_NEW(t);
 	evq_timekeeper->push_start_timer(t);
-	unsigned short timer_id = t->get_id();
+	t_object_id timer_id = t->get_object_id();
 	MEMMAN_DELETE(t);
 	delete t;
 	return timer_id;
 }
 
-unsigned short t_transaction_mgr::start_stun_timer(long dur, t_stun_timer tmr,
+t_object_id t_transaction_mgr::start_stun_timer(long dur, t_stun_timer tmr,
 			unsigned short tid)
 {
 	t_tmr_stun_trans *t = new t_tmr_stun_trans(dur, tmr, tid);
 	MEMMAN_NEW(t);
 	evq_timekeeper->push_start_timer(t);
-	unsigned short timer_id = t->get_id();
+	t_object_id timer_id = t->get_object_id();
 	MEMMAN_DELETE(t);
 	delete t;
 	return timer_id;
 }
 
-void t_transaction_mgr::stop_timer(unsigned short id) {
+void t_transaction_mgr::stop_timer(t_object_id id) {
 	evq_timekeeper->push_stop_timer(id);
 }
 
@@ -655,7 +655,8 @@ void t_transaction_mgr::run(void) {
 	t_event_stun_response	*ev_stun_response;
 	t_event_icmp		*ev_icmp;
 
-	while (true) {
+	bool quit = false;
+	while (!quit) {
 		event = evq_trans_mgr->pop();
 
 		switch (event->get_type()) {
@@ -687,6 +688,9 @@ void t_transaction_mgr::run(void) {
 			ev_icmp = (t_event_icmp *)event;
 			handle_event_icmp(ev_icmp);
 			break;
+		case EV_QUIT:
+			quit = true;
+			break;
 		default:
 			assert(false);
 			break;
@@ -700,4 +704,5 @@ void t_transaction_mgr::run(void) {
 // Main function to be started in a separate thread.
 void *transaction_mgr_main(void *arg) {
 	transaction_mgr->run();
+	return NULL;
 }

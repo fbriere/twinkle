@@ -149,9 +149,8 @@ uint16 t_gsm_audio_encoder::encode(int16 *sample_buf, uint16 nsamples,
 
 t_speex_audio_encoder::t_speex_audio_encoder(uint16 payload_id, uint16 ptime, 
 		t_mode mode, t_user *user_config) :
-	t_audio_encoder(payload_id, ptime, user_config)
+	t_audio_encoder(payload_id, PTIME_SPEEX, user_config)
 {
-	assert(ptime > 0);
 	speex_bits_init(&speex_bits);
 	_mode = mode;
 	
@@ -240,12 +239,10 @@ uint16 t_speex_audio_encoder::encode(int16 *sample_buf, uint16 nsamples,
 
 t_ilbc_audio_encoder::t_ilbc_audio_encoder(uint16 payload_id, uint16 ptime,
 		t_user *user_config) :
-	t_audio_encoder(payload_id, ptime, user_config)
+	t_audio_encoder(payload_id, (ptime < 25 ? 20 : 30), user_config)
 {
-	assert((ptime == 20 || ptime == 30));
-	
 	_codec = CODEC_ILBC;
-	_mode = ptime;
+	_mode = _ptime;
 	
 	if (_mode == 20) {
 		_max_payload_size = NO_OF_BYTES_20MS;
@@ -276,7 +273,7 @@ uint16 t_ilbc_audio_encoder::encode(int16 *sample_buf, uint16 nsamples,
 #endif
 
 //////////////////////////////////////////
-// class t_ilbc_g726_encoder
+// class t_g726_encoder
 //////////////////////////////////////////
 
 t_g726_audio_encoder::t_g726_audio_encoder(uint16 payload_id, uint16 ptime, 
@@ -304,6 +301,7 @@ t_g726_audio_encoder::t_g726_audio_encoder(uint16 payload_id, uint16 ptime,
 	
 	if (ptime = 0) _ptime = PTIME_G726;
 	_max_payload_size = audio_sample_rate(_codec)/1000 * _ptime;
+	_packing = user_config->get_g726_packing();
 	
 	g72x_init_state(&_state);
 }
@@ -313,12 +311,18 @@ uint16 t_g726_audio_encoder::encode_16(int16 *sample_buf, uint16 nsamples,
 {
 	assert(nsamples % 4 == 0);
 	assert(nsamples / 4 <= payload_size);
-
+	
 	for (int i = 0; i < nsamples; i += 4) {
 		payload[i >> 2] = 0;
 		for (int j = 0; j < 4; j++) {
-			payload[i >> 2] |= static_cast<uint8>(g723_16_encoder(sample_buf[i+j],
-				AUDIO_ENCODING_LINEAR, &_state)) << (j * 2);
+			uint8 v = static_cast<uint8>(g723_16_encoder(sample_buf[i+j],
+				AUDIO_ENCODING_LINEAR, &_state));
+				
+			if (_packing == G726_PACK_RFC3551) {
+				payload[i >> 2] |= v << (j * 2);
+			} else {
+				payload[i >> 2] |= v << ((3-j) * 2);
+			}
 		}
 	}
 	
@@ -334,8 +338,13 @@ uint16 t_g726_audio_encoder::encode_24(int16 *sample_buf, uint16 nsamples,
 	for (int i = 0; i < nsamples; i += 8) {
 		uint32 v = 0;
 		for (int j = 0; j < 8; j++) {
-			v |= static_cast<uint32>(g723_24_encoder(sample_buf[i+j],
-				AUDIO_ENCODING_LINEAR, &_state)) << (j * 3);
+			if (_packing == G726_PACK_RFC3551) {
+				v |= static_cast<uint32>(g723_24_encoder(sample_buf[i+j],
+					AUDIO_ENCODING_LINEAR, &_state)) << (j * 3);
+			} else {
+				v |= static_cast<uint32>(g723_24_encoder(sample_buf[i+j],
+					AUDIO_ENCODING_LINEAR, &_state)) << ((7-j) * 3);
+			}
 		}
 		payload[(i >> 3) * 3] = static_cast<uint8>(v & 0xff);
 		payload[(i >> 3) * 3 + 1] = static_cast<uint8>((v >> 8) & 0xff);
@@ -354,8 +363,14 @@ uint16 t_g726_audio_encoder::encode_32(int16 *sample_buf, uint16 nsamples,
 	for (int i = 0; i < nsamples; i += 2) {
 		payload[i >> 1] = 0;
 		for (int j = 0; j < 2; j++) {
-			uint8 v = static_cast<uint8>(g721_encoder(sample_buf[i+j], AUDIO_ENCODING_LINEAR, &_state));
-			payload[i >> 1] |= v << (j * 4);
+			uint8 v = static_cast<uint8>(g721_encoder(sample_buf[i+j],
+				AUDIO_ENCODING_LINEAR, &_state));
+				
+			if (_packing == G726_PACK_RFC3551) {
+				payload[i >> 1] |= v << (j * 4);
+			} else {
+				payload[i >> 1] |= v << ((1-j) * 4);
+			}
 		}
 	}
 	
@@ -371,8 +386,13 @@ uint16 t_g726_audio_encoder::encode_40(int16 *sample_buf, uint16 nsamples,
 	for (int i = 0; i < nsamples; i += 8) {
 		uint64 v = 0;
 		for (int j = 0; j < 8; j++) {
-			v |= static_cast<uint64>(g723_40_encoder(sample_buf[i+j],
-				AUDIO_ENCODING_LINEAR, &_state)) << (j * 5);
+			if (_packing == G726_PACK_RFC3551) {
+				v |= static_cast<uint64>(g723_40_encoder(sample_buf[i+j],
+					AUDIO_ENCODING_LINEAR, &_state)) << (j * 5);
+			} else {
+				v |= static_cast<uint64>(g723_40_encoder(sample_buf[i+j],
+					AUDIO_ENCODING_LINEAR, &_state)) << ((7-j) * 5);
+			}
 		}
 		payload[(i >> 3) * 5] = static_cast<uint8>(v & 0xff);
 		payload[(i >> 3) * 5 + 1] = static_cast<uint8>((v >> 8) & 0xff);

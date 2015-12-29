@@ -628,8 +628,10 @@ void t_audio_session::set_srtp_cipher_mode(const string &cipher_mode) {
 
 void *main_audio_rx(void *arg) {
 	_audio_session->audio_rx->run();
+	return NULL;
 }
 
 void *main_audio_tx(void *arg) {
 	_audio_session->audio_tx->run();
+	return NULL;
 }

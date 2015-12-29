@@ -28,10 +28,12 @@
 #include "line.h"
 #include "log.h"
 #include "sdp/sdp.h"
+#include "translator.h"
 #include "util.h"
 #include "user.h"
 #include "userintf.h"
 #include "audits/memman.h"
+#include "parser/parse_ctrl.h"
 #include "sockets/socket.h"
 #include "stun/stun_transaction.h"
 
@@ -40,19 +42,170 @@ extern t_event_queue	*evq_timekeeper;
 extern t_event_queue	*evq_sender_udp;
 extern string		user_host;
 
+// t_transfer_data
+
+t_transfer_data::t_transfer_data(t_request *r, unsigned short _lineno, bool _hide_user, 
+		t_user *user) :
+	refer_request(dynamic_cast<t_request *>(r->copy())),
+	lineno(_lineno),
+	hide_user(_hide_user),
+	user_config(user)
+{}
+	
+t_transfer_data::~t_transfer_data() {
+	MEMMAN_DELETE(refer_request);
+	delete refer_request;
+}
+
+t_request *t_transfer_data::get_refer_request(void) const {
+	return refer_request;
+}
+
+bool t_transfer_data::get_hide_user(void) const {
+	return hide_user;
+}
+
+unsigned short t_transfer_data::get_lineno(void) const {
+	return lineno;
+}
+
+t_user *t_transfer_data::get_user(void) const {
+	return user_config;
+}
+
+
+// t_phone	
+
 ///////////
 // Private
 ///////////
 
+void t_phone::move_line_to_background(unsigned short lineno) {
+	// The line will be released in the background. It should
+	// immediately release its RTP ports as these maybe needed
+	// for new calls.
+	lines.at(lineno)->kill_rtp();
+	
+	cleanup_3way_state(lineno);
+	
+	// Move the line to the back of the vector.
+	lines.push_back(lines.at(lineno));
+	lines.back()->line_number = lines.size() - 1;
+	
+	// Create a new line for making calls.
+	lines.at(lineno) = new t_line(this, lineno);
+	MEMMAN_NEW(lines.at(lineno));
+	
+	// The new line must have the same RTP port as the
+	// releasing line, otherwise it may conflict with
+	// the other lines. Due to call transfers, the port
+	// number may be unrelated to the line position.
+	lines.at(lineno)->rtp_port = lines.back()->get_rtp_port();
+	
+	log_file->write_header("t_phone::move_line_to_background",
+		LOG_NORMAL, LOG_DEBUG);
+	log_file->write_raw("Moved line ");
+	log_file->write_raw(lineno + 1);
+	log_file->write_raw(" to background position ");
+	log_file->write_raw(lines.back()->get_line_number() + 1);
+	log_file->write_endl();
+	log_file->write_footer();
+	
+	// Notify the user interface of the line state change
+	ui->cb_line_state_changed();
+}
+
+void t_phone::cleanup_dead_lines(void) {
+	// Only remove idle lines at the end of the dead pool to avoid
+	// moving lines in the vector.
+	while (lines.size() > NUM_CALL_LINES && lines.back()->get_state() == LS_IDLE)
+	{
+		
+		log_file->write_header("t_phone::cleanup_dead_lines",
+			LOG_NORMAL, LOG_DEBUG);
+		log_file->write_raw("Removed dead line ");
+		log_file->write_raw(lines.back()->get_line_number() + 1);
+		log_file->write_endl();
+		log_file->write_footer();
+		
+		MEMMAN_DELETE(lines.back());
+		delete lines.back();
+		lines.pop_back();
+	}
+}
+
+void t_phone::move_releasing_lines_to_background(void) {
+	// NOTE: the line on the REFERRER position is not moved to the
+	//       background as a subscription may still be active.
+	for (int i = 0; i < NUM_USER_LINES; i++) {
+		if (lines.at(i)->get_substate() == LSSUB_RELEASING &&
+		    !lines.at(i)->get_keep_seized()) 
+		{
+			move_line_to_background(i);
+		}
+	}
+}
+
+void t_phone::cleanup_3way_state(unsigned short lineno) {
+	assert(lineno < lines.size());
+
+	lock();
+
+	// Clean up 3-way data if the line was involved in a 3-way
+	if (is_3way)
+	{
+		bool line_in_3way = false;
+		t_audio_session *as_peer;
+		t_line *line_peer;
+
+		if (lineno == line1_3way->get_line_number()) {
+			line_in_3way = true;
+			line_peer = line2_3way;
+		} else if (lineno == line2_3way->get_line_number()) {
+			line_in_3way = true;
+			line_peer = line1_3way;
+		}
+
+		if (line_in_3way) {
+			// Stop the 3-way mixing on the peer line
+			as_peer = line_peer->get_audio_session();
+			if (as_peer) as_peer->stop_3way();
+
+			// Make the peer line the active line
+			set_active_line(line_peer->get_line_number());
+			
+			// If the 3-way was with mixed codec sample rates, then
+			// the remaining audio session might have a mismatch
+			// between the sound card sample rate and the codec
+			// sample rate. In that case clear the sample rate by
+			// toggling the audio session off and on.
+			if (!as_peer->matching_sample_rates()) {
+				log_file->write_report(
+					"Hold/retrieve call to align codec and sound card.",
+					"t_phone::line_cleared", LOG_NORMAL, LOG_DEBUG);
+				line_peer->hold(true);
+				line_peer->retrieve();
+			}
+
+			is_3way = false;
+			line1_3way = NULL;
+			line2_3way = NULL;
+		}
+	}
+
+	unlock();
+}
+
 void t_phone::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
-		const string &subject)
+		const string &subject, bool anonymous)
 {
 	// Ignore if active line is not idle
 	if (lines[active_line]->get_state() != LS_IDLE) {
 		return;
 	}
 
-	lines[active_line]->invite(pu->get_user_profile(), to_uri, to_display, subject);
+	lines[active_line]->invite(pu->get_user_profile(), to_uri, to_display, subject,
+					anonymous);
 }
 
 void t_phone::answer(void) {
@@ -93,21 +246,30 @@ void t_phone::end_call(void) {
 		if (sys_config->get_hangup_both_3way()) {
 			line1_3way->end_call();
 			line2_3way->end_call();
+			
+			// NOTE: moving a line to the dying pool causes the
+			// 3way line pointers to be cleared.
+			unsigned short lineno1 = line1_3way->get_line_number();
+			unsigned short lineno2 = line2_3way->get_line_number();
+			move_line_to_background(lineno1);
+			move_line_to_background(lineno2);
 		} else {
 			// Hangup the active line, and make the next
 			// line active.
 			int l = active_line;
 			activate_line((l+1) % NUM_USER_LINES);
-			lines[l]->end_call();
+			lines.at(l)->end_call();
+			move_line_to_background(l);
 		}
 		
 		return;
 	}
 
 	// Ignore if active line is idle
-	if (lines[active_line]->get_state() == LS_IDLE) return;
+	if (lines.at(active_line)->get_state() == LS_IDLE) return;
 
-	lines[active_line]->end_call();
+	lines.at(active_line)->end_call();
+	move_line_to_background(active_line);
 }
 
 void t_phone::registration(t_phone_user *pu, t_register_type register_type, 
@@ -142,6 +304,131 @@ void t_phone::retrieve(void) {
 
 void t_phone::refer(const t_url &uri, const string &display) {
 	lines[active_line]->refer(uri, display);
+}
+
+void t_phone::refer(unsigned short lineno_from, unsigned short lineno_to) 
+{
+	// The nicest transfer is an attended transfer. An attended transfer
+	// is only possible of the transfer target supports the 'replaces'
+	// extension (RFC 3891).
+	// If 'replaces' is not supported, then a transfer with consultation
+	// is done. First hang up the consultation call, then transfer the
+	// line.
+	if (lines.at(lineno_to)->remote_extension_supported(EXT_REPLACES)) {
+		log_file->write_report("Remote end supports 'replaces'.\n"\
+			"Attended transfer.",
+			"t_phone::refer");
+		refer_attended(lineno_from, lineno_to);
+	} else {
+		log_file->write_report("Remote end does not support 'replaces'.\n"\
+			"Transfer with consultation.",
+			"t_phone::refer");
+		refer_consultation(lineno_from, lineno_to);
+	}
+}
+
+// Attended call transfer
+// See draft-ietf-sipping-cc-transfer-07 7.3
+void t_phone::refer_attended(unsigned short lineno_from, unsigned short lineno_to) 
+{
+	t_line *line = lines.at(lineno_to);
+	
+	if (line->get_substate() != LSSUB_ESTABLISHED) {
+		return;
+	}
+	
+	t_user *user_config = get_line_user(lineno_from);
+	
+	// draft-ietf-sipping-cc-transfer-07 section 7.3
+	// The call must be referred to the contact URI of the far-end.
+	// As the contact URI may not be globally routable, the AoR
+	// may be used alternatively.
+	t_url uri;
+	string display;
+	if (user_config->get_attended_refer_to_aor()) {
+		uri = line->get_remote_uri();
+		display = line->get_remote_target_display();
+	} else {
+		uri = line->get_remote_target_uri();
+		display = line->get_remote_target_display();
+	}
+
+	// Create Replaces header for replacing the call on lineno_to
+	t_hdr_replaces hdr_replaces;
+	hdr_replaces.set_call_id(line->get_call_id());
+	hdr_replaces.set_from_tag(line->get_local_tag());
+	hdr_replaces.set_to_tag(line->get_remote_tag());
+	uri.add_header(hdr_replaces);
+	
+	// draft-ietf-sipping-cc-transfer-07 section 7.3
+	// If the call is referred to the AoR, then add a Require header
+	// that requires the 'Replaces' extension, to make the correct phone
+	// ring in case of forking.
+	if (user_config->get_attended_refer_to_aor()) {
+		t_hdr_require hdr_require;
+		hdr_require.add_feature(EXT_REPLACES);
+		uri.add_header(hdr_require);
+	}
+	
+	// Transfer call
+	lines.at(lineno_from)->refer(uri, display);
+}
+
+// Call transfer with consultation
+// See draft-ietf-sipping-cc-transfer-07 7
+void t_phone::refer_consultation(unsigned short lineno_from, unsigned short lineno_to) 
+{
+	t_line *line = lines.at(lineno_to);
+	
+	if (line->get_substate() != LSSUB_ESTABLISHED) {
+		return;
+	}
+	
+	// Refer call to the URI of the far-end
+	t_url uri = line->get_remote_uri();
+	string display = line->get_remote_display();
+	
+	// End consultation call
+	line->end_call();
+	move_line_to_background(lineno_to);
+	
+	// Transfer call
+	lines.at(lineno_from)->refer(uri, display);
+}
+
+void t_phone::setup_consultation_call(const t_url &uri, const string &display) {
+	unsigned short consult_line;
+	if (!get_idle_line(consult_line)) {
+		log_file->write_report("Cannot get idle line for consultation call.",
+			"t_phone::setup_consultation_call");
+		return;
+	}
+	
+	unsigned short xfer_line = active_line;
+	t_user *user_config = get_line_user(xfer_line);
+	
+	t_phone_user *pu = find_phone_user(user_config->get_profile_name());
+	if (!pu) {
+		log_file->write_header("t_phone::setup_consultation_call", 
+				LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user_config->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	activate_line(consult_line);
+	
+	string subject = TRANSLATE("Call transfer - %1");
+	subject = replace_first(subject, "%1",
+			ui->format_sip_address(user_config, 
+				get_remote_display(xfer_line), 
+				get_remote_uri(xfer_line)));
+			
+	invite(pu, uri, display, subject, false);
+	lines.at(consult_line)->set_is_transfer_consult(true, xfer_line);
+	lines.at(xfer_line)->set_to_be_transferred(true, consult_line);
+	
+	ui->cb_consultation_call_setup(user_config, consult_line);
 }
 
 void t_phone::activate_line(unsigned short l) {
@@ -225,7 +512,7 @@ void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
 	case PTMR_NAT_KEEPALIVE:
 		t = new t_tmr_phone(user_config->get_timer_nat_keepalive() * 1000, timer, this);
 		MEMMAN_NEW(t);
-		pu->id_nat_keepalive = t->get_id();
+		pu->id_nat_keepalive = t->get_object_id();
 		break;
 	default:
 		assert(false);
@@ -270,7 +557,7 @@ void t_phone::start_set_timer(t_phone_timer timer, long time, t_phone_user *pu) 
 		}
 		t = new t_tmr_phone(new_time, timer, this);
 		MEMMAN_NEW(t);
-		pu->id_registration = t->get_id();
+		pu->id_registration = t->get_object_id();
 		break;
 	default:
 		assert(false);
@@ -281,14 +568,14 @@ void t_phone::start_set_timer(t_phone_timer timer, long time, t_phone_user *pu) 
 	delete t;
 }
 
-void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
+void t_phone::handle_response_out_of_dialog(t_response *r, t_tuid tuid, t_tid tid) {
 	t_phone_user *pu = match_phone_user(r, tuid);
 	if (!pu) {
 		// Response does not match any pending request.
 		return;
 	}
 	
-	pu->handle_response_out_of_dialog(r, tuid);
+	pu->handle_response_out_of_dialog(r, tuid, tid);
 }
 
 void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
@@ -301,8 +588,8 @@ void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
 	pu->handle_response_out_of_dialog(r, tuid);
 }
 
-t_phone_user *t_phone::find_phone_user(const string &profile_name) {
-	for (list<t_phone_user *>::iterator i = phone_users.begin();
+t_phone_user *t_phone::find_phone_user(const string &profile_name) const {
+	for (list<t_phone_user *>::const_iterator i = phone_users.begin();
 	     i != phone_users.end(); i++)
 	{
 		if (!(*i)->is_active()) continue;
@@ -354,7 +641,7 @@ t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid, bool active
 //////////////
 
 void t_phone::recvd_provisional(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_provisional(r, tuid, tid);
 			return;
@@ -368,7 +655,7 @@ void t_phone::recvd_provisional(t_response *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_phone::recvd_success(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_success(r, tuid, tid);
 			return;
@@ -376,11 +663,11 @@ void t_phone::recvd_success(t_response *r, t_tuid tuid, t_tid tid) {
 	}
 
 	// out-of-dialog responses
-	handle_response_out_of_dialog(r, tuid);
+	handle_response_out_of_dialog(r, tuid, tid);
 }
 
 void t_phone::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_redirect(r, tuid, tid);
 			return;
@@ -388,11 +675,11 @@ void t_phone::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 	}
 
 	// out-of-dialog responses
-	handle_response_out_of_dialog(r, tuid);
+	handle_response_out_of_dialog(r, tuid, tid);
 }
 
 void t_phone::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_client_error(r, tuid, tid);
 			return;
@@ -400,11 +687,11 @@ void t_phone::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 	}
 
 	// out-of-dialog responses
-	handle_response_out_of_dialog(r, tuid);
+	handle_response_out_of_dialog(r, tuid, tid);
 }
 
 void t_phone::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_server_error(r, tuid, tid);
 			return;
@@ -412,11 +699,11 @@ void t_phone::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 	}
 
 	// out-of-dialog responses
-	handle_response_out_of_dialog(r, tuid);
+	handle_response_out_of_dialog(r, tuid, tid);
 }
 
 void t_phone::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_global_error(r, tuid, tid);
 			return;
@@ -424,23 +711,39 @@ void t_phone::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 	}
 
 	// out-of-dialog responses
-	handle_response_out_of_dialog(r, tuid);
+	handle_response_out_of_dialog(r, tuid, tid);
+}
+
+void t_phone::post_process_response(t_response *r, t_tuid tuid, t_tid tid) {
+	cleanup_dead_lines();
+	move_releasing_lines_to_background();
 }
 
 void t_phone::recvd_invite(t_request *r, t_tid tid) {
-	t_response *resp;
-	list <string> unsupported;
-	t_call_record call_record;
-
 	// Check if this INVITE is a retransmission.
 	// Once the TU sent a 2XX repsonse on an INVITE it has to deal
 	// with retransmissions.
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->is_invite_retrans(r)) {
 			lines[i]->process_invite_retrans();
 			return;
 		}
 	}
+	
+	// RFC 3261 12.2.2
+	// An INVITE with a To-header without a tag is an initial
+	// INVITE
+	if (r->hdr_to.tag == "") {
+		recvd_initial_invite(r, tid);
+	} else {
+		recvd_re_invite(r, tid);
+	}	
+}
+
+void t_phone::recvd_initial_invite(t_request *r, t_tid tid) {
+	t_response *resp;
+	list <string> unsupported;
+	t_call_record call_record;
 	
 	// Find out for which user this INVITE is.
 	t_phone_user *pu = match_phone_user(r, true);
@@ -478,253 +781,145 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Do not create a call history record here. The far-end
 		// should retry the call without the extension, so this
 		// is not a missed call from the user point of view.
-		// Not that this INVITE can also be a re-INVITE.
 				
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
 	}
-
-	// RFC 3261 12.2.2
-	// An INVITE with a To-header without a tag is an initial
-	// INVITE
-	if (r->hdr_to.tag == "") {
-		t_display_url display_url;
-		list<t_display_url> cf_dest; // call forwarding destinations
-		
-		// Call user defineable incoming call script to determine how
-		// to handle this call
-		t_script_result script_result;
-		
-		if (!user_config->get_script_incoming_call().empty()) {
-			// Send 100 Trying as the script might take a while
-			resp = r->create_response(R_100_TRYING);
-			send_response(resp, 0, tid);
-			MEMMAN_DELETE(resp);
-			delete resp;
-			
-			t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL);
-			script.exec_action(script_result, r);
-			
-			// Override display name with caller name returned by script
-			if (!script_result.caller_name.empty()) {
-				r->hdr_from.display_override = script_result.caller_name;
-				log_file->write_header("t_phone::recvd_invite", 
-						LOG_NORMAL, LOG_DEBUG);
-				log_file->write_raw("Override display name with caller name:\n");
-				log_file->write_raw(script_result.caller_name);
-				log_file->write_endl();
-				log_file->write_footer();
-			}
-		}
-		
-		if (script_result.caller_name.empty() &&
-		    sys_config->get_ab_lookup_name() && 
-		    (sys_config->get_ab_override_display() || r->hdr_from.display.empty())) 
-		{
-			// Send 100 Trying as name lookup might take a while
-			resp = r->create_response(R_100_TRYING);
-			send_response(resp, 0, tid);
-			MEMMAN_DELETE(resp);
-			delete resp;
-			
-			string name = ui->get_name_from_abook(user_config, r->hdr_from.uri);
-			if (!name.empty()) {
-				r->hdr_from.display_override = name;
-				log_file->write_header("t_phone::recvd_invite", 
-						LOG_NORMAL, LOG_DEBUG);
-				log_file->write_raw(
-					"Override display name with address book name:\n");
-				log_file->write_raw(name);
-				log_file->write_endl();
-				log_file->write_footer();
-			}
-		}	
-		
-		// Perform the action in the script_result.
-		// NOTE: the default action is "continue"
-		switch (script_result.action) {
-		case t_script_result::ACTION_CONTINUE:
-			// Continue with call
-			break;
-		case t_script_result::ACTION_AUTOANSWER:
-			log_file->write_report("Incoming call script action: autoanswer",
-				"t_phone::recvd_invite");
-			break;
-		case t_script_result::ACTION_REJECT:
-			log_file->write_report("Incoming call script action: reject",
-				"t_phone::recvd_invite");
-			resp = r->create_response(R_603_DECLINE, script_result.reason);
-			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-			break;
-		case t_script_result::ACTION_DND:
-			log_file->write_report("Incoming call script action: dnd",
-				"t_phone::recvd_invite");
-			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE, 
-					script_result.reason);
-			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-			break;
-		case  t_script_result::ACTION_REDIRECT:
-			log_file->write_report("Incoming call script action: redirect",
-				"t_phone::recvd_invite");
-			ui->expand_destination(user_config, 
-				script_result.contact, display_url);
-			if (display_url.is_valid()) {
-				cf_dest.clear();
-				cf_dest.push_back(display_url);
-				resp = r->create_response(R_302_MOVED_TEMPORARILY);
-				resp->hdr_contact.set_contacts(cf_dest);
-			} else {
-				log_file->write_report("Invalid redirect contact",
-					"t_phone::recvd_invite",
-					LOG_NORMAL, LOG_WARNING);
-				resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
-			}
-			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-			break;
-		default:
-			log_file->write_report("Error in incoming call script",
-				"t_phone::recvd_invite", LOG_NORMAL, LOG_WARNING);
-			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
-			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-			break;
-		}		
-
-		// Call forwarding always
-		// NOTE: if a call script returned the autoanswer action, then
-		//       call forwarding should be bypassed
-		if (pu->service->get_cf_active(CF_ALWAYS, cf_dest) &&
-		    script_result.action == t_script_result::ACTION_CONTINUE) 
-		{
-			log_file->write_report("Call redirection unconditional",
-				"t_phone::recvd_invite");
-			resp = r->create_response(R_302_MOVED_TEMPORARILY);
-			resp->hdr_contact.set_contacts(cf_dest);
-			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-		
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-		}
-
-		// Do not disturb
-		// RFC 3261 21.4.18
-		// NOTE: if a call script returned the autoanswer action, then
-		//       do not disturb should be bypassed
-		if (pu->service->is_dnd_active() &&
-		    script_result.action == t_script_result::ACTION_CONTINUE) 
-		{
-			log_file->write_report("Do not disturb",
-				"t_phone::recvd_invite");
-			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
-			send_response(resp, 0, tid);
-
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
-			MEMMAN_DELETE(resp);
-			delete resp;
-			return;
-		}
-
-		// Send the INVITE to the active line if it is idle
-		if (lines[active_line]->get_substate() == LSSUB_IDLE) {
-			// Auto answer
-			if (pu->service->is_auto_answer_active() ||
-			    script_result.action == t_script_result::ACTION_AUTOANSWER) 
+	
+	// RFC 3891 3
+	// If a replaces header is present, check if it matches a dialog
+	int replace_line = -1;
+	if (r->hdr_replaces.is_populated() && user_config->get_ext_replaces()) {
+		bool early_matched = false;
+		for (int i = 0; i < lines.size(); i++) {
+			if (lines.at(i)->match_replaces(r->hdr_replaces.call_id,
+				r->hdr_replaces.to_tag,
+				r->hdr_replaces.from_tag,
+				early_matched))
 			{
-				log_file->write_report("Auto answer",
-					"t_phone::recvd_invite");
-				lines[active_line]->set_auto_answer(true);
-			}		
-		
-			lines[active_line]->recvd_invite(user_config, r, tid,
-				script_result.ringtone);
-			
-			return;
+				replace_line = i;
+				break;
+			}
 		}
-
-		if (sys_config->get_call_waiting() || all_lines_idle()) {
-			// Send the INVITE to the first idle unseized line
-			for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
-				if (lines[i]->get_substate() == LSSUB_IDLE) {
-					lines[i]->recvd_invite(user_config, r, tid,
-						script_result.ringtone);
+		
+		if (replace_line >= NUM_CALL_LINES) {
+			// Replaces header matches a releasing line.
+			resp = r->create_response(R_603_DECLINE);
+			send_response(resp, 0, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			return;
+		} else if (replace_line >= 0) {
+			if (replace_line == active_line) {
+				if (r->hdr_replaces.early_only && !early_matched) {
+					resp = r->create_response(R_486_BUSY_HERE);
+					send_response(resp, 0, tid);
+					MEMMAN_DELETE(resp);
+					delete resp;
 					return;
 				}
+				
+				// The existing call will be torn down only after
+				// it has been checked that this incoming INVITE
+				// is not rejected by the user, e.g. DND.
+			} else {
+				// Implementation decision:
+				// Don't allow a held call to be replaced.
+				resp = r->create_response(R_486_BUSY_HERE);
+				send_response(resp, 0, tid);
+				
+				// Create a call history record
+				call_record.start_call(r, t_call_record::DIR_IN, 
+					user_config->get_profile_name());
+				call_record.fail_call(resp);
+				call_history->add_call_record(call_record);
+		
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
 			}
-		}
-
-		// The phone is busy
-		// Call forwarding busy
-		if (pu->service->get_cf_active(CF_BUSY, cf_dest)) {
-			log_file->write_report("Call redirection busy",
-				"t_phone::recvd_invite");
-			resp = r->create_response(R_302_MOVED_TEMPORARILY);
-			resp->hdr_contact.set_contacts(cf_dest);
+		} else {
+			// Replaces does not match any line.
+			resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
 			send_response(resp, 0, tid);
-			
-			// Create a call history record
-			call_record.start_call(r, t_call_record::DIR_IN, 
-				user_config->get_profile_name());
-			call_record.fail_call(resp);
-			call_history->add_call_record(call_record);
-			
 			MEMMAN_DELETE(resp);
 			delete resp;
+			return;
 		}
-
-		// Send busy response
-		resp = r->create_response(R_486_BUSY_HERE);
+	}
+	
+	t_display_url display_url;
+	list<t_display_url> cf_dest; // call forwarding destinations
+	
+	// Call user defineable incoming call script to determine how
+	// to handle this call
+	t_script_result script_result;
+	
+	if (!user_config->get_script_incoming_call().empty()) {
+		// Send 100 Trying as the script might take a while
+		resp = r->create_response(R_100_TRYING);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL);
+		script.exec_action(script_result, r);
+		
+		if (!script_result.display_msg.empty()) {
+			ui->cb_display_msg(script_result.display_msg, MSG_INFO);
+		}
+		
+		// Override display name with caller name returned by script
+		if (!script_result.caller_name.empty()) {
+			r->hdr_from.display_override = script_result.caller_name;
+			log_file->write_header("t_phone::recvd_invite", 
+					LOG_NORMAL, LOG_DEBUG);
+			log_file->write_raw("Override display name with caller name:\n");
+			log_file->write_raw(script_result.caller_name);
+			log_file->write_endl();
+			log_file->write_footer();
+		}
+	}
+	
+	// Lookup address in address book.
+	if (script_result.caller_name.empty() &&
+		sys_config->get_ab_lookup_name() && 
+		(sys_config->get_ab_override_display() || r->hdr_from.display.empty())) 
+	{
+		// Send 100 Trying as name lookup might take a while
+		resp = r->create_response(R_100_TRYING);
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		
+		string name = ui->get_name_from_abook(user_config, r->hdr_from.uri);
+		if (!name.empty()) {
+			r->hdr_from.display_override = name;
+			log_file->write_header("t_phone::recvd_invite", 
+					LOG_NORMAL, LOG_DEBUG);
+			log_file->write_raw(
+				"Override display name with address book name:\n");
+			log_file->write_raw(name);
+			log_file->write_endl();
+			log_file->write_footer();
+		}
+	}	
+	
+	// Perform the action in the script_result.
+	// NOTE: the default action is "continue"
+	switch (script_result.action) {
+	case t_script_result::ACTION_CONTINUE:
+		// Continue with call
+		break;
+	case t_script_result::ACTION_AUTOANSWER:
+		log_file->write_report("Incoming call script action: autoanswer",
+			"t_phone::recvd_invite");
+		break;
+	case t_script_result::ACTION_REJECT:
+		log_file->write_report("Incoming call script action: reject",
+			"t_phone::recvd_invite");
+		resp = r->create_response(R_603_DECLINE, script_result.reason);
 		send_response(resp, 0, tid);
 		
 		// Create a call history record
@@ -732,17 +927,220 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 			user_config->get_profile_name());
 		call_record.fail_call(resp);
 		call_history->add_call_record(call_record);
-			
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+		break;
+	case t_script_result::ACTION_DND:
+		log_file->write_report("Incoming call script action: dnd",
+			"t_phone::recvd_invite");
+		resp = r->create_response(R_480_TEMP_NOT_AVAILABLE, 
+				script_result.reason);
+		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+		break;
+	case  t_script_result::ACTION_REDIRECT:
+		log_file->write_report("Incoming call script action: redirect",
+			"t_phone::recvd_invite");
+		ui->expand_destination(user_config, 
+			script_result.contact, display_url);
+		if (display_url.is_valid()) {
+			cf_dest.clear();
+			cf_dest.push_back(display_url);
+			resp = r->create_response(R_302_MOVED_TEMPORARILY);
+			resp->hdr_contact.set_contacts(cf_dest);
+		} else {
+			log_file->write_report("Invalid redirect contact",
+				"t_phone::recvd_invite",
+				LOG_NORMAL, LOG_WARNING);
+			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
+		}
+		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+		break;
+	default:
+		log_file->write_report("Error in incoming call script",
+			"t_phone::recvd_invite", LOG_NORMAL, LOG_WARNING);
+		resp = r->create_response(R_500_INTERNAL_SERVER_ERROR); 
+		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+		break;
+	}		
+
+	// Call forwarding always
+	// NOTE: if a call script returned the autoanswer action, then
+	//       call forwarding should be bypassed
+	if (pu->service->get_cf_active(CF_ALWAYS, cf_dest) &&
+		script_result.action == t_script_result::ACTION_CONTINUE) 
+	{
+		log_file->write_report("Call redirection unconditional",
+			"t_phone::recvd_invite");
+		resp = r->create_response(R_302_MOVED_TEMPORARILY);
+		resp->hdr_contact.set_contacts(cf_dest);
+		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+	
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
 	}
 
+	// Do not disturb
+	// RFC 3261 21.4.18
+	// NOTE: if a call script returned the autoanswer action, then
+	//       do not disturb should be bypassed
+	if (pu->service->is_dnd_active() &&
+		script_result.action == t_script_result::ACTION_CONTINUE) 
+	{
+		log_file->write_report("Do not disturb",
+			"t_phone::recvd_invite");
+		resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
+		send_response(resp, 0, tid);
+
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+	
+	// RFC 3891
+	if (replace_line >= 0) {
+		// This call replaces an existing call. Tear down this existing
+		// call. This will clear the active line.
+		log_file->write_report("End call due to Replaces header.",
+				"t_phone::recvd_initial_invite");
+		lines.at(replace_line)->end_call();
+		move_line_to_background(replace_line);
+	}
+
+	// Send the INVITE to the active line if it is idle
+	if (lines[active_line]->get_substate() == LSSUB_IDLE) {
+		if (replace_line >= 0) {
+			// RFC 3891
+			// This call replaces an existing call, answer immediate.
+			lines[active_line]->set_auto_answer(true);
+		} else if (pu->service->is_auto_answer_active() ||
+			script_result.action == t_script_result::ACTION_AUTOANSWER) 
+		{
+			// Auto answer
+			log_file->write_report("Auto answer",
+				"t_phone::recvd_invite");
+			lines[active_line]->set_auto_answer(true);
+		}	
+	
+		lines[active_line]->recvd_invite(user_config, r, tid,
+			script_result.ringtone);
+		
+		return;
+	}
+
+	if (sys_config->get_call_waiting() || all_lines_idle()) {
+		// Send the INVITE to the first idle unseized line
+		for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
+			if (lines[i]->get_substate() == LSSUB_IDLE) {
+				lines[i]->recvd_invite(user_config, r, tid,
+					script_result.ringtone);
+				return;
+			}
+		}
+	}
+
+	// The phone is busy
+	// Call forwarding busy
+	if (pu->service->get_cf_active(CF_BUSY, cf_dest)) {
+		log_file->write_report("Call redirection busy",
+			"t_phone::recvd_invite");
+		resp = r->create_response(R_302_MOVED_TEMPORARILY);
+		resp->hdr_contact.set_contacts(cf_dest);
+		send_response(resp, 0, tid);
+		
+		// Create a call history record
+		call_record.start_call(r, t_call_record::DIR_IN, 
+			user_config->get_profile_name());
+		call_record.fail_call(resp);
+		call_history->add_call_record(call_record);
+		
+		MEMMAN_DELETE(resp);
+		delete resp;
+		return;
+	}
+
+	// Send busy response
+	resp = r->create_response(R_486_BUSY_HERE);
+	send_response(resp, 0, tid);
+	
+	// Create a call history record
+	call_record.start_call(r, t_call_record::DIR_IN, 
+		user_config->get_profile_name());
+	call_record.fail_call(resp);
+	call_history->add_call_record(call_record);
+		
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
+
+void t_phone::recvd_re_invite(t_request *r, t_tid tid) {
+	t_response *resp;
+	list <string> unsupported;
+
 	// RFC 3261 12.2.2
 	// A To-header with a tag is a mid-dialog request.
 	// Find a line that matches the request
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);
+			
+			// Check if the far end requires any unsupported extensions
+			if (!user_config->check_required_ext(r, unsupported))
+			{
+				// Not all required extensions are supported
+				resp = r->create_response(R_420_BAD_EXTENSION);
+				resp->hdr_unsupported.set_features(unsupported);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}
+		
 			lines[i]->recvd_invite(user_config, r, tid, "");
 			return;
 		}
@@ -758,7 +1156,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 void t_phone::recvd_ack(t_request *r, t_tid tid) {
 	t_response *resp;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			lines[i]->recvd_ack(r, tid);
 			return;
@@ -776,7 +1174,7 @@ void t_phone::recvd_cancel(t_request *r, t_tid cancel_tid,
 {
 	t_response *resp;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match_cancel(r, target_tid)) {
 			lines[i]->recvd_cancel(r, cancel_tid, target_tid);
 			return;
@@ -793,7 +1191,7 @@ void t_phone::recvd_bye(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			t_user *user_config = lines[i]->get_user();
 			assert(user_config);
@@ -821,6 +1219,14 @@ void t_phone::recvd_bye(t_request *r, t_tid tid) {
 }
 
 void t_phone::recvd_options(t_request *r, t_tid tid) {
+	if (r->hdr_to.tag =="") {
+		recvd_options_out_dialog(r, tid);
+	} else {
+		recvd_options_in_dialog(r, tid);
+	}
+}
+
+void t_phone::recvd_options_out_dialog(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 	
@@ -845,30 +1251,46 @@ void t_phone::recvd_options(t_request *r, t_tid tid) {
 		delete resp;
 		return;
 	}
+	
+	resp = pu->create_options_response(r);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
+}
 
-	// Check if this is a mid-dialog request.
-	if (r->hdr_to.tag !="") {
-		// RFC 3261 12.2.2
-		// A To-header with a tag is a mid-dialog request.
-		// No dialog matches with the request.
-		for (unsigned short i = 0; i < NUM_LINES; i++) {
-			if (lines[i]->match(r)) {
-				lines[i]->recvd_options(r, tid);
+void t_phone::recvd_options_in_dialog(t_request *r, t_tid tid) {
+	t_response *resp;
+	list <string> unsupported;
+	
+	// RFC 3261 12.2.2
+	// A To-header with a tag is a mid-dialog request.
+	// No dialog matches with the request.
+	for (unsigned short i = 0; i < lines.size(); i++) {
+		if (lines[i]->match(r)) {
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);		
+		
+			// Check if the far end requires any unsupported extensions
+			if (!user_config->check_required_ext(r, unsupported))
+			{
+				// Not all required extensions are supported
+				resp = r->create_response(R_420_BAD_EXTENSION);
+				resp->hdr_unsupported.set_features(unsupported);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
 				return;
-			}
+			}		
+		
+			lines[i]->recvd_options(r, tid);
+			return;
 		}
-
-		resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
-		send_response(resp, 0, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
-	 } else {
-		// Request outside dialog
-		resp = pu->create_options_response(r);
-		send_response(resp, 0, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
 	}
+
+	resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+	send_response(resp, 0, tid);
+	MEMMAN_DELETE(resp);
+	delete resp;
 }
 
 void t_phone::recvd_register(t_request *r, t_tid tid) {
@@ -947,7 +1369,7 @@ void t_phone::recvd_register(t_request *r, t_tid tid) {
 void t_phone::recvd_prack(t_request *r, t_tid tid) {
 	t_response *resp;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			lines[i]->recvd_prack(r, tid);
 			return;
@@ -973,7 +1395,7 @@ void t_phone::recvd_subscribe(t_request *r, t_tid tid) {
 		return;
 	}
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			lines[i]->recvd_subscribe(r, tid);
 			return;
@@ -1001,18 +1423,37 @@ void t_phone::recvd_subscribe(t_request *r, t_tid tid) {
 
 void t_phone::recvd_notify(t_request *r, t_tid tid) {
 	t_response *resp;
+	t_phone_user *pu;
 
-	if (r->hdr_event.event_type != SIP_EVENT_REFER) {
+	// Check support for the notified event
+	if (!SIP_EVENT_SUPPORTED(r->hdr_event.event_type)) {
 		// Non-supported event type
 		resp = r->create_response(R_489_BAD_EVENT);
-		resp->hdr_allow_events.add_event_type(SIP_EVENT_REFER);
+		ADD_SUPPORTED_SIP_EVENTS(resp->hdr_allow_events);
 		send_response(resp, 0 ,tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
 		return;
 	}
+	
+	// MWI notification
+	if (r->hdr_event.event_type == SIP_EVENT_MSG_SUMMARY)
+	{
+		pu = match_phone_user(r, true);
+		if (pu) {
+			pu->recvd_notify(r, tid);
+		} else {
+			resp = r->create_response(R_481_TRANSACTION_NOT_EXIST);
+			send_response(resp, 0 ,tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+		}
+		
+		return;
+	}
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	// REFER notification
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			lines[i]->recvd_notify(r, tid);
 			if (lines[i]->get_refer_state() == REFST_NULL) {
@@ -1020,7 +1461,15 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 				log_file->write_report("Refer subscription terminated.",
 					"t_phone::recvd_notify");
 
-				if (lines[i]->is_refer_succeeded()) {
+				if (lines[i]->get_substate() == LSSUB_RELEASING ||
+				    lines[i]->get_substate() == LSSUB_IDLE)
+				{
+					// The line is (being) cleared already. So this
+					// NOTIFY signals the end of the refer subscription
+					// attached to this line.
+					cleanup_dead_lines();
+					return;
+				} else if (lines[i]->is_refer_succeeded()) {
 					log_file->write_report(
 						"Refer succeeded. End call with referee,",
 						"t_phone::recvd_notify");
@@ -1066,8 +1515,23 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 void t_phone::recvd_refer(t_request *r, t_tid tid) {
 	t_response *resp;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
+			t_user *user_config = lines[i]->get_user();
+			assert(user_config);
+			
+			list <string> unsupported;
+			if (!user_config->check_required_ext(r, unsupported))
+			{
+				// Not all required extensions are supported
+				resp = r->create_response(R_420_BAD_EXTENSION);
+				resp->hdr_unsupported.set_features(unsupported);
+				send_response(resp, 0, tid);
+				MEMMAN_DELETE(resp);
+				delete resp;
+				return;
+			}
+		
 			// Reject if a 3-way call is established.
 			if (is_3way) {
 				log_file->write_report("3-way call active. Reject REFER.",
@@ -1090,9 +1554,10 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 				return;
 			}
 
-			// Check if a refer is alread in progress
+			// Check if a refer is already in progress
 			if (i == LINENO_REFERRER ||
-			    lines[LINENO_REFERRER]->get_state() != LS_IDLE)
+			    lines[LINENO_REFERRER]->get_state() != LS_IDLE ||
+			    incoming_refer_data != NULL)
 			{
 				log_file->write_report(
 					"A REFER is still in progress. Reject REFER.",
@@ -1106,47 +1571,22 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 
 			if (!lines[i]->recvd_refer(r, tid)) {
 				// Refer has been rejected.
+				log_file->write_report("Incoming REFER rejected.",
+					"t_phone::recvd_refer");
 				return;
 			}
 			
-			t_user *user_config = lines[i]->get_user();
-			assert(user_config);
-
-			ui->cb_call_referred(user_config, i, r);
-
-			// Put line on-hold and place it in the referrer line
-			log_file->write_report(
-				"Hold call before calling the refer-target.",
-				"t_phone::recvd_refer");
-
-			if (user_config->get_referee_hold()) {
-				lines[i]->hold();
-			} else {
-				// The user profile indicates that the line should
-				// not be put on-hold, i.e. do not send re-INVITE.
-				// So only stop RTP.
-				lines[i]->hold(true);
-			}
-
-			t_line *l = lines[i];
-			lines[i] = lines[LINENO_REFERRER];
-			lines[i]->line_number = i;
-			lines[LINENO_REFERRER] = l;
-			lines[LINENO_REFERRER]->line_number = LINENO_REFERRER;
-
-			ui->cb_line_state_changed();
-
-			// Setup call to the Refer-To destination
-			log_file->write_report("Call refer-target.",
-				"t_phone::recvd_refer");
-			lines[i]->invite(user_config, r->hdr_refer_to.uri,
-				r->hdr_refer_to.display, "", r->hdr_referred_by);
-			lines[i]->open_dialog->is_referred_call = true;
-
+			// Make sure the line stays seized if the far-end ends the
+			// call, so a line will be available if the user gives permission
+			// for the call transfer.
+			lines[i]->set_keep_seized(true);
+			incoming_refer_data = new t_transfer_data(r, i, 
+					lines[i]->get_hide_user(), user_config);
+			MEMMAN_NEW(incoming_refer_data);
 			return;
 		}
 	}
-
+	
 	if (r->hdr_to.tag == "") {
 		// Twinkle does not allow a REFER outside a dialog.
 		resp = r->create_response(R_403_FORBIDDEN);
@@ -1160,13 +1600,116 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 	send_response(resp, 0, tid);
 	MEMMAN_DELETE(resp);
 	delete resp;
+}	
+	
+void t_phone::recvd_refer_permission(bool permission) {
+	if (!incoming_refer_data) {
+		// This should not happen
+		log_file->write_report("Incoming REFER data is gone.",
+			"t_phone::recvd_refer_permission",
+			LOG_NORMAL, LOG_WARNING);
+		return;
+	}
+
+	unsigned short i = incoming_refer_data->get_lineno();
+	t_request *r = incoming_refer_data->get_refer_request();
+	bool hide_user = incoming_refer_data->get_hide_user();
+	t_user *user_config = incoming_refer_data->get_user();
+			
+	lines[i]->recvd_refer_permission(permission, r);
+	
+	if (!permission) {
+		log_file->write_report("Incoming REFER rejected.",
+			"t_phone::recvd_refer_permission");
+		lines[i]->set_keep_seized(false);
+		move_releasing_lines_to_background();
+		
+		MEMMAN_DELETE(incoming_refer_data);
+		delete incoming_refer_data;
+		incoming_refer_data = NULL;
+		return;
+	} else {
+		log_file->write_report("Incoming REFER allowed.",
+			"t_phone::recvd_refer_permission");
+	}
+	
+	if (lines[i]->get_substate() == LSSUB_ESTABLISHED) {
+		// Put line on-hold and place it in the referrer line
+		log_file->write_report(
+			"Hold call before calling the refer-target.",
+			"t_phone::recvd_refer_permission");
+
+		if (user_config->get_referee_hold()) {
+			lines[i]->hold();
+		} else {
+			// The user profile indicates that the line should
+			// not be put on-hold, i.e. do not send re-INVITE.
+			// So only stop RTP.
+			lines[i]->hold(true);
+		}
+	}
+
+	// Move the original line to the REFERRER line (the line may be idle
+	// already).
+	t_line *l = lines[i];
+	lines[i] = lines[LINENO_REFERRER];
+	lines[i]->line_number = i;
+	lines[LINENO_REFERRER] = l;
+	lines[LINENO_REFERRER]->line_number = LINENO_REFERRER;
+	lines[LINENO_REFERRER]->set_keep_seized(false);
+
+	ui->cb_line_state_changed();
+
+	// Setup call to the Refer-To destination
+	log_file->write_report("Call refer-target.",
+		"t_phone::recvd_refer_permission");
+	
+	t_hdr_replaces hdr_replaces;
+	t_hdr_require hdr_require;
+	
+	// Analyze headers in Refer-To URI.
+	// For an attended call transfer the Refer-To URI
+	// will contain a Replaces header and possibly a Require
+	// header. Other headers are ignored for now.
+	// See draft-ietf-sipping-cc-transfer-07 7.3
+	if (!r->hdr_refer_to.uri.get_headers().empty()) {
+		try {
+			t_sip_message *m = t_parser::parse_headers(
+					r->hdr_refer_to.uri.get_headers());
+			hdr_replaces = m->hdr_replaces;
+			hdr_require = m->hdr_require;
+			MEMMAN_DELETE(m);
+			delete m;
+		} catch (int) {
+			log_file->write_header("t_phone::recvd_refer_permission",
+					LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Cannot parse headers in Refer-To URI\n");
+			log_file->write_raw(r->hdr_refer_to.uri.encode());
+			log_file->write_endl();
+			log_file->write_footer();
+		}
+	}
+	
+	ui->cb_call_referred(user_config, i, r);
+	
+	lines[i]->invite(user_config, 
+		r->hdr_refer_to.uri.copy_without_headers(),
+		r->hdr_refer_to.display, "", r->hdr_referred_by, 
+		hdr_replaces, hdr_require, hide_user);
+	lines[i]->open_dialog->is_referred_call = true;
+	
+	MEMMAN_DELETE(incoming_refer_data);
+	delete incoming_refer_data;
+	incoming_refer_data = NULL;
+	
+	return;
 }
 
 void t_phone::recvd_info(t_request *r, t_tid tid) {
 	t_response *resp;
 	list <string> unsupported;
 
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			t_user *user_config = lines[i]->get_user();
 			assert(user_config);
@@ -1193,12 +1736,18 @@ void t_phone::recvd_info(t_request *r, t_tid tid) {
 	delete resp;
 }
 
+void t_phone::post_process_request(t_request *r, t_tid cancel_tid, t_tid target_tid) {
+	cleanup_dead_lines();
+	move_releasing_lines_to_background();
+}
+
+
 void t_phone::failure(t_failure failure, t_tid tid) {
 	// TODO
 }
 
 void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r, tuid)) {
 			lines[i]->recvd_stun_resp(r, tuid, tid);
 			return;
@@ -1214,12 +1763,12 @@ void t_phone::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
 // Public
 ///////////
 
-t_phone::t_phone() : t_transaction_layer() {
+t_phone::t_phone() : t_transaction_layer(), lines(NUM_CALL_LINES) {
 	is_active = true;
 	active_line = 0;
 
 	// Create phone lines
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	for (unsigned short i = 0; i < NUM_CALL_LINES; i++) {
 		lines[i] = new t_line(this, i);
 		MEMMAN_NEW(lines[i]);
 	}
@@ -1228,11 +1777,31 @@ t_phone::t_phone() : t_transaction_layer() {
 	is_3way = false;
 	line1_3way = NULL;
 	line2_3way = NULL;
+	
+	incoming_refer_data = NULL;
+	
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	startup_time = t.tv_sec;
+	
+	// NOTE: The RTP ports for the lines are initialized after the
+	// system settings have been read.
 }
 
 t_phone::~t_phone() {
 	// Delete phone lines
-	for (unsigned short i = 0; i < NUM_LINES; i++) {
+	log_file->write_header("t_phone::~t_phone");
+	log_file->write_raw("Number of lines to cleanup: ");
+	log_file->write_raw(lines.size());
+	log_file->write_endl();
+	log_file->write_footer();
+	
+	if (incoming_refer_data) {
+		MEMMAN_DELETE(incoming_refer_data);
+		delete incoming_refer_data;
+	}
+	
+	for (unsigned short i = 0; i < lines.size(); i++) {
 		MEMMAN_DELETE(lines[i]);
 		delete lines[i];
 	}
@@ -1248,13 +1817,13 @@ t_phone::~t_phone() {
 
 void t_phone::pub_invite(t_user *user, 
 		const t_url &to_uri, const string &to_display,
-		const string &subject)
+		const string &subject, bool anonymous)
 {
 	lock();
 	
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
-		invite(pu, to_uri, to_display, subject);
+		invite(pu, to_uri, to_display, subject, anonymous);
 	} else {
 		log_file->write_header("t_phone::pub_invite", LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("User profile not active: ");
@@ -1358,6 +1927,18 @@ void t_phone::pub_refer(const t_url &uri, const string &display) {
 	unlock();
 }
 
+void t_phone::pub_setup_consultation_call(const t_url &uri, const string &display) {
+	lock();
+	setup_consultation_call(uri, display);
+	unlock();
+}
+
+void t_phone::pub_refer(unsigned short lineno_from, unsigned short lineno_to) {
+	lock();
+	refer(lineno_from, lineno_to);
+	unlock();
+}
+
 void t_phone::mute(bool enable) {
 	lock();
 
@@ -1399,9 +1980,28 @@ bool t_phone::pub_seize(void) {
 	return retval;
 }
 
+bool t_phone::pub_seize(unsigned short line) {
+	assert(line < NUM_USER_LINES);
+	bool retval;
+	
+	lock();
+	retval = lines[line]->seize();
+	unlock();
+	
+	return retval;
+}
+
 void t_phone::pub_unseize(void) {
 	lock();
 	lines[active_line]->unseize();
+	unlock();
+}
+
+void t_phone::pub_unseize(unsigned short line) {
+	assert(line < NUM_USER_LINES);
+	
+	lock();
+	lines[line]->unseize();
 	unlock();
 }
 
@@ -1450,6 +2050,38 @@ void t_phone::pub_zrtp_go_clear_ok(unsigned short line) {
 	unlock();
 }
 
+void t_phone::pub_subscribe_mwi(t_user *user, unsigned long expires) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->subscribe_mwi(expires);
+	} else {
+		log_file->write_header("t_phone::pub_subscribe_mwi", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
+void t_phone::pub_unsubscribe_mwi(t_user *user) {
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		pu->unsubscribe_mwi();
+	} else {
+		log_file->write_header("t_phone::pub_unsubscribe_mwi", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_footer();
+	}
+	
+	unlock();
+}
+
 t_phone_state t_phone::get_state(void) const {
 	lock();
 	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
@@ -1476,6 +2108,63 @@ bool t_phone::all_lines_idle(void) const {
 	// All lines are idle
 	unlock();
 	return true;
+}
+
+bool t_phone::get_idle_line(unsigned short &lineno) const {
+	lock();
+	
+	bool found_idle_line = false;
+	for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
+		if (lines[i]->get_substate() == LSSUB_IDLE) {
+			lineno = i;
+			found_idle_line = true;
+			break;
+		}
+	}
+	
+	unlock();
+	return found_idle_line;
+}
+
+void t_phone::line_timeout(t_object_id id, t_line_timer timer, t_object_id did) {
+	lock();
+	
+	// If there is no line with id anymore, then the timer expires
+	// silently.
+	t_line *line = get_line_by_id(id);
+	if (line) {
+		line->timeout(timer, did);
+	}
+	
+	unlock();
+}
+
+void t_phone::line_timeout_sub(t_object_id id, t_subscribe_timer timer, t_object_id did,
+		const string &event_type, const string &event_id)
+{
+	lock();
+	
+	// If there is no line with id anymore, then the timer expires
+	// silently.
+	t_line *line = get_line_by_id(id);
+	if (line) {
+		line->timeout_sub(timer, did, event_type, event_id);
+	}
+	
+	unlock();
+}
+
+void t_phone::subscription_timeout(t_subscribe_timer timer, t_object_id id_timer)
+{
+	lock();
+	for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); i++)
+	{
+		if ((*i)->match_subscribe_timer(timer, id_timer)) {
+			(*i)->timeout_sub(timer, id_timer);
+		}
+	}
+	unlock();
 }
 
 void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
@@ -1518,8 +2207,18 @@ unsigned short t_phone::get_active_line(void) const {
 	return active_line;
 }
 
+t_line *t_phone::get_line_by_id(t_object_id id) const {
+	for (int i = 0; i < lines.size(); i++) {
+		if (lines[i]->get_object_id() == id) {
+			return lines[i];
+		}
+	}
+	
+	return NULL;
+}
+
 t_line *t_phone::get_line(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 	return lines[lineno];
 }
 
@@ -1565,7 +2264,7 @@ bool t_phone::get_last_reg_failed(t_user *user) {
 }
 
 t_line_state t_phone::get_line_state(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	t_line_state s = get_line(lineno)->get_state();
@@ -1574,7 +2273,7 @@ t_line_state t_phone::get_line_state(unsigned short lineno) const {
 }
 
 t_line_substate t_phone::get_line_substate(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	t_line_substate s = get_line(lineno)->get_substate();
@@ -1583,7 +2282,7 @@ t_line_substate t_phone::get_line_substate(unsigned short lineno) const {
 }
 
 bool t_phone::is_line_on_hold(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	bool b = get_line(lineno)->get_is_on_hold();
@@ -1592,7 +2291,7 @@ bool t_phone::is_line_on_hold(unsigned short lineno) const {
 }
 
 bool t_phone::is_line_muted(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	bool b = get_line(lineno)->get_is_muted();
@@ -1600,8 +2299,30 @@ bool t_phone::is_line_muted(unsigned short lineno) const {
 	return b;
 }
 
+bool t_phone::is_line_transfer_consult(unsigned short lineno,
+		unsigned short &transfer_from_line) const 
+{
+	assert(lineno < lines.size());
+	
+	lock();
+	bool b = get_line(lineno)->get_is_transfer_consult(transfer_from_line);
+	unlock();
+	return b;	
+}
+
+bool t_phone::line_to_be_transferred(unsigned short lineno, 
+		unsigned short &transfer_to_line) const
+{
+	assert(lineno < lines.size());
+	
+	lock();
+	bool b = get_line(lineno)->get_to_be_transferred(transfer_to_line);
+	unlock();
+	return b;
+}
+
 bool t_phone::is_line_encrypted(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	bool b = get_line(lineno)->get_is_encrypted();
@@ -1610,7 +2331,7 @@ bool t_phone::is_line_encrypted(unsigned short lineno) const {
 }
 
 bool t_phone::is_line_auto_answered(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	bool b = get_line(lineno)->get_auto_answer();
@@ -1619,7 +2340,7 @@ bool t_phone::is_line_auto_answered(unsigned short lineno) const {
 }
 
 t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	t_refer_state s = get_line(lineno)->get_refer_state();
@@ -1628,21 +2349,71 @@ t_refer_state t_phone::get_line_refer_state(unsigned short lineno) const {
 }
 
 t_user *t_phone::get_line_user(unsigned short lineno) {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 	lock();
 	t_user *user = get_line(lineno)->get_user();
 	unlock();
 	return user;
 }
 
-bool t_phone::
-has_line_media(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+bool t_phone::has_line_media(unsigned short lineno) const {
+	assert(lineno < lines.size());
 	
 	lock();
 	bool b = get_line(lineno)->has_media();
 	unlock();
 	return b;
+}
+
+bool t_phone::is_mwi_subscribed(t_user *user) const {
+	bool result = false;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->is_mwi_subscribed();
+	unlock();
+	
+	return result;
+}
+
+bool t_phone::is_mwi_terminated(t_user *user) const {
+	bool result = false;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->is_mwi_terminated();
+	unlock();
+	
+	return result;
+}
+
+t_mwi t_phone::get_mwi(t_user *user) const {
+	t_mwi result;
+	
+	lock();
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) result = pu->mwi;
+	unlock();
+	
+	return result;
+}
+
+t_url t_phone::get_remote_uri(unsigned short lineno) const {
+	assert(lineno < lines.size());
+	
+	lock();
+	t_url uri = get_line(lineno)->get_remote_uri();
+	unlock();
+	return uri;
+}
+
+string t_phone::get_remote_display(unsigned short lineno) const {
+	assert(lineno < lines.size());
+	
+	lock();
+	string display = get_line(lineno)->get_remote_display();
+	unlock();
+	return display;
 }
 
 bool t_phone::part_of_3way(unsigned short lineno) {
@@ -1740,56 +2511,6 @@ bool t_phone::join_3way(unsigned short lineno1, unsigned short lineno2) {
 	return true;
 }
 
-void t_phone::line_cleared(unsigned short lineno) {
-	assert(lineno < NUM_LINES);
-
-	lock();
-
-	// Clean up 3-way data if the line was involved in a 3-way
-	if (is_3way)
-	{
-		bool line_in_3way = false;
-		t_audio_session *as_peer;
-		t_line *line_peer;
-
-		if (lineno == line1_3way->get_line_number()) {
-			line_in_3way = true;
-			line_peer = line2_3way;
-		} else if (lineno == line2_3way->get_line_number()) {
-			line_in_3way = true;
-			line_peer = line1_3way;
-		}
-
-		if (line_in_3way) {
-			// Stop the 3-way mixing on the peer line
-			as_peer = line_peer->get_audio_session();
-			if (as_peer) as_peer->stop_3way();
-
-			// Make the peer line the active line
-			set_active_line(line_peer->get_line_number());
-			
-			// If the 3-way was with mixed codec sample rates, then
-			// the remaining audio session might have a mismatch
-			// between the sound card sample rate and the codec
-			// sample rate. In that case clear the sample rate by
-			// toggling the audio session off and on.
-			if (!as_peer->matching_sample_rates()) {
-				log_file->write_report(
-					"Hold/retrieve call to align codec and sound card.",
-					"t_phone::line_cleared", LOG_NORMAL, LOG_DEBUG);
-				line_peer->hold(true);
-				line_peer->retrieve();
-			}
-
-			is_3way = false;
-			line1_3way = NULL;
-			line2_3way = NULL;
-		}
-	}
-
-	unlock();
-}
-
 void t_phone::notify_refer_progress(t_response *r, unsigned short referee_lineno) {
 	if (lines[LINENO_REFERRER]->get_state() != LS_IDLE) {
 		lines[LINENO_REFERRER]->notify_refer_progress(r);
@@ -1851,7 +2572,7 @@ void t_phone::notify_refer_progress(t_response *r, unsigned short referee_lineno
 }
 
 t_call_info t_phone::get_call_info(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	t_call_info call_info = get_line(lineno)->get_call_info();
@@ -1860,7 +2581,7 @@ t_call_info t_phone::get_call_info(unsigned short lineno) const {
 }
 
 t_call_record t_phone::get_call_hist(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	t_call_record call_hist = get_line(lineno)->call_hist_record;
@@ -1869,7 +2590,7 @@ t_call_record t_phone::get_call_hist(unsigned short lineno) const {
 }
 
 string t_phone::get_ringtone(unsigned short lineno) const {
-	assert(lineno < NUM_LINES);
+	assert(lineno < lines.size());
 
 	lock();
 	string ringtone = get_line(lineno)->get_ringtone();
@@ -1877,8 +2598,12 @@ string t_phone::get_ringtone(unsigned short lineno) const {
 	return ringtone;
 }
 
+time_t t_phone::get_startup_time(void) const {
+	return startup_time;
+}
+
 void t_phone::init_rtp_ports(void) {
-	for (int i = 0; i < NUM_LINES; i++) {
+	for (int i = 0; i < lines.size(); i++) {
 		lines[i]->init_rtp_port();
 	}
 }
@@ -2112,12 +2837,22 @@ void t_phone::init(void) {
 	
 	list<t_user *> user_list = ref_users();
 	
-	// Automatic registration at startup if requested
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
 	{
+		// Automatic registration at startup if requested
 		if ((*i)->get_register_at_startup()) {
 			pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
+		} else {
+			// No registration will be done, so subscribe to
+			// MWI now.
+			if ((*i)->get_mwi_sollicited()) {
+				pub_subscribe_mwi(*i, DUR_MWI(*i));
+			}
 		}
+		
+		// NOTE: subscription to MWI is done after registration
+		//       succeeded. This way STUN will have set the correct
+		//       IP adres (STUN is done as part of registration.)
 	}
 	
 	unlock();
@@ -2127,7 +2862,7 @@ void t_phone::terminate(void) {
 	lock();
 	
 	// Clear all lines
-	for (int i = 0; i < NUM_LINES; i++) {
+	for (int i = 0; i < NUM_CALL_LINES; i++) {
 		switch (lines[i]->get_substate()) {
 		case LSSUB_IDLE:
 			break;
@@ -2157,6 +2892,12 @@ void t_phone::terminate(void) {
 	for (list<t_user *>::iterator i = user_list.begin();
 	     i != user_list.end(); i++)
 	{
+		// Unsubscribe MWI
+		if (is_mwi_subscribed(*i)) {
+			pub_unsubscribe_mwi(*i);
+		}
+		
+		// De-register
 		if (get_is_registered(*i)) {
 			pub_registration(*i, REG_DEREGISTER);
 		}
@@ -2172,6 +2913,16 @@ void t_phone::terminate(void) {
 		}
 	}
 	
+	// Wait for MWI unsubscription
+	int mwi_wait = 0;
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
+	{
+		while (!is_mwi_terminated(*i) && mwi_wait < DUR_UNSUBSCRIBE_GUARD) {
+			sleep(1);
+			mwi_wait++;
+		}
+	}
+		
 	// Wait till all lines are idle
 	int dur = 0;
 	while (dur < QUIT_IDLE_WAIT) {
@@ -2179,11 +2930,11 @@ void t_phone::terminate(void) {
 		sleep(1);
 		dur++;
 	}
-	
+		
 	// Force lines to idle state if they could not be cleared
 	// gracefully
 	lock();
-	for (int i = 0; i < NUM_LINES; i++) {
+	for (int i = 0; i < lines.size(); i++) {
 		if (lines[i]->get_substate() != LSSUB_IDLE) {
 			lines[i]->force_idle();
 		}
@@ -2193,6 +2944,7 @@ void t_phone::terminate(void) {
 
 void *phone_uas_main(void *arg) {
 	phone->run();
+	return NULL;
 }
 
 void *phone_sigwait(void *arg) {

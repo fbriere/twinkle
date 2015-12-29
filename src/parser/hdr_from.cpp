@@ -20,7 +20,7 @@
 #include "definitions.h"
 #include "parse_ctrl.h"
 
-t_hdr_from::t_hdr_from() : t_header() {}
+t_hdr_from::t_hdr_from() : t_header("From", "f") {}
 
 void t_hdr_from::set_display(const string &d) {
 	populated = true;
@@ -52,23 +52,6 @@ void t_hdr_from::add_param(const t_parameter &p) {
 	params.push_back(p);
 }
 
-string t_hdr_from::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	if (t_parser::compact_headers) {
-		s = "f: ";
-	} else {
-		s = "From: ";
-	}
-
-	s += encode_value();
-	s += CRLF;
-
-	return s;
-}
-
 string t_hdr_from::encode_value(void) const {
 	string s;
 
@@ -92,15 +75,6 @@ string t_hdr_from::encode_value(void) const {
 
 	s += param_list2str(params);
 
-	return s;
-}
-
-string t_hdr_from::encode_env(void) const {
-	string s;
-	
-	s = "SIP_FROM=";
-	s += encode_value();
-	
 	return s;
 }
 

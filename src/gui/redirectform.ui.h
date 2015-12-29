@@ -39,12 +39,6 @@ void RedirectForm::init()
 	address1ToolButton->setIconSet(i);
 	address2ToolButton->setIconSet(i);
 	address3ToolButton->setIconSet(i);
-	
-#ifndef HAVE_KDE
-	address1ToolButton->setEnabled(false);
-	address2ToolButton->setEnabled(false);
-	address3ToolButton->setEnabled(false);
-#endif
 }
 
 void RedirectForm::destroy()

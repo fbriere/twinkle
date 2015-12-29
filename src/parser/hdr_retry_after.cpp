@@ -20,7 +20,7 @@
 #include "hdr_retry_after.h"
 #include "util.h"
 
-t_hdr_retry_after::t_hdr_retry_after() : t_header() {
+t_hdr_retry_after::t_hdr_retry_after() : t_header("Retry-After") {
 	time = 0;
 	duration = 0;
 }
@@ -45,18 +45,6 @@ void t_hdr_retry_after::add_param(const t_parameter &p) {
 	params.push_back(p);
 }
 
-string t_hdr_retry_after::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Retry-After: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_retry_after::encode_value(void) const {
 	string s;
 
@@ -77,14 +65,5 @@ string t_hdr_retry_after::encode_value(void) const {
 
 	s += param_list2str(params);
 
-	return s;
-}
-
-string t_hdr_retry_after::encode_env(void) const {
-	string s;
-	
-	s = "SIP_RETRY_AFTER=";
-	s += encode_value();
-	
 	return s;
 }

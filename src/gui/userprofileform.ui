@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>764</width>
-            <height>606</height>
+            <width>754</width>
+            <height>614</height>
         </rect>
     </property>
     <property name="caption">
@@ -68,6 +68,14 @@
                 </property>
                 <property name="pixmap">
                     <pixmap>package_network.png</pixmap>
+                </property>
+            </item>
+            <item>
+                <property name="text">
+                    <string>Voice mail</string>
+                </property>
+                <property name="pixmap">
+                    <pixmap>mwi_none.png</pixmap>
                 </property>
             </item>
             <item>
@@ -388,7 +396,7 @@ This field is mandatory.</string>
                                     <cstring>authNameTextLabel</cstring>
                                 </property>
                                 <property name="text">
-                                    <string>&amp;Name:</string>
+                                    <string>Authentication &amp;name:</string>
                                 </property>
                                 <property name="buddy" stdset="0">
                                     <cstring>authNameLineEdit</cstring>
@@ -747,7 +755,7 @@ This field is mandatory.</string>
                                 <cstring>tabCodecs</cstring>
                             </property>
                             <attribute name="title">
-                                <string>Codec&amp;s</string>
+                                <string>Co&amp;decs</string>
                             </attribute>
                             <vbox>
                                 <property name="name">
@@ -1081,6 +1089,40 @@ This field is mandatory.</string>
                                         </spacer>
                                     </hbox>
                                 </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>inFarEndCodecPrefCheckBox</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>&amp;Follow codec preference from far end on incoming calls</string>
+                                    </property>
+                                    <property name="accel">
+                                        <string>Alt+F</string>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>&lt;p&gt;
+For incoming calls, follow the preference from the far-end (SDP offer). Pick the first codec from the SDP offer that is also in the list of active codecs.
+&lt;p&gt;
+If you disable this option, then the first codec from the active codecs that is also in the SDP offer is picked.</string>
+                                    </property>
+                                </widget>
+                                <widget class="QCheckBox">
+                                    <property name="name">
+                                        <cstring>outFarEndCodecPrefCheckBox</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>Follow codec &amp;preference from far end on outgoing calls</string>
+                                    </property>
+                                    <property name="accel">
+                                        <string>Alt+P</string>
+                                    </property>
+                                    <property name="whatsThis" stdset="0">
+                                        <string>&lt;p&gt;
+For outgoing calls, follow the preference from the far-end (SDP answer). Pick the first codec from the SDP answer that is also in the list of active codecs.
+&lt;p&gt;
+If you disable this option, then the first codec from the active codecs that is also in the SDP answer is picked.</string>
+                                    </property>
+                                </widget>
                                 <spacer>
                                     <property name="name">
                                         <cstring>spacer38</cstring>
@@ -1094,7 +1136,7 @@ This field is mandatory.</string>
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>20</height>
+                                            <height>30</height>
                                         </size>
                                     </property>
                                 </spacer>
@@ -1478,11 +1520,11 @@ This field is mandatory.</string>
                                     <property name="title">
                                         <string>G.726</string>
                                     </property>
-                                    <hbox>
+                                    <grid>
                                         <property name="name">
                                             <cstring>unnamed</cstring>
                                         </property>
-                                        <widget class="QLayoutWidget">
+                                        <widget class="QLayoutWidget" row="0" column="0">
                                             <property name="name">
                                                 <cstring>layout22</cstring>
                                             </property>
@@ -1592,7 +1634,7 @@ This field is mandatory.</string>
                                                 </widget>
                                             </grid>
                                         </widget>
-                                        <spacer>
+                                        <spacer row="0" column="1">
                                             <property name="name">
                                                 <cstring>spacer31</cstring>
                                             </property>
@@ -1609,7 +1651,63 @@ This field is mandatory.</string>
                                                 </size>
                                             </property>
                                         </spacer>
-                                    </hbox>
+                                        <widget class="QLayoutWidget" row="1" column="0" rowspan="1" colspan="2">
+                                            <property name="name">
+                                                <cstring>layout41</cstring>
+                                            </property>
+                                            <hbox>
+                                                <property name="name">
+                                                    <cstring>unnamed</cstring>
+                                                </property>
+                                                <widget class="QLabel">
+                                                    <property name="name">
+                                                        <cstring>g726PackingTextLabel</cstring>
+                                                    </property>
+                                                    <property name="text">
+                                                        <string>Codeword &amp;packing order:</string>
+                                                    </property>
+                                                    <property name="buddy" stdset="0">
+                                                        <cstring>g726PackingComboBox</cstring>
+                                                    </property>
+                                                </widget>
+                                                <widget class="QComboBox">
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>RFC 3551</string>
+                                                        </property>
+                                                    </item>
+                                                    <item>
+                                                        <property name="text">
+                                                            <string>ATM AAL2</string>
+                                                        </property>
+                                                    </item>
+                                                    <property name="name">
+                                                        <cstring>g726PackComboBox</cstring>
+                                                    </property>
+                                                    <property name="whatsThis" stdset="0">
+                                                        <string>There are 2 standards to pack the G.726 codewords into an RTP packet. RFC 3551 is the default packing method. Some SIP devices use ATM AAL2 however. If you experience bad quality using G.726 with RFC 3551 packing, then try ATM AAL2 packing.</string>
+                                                    </property>
+                                                </widget>
+                                                <spacer>
+                                                    <property name="name">
+                                                        <cstring>spacer40_2</cstring>
+                                                    </property>
+                                                    <property name="orientation">
+                                                        <enum>Horizontal</enum>
+                                                    </property>
+                                                    <property name="sizeType">
+                                                        <enum>Expanding</enum>
+                                                    </property>
+                                                    <property name="sizeHint">
+                                                        <size>
+                                                            <width>141</width>
+                                                            <height>20</height>
+                                                        </size>
+                                                    </property>
+                                                </spacer>
+                                            </hbox>
+                                        </widget>
+                                    </grid>
                                 </widget>
                                 <spacer>
                                     <property name="name">
@@ -1624,7 +1722,7 @@ This field is mandatory.</string>
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>241</height>
+                                            <height>150</height>
                                         </size>
                                     </property>
                                 </spacer>
@@ -1982,11 +2080,11 @@ Send DTMF out-of-band via a SIP INFO request.
                 <attribute name="id">
                     <number>3</number>
                 </attribute>
-                <grid>
+                <vbox>
                     <property name="name">
                         <cstring>unnamed</cstring>
                     </property>
-                    <widget class="QLabel" row="0" column="0">
+                    <widget class="QLabel">
                         <property name="name">
                             <cstring>sipProtocolTitleTextLabel</cstring>
                         </property>
@@ -2012,7 +2110,7 @@ Send DTMF out-of-band via a SIP INFO request.
                             <number>10</number>
                         </property>
                     </widget>
-                    <widget class="QTabWidget" row="1" column="0">
+                    <widget class="QTabWidget">
                         <property name="name">
                             <cstring>sipProtoclTabWidget</cstring>
                         </property>
@@ -2040,107 +2138,10 @@ Send DTMF out-of-band via a SIP INFO request.
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>20</height>
+                                            <height>16</height>
                                         </size>
                                     </property>
                                 </spacer>
-                                <widget class="QGroupBox" row="1" column="0">
-                                    <property name="name">
-                                        <cstring>redirectionGroupBox</cstring>
-                                    </property>
-                                    <property name="title">
-                                        <string>Redirection</string>
-                                    </property>
-                                    <grid>
-                                        <property name="name">
-                                            <cstring>unnamed</cstring>
-                                        </property>
-                                        <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
-                                            <property name="name">
-                                                <cstring>allowRedirectionCheckBox</cstring>
-                                            </property>
-                                            <property name="text">
-                                                <string>&amp;Allow redirection</string>
-                                            </property>
-                                            <property name="accel">
-                                                <string>Alt+A</string>
-                                            </property>
-                                            <property name="whatsThis" stdset="0">
-                                                <string>Indicates if Twinkle should redirect a request if s 3XX response is received.</string>
-                                            </property>
-                                        </widget>
-                                        <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
-                                            <property name="name">
-                                                <cstring>askUserRedirectCheckBox</cstring>
-                                            </property>
-                                            <property name="text">
-                                                <string>Ask user &amp;permission to redirect</string>
-                                            </property>
-                                            <property name="accel">
-                                                <string>Alt+P</string>
-                                            </property>
-                                            <property name="whatsThis" stdset="0">
-                                                <string>Indicates if Twinkle should ask the user before redirecting a request when a 3XX response is received.</string>
-                                            </property>
-                                        </widget>
-                                        <widget class="QLabel" row="2" column="0">
-                                            <property name="name">
-                                                <cstring>maxRedirectTextLabel</cstring>
-                                            </property>
-                                            <property name="text">
-                                                <string>Max re&amp;directions:</string>
-                                            </property>
-                                            <property name="buddy" stdset="0">
-                                                <cstring>maxRedirectSpinBox</cstring>
-                                            </property>
-                                        </widget>
-                                        <widget class="QSpinBox" row="2" column="1">
-                                            <property name="name">
-                                                <cstring>maxRedirectSpinBox</cstring>
-                                            </property>
-                                            <property name="sizePolicy">
-                                                <sizepolicy>
-                                                    <hsizetype>1</hsizetype>
-                                                    <vsizetype>0</vsizetype>
-                                                    <horstretch>0</horstretch>
-                                                    <verstretch>0</verstretch>
-                                                </sizepolicy>
-                                            </property>
-                                            <property name="minimumSize">
-                                                <size>
-                                                    <width>46</width>
-                                                    <height>0</height>
-                                                </size>
-                                            </property>
-                                            <property name="maxValue">
-                                                <number>5</number>
-                                            </property>
-                                            <property name="minValue">
-                                                <number>1</number>
-                                            </property>
-                                            <property name="whatsThis" stdset="0">
-                                                <string>The number of redirect addresses that Twinkle tries at a maximum before it gives up redirecting a request. This prevents a request from getting redirected forever.</string>
-                                            </property>
-                                        </widget>
-                                        <spacer row="2" column="2">
-                                            <property name="name">
-                                                <cstring>spacer5</cstring>
-                                            </property>
-                                            <property name="orientation">
-                                                <enum>Horizontal</enum>
-                                            </property>
-                                            <property name="sizeType">
-                                                <enum>Expanding</enum>
-                                            </property>
-                                            <property name="sizeHint">
-                                                <size>
-                                                    <width>80</width>
-                                                    <height>20</height>
-                                                </size>
-                                            </property>
-                                        </spacer>
-                                    </grid>
-                                </widget>
                                 <widget class="QGroupBox" row="0" column="0" rowspan="1" colspan="2">
                                     <property name="name">
                                         <cstring>optionsGroupBox</cstring>
@@ -2324,6 +2325,103 @@ This format is what most SIP phones use.
                                         </widget>
                                     </grid>
                                 </widget>
+                                <widget class="QGroupBox" row="1" column="0">
+                                    <property name="name">
+                                        <cstring>redirectionGroupBox</cstring>
+                                    </property>
+                                    <property name="title">
+                                        <string>Redirection</string>
+                                    </property>
+                                    <grid>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QCheckBox" row="0" column="0" rowspan="1" colspan="2">
+                                            <property name="name">
+                                                <cstring>allowRedirectionCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>&amp;Allow redirection</string>
+                                            </property>
+                                            <property name="accel">
+                                                <string>Alt+A</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Indicates if Twinkle should redirect a request if a 3XX response is received.</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="1" column="0" rowspan="1" colspan="3">
+                                            <property name="name">
+                                                <cstring>askUserRedirectCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Ask user &amp;permission to redirect</string>
+                                            </property>
+                                            <property name="accel">
+                                                <string>Alt+P</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Indicates if Twinkle should ask the user before redirecting a request when a 3XX response is received.</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="2" column="0">
+                                            <property name="name">
+                                                <cstring>maxRedirectTextLabel</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Max re&amp;directions:</string>
+                                            </property>
+                                            <property name="buddy" stdset="0">
+                                                <cstring>maxRedirectSpinBox</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QSpinBox" row="2" column="1">
+                                            <property name="name">
+                                                <cstring>maxRedirectSpinBox</cstring>
+                                            </property>
+                                            <property name="sizePolicy">
+                                                <sizepolicy>
+                                                    <hsizetype>1</hsizetype>
+                                                    <vsizetype>0</vsizetype>
+                                                    <horstretch>0</horstretch>
+                                                    <verstretch>0</verstretch>
+                                                </sizepolicy>
+                                            </property>
+                                            <property name="minimumSize">
+                                                <size>
+                                                    <width>46</width>
+                                                    <height>0</height>
+                                                </size>
+                                            </property>
+                                            <property name="maxValue">
+                                                <number>5</number>
+                                            </property>
+                                            <property name="minValue">
+                                                <number>1</number>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>The number of redirect addresses that Twinkle tries at a maximum before it gives up redirecting a request. This prevents a request from getting redirected forever.</string>
+                                            </property>
+                                        </widget>
+                                        <spacer row="2" column="2">
+                                            <property name="name">
+                                                <cstring>spacer5</cstring>
+                                            </property>
+                                            <property name="orientation">
+                                                <enum>Horizontal</enum>
+                                            </property>
+                                            <property name="sizeType">
+                                                <enum>Expanding</enum>
+                                            </property>
+                                            <property name="sizeHint">
+                                                <size>
+                                                    <width>80</width>
+                                                    <height>20</height>
+                                                </size>
+                                            </property>
+                                        </spacer>
+                                    </grid>
+                                </widget>
                                 <widget class="QGroupBox" row="1" column="1">
                                     <property name="name">
                                         <cstring>sipExtensionsGroupBox</cstring>
@@ -2335,17 +2433,6 @@ This format is what most SIP phones use.
                                         <property name="name">
                                             <cstring>unnamed</cstring>
                                         </property>
-                                        <widget class="QLabel" row="0" column="0">
-                                            <property name="name">
-                                                <cstring>ext100relTextLabel</cstring>
-                                            </property>
-                                            <property name="text">
-                                                <string>&amp;100 rel (PRACK):</string>
-                                            </property>
-                                            <property name="buddy" stdset="0">
-                                                <cstring>ext100relComboBox</cstring>
-                                            </property>
-                                        </widget>
                                         <widget class="QComboBox" row="0" column="1">
                                             <item>
                                                 <property name="text">
@@ -2393,6 +2480,28 @@ This format is what most SIP phones use.
 &lt;b&gt;required&lt;/b&gt;: 100rel is required (it is put in the require header of an outgoing INVITE). If an incoming INVITE indicates that it supports 100rel, then Twinkle will require a PRACK when sending a 1xx response. A call will fail when the far-end does not support 100rel.
 &lt;br&gt;&lt;br&gt;
 &lt;b&gt;preferred&lt;/b&gt;: Similar to required, but if a call fails because the far-end indicates it does not support 100rel (420 response) then the call will be re-attempted without the 100rel requirement.</string>
+                                            </property>
+                                        </widget>
+                                        <widget class="QLabel" row="0" column="0">
+                                            <property name="name">
+                                                <cstring>ext100relTextLabel</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>&amp;100 rel (PRACK):</string>
+                                            </property>
+                                            <property name="buddy" stdset="0">
+                                                <cstring>ext100relComboBox</cstring>
+                                            </property>
+                                        </widget>
+                                        <widget class="QCheckBox" row="1" column="0">
+                                            <property name="name">
+                                                <cstring>extReplacesCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Replaces</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Indicates if the Replaces-extenstion is supported.</string>
                                             </property>
                                         </widget>
                                     </grid>
@@ -2491,6 +2600,17 @@ This format is what most SIP phones use.
                                                 <string>While a call is being transferred, the referee sends NOTIFY messages to the referrer about the progress of the transfer. These messages are only sent for a short interval which length is determined by the referee. If you tick this box, the referrer will automatically send a SUBSCRIBE to lengthen this interval if it is about to expire and the transfer has not yet been completed.</string>
                                             </property>
                                         </widget>
+                                        <widget class="QCheckBox">
+                                            <property name="name">
+                                                <cstring>referAorCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>Attended refer to AoR (Address of Record)</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endoint.</string>
+                                            </property>
+                                        </widget>
                                     </vbox>
                                 </widget>
                                 <spacer>
@@ -2506,14 +2626,71 @@ This format is what most SIP phones use.
                                     <property name="sizeHint">
                                         <size>
                                             <width>20</width>
-                                            <height>51</height>
+                                            <height>90</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                            </vbox>
+                        </widget>
+                        <widget class="QWidget">
+                            <property name="name">
+                                <cstring>TabPage</cstring>
+                            </property>
+                            <attribute name="title">
+                                <string>Privacy</string>
+                            </attribute>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QGroupBox">
+                                    <property name="name">
+                                        <cstring>privacyGroupBox</cstring>
+                                    </property>
+                                    <property name="title">
+                                        <string>Privacy options</string>
+                                    </property>
+                                    <vbox>
+                                        <property name="name">
+                                            <cstring>unnamed</cstring>
+                                        </property>
+                                        <widget class="QCheckBox">
+                                            <property name="name">
+                                                <cstring>pPreferredIdCheckBox</cstring>
+                                            </property>
+                                            <property name="text">
+                                                <string>&amp;Send P-Preferred-Identity header when hiding user identity</string>
+                                            </property>
+                                            <property name="accel">
+                                                <string>Alt+S</string>
+                                            </property>
+                                            <property name="whatsThis" stdset="0">
+                                                <string>Include a P-Preferred-Identity header with your identity in an INVITE request for a call with identity hiding.</string>
+                                            </property>
+                                        </widget>
+                                    </vbox>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer40</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Vertical</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>331</height>
                                         </size>
                                     </property>
                                 </spacer>
                             </vbox>
                         </widget>
                     </widget>
-                </grid>
+                </vbox>
             </widget>
             <widget class="QWidget">
                 <property name="name">
@@ -3571,6 +3748,7 @@ reason=&amp;lt;string&amp;gt;&lt;br&gt;
 contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;
 caller_name=&amp;lt;name of caller to display&amp;gt;&lt;br&gt;
 ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
+display_msg=&amp;lt;message to show on display&amp;gt;&lt;br&gt;
 end&lt;br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
@@ -3826,7 +4004,7 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
                     </property>
                     <widget class="QLabel">
                         <property name="name">
-                            <cstring>scriptsTitleTextLabel_2</cstring>
+                            <cstring>securityTitleTextLabel</cstring>
                         </property>
                         <property name="paletteBackgroundColor">
                             <color>
@@ -3938,15 +4116,325 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
                     </spacer>
                 </vbox>
             </widget>
+            <widget class="QWidget">
+                <property name="name">
+                    <cstring>pageVoiceMail</cstring>
+                </property>
+                <attribute name="id">
+                    <number>10</number>
+                </attribute>
+                <vbox>
+                    <property name="name">
+                        <cstring>unnamed</cstring>
+                    </property>
+                    <widget class="QLabel">
+                        <property name="name">
+                            <cstring>voiceMailTextLabel</cstring>
+                        </property>
+                        <property name="paletteBackgroundColor">
+                            <color>
+                                <red>150</red>
+                                <green>150</green>
+                                <blue>150</blue>
+                            </color>
+                        </property>
+                        <property name="font">
+                            <font>
+                                <pointsize>21</pointsize>
+                            </font>
+                        </property>
+                        <property name="frameShape">
+                            <enum>Box</enum>
+                        </property>
+                        <property name="text">
+                            <string>Voice mail</string>
+                        </property>
+                        <property name="indent">
+                            <number>10</number>
+                        </property>
+                    </widget>
+                    <widget class="QLayoutWidget">
+                        <property name="name">
+                            <cstring>layout39</cstring>
+                        </property>
+                        <grid>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLabel" row="0" column="0">
+                                <property name="name">
+                                    <cstring>vmAddressTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;Voice mail address:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>vmAddressLineEdit</cstring>
+                                </property>
+                            </widget>
+                            <widget class="QLineEdit" row="0" column="1">
+                                <property name="name">
+                                    <cstring>vmAddressLineEdit</cstring>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>The SIP address or telephone number to access your voice mail.</string>
+                                </property>
+                            </widget>
+                            <widget class="QLayoutWidget" row="1" column="1">
+                                <property name="name">
+                                    <cstring>layout38</cstring>
+                                </property>
+                                <hbox>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <widget class="QComboBox">
+                                        <item>
+                                            <property name="text">
+                                                <string>Unsollicited</string>
+                                            </property>
+                                        </item>
+                                        <item>
+                                            <property name="text">
+                                                <string>Sollicited</string>
+                                            </property>
+                                        </item>
+                                        <property name="name">
+                                            <cstring>mwiTypeComboBox</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
+&lt;p&gt;
+If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
+&lt;/p&gt;
+&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;p&gt;
+Asterisk provides unsollicited message waiting indication.
+&lt;/p&gt;
+&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;p&gt;
+Sollicited message waiting indication as specified by RFC 3842.
+&lt;/p&gt;</string>
+                                        </property>
+                                    </widget>
+                                    <spacer>
+                                        <property name="name">
+                                            <cstring>spacer39</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>221</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                </hbox>
+                            </widget>
+                            <widget class="QLabel" row="1" column="0">
+                                <property name="name">
+                                    <cstring>mwiTypeTextLabel</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>&amp;MWI type:</string>
+                                </property>
+                                <property name="buddy" stdset="0">
+                                    <cstring>mwiTypeComboBox</cstring>
+                                </property>
+                            </widget>
+                        </grid>
+                    </widget>
+                    <widget class="QGroupBox">
+                        <property name="name">
+                            <cstring>mwiSollicitedGroupBox</cstring>
+                        </property>
+                        <property name="title">
+                            <string>Sollicited MWI</string>
+                        </property>
+                        <vbox>
+                            <property name="name">
+                                <cstring>unnamed</cstring>
+                            </property>
+                            <widget class="QLayoutWidget">
+                                <property name="name">
+                                    <cstring>layout36</cstring>
+                                </property>
+                                <grid>
+                                    <property name="name">
+                                        <cstring>unnamed</cstring>
+                                    </property>
+                                    <spacer row="2" column="0">
+                                        <property name="name">
+                                            <cstring>spacer35</cstring>
+                                        </property>
+                                        <property name="orientation">
+                                            <enum>Horizontal</enum>
+                                        </property>
+                                        <property name="sizeType">
+                                            <enum>Expanding</enum>
+                                        </property>
+                                        <property name="sizeHint">
+                                            <size>
+                                                <width>120</width>
+                                                <height>20</height>
+                                            </size>
+                                        </property>
+                                    </spacer>
+                                    <widget class="QLabel" row="3" column="0">
+                                        <property name="name">
+                                            <cstring>mwiDurationTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Subscription &amp;duration:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>mwiDurationSpinBox</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="0" column="0">
+                                        <property name="name">
+                                            <cstring>mwiUserTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Mailbox &amp;user name:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>mwiUserLineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLineEdit" row="1" column="1">
+                                        <property name="name">
+                                            <cstring>mwiServerLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>The hostname, domain name or IP address of your voice mailbox server.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLayoutWidget" row="3" column="1">
+                                        <property name="name">
+                                            <cstring>layout35</cstring>
+                                        </property>
+                                        <hbox>
+                                            <property name="name">
+                                                <cstring>unnamed</cstring>
+                                            </property>
+                                            <widget class="QSpinBox">
+                                                <property name="name">
+                                                    <cstring>mwiDurationSpinBox</cstring>
+                                                </property>
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>90</width>
+                                                        <height>0</height>
+                                                    </size>
+                                                </property>
+                                                <property name="maxValue">
+                                                    <number>999999</number>
+                                                </property>
+                                                <property name="lineStep">
+                                                    <number>100</number>
+                                                </property>
+                                                <property name="whatsThis" stdset="0">
+                                                    <string>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</string>
+                                                </property>
+                                            </widget>
+                                            <widget class="QLabel">
+                                                <property name="name">
+                                                    <cstring>mwiSecondsTextLabel</cstring>
+                                                </property>
+                                                <property name="text">
+                                                    <string>seconds</string>
+                                                </property>
+                                            </widget>
+                                            <spacer>
+                                                <property name="name">
+                                                    <cstring>spacer36</cstring>
+                                                </property>
+                                                <property name="orientation">
+                                                    <enum>Horizontal</enum>
+                                                </property>
+                                                <property name="sizeType">
+                                                    <enum>Expanding</enum>
+                                                </property>
+                                                <property name="sizeHint">
+                                                    <size>
+                                                        <width>190</width>
+                                                        <height>20</height>
+                                                    </size>
+                                                </property>
+                                            </spacer>
+                                        </hbox>
+                                    </widget>
+                                    <widget class="QLineEdit" row="0" column="1">
+                                        <property name="name">
+                                            <cstring>mwiUserLineEdit</cstring>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Your user name for accessing your voice mailbox.</string>
+                                        </property>
+                                    </widget>
+                                    <widget class="QLabel" row="1" column="0">
+                                        <property name="name">
+                                            <cstring>mwiServerTextLabel</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Mailbox &amp;server:</string>
+                                        </property>
+                                        <property name="buddy" stdset="0">
+                                            <cstring>mwiServerLineEdit</cstring>
+                                        </property>
+                                    </widget>
+                                    <widget class="QCheckBox" row="2" column="1">
+                                        <property name="name">
+                                            <cstring>mwiViaProxyCheckBox</cstring>
+                                        </property>
+                                        <property name="text">
+                                            <string>Via outbound &amp;proxy</string>
+                                        </property>
+                                        <property name="accel">
+                                            <string>Alt+P</string>
+                                        </property>
+                                        <property name="whatsThis" stdset="0">
+                                            <string>Check this option if Twinkle should send SIP messages to the mailbox server via the outbound proxy.</string>
+                                        </property>
+                                    </widget>
+                                </grid>
+                            </widget>
+                        </vbox>
+                    </widget>
+                    <spacer>
+                        <property name="name">
+                            <cstring>spacer38_3</cstring>
+                        </property>
+                        <property name="orientation">
+                            <enum>Vertical</enum>
+                        </property>
+                        <property name="sizeType">
+                            <enum>Expanding</enum>
+                        </property>
+                        <property name="sizeHint">
+                            <size>
+                                <width>20</width>
+                                <height>211</height>
+                            </size>
+                        </property>
+                    </spacer>
+                </vbox>
+            </widget>
         </widget>
     </grid>
 </widget>
 <connections>
     <connection>
         <sender>categoryListBox</sender>
-        <signal>highlighted(QListBoxItem*)</signal>
+        <signal>highlighted(int)</signal>
         <receiver>UserProfileForm</receiver>
-        <slot>showCategory(QListBoxItem*)</slot>
+        <slot>showCategory(int)</slot>
     </connection>
     <connection>
         <sender>cancelPushButton</sender>
@@ -4182,6 +4670,12 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
         <receiver>zrtpSettingsGroupBox</receiver>
         <slot>setEnabled(bool)</slot>
     </connection>
+    <connection>
+        <sender>mwiTypeComboBox</sender>
+        <signal>activated(int)</signal>
+        <receiver>UserProfileForm</receiver>
+        <slot>changeMWIType(int)</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>displayLineEdit</tabstop>
@@ -4198,6 +4692,12 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>proxyLineEdit</tabstop>
     <tabstop>allRequestsCheckBox</tabstop>
     <tabstop>proxyNonResolvableCheckBox</tabstop>
+    <tabstop>vmAddressLineEdit</tabstop>
+    <tabstop>mwiTypeComboBox</tabstop>
+    <tabstop>mwiUserLineEdit</tabstop>
+    <tabstop>mwiServerLineEdit</tabstop>
+    <tabstop>mwiViaProxyCheckBox</tabstop>
+    <tabstop>mwiDurationSpinBox</tabstop>
     <tabstop>rtpAudioTabWidget</tabstop>
     <tabstop>availCodecListBox</tabstop>
     <tabstop>addCodecPushButton</tabstop>
@@ -4206,6 +4706,8 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>upCodecPushButton</tabstop>
     <tabstop>downCodecPushButton</tabstop>
     <tabstop>ptimeSpinBox</tabstop>
+    <tabstop>inFarEndCodecPrefCheckBox</tabstop>
+    <tabstop>outFarEndCodecPrefCheckBox</tabstop>
     <tabstop>ilbcPayloadSpinBox</tabstop>
     <tabstop>ilbcPayloadSizeComboBox</tabstop>
     <tabstop>spxVbrCheckBox</tabstop>
@@ -4216,6 +4718,11 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>spxNbPayloadSpinBox</tabstop>
     <tabstop>spxWbPayloadSpinBox</tabstop>
     <tabstop>spxUwbPayloadSpinBox</tabstop>
+    <tabstop>g72616PayloadSpinBox</tabstop>
+    <tabstop>g72624PayloadSpinBox</tabstop>
+    <tabstop>g72632PayloadSpinBox</tabstop>
+    <tabstop>g72640PayloadSpinBox</tabstop>
+    <tabstop>g726PackComboBox</tabstop>
     <tabstop>dtmfTransportComboBox</tabstop>
     <tabstop>dtmfPayloadTypeSpinBox</tabstop>
     <tabstop>dtmfDurationSpinBox</tabstop>
@@ -4234,11 +4741,14 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>askUserRedirectCheckBox</tabstop>
     <tabstop>maxRedirectSpinBox</tabstop>
     <tabstop>ext100relComboBox</tabstop>
+    <tabstop>extReplacesCheckBox</tabstop>
     <tabstop>allowReferCheckBox</tabstop>
     <tabstop>askUserReferCheckBox</tabstop>
     <tabstop>refereeHoldCheckBox</tabstop>
     <tabstop>referrerHoldCheckBox</tabstop>
     <tabstop>refreshReferSubCheckBox</tabstop>
+    <tabstop>referAorCheckBox</tabstop>
+    <tabstop>pPreferredIdCheckBox</tabstop>
     <tabstop>natNoneRadioButton</tabstop>
     <tabstop>natStaticRadioButton</tabstop>
     <tabstop>publicIPLineEdit</tabstop>
@@ -4268,6 +4778,10 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <tabstop>outCallFailedLineEdit</tabstop>
     <tabstop>localReleaseLineEdit</tabstop>
     <tabstop>remoteReleaseLineEdit</tabstop>
+    <tabstop>zrtpEnabledCheckBox</tabstop>
+    <tabstop>zrtpSendIfSupportedCheckBox</tabstop>
+    <tabstop>zrtpSdpCheckBox</tabstop>
+    <tabstop>zrtpGoClearWarningCheckBox</tabstop>
     <tabstop>okPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
     <tabstop>profileComboBox</tabstop>
@@ -4309,9 +4823,11 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <signal>authCredentialsChanged(t_user *, const string &amp;)</signal>
     <signal>sipUserChanged(t_user *)</signal>
     <signal>success()</signal>
+    <signal>mwiChangeUnsubscribe(t_user *)</signal>
+    <signal>mwiChangeSubscribe(t_user *)</signal>
 </signals>
 <slots>
-    <slot>showCategory( QListBoxItem * item )</slot>
+    <slot>showCategory( int index )</slot>
     <slot>populate()</slot>
     <slot>initProfileList( list&lt;t_user *&gt; profiles, QString show_profile_name )</slot>
     <slot>show( list&lt;t_user *&gt; profiles, QString show_profile )</slot>
@@ -4338,6 +4854,7 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
     <slot>editConversion()</slot>
     <slot>removeConversion()</slot>
     <slot>testConversion()</slot>
+    <slot>changeMWIType( int idxMWIType )</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

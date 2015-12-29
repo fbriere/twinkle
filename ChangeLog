@@ -1,3 +1,79 @@
+29 dec 2006 - 1.0 BETA
+======================
+- Local address book
+- Message waiting indication (MWI)
+  * Sollicted MWI as specified by RFC 3842
+  * Unsollicited MWI as implemented by Asterisk
+- Voice mail speed dial
+- Call transfer with consultation
+  * This is a combination of a consultation call on the other line
+    followed by a blind transfer.
+- Attended call transfer
+  * This is a combination of a consultation call on the other line
+    followed by a replacement from B to C of the call on the first line.
+    This is only possible if the C-party supports "replaces".
+    If "replaces" is not supported, then twinkle automatically falls
+    back to "transfer with consultation".
+- User identity hiding
+- Multi language support
+  This version contains Dutch and German translations
+- Send BYE when a CANCEL/2XX INVITE glare occurs.
+- When call release was not immediate due to network problems or protocol errors,
+  the line would be locked for some time. Now Twinkle releases a call in the
+  background immediately freeing the line for new calls.
+- Escape reserved symbols in a URI by their hex-notation (%hex).
+- Changed key binding for Bye from F7 to ESC
+- When a lock file exists at startup, Twinkle asks if you want to override it
+- New command line options: --force, --sip-port, --rtp-port
+- Ring tone and speaker device list now also shows playback only devices
+- Microphone device list now also shows capture only devices
+- Validate audio device settings on startup, before making a call, before
+  answering a call.
+- SIP_FROM_USER, SIP_FROM_HOST, SIP_TO_USER, SIP_TO_HOST variables for call scripts.
+- display_msg parameter added to incoming call script
+- User profile options to indicate which codec preference to follow
+- Twinkle now asks permission for an incoming REFER asynchronously. This
+  prevents blocking of the transaction layer.
+- Highlight missed calls in call history
+- Support for G.726 ATM AAL2 codeword packing
+- replaces SIP extension (RFC 3891)
+- norefesub SIP extension (RFC 4488)
+
+Bug fixes
+---------
+- Invalid speex payload when setting ptime=30 for G.711
+- When editing the active user profile via File -> Change User -> Edit
+  QObject::connect: No such slot MphoneForm::displayUser(t_user*)
+- 32 s after call setup the DTMF button gets disabled.
+- 4XX response on INVITE does not get properly handled.
+  From/To/Subject labels are not cleared. No call history record is made.
+- The dial combobox accepted a newline through copy/past. This corrupted
+  the system settings.
+- When a far-end responds with no supported codecs, Twinkle automatically
+  releases the call. If the far-end sends an invalid response on this
+  release and the user pressed the BYE button, Twinkle crashed.
+- When using STUN the private port was put in the Via header instead of
+  the public port.
+- Twinkle crashes once in a while it is just sitting idle.
+
+Build changes
+-------------
+- If libbind exists then link with libbind, otherwise link with libresolv
+  This solves GLIBC_PRIVATE errors on Fedora
+- Link with libboost_regex or libboost_regex-gcc
+
+New RFC's
+---------
+RFC 3323 - A Privacy Mechanism for the Session Initiation Protocol (SIP)
+RFC 3325 - Private Extensions to the Session Initiation Protocol (SIP) for
+           Asserted Identity within Trusted Networks
+RFC 3842 - A Message Summary and Message Waiting Indication Event Package 
+           for the Session Initiation Protocol (SIP)
+RFC 3891 - The Session Initiation Protocol (SIP) "Replaces" Header
+RFC 4488 - Suppression of Session Initiation Protocol (SIP)
+           REFER Method Implicit Subscription
+
+
 01 oct 2006 - Release 0.9
 =========================
 - Supports Phil Zimmermann's ZRTP and SRTP for

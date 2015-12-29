@@ -20,7 +20,7 @@
 #include "hdr_rack.h"
 #include "util.h"
 
-t_hdr_rack::t_hdr_rack() : t_header() {
+t_hdr_rack::t_hdr_rack() : t_header("RAck") {
 	cseq_nr = 0;
 	resp_nr = 0;
 	method = INVITE;
@@ -50,18 +50,6 @@ void t_hdr_rack::set_method(const string &s) {
 	}
 }
 
-string t_hdr_rack::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "RAck: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_rack::encode_value(void) const {
 	string s;
 
@@ -72,14 +60,5 @@ string t_hdr_rack::encode_value(void) const {
 	s += ' ';
 	s += method2str(method, unknown_method);
 
-	return s;
-}
-
-string t_hdr_rack::encode_env(void) const {
-	string s;
-	
-	s = "SIP_RACK=";
-	s += encode_value();
-	
 	return s;
 }

@@ -46,7 +46,7 @@ string t_route::encode(void) const {
 	return s;
 }
 
-t_hdr_record_route::t_hdr_record_route() : t_header() {}
+t_hdr_record_route::t_hdr_record_route() : t_header("Record-Route") {}
 
 void t_hdr_record_route::add_route(const t_route &r) {
 	populated = true;
@@ -54,19 +54,8 @@ void t_hdr_record_route::add_route(const t_route &r) {
 }
 
 string t_hdr_record_route::encode(void) const {
-	return (t_parser::multi_values_as_list ? encode_list() : encode_multi_header());
-}
-
-string t_hdr_record_route::encode_list(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Record-Route: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
+	return (t_parser::multi_values_as_list ? 
+			t_header::encode() : encode_multi_header());
 }
 
 string t_hdr_record_route::encode_multi_header(void) const {
@@ -77,7 +66,8 @@ string t_hdr_record_route::encode_multi_header(void) const {
 	for (list<t_route>::const_iterator i = route_list.begin();
 	     i != route_list.end(); i++)
 	{
-		s += "Record-Route: ";
+		s += header_name;
+		s += ": ";
 		s += i->encode();
 		s += CRLF;
 	}
@@ -93,19 +83,9 @@ string t_hdr_record_route::encode_value(void) const {
 	for (list<t_route>::const_iterator i = route_list.begin();
 	     i != route_list.end(); i++)
 	{
-		if (i != route_list.begin()) s += ", ";
+		if (i != route_list.begin()) s += ",";
 		s += i->encode();
 	}
 
 	return s;
 }
-
-string t_hdr_record_route::encode_env(void) const {
-	string s;
-
-	s = "SIP_RECORD_ROUTE=";
-	s += encode_value();
-	
-	return s;
-}
-	

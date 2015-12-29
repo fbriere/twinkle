@@ -40,23 +40,11 @@ string t_language::encode(void) const {
 }
 
 
-t_hdr_accept_language::t_hdr_accept_language() : t_header() {};
+t_hdr_accept_language::t_hdr_accept_language() : t_header("Accept-Language") {};
 
 void t_hdr_accept_language::add_language(const t_language &language) {
 	populated = true;
 	language_list.push_back(language);
-}
-
-string t_hdr_accept_language::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s += "Accept-Language: ";
-	s += encode_value();
-	s += CRLF;
-
-	return s;
 }
 
 string t_hdr_accept_language::encode_value(void) const {
@@ -67,18 +55,9 @@ string t_hdr_accept_language::encode_value(void) const {
 	for (list<t_language>::const_iterator i = language_list.begin();
 	     i != language_list.end(); i++)
 	{
-		if (i != language_list.begin()) s += ", ";
+		if (i != language_list.begin()) s += ",";
 		s += i->encode();
 	}
-	
-	return s;
-}
-
-string t_hdr_accept_language::encode_env(void) const {
-	string s;
-	
-	s = "SIP_ACCEPT_LANGUAGE=";
-	s += encode_value();
 	
 	return s;
 }

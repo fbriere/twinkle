@@ -26,6 +26,8 @@
 #include "header.h"
 
 #define EXT_100REL	"100rel"	// RFC 3262
+#define EXT_REPLACES	"replaces"	// RFC 3891
+#define EXT_NOREFERSUB	"norefersub"	// RFC 4488
 
 class t_hdr_supported : public t_header {
 public:
@@ -33,6 +35,7 @@ public:
 
 	t_hdr_supported();
 	void add_feature(const string &f);
+	void add_features(const list<string> &l);
 
 	// Clear the list of features, but make the header 'populated'.
 	// An empty header will be in the message.
@@ -40,9 +43,7 @@ public:
 
 	bool contains(const string &f) const;
 	
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

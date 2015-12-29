@@ -100,13 +100,10 @@ void t_url::construct_user_url(const string &s) {
 		i = userpass.find(':');
 		if (i != string::npos) {
 			if (i == 0 || i == userpass.size()-1) return;
-			user = userpass.substr(0, i);
-			if (user.find(' ') != string::npos) return;
-			password = userpass.substr(i+1);
-			if (password.find(' ') != string::npos) return;
+			user = unescape_hex(userpass.substr(0, i));
+			password = unescape_hex(userpass.substr(i+1));
 		} else {
-			user = userpass;
-			if (user.find(' ') != string::npos) return;
+			user = unescape_hex(userpass);
 		}
 	} else {
 		r = s;
@@ -168,7 +165,7 @@ void t_url::construct_machine_url(const string &s) {
 }
 
 bool t_url::parse_params_headers(const string &s) {
-	string param_str;
+	string param_str = "";
 
 	// Find start of headers
 	// Note: parameters will not contain / or ?-symbol
@@ -176,9 +173,11 @@ bool t_url::parse_params_headers(const string &s) {
 	if (header_start != string::npos) {
 		headers = s.substr(header_start + 1);
 
-		// The first symbol of the parameter list is ;
-		// Remove this.
-		param_str = s.substr(1, header_start - 1);
+		if (s[0] == ';') {
+			// The first symbol of the parameter list is ;
+			// Remove this.
+			param_str = s.substr(1, header_start - 1);
+		}
 	} else {
 		// There are no headers
 		// The first symbol of the parameter list is ;
@@ -192,21 +191,21 @@ bool t_url::parse_params_headers(const string &s) {
 	// seperated by semi-colons.
 	// Note: parameters will not contain a semi-colon in the
 	//       name or value.
-	list<string> param_lst = split(param_str, ';');
+	vector<string> param_lst = split(param_str, ';');
 
 	// Parse the parameters
-	for (list<string>::iterator i = param_lst.begin();
+	for (vector<string>::iterator i = param_lst.begin();
 	     i != param_lst.end(); i++)
 	{
 		string pname;
 		string pvalue;
 
-		list<string> param = split(*i, '=');
+		vector<string> param = split(*i, '=');
 		if (param.size() > 2) return false;
 
-		pname = trim(tolower(param.front()));
+		pname = tolower(unescape_hex(trim(param.front())));
 		if (param.size() == 2) {
-			pvalue = trim(tolower(param.back()));
+			pvalue = tolower(unescape_hex(trim(param.back())));
 		}
 
 		if (pname == "transport") {
@@ -230,6 +229,44 @@ bool t_url::parse_params_headers(const string &s) {
 	return true;
 }
 
+// Public static
+
+string t_url::escape_user_value(const string &user_value) {
+	// RFC 3261
+	// user             =  1*( unreserved / escaped / user-unreserved )
+	// user-unreserved  =  "&" / "=" / "+" / "$" / "," / ";" / "?" / "/"
+	// unreserved       =  alphanum / mark
+	// mark             =  "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+
+	return escape_hex(user_value,
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYX0123456789"\
+		"-_.!~*'()&=+$,;?/");
+}
+
+string t_url::escape_passwd_value(const string &passwd_value) {
+	// RFC 3261
+	// password         = *( unreserved / escaped / "&" / "=" / "+" / "$" / "," )
+	// unreserved       =  alphanum / mark
+	// mark             =  "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+	
+	return escape_hex(passwd_value,
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYX0123456789"\
+		"-_.!~*'()&=+$,");
+}
+
+string t_url::escape_hnv(const string &hnv) {
+	// RFC 3261
+	// hname           =  1*( hnv-unreserved / unreserved / escaped )
+	// hvalue          =  *( hnv-unreserved / unreserved / escaped )
+	// hnv-unreserved  =  "[" / "]" / "/" / "?" / ":" / "+" / "$"
+	// unreserved       =  alphanum / mark
+	// mark             =  "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+	
+	return escape_hex(hnv,
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYX0123456789"\
+		"-_.!~*'()[]/?:+$");
+}
+
 // Public
 
 t_url::t_url(void) {
@@ -242,6 +279,12 @@ t_url::t_url(void) {
 
 t_url::t_url(const string &s) {
 	set_url(s);
+}
+
+t_url t_url::copy_without_headers(void) const {
+	t_url u(*this);
+	u.clear_headers();
+	return u;
 }
 
 void t_url::set_url(const string &s) {
@@ -419,6 +462,27 @@ void t_url::set_user(const string &u) {
 	user = u;
 }
 
+void t_url::add_header(const t_header &hdr) {
+	if (!hdr.is_populated()) return;
+	
+	modified = true;
+	
+	if (!headers.empty()) headers += ';';
+	headers += escape_hnv(hdr.get_name());
+	headers += '=';
+	headers += escape_hnv(hdr.get_value());
+}
+
+void t_url::clear_headers(void) {
+	if (headers.empty()) {
+		// No headers to clear
+		return;
+	}
+	
+	modified = true;
+	headers.clear();
+}
+
 bool t_url::is_valid(void) const {
 	return valid;
 }
@@ -460,6 +524,10 @@ bool t_url::sip_match(const t_url &u) const {
 
 bool t_url::operator==(const t_url &u) const {
 	return sip_match(u);
+}
+
+bool t_url::operator!=(const t_url &u) const {
+	return !sip_match(u);
 }
 
 bool t_url::user_host_match(const t_url &u, bool looks_like_phone, 
@@ -508,11 +576,11 @@ string t_url::encode(void) const {
 		
 		s = scheme;
 		s += ':';
-		s += user;
+		s += escape_user_value(user);
 		
 		if (!password.empty()) {
 			s += ':';
-			s += password;
+			s += escape_passwd_value(password);
 		}
 		
 		s += '@';
@@ -575,6 +643,42 @@ string t_url::encode_noscheme(void) const {
 		s = s.substr(i + 1);
 	}
 
+	return s;
+}
+
+string t_url::encode_no_params_hdrs(bool escape) const {
+	if (!user_url) {
+		// TODO: machine URL's are currently not used
+		return text_format;
+	}
+
+	string s;
+	
+	s = scheme;
+	s += ':';
+	if (escape) {
+		s += escape_user_value(user);
+	} else {
+		s += user;
+	}
+	
+	if (!password.empty()) {
+		s += ':';
+		if (escape) {
+			s += escape_passwd_value(password);
+		} else {
+			s += password;
+		}
+	}
+	
+	s += '@';
+	s += host;
+	
+	if (port > 0) {
+		s += ':';
+		s += int2str(port);
+	}
+	
 	return s;
 }
 

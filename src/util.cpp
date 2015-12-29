@@ -27,6 +27,9 @@
 string month_abbrv[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", 
 			"Aug", "Sep", "Oct", "Nov", "Dec"};
 			
+string month_full[] = {"January", "February", "March", "April", "May", "June", "July",
+		       "August", "September", "October", "November", "December"};
+			
 string day_abbrv[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
 string random_token(int length) {
@@ -120,6 +123,16 @@ string month2str(int month) {
 	return "XXX";
 }
 
+int str2month_full(const string &month) {
+	for (int i = 0; i < 12; i++) {
+		if (cmp_nocase(month_full[i], month) == 0) {
+			return i;
+		}
+	}
+	
+	return 0;
+}
+
 string duration2str(unsigned long seconds) {
 	string result;
 	long remainder, h, m, s;
@@ -163,7 +176,7 @@ unsigned long hex2int(const string &h) {
 	unsigned long u = 0;
 
 	int power = 1;
-	for (string::const_reverse_iterator i = h.rbegin(); i != h.rend(); i++) {
+	for (string::const_reverse_iterator i = h.rbegin(); i != h.rend(); ++i) {
 		if (*i >= '0' && *i <= '9')
 			u += (*i - '0') * power;
 		else if (*i >= 'a' && *i <= 'f')
@@ -180,7 +193,7 @@ unsigned long hex2int(const string &h) {
 string tolower(const string &s) {
 	string result;
 
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
 		result += tolower(*i);
 	}
 
@@ -190,7 +203,7 @@ string tolower(const string &s) {
 string toupper(const string &s) {
 	string result;
 
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
 		result += toupper(*i);
 	}
 
@@ -227,8 +240,8 @@ int cmp_nocase(const string &s1, const string &s2) {
 		if (toupper(*i1) != toupper(*i2)) {
 			return (toupper(*i1) < toupper(*i2)) ? -1 : 1;
 		}
-		i1++;
-		i2++;
+		++i1;
+		++i2;
 	}
 
 	if (s1.size() == s2.size()) return 0;
@@ -261,11 +274,45 @@ string unescape(const string &s) {
 	string result;
 
 	for (int i = 0; i < s.size(); i++) {
-		if (s[i] == '\\' && i < s.size()) {
+		if (s[i] == '\\' && i < s.size() - 1) {
 			i++;
 		}
 		
 		result += s[i];
+	}
+	
+	return result;
+}
+
+string escape_hex(const string &s, const string &unreserved) {
+	string result;
+	
+	for (int i = 0; i < s.size(); i++) {
+		if (unreserved.find(s[i], 0) != string::npos) {
+			// Unreserved symbol
+			result += s[i];
+		} else {
+			// Reserved symbol
+			result += int2str((int)s[i], "%%%02x");
+		}
+	}
+	
+	return result;
+}
+string unescape_hex(const string &s) {
+	string result;
+	
+	for (int i = 0; i < s.size(); i++) {
+		if (s[i] == '%' && i < s.size() - 2 &&
+		    isxdigit(s[i+1]) && isxdigit(s[i+2])) 
+		{
+			// Escaped hex-value
+			string hexval = s.substr(i+1, 2);
+			result += static_cast<char>(hex2int(hexval));
+			i += 2;
+		} else {
+			result += s[i];
+		}
 	}
 	
 	return result;
@@ -281,10 +328,21 @@ string replace_char(const string &s, char from, char to) {
    	return result;
 }
 
-list<string> split(const string &s, char c) {
+string replace_first(const string &s, const string &from, const string &to) {
+	string result = s;
+	
+	string::size_type i = result.find(from, 0);
+	if (i != string::npos) {
+		result.replace(i, from.size(), to);
+	}
+	
+	return result;
+}
+
+vector<string> split(const string &s, char c) {
 	string::size_type i;
 	string::size_type j = 0;
-	list<string> l;
+	vector<string> l;
 
 	while (true) {
 		i = s.find(c, j);
@@ -307,10 +365,10 @@ list<string> split(const string &s, char c) {
 	}
 }
 
-list<string> split(const string &s, const string& separator) {
+vector<string> split(const string &s, const string& separator) {
 	string::size_type i;
 	string::size_type j = 0;
-	list<string> l;
+	vector<string> l;
 
 	while (true) {
 		i = s.find(separator, j);
@@ -333,8 +391,18 @@ list<string> split(const string &s, const string& separator) {
 	}
 }
 
-list<string> split_on_first(const string &s, char c) {
-	list<string> l;
+vector<string> split_linebreak(const string &s) {
+	if (s.find("\r\n") != string::npos) {
+		return split(s, "\r\n");
+	} else if (s.find("\r") != string::npos) {
+		return split(s, "\r");
+	}
+	
+	return split(s, "\n");
+}
+
+vector<string> split_on_first(const string &s, char c) {
+	vector<string> l;
 	string::size_type i = s.find(c);
 	if (i == string::npos) {
 		l.push_back(s);
@@ -355,8 +423,8 @@ list<string> split_on_first(const string &s, char c) {
 	return l;
 }
 
-list<string> split_escaped(const string &s, char c) {
-	list<string> l;
+vector<string> split_escaped(const string &s, char c) {
+	vector<string> l;
 	
 	int start_pos = 0;
 	for (int i = 0; i < s.size(); i++) {
@@ -381,8 +449,8 @@ list<string> split_escaped(const string &s, char c) {
 	return l;
 }
 
-list<string> split_ws(const string &s, bool quote_sensitive) {
-        list<string> l;
+vector<string> split_ws(const string &s, bool quote_sensitive) {
+        vector<string> l;
         bool in_quotes = false;
 
         int start_pos = 0;
@@ -430,10 +498,10 @@ bool is_number(const string &s) {
 }
 
 bool is_ipaddr(const string &s) {
-	list<string> l = split(s, '.');
+	vector<string> l = split(s, '.');
 	if (l.size() != 4) return false;
 	
-	for (list<string>::iterator i = l.begin(); i != l.end(); i++) {
+	for (vector<string>::iterator i = l.begin(); i != l.end(); ++i) {
 		if (!is_number(*i) || atoi(i->c_str()) > 255) return false;
 	}
 	
@@ -524,7 +592,7 @@ bool looks_like_phone(const string &s, const string &special_symbols) {
 	string phone_symbols= special_symbols + "0123456789*#+ \t";
 	string t;
 	
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
 		if (phone_symbols.find(*i) == string::npos) return false;
 	}
 
@@ -534,7 +602,7 @@ bool looks_like_phone(const string &s, const string &special_symbols) {
 string remove_symbols(const string &s, const string &special_symbols) {
 	string result;
 	
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
 		if (special_symbols.find(*i) == string::npos) {
 			result += *i;
 		}
@@ -546,7 +614,7 @@ string remove_symbols(const string &s, const string &special_symbols) {
 string remove_white_space(const string &s) {
 	string result;
 	
-	for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
 		if (*i != ' ' && *i != '\t') {
 			result += *i;
 		}
@@ -559,4 +627,18 @@ string dotted_truncate(const string &s, int len) {
 	if (len >= s.size()) return s;
 	
 	return s.substr(0, len) + "...";
+}
+
+string to_printable(const string &s) {
+	string result;
+	
+	for (string::const_iterator i = s.begin(); i != s.end(); ++i) {
+		if (isprint(*i) || *i == '\n' || *i == '\r') {
+			result += *i;
+		} else {
+			result += '.';
+		}
+	}
+	
+	return result;
 }

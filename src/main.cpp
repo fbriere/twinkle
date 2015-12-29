@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include "address_book.h"
 #include "call_history.h"
 #include "events.h"
 #include "line.h"
@@ -30,6 +31,7 @@
 #include "sender.h"
 #include "sys_settings.h"
 #include "transaction_mgr.h"
+#include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
@@ -58,6 +60,9 @@ t_init_rand init_rand;
 
 // Indicates if application is ending (because user pressed Quit)
 bool end_app;
+
+// Language translator
+t_translator *translator = NULL;
 
 // IP address on which the phone is running
 string user_host;
@@ -113,6 +118,14 @@ t_sys_settings		*sys_config;
 // Call history
 t_call_history		*call_history;
 
+// Local address book
+t_address_book		*ab_local;
+
+// If a port number is passed by the user on the command line, then
+// that port number overrides the port from the system settings.
+unsigned short		g_override_sip_udp_port = 0;
+unsigned short		g_override_rtp_port = 0;
+
 // Indicates if LinuxThreads or NPTL is active.
 bool			threading_is_LinuxThreads;
 
@@ -124,6 +137,8 @@ main(int argc, char *argv[]) {
 
 	memman = new t_memman();
 	MEMMAN_NEW(memman);
+	translator = new t_translator();
+	MEMMAN_NEW(translator);
 	evq_trans_mgr = new t_event_queue();
 	MEMMAN_NEW(evq_trans_mgr);
 	evq_sender_udp = new t_event_queue();
@@ -250,6 +265,16 @@ main(int argc, char *argv[]) {
 	if (!call_history->read_history(error_msg)) {
 		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
+	
+	// Create local address book
+	ab_local = new t_address_book();
+	MEMMAN_NEW(ab_local);
+	
+	// Read local address book
+	if (!ab_local->read_address_book(error_msg)) {
+		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
+		ui->cb_show_msg(error_msg, MSG_WARNING);
+	}
 
 	// Initialize RTP port settings.
 	phone->init_rtp_ports();
@@ -361,6 +386,11 @@ main(int argc, char *argv[]) {
 		sys_config->delete_lock_file();
 		exit(1);
 	}
+	
+	// Validate sound devices
+	if (!sys_config->exec_audio_validation(true, true, true, error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_WARNING);
+	}
 
 	try {
 		ui->run();
@@ -381,10 +411,16 @@ main(int argc, char *argv[]) {
 	
 	// Application is ending
 	end_app = true;
+	
+	// Kill the threads getting receiving input from the outside world first,
+	// so no new inputs come in during termination.
+	thr_listen_udp->cancel();
+	thr_listen_udp->join();
 
-	thr_phone_uas->cancel();
+	evq_trans_layer->push_quit();
 	thr_phone_uas->join();
-	thr_trans_mgr->cancel();
+	
+	evq_trans_mgr->push_quit();
 	thr_trans_mgr->join();
 	
 	try {
@@ -399,11 +435,10 @@ main(int argc, char *argv[]) {
 		thr_alarm_catcher->join();
 	}
 	
-	thr_timekeeper->cancel();
+	evq_timekeeper->push_quit();
 	thr_timekeeper->join();
-	thr_listen_udp->cancel();
-	thr_listen_udp->join();
-	thr_sender_udp->cancel();
+	
+	evq_sender_udp->push_quit();
 	thr_sender_udp->join();
 
 	MEMMAN_DELETE(thr_phone_uas);
@@ -425,6 +460,8 @@ main(int argc, char *argv[]) {
 	MEMMAN_DELETE(thr_sender_udp);
 	delete thr_sender_udp;
 
+	MEMMAN_DELETE(ab_local);
+	delete ab_local;
 	MEMMAN_DELETE(call_history);
 	delete call_history;
 
@@ -449,6 +486,10 @@ main(int argc, char *argv[]) {
 	delete evq_trans_layer;
 	MEMMAN_DELETE(evq_timekeeper);
 	delete evq_timekeeper;
+	
+	MEMMAN_DELETE(translator);
+	delete translator;
+	translator = NULL;
 
 	// Report memory leaks
 	// Report deletion of log_file and sys_config already to get

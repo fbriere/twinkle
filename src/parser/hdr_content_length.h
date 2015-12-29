@@ -33,9 +33,7 @@ public:
 	t_hdr_content_length();
 	void set_length(int l);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

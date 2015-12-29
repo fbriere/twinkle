@@ -19,23 +19,11 @@
 #include "definitions.h"
 #include "hdr_mime_version.h"
 
-t_hdr_mime_version::t_hdr_mime_version() : t_header() {};
+t_hdr_mime_version::t_hdr_mime_version() : t_header("MIME-Version") {};
 
 void t_hdr_mime_version::set_version(const string &v) {
 	populated = true;
 	version = v;
-}
-
-string t_hdr_mime_version::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "MIME-Version: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
 }
 
 string t_hdr_mime_version::encode_value(void) const {
@@ -43,13 +31,3 @@ string t_hdr_mime_version::encode_value(void) const {
 
 	return version;
 }
-
-string t_hdr_mime_version::encode_env(void) const {
-	string s;
-
-	s = "SIP_MIME_VERSION=";
-	s += encode_value();
-	
-	return s;
-}
-	

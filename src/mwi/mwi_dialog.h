@@ -16,14 +16,20 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef _GUI_UTIL_H
-#define _GUI_UTIL_H
+#ifndef _MWI_DIALOG_H
+#define _MWI_DIALOG_H
 
-#include <string>
-#include "qstring.h"
+#include "mwi.h"
+#include "subscription_dialog.h"
 
-using namespace std;
+// Forward declaration
+class t_phone_user;
 
-QString str2qstr(const string &s);
+class t_mwi_dialog : public t_subscription_dialog {
+public:
+	t_mwi_dialog(t_phone_user *_phone_user);
+	
+	virtual t_mwi_dialog *copy(void);
+};
 
 #endif

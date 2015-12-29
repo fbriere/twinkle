@@ -20,6 +20,7 @@
 #define _PROTOCOL_H
 
 #include "twinkle_config.h"
+#include "parser/hdr_supported.h"
 
 #define CRLF		"\r\n"
 
@@ -27,7 +28,16 @@
 #define PRODUCT_NAME	"Twinkle"
 #define PRODUCT_VERSION	VERSION
 
-typedef unsigned short	t_dialog_id;
+// Anonymous calling
+#define ANONYMOUS_DISPLAY	"Anonymous"
+#define ANONYMOUS_URI		"sip:anonymous@anonymous.invalid"
+
+// Call transfer types
+enum t_transfer_type {
+	TRANSFER_BASIC,		// Basic transfer (blind)
+	TRANSFER_CONSULT,	// Transfer with consultation (possibly attended)
+	TRANSFER_OTHER_LINE	// Transfer call to other line
+};
 
 // State of a call transfer at the referrer.
 enum t_refer_state {
@@ -137,6 +147,10 @@ enum t_stun_timer {
 // This situation is not defined by RFC 3261
 #define DUR_CANCEL_GUARD	(64 * DURATION_T1)
 
+// MWI timers (s)
+#define DUR_MWI(u)		((u)->get_mwi_subscription_time())
+#define DUR_MWI_FAILURE		30
+
 // RFC 3261 14.1
 // Maximum values (10th of sec) for timers for retrying a re-INVITE after
 // a glare (491 response).
@@ -162,6 +176,10 @@ enum t_stun_timer {
 
 // Minimum duration of a subscription
 #define MIN_DUR_SUBSCRIPTION	60
+
+// Duration to wait before re-subscribing after termination of
+// a subscription
+#define DUR_RESUBSCRIBE		30
 
 // After an unsubscribe has been sent, a NOTIFY will should come in.
 // In case the NOTIFY does not come, this guard timer (ms) will assure
@@ -223,7 +241,11 @@ enum t_stun_timer {
 				}
 
 // Set Supported header with supported extensions
-#define SET_HDR_SUPPORTED(h)	{ (h).set_empty(); }
+#define SET_HDR_SUPPORTED(h, u)	{ if ((u)->get_ext_replaces()) {\
+					(h).add_feature(EXT_REPLACES);\
+				  }\
+				  (h).add_feature(EXT_NOREFERSUB);\
+				}
 
 // Set Accept header with accepted body types
 #define SET_HDR_ACCEPT(h)	{ (h).add_media(t_media("application",\
@@ -248,5 +270,13 @@ enum t_stun_timer {
 // Set Organization header
 #define SET_HDR_ORGANIZATION(h, u)	{ if ((u)->get_organization() != "") {\
 					(h).set_name((u)->get_organization()); }}
+
+// Check if an event is supported by Twinkle				
+#define SIP_EVENT_SUPPORTED(e)	((e) == SIP_EVENT_REFER ||\
+				 (e) == SIP_EVENT_MSG_SUMMARY)
+
+// Add the supported events to the Allow-Events header
+#define ADD_SUPPORTED_SIP_EVENTS(h)	{ (h).add_event_type(SIP_EVENT_REFER);\
+					  (h).add_event_type(SIP_EVENT_MSG_SUMMARY); }
 
 #endif

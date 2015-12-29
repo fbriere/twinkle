@@ -275,7 +275,7 @@ bool t_service::read_config(string &error_msg) {
 		// Skip comment lines
 		if (line[0] == '#') continue;
 
-		list<string> l = split_on_first(line, '=');
+		vector<string> l = split_on_first(line, '=');
 		if (l.size() != 2) {
 			error_msg = "Syntax error in file ";
 			error_msg += f;
@@ -287,8 +287,8 @@ bool t_service::read_config(string &error_msg) {
 			return false;
 		}
 
-		string parameter = trim(l.front());
-		string value = trim(l.back());
+		string parameter = trim(l[0]);
+		string value = trim(l[1]);
 		
 		if (parameter == FLD_CF_ALWAYS) {
 			ui->expand_destination(user_config, value, display_url);

@@ -46,9 +46,7 @@ public:
 	// Add a language to the list of accepted media
 	void add_language(const t_language &language);
 
-	string encode(void) const;
 	string encode_value(void) const;
-	string encode_env(void) const;
 };
 
 #endif

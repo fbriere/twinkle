@@ -17,17 +17,18 @@
 */
 
 #include "audio_device.h"
+#include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
 #include "sys_settings.h"
+#include "translator.h"
 #include "log.h"
 #include "userintf.h"
 #include "util.h"
 #include "audits/memman.h"
-#include <iostream>
 
 #ifdef HAVE_LIBASOUND
 #include <alsa/asoundlib.h>
@@ -62,6 +63,18 @@ t_audio_io* t_audio_io::open(const t_audio_device& dev, bool playback, bool capt
 		delete aio;
 		return 0L;
 	}
+}
+
+bool t_audio_io::validate(const t_audio_device& dev, bool playback, bool capture) {
+	t_audio_io *aio = open(dev, playback, capture, false, 2, SAMPLEFORMAT_S16, 8000, true);
+	
+	if (aio) {
+		MEMMAN_DELETE(aio);
+		delete aio;
+		return true;
+	}
+	
+	return false;
 }
 
 t_audio_io::~t_audio_io() {}
@@ -146,7 +159,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 			msg += strerror(errno);
 			log_file->write_report(msg, "t_oss_io::open",
 				LOG_NORMAL, LOG_CRITICAL);
-			ui->cb_display_msg("Sound card cannot be set to full duplex.",
+			ui->cb_display_msg(TRANSLATE("Sound card cannot be set to full duplex."),
 				MSG_CRITICAL);
 			close(fd);
 			return false;
@@ -183,7 +196,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_display_msg("Cannot set buffer size on sound card.",
+		ui->cb_display_msg(TRANSLATE("Cannot set buffer size on sound card."),
 			MSG_CRITICAL);
 		close(fd);
 		return false;
@@ -196,9 +209,8 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		msg = "Sound card cannot be set to ";
-		msg += int2str(channels);
-		msg += " channels.";
+		msg = TRANSLATE("Sound card cannot be set to %1 channels.");
+		msg = replace_first(msg, "%1", int2str(channels));
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
@@ -207,8 +219,8 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 			"t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		string msg = "Sound card cannot be set to ";
-		msg += int2str(channels);
-		msg += " channels.";
+		msg = TRANSLATE("Sound card cannot be set to %1 channels.");
+		msg = replace_first(msg, "%1", int2str(channels));
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
@@ -245,7 +257,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_display_msg("Cannot set sound card to 16 bits recording.",
+		ui->cb_display_msg(TRANSLATE("Cannot set sound card to 16 bits recording."),
 			MSG_CRITICAL);
 		return false;
 	}
@@ -257,7 +269,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		ui->cb_display_msg("Cannot set sound card to 16 bits playing.",
+		ui->cb_display_msg(TRANSLATE("Cannot set sound card to 16 bits playing."),
 			MSG_CRITICAL);
 		return false;
 	}
@@ -270,8 +282,8 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 		msg += strerror(errno);
 		log_file->write_report(msg, "t_oss_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
-		msg = "Cannot set sound card sample rate to ";
-		msg += int2str(sample_rate);
+		msg = TRANSLATE("Cannot set sound card sample rate to %1");
+		msg = replace_first(msg, "%1", int2str(sample_rate));
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
 	}
@@ -404,7 +416,7 @@ bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blo
 	snd_pcm_t* pcm_ptr;
 	
 #define HANDLE_ALSA_ERROR(func) string msg(func); msg += " failed: "; msg += snd_strerror(err); \
-	log_file->write_report(msg, "t_alsa_io::open", LOG_NORMAL, LOG_CRITICAL); msg = "Opening ALSA driver failed: " + msg; \
+	log_file->write_report(msg, "t_alsa_io::open", LOG_NORMAL, LOG_CRITICAL); msg = TRANSLATE("Opening ALSA driver failed") + ": " + msg; \
 	ui->cb_display_msg(msg, MSG_CRITICAL); if(pcm_ptr) snd_pcm_close(pcm_ptr); return false;
 	
 	mode = SND_PCM_NONBLOCK;
@@ -418,8 +430,13 @@ open_again:
 		log_file->write_report(msg, "t_alsa_io::open",
 			LOG_NORMAL, LOG_CRITICAL);
 		msg = "Cannot open ALSA driver for PCM ";
-		if (playback) msg += "playback: ";
-		else msg += "capture: ";
+
+		if (playback) {
+			msg = TRANSLATE("Cannot open ALSA driver for PCM playback");
+		} else {
+			msg = TRANSLATE("Cannot open ALSA driver for PCM playback");
+		}
+		msg += ": ";
 		msg += snd_strerror(err);
 		ui->cb_display_msg(msg, MSG_CRITICAL);
 		return false;
@@ -840,7 +857,8 @@ int t_alsa_io::write(const unsigned char* buf, int len) {
 // This function fills the specified list with ALSA hardware soundcards found on the system.
 // It uses plughw:xx instead of hw:xx for specifiers, because hw:xx are not practical to
 // use (e.g. they require a resampler/channel mixer in the application).
-void alsa_fill_soundcards(list<t_audio_device>& l)
+// playback indicates if a list with playback or capture devices should be created.
+void alsa_fill_soundcards(list<t_audio_device>& l, bool playback)
 {
 	int err = 0;
 	int card = -1, device = -1;
@@ -870,7 +888,13 @@ void alsa_fill_soundcards(list<t_audio_device>& l)
 
 				snd_pcm_info_set_device(pcminfo, device);
 				snd_pcm_info_set_subdevice(pcminfo, 0);
-				snd_pcm_info_set_stream(pcminfo, SND_PCM_STREAM_PLAYBACK);
+				
+				if (playback) {
+					snd_pcm_info_set_stream(pcminfo, SND_PCM_STREAM_PLAYBACK);
+				} else {
+					snd_pcm_info_set_stream(pcminfo, SND_PCM_STREAM_CAPTURE);
+				}
+				
 				if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) continue;
 
 				t_audio_device dev;

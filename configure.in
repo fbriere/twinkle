@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ilbc-cpp,
 	AC_HELP_STRING([--enable-ilbc-cpp], [your ilbc library is built for C++ instead of C]),
 	[ac_cv_ilbc_cpp=$enableval], [ac_cv_ilbc_cpp=no])
 
-AM_INIT_AUTOMAKE(twinkle,0.9)
-AC_DEFINE(VERSION_DATE,["October 1 2006"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,"1.0beta")
+AC_DEFINE(VERSION_DATE,["December 29 2006"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP
@@ -134,6 +134,15 @@ else
 	AC_PREFIX_DEFAULT(${prefix:-/usr/local})
 fi
 
+# Check for libbbind or libresolv. libbind is preferred as libresolv gives
+# GLIBC_PRIVATE on Fedora.
+AC_CHECK_LIB(bind, main, [
+	LIBS="-lbind $LIBS"
+	echo "LIBS += -lbind" >> $QT_INCL_PRO],
+	[
+	LIBS="-lresolv $LIBS"
+	echo "LIBS += -lresolv" >> $QT_INCL_PRO])
+
 # Check if sndfile library is available
 AC_CHECK_HEADER(sndfile.h, [],
 	[AC_MSG_ERROR([sndfile header files missing (libsndfile-devel package)])])
@@ -200,11 +209,17 @@ else
 	have_zrtp="no"
 fi
 
-# Check if boost is available
+# Check if boost regex is available
 AC_CHECK_HEADER(boost/regex.h, [],
 	[AC_MSG_ERROR([boost/regex.h missing (boost-devel package)])])
-AC_CHECK_LIB(boost_regex, main, [], 
-	[AC_MSG_ERROR([libboost_regex library is missing (boost package).])])
+AC_CHECK_LIB(boost_regex, main, [
+	LIBS="-lboost_regex $LIBS"
+	echo "LIBS += -lboost_regex" >> $QT_INCL_PRO], 
+	[
+	AC_CHECK_LIB(boost_regex-gcc, main, [
+		LIBS="-lboost_regex-gcc $LIBS"
+		echo "LIBS += -lboost_regex-gcc" >> $QT_INCL_PRO],
+		[AC_MSG_ERROR([libboost_regex library is missing (boost package).])])])
 
 	
 $QTDIR/bin/qmake -o src/gui/Makefile src/gui/twinkle.pro
@@ -219,6 +234,7 @@ AC_SUBST(PARSER_CXXFLAGS)
 AC_OUTPUT(Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile \
 	src/audits/Makefile src/sdp/Makefile src/parser/Makefile \
 	src/sockets/Makefile src/stun/Makefile src/threads/Makefile \
+	src/gui/lang/Makefile src/mwi/Makefile \
 	twinkle.spec)
 	
 AC_MSG_RESULT([])

@@ -23,6 +23,7 @@
 #define _SUB_REFER_H
 
 #include "subscription.h"
+#include "dialog.h"
 
 // State of reference as seen by the referrer
 enum t_sub_refer_result {
@@ -41,6 +42,8 @@ private:
 
 	// Current substate of the notification
 	string			current_substate;
+	
+	t_dialog *get_dialog(void) const;
 
 public:
 	t_sub_refer(t_dialog *_dialog, t_subscription_role _role);
@@ -58,8 +61,6 @@ public:
 	bool recv_subscribe(t_request *r, t_tuid tuid, t_tid tid);
 
 	bool timeout(t_subscribe_timer timer);
-
-	void refresh_subscribe(void);
 
 	t_sub_refer_result get_sr_result(void) const;
 };

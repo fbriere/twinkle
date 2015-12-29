@@ -19,36 +19,15 @@
 #include "definitions.h"
 #include "hdr_priority.h"
 
-t_hdr_priority::t_hdr_priority() : t_header() {};
+t_hdr_priority::t_hdr_priority() : t_header("Priority") {};
 
 void t_hdr_priority::set_priority(const string &p) {
 	populated = true;
 	priority = p;
 }
 
-string t_hdr_priority::encode(void) const {
-	string s;
-
-	if (!populated) return s;
-
-	s = "Priority: ";
-	s += encode_value();
-	s += CRLF;
-	
-	return s;
-}
-
 string t_hdr_priority::encode_value(void) const {
 	if (!populated) return "";
 
 	return priority;
-}
-
-string t_hdr_priority::encode_env(void) const {
-	string s;
-	
-	s = "SIP_PRIORITY=";
-	s += encode_value();
-	
-	return s;
 }

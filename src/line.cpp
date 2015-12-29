@@ -71,6 +71,7 @@ string t_call_info::get_from_display_presentation(void) const {
 ///////////
 // Private
 ///////////
+
 t_dialog *t_line::match_response(t_response *r,
 		const list<t_dialog *> &l) const
 {
@@ -93,25 +94,37 @@ t_dialog *t_line::match_response(StunMessage *r, t_tuid tuid,
 	return NULL;
 }
 
-t_dialog *t_line::get_dialog(t_dialog_id did) const {
+t_dialog *t_line::match_call_id_tags(const string &call_id,
+		const string &to_tag, const string &from_tag,
+		const list<t_dialog *> &l) const
+{
+	list<t_dialog *>::const_iterator i;
+	for (i = l.begin(); i != l.end(); i++) {
+		if ((*i)->match(call_id, to_tag, from_tag)) return *i;
+	}
+
+	return NULL;
+}
+
+t_dialog *t_line::get_dialog(t_object_id did) const {
 	list<t_dialog *>::const_iterator i;
 
 	if (did == 0) return NULL;
 
-	if (open_dialog && open_dialog->get_id() == did) {
+	if (open_dialog && open_dialog->get_object_id() == did) {
 		return open_dialog;
 	}
 
-	if (active_dialog && active_dialog->get_id() == did) {
+	if (active_dialog && active_dialog->get_object_id() == did) {
 		return active_dialog;
 	}
 
 	for (i = pending_dialogs.begin(); i != pending_dialogs.end(); i++) {
-		if ((*i)->get_id() == did) return *i;
+		if ((*i)->get_object_id() == did) return *i;
 	}
 
 	for (i = dying_dialogs.begin(); i != dying_dialogs.end(); i++) {
-		if ((*i)->get_id() == did) return *i;
+		if ((*i)->get_object_id() == did) return *i;
 	}
 
 	return NULL;
@@ -168,11 +181,14 @@ void t_line::cleanup(void) {
 		open_dialog = NULL;
 	}
 
-	if (active_dialog && active_dialog->get_state() == DS_CONFIRMED_SUB) {
-		// The calls have been released but a subscription is
-		// still active.
-		// TODO: a line with this state should go to the background?
-		substate = LSSUB_RELEASING;
+	if (active_dialog) {
+		if (active_dialog->get_state() == DS_CONFIRMED_SUB) {
+			// The calls have been released but a subscription is
+			// still active.
+			substate = LSSUB_RELEASING;
+		} else if (active_dialog->will_release()) {
+			substate = LSSUB_RELEASING;
+		}
 	}
 
 	for (i = pending_dialogs.begin(); i != pending_dialogs.end(); i++) {
@@ -195,15 +211,22 @@ void t_line::cleanup(void) {
 
 	if (!open_dialog && !active_dialog && pending_dialogs.size() == 0) {
 		state = LS_IDLE;
-		substate = LSSUB_IDLE;
+		
+		if (keep_seized) {
+			substate = LSSUB_SEIZED;
+		} else {
+			substate = LSSUB_IDLE;
+		}
+		
 		is_on_hold = false;
 		is_muted = false;
+		hide_user = false;
+		cleanup_transfer_consult_state();
 		try_to_encrypt = false;
 		auto_answer = false;
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
-		phone->line_cleared(line_number);
 		user_config = NULL;
 		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
@@ -227,14 +250,21 @@ void t_line::cleanup_open_pending(void) {
 	if (!active_dialog) {
 		is_on_hold = false;
 		is_muted = false;
+		hide_user = false;
+		cleanup_transfer_consult_state();
 		try_to_encrypt = false;
 		auto_answer = false;
 		state = LS_IDLE;
-		substate = LSSUB_IDLE;
+		
+		if (keep_seized) {
+			substate = LSSUB_SEIZED;
+		} else {
+			substate = LSSUB_IDLE;
+		}
+
 		call_info.clear();
 		call_history->add_call_record(call_hist_record);
 		call_hist_record.renew();
-		phone->line_cleared(line_number);
 		user_config = NULL;
 		user_defined_ringtone.clear();
 		ui->cb_line_state_changed();
@@ -274,16 +304,32 @@ void t_line::cleanup_forced(void) {
 
 	state = LS_IDLE;
 	substate = LSSUB_IDLE;
+	keep_seized = false;
 	is_on_hold = false;
 	is_muted = false;
+	hide_user = false;
+	cleanup_transfer_consult_state();
 	auto_answer = false;
 	call_info.clear();
 	call_history->add_call_record(call_hist_record);
 	call_hist_record.renew();
-	phone->line_cleared(line_number);
 	user_config = NULL;
 	user_defined_ringtone.clear();
 	ui->cb_line_state_changed();
+}
+
+void t_line::cleanup_transfer_consult_state(void) {
+	if (is_transfer_consult) {
+		t_line *from_line = phone->get_line(consult_transfer_from_line);
+		from_line->set_to_be_transferred(false, 0);
+		is_transfer_consult = false;
+	}
+	
+	if (to_be_transferred) {
+		t_line *to_line = phone->get_line(consult_transfer_to_line);
+		to_line->set_is_transfer_consult(false, 0);
+		to_be_transferred = false;
+	}
 }
 
 
@@ -291,9 +337,9 @@ void t_line::cleanup_forced(void) {
 // Public
 ///////////
 
-t_line::t_line(t_phone *_phone, unsigned short _line_number) {
-	assert(_line_number < NUM_LINES);
-
+t_line::t_line(t_phone *_phone, unsigned short _line_number) : 
+	t_id_object()
+{
 	// NOTE: The rtp_port attribute can only be initialized when
 	//       a user profile has been selected.
 
@@ -304,6 +350,9 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	active_dialog = NULL;
 	is_on_hold = false;
 	is_muted = false;
+	hide_user = false;
+	is_transfer_consult = false;
+	to_be_transferred = false;
 	try_to_encrypt = false;
 	auto_answer = false;
 	line_number = _line_number;
@@ -311,6 +360,7 @@ t_line::t_line(t_phone *_phone, unsigned short _line_number) {
 	id_no_answer = 0;
 	user_config = NULL;
 	user_defined_ringtone.clear();
+	keep_seized = false;
 }
 
 t_line::~t_line() {
@@ -355,7 +405,7 @@ t_refer_state t_line::get_refer_state(void) const {
 	return REFST_NULL;
 }
 
-void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
+void t_line::start_timer(t_line_timer timer, t_object_id did) {
 	t_tmr_line	*t;
 	t_dialog	*dialog = get_dialog(did);
 	unsigned long	dur;
@@ -372,34 +422,34 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 				dialog->dur_ack_timeout = DURATION_T2;
 			}
 		}
-		t = new t_tmr_line(dialog->dur_ack_timeout , timer, this,
+		t = new t_tmr_line(dialog->dur_ack_timeout , timer, get_object_id(),
 					did);
 		MEMMAN_NEW(t);
-		dialog->id_ack_timeout = t->get_id();
+		dialog->id_ack_timeout = t->get_object_id();
 		break;
 	case LTMR_ACK_GUARD:
 		assert(dialog);
 		// RFC 3261 13.3.1.4
-		t = new t_tmr_line(64 * DURATION_T1, timer, this, did);
+		t = new t_tmr_line(64 * DURATION_T1, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		dialog->id_ack_guard = t->get_id();
+		dialog->id_ack_guard = t->get_object_id();
 		break;
 	case LTMR_INVITE_COMP:
 		// RFC 3261 13.2.2.4
-		t = new t_tmr_line(64 * DURATION_T1, timer, this, did);
+		t = new t_tmr_line(64 * DURATION_T1, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		id_invite_comp = t->get_id();
+		id_invite_comp = t->get_object_id();
 		break;
 	case LTMR_NO_ANSWER:
-		t = new t_tmr_line(DUR_NO_ANSWER(user_config), timer, this, did);
+		t = new t_tmr_line(DUR_NO_ANSWER(user_config), timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		id_no_answer = t->get_id();
+		id_no_answer = t->get_object_id();
 		break;
 	case LTMR_RE_INVITE_GUARD:
 		assert(dialog);
-		t = new t_tmr_line(DUR_RE_INVITE_GUARD, timer, this, did);
+		t = new t_tmr_line(DUR_RE_INVITE_GUARD, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		dialog->id_re_invite_guard = t->get_id();
+		dialog->id_re_invite_guard = t->get_object_id();
 		break;
 	case LTMR_GLARE_RETRY:
 		assert(dialog);
@@ -408,9 +458,9 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 		} else {
 			dur = DUR_GLARE_RETRY_NOT_OWN;
 		}
-		t = new t_tmr_line(dur, timer, this, did);
+		t = new t_tmr_line(dur, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		dialog->id_glare_retry = t->get_id();
+		dialog->id_glare_retry = t->get_object_id();
 		break;
 	case LTMR_100REL_TIMEOUT:
 		assert(dialog);
@@ -420,23 +470,23 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 		} else {
 			dialog->dur_100rel_timeout *= 2;
 		}
-		t = new t_tmr_line(dialog->dur_100rel_timeout , timer, this,
+		t = new t_tmr_line(dialog->dur_100rel_timeout , timer, get_object_id(),
 					did);
 		MEMMAN_NEW(t);
-		dialog->id_100rel_timeout = t->get_id();
+		dialog->id_100rel_timeout = t->get_object_id();
 		break;
 	case LTMR_100REL_GUARD:
 		assert(dialog);
 		// RFC 3262 3
-		t = new t_tmr_line(DUR_100REL_GUARD, timer, this, did);
+		t = new t_tmr_line(DUR_100REL_GUARD, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		dialog->id_100rel_guard = t->get_id();
+		dialog->id_100rel_guard = t->get_object_id();
 		break;
 	case LTMR_CANCEL_GUARD:
 		assert(dialog);
-		t = new t_tmr_line(DUR_CANCEL_GUARD, timer, this, did);
+		t = new t_tmr_line(DUR_CANCEL_GUARD, timer, get_object_id(), did);
 		MEMMAN_NEW(t);
-		dialog->id_cancel_guard = t->get_id();
+		dialog->id_cancel_guard = t->get_object_id();
 		break;		
 	default:
 		assert(false);
@@ -447,8 +497,8 @@ void t_line::start_timer(t_line_timer timer, t_dialog_id did) {
 	delete t;
 }
 
-void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
-	unsigned short	*id;
+void t_line::stop_timer(t_line_timer timer, t_object_id did) {
+	t_object_id	*id;
 	t_dialog	*dialog = get_dialog(did);
 
 	switch(timer) {
@@ -506,13 +556,16 @@ void t_line::stop_timer(t_line_timer timer, t_dialog_id did) {
 }
 
 void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
-		const string &subject)
+		const string &subject, bool anonymous)
 {
-	invite(user, to_uri, to_display, subject, t_hdr_referred_by());
+	invite(user, to_uri, to_display, subject, t_hdr_referred_by(), 
+			t_hdr_replaces(), t_hdr_require(), anonymous);
 }
 
 void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
-		const string &subject, const t_hdr_referred_by &hdr_referred_by)
+		const string &subject, const t_hdr_referred_by &hdr_referred_by,
+		const t_hdr_replaces &hdr_replaces,
+		const t_hdr_require &hdr_require, bool anonymous)
 {
 	assert(user);
 	
@@ -523,10 +576,17 @@ void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 
 	assert(!open_dialog);
 	
+	// Validate speaker and mic
+	string error_msg;
+	if (!sys_config->exec_audio_validation(false, true, true, error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		return;
+	}
+	
 	user_config = user;
 
-	call_info.from_uri = create_user_uri();
-	call_info.from_display = user_config->get_display();
+	call_info.from_uri = create_user_uri(); // NOTE: hide_user is not set yet
+	call_info.from_display = user_config->get_display(false);
 	call_info.from_organization = user_config->get_organization();
 	call_info.to_uri = to_uri;
 	call_info.to_display = to_display;
@@ -538,11 +598,13 @@ void t_line::invite(t_user *user, const t_url &to_uri, const string &to_display,
 
 	state = LS_BUSY;
 	substate = LSSUB_OUTGOING_PROGRESS;
+	hide_user = anonymous;
 	ui->cb_line_state_changed();
 
 	open_dialog = new t_dialog(this);
 	MEMMAN_NEW(open_dialog);
-	open_dialog->send_invite(to_uri, to_display, subject, hdr_referred_by);
+	open_dialog->send_invite(to_uri, to_display, subject, hdr_referred_by, 
+			hdr_replaces, hdr_require, anonymous);
 
 	cleanup();
 }
@@ -551,6 +613,13 @@ void t_line::answer(void) {
 	// Ignore if line is idle
 	if (state == LS_IDLE) return;
 	assert(active_dialog);
+	
+	// Validate speaker and mic
+	string error_msg;
+	if (!sys_config->exec_audio_validation(false, true, true, error_msg)) {
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		return;
+	}
 
 	stop_timer(LTMR_NO_ANSWER);
 
@@ -610,6 +679,12 @@ void t_line::end_call(void) {
 		ui->cb_line_state_changed();
 		ui->cb_stop_call_notification(line_number);
 		active_dialog->send_bye();
+		
+		// If the line was part of a transfer with consultation,
+		// then clean the consultation state as the transfer cannot
+		// proceed anymore.
+		cleanup_transfer_consult_state();
+		
 		cleanup();
 		return;
 	}
@@ -624,19 +699,23 @@ void t_line::end_call(void) {
 		ui->cb_line_state_changed();
 		ui->cb_stop_call_notification(line_number);
 		open_dialog->send_cancel(!pending_dialogs.empty());
+		
+		// Make sure dialog is terminated if CANCEL glares with
+		// 2XX on INVITE.
+		for (list<t_dialog *>::iterator i = pending_dialogs.begin();
+		     i != pending_dialogs.end(); i++)
+		{
+			(*i)->set_end_after_2xx_invite(true);
+		}
+		
 		cleanup();
 		return;
 	}
 
-	// TODO:
+	// NOTE:
 	// The call is only ended for real when the dialog reaches
 	// the DS_TERMINATED state, i.e. a 200 OK on BYE is received
 	// or a 487 TERMINATED on INVITE is received.
-	// If the CANCEL glares with a 200 OK on INVITE the call will
-	// not be ended at all.
-	// The dialog should get some stale state such that a new
-	// call can be setup while the old call is terminated in a
-	// proper way. Maybe add to dying_dialogs.
 }
 
 void t_line::send_dtmf(char digit, bool inband, bool info) {
@@ -678,6 +757,22 @@ void t_line::retrieve(void) {
 		ui->cb_line_state_changed();
 		cleanup();
 		return;
+	}
+}
+
+void t_line::kill_rtp(void) {
+	if (active_dialog) active_dialog->kill_rtp();
+	
+	for (list<t_dialog *>::iterator i = pending_dialogs.begin();
+		     i != pending_dialogs.end(); i++)
+	{
+		(*i)->kill_rtp();
+	}
+	
+	for (list<t_dialog *>::iterator i = dying_dialogs.begin();
+		     i != dying_dialogs.end(); i++)
+	{
+		(*i)->kill_rtp();
 	}
 }
 
@@ -828,6 +923,18 @@ void t_line::recvd_redirect(t_response *r, t_tuid tuid, t_tid tid) {
 				// Redirection not allowed/failed
 				active_dialog->recvd_response(r, tuid, tid);
 			}
+			
+			// Retrieve a held line after a REFER failure
+			if (r->hdr_cseq.method == REFER &&
+			    active_dialog->out_refer_req_failed)
+			{
+				active_dialog->out_refer_req_failed = false;
+				if (phone->get_active_line() == line_number &&
+				    user_config->get_referrer_hold()) 
+				{
+					retrieve();
+				}
+			}
 		}
 
 		cleanup();
@@ -947,6 +1054,18 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 						recvd_response(r, tuid, tid);
 				}
 			}
+			
+			// Retrieve a held line after a REFER failure
+			if (r->hdr_cseq.method == REFER &&
+			    active_dialog->out_refer_req_failed)
+			{
+				active_dialog->out_refer_req_failed = false;
+				if (phone->get_active_line() == line_number &&
+				    user_config->get_referrer_hold()) 
+				{
+					retrieve();
+				}
+			}
 		}
 
 		cleanup();
@@ -966,9 +1085,8 @@ void t_line::recvd_client_error(t_response *r, t_tuid tuid, t_tid tid) {
 			} else {
 				d->recvd_response(r, tuid, tid);
 			}
-		}
-		
-		if (r->hdr_cseq.method == INVITE) {
+		} else {
+			d->recvd_response(r, tuid, tid);
 			pending_dialogs.remove(d);
 			MEMMAN_DELETE(d);
 			delete d;
@@ -1139,6 +1257,18 @@ void t_line::recvd_server_error(t_response *r, t_tuid tuid, t_tid tid) {
 					// Request failed
 					active_dialog->
 						recvd_response(r, tuid, tid);
+				}
+			}
+			
+			// Retrieve a held line after a REFER failure
+			if (r->hdr_cseq.method == REFER &&
+			    active_dialog->out_refer_req_failed)
+			{
+				active_dialog->out_refer_req_failed = false;
+				if (phone->get_active_line() == line_number &&
+				    user_config->get_referrer_hold()) 
+				{
+					retrieve();
 				}
 			}
 		}
@@ -1333,7 +1463,15 @@ void t_line::recvd_invite(t_user *user, t_request *r, t_tid tid, const string &r
 		cleanup();
 		
 		// Answer if auto answer mode is activated
-		if (auto_answer) answer();
+		if (auto_answer) {
+			// Validate speaker and mic
+			string error_msg;
+			if (!sys_config->exec_audio_validation(false, true, true, error_msg)) {
+				ui->cb_display_msg(error_msg, MSG_CRITICAL);
+			} else {
+				answer();
+			}
+		}
 		break;
 	case LS_BUSY:
 		// Only re-INVITEs can be sent to a busy line
@@ -1504,6 +1642,13 @@ bool t_line::recvd_refer(t_request *r, t_tid tid) {
 	return retval;
 }
 
+void t_line::recvd_refer_permission(bool permission, t_request *r) {
+	if (active_dialog && active_dialog->match_request(r)) {
+		active_dialog->recvd_refer_permission(permission, r);
+	}
+	cleanup();
+}
+
 void t_line::recvd_stun_resp(StunMessage *r, t_tuid tuid, t_tid tid) {
 	t_dialog *d;
 
@@ -1538,12 +1683,7 @@ void t_line::failure(t_failure failure, t_tid tid) {
 	// TODO
 }
 
-void t_line::timeout(t_line_timer timer, t_dialog_id did) {
-	// This method is called by the timekeeper thread, so lock
-	// the phone (transaction layer) to prevent race conditions.
-
-	phone->lock();
-
+void t_line::timeout(t_line_timer timer, t_object_id did) {
 	t_dialog *dialog = get_dialog(did);
 	list<t_display_url> cf_dest; // call forwarding destinations
 
@@ -1637,26 +1777,17 @@ void t_line::timeout(t_line_timer timer, t_dialog_id did) {
 	}
 
 	cleanup();
-
-	phone->unlock();
 }
 
-void t_line::timeout_sub(t_subscribe_timer timer, t_dialog_id did,
+void t_line::timeout_sub(t_subscribe_timer timer, t_object_id did,
 		const string &event_type, const string &event_id)
 {
-	// This method is called by the timekeeper thread, so lock
-	// the phone (transaction layer) to prevent race conditions.
-
-	phone->lock();
-
 	t_dialog *dialog = get_dialog(did);
 	if (dialog) dialog->timeout_sub(timer, event_type, event_id);
 	cleanup();
-
-	phone->unlock();
 }
 
-bool t_line::match(t_response *r, t_tuid tuid) {
+bool t_line::match(t_response *r, t_tuid tuid) const {
 	if (open_dialog && open_dialog->match_response(r, tuid)) {
 		return true;
 	}
@@ -1676,12 +1807,12 @@ bool t_line::match(t_response *r, t_tuid tuid) {
 	return false;
 }
 
-bool t_line::match(t_request *r) {
+bool t_line::match(t_request *r) const {
 	assert(r->method != CANCEL);
 	return (active_dialog && active_dialog->match_request(r));
 }
 
-bool t_line::match_cancel(t_request *r, t_tid target_tid) {
+bool t_line::match_cancel(t_request *r, t_tid target_tid) const {
 	assert(r->method == CANCEL);
 
 	// A CANCEL matches a dialog if the target tid equals the tid
@@ -1689,7 +1820,7 @@ bool t_line::match_cancel(t_request *r, t_tid target_tid) {
 	return (active_dialog && active_dialog->match_cancel(r, target_tid));
 }
 
-bool t_line::match(StunMessage *r, t_tuid tuid) {
+bool t_line::match(StunMessage *r, t_tuid tuid) const {
 	if (open_dialog && open_dialog->match_response(r, tuid)) {
 		return true;
 	}
@@ -1709,6 +1840,27 @@ bool t_line::match(StunMessage *r, t_tuid tuid) {
 	return false;
 }
 
+bool t_line::match_replaces(const string &call_id, const string &to_tag, 
+		const string &from_tag, bool &early_matched) const
+{
+	if (active_dialog && active_dialog->match(call_id, to_tag, from_tag)) {
+		early_matched = false;
+		return true;
+	}
+
+	// RFC 3891 3
+	// And early dialog only matches when it was created by the UA
+	t_dialog *d;
+	if ((d = match_call_id_tags(call_id, to_tag, from_tag, 
+		pending_dialogs)) != NULL && d->is_call_id_owner()) 
+	{
+		early_matched = true;
+		return true;
+	}
+
+	return false;
+}
+
 bool t_line::is_invite_retrans(t_request *r) {
 	assert(r->method == INVITE);
 	return (active_dialog && active_dialog->is_invite_retrans(r));
@@ -1720,12 +1872,12 @@ void t_line::process_invite_retrans(void) {
 
 string t_line::create_user_contact(void) const {
 	assert(user_config);
-	return user_config->create_user_contact();
+	return user_config->create_user_contact(hide_user);
 }
 
 string t_line::create_user_uri(void) const {
 	assert(user_config);
-	return user_config->create_user_uri();
+	return user_config->create_user_uri(hide_user);
 }
 
 t_response *t_line::create_options_response(t_request *r, bool in_dialog) const
@@ -1735,6 +1887,9 @@ t_response *t_line::create_options_response(t_request *r, bool in_dialog) const
 }
 
 void t_line::send_response(t_response *r, t_tuid tuid, t_tid tid) {
+	if (hide_user) {
+		r->hdr_privacy.add_privacy(PRIVACY_ID);
+	}
 	phone->send_response(r, tuid, tid);
 }
 
@@ -1757,6 +1912,30 @@ bool t_line::get_is_on_hold(void) const {
 
 bool t_line::get_is_muted(void) const {
 	return is_muted;
+}
+
+bool t_line::get_hide_user(void) const {
+	return hide_user;
+}
+
+bool t_line::get_is_transfer_consult(unsigned short &lineno) const {
+	lineno = consult_transfer_from_line;
+	return is_transfer_consult;
+}
+
+void t_line::set_is_transfer_consult(bool enable, unsigned short lineno) {
+	is_transfer_consult = enable;
+	consult_transfer_from_line = lineno;
+}
+
+bool t_line::get_to_be_transferred(unsigned short &lineno) const {
+	lineno = consult_transfer_to_line;
+	return to_be_transferred;
+}
+
+void t_line::set_to_be_transferred(bool enable, unsigned short lineno) {
+	to_be_transferred = enable;
+	consult_transfer_to_line = lineno;
 }
 
 bool t_line::get_is_encrypted(void) const {
@@ -1785,6 +1964,46 @@ bool t_line::is_refer_succeeded(void) const {
 bool t_line::has_media(void) const {
 	t_session *session = get_session();
 	return (session && !session->receive_host.empty() && !session->dst_rtp_host.empty());
+}
+
+t_url t_line::get_remote_target_uri(void) const {
+	if (!active_dialog) return t_url();
+	return active_dialog->get_remote_target_uri();
+}
+
+string t_line::get_remote_target_display(void) const {
+	if (!active_dialog) return "";
+	return active_dialog->get_remote_target_display();
+}
+
+t_url t_line::get_remote_uri(void) const {
+	if (!active_dialog) return t_url();
+	return active_dialog->get_remote_uri();
+}
+
+string t_line::get_remote_display(void) const {
+	if (!active_dialog) return "";
+	return active_dialog->get_remote_display();
+}
+
+string t_line::get_call_id(void) const {
+	if (!active_dialog) return "";
+	return active_dialog->get_call_id();
+}
+
+string t_line::get_local_tag(void) const {
+	if (!active_dialog) return "";
+	return active_dialog->get_local_tag();
+}
+
+string t_line::get_remote_tag(void) const {
+	if (!active_dialog) return "";
+	return active_dialog->get_remote_tag();
+}
+
+bool t_line::remote_extension_supported(const string &extension) const {
+	if (!active_dialog) return false;
+	return active_dialog->remote_extension_supported(extension);
 }
 
 bool t_line::seize(void) {
@@ -1946,4 +2165,13 @@ void t_line::zrtp_go_clear_ok(void) {
 
 void t_line::force_idle(void) {
 	cleanup_forced();
+}
+
+void t_line::set_keep_seized(bool seize) {
+	keep_seized = seize;
+	cleanup();
+}
+
+bool t_line::get_keep_seized(void) const {
+	return keep_seized;
 }
