@@ -259,6 +259,7 @@ public:
 	
 	// Execute external commands
 	virtual void cmd_call(const string &destination);
+	virtual void cmd_quit(void);
 };
 
 extern t_userintf *ui;

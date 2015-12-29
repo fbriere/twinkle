@@ -256,18 +256,6 @@ int main( int argc, char ** argv )
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
 	
-	// A dedicated thread will catch the SIGALRM signal, therefore
-	// all threads must block SIGALRM. Block SIGALRM now, then all
-	// created threads will inherit the signal mask.
-	// In LinuxThreads the sigwait does not work very well, so
-	// in LinuxThreads a signal handler is used instead.
-	if (!threading_is_LinuxThreads) {
-		sigset_t sigset;
-		sigemptyset(&sigset);
-		sigaddset(&sigset, SIGALRM);
-		sigprocmask(SIG_BLOCK, &sigset, NULL);
-	}
-	
 #ifdef HAVE_KDE
 	KApplication *qa = NULL;
 #else
@@ -570,12 +558,33 @@ int main( int argc, char ** argv )
 		log_msg += "\n";
 		log_file->write_report(log_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
+	
+	// A dedicated thread will catch the SIGALRM signal, therefore
+	// all threads must block SIGALRM. Block SIGALRM now, then all
+	// created threads will inherit the signal mask.
+	// In LinuxThreads the sigwait does not work very well, so
+	// in LinuxThreads a signal handler is used instead.
+	if (!threading_is_LinuxThreads) {
+		sigset_t sigset;
+		sigemptyset(&sigset);
+		sigaddset(&sigset, SIGALRM);
+		sigprocmask(SIG_BLOCK, &sigset, NULL);
+	}
+	
+	// Block SIGINT and SIGTERM as those will be caught by the
+	// signal catcher thread
+	sigset_t sigset;
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigaddset(&sigset, SIGTERM);
+	sigprocmask(SIG_BLOCK, &sigset, NULL);
 				 
 	// Create threads
 	t_thread *thr_sender_udp;
 	t_thread *thr_listen_udp;
 	t_thread *thr_timekeeper;
-	t_thread *thr_signal_catcher;
+	t_thread *thr_alarm_catcher;
+	t_thread *thr_sig_catcher;
 	t_thread *thr_trans_mgr;
 	t_thread *thr_phone_uas;
 	t_thread *thr_listen_cmd = NULL;
@@ -593,11 +602,16 @@ int main( int argc, char ** argv )
 		thr_timekeeper = new t_thread(timekeeper_main, NULL);
 		MEMMAN_NEW(thr_timekeeper);
 		
-		// Signal catcher thread
+		// Alarm catcher thread
 		if (!threading_is_LinuxThreads) {
-			thr_signal_catcher = new t_thread(timekeeper_sigwait, NULL);
-			MEMMAN_NEW(thr_signal_catcher);
+			thr_alarm_catcher = new t_thread(timekeeper_sigwait, NULL);
+				
+		MEMMAN_NEW(thr_alarm_catcher);
 		}
+		
+		// Signal catcher thread
+		thr_sig_catcher = new t_thread(phone_sigwait, NULL);
+		MEMMAN_NEW(thr_sig_catcher);
 
 		// Transaction manager thread
 		thr_trans_mgr = new t_thread(transaction_mgr_main, NULL);
@@ -651,10 +665,16 @@ int main( int argc, char ** argv )
 	thr_phone_uas->join();
 	thr_trans_mgr->cancel();
 	thr_trans_mgr->join();
+	try {
+		thr_sig_catcher->cancel();
+	} catch (int) {
+		// Thread terminated already by itself
+	}
+	thr_sig_catcher->join();
 	
 	if (!threading_is_LinuxThreads) {
-		thr_signal_catcher->cancel();
-		thr_signal_catcher->join();
+		thr_alarm_catcher->cancel();
+		thr_alarm_catcher->join();
 	}
 	
 	thr_timekeeper->cancel();
@@ -675,10 +695,12 @@ int main( int argc, char ** argv )
 	delete thr_trans_mgr;
 	MEMMAN_DELETE(thr_timekeeper);
 	delete thr_timekeeper;
+	MEMMAN_DELETE(thr_sig_catcher);
+	delete thr_sig_catcher;
 	
 	if (!threading_is_LinuxThreads) {
-		MEMMAN_DELETE(thr_signal_catcher);
-		delete thr_signal_catcher;
+		MEMMAN_DELETE(thr_alarm_catcher);
+		delete thr_alarm_catcher;
 	}
 	
 	MEMMAN_DELETE(thr_listen_udp);

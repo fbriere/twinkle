@@ -987,7 +987,7 @@ void t_gui::cb_fetch_reg_result(t_user *user_config, const t_response *r) {
 	s = user_config->get_profile_name().c_str();
 	const list<t_contact_param> &l = r->hdr_contact.contact_list;
 	if (l.size() == 0) {
-		s += ": you are nor registered";
+		s += ": you are not registered";
 		mainWindow->display(s);
 	} else {
 		s += ": you have the following registrations";
@@ -1576,6 +1576,12 @@ bool t_gui::cb_nat_discovery_cancelled(void) {
 void t_gui::cmd_call(const string &destination) {
 	lock();
 	mainWindow->phoneInvite(destination.c_str(), "");
+	unlock();
+}
+
+void t_gui::cmd_quit(void) {
+	lock();
+	mainWindow->fileExit();
 	unlock();
 }
 

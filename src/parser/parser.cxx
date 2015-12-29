@@ -2554,7 +2554,7 @@ yyreduce:
 
   case 168:
 #line 563 "parser.yxx"
-    { CTXT_URI; }
+    { CTXT_URI_SPECIAL; }
     break;
 
   case 172:

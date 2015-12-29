@@ -55,7 +55,7 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 	// the user=phone parameter.
 	if (user_config->numerical_user_is_phone) {
 		t_url u(s);
-		if (u.user_looks_like_phone()) {
+		if (u.get_user_param().empty() && u.user_looks_like_phone()) {
 			s += ";user=phone";
 		}
 	}
@@ -2361,4 +2361,8 @@ void t_userintf::cmd_call(const string &destination) {
 	string s = "invite ";
 	s += destination;
 	exec_command(s);
+}
+
+void t_userintf::cmd_quit(void) {
+	exec_command("quit");
 }
