@@ -865,6 +865,7 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-qt-check      do not check Qt installation
+  --enable-ilbc-cpp       your ilbc library is built for C++ instead of C
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --enable-libsuffix      /lib directory suffix (64,32,none=default)
@@ -882,6 +883,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-kde           do not compile KDE features
   --without-ilbc          do not compile iLBC
+  --without-speex         do not compile speex
   --with-extra-includes=DIR
                           adds non standard include paths
   --with-extra-libs=DIR   adds non standard library paths
@@ -1476,6 +1478,23 @@ else
   ac_cv_ilbc=yes
 fi;
 
+
+# Check whether --with-speex or --without-speex was given.
+if test "${with_speex+set}" = set; then
+  withval="$with_speex"
+  ac_cv_speex=$withval
+else
+  ac_cv_speex=yes
+fi;
+
+# Check whether --enable-ilbc-cpp or --disable-ilbc-cpp was given.
+if test "${enable_ilbc_cpp+set}" = set; then
+  enableval="$enable_ilbc_cpp"
+  ac_cv_ilbc_cpp=$enableval
+else
+  ac_cv_ilbc_cpp=no
+fi;
+
 am__api_version="1.9"
 
 
@@ -1791,7 +1810,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=twinkle
- VERSION=0.8
+ VERSION=0.8.1
 
 
 cat >>confdefs.h <<_ACEOF
@@ -1923,7 +1942,7 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 cat >>confdefs.h <<\_ACEOF
-#define VERSION_DATE "July 1 2006"
+#define VERSION_DATE "July 9 2006"
 _ACEOF
 
 ac_ext=c
@@ -13005,7 +13024,7 @@ for i in $jpeg_incdirs;
 do
   for j in jpeglib.h;
   do
-    echo "configure: 13008: $i/$j" >&5
+    echo "configure: 13027: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       jpeg_incdir=$i
@@ -13313,7 +13332,7 @@ for i in $qt_incdirs;
 do
   for j in $kde_qt_header;
   do
-    echo "configure: 13316: $i/$j" >&5
+    echo "configure: 13335: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       qt_incdir=$i
@@ -14531,7 +14550,7 @@ for i in $kde_incdirs;
 do
   for j in $kde_check_header;
   do
-    echo "configure: 14534: $i/$j" >&5
+    echo "configure: 14553: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_incdir=$i
@@ -14561,7 +14580,7 @@ for i in $kde_libdirs;
 do
   for j in $kde_check_lib;
   do
-    echo "configure: 14564: $i/$j" >&5
+    echo "configure: 14583: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_libdir=$i
@@ -14579,7 +14598,7 @@ for i in $kde_libdirs;
 do
   for j in "kde3/plugins/designer/kdewidgets.la";
   do
-    echo "configure: 14582: $i/$j" >&5
+    echo "configure: 14601: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       kde_widgetdir=$i
@@ -16081,7 +16100,7 @@ for i in $kde_sharedirs;
 do
   for j in apps/ksgmltools2/customization/kde-chunk.xsl;
   do
-    echo "configure: 16084: $i/$j" >&5
+    echo "configure: 16103: $i/$j" >&5
     if test -r "$i/$j"; then
       echo "taking that" >&5
       KDE_XSL_STYLESHEET=$i
@@ -16722,7 +16741,9 @@ fi
 
 
 # Check if SPEEX is available
-echo "$as_me:$LINENO: checking for main in -lspeex" >&5
+if test "x$ac_cv_speex" = "xyes"
+then
+	echo "$as_me:$LINENO: checking for main in -lspeex" >&5
 echo $ECHO_N "checking for main in -lspeex... $ECHO_C" >&6
 if test "${ac_cv_lib_speex_main+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -16782,7 +16803,7 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_speex_main" >&5
 echo "${ECHO_T}$ac_cv_lib_speex_main" >&6
 if test $ac_cv_lib_speex_main = yes; then
 
-	if test "${ac_cv_header_speex_speex_h+set}" = set; then
+		if test "${ac_cv_header_speex_speex_h+set}" = set; then
   echo "$as_me:$LINENO: checking for speex/speex.h" >&5
 echo $ECHO_N "checking for speex/speex.h... $ECHO_C" >&6
 if test "${ac_cv_header_speex_speex_h+set}" = set; then
@@ -16933,24 +16954,255 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_SPEEX 1
 _ACEOF
 
-	LIBS="-lspeex $LIBS"
-	echo "LIBS += -lspeex" >> $QT_INCL_PRO
-	have_speex="yes"
+		LIBS="-lspeex $LIBS"
+		echo "LIBS += -lspeex" >> $QT_INCL_PRO
+		have_speex="yes"
 
 else
   have_speex="no"
 fi
 
+else
+	have_speex="no"
+fi
 
 # iLBC
 if test "x$ac_cv_ilbc" = "xyes"
 then
+	echo "$as_me:$LINENO: checking for iLBC_decode in -lilbc" >&5
+echo $ECHO_N "checking for iLBC_decode in -lilbc... $ECHO_C" >&6
+if test "${ac_cv_lib_ilbc_iLBC_decode+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lilbc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char iLBC_decode ();
+int
+main ()
+{
+iLBC_decode ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_ilbc_iLBC_decode=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_ilbc_iLBC_decode=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_ilbc_iLBC_decode" >&5
+echo "${ECHO_T}$ac_cv_lib_ilbc_iLBC_decode" >&6
+if test $ac_cv_lib_ilbc_iLBC_decode = yes; then
+
+		if test "${ac_cv_header_ilbc_iLBC_define_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for ilbc/iLBC_define.h" >&5
+echo $ECHO_N "checking for ilbc/iLBC_define.h... $ECHO_C" >&6
+if test "${ac_cv_header_ilbc_iLBC_define_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_ilbc_iLBC_define_h" >&5
+echo "${ECHO_T}$ac_cv_header_ilbc_iLBC_define_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking ilbc/iLBC_define.h usability" >&5
+echo $ECHO_N "checking ilbc/iLBC_define.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <ilbc/iLBC_define.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking ilbc/iLBC_define.h presence" >&5
+echo $ECHO_N "checking ilbc/iLBC_define.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <ilbc/iLBC_define.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: ilbc/iLBC_define.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: ilbc/iLBC_define.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------------ ##
+## Report this to the AC_PACKAGE_NAME lists.  ##
+## ------------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for ilbc/iLBC_define.h" >&5
+echo $ECHO_N "checking for ilbc/iLBC_define.h... $ECHO_C" >&6
+if test "${ac_cv_header_ilbc_iLBC_define_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_ilbc_iLBC_define_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_ilbc_iLBC_define_h" >&5
+echo "${ECHO_T}$ac_cv_header_ilbc_iLBC_define_h" >&6
+
+fi
+if test $ac_cv_header_ilbc_iLBC_define_h = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: ilbc header files missing" >&5
+echo "$as_me: error: ilbc header files missing" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_ILBC 1
 _ACEOF
 
-	have_ilbc="yes"
+		LIBS="-lilbc $LIBS"
+		echo "LIBS += -lilbc" >> $QT_INCL_PRO
+		have_ilbc="yes"
+
+else
+  have_ilbc="no"
+fi
+
+
+	if test "x$ac_cv_ilbc_cpp" = "xyes"
+	then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ILBC_CPP 1
+_ACEOF
+
+	fi
 else
 	have_ilbc="no"
 fi
@@ -17185,7 +17437,7 @@ echo "distdir:" >> src/gui/Makefile
 PARSER_CXXFLAGS=`echo $CXXFLAGS | sed -e "s/\-O2//;s/\-Os//"`
 
 
-                                                                                                                        ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audio/ilbc/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile twinkle.spec"
+                                                                                                              ac_config_files="$ac_config_files Makefile src/Makefile src/audio/Makefile src/audio/gsm/Makefile src/audits/Makefile src/sdp/Makefile src/parser/Makefile src/sockets/Makefile src/stun/Makefile src/threads/Makefile twinkle.spec"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -17760,7 +18012,6 @@ do
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
   "src/audio/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/Makefile" ;;
   "src/audio/gsm/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/gsm/Makefile" ;;
-  "src/audio/ilbc/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audio/ilbc/Makefile" ;;
   "src/audits/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/audits/Makefile" ;;
   "src/sdp/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/sdp/Makefile" ;;
   "src/parser/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/parser/Makefile" ;;

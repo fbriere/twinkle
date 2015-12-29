@@ -1,3 +1,22 @@
+09 jul 2006 - Release 0.8.1
+===========================
+- Removed iLBC source code from Twinkle. To use iLBC you can
+  link Twinkle with the ilbc library (ilbc package). When you
+  have the ilbc library installed on your system, then Twinkle's
+  configure script will automatically setup the Makefiles to
+  link with the library.
+
+Bug fixes
+---------
+- Name and photo lookups in KAddressbook on incoming calls may
+  freeze Twinkle.
+
+Build improvements
+------------------
+- Added missing includes to userprofile.ui and addressfinder.h
+- Configure has new --without-speex option
+
+
 01 jul 2006 - Release 0.8
 =========================
 - iLBC

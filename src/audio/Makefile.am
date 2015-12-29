@@ -37,6 +37,6 @@ libaudio_a_SOURCES =\
         tone_gen.h\
         twinkle_rtp_session.h
 
-SUBDIRS = gsm ilbc
+SUBDIRS = gsm
 
 EXTRA_DIST = README_G711

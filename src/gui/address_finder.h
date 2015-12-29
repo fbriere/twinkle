@@ -24,6 +24,9 @@
 #include <string>
 #include "user.h"
 #include "sockets/url.h"
+#include "threads/mutex.h"
+#include "qobject.h"
+#include "qimage.h"
 
 #ifdef HAVE_KDE
 #include <kabc/addressbook.h>
@@ -39,7 +42,9 @@ class t_address_finder : public QObject {
 private:
 	Q_OBJECT
 	static t_address_finder *instance;
+	static t_mutex mtx_instance;
 	
+	t_mutex	mtx_finder;
 #ifdef HAVE_KDE
 	KABC::AddressBook *abook;
 #endif

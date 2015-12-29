@@ -20,7 +20,13 @@
 #include "audio_encoder.h"
 
 #ifdef HAVE_ILBC
-#include "ilbc/iLBC_encode.h"
+#ifndef HAVE_ILBC_CPP
+extern "C" {
+#endif
+#include <ilbc/iLBC_encode.h>
+#ifndef HAVE_ILBC_CPP
+}
+#endif
 #endif
 
 //////////////////////////////////////////

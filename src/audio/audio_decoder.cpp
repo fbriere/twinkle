@@ -21,7 +21,13 @@
 #include "log.h"
 
 #ifdef HAVE_ILBC
-#include "ilbc/iLBC_decode.h"
+#ifndef HAVE_ILBC_CPP
+extern "C" {
+#endif
+#include <ilbc/iLBC_decode.h>
+#ifndef HAVE_ILBC_CPP
+}
+#endif
 #endif
 
 //////////////////////////////////////////
