@@ -1,8 +1,7 @@
 Source: twinkle
 Section: comm
 Priority: optional
-Maintainer: Clint Adams <clint@debian.org>
-Uploaders: Peter Colberg <peter@colberg.org>
+Maintainer: Peter Colberg <peter@colberg.org>
 Build-Depends: bison,
                cmake,
                debhelper (>= 9),

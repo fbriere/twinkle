@@ -1,5 +1,6 @@
-twinkle (1:1.9.0+dfsg-1) UNRELEASED; urgency=medium
+twinkle (1:1.9.0+dfsg-1) unstable; urgency=medium
 
+  [ Peter Colberg ]
   * New upstream release.
   * Repack orig tarball without embedded gsm library.
   * Update Homepage to new upstream URL.
@@ -38,7 +39,10 @@ twinkle (1:1.9.0+dfsg-1) UNRELEASED; urgency=medium
   * Remove deprecated menu file.
   * Bump Standards-Version to 3.9.6.
 
- -- Peter Colberg <peter@colberg.org>  Mon, 28 Dec 2015 20:31:28 -0500
+  [ Clint Adams ]
+  * Remove myself from Maintainer field.
+
+ -- Clint Adams <clint@debian.org>  Tue, 29 Dec 2015 12:59:30 -0500
 
 twinkle (1:1.4.2-4.1) unstable; urgency=medium
 
