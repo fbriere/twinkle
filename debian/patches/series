@@ -1,8 +1,2 @@
-boost_regex-mt.patch
 desktop-entry-contains-encoding-key.patch
 libgsm.patch
-newer-libccrtp.diff
-no-qt.diff
-localetime_r_conflict.diff
-vsnprintf_incompatibility.diff
-newer-automake.diff
