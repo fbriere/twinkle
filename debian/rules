@@ -1,19 +1,20 @@
 #!/usr/bin/make -f
 
-URL = http://www.xs4all.nl/~mfnboer/twinkle/download/$(DEB_SOURCE_PACKAGE)-$(DEB_UPSTREAM_VERSION).tar.gz
-FILENAME = $(DEB_SOURCE_PACKAGE)_$(DEB_UPSTREAM_VERSION).orig.tar.gz
+CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ALSA=ON -DWITH_ZRTP=ON -DWITH_SPEEX=ON -DWITH_GSM=ON
 
-include /usr/share/cdbs/1/rules/autoreconf.mk
-include /usr/share/cdbs/1/class/autotools.mk
-include /usr/share/cdbs/1/rules/debhelper.mk
+%:
+	dh $@
 
-DEB_CONFIGURE_EXTRA_FLAGS := --without-ilbc --without-kde
+override_dh_clean:
+	rm -f debian/twinkle.1
+	dh_clean
 
-get-orig-source:
-	@@dh_testdir
-	@@[ -d ../tarballs/. ]||mkdir -p ../tarballs
-	@@echo Downloading $(FILENAME) from $(URL) ...
-	@@wget  -nv -T10 -t3 -O ../tarballs/$(FILENAME) $(URL)
+override_dh_auto_configure:
+	dh_auto_configure -- $(CONFIGURE_FLAGS)
 
-help2man:
-	help2man twinkle -N -n 'Voice over Internet Protocol (VoIP) SIP Phone' -o debian/twinkle.1
+override_dh_installman:
+	help2man debian/twinkle/usr/bin/twinkle -N -n 'Voice over Internet Protocol (VoIP) SIP Phone' -o debian/twinkle.1
+	dh_installman
+
+override_dh_installchangelogs:
+	dh_installchangelogs NEWS
