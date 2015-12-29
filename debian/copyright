@@ -1,124 +1,91 @@
-This package was debianized by Mark Purcell <msp@debian.org> on
-Sun, 29 May 2005 09:40:22 +0100.
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Twinkle
+Source: https://github.com/LubosD/twinkle/releases
+ The orig tarball excludes the gsm library, which has been packaged for Debian.
+Files-Excluded: src/audio/gsm/*
 
-It was downloaded from http://www.twinklephone.com/
+Files: *
+Copyright: 2005-2009 Michel de Boer <michel@twinklephone.com>
+           2015 Luboš Doležel <lubos@dolezel.info>
+           2015 Michal Kubecek <mkubecek@suse.cz>
+License: GPL-2+
 
-In order to make twinkle DFSG compliant the audio/ilbc portion of code
-has been removed and the package as been built with
-	./configure --without-ilbc
+Files: debian/*
+Copyright: 2005-2009 Mark Purcell <msp@debian.org>
+           2013-2014 Clint Adams <clint@debian.org>
+           2015 Peter Colberg <peter@colberg.org>
+License: GPL-2+
 
-Copyright Holder:
+Files: src/audio/g* src/audio/README_G711
+Copyright: Sun Microsystems, Inc.
+License: public-domain
+ This source code is released by Sun Microsystems, Inc. to the public domain.
+ Please give your acknowledgement in product literature if this code is used
+ in your product implementation.
 
-Author of Twinkle.
+Files: src/sockets/dnssrv.cpp
+Copyright: 2002 Rick van Rein
+           2005 Michel de Boer
+License: GPL-2+
 
-Michel de Boer <michel@twinklephone.com> designed and implemented Twinkle.
+Files: src/stun/stun.* src/stun/udp.*
+Copyright: 2000 Vovida Networks, Inc.
+License: Vovida
 
-License:
+License: GPL-2+
+ This package is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this package; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
+ MA 02110-1301, USA.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ can be found in `/usr/share/common-licenses/GPL-2'.
 
-   This package is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
-
-   This package is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this package; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston,
-   MA 02110-1301, USA.
-
-On Debian systems, the complete text of the GNU General
-Public License can be found in `/usr/share/common-licenses/GPL'.
-
-Twinkle contains the following 3rd party software packages:
-- GSM codec from Jutta Degener and Carsten Bormann
-
-Copyright 1992, 1993, 1994 by Jutta Degener and Carsten Bormann,
-Technische Universitaet Berlin
-
-Any use of this software is permitted provided that this notice is not
-removed and that neither the authors nor the Technische Universitaet Berlin
-are deemed to have made any representations as to the suitability of this
-software for any purpose nor are held responsible for any defects of
-this software.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
-
-As a matter of courtesy, the authors request to be informed about uses
-this software has found, about bugs in this software, and about any
-improvements that may be of general interest.
-
-Berlin, 28.11.1994
-Jutta Degener
-Carsten Bormann
-
-- G.711 codec from Sun Microsystems
-The files in this directory comprise ANSI-C language reference implementations
-of the CCITT (International Telegraph and Telephone Consultative Committee)
-G.711, G.721 and G.723 voice compressions.  They have been tested on Sun
-SPARCstations and passed 82 out of 84 test vectors published by CCITT
-(Dec. 20, 1988) for G.721 and G.723.  [The two remaining test vectors,
-which the G.721 decoder implementation for u-law samples did not pass,
-may be in error because they are identical to two other vectors for G.723_40.]
-
-This source code is released by Sun Microsystems, Inc. to the public domain.
-Please give your acknowledgement in product literature if this code is used
-in your product implementation.
-
-
-src/stun/stun.*
-/* ====================================================================
- * The Vovida Software License, Version 1.0
- *
- * Copyright (c) 2000 Vovida Networks, Inc.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The names "VOCAL", "Vovida Open Communication Application Library",
- *    and "Vovida Open Communication Application Library (VOCAL)" must
- *    not be used to endorse or promote products derived from this
- *    software without prior written permission. For written
- *    permission, please contact vocal@vovida.org.
- *
- * 4. Products derived from this software may not be called "VOCAL", nor
- *    may "VOCAL" appear in their name, without prior written
- *    permission of Vovida Networks, Inc.
- *
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
- * NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL VOVIDA
- * NETWORKS, INC. OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT DAMAGES
- * IN EXCESS OF $1,000, NOR FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
- * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
- * DAMAGE.
- *
- * ====================================================================
- *
- * This software consists of voluntary contributions made by Vovida
- * Networks, Inc. and many individuals on behalf of Vovida Networks,
- * Inc.  For more information on Vovida Networks, Inc., please see
- * <http://www.vovida.org/>.
- *
- */
-
-src/sockets/dnssrv.cpp:
-   This software is copyrighted (c) 2002 Rick van Rein, the Netherlands.
-
-   This software has been modified by Michel de Boer. 2005
+License: Vovida
+ The Vovida Software License, Version 1.0
+ .
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+ .
+ 3. The names "VOCAL", "Vovida Open Communication Application Library",
+    and "Vovida Open Communication Application Library (VOCAL)" must
+    not be used to endorse or promote products derived from this
+    software without prior written permission. For written
+    permission, please contact vocal@vovida.org.
+ .
+ 4. Products derived from this software may not be called "VOCAL", nor
+    may "VOCAL" appear in their name, without prior written
+    permission of Vovida Networks, Inc.
+ .
+ THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
+ NON-INFRINGEMENT ARE DISCLAIMED.  IN NO EVENT SHALL VOVIDA
+ NETWORKS, INC. OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT DAMAGES
+ IN EXCESS OF $1,000, NOR FOR ANY INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+ USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ DAMAGE.
