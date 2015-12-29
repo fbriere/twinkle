@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,8 +105,8 @@ t_msg_session::t_msg_session(t_user *u) :
 
 t_msg_session::t_msg_session(t_user *u, t_display_url _remote_party) :
 	user_config(u),
-	new_message_added(false),
 	remote_party(_remote_party),
+	new_message_added(false),
 	error_recvd(false),
 	delivery_notification_recvd(false),
 	msg_in_flight(false),

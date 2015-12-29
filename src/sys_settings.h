@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,11 +47,17 @@ using namespace std;
 #define PFX_OSS		"oss:"
 #define PFX_ALSA	"alsa:"
 
+/** ALSA default device */
+#define DEV_ALSA_DFLT	"alsa:default"
+
 /** Device string for other device */
 #define DEV_OTHER	"other device"
 
 /** File with SIP providers for the wizard */
 #define FILE_PROVIDERS	"providers.csv"
+
+/** File with CLI command history */
+#define FILE_CLI_HISTORY "twinkle.history"
 //@}
 
 
@@ -123,7 +129,6 @@ private:
 	// usage.
 	bool			validate_audio_dev;
 	
-	bool			au_reduce_noise_mic;
 	int			alsa_play_period_size;
 	int			alsa_capture_period_size;
 	int			oss_fragment_size;
@@ -268,7 +273,6 @@ public:
 	t_audio_device get_dev_speaker(void) const;
 	t_audio_device get_dev_mic(void) const;
 	bool get_validate_audio_dev(void) const;
-	bool get_au_reduce_noise_mic(void) const;
 	int get_alsa_play_period_size(void) const;
 	int get_alsa_capture_period_size(void) const;
 	int get_oss_fragment_size(void) const;
@@ -323,7 +327,6 @@ public:
 	void set_dev_speaker(const t_audio_device &dev);
 	void set_dev_mic(const t_audio_device &dev);
 	void set_validate_audio_dev(bool b);
-	void set_au_reduce_noise_mic(bool b);
 	void set_alsa_play_period_size(int size);
 	void set_alsa_capture_period_size(int size);
 	void set_oss_fragment_size(int size);
@@ -393,22 +396,44 @@ public:
 	 */
 	string get_options_built(void) const;
 
-	// Check if the environment of the machine satisfies all requirements.
-	// If not, then false is returned and error_msg contains an appropriate
-	// error message to show the user.
+	/** 
+	 * Check if the environment of the machine satisfies all requirements.
+	 * @param error_msg [out] User readable error message when false is returned.
+	 * @return true if all requirements are met.
+	 * @return false, otherwise and error_msg contains an appropriate
+	 * error message to show the user.
+	 */
 	bool check_environment(string &error_msg) const;
 
-	// Set the share directory
+	/**
+	 * Set the share directory
+	 * @param dir [in] Absolute path of the share directory.
+	 */ 
 	void set_dir_share(const string &dir);
 
-	// Get the share directory
+	/**
+	 * Get the share directory.
+	 * @return Absolute path of the directory with shared files.
+	 */
 	string get_dir_share(void) const;
 	
-	// Get the directory containing language translation files
+	/**
+	 * Get the directory containing language translation files.
+	 * @return Absolute path of the language directory.
+	 */
 	string get_dir_lang(void) const;
 	
-	// Get the user directory
+	/**
+	 * Get the user directory.
+	 * @return Absolute path of the user directory.
+	 */
 	string get_dir_user(void) const;
+	
+	/**
+	 * Get the CLI command history file.
+	 * @return Full pathname of the history file.
+	 */
+	string get_history_file(void) const;
 	
 	/** 
 	 * Get the temporary file directory.

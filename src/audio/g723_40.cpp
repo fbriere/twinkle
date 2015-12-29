@@ -146,7 +146,7 @@ g723_40_decoder(
 	struct g72x_state *state_ptr)
 {
 	short		sezi, sei, sez, se;	/* ACCUM */
-	short		y, dif;			/* MIX */
+	short		y;			/* MIX */
 	short		sr;			/* ADDB */
 	short		dq;
 	short		dqsez;

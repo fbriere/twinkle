@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -73,7 +73,8 @@ private:
 	 */
 	list<t_request *> pending_messages;
 
-	// Registration data
+	/** @name Registration data */
+	//@{
 	string			register_call_id;  /**< Call-ID for REGISTER requests. */
 	unsigned long		register_seqnr;    /**< Last seqnr issued. */
 	bool			is_registered;     /**< Indicates if user is registered. */
@@ -82,6 +83,10 @@ private:
 	
 	/** Destination of last REGISTER */
 	t_ip_port		register_ip_port;
+	
+	/** Service Route, collected from REGISTER responses */
+	list<t_route>		service_route;
+	//@}
 	
 	// A STUN request can be triggered by the following events:
 	//
@@ -421,6 +426,12 @@ public:
 	 */ 
 	unsigned short get_public_port_sip(void) const;
 	
+	/** 
+	 * Get the service route.
+	 * @return The service route.
+	 */
+	list<t_route> get_service_route(void) const;
+
 	// Try to match message with phone user
 	bool match(t_response *r, t_tuid tuid) const;
 	bool match(t_request *r) const;

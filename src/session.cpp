@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -492,7 +492,34 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) {
 	
 	// Determine the IP address to receive the media streams
 	if (receive_host == AUTO_IP4_ADDRESS) {
-		unsigned local_ip = m->get_local_ip();
+		unsigned long local_ip = 0;
+		unsigned long dst_ip = gethostbyname(dst_rtp_host);
+		
+		if (dst_ip != 0)
+		{
+			// Determine source IP address for RTP from the
+			// destination RTP IP address.
+			log_file->write_report("Cannot determine local IP address from RTP destination.",
+				"t_session::create_sdp_answer", LOG_NORMAL, LOG_WARNING);
+				
+			local_ip = get_src_ip4_address_for_dst(dst_ip);
+		}
+		else
+		{
+			string log_msg = "Cannot determine IP address for: ";
+			log_msg += dst_rtp_host;
+			log_file->write_report(log_msg,
+				"t_session::create_sdp_answer", LOG_NORMAL, LOG_WARNING);
+		}
+		
+		if (local_ip == 0)
+		{
+			// Somehow the source IP address could not be determined
+			// from the destination RTP address. Try to determine it
+			// from the destination of the SIP message.
+			local_ip = m->get_local_ip();
+		}
+			
 		if (local_ip == 0) {
 			log_file->write_report("Cannot determine local IP address.",
 				"t_session::create_sdp_answer", LOG_NORMAL, LOG_CRITICAL);
@@ -570,8 +597,6 @@ void t_session::create_sdp_answer(t_sip_message *m, const string &user) {
 }
 
 void t_session::start_rtp(void) {
-	t_audio_codec codec;
-	
 	// If a session is killed, it may not be started again.
 	if (is_killed) {
 		log_file->write_report("Cannot start. The session is killed already.",

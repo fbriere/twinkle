@@ -1,9 +1,9 @@
 TEMPLATE	= app
 LANGUAGE	= C++
 
-CONFIG	+= qt warn_off release thread
+CONFIG	+= qt warn_on release thread
 
-LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic
+LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../sockets/libsocket.a ../threads/libthread.a ../audio/libaudio.a ../audits/libaudits.a ../stun/libstun.a ../mwi/libmwi.a ../im/libim.a ../patterns/libpatterns.a ../presence/libpresence.a ../utils/libutils.a -lsndfile -lmagic -lreadline
 
 DEFINES	+= QT_NO_STL
 
@@ -224,6 +224,7 @@ TRANSLATIONS	= lang/twinkle_nl.ts \
 	lang/twinkle_cs.ts \
 	lang/twinkle_fr.ts \
 	lang/twinkle_ru.ts \
+	lang/twinkle_sv.ts \
 	lang/twinkle_xx.ts
 
 unix {

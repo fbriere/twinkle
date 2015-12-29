@@ -41,8 +41,8 @@ subdir = src/parser
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in parser.cxx \
 	parser.h scanner.cxx
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/m4/vl_lib_readline.m4 \
+	$(top_srcdir)/acinclude.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -73,21 +73,22 @@ am_libsipparser_a_OBJECTS = challenge.$(OBJEXT) coding.$(OBJEXT) \
 	hdr_proxy_authenticate.$(OBJEXT) \
 	hdr_proxy_authorization.$(OBJEXT) hdr_proxy_require.$(OBJEXT) \
 	hdr_rack.$(OBJEXT) hdr_record_route.$(OBJEXT) \
-	hdr_refer_sub.$(OBJEXT) hdr_refer_to.$(OBJEXT) \
-	hdr_referred_by.$(OBJEXT) hdr_replaces.$(OBJEXT) \
-	hdr_reply_to.$(OBJEXT) hdr_require.$(OBJEXT) \
-	hdr_retry_after.$(OBJEXT) hdr_route.$(OBJEXT) \
-	hdr_rseq.$(OBJEXT) hdr_server.$(OBJEXT) hdr_sip_etag.$(OBJEXT) \
-	hdr_sip_if_match.$(OBJEXT) hdr_subject.$(OBJEXT) \
-	hdr_subscription_state.$(OBJEXT) hdr_supported.$(OBJEXT) \
-	hdr_timestamp.$(OBJEXT) hdr_to.$(OBJEXT) \
-	hdr_unsupported.$(OBJEXT) hdr_user_agent.$(OBJEXT) \
-	hdr_via.$(OBJEXT) hdr_warning.$(OBJEXT) \
-	hdr_www_authenticate.$(OBJEXT) header.$(OBJEXT) \
-	identity.$(OBJEXT) media_type.$(OBJEXT) parameter.$(OBJEXT) \
-	parse_ctrl.$(OBJEXT) parser.$(OBJEXT) request.$(OBJEXT) \
-	response.$(OBJEXT) scanner.$(OBJEXT) sip_body.$(OBJEXT) \
-	sip_message.$(OBJEXT)
+	hdr_service_route.$(OBJEXT) hdr_refer_sub.$(OBJEXT) \
+	hdr_refer_to.$(OBJEXT) hdr_referred_by.$(OBJEXT) \
+	hdr_replaces.$(OBJEXT) hdr_reply_to.$(OBJEXT) \
+	hdr_require.$(OBJEXT) hdr_retry_after.$(OBJEXT) \
+	hdr_route.$(OBJEXT) hdr_rseq.$(OBJEXT) hdr_server.$(OBJEXT) \
+	hdr_sip_etag.$(OBJEXT) hdr_sip_if_match.$(OBJEXT) \
+	hdr_subject.$(OBJEXT) hdr_subscription_state.$(OBJEXT) \
+	hdr_supported.$(OBJEXT) hdr_timestamp.$(OBJEXT) \
+	hdr_to.$(OBJEXT) hdr_unsupported.$(OBJEXT) \
+	hdr_user_agent.$(OBJEXT) hdr_via.$(OBJEXT) \
+	hdr_warning.$(OBJEXT) hdr_www_authenticate.$(OBJEXT) \
+	header.$(OBJEXT) identity.$(OBJEXT) media_type.$(OBJEXT) \
+	milenage.$(OBJEXT) parameter.$(OBJEXT) parse_ctrl.$(OBJEXT) \
+	parser.$(OBJEXT) request.$(OBJEXT) response.$(OBJEXT) \
+	rijndael.$(OBJEXT) route.$(OBJEXT) scanner.$(OBJEXT) \
+	sip_body.$(OBJEXT) sip_message.$(OBJEXT)
 libsipparser_a_OBJECTS = $(am_libsipparser_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -340,7 +341,7 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-AM_CPPFLAGS = $(XML2_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = -Wall $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 # bison flags
 AM_YFLAGS = -d
@@ -417,6 +418,7 @@ libsipparser_a_SOURCES = \
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
+        hdr_service_route.cpp\
         hdr_refer_sub.cpp\
 	hdr_refer_to.cpp\
 	hdr_referred_by.cpp\
@@ -442,11 +444,14 @@ libsipparser_a_SOURCES = \
         header.cpp\
         identity.cpp\
         media_type.cpp\
+        milenage.cpp\
         parameter.cpp\
         parse_ctrl.cpp\
 	parser.yxx\
         request.cpp\
         response.cpp\
+        rijndael.cpp\
+        route.cpp\
 	scanner.lxx\
         sip_body.cpp\
         sip_message.cpp\
@@ -490,6 +495,7 @@ libsipparser_a_SOURCES = \
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
+        hdr_service_route.h\
         hdr_refer_sub.h\
 	hdr_refer_to.h\
 	hdr_referred_by.h\
@@ -515,10 +521,13 @@ libsipparser_a_SOURCES = \
         header.h\
         identity.h\
         media_type.h\
+        milenage.h\
         parameter.h\
         parse_ctrl.h\
         request.h\
         response.h\
+        rijndael.h\
+        route.h\
         sip_body.h\
         sip_message.h
 
@@ -624,6 +633,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_route.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_rseq.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_service_route.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_sip_etag.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_sip_if_match.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hdr_subject.Po@am__quote@
@@ -639,11 +649,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/identity.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/media_type.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/milenage.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parameter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse_ctrl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/request.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/response.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rijndael.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/route.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scanner.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sip_body.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sip_message.Po@am__quote@

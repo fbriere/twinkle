@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,22 +23,12 @@
 
 #include <list>
 #include <string>
+#include "route.h"
 #include "header.h"
 #include "parameter.h"
 #include "sockets/url.h"
 
 using namespace std;
-
-class t_route {
-public:
-	string			display;
-	t_url			uri;
-	list<t_parameter>	params;
-
-	void add_param(const t_parameter &p);
-	void set_params(const list<t_parameter> &l);
-	string encode(void) const;
-};
 
 class t_hdr_record_route : public t_header {
 public:

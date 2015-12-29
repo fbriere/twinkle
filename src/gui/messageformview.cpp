@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,12 +67,16 @@ void MessageFormView::update(void) {
 	// Update msgLineEdit field based on msg-in-flight indication
 	if (!_msgSession->is_msg_in_flight() && !msgLineEdit->isEnabled()) {
 		msgLineEdit->clear();
-		msgLineEdit->setFocus();
 		
 		// When the user edits the message, the composition indication
 		// will be set to active.
-		connect(msgLineEdit, SIGNAL(textChanged(const QString &)),
+		connect(msgLineEdit, SIGNAL(textChanged(const QString &)),		
 			this, SLOT(setLocalComposingIndicationActive()));
+		
+		// Enable msgLineEdit first, otherwise the setFocus does not work
+		msgLineEdit->setEnabled(true);
+		
+		msgLineEdit->setFocus();
 	} else if (_msgSession->is_msg_in_flight() && msgLineEdit->isEnabled()) {
 		// Disable the triggering of the composition indication while a message
 		// is being sent.
@@ -81,7 +85,10 @@ void MessageFormView::update(void) {
 		msgLineEdit->setText(tr("sending message"));
 	}
 	
+	// Enable/disable msgLineEdit here to be robust, such that msgLineEdit
+	// does not stay disabled forever.
 	msgLineEdit->setEnabled(!_msgSession->is_msg_in_flight());
+	
 	sendFileAction->setEnabled(!_msgSession->is_msg_in_flight());
 	
 	// Display error

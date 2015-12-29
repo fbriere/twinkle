@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ extern t_phone *phone;
 bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &silence) {
 	int status;
 	struct timespec sleeptimer;
-	struct timeval debug_timer;
+	//struct timeval debug_timer;
 	
 	silence = false;
 
@@ -64,7 +64,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 		// We are not the main receiver in a 3-way call, so
 		// get the sound samples from the local media buffer.
 		// This buffer will be filled by the main receiver.
-		if (!media_3way_peer_rx->get(sample_buf, SAMPLE_BUF_SIZE)) {
+		if (!media_3way_peer_rx->get(input_sample_buf, SAMPLE_BUF_SIZE)) {
 			// The mutex is unlocked before going to sleep.
 			// First I had the mutex unlock after the sleep.
 			// That worked fine with LinuxThreading, but it does
@@ -88,7 +88,8 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 		mtx_3way.unlock();
 		
 		// Get the sound samples from the DSP
-		status = input_device->read(sample_buf, SAMPLE_BUF_SIZE);
+		status = input_device->read(input_sample_buf, SAMPLE_BUF_SIZE);
+
 		if (status != SAMPLE_BUF_SIZE) {
 			if (!logged_capture_failure) {
 				// Log this failure only once
@@ -103,6 +104,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 				log_file->write_footer();
 				logged_capture_failure = true;
 			}
+
 			stop_running = true;
 			return false;
 		}
@@ -111,17 +113,12 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 		// Note that we keep reading the dsp, to prevent the DSP buffers
 		// from filling up.
 		if (get_line()->get_is_muted()) {
-			memset(sample_buf, 0, SAMPLE_BUF_SIZE);
+			memset(input_sample_buf, 0, SAMPLE_BUF_SIZE);
 		}
 	}
 
 	// Convert buffer to a buffer of shorts as the samples are 16 bits
-	short *sb = (short *)sample_buf;
-	
-	// Reduce noise
-	if (sys_config->get_au_reduce_noise_mic()) {
-		pcm_reduce_noise(sb, SAMPLE_BUF_SIZE / 2);
-	}
+	short *sb = (short *)input_sample_buf;
 
 	mtx_3way.lock();
 	if (is_3way) {
@@ -130,7 +127,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 		// There may be no other receiver when one of the far-ends
 		// has put the call on-hold.
 		if (is_main_rx_3way && peer_rx_3way) {
-			peer_rx_3way->post_media_peer_rx_3way(sample_buf, SAMPLE_BUF_SIZE,
+			peer_rx_3way->post_media_peer_rx_3way(input_sample_buf, SAMPLE_BUF_SIZE,
 				audio_encoder->get_sample_rate());
 		}
 
@@ -145,9 +142,37 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 
 	mtx_3way.unlock();
 
-	// Encode sound samples
-	sound_payload_size = audio_encoder->encode(
-			sb, nsamples, payload, payload_size, silence);
+	/*** PREPROCESSING & ENCODING ***/
+
+	bool preprocessing_silence = false;
+
+#ifdef HAVE_SPEEX
+	// speex acoustic echo cancellation
+	if (audio_session->get_do_echo_cancellation() && !audio_session->get_echo_captured_last()) {
+
+	    spx_int16_t *input_buf = new spx_int16_t[SAMPLE_BUF_SIZE/2];
+	    MEMMAN_NEW_ARRAY(input_buf);
+
+	    for (int i = 0; i < SAMPLE_BUF_SIZE / 2; i++) {
+		input_buf[i] = sb[i];
+	    }
+
+	    speex_echo_capture(audio_session->get_speex_echo_state(), input_buf, sb);
+	    audio_session->set_echo_captured_last(true);
+
+	    MEMMAN_DELETE_ARRAY(input_buf);
+	    delete [] input_buf;
+	}
+
+	// preprocessing
+	preprocessing_silence = speex_preprocess_run(speex_preprocess_state, sb);
+#endif
+
+	// encoding
+	sound_payload_size = audio_encoder->encode(sb, nsamples, payload, payload_size, silence);	
+
+	// recognizing silence (both from preprocessing and encoding)
+	silence = silence || !preprocessing_silence;
 
 	return true;
 }
@@ -317,8 +342,8 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	
 	payload_size = audio_encoder->get_max_payload_size();
 
-	sample_buf = new unsigned char[SAMPLE_BUF_SIZE];
-	MEMMAN_NEW_ARRAY(sample_buf);
+	input_sample_buf = new unsigned char[SAMPLE_BUF_SIZE];
+	MEMMAN_NEW_ARRAY(input_sample_buf);
 
 	payload = new unsigned char[payload_size];
 	MEMMAN_NEW_ARRAY(payload);
@@ -331,6 +356,38 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	mix_buf_3way = NULL;
 	is_3way = false;
 	is_main_rx_3way = false;
+
+#ifdef HAVE_SPEEX
+	// initializing speex preprocessing state
+	speex_preprocess_state = speex_preprocess_state_init(nsamples, audio_encoder->get_sample_rate());
+
+	int arg;
+	float farg;
+
+	// Noise reduction
+	arg = (user_config->get_speex_dsp_nrd() ? 1 : 0);
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_DENOISE, &arg);
+	arg = -30;	
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &arg);
+
+	// Automatic gain control
+	arg = (user_config->get_speex_dsp_agc() ?  1 : 0);	
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_AGC, &arg);
+	farg = (float) (user_config->get_speex_dsp_agc_level()) * 327.68f;	
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_AGC_LEVEL, &farg);
+	arg = 30;	
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_AGC_MAX_GAIN, &arg);
+
+	// Voice activity detection
+	arg = (user_config->get_speex_dsp_vad() ? 1 : 0);
+	speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_VAD, &arg);
+
+	// Acoustic echo cancellation 
+	if (audio_session->get_do_echo_cancellation()) {
+	    speex_preprocess_ctl(speex_preprocess_state, SPEEX_PREPROCESS_SET_ECHO_STATE, 
+				 audio_session->get_speex_echo_state());
+	}
+#endif
 }
 
 t_audio_rx::~t_audio_rx() {
@@ -345,8 +402,16 @@ t_audio_rx::~t_audio_rx() {
 		} while (is_running);
 	}
 
-	MEMMAN_DELETE_ARRAY(sample_buf);
-	delete [] sample_buf;
+#ifdef HAVE_SPEEX
+	// cleaning speex preprocessing
+	if (audio_session->get_do_echo_cancellation()) {
+	    speex_echo_state_reset(audio_session->get_speex_echo_state());
+	}
+	speex_preprocess_state_destroy(speex_preprocess_state);
+#endif
+       
+	MEMMAN_DELETE_ARRAY(input_sample_buf);
+	delete [] input_sample_buf;
 	
 	MEMMAN_DELETE_ARRAY(payload);
 	delete [] payload;
@@ -385,9 +450,7 @@ void t_audio_rx::set_running(bool running) {
 //       need the phone lock, this would lead to a dead lock (and a long trip
 //	 in debug hell!)
 void t_audio_rx::run(void) {
-	int status;
-	struct timespec sleeptimer;
-	struct timeval debug_timer;
+	//struct timeval debug_timer;
 	unsigned short sound_payload_size;
 	uint32 dtmf_rtp_timestamp;
 	
@@ -441,7 +504,7 @@ void t_audio_rx::run(void) {
 		if (dtmf_player) {
 			rtp_session->setMark(false);
 			// Skip samples from sound card
-			input_device->read(sample_buf, SAMPLE_BUF_SIZE);
+			input_device->read(input_sample_buf, SAMPLE_BUF_SIZE);
 			sound_payload_size = dtmf_player->get_payload(
 				payload, payload_size, timestamp, dtmf_rtp_timestamp);
 			silence_period = false;
@@ -450,7 +513,7 @@ void t_audio_rx::run(void) {
 			// Set marker in first RTP packet of a DTMF event
 			rtp_session->setMark(true);
 			// Skip samples from sound card
-			input_device->read(sample_buf, SAMPLE_BUF_SIZE);
+			input_device->read(input_sample_buf, SAMPLE_BUF_SIZE);
 			assert(dtmf_player);
 			sound_payload_size = dtmf_player->get_payload(
 				payload, payload_size, timestamp, dtmf_rtp_timestamp);
@@ -463,7 +526,7 @@ void t_audio_rx::run(void) {
 				// to keep the NAT bindings for RTP fresh.
 				silence_nsamples += SAMPLE_BUF_SIZE / 2;
 				if (silence_nsamples > 
-					user_config->get_timer_nat_keepalive() * 1000 *
+					(uint64_t)user_config->get_timer_nat_keepalive() * 1000 *
 					audio_encoder->get_sample_rate())
 				{
 					suppress_samples = false;
@@ -722,7 +785,6 @@ void t_audio_rx::set_main_rx_3way(bool main_rx) {
 	// Initialize the DSP if we become the mixer and we were not before
 	if (main_rx && !is_main_rx_3way) {		
 		// Enable recording
-		int arg;
 		if (sys_config->equal_audio_dev(sys_config->get_dev_speaker(),
 				sys_config->get_dev_mic())) 
 		{

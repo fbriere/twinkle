@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -139,10 +139,14 @@ private:
 	/** RTP port to be used for this line. */
 	unsigned short		rtp_port;
 	
-	// User profile of user using the line
-	// This is a pointer to the user_config owned by a phone user.
-	// So this pointer should never be deleted.
-	t_user			*user_config;
+	/**
+	 * Phone user using the line.
+	 * This member is only set when the line is not idle.
+	 * An idle line is not associated with a user.
+	 * @note The line object does not own the phone user.
+	 *       Therefor the line object must never delete the phone user.
+	 */
+	t_phone_user		*phone_user;
 	
 	// The incoming call script can return a specific ring tone
 	// to be played for an incoming call. This ring tone is
@@ -199,11 +203,11 @@ public:
 	void stop_timer(t_line_timer timer, t_object_id did = 0);
 
 	// Actions
-	void invite(t_user *user, const t_url &to_uri, const string &to_display,
+	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject, const t_hdr_referred_by &hdr_referred_by,
 		const t_hdr_replaces &hdr_replaces, const t_hdr_require &hdr_require, 
 		bool anonymous);
-	void invite(t_user *user, const t_url &to_uri, const string &to_display,
+	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
 		const string &subject, bool anonymous);
 	void answer(void);
 	void reject(void);
@@ -239,7 +243,7 @@ public:
 
 	/** @name Handle incoming requests */
 	//@{
-	void recvd_invite(t_user *user, t_request *r, t_tid tid, const string &ringtone);
+	void recvd_invite(t_phone_user *pu, t_request *r, t_tid tid, const string &ringtone);
 	void recvd_ack(t_request *r, t_tid tid);
 	void recvd_cancel(t_request *r, t_tid cancel_tid, t_tid target_tid);
 	void recvd_bye(t_request *r, t_tid tid);
@@ -399,10 +403,18 @@ public:
 	/** Get the RTP port to be used for a call on this line. */
 	unsigned short get_rtp_port(void) const;
 	
-	// Get the user using the phone.
-	// Returns a pointer to the user object owned by the line.
-	// NOT a copy.
+	/**
+	 * Get the user profile of the user using the phone.
+	 * @return a pointer to the user object owned by the line.
+	 * NOT a copy.
+	 */
 	t_user *get_user(void) const;
+	
+	/**
+	 * Get the phone user using the phone.
+	 * @return Pointer to the phone user.
+	 */
+	t_phone_user *get_phone_user(void) const;
 	
 	// Get the ring tone to be played for an incoming call
 	string get_ringtone(void) const;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 
 #include <string>
 #include <list>
+#include <cc++/config.h>
+#include "protocol.h"
 #include "sys_settings.h"
 #include "audio/audio_codecs.h"
 #include "sockets/url.h"
@@ -104,21 +106,40 @@ private:
 	// Mutex for exclusive access to the user profile
 	mutable t_recursive_mutex	mtx_user;
 
-	// USER
-
+	/** @name USER */
+	//@{
 	// SIP user
+	/** User name (public user identity). */
 	string			name;
+	
+	/** Domain of the user. */
 	string			domain;
+	
+	/** Display name. */
 	string			display;
 
-	// The organization will be put in an initial INVITE and in a
-	// 200 OK on an INVITE.
+	/**
+	 * The organization will be put in an initial INVITE and in a
+	 * 200 OK on an INVITE.
+	 */
 	string			organization;
 
 	// SIP authentication
-	string			auth_realm; // an empty realm matches with all realms
+	/** Authentication realm. An empty realm matches with all realms. */
+	string			auth_realm;
+	
+	/** Authentication name (private user identity). */
 	string			auth_name;
+	
+	/** Authentication password (aka_k for akav1-md5 authentication) */
 	string			auth_pass;
+	
+	/** Operator variant key for akav1-md5 authentication. */
+	uint8			auth_aka_op[AKA_OPLEN];
+	
+	/** Authentication management field for akav1-md5 authentication. */
+	uint8			auth_aka_amf[AKA_AMFLEN];
+	//@}
 
 
 	// SIP SERVER
@@ -176,14 +197,21 @@ private:
 	unsigned short		speex_wb_payload_type;
 	unsigned short		speex_uwb_payload_type;
 	
-	// Speex options
+	// Speex preprocessing options
+	bool			speex_dsp_vad;       // voice activity reduction
+	bool			speex_dsp_agc;       // automatic gain control
+	bool			speex_dsp_aec;       // acoustic echo cancellation
+	bool			speex_dsp_nrd;       // noise reduction
+	unsigned short		speex_dsp_agc_level; // gain level of AGC (1-100[%])
+
+	// Speex coding options
 	t_bit_rate_type		speex_bit_rate_type;
 	int			speex_abr_nb;
 	int			speex_abr_wb;
-	bool			speex_vad;
 	bool			speex_dtx;
 	bool			speex_penh;
 	unsigned short		speex_complexity;
+	unsigned short		speex_quality; // quality measure (worst 0-10 best)
 	
 	// RTP dynamic payload types for iLBC
 	unsigned short		ilbc_payload_type;
@@ -373,29 +401,41 @@ private:
 	unsigned short		timer_tcp_ping;
 	//@}
 
-	// ADDRESS FORMAT
-
-	// Telephone numbers
-	// Display only the user-part of a URI if it is a telephone number
-	// I.e. the user=phone parameter is present, or the user indicated
-	// that the format of the user-part is a telephone number.
+	/** @name ADDRESS FORMAT */
+	//@{
+	/**
+	 * Telephone numbers
+	 * Display only the user-part of a URI if it is a telephone number
+	 * I.e. the user=phone parameter is present, or the user indicated
+	 * that the format of the user-part is a telephone number.
+	 * If the URI is a tel-URI then display the telephone number.
+	 */
 	bool			display_useronly_phone;
 
-	// Consider user-parts that consist of 0-9,+,-,*,# as a telephone
-	// number. I.e. in outgoing messages the user=phone parameter will
-	// be added to the URI. For incoming messages the URI will be considered
-	// to be a telephone number regardless of the presence of the
-	// user=phone parameter.
+	/**
+	 * Consider user-parts that consist of 0-9,+,-,*,# as a telephone
+	 * number. I.e. in outgoing messages the user=phone parameter will
+	 * be added to the URI. For incoming messages the URI will be considered
+	 * to be a telephone number regardless of the presence of the
+	 * user=phone parameter.
+	 */
 	bool			numerical_user_is_phone;
 	
-	// Remove special symbols from numerical dial strings
+	/** Remove special symbols from numerical dial strings */
 	bool			remove_special_phone_symbols;
 	
-	// Special symbols that must be removed from telephone numbers
+	/** Special symbols that must be removed from telephone numbers */
 	string			special_phone_symbols;
 	
-	// Number conversion
+	/**
+	 * If the user enters a telephone number as address, then complete it
+	 * to a tel-URI instead of a sip-URI.
+	 */
+	bool			use_tel_uri_for_phone;
+	
+	/** Number conversion */
 	list<t_number_conversion>	number_conversions;
+	//@}
 	
 	// RING TONES
 	string		ringtone_file;
@@ -502,6 +542,8 @@ public:
 	string get_auth_realm(void) const;
 	string get_auth_name(void) const;
 	string get_auth_pass(void) const;
+	void get_auth_aka_op(uint8 *aka_op) const;
+	void get_auth_aka_amf(uint8 *aka_amf) const;
 	bool get_use_outbound_proxy(void) const;
 	t_url get_outbound_proxy(void) const;
 	bool get_all_requests_to_proxy(void) const;
@@ -522,10 +564,15 @@ public:
 	t_bit_rate_type get_speex_bit_rate_type(void) const;
 	int get_speex_abr_nb(void) const;
 	int get_speex_abr_wb(void) const;
-	bool get_speex_vad(void) const;
 	bool get_speex_dtx(void) const;
 	bool get_speex_penh(void) const;
+	unsigned short get_speex_quality(void) const;
 	unsigned short get_speex_complexity(void) const;
+	bool get_speex_dsp_vad(void) const;
+	bool get_speex_dsp_agc(void) const;
+	bool get_speex_dsp_aec(void) const;
+	bool get_speex_dsp_nrd(void) const;
+	unsigned short get_speex_dsp_agc_level(void) const;
 	unsigned short get_ilbc_payload_type(void) const;
 	unsigned short get_ilbc_mode(void) const;
 	unsigned short get_g726_16_payload_type(void) const;
@@ -572,6 +619,7 @@ public:
 	bool get_numerical_user_is_phone(void) const;
 	bool get_remove_special_phone_symbols(void) const;
 	string get_special_phone_symbols(void) const;
+	bool get_use_tel_uri_for_phone(void) const;
 	string get_ringtone_file(void) const;
 	string get_ringback_file(void) const;
 	string get_script_incoming_call(void) const;
@@ -610,6 +658,8 @@ public:
 	void set_auth_realm(const string &realm);
 	void set_auth_name(const string &name);
 	void set_auth_pass(const string &pass);
+	void set_auth_aka_op(const uint8 *aka_op);
+	void set_auth_aka_amf(const uint8 *aka_amf);
 	void set_use_outbound_proxy(bool b);
 	void set_outbound_proxy(const t_url &url);
 	void set_all_requests_to_proxy(bool b);
@@ -630,10 +680,15 @@ public:
 	void set_speex_bit_rate_type(t_bit_rate_type bit_rate_type);
 	void set_speex_abr_nb(int abr);
 	void set_speex_abr_wb(int abr);
-	void set_speex_vad(bool b);
 	void set_speex_dtx(bool b);
 	void set_speex_penh(bool b);
+	void set_speex_quality(unsigned short quality);
 	void set_speex_complexity(unsigned short complexity);
+	void set_speex_dsp_vad(bool b);
+	void set_speex_dsp_agc(bool b);
+	void set_speex_dsp_aec(bool b);
+	void set_speex_dsp_nrd(bool b);
+	void set_speex_dsp_agc_level(unsigned short level);
 	void set_ilbc_payload_type(unsigned short payload_type);
 	void set_g726_16_payload_type(unsigned short payload_type);
 	void set_g726_24_payload_type(unsigned short payload_type);
@@ -680,6 +735,7 @@ public:
 	void set_numerical_user_is_phone(bool b);
 	void set_remove_special_phone_symbols(bool b);
 	void set_special_phone_symbols(const string &symbols);
+	void set_use_tel_uri_for_phone(bool b);
 	void set_ringtone_file(const string &file);
 	void set_ringback_file(const string &file);
 	void set_script_incoming_call(const string &script);

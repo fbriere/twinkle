@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -398,6 +398,11 @@ void t_event_ui::set_cipher_mode(const string &_cipher_mode) {
 
 void t_event_ui::set_zrtp_sas(const string &sas) {
 	zrtp_sas = sas;
+}
+
+void t_event_ui::set_display_msg(const string &_msg, t_msg_priority &_msg_priority) {
+	msg = _msg;
+	msg_priority = _msg_priority;
 }
 
 void t_event_ui::exec(t_userintf *user_intf) {

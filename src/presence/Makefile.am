@@ -1,4 +1,4 @@
-AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = -Wall $(CCRTP_CFLAGS) $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libpresence.a
 

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = $(XML2_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = -Wall $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 # bison flags
 AM_YFLAGS = -d
@@ -79,6 +79,7 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.cpp\
         hdr_rack.cpp\
         hdr_record_route.cpp\
+        hdr_service_route.cpp\
         hdr_refer_sub.cpp\
 	hdr_refer_to.cpp\
 	hdr_referred_by.cpp\
@@ -104,11 +105,14 @@ libsipparser_a_SOURCES =\
         header.cpp\
         identity.cpp\
         media_type.cpp\
+        milenage.cpp\
         parameter.cpp\
         parse_ctrl.cpp\
 	parser.yxx\
         request.cpp\
         response.cpp\
+        rijndael.cpp\
+        route.cpp\
 	scanner.lxx\
         sip_body.cpp\
         sip_message.cpp\
@@ -152,6 +156,7 @@ libsipparser_a_SOURCES =\
         hdr_proxy_require.h\
         hdr_rack.h\
         hdr_record_route.h\
+        hdr_service_route.h\
         hdr_refer_sub.h\
 	hdr_refer_to.h\
 	hdr_referred_by.h\
@@ -177,9 +182,12 @@ libsipparser_a_SOURCES =\
         header.h\
         identity.h\
         media_type.h\
+        milenage.h\
         parameter.h\
         parse_ctrl.h\
         request.h\
         response.h\
+        rijndael.h\
+        route.h\
         sip_body.h\
         sip_message.h

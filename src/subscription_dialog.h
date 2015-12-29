@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,9 +42,6 @@ protected:
 	 * create the proper subscription.
 	 */
 	t_subscription		*subscription;
-	
-	/** The phone user owning this dialog. */
-	t_phone_user		*phone_user;
 	
 	/**
 	 * Constructor. This class must be subclassed. The subclass must provide

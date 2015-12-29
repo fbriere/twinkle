@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -48,6 +49,8 @@ extern t_phone		*phone;
 #define FLD_AUTH_REALM			"auth_realm"
 #define FLD_AUTH_NAME			"auth_name"
 #define FLD_AUTH_PASS			"auth_pass"
+#define FLD_AUTH_AKA_OP			"auth_aka_op"
+#define FLD_AUTH_AKA_AMF		"auth_aka_amf"
 
 // SIP SERVER fields
 #define FLD_OUTBOUND_PROXY		"outbound_proxy"
@@ -70,10 +73,15 @@ extern t_phone		*phone;
 #define FLD_SPEEX_BIT_RATE_TYPE		"speex_bit_rate_type"
 #define FLD_SPEEX_ABR_NB		"speex_abr_nb"
 #define FLD_SPEEX_ABR_WB		"speex_abr_wb"
-#define FLD_SPEEX_VAD			"speex_vad"
 #define FLD_SPEEX_DTX			"speex_dtx"
 #define FLD_SPEEX_PENH			"speex_penh"
+#define FLD_SPEEX_QUALITY		"speex_quality"
 #define FLD_SPEEX_COMPLEXITY		"speex_complexity"
+#define FLD_SPEEX_DSP_VAD		"speex_dsp_vad"
+#define FLD_SPEEX_DSP_AGC		"speex_dsp_agc"
+#define FLD_SPEEX_DSP_AGC_LEVEL		"speex_dsp_agc_level"
+#define FLD_SPEEX_DSP_AEC		"speex_dsp_aec"
+#define FLD_SPEEX_DSP_NRD		"speex_dsp_nrd"
 #define FLD_ILBC_PAYLOAD_TYPE		"ilbc_payload_type"
 #define FLD_ILBC_MODE			"ilbc_mode"
 #define FLD_G726_16_PAYLOAD_TYPE	"g726_16_payload_type"
@@ -126,6 +134,7 @@ extern t_phone		*phone;
 #define FLD_NUMERICAL_USER_IS_PHONE	"numerical_user_is_phone"
 #define FLD_REMOVE_SPECIAL_PHONE_SYM	"remove_special_phone_symbols"
 #define FLD_SPECIAL_PHONE_SYMBOLS	"special_phone_symbols"
+#define FLD_USE_TEL_URI_FOR_PHONE	"use_tel_uri_for_phone"
 
 // Ring tone settings
 #define FLD_USER_RINGTONE_FILE		"ringtone_file"
@@ -339,6 +348,8 @@ bool t_user::set_server_value(t_url &server, const string &scheme, const string 
 
 t_user::t_user() {
 	// Set defaults
+	memset(auth_aka_op, 0, AKA_OPLEN);
+	memset(auth_aka_amf, 0, AKA_AMFLEN);
 	use_outbound_proxy = false;
 	all_requests_to_proxy = false;
 	non_resolvable_to_proxy = false;
@@ -385,10 +396,15 @@ t_user::t_user() {
 	speex_bit_rate_type = BIT_RATE_CBR;
 	speex_abr_nb = 0;
 	speex_abr_wb = 0;
-	speex_vad = true;
 	speex_dtx = false;
 	speex_penh = true;
-	speex_complexity = 2;
+	speex_quality = 6;
+	speex_complexity = 3;
+	speex_dsp_vad = true;
+	speex_dsp_agc = true;
+	speex_dsp_aec = false;
+	speex_dsp_nrd = true;
+	speex_dsp_agc_level = 20;
 	ilbc_payload_type = 96;
 	ilbc_mode = 30;
 	g726_16_payload_type = 102;
@@ -405,6 +421,7 @@ t_user::t_user() {
 	numerical_user_is_phone = false;
 	remove_special_phone_symbols = true;
 	special_phone_symbols = SPECIAL_PHONE_SYMBOLS;
+	use_tel_uri_for_phone = false;
 	referee_hold = false;
 	referrer_hold = true;
 	allow_refer = true;
@@ -452,6 +469,8 @@ t_user::t_user(const t_user &u) {
 	auth_realm = u.auth_realm;
 	auth_name = u.auth_name;
 	auth_pass = u.auth_pass;
+	memcpy(auth_aka_op, u.auth_aka_op, AKA_OPLEN);
+	memcpy(auth_aka_amf, u.auth_aka_amf, AKA_AMFLEN);
 	use_outbound_proxy = u.use_outbound_proxy;
 	outbound_proxy = u.outbound_proxy;
 	all_requests_to_proxy = u.all_requests_to_proxy;
@@ -472,10 +491,15 @@ t_user::t_user(const t_user &u) {
 	speex_bit_rate_type = u.speex_bit_rate_type;
 	speex_abr_nb = u.speex_abr_nb;
 	speex_abr_wb = u.speex_abr_wb;
-	speex_vad = u.speex_vad;
 	speex_dtx = u.speex_dtx;
 	speex_penh = u.speex_penh;
+	speex_quality = u.speex_quality;
 	speex_complexity = u.speex_complexity;
+	speex_dsp_vad = u.speex_dsp_vad;
+	speex_dsp_agc = u.speex_dsp_agc;
+	speex_dsp_agc_level = u.speex_dsp_agc_level;
+	speex_dsp_aec = u.speex_dsp_aec;
+	speex_dsp_nrd = u.speex_dsp_nrd;
 	ilbc_payload_type = u.ilbc_payload_type;
 	ilbc_mode = u.ilbc_mode;
 	g726_16_payload_type = u.g726_16_payload_type;
@@ -522,6 +546,7 @@ t_user::t_user(const t_user &u) {
 	numerical_user_is_phone = u.numerical_user_is_phone;
 	remove_special_phone_symbols = u.remove_special_phone_symbols;
 	special_phone_symbols = u.special_phone_symbols;
+	use_tel_uri_for_phone = u.use_tel_uri_for_phone;
 	ringtone_file = u.ringtone_file;
 	ringback_file = u.ringback_file;
 	script_incoming_call = u.script_incoming_call;
@@ -614,6 +639,16 @@ string t_user::get_auth_pass(void) const {
 	result = auth_pass;
 	mtx_user.unlock();
 	return result;
+}
+
+void t_user::get_auth_aka_op(uint8 *aka_op) const {
+	t_mutex_guard guard(mtx_user);
+	memcpy(aka_op, auth_aka_op, AKA_OPLEN);
+}
+	
+void t_user::get_auth_aka_amf(uint8 *aka_amf) const {
+	t_mutex_guard guard(mtx_user);
+	memcpy(aka_amf, auth_aka_amf, AKA_AMFLEN);
 }
 
 bool t_user::get_use_outbound_proxy(void) const {
@@ -776,14 +811,6 @@ int t_user::get_speex_abr_wb(void) const {
 	return result;
 }
 
-bool t_user::get_speex_vad(void) const {
-	bool result;
-	mtx_user.lock();
-	result = speex_vad;
-	mtx_user.unlock();
-	return result;
-}
-
 bool t_user::get_speex_dtx(void) const {
 	bool result;
 	mtx_user.lock();
@@ -800,10 +827,58 @@ bool t_user::get_speex_penh(void) const {
 	return result;
 }
 
+unsigned short t_user::get_speex_quality(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_quality;
+	mtx_user.unlock();
+	return result;
+}
+
 unsigned short t_user::get_speex_complexity(void) const {
 	unsigned short result;
 	mtx_user.lock();
 	result = speex_complexity;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_dsp_vad(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_dsp_vad;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_dsp_agc(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_dsp_agc;
+	mtx_user.unlock();
+	return result;
+}
+
+unsigned short t_user::get_speex_dsp_agc_level(void) const {
+	unsigned short result;
+	mtx_user.lock();
+	result = speex_dsp_agc_level;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_dsp_aec(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_dsp_aec;
+	mtx_user.unlock();
+	return result;
+}
+
+bool t_user::get_speex_dsp_nrd(void) const {
+	bool result;
+	mtx_user.lock();
+	result = speex_dsp_nrd;
 	mtx_user.unlock();
 	return result;
 }
@@ -1164,6 +1239,11 @@ string t_user::get_special_phone_symbols(void) const {
 	return result;
 }
 
+bool t_user::get_use_tel_uri_for_phone(void) const {
+	t_mutex_guard guard(mtx_user);
+	return use_tel_uri_for_phone;
+}
+
 string t_user::get_ringtone_file(void) const {
 	string result;
 	mtx_user.lock();
@@ -1412,6 +1492,16 @@ void t_user::set_auth_pass(const string &pass) {
 	mtx_user.unlock();
 }
 
+void t_user::set_auth_aka_op(const uint8 *aka_op) {
+	t_mutex_guard guard(mtx_user);
+	memcpy(auth_aka_op, aka_op, AKA_OPLEN);
+}
+
+void t_user::set_auth_aka_amf(const uint8 *aka_amf) {
+	t_mutex_guard guard(mtx_user);
+	memcpy(auth_aka_amf, aka_amf, AKA_AMFLEN);
+}
+
 void t_user::set_use_outbound_proxy(bool b) {
 	mtx_user.lock();
 	use_outbound_proxy = b;
@@ -1532,12 +1622,6 @@ void t_user::set_speex_abr_wb(int abr) {
 	mtx_user.unlock();
 }
 
-void t_user::set_speex_vad(bool b) {
-	mtx_user.lock();
-	speex_vad = b;
-	mtx_user.unlock();
-}
-
 void t_user::set_speex_dtx(bool b) {
 	mtx_user.lock();
 	speex_dtx = b;
@@ -1550,9 +1634,45 @@ void t_user::set_speex_penh(bool b) {
 	mtx_user.unlock();
 }
 
+void t_user::set_speex_quality(unsigned short quality) {
+	mtx_user.lock();
+	speex_quality = quality;
+	mtx_user.unlock();
+}
+
 void t_user::set_speex_complexity(unsigned short complexity) {
 	mtx_user.lock();
 	speex_complexity = complexity;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dsp_vad(bool b) {
+	mtx_user.lock();
+	speex_dsp_vad = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dsp_agc(bool b) {
+	mtx_user.lock();
+	speex_dsp_agc = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dsp_agc_level(unsigned short level) {
+	mtx_user.lock();
+	speex_dsp_agc_level = level;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dsp_aec(bool b) {
+	mtx_user.lock();
+	speex_dsp_aec = b;
+	mtx_user.unlock();
+}
+
+void t_user::set_speex_dsp_nrd(bool b) {
+	mtx_user.lock();
+	speex_dsp_nrd = b;
 	mtx_user.unlock();
 }
 
@@ -1828,6 +1948,11 @@ void t_user::set_special_phone_symbols(const string &symbols) {
 	mtx_user.unlock();
 }
 
+void t_user::set_use_tel_uri_for_phone(bool b) {
+	t_mutex_guard guard(mtx_user);
+	use_tel_uri_for_phone = b;
+}
+
 void t_user::set_ringtone_file(const string &file) {
 	mtx_user.lock();
 	ringtone_file = file;
@@ -2086,6 +2211,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			auth_name = value;
 		} else if (parameter == FLD_AUTH_PASS) {
 			auth_pass = value;
+		} else if (parameter == FLD_AUTH_AKA_OP) {
+			hex2binary(value, auth_aka_op);
+		} else if (parameter == FLD_AUTH_AKA_AMF) {
+			hex2binary(value, auth_aka_amf);
 		} else if (parameter == FLD_CODECS) {
 			vector<string> l = split(value, ',');
 			if (l.size() > 0) codecs.clear();
@@ -2240,12 +2369,23 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			speex_abr_nb = atoi(value.c_str());
 		} else if (parameter == FLD_SPEEX_ABR_WB) {
 			speex_abr_wb = atoi(value.c_str());
-		} else if (parameter == FLD_SPEEX_VAD) {
-			speex_vad = yesno2bool(value);
 		} else if (parameter == FLD_SPEEX_DTX) {
 			speex_dtx = yesno2bool(value);
 		} else if (parameter == FLD_SPEEX_PENH) {
 			speex_penh = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_QUALITY) {
+			speex_quality = atoi(value.c_str());
+			if (speex_quality > 10) {
+				error_msg = "Syntax error in file ";
+				error_msg += f;
+				error_msg += "\n";
+				error_msg += "Invalid value for speex quality: ";
+				error_msg += value;
+				log_file->write_report(error_msg, "t_user::read_config",
+					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
+				return false;	
+			}
 		} else if (parameter == FLD_SPEEX_COMPLEXITY) {
 			speex_complexity = atoi(value.c_str());
 			if (speex_complexity < 1 || speex_complexity > 10) {
@@ -2253,6 +2393,27 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg += f;
 				error_msg += "\n";
 				error_msg += "Invalid value for speex complexity: ";
+				error_msg += value;
+				log_file->write_report(error_msg, "t_user::read_config",
+					LOG_NORMAL, LOG_CRITICAL);
+				mtx_user.unlock();
+				return false;	
+			}
+		} else if (parameter == FLD_SPEEX_DSP_VAD) {
+			speex_dsp_vad = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_DSP_AGC) {
+			speex_dsp_agc = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_DSP_AEC) {
+			speex_dsp_aec = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_DSP_NRD) {
+			speex_dsp_nrd = yesno2bool(value);
+		} else if (parameter == FLD_SPEEX_DSP_AGC_LEVEL) {
+			speex_dsp_agc_level = atoi(value.c_str());
+			if (speex_dsp_agc_level < 1 || speex_dsp_agc_level > 100) {
+				error_msg = "Syntax error in file ";
+				error_msg += f;
+				error_msg += "\n";
+				error_msg += "Invalid value for automatic gain control level: ";
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
@@ -2291,6 +2452,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			remove_special_phone_symbols = yesno2bool(value);
 		} else if (parameter == FLD_SPECIAL_PHONE_SYMBOLS) {
 			special_phone_symbols = value;
+		} else if (parameter == FLD_USE_TEL_URI_FOR_PHONE) {
+			use_tel_uri_for_phone = yesno2bool(value);
 		} else if (parameter == FLD_USER_RINGTONE_FILE) {
 			ringtone_file = value;
 		} else if (parameter == FLD_USER_RINGBACK_FILE) {
@@ -2427,6 +2590,8 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_AUTH_REALM << '=' << auth_realm << endl;
 	config << FLD_AUTH_NAME << '=' << auth_name << endl;
 	config << FLD_AUTH_PASS << '=' << auth_pass << endl;
+	config << FLD_AUTH_AKA_OP << '=' << binary2hex(auth_aka_op, AKA_OPLEN) << endl;
+	config << FLD_AUTH_AKA_AMF << '=' << binary2hex(auth_aka_amf, AKA_AMFLEN) << endl;
 	config << endl;
 
 	// Write SIP SERVER settings
@@ -2511,10 +2676,15 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	// config << FLD_SPEEX_ABR_NB << '=' << speex_abr_nb << endl;
 	// config << FLD_SPEEX_ABR_WB << '=' << speex_abr_wb << endl;
 	config << bit_rate_type2str(speex_bit_rate_type) << endl;
-	config << FLD_SPEEX_VAD << '=' << bool2yesno(speex_vad) << endl;
 	config << FLD_SPEEX_DTX << '=' << bool2yesno(speex_dtx) << endl;
 	config << FLD_SPEEX_PENH << '=' << bool2yesno(speex_penh) << endl;
+	config << FLD_SPEEX_QUALITY << '=' << speex_quality << endl;
 	config << FLD_SPEEX_COMPLEXITY << '=' << speex_complexity << endl;
+	config << FLD_SPEEX_DSP_VAD << '=' << bool2yesno(speex_dsp_vad) << endl;
+	config << FLD_SPEEX_DSP_AGC << '=' << bool2yesno(speex_dsp_agc) << endl;
+	config << FLD_SPEEX_DSP_AEC << '=' << bool2yesno(speex_dsp_aec) << endl;
+	config << FLD_SPEEX_DSP_NRD << '=' << bool2yesno(speex_dsp_nrd) << endl;
+	config << FLD_SPEEX_DSP_AGC_LEVEL << '=' << speex_dsp_agc_level << endl;
 	config << FLD_ILBC_PAYLOAD_TYPE << '=' << ilbc_payload_type << endl;
 	config << FLD_ILBC_MODE << '=' << ilbc_mode << endl;
 	config << FLD_G726_16_PAYLOAD_TYPE << '=' << g726_16_payload_type << endl;
@@ -2609,6 +2779,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	config << FLD_REMOVE_SPECIAL_PHONE_SYM << '=';
 	config << bool2yesno(remove_special_phone_symbols) << endl;
 	config << FLD_SPECIAL_PHONE_SYMBOLS << '=' << special_phone_symbols << endl;
+	config << FLD_USE_TEL_URI_FOR_PHONE << '=' << bool2yesno(use_tel_uri_for_phone) << endl;
 	config << endl;
 	
 	// Write RING TONE settings
@@ -2758,7 +2929,7 @@ string t_user::get_contact_name(void) const {
 	s += '_';
 	
 	// Cut of port and/or uri-parameters if present in domain
-	int i = domain.find_first_of(":;");
+	string::size_type i = domain.find_first_of(":;");
 	if (i != string::npos) {
 		// Some broken SIP proxies think that their own address appears
 		// in the contact header when they see the domain in the user part.
@@ -2853,6 +3024,8 @@ string t_user::create_user_contact(bool anonymous, const string &auto_ip) {
 			break;
 		case SIP_TRANS_TCP:
 			s += ";transport=tcp";
+			break;
+		default:
 			break;
 		}
 	}

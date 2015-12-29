@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,9 +52,10 @@
 
 // Indices of RTP audio tabs
 #define idxRtpCodecs	0
-#define idxRtpIlbc		1
-#define idxRtpSpeex	2
-#define idxRtpDtmf		3
+#define idxRtpPreprocessing 1
+#define idxRtpIlbc	    2
+#define idxRtpSpeex	    3
+#define idxRtpDtmf	    4
 
 // Codec labels
 #define labelCodecG711a		"G.711 A-law"
@@ -101,12 +102,14 @@ void UserProfileForm::init()
 	QRegExp rxNoSpace("\\S*");
 	QRegExp rxNoAtSign("[^@]*");
 	QRegExp rxQvalue("(0\\.[0-9]{0,3})|(1\\.0{0,3})");
+	QRegExp rxAkaOpValue("[a-zA-Z0-9]{0,32}");
+	QRegExp rxAkaAmfValue("[a-zA-Z0-9]{0,4}");
 	
 	// Set validators
 	// USER
-	usernameLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
 	domainLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
-	authNameLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
+	authAkaOpLineEdit->setValidator(new QRegExpValidator(rxAkaOpValue, this));
+	authAkaAmfLineEdit->setValidator(new QRegExpValidator(rxAkaAmfValue, this));
 	
 	// SIP SERVER
 	registrarLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
@@ -114,7 +117,6 @@ void UserProfileForm::init()
 	proxyLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
 	
 	// Voice mail
-	mwiUserLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
 	mwiServerLineEdit->setValidator(new QRegExpValidator(rxNoSpace, this));
 	
 	// NAT
@@ -124,9 +126,11 @@ void UserProfileForm::init()
 	testConversionLineEdit->setValidator(new QRegExpValidator(rxNoAtSign, this));
 	
 #ifndef HAVE_SPEEX
-	// Speex
+	// Speex & (Speex) Preprocessing
 	speexGroupBox->hide();
+	preprocessingGroupBox->hide();
 	rtpAudioTabWidget->setTabEnabled(rtpAudioTabWidget->page(idxRtpSpeex), false);
+	rtpAudioTabWidget->setTabEnabled(rtpAudioTabWidget->page(idxRtpPreprocessing), false);
 #endif
 #ifndef HAVE_ILBC
 	// iLBC
@@ -299,6 +303,14 @@ void UserProfileForm::populate()
 	authNameLineEdit->setText(current_profile->get_auth_name().c_str());
 	authPasswordLineEdit->setText(current_profile->get_auth_pass().c_str());
 	
+	uint8 aka_op[AKA_OPLEN];
+	current_profile->get_auth_aka_op(aka_op);
+	authAkaOpLineEdit->setText(binary2hex(aka_op, AKA_OPLEN).c_str());
+	
+	uint8 aka_amf[AKA_AMFLEN];
+	current_profile->get_auth_aka_amf(aka_amf);
+	authAkaAmfLineEdit->setText(binary2hex(aka_amf, AKA_AMFLEN).c_str());
+	
 	// SIP SERVER
 	registrarLineEdit->setText(current_profile->get_registrar().encode_noscheme().c_str());
 	expirySpinBox->setValue(current_profile->get_registration_time());
@@ -376,17 +388,23 @@ void UserProfileForm::populate()
 	ptimeSpinBox->setValue(current_profile->get_ptime());
 	
 	// Codec preference
-	inFarEndCodecPrefCheckBox->setChecked(
-			current_profile->get_in_obey_far_end_codec_pref());
-	outFarEndCodecPrefCheckBox->setChecked(
-			current_profile->get_out_obey_far_end_codec_pref());
+	inFarEndCodecPrefCheckBox->setChecked(current_profile->get_in_obey_far_end_codec_pref());
+	outFarEndCodecPrefCheckBox->setChecked(current_profile->get_out_obey_far_end_codec_pref());
 	
-	// Speex
-	spxVbrCheckBox->setChecked(
-			current_profile->get_speex_bit_rate_type() == BIT_RATE_VBR);
-	spxVadCheckBox->setChecked(current_profile->get_speex_vad());
+	// Speex preprocessing and AEC
+	spxDspVadCheckBox->setChecked(current_profile->get_speex_dsp_vad());
+	spxDspAgcCheckBox->setChecked(current_profile->get_speex_dsp_agc());
+	spxDspAecCheckBox->setChecked(current_profile->get_speex_dsp_aec());
+	spxDspNrdCheckBox->setChecked(current_profile->get_speex_dsp_nrd());
+	spxDspAgcLevelSpinBox->setValue(current_profile->get_speex_dsp_agc_level());
+	spxDspAgcLevelTextLabel->setEnabled(current_profile->get_speex_dsp_agc());
+	spxDspAgcLevelSpinBox->setEnabled(current_profile->get_speex_dsp_agc());
+	
+	// Speex ([en/de]coding)
+	spxVbrCheckBox->setChecked(current_profile->get_speex_bit_rate_type() == BIT_RATE_VBR);
 	spxDtxCheckBox->setChecked(current_profile->get_speex_dtx());
 	spxPenhCheckBox->setChecked(current_profile->get_speex_penh());
+	spxQualitySpinBox->setValue(current_profile->get_speex_quality());
 	spxComplexitySpinBox->setValue(current_profile->get_speex_complexity());
 	spxNbPayloadSpinBox->setValue(current_profile->get_speex_nb_payload_type());
 	spxWbPayloadSpinBox->setValue(current_profile->get_speex_wb_payload_type());
@@ -514,6 +532,7 @@ void UserProfileForm::populate()
 	removeSpecialCheckBox->setChecked(
 			current_profile->get_remove_special_phone_symbols());
 	specialLineEdit->setText(current_profile->get_special_phone_symbols().c_str());
+	useTelUriCheckBox->setChecked(current_profile->get_use_tel_uri_for_phone());
 	
 	conversionListView->clear();
 	conversionListView->setSorting(-1);
@@ -724,6 +743,7 @@ bool UserProfileForm::validateValues()
 		}
 	}
 	
+
 	// Validity check voice mail page
 	if (mwiTypeComboBox->currentItem() == idxMWISollicited) {
 		// Mailbox user name is mandatory
@@ -870,9 +890,21 @@ bool UserProfileForm::validateValues()
 	
 	current_profile->set_organization(organizationLineEdit->text().ascii());
 	
+	uint8 new_aka_op[AKA_OPLEN];
+	uint8 new_aka_amf[AKA_AMFLEN];
+	uint8 current_aka_op[AKA_OPLEN];
+	uint8 current_aka_amf[AKA_AMFLEN];
+	
+	hex2binary(padleft(authAkaOpLineEdit->text().ascii(), '0', 32), new_aka_op);
+	hex2binary(padleft(authAkaAmfLineEdit->text().ascii(), '0', 4), new_aka_amf);
+	current_profile->get_auth_aka_op(current_aka_op);
+	current_profile->get_auth_aka_amf(current_aka_amf);
+	
 	if (current_profile->get_auth_realm() != authRealmLineEdit->text().ascii() ||
 	    current_profile->get_auth_name() != authNameLineEdit->text().ascii() ||
-	    current_profile->get_auth_pass() != authPasswordLineEdit->text().ascii())
+	    current_profile->get_auth_pass() != authPasswordLineEdit->text().ascii() ||
+	    memcmp(current_aka_op, new_aka_op, AKA_OPLEN) != 0 ||
+	    memcmp(current_aka_amf, new_aka_amf, AKA_AMFLEN) != 0)
 	{
 		emit authCredentialsChanged(current_profile,
 					current_profile->get_auth_realm());
@@ -880,6 +912,8 @@ bool UserProfileForm::validateValues()
 		current_profile->set_auth_realm(authRealmLineEdit->text().ascii());
 		current_profile->set_auth_name(authNameLineEdit->text().ascii());
 		current_profile->set_auth_pass(authPasswordLineEdit->text().ascii());
+		current_profile->set_auth_aka_op(new_aka_op);
+		current_profile->set_auth_aka_amf(new_aka_amf);
 	}
 
 	// SIP SERVER
@@ -957,7 +991,7 @@ bool UserProfileForm::validateValues()
 	// RTP AUDIO
 	// Codecs
 	list<t_audio_codec> audio_codecs;
-	for (int i = 0; i < activeCodecListBox->count(); i++) {
+	for (size_t i = 0; i < activeCodecListBox->count(); i++) {
 		audio_codecs.push_back(label2codec(activeCodecListBox->text(i)));
 	}
 	current_profile->set_codecs(audio_codecs);
@@ -966,17 +1000,21 @@ bool UserProfileForm::validateValues()
 	current_profile->set_ptime(ptimeSpinBox->value());
 	
 	// Codec preference
-	current_profile->set_in_obey_far_end_codec_pref(
-		inFarEndCodecPrefCheckBox->isChecked());
-	current_profile->set_out_obey_far_end_codec_pref(
-		outFarEndCodecPrefCheckBox->isChecked());
+	current_profile->set_in_obey_far_end_codec_pref(inFarEndCodecPrefCheckBox->isChecked());
+	current_profile->set_out_obey_far_end_codec_pref(outFarEndCodecPrefCheckBox->isChecked());
 	
-	// Speex
-	current_profile->set_speex_bit_rate_type(
-		(spxVbrCheckBox->isChecked() ? BIT_RATE_VBR : BIT_RATE_CBR));
-	current_profile->set_speex_vad(spxVadCheckBox->isChecked());
+	// Speex preprocessing & AEC
+ 	current_profile->set_speex_dsp_vad(spxDspVadCheckBox->isChecked());
+	current_profile->set_speex_dsp_agc(spxDspAgcCheckBox->isChecked());
+	current_profile->set_speex_dsp_aec(spxDspAecCheckBox->isChecked());
+	current_profile->set_speex_dsp_nrd(spxDspNrdCheckBox->isChecked());
+	current_profile->set_speex_dsp_agc_level(spxDspAgcLevelSpinBox->value());
+
+	// Speex ([en/de]coding)
+	current_profile->set_speex_bit_rate_type((spxVbrCheckBox->isChecked() ? BIT_RATE_VBR : BIT_RATE_CBR));
 	current_profile->set_speex_dtx(spxDtxCheckBox->isChecked());
 	current_profile->set_speex_penh(spxPenhCheckBox->isChecked());
+	current_profile->set_speex_quality(spxQualitySpinBox->value());
 	current_profile->set_speex_complexity(spxComplexitySpinBox->value());
 	current_profile->set_speex_nb_payload_type(spxNbPayloadSpinBox->value());
 	current_profile->set_speex_wb_payload_type(spxWbPayloadSpinBox->value());
@@ -1102,6 +1140,7 @@ bool UserProfileForm::validateValues()
 	current_profile->set_special_phone_symbols(
 			specialLineEdit->text().stripWhiteSpace().ascii());
 	current_profile->set_number_conversions(get_number_conversions());
+	current_profile->set_use_tel_uri_for_phone(useTelUriCheckBox->isChecked());
 	
 	// TIMERS
 	current_profile->set_timer_noanswer(tmrNoanswerSpinBox->value());
@@ -1251,7 +1290,7 @@ void UserProfileForm::chooseRemoteReleaseScript()
 }
 
 void UserProfileForm::addCodec() {
-	for (int i = 0; i < availCodecListBox->count(); i++) {
+	for (size_t i = 0; i < availCodecListBox->count(); i++) {
 		if (availCodecListBox->isSelected(i)) {
 			activeCodecListBox->insertItem(availCodecListBox->text(i));
 			activeCodecListBox->setSelected(
@@ -1263,7 +1302,7 @@ void UserProfileForm::addCodec() {
 }
 
 void UserProfileForm::removeCodec() {
-	for (int i = 0; i < activeCodecListBox->count(); i++) {
+	for (size_t i = 0; i < activeCodecListBox->count(); i++) {
 		if (activeCodecListBox->isSelected(i)) {
 			availCodecListBox->insertItem(activeCodecListBox->text(i));
 			availCodecListBox->setSelected(
@@ -1291,7 +1330,7 @@ void UserProfileForm::downCodec() {
 	QListBoxItem *lbi = activeCodecListBox->selectedItem();
 	if (!lbi) return;
 	
-	int idx = activeCodecListBox->index(lbi);
+	size_t idx = activeCodecListBox->index(lbi);
 	if (idx == activeCodecListBox->count() - 1) return;
 	
 	QString label = lbi->text();

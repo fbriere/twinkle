@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -103,8 +103,5 @@ int resample(short *input_buf, int input_len, int input_sample_rate,
 
 // Mix 2 16 bits signed linear PCM values
 short mix_linear_pcm(short pcm1, short pcm2);
-
-// Reduce noise of 16 bits signed linear PCM samples
-void pcm_reduce_noise(short *pcm_buf, int bufsize);
 
 #endif

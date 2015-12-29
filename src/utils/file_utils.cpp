@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -106,7 +106,7 @@ string get_working_dir(void) {
 	char *dir = NULL;
 	
 	while (true) {
-		if (dir = getcwd(buf, buf_size)) break;
+		if ((dir = getcwd(buf, buf_size)) != NULL) break;
 		if (errno != ERANGE) break;
 		
 		// The buffer is too small.

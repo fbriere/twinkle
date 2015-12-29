@@ -2902,17 +2902,17 @@ Kies eerst een gebruikersprofiel.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
-        <translation>&amp;Verminder ruis van de microfoon</translation>
+        <translation type="obsolete">&amp;Verminder ruis van de microfoon</translation>
     </message>
     <message>
         <source>Alt+N</source>
-        <translation>Alt+V</translation>
+        <translation type="obsolete">Alt+V</translation>
     </message>
     <message>
         <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
 
 The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</source>
-        <translation>Opnames van de microfoon kunnen ruis bevatten. Dit kan vervelend zijn voor de persoon aan de andere kant van de lijn. Deze instelling kan zachte ruis van de microfoon verwijderen.
+        <translation type="obsolete">Opnames van de microfoon kunnen ruis bevatten. Dit kan vervelend zijn voor de persoon aan de andere kant van de lijn. Deze instelling kan zachte ruis van de microfoon verwijderen.
 
 Het algoritme om ruis te verminderen is erg simplistisch. Geluid wordt gedigitaliseerd als 16 bits lineaire PCM samples. Alle samples tussen de waarden -50 en 50 worden afgerond naar 0.</translation>
     </message>
@@ -4117,7 +4117,7 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>&amp;VAD</source>
-        <translation>&amp;VAD</translation>
+        <translation type="obsolete">&amp;VAD</translation>
     </message>
     <message>
         <source>Alt+V</source>
@@ -4125,7 +4125,7 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
-        <translation>Voice activity detection detecteert of de opgenomen audio spraak of stilte dan wel achtergrondruis is. VAD staat atlijd impliciet aan als VBR wordt gebruikt. VAD is dus alleen nutting als VBR uitstaat. De Speex codec stuurt dan slechts een paar bits tijdens stilte periodes. Dit heet comfort noise generation (CNG).</translation>
+        <translation type="obsolete">Voice activity detection detecteert of de opgenomen audio spraak of stilte dan wel achtergrondruis is. VAD staat atlijd impliciet aan als VBR wordt gebruikt. VAD is dus alleen nutting als VBR uitstaat. De Speex codec stuurt dan slechts een paar bits tijdens stilte periodes. Dit heet comfort noise generation (CNG).</translation>
     </message>
     <message>
         <source>&amp;Wide band payload type:</source>
@@ -4133,7 +4133,7 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>V&amp;BR</source>
-        <translation>V&amp;BR</translation>
+        <translation type="obsolete">V&amp;BR</translation>
     </message>
     <message>
         <source>Alt+B</source>
@@ -4153,11 +4153,11 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>DT&amp;X</source>
-        <translation>DT&amp;X</translation>
+        <translation type="obsolete">DT&amp;X</translation>
     </message>
     <message>
         <source>Alt+X</source>
-        <translation>Alt+X</translation>
+        <translation type="obsolete">Alt+X</translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
@@ -5522,7 +5522,7 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
     </message>
     <message>
         <source> bytes</source>
-        <translation> bytes</translation>
+        <translation type="obsolete"> bytes</translation>
     </message>
     <message>
         <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
@@ -5547,6 +5547,98 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
     <message>
         <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
         <translation>Twinkle stuurt een compositie indicatie als u een bericht aan het schrijven bent. De ontvanger van uw bericht kan dan zien dat u bezig bent met schrijven.</translation>
+    </message>
+    <message>
+        <source>AKA AM&amp;F:</source>
+        <translation>AkA AM&amp;F:</translation>
+    </message>
+    <message>
+        <source>A&amp;KA OP:</source>
+        <translation>A&amp;KA OP:</translation>
+    </message>
+    <message>
+        <source>Authentication management field for AKAv1-MD5 authentication.</source>
+        <translation>&quot;Authentication management field&quot; voor AKAv1-MD5 authenticatie.</translation>
+    </message>
+    <message>
+        <source>Operator variant key for AKAv1-MD5 authentication.</source>
+        <translation>&quot;Operator variant key&quot; voor AKAv1-MD5 authenticatie.</translation>
+    </message>
+    <message>
+        <source>Prepr&amp;ocessing</source>
+        <translation>V&amp;oorbewerking</translation>
+    </message>
+    <message>
+        <source>Preprocessing (improves quality at remote end)</source>
+        <translation>Voorbewerking (verbetert de geluidskwaliteit voor uw gesprekspartner)</translation>
+    </message>
+    <message>
+        <source>&amp;Automatic gain control</source>
+        <translation>&amp;Automatische sterkteregeling</translation>
+    </message>
+    <message>
+        <source>Automatic gain control (AGC) is a feature that deals with the fact that the recording volume may vary by a large amount between different setups. The AGC provides a way to adjust a signal to a reference volume. This is useful because it removes the need for manual adjustment of the microphone gain. A secondary advantage is that by setting the microphone gain to a conservative (low) level, it is easier to avoid clipping.</source>
+        <translation>Automatische sterkteregeling versterkt zachte signalen en dempt luide signalen die door de microfoon worden opgenomen.</translation>
+    </message>
+    <message>
+        <source>Automatic gain control &amp;level:</source>
+        <translation>Niveau automatische sterkterege&amp;ling:</translation>
+    </message>
+    <message>
+        <source>Automatic gain control level represents percentual value of automatic gain setting of a microphone. Recommended value is about 25%.</source>
+        <translation>Een waarde rond 25% is aanbevolen voor een goede geluidskwaliteit.</translation>
+    </message>
+    <message>
+        <source>&amp;Voice activity detection</source>
+        <translation>&amp;Voice activity detection</translation>
+    </message>
+    <message>
+        <source>When enabled, voice activity detection detects whether the input signal represents a speech or a silence/background noise.</source>
+        <translation>&quot;Voice activity detection&quot; detecteteert of een signaal spraak of stilte/ruid bevat. Stilte/ruis wordt niet over het netwerk gestuurd waardoor minder bandbreedte gebruikt wordt.</translation>
+    </message>
+    <message>
+        <source>&amp;Noise reduction</source>
+        <translation>Ruisonderdrukki&amp;ng</translation>
+    </message>
+    <message>
+        <source>The noise reduction can be used to reduce the amount of background noise present in the input signal. This provides higher quality speech.</source>
+        <translation>Ruisonderdrukking vermindert achtergrondruis in het microfoonsignaal.</translation>
+    </message>
+    <message>
+        <source>Acoustic &amp;Echo Cancellation</source>
+        <translation>Acoustic &amp;Echo Cancellation</translation>
+    </message>
+    <message>
+        <source>In any VoIP communication, if a speech from the remote end is played in the local loudspeaker, then it propagates in the room and is captured by the microphone. If the audio captured from the microphone is sent directly to the remote end, then the remote user hears an echo of his voice. An acoustic echo cancellation is designed to remove the acoustic echo before it is sent to the remote end. It is important to understand that the echo canceller is meant to improve the quality on the remote end.</source>
+        <translation>Spraak uit de speakers wordt opgevangen door de microfoon waardoor uw gesprekspartner een echo waarneemt. &quot;Acoustic echo cancellation&quot; verwijdert deze echo.</translation>
+    </message>
+    <message>
+        <source>Variable &amp;bit-rate</source>
+        <translation>Variable &amp;bit-rate</translation>
+    </message>
+    <message>
+        <source>Discontinuous &amp;Transmission</source>
+        <translation>Discontinuous &amp;Transmission</translation>
+    </message>
+    <message>
+        <source>&amp;Quality:</source>
+        <translation>&amp;Kwaliteit:</translation>
+    </message>
+    <message>
+        <source>Speex is a lossy codec, which means that it achives compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</source>
+        <translation>Speex comprimeert het geluidssignaal ten koste van de kwaliteit. Hoe meer compressie, hoe minder bandbreedte nodig is, maar hoe slechter de geluidskwaliteit. Deze kwaliteitsfactor (0 tot 10) bepaalt de trade-off tussen kwaliteit en compressie.</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>bytes</translation>
+    </message>
+    <message>
+        <source>Use tel-URI for telephone &amp;number</source>
+        <translation>Vestuur telefoon&amp;nummer als tel-URI</translation>
+    </message>
+    <message>
+        <source>Expand a dialed telephone number to a tel-URI instead of a sip-URI.</source>
+        <translation>Expandeer een telefoonnummer naar een tel-URI in plaats van een sip-URI.</translation>
     </message>
 </context>
 <context>

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -451,6 +451,7 @@ void *listen_udp(void *arg) {
 	}
 	
 	log_file->write_report("UDP listener terminated.", "::listen_udp");
+	return NULL;
 }
 
 void *listen_for_data_tcp(void *arg) {
@@ -578,6 +579,8 @@ void *listen_for_data_tcp(void *arg) {
 	}
 	
 	log_file->write_report("TCP data listener terminated.", "::listen_for_data_tcp");
+	
+	return NULL;
 }
 
 void *listen_for_conn_requests_tcp(void *arg) {
@@ -609,4 +612,5 @@ void *listen_for_conn_requests_tcp(void *arg) {
 	}
 	
 	log_file->write_report("TCP connection listener terminated.", "::listen_for_conn_requests_tcp");
+	return NULL;
 }

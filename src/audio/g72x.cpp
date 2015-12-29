@@ -71,7 +71,7 @@ fmult(
 	int		srn)
 {
 	short		anmag, anexp, anmant;
-	short		wanexp, wanmag, wanmant;
+	short		wanexp, wanmant;
 	short		retval;
 
 	anmag = (an > 0) ? an : ((-an) & 0x1FFF);
@@ -277,12 +277,11 @@ update(
 	struct g72x_state *state_ptr)	/* coder state pointer */
 {
 	int		cnt;
-	short		mag, exp, mant;	/* Adaptive predictor, FLOAT A */
-	short		a2p;		/* LIMC */
+	short		mag, exp;	/* Adaptive predictor, FLOAT A */
+	short		a2p = 0;	/* LIMC */
 	short		a1ul;		/* UPA1 */
-	short		ua2, pks1;	/* UPA2 */
-	short		uga2a, fa1;
-	short		uga2b;
+	short		pks1;		/* UPA2 */
+	short		fa1;
 	char		tr;		/* tone/transition detector */
 	short		ylint, thr2, dqthr;
 	short  		ylfrac, thr1;

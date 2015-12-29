@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -115,13 +115,13 @@ void t_im_iscomposing_xml_body::create_xml_doc(
 	xmlDocSetRootElement(xml_doc, node_iscomposing);
 	
 	// state
-	xmlNode *node_state = xmlNewChild(node_iscomposing, ns_im_iscomposing, 
+	xmlNewChild(node_iscomposing, ns_im_iscomposing, 
 			BAD_CAST "state", 
 			BAD_CAST state_.c_str());
 			
 	// refresh
 	if (refresh_ > 0) {
-		xmlNode *node_refresh = xmlNewChild(node_iscomposing, ns_im_iscomposing,
+		xmlNewChild(node_iscomposing, ns_im_iscomposing,
 				BAD_CAST "refresh",
 				BAD_CAST int2str(refresh_).c_str());
 	}

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -277,7 +277,6 @@ t_transaction_mgr::~t_transaction_mgr() {
 void t_transaction_mgr::handle_event_network(t_event_network *e) {
 	t_trans_server	*ts;
 	t_ts_invite	*ts_invite;
-	t_ts_non_invite	*ts_non_invite;
 	t_trans_client	*tc;
 	t_sip_message	*msg = e->get_msg();
 	t_request	*request;
@@ -358,8 +357,6 @@ void t_transaction_mgr::handle_event_network(t_event_network *e) {
 
 void t_transaction_mgr::handle_event_user(t_event_user *e) {
 	t_trans_server	*ts;
-	t_ts_invite	*ts_invite;
-	t_ts_non_invite	*ts_non_invite;
 	t_sip_message	*msg = e->get_msg();
 	t_request	*request;
 	t_response	*response;
@@ -526,7 +523,6 @@ void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
 	StunMessage *msg = e->get_msg();
 	unsigned short tuid = e->get_tuid();
 	unsigned short tid = e->get_tid();
-	StunMessage *response;
 	t_sip_stun_trans *sst;
 	t_media_stun_trans *mst;
 	StunMessage *resp;

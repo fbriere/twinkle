@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -54,11 +54,11 @@ string random_hexstr(int length) {
 	int x;
 
 	for (int i = 0; i < length; i++) {
-		x = rand() % 15;
+		x = rand() % 16;
 		if (x <= 9)
 			s += '0' + x;
 		else
-			s += 'a' + x;
+			s += 'a' + x - 10;
 	}
 
 	return s;
@@ -173,7 +173,7 @@ string duration2str(unsigned long seconds) {
 
 string timer2str(unsigned long seconds) {
 	string result;
-	long remainder, h, m, s;
+	unsigned long remainder, h, m, s;
 	
 	h = seconds / 3600;
 	remainder = seconds % 3600;
@@ -181,8 +181,33 @@ string timer2str(unsigned long seconds) {
 	s = remainder % 60;
 	
 	char buf[16];
-	snprintf(buf, 16, "%01d:%02d:%02d", h, m, s);
+	snprintf(buf, 16, "%01lu:%02lu:%02lu", h, m, s);
 	return string(buf);
+}
+
+static uint8 hexdig2value(char hexdig) {
+	uint8 val = 0;
+	
+	if (hexdig >= '0' && hexdig <= '9')
+		val = hexdig - '0';
+	else if (hexdig >= 'a' && hexdig <= 'f')
+		val = hexdig - 'a' + 10;
+	else if (hexdig >= 'A' && hexdig <= 'F')
+		val = hexdig - 'A' + 10;
+		
+	return val;
+}
+
+static char value2hexdig(uint8 val) {
+	char c = '0';
+	
+	if (val <= 9) {
+		c = '0' + val;
+	} else if (val <= 15) {
+		c = 'a' + val - 10;
+	}
+	
+	return c;
 }
 
 unsigned long hex2int(const string &h) {
@@ -190,17 +215,37 @@ unsigned long hex2int(const string &h) {
 
 	int power = 1;
 	for (string::const_reverse_iterator i = h.rbegin(); i != h.rend(); ++i) {
-		if (*i >= '0' && *i <= '9')
-			u += (*i - '0') * power;
-		else if (*i >= 'a' && *i <= 'f')
-			u += (*i - 'a' + 10) * power;
-		else if (*i >= 'A' && *i <= 'F')
-			u += (*i - 'A' + 10) * power;
-
+		u += hexdig2value(*i) * power;
 		power = power * 16;
 	}
 
 	return u;
+}
+
+void hex2binary(const string &h, uint8 *buf) {
+	uint8 *p = buf;
+	
+	bool hi_nibble = true;
+	for (string::const_iterator i = h.begin() ; i != h.end(); ++i) {
+		if (hi_nibble) {
+			*p = hexdig2value(*i) << 4;
+		} else {
+			*(p++) |= hexdig2value(*i);
+		}
+		
+		hi_nibble = !hi_nibble;
+	}
+}
+
+string binary2hex(uint8 *buf, unsigned long len) {
+	string s;
+	
+	for (uint8 *p = buf; p < buf + len; ++p) {
+		s += value2hexdig((*p >> 4) & 0xf);
+		s += value2hexdig(*p & 0xf);
+	}
+	
+	return s;
 }
 
 string tolower(const string &s) {
@@ -245,6 +290,12 @@ string trim(const string &s) {
 	return ltrim(rtrim(s));
 }
 
+string padleft(const string &s, char c, unsigned long len) {
+	string result(c, len);
+	result += s;
+	return result.substr(result.size() - len);
+}
+
 int cmp_nocase(const string &s1, const string &s2) {
 	string::const_iterator i1 = s1.begin();
 	string::const_iterator i2 = s2.begin();
@@ -272,7 +323,7 @@ bool must_quote(const string &s) {
 string escape(const string &s, char c) {
 	string result;
 
-	for (int i = 0; i < s.size(); i++) {
+	for (string::size_type i = 0; i < s.size(); i++) {
 		if (s[i] == '\\' || s[i] == c) {
 			result += '\\';
 		}
@@ -286,7 +337,7 @@ string escape(const string &s, char c) {
 string unescape(const string &s) {
 	string result;
 
-	for (int i = 0; i < s.size(); i++) {
+	for (string::size_type i = 0; i < s.size(); i++) {
 		if (s[i] == '\\' && i < s.size() - 1) {
 			i++;
 		}
@@ -300,7 +351,7 @@ string unescape(const string &s) {
 string escape_hex(const string &s, const string &unreserved) {
 	string result;
 	
-	for (int i = 0; i < s.size(); i++) {
+	for (string::size_type i = 0; i < s.size(); i++) {
 		if (unreserved.find(s[i], 0) != string::npos) {
 			// Unreserved symbol
 			result += s[i];
@@ -315,7 +366,7 @@ string escape_hex(const string &s, const string &unreserved) {
 string unescape_hex(const string &s) {
 	string result;
 	
-	for (int i = 0; i < s.size(); i++) {
+	for (string::size_type i = 0; i < s.size(); i++) {
 		if (s[i] == '%' && i < s.size() - 2 &&
 		    isxdigit(s[i+1]) && isxdigit(s[i+2])) 
 		{
@@ -334,7 +385,7 @@ string unescape_hex(const string &s) {
 string replace_char(const string &s, char from, char to) {
 	string result = s;
 
-	for (int i = 0; i < result.size(); i++) {
+	for (string::size_type i = 0; i < result.size(); i++) {
         	if (result[i] == from) result[i] = to;
    	}
    	
@@ -461,8 +512,8 @@ vector<string> split_on_last(const string &s, char c) {
 vector<string> split_escaped(const string &s, char c) {
 	vector<string> l;
 	
-	int start_pos = 0;
-	for (int i = 0; i < s.size(); i++) {
+	string::size_type start_pos = 0;
+	for (string::size_type i = 0; i < s.size(); i++) {
 		if (s[i] == '\\') {
 			// Skip escaped character
 			if (i < s.size()) i++;
@@ -488,8 +539,8 @@ vector<string> split_ws(const string &s, bool quote_sensitive) {
         vector<string> l;
         bool in_quotes = false;
 
-        int start_pos = 0;
-        for (int i = 0; i < s.size(); i++ ) {
+        string::size_type start_pos = 0;
+        for (string::size_type i = 0; i < s.size(); i++ ) {
                 if (quote_sensitive && s[i] == '"') {
                         in_quotes = !in_quotes;
                         continue;
@@ -538,7 +589,7 @@ string unquote(const string &s) {
 bool is_number(const string &s) {
 	if (s.empty()) return false;
 	
-        for (int i = 0; i < s.size(); i++ ) {
+        for (string::size_type i = 0; i < s.size(); i++ ) {
 		if (!isdigit(s[i])) return false;
 	}
 
@@ -567,7 +618,7 @@ string str2dtmf(const string &s) {
 	string result;
 	string to_convert = tolower(s);
 	
-	for (int i = 0; i < to_convert.size(); i++) {
+	for (string::size_type i = 0; i < to_convert.size(); i++) {
 		switch (to_convert[i]) {
 		case '1':
 			result += '1';
@@ -671,7 +722,7 @@ string remove_white_space(const string &s) {
 	return result;
 }
 
-string dotted_truncate(const string &s, int len) {
+string dotted_truncate(const string &s, string::size_type len) {
 	if (len >= s.size()) return s;
 	
 	return s.substr(0, len) + "...";

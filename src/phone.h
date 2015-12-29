@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -96,16 +96,17 @@ private:
 	// Indicates if triggered INVITE must be anonymous
 	bool		hide_user;
 	
-	t_user		*user_config;
+	t_phone_user	*phone_user;
 	
 public:
-	t_transfer_data(t_request *r, unsigned short _lineno, bool _hide_user, t_user *user);
+	t_transfer_data(t_request *r, unsigned short _lineno, bool _hide_user, 
+		t_phone_user *pu);
 	~t_transfer_data();
 	
 	t_request *get_refer_request(void) const;
 	unsigned short get_lineno(void) const;
 	bool get_hide_user(void) const;
-	t_user *get_user(void) const;
+	t_phone_user *get_phone_user(void) const;
 };
 
 class t_phone : public t_transaction_layer {

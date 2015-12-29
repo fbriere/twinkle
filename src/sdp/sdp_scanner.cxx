@@ -486,7 +486,7 @@ int yysdp_flex_debug = 0;
 char *yysdptext;
 #line 1 "sdp_scanner.lxx"
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

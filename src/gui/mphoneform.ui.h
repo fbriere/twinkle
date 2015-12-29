@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -864,8 +864,8 @@ void MphoneForm::updateState()
 // Update registration status
 void MphoneForm::updateRegStatus()
 {
-	int num_registered = 0;
-	int num_failed = 0;
+	size_t num_registered = 0;
+	size_t num_failed = 0;
 	QString toolTip = "<b>";
 	toolTip.append(tr("Registration status:"));
 	toolTip.append("</b><br>");
@@ -1075,9 +1075,9 @@ void MphoneForm::updateMwi()
 // Update active services status
 void MphoneForm::updateServicesStatus()
 {	
-	int num_dnd = 0;
-	int num_cf = 0;
-	int num_auto_answer = 0;
+	size_t num_dnd = 0;
+	size_t num_cf = 0;
+	size_t num_auto_answer = 0;
 	QString tipDnd = "<b>";
 	tipDnd += tr("Do not disturb active for:").replace(' ', "&nbsp;");
 	tipDnd += "</b><br>\n<table>";

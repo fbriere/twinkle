@@ -1,4 +1,5 @@
 AM_CPPFLAGS = \
+	-Wall \
 	-I$(top_srcdir)/src \
 	$(CCRTP_CFLAGS)\
 	$(XML2_CFLAGS)

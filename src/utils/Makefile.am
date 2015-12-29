@@ -1,4 +1,4 @@
-AM_CPPFLAGS = $(XML2_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = -Wall $(XML2_CFLAGS) -I$(top_srcdir)/src
 
 noinst_LIBRARIES = libutils.a
 

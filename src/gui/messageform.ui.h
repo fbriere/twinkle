@@ -11,7 +11,7 @@
 *****************************************************************************/
 
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifdef HAVE_KDE>
+#ifdef HAVE_KDE
 #include <kfiledialog.h>
 #include <kiconloader.h>
 #include <kmimetype.h>
@@ -233,7 +233,7 @@ void MessageForm::sendMessage() {
 		return;
 	}
 	
-	_msgSession->send_msg(msgLineEdit->text().ascii(), im::TXT_PLAIN);
+	_msgSession->send_msg(msgLineEdit->text().ascii(), im::TXT_PLAIN);	
 }
 
 /**
@@ -306,7 +306,7 @@ void MessageForm::addMessage(const im::t_msg &msg, const QString &name)
 		
 		bool show_attachment_inline = false;
 		bool scale_image = false;
-		int scaled_width, scaled_height;
+		int scaled_width = 0, scaled_height = 0;
 		
 		if (msg.attachment_media.type == "image") {
 			// Show image inline if possible
@@ -317,8 +317,8 @@ void MessageForm::addMessage(const im::t_msg &msg, const QString &name)
 				    image.height() > MAX_HEIGHT_IMG_INLINE)
 				{
 					// Shrink image
-					scaled_width = image.width() * IMG_SCALE_FACTOR(image.width(), image.height());
-					scaled_height = image.height() * IMG_SCALE_FACTOR(image.width(), image.height());
+					scaled_width = int(image.width() * IMG_SCALE_FACTOR(image.width(), image.height()));
+					scaled_height = int(image.height() * IMG_SCALE_FACTOR(image.width(), image.height()));
 					scale_image = true;
 				}
 			}
@@ -459,7 +459,7 @@ void MessageForm::showAttachmentPopupMenu(const QString &attachment) {
 	attachmentPopupMenu->popup(QCursor::pos());
 }
 
-void MessageForm::attachmentPopupActivated(int id) {
+void MessageForm::attachmentPopupActivated(unsigned int id) {
 #ifdef HAVE_KDE
 	vector<KService::Ptr> *serviceMap = (vector<KService::Ptr> *)_serviceMap;
 	assert(serviceMap);

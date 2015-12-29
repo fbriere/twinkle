@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ string t_header::get_name(void) const {
 
 string t_header::get_value(void) const {
 	string s;
-	int i;
+	string::size_type i;
 
 	if (!populated) return s;
 

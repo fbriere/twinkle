@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,10 @@ public:
 	// string. A subclass should reimplement this method to
 	// provide translation.
 	virtual string translate(const string &s) { return s; };
-	virtual string translate2(const string &context, const string &s) { return s; };
+	
+	// The name of the context parameter is in comments to avoid
+	// unused argument warnings.
+	virtual string translate2(const string &/*context*/, const string &s) { return s; };
 };
 
 extern t_translator *translator;

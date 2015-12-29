@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -245,6 +245,18 @@ t_audio_session::t_audio_session(t_session *_session,
 		if (!open_dsp()) return;
 	}
 
+#ifdef HAVE_SPEEX	
+	// Speex AEC auxiliary data initialization 
+	do_echo_cancellation = false;
+
+	if (user_config->get_speex_dsp_aec()) {
+	    int nsamples = audio_sample_rate(codec) / 1000 * ptime;
+ 	    speex_echo_state = speex_echo_state_init(nsamples, 5*nsamples);
+	    do_echo_cancellation = true;
+	    echo_captured_last = true;
+	}
+#endif
+
 	// Create recorder
 	if (!_recv_host.empty() && _recv_port != 0) {
 		audio_rx = new t_audio_rx(this, mic, rtp_session, codec, 
@@ -300,7 +312,6 @@ t_audio_session::t_audio_session(t_session *_session,
 			}
 		}
 	}
-
 	valid = true;
 }
 
@@ -387,6 +398,13 @@ t_audio_session::~t_audio_session() {
 		delete mic;
 		mic = 0;
 	}
+
+#ifdef HAVE_SPEEX
+	// cleaning speech AEC
+	if (do_echo_cancellation) {
+	    speex_echo_state_destroy(speex_echo_state); 
+	}
+#endif
 }
 
 void t_audio_session::set_session(t_session *_session) {
@@ -628,6 +646,25 @@ void t_audio_session::set_srtp_cipher_mode(const string &cipher_mode) {
 	srtp_cipher_mode = cipher_mode;
 	mtx_zrtp_data.unlock();
 }
+
+
+#ifdef HAVE_SPEEX
+bool t_audio_session::get_do_echo_cancellation(void) const {
+    return do_echo_cancellation;
+}
+
+bool t_audio_session::get_echo_captured_last(void) {
+    return echo_captured_last;
+}
+
+void t_audio_session::set_echo_captured_last(bool value) {
+    echo_captured_last = value;
+}
+
+SpeexEchoState *t_audio_session::get_speex_echo_state(void) {
+    return speex_echo_state;
+}
+#endif
 
 void *main_audio_rx(void *arg) {
 	_audio_session->audio_rx->run();

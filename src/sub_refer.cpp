@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -280,8 +280,6 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
 }
 
 bool t_sub_refer::timeout(t_subscribe_timer timer) {
-	t_request *r;
-
 	if (t_subscription::timeout(timer)) return true;
 
 	switch (timer) {

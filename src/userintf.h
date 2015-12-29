@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #include <list>
 #include <string>
+
 #include "events.h"
 #include "phone.h"
 #include "protocol.h"
@@ -45,14 +46,6 @@
 #define INTERVAL_RINGBACK       3000
 
 using namespace std;
-
-// Message prioritoes
-enum t_msg_priority {
-	MSG_NO_PRIO,
-	MSG_INFO,
-	MSG_WARNING,
-	MSG_CRITICAL
-};
 
 struct t_command_arg {
         char    flag;
@@ -173,9 +166,16 @@ public:
         t_userintf(t_phone *_phone);
         virtual ~t_userintf();
 
-        // Expand a SIP destination to a full SIP uri, i.e. add sip: scheme
-        // and domain if these are missing.
-        string expand_destination(t_user *user_config, const string &dst);
+	/**
+         * Expand a SIP destination to a full SIP/TEL uri, i.e. add sip/tel scheme
+         * and domain if these are missing.
+         * @param user_config [in] User profile of the user for which the expansion is done.
+         * @param dst [in] The address string to expand.
+         * @param scheme [in] Scheme to expand to (sip/tel/""). If scheme is empty then
+         *        the expansion is done according to preferences from the user profile.
+         * @return The expanded address.
+         */
+        string expand_destination(t_user *user_config, const string &dst, const string &scheme = "");
         
         // Expand a SIP destination into a display and a full SIP uri
         void expand_destination(t_user *user_config, 
@@ -183,7 +183,7 @@ public:
         void expand_destination(t_user *user_config, 
         	const string &dst, t_display_url &display_url);
         	
-        // Expand a SIP destination as above, but split of any headers if any.
+        // Expand a SIP destination as above, but split off any headers if any.
         // If the subject header is present, then its value will be returned in
         // subject.
         // The dst_no_headers parameter will contain the dst string with the headers
@@ -326,8 +326,20 @@ public:
 	// Returns true for yes and false for no.
 	virtual bool cb_ask_msg(const string &msg, t_msg_priority prio = MSG_INFO);
 
-	// Display an error message.
+	/** 
+	 * Display an error/information message.
+	 * @param msg [in] Message to display.
+	 * @param prio [in] Priority associated with the message.
+	 */
 	virtual void cb_display_msg(const string &msg,
+			t_msg_priority prio = MSG_INFO);
+			
+	/**
+	 * Display an error/information message in an asynchronous way.
+	 * @param msg [in] Message to display.
+	 * @param prio [in] Priority associated with the message.
+	 */
+	virtual void cb_async_display_msg(const string &msg, 
 			t_msg_priority prio = MSG_INFO);
 			
 	// Log file has been updated
@@ -421,6 +433,10 @@ public:
 	
 	// Lookup a URL in the address book
 	virtual string get_name_from_abook(t_user *user_config, const t_url &u);
+
+	// Get all command names
+	const list<string>& get_all_commands(void);
+
 };
 
 void *process_events_main(void *arg);

@@ -9,7 +9,7 @@
             <x>0</x>
             <y>0</y>
             <width>461</width>
-            <height>125</height>
+            <height>127</height>
         </rect>
     </property>
     <property name="caption">
@@ -30,6 +30,9 @@
                 <widget class="QToolButton" row="1" column="2">
                     <property name="name">
                         <cstring>fileToolButton</cstring>
+                    </property>
+                    <property name="focusPolicy">
+                        <enum>TabFocus</enum>
                     </property>
                     <property name="text">
                         <string></string>

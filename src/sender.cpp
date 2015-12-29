@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -66,7 +66,6 @@ static int num_non_icmp_errors = 0;
 // Returns true if the packet that failed to be sent, should still be sent.
 // Returns false if the packet that failed to be sent, should be discarded.
 static bool handle_socket_err(int err, unsigned long dst_addr, unsigned short dst_port) {
-	t_event_icmp *ev_icmp;
 	string log_msg;
 
 	// Check if an ICMP error has been received
@@ -490,6 +489,7 @@ void *tcp_sender_loop(void *arg) {
 	}
 	
 	log_file->write_report("TCP sender terminated.", "::tcp_sender_loop");
+	return NULL;
 }
 
 void *sender_loop(void *arg) {
@@ -556,4 +556,6 @@ void *sender_loop(void *arg) {
 		MEMMAN_DELETE(event);
 		delete event;
 	}
+	
+	return NULL;
 }

@@ -8,7 +8,7 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>709</width>
+            <width>729</width>
             <height>593</height>
         </rect>
     </property>
@@ -355,22 +355,6 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
                                 </property>
                             </widget>
                         </grid>
-                    </widget>
-                    <widget class="QCheckBox">
-                        <property name="name">
-                            <cstring>reduceNoiseMicCheckBox</cstring>
-                        </property>
-                        <property name="text">
-                            <string>Reduce &amp;noise from the microphone</string>
-                        </property>
-                        <property name="accel">
-                            <string>Alt+N</string>
-                        </property>
-                        <property name="whatsThis" stdset="0">
-                            <string>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
-
-The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</string>
-                        </property>
                     </widget>
                     <widget class="QGroupBox">
                         <property name="name">
@@ -1759,7 +1743,6 @@ Depending on your SIP provider the network might provide ring back tone or an an
     <tabstop>micComboBox</tabstop>
     <tabstop>otherMicLineEdit</tabstop>
     <tabstop>validateAudioCheckBox</tabstop>
-    <tabstop>reduceNoiseMicCheckBox</tabstop>
     <tabstop>ossFragmentComboBox</tabstop>
     <tabstop>alsaPlayPeriodComboBox</tabstop>
     <tabstop>alsaCapturePeriodComboBox</tabstop>

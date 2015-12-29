@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,14 +44,19 @@
 
 // Main function for play thread
 void *tone_gen_play(void *arg) {
+	ui->add_prohibited_thread();
+	
 	t_tone_gen *tg = (t_tone_gen *)arg;
 	tg->play();
+	
+	ui->remove_prohibited_thread();
+	
 	return NULL;
 }
 
 t_tone_gen::t_tone_gen(const string &filename, const t_audio_device &_dev_tone) :
-		sema_finished(0),
-		dev_tone(_dev_tone)
+		dev_tone(_dev_tone),
+		sema_finished(0)
 {
 	string f;
 
@@ -124,10 +129,6 @@ bool t_tone_gen::is_valid(void) const {
 }
 
 void t_tone_gen::play(void) {
-	int arg, arg2;	// arg for ioctl()
-	int status;	// return from ioctl()
-	struct timespec sleeptimer;
-
 	if (!valid) {
 		log_file->write_report(
 			"Tone generator is invalid. Cannot play tone",
@@ -233,9 +234,6 @@ void t_tone_gen::stop(void) {
 	
 	log_file->write_report("Tone stopped.",
 		"t_tone_gen::stop");
-
-	// Stop audio play out
-	int arg = 0;
 
 	if (aio) {
 		MEMMAN_DELETE(aio);

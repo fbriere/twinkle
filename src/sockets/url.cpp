@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include "log.h"
 #include "socket.h"
 #include "url.h"
+#include "user.h"
 #include "util.h"
 
 using namespace std;
@@ -197,7 +198,7 @@ string t_ip_port::tostring(void) const {
 // Private
 
 void t_url::construct_user_url(const string &s) {
-	int i;
+	string::size_type i;
 	string r;
 
 	// Determine user/password (both are optional)
@@ -211,8 +212,19 @@ void t_url::construct_user_url(const string &s) {
 			if (i == 0 || i == userpass.size()-1) return;
 			user = unescape_hex(userpass.substr(0, i));
 			password = unescape_hex(userpass.substr(i+1));
+			
+			if (escape_passwd_value(password) != password) {
+				modified = true;
+			}
 		} else {
 			user = unescape_hex(userpass);
+		}
+		
+		// Set modified flag if user contains reserved symbols.
+		// This enforces escaping these symbols when the url gets
+		// encoded.
+		if (escape_user_value(user) != user) {
+			modified = true;
 		}
 	} else {
 		r = s;
@@ -264,7 +276,7 @@ void t_url::construct_user_url(const string &s) {
 
 
 void t_url::construct_machine_url(const string &s) {
-	int i;
+	string::size_type i;
 
 	// Determine host
 	string hostport;
@@ -314,7 +326,7 @@ bool t_url::parse_params_headers(const string &s) {
 
 	// Find start of headers
 	// Note: parameters will not contain / or ?-symbol
-	int header_start = s.find_first_of("/?");
+	string::size_type header_start = s.find_first_of("/?");
 	if (header_start != string::npos) {
 		headers = s.substr(header_start + 1);
 
@@ -433,7 +445,7 @@ t_url t_url::copy_without_headers(void) const {
 }
 
 void t_url::set_url(const string &s) {
-	int i;
+	string::size_type i;
 	string r;
 
 	modified = false;
@@ -505,16 +517,20 @@ unsigned long t_url::get_n_ip(void) const {
 
 	// TODO: handle multiple A RR's
 	
+	if (scheme == "tel") return 0;
+	
 	h = gethostbyname(host.c_str());
 	if (h == NULL) return 0;
 	return *((unsigned long *)h->h_addr);
 }
 
 unsigned long t_url::get_h_ip(void) const {
+	if (scheme == "tel") return 0;
 	return gethostbyname(host);
 }
 
 list<unsigned long> t_url::get_h_ip_all(void) const {
+	if (scheme == "tel") return list<unsigned long>();
 	return gethostbyname_all(host);
 }
 
@@ -522,6 +538,8 @@ string t_url::get_ip(void) const {
 	struct hostent *h;
 
 	// TODO: handle multiple A RR's
+	
+	if (scheme == "tel") return 0;
 	
 	h = gethostbyname(host.c_str());
 	if (h == NULL) return "";
@@ -532,6 +550,8 @@ list<t_ip_port> t_url::get_h_ip_srv(const string &transport) const {
 	list<t_ip_port> ip_list;
 	list<t_dns_result> srv_list;
 	list<unsigned long> ipaddr_list;
+	
+	if (scheme == "tel") return list<t_ip_port>();
 		
 	// RFC 3263 4.2
 	// Only do an SRV lookup if host is a hostname and no port is specified.
@@ -687,17 +707,26 @@ bool t_url::user_host_match(const t_url &u, bool looks_like_phone,
 	string u1 = get_user();
 	string u2 = u.get_user();
 	
+	// For tel-URIs the phone number is in the host part.
+	if (scheme == "tel") u1 = get_host();
+	if (u.scheme == "tel") u2 = u.get_host();
+	
+	bool u1_is_phone = false;
+	bool u2_is_phone = false;
+	
 	if (is_phone(looks_like_phone, special_symbols)) {
 		u1 = remove_symbols(u1, special_symbols);
+		u1_is_phone = true;
 	}
 	
 	if (u.is_phone(looks_like_phone, special_symbols)) {
 		u2 = remove_symbols(u2, special_symbols);
+		u2_is_phone = true;
 	}
 	
 	if (u1 != u2) return false;
 	
-	if (is_phone(looks_like_phone, special_symbols)) {
+	if (u1_is_phone && u2_is_phone) {
 		// Both URLs are phone numbers. Do not compare
 		// the host-part.
 		return true;
@@ -794,7 +823,7 @@ string t_url::encode(void) const {
 
 string t_url::encode_noscheme(void) const {
 	string s = encode();
-	int i = s.find(':');
+	string::size_type i = s.find(':');
 
 	if (i != string::npos && i < s.size()) {
 		s = s.substr(i + 1);
@@ -843,6 +872,18 @@ string t_url::encode_no_params_hdrs(bool escape) const {
 	return s;
 }
 
+void t_url::apply_conversion_rules(t_user *user_config) {
+	if (scheme == "tel") {
+		host = user_config->convert_number(host);
+	} else {
+		// Convert user part for all other schemes
+		user = user_config->convert_number(user);
+	}
+	
+	modified = true;
+}
+
+
 t_display_url::t_display_url() {}
 
 t_display_url::t_display_url(const t_url &_url, const string &_display) :
@@ -868,4 +909,3 @@ string t_display_url::encode(void) const {
 	
 	return s;
 }
-

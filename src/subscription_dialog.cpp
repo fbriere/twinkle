@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,12 +32,12 @@ extern t_phone *phone;
 extern string local_hostname;
 
 t_subscription_dialog::t_subscription_dialog(t_phone_user *_phone_user) :
-		t_abstract_dialog(_phone_user->get_user_profile()),
-		subscription(NULL),
-		phone_user(_phone_user)
+		t_abstract_dialog(_phone_user),
+		subscription(NULL)
 {}
 
 void t_subscription_dialog::send_request(t_request *r, t_tuid tuid) {
+	t_user *user_config = phone_user->get_user_profile();
 	phone->send_request(user_config, r, tuid);
 }
 
@@ -146,6 +146,7 @@ t_subscription_dialog::~t_subscription_dialog() {
 }
 
 t_request *t_subscription_dialog::create_request(t_method m) {
+	t_user *user_config = phone_user->get_user_profile();
 	t_request *r = t_abstract_dialog::create_request(m);
 	
 	// Contact header
@@ -181,6 +182,8 @@ bool t_subscription_dialog::resend_request_auth(t_response *resp) {
 }
 
 bool t_subscription_dialog::redirect_request(t_response *resp) {
+	t_user *user_config = phone_user->get_user_profile();
+	
 	t_client_request **current_cr = &(subscription->req_out);
 	if (!*current_cr) return false;
 	t_request *req = (*current_cr)->get_request();
@@ -235,6 +238,7 @@ bool t_subscription_dialog::failover_request(t_response *resp) {
 }
 
 void t_subscription_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
+	t_user *user_config = phone_user->get_user_profile();
 	t_abstract_dialog::recvd_response(r, tuid ,tid);
 
 	t_client_request *cr = subscription->req_out;
@@ -378,6 +382,8 @@ bool t_subscription_dialog::match_timer(t_subscribe_timer timer, t_object_id id_
 void t_subscription_dialog::subscribe(unsigned long expires, const t_url &req_uri,
 		const t_url &to_uri, const string &to_display) 
 {
+	t_user *user_config = phone_user->get_user_profile();
+	
 	assert (get_subscription_state() == SS_NULL);
 	call_id = NEW_CALL_ID(user_config);
 	call_id_owner = true;
@@ -389,6 +395,7 @@ void t_subscription_dialog::subscribe(unsigned long expires, const t_url &req_ur
 	remote_display = to_display;
 	remote_tag.clear();
 	remote_target_uri = req_uri;
+	route_set = phone_user->get_service_route();
 	
 	subscription->subscribe(expires);
 }

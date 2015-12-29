@@ -82,17 +82,15 @@ int insrv_lookup (const char *service, const char *proto, const char *domain,
 	// 1. convert service/proto to svcnm
 	// 2. construct SRV query for _service._proto.domain
 
-	iobuf query, names;
+	iobuf names;
 	name svcnm;
-	int error=0;
 	int ctr;
 	int rnd;
-	int sox=0;
 	HEADER *nameshdr;
-	unsigned char *here, *srv[MAXNUM_SRV], *ip;
+	unsigned char *here, *srv[MAXNUM_SRV];
 	int num_srv=0;
 	// Storage for fallback SRV list, constructed when DNS gives no SRV
-	unsigned char fallbacksrv [2*(MAXCDNAME+SRV_FIXEDSZ+MAXCDNAME)];
+	//unsigned char fallbacksrv [2*(MAXCDNAME+SRV_FIXEDSZ+MAXCDNAME)];
 
 	// srv_flags &= ~SRV_GOT_MASK;
 	// srv_flags |=  SRV_GOT_SRV;

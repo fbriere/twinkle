@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -150,6 +150,8 @@ void t_log::write_header(const string &func_name, t_log_class log_class,
 			log_report_disabled = true;
 			return;
 		}
+		break;
+	default:
 		break;
 	}
 

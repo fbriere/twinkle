@@ -140,9 +140,7 @@ bool t_record_file<R>::load(string &error_msg) {
 }
 
 template< class R >
-bool t_record_file<R>::save(string &error_msg) const {
-	struct stat stat_buf;
-	
+bool t_record_file<R>::save(string &error_msg) const {	
 	if (filename.empty()) return false;
 	
 	mtx_records.lock();

@@ -1,4 +1,6 @@
-<!DOCTYPE TS><TS>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS><TS version="1.1" language="cs">
+<defaultcodec></defaultcodec>
 <context>
     <name>AddressCardForm</name>
     <message>
@@ -144,110 +146,110 @@
     <name>BuddyForm</name>
     <message>
         <source>Twinkle - Buddy</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Buddy</translation>
     </message>
     <message>
         <source>Address book</source>
-        <translation type="unfinished">Adresář</translation>
+        <translation>Adresář</translation>
     </message>
     <message>
         <source>Select an address from the address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>vybrat adresu z adresáře .</translation>
     </message>
     <message>
         <source>&amp;Phone:</source>
-        <translation type="unfinished">&amp;Telefon:</translation>
+        <translation>&amp;Telefon:</translation>
     </message>
     <message>
         <source>Name of your buddy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Jméno vašeho Buddy.</translation>
     </message>
     <message>
         <source>&amp;Show availability</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Ukázat dostupnost</translation>
     </message>
     <message>
         <source>Alt+S</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+S</translation>
     </message>
     <message>
         <source>Check this option if you want to see the availability of your buddy. This will only work if your provider offers a presence agent.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vybrat tuto volbu pokud chcete vidět dostupnost vašeho buddy. Toto bude fungovat pouze pokud váš VoIP poskytovatel nabízí funkci &quot;prezenčního agenta&quot;.</translation>
     </message>
     <message>
         <source>&amp;Name:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Jméno:</translation>
     </message>
     <message>
         <source>SIP address your buddy.</source>
-        <translation type="unfinished"></translation>
+        <translation>SIP adresa vašeho buddy.</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;OK</translation>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">Zrušit (Es&amp;c)</translation>
+        <translation>Zrušit (Es&amp;c)</translation>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>You must fill in a name.</source>
-        <translation type="unfinished">Musíte zadat jméno.</translation>
+        <translation>Musíte zadat jméno.</translation>
     </message>
     <message>
         <source>Invalid phone.</source>
-        <translation type="unfinished"></translation>
+        <translation>neplatné telefonní číslo.</translation>
     </message>
     <message>
         <source>Failed to save buddy list: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nepodařilo se uložit buddy seznam: %1</translation>
     </message>
 </context>
 <context>
     <name>BuddyList</name>
     <message>
         <source>Availability</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostupnost</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished">neznámý</translation>
+        <translation>neznámý</translation>
     </message>
     <message>
         <source>offline</source>
-        <translation type="unfinished"></translation>
+        <translation>offline</translation>
     </message>
     <message>
         <source>online</source>
-        <translation type="unfinished"></translation>
+        <translation>online</translation>
     </message>
     <message>
         <source>request rejected</source>
-        <translation type="unfinished"></translation>
+        <translation>požadavek odmítnut</translation>
     </message>
     <message>
         <source>not published</source>
-        <translation type="unfinished"></translation>
+        <translation>nepublikováno</translation>
     </message>
     <message>
         <source>failed to publish</source>
-        <translation type="unfinished"></translation>
+        <translation>publikování selhalho</translation>
     </message>
     <message>
         <source>request failed</source>
-        <translation type="unfinished"></translation>
+        <translation>požadavek selhal</translation>
     </message>
     <message>
         <source>Click right to add a buddy.</source>
-        <translation type="unfinished"></translation>
+        <translation>pravým kliknutím přidat buddyho.</translation>
     </message>
 </context>
 <context>
@@ -778,15 +780,15 @@ Pokud se připojíte k nějaké síti později, musíte Twinkle spustit znovu. T
     </message>
     <message>
         <source>Failed to create a %1 socket (SIP) on port %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhalo vytvoření %1 socketu (SIP) na portu %2</translation>
     </message>
     <message>
         <source>Accepted by network</source>
-        <translation type="unfinished"></translation>
+        <translation>Akceptováno sítí</translation>
     </message>
     <message>
         <source>Failed to save message attachment: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhalo uložení přílohy zprávy: %1</translation>
     </message>
 </context>
 <context>
@@ -1271,106 +1273,106 @@ With this option you request your SIP provider to hide your identity from the ca
     <name>MessageForm</name>
     <message>
         <source>Twinkle - Instant message</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - instantní zpráva</translation>
     </message>
     <message>
         <source>&amp;To:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Komu:</translation>
     </message>
     <message>
         <source>The user that will send the message.</source>
-        <translation type="unfinished"></translation>
+        <translation>Uživatel, který pošle zprávu.</translation>
     </message>
     <message>
         <source>The address of the user that you want to send a message. This can be a full SIP address like &lt;b&gt;sip:example@example.com&lt;/b&gt; or just the user part or telephone number of the full address. When you do not specify a full address, then Twinkle will complete the address by using the domain value of your user profile.</source>
-        <translation type="unfinished"></translation>
+        <translation>Adresa uživatele, kterému má být zpráva poslána. To může být buď SIP adresa, jako např. &lt;b&gt;sip:example@example.com&lt;/b&gt; nebo telefonní číslo z kompletní adresy uživatele.  Pokud se neuvede celá adresa, Twinkle doplni adresu hodnotou &quot;Domain&quot; z nastaveni uživatele v uživatelského profilu.</translation>
     </message>
     <message>
         <source>Address book</source>
-        <translation type="unfinished">Adresář</translation>
+        <translation>Adresář</translation>
     </message>
     <message>
         <source>Select an address from the address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Výběr adresy z adresáře.</translation>
     </message>
     <message>
         <source>&amp;User profile:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Uživatelský profil:</translation>
     </message>
     <message>
         <source>Conversation</source>
-        <translation type="unfinished"></translation>
+        <translation>Konverzace</translation>
     </message>
     <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sem napsat zprávu a poté pro odeslání stisknout &quot;Odeslat&quot;. </translation>
     </message>
     <message>
         <source>&amp;Send</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Odeslat</translation>
     </message>
     <message>
         <source>Alt+S</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Send the message.</source>
-        <translation type="unfinished"></translation>
+        <translation>Odeslat zprávu.</translation>
     </message>
     <message>
         <source>Delivery failure</source>
-        <translation type="unfinished"></translation>
+        <translation>Doručení selhalo</translation>
     </message>
     <message>
         <source>Delivery notification</source>
-        <translation type="unfinished"></translation>
+        <translation>Potvrzení o doručení</translation>
     </message>
     <message>
         <source>Instant message toolbar</source>
-        <translation type="unfinished"></translation>
+        <translation>Lišta s instantními zprávami</translation>
     </message>
     <message>
         <source>Send file...</source>
-        <translation type="unfinished"></translation>
+        <translation>Odeslat soubor...</translation>
     </message>
     <message>
         <source>Send file</source>
-        <translation type="unfinished"></translation>
+        <translation>Odeslat soubor</translation>
     </message>
     <message>
         <source>image size is scaled down in preview</source>
-        <translation type="unfinished"></translation>
+        <translation>obrázek je v náhledu zmenšen</translation>
     </message>
     <message>
         <source>Open with %1...</source>
-        <translation type="unfinished"></translation>
+        <translation>Otevřít s  %1...</translation>
     </message>
     <message>
         <source>Open with...</source>
-        <translation type="unfinished"></translation>
+        <translation>Otevřít s...</translation>
     </message>
     <message>
         <source>Save attachment as...</source>
-        <translation type="unfinished"></translation>
+        <translation>Uložit přílohu jako...</translation>
     </message>
     <message>
         <source>File already exists. Do you want to overwrite this file?</source>
-        <translation type="unfinished"></translation>
+        <translation>Soubor již existuje. Chcete přepsat tento soubor?</translation>
     </message>
     <message>
         <source>Failed to save attachment.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhalo uložení přílohy.</translation>
     </message>
     <message>
         <source>%1 is typing a message.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 píše zprávu.</translation>
     </message>
 </context>
 <context>
     <name>MessageFormView</name>
     <message>
         <source>sending message</source>
-        <translation type="unfinished"></translation>
+        <translation>odesílání zprávy</translation>
     </message>
 </context>
 <context>
@@ -2193,63 +2195,63 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>Buddy list</source>
-        <translation type="unfinished"></translation>
+        <translation>Buddy seznam</translation>
     </message>
     <message>
         <source>&amp;Message</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Zpráva</translation>
     </message>
     <message>
         <source>Msg</source>
-        <translation type="unfinished"></translation>
+        <translation>Msg</translation>
     </message>
     <message>
         <source>Instant &amp;message...</source>
-        <translation type="unfinished"></translation>
+        <translation>Instantní &amp;zpráva...</translation>
     </message>
     <message>
         <source>Instant message</source>
-        <translation type="unfinished"></translation>
+        <translation>Instantní zpráva</translation>
     </message>
     <message>
         <source>&amp;Call...</source>
-        <translation type="unfinished">Volat (&amp;Call)...</translation>
+        <translation>Volat (&amp;Call)...</translation>
     </message>
     <message>
         <source>&amp;Edit...</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Upravit...</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished">&amp;Smazat</translation>
+        <translation>&amp;Smazat</translation>
     </message>
     <message>
         <source>O&amp;ffline</source>
-        <translation type="unfinished"></translation>
+        <translation>O&amp;ffline</translation>
     </message>
     <message>
         <source>&amp;Online</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Online</translation>
     </message>
     <message>
         <source>&amp;Change availability</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Změnit dostupnost</translation>
     </message>
     <message>
         <source>&amp;Add buddy...</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Přidat buddy...</translation>
     </message>
     <message>
         <source>Failed to save buddy list: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhalo uložení seznamu s buddy: %1</translation>
     </message>
     <message>
         <source>You can create a separate buddy list for each user profile. You can only see availability of your buddies and publish your own availability if your provider offers a presence server.</source>
-        <translation type="unfinished"></translation>
+        <translation>Je možné vytvořit oddělený buddy seznam pro každý uživatelský profil. Dostupnost vaších buddy a dostupnost vlastní lze zjistit a využívat jen pokud VoIP poskytovatel provozuje prezenční server.</translation>
     </message>
     <message>
         <source>&amp;Buddy list</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Buddy seznam</translation>
     </message>
     <message>
         <source>&amp;Display</source>
@@ -2433,7 +2435,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>&amp;Wizard</source>
-        <translation></translation>
+        <translation>&amp;Wizard</translation>
     </message>
     <message>
         <source>Alt+W</source>
@@ -2481,7 +2483,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>&amp;Set as default</source>
-        <translation>Nastavit jako &amp;standard</translation>
+        <translation>Nastavit jako &amp;výchozí</translation>
     </message>
     <message>
         <source>Alt+S</source>
@@ -2661,43 +2663,43 @@ Please select a profile.</source>
     <name>SendFileForm</name>
     <message>
         <source>Twinkle - Send File</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Odeslat soubor</translation>
     </message>
     <message>
         <source>Select file to send.</source>
-        <translation type="unfinished"></translation>
+        <translation>Výběr souboru k odeslání.</translation>
     </message>
     <message>
         <source>&amp;File:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Soubor:</translation>
     </message>
     <message>
         <source>&amp;Subject:</source>
-        <translation type="unfinished">&amp;Předmět:</translation>
+        <translation>&amp;Předmět:</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;OK</translation>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">Zrušit (Es&amp;c)</translation>
+        <translation>Zrušit (Es&amp;c)</translation>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+C</translation>
     </message>
     <message>
         <source>File does not exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>Soubor neexistuje.</translation>
     </message>
     <message>
         <source>Send file...</source>
-        <translation type="unfinished"></translation>
+        <translation>Odeslat soubor...</translation>
     </message>
 </context>
 <context>
@@ -2903,14 +2905,9 @@ Please select a profile.</source>
         <translation>Speciální potlačení &amp;rušení z mikrofonu</translation>
     </message>
     <message>
-        <source>Alt+N</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>Recordings from the microphone can contain noise. This could be annoying to the person on the other side of your call. This option removes soft noise coming from the microphone.
-
 The noise reduction algorithm is very simplistic. Sound is captured as 16 bits signed linear PCM samples. All samples between -50 and 50 are truncated to 0.</source>
-        <translation>Zvuk z mikrofonu může obsahovat rušení. Tato volba se ho snaží odstranit. Zavedena byla po zkušenosti s vadnými A/D převodníky u některých Provider Gateways.
+        <translation type="obsolete">Zvuk z mikrofonu může obsahovat rušení. Tato volba se ho snaží odstranit. Zavedena byla po zkušenosti s vadnými A/D převodníky u některých Provider Gateways.
 Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek a poté jsou všechny vzorky s hodnotou mezi -50 až 50 nastaveny na 0.</translation>
     </message>
     <message>
@@ -3352,27 +3349,27 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Maximum allowed size (0-65535) in bytes of an incoming SIP message over UDP.</source>
-        <translation type="unfinished"></translation>
+        <translation>Maximálně povolená velikost příchozí SIP zprávy přes UDP, v Bajtech (0-65535).</translation>
     </message>
     <message>
         <source>&amp;SIP port:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;SIP port:</translation>
     </message>
     <message>
         <source>Max. SIP message size (&amp;TCP):</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. velikost SIP zprávy (&amp;TCP):</translation>
     </message>
     <message>
         <source>The UDP/TCP port used for sending and receiving SIP messages.</source>
-        <translation type="unfinished"></translation>
+        <translation>UDP/TCP port použitý pro odesílání a přijímání SIP zpráv.</translation>
     </message>
     <message>
         <source>Max. SIP message size (&amp;UDP):</source>
-        <translation type="unfinished"></translation>
+        <translation>Max. velikost SIP zprávy (&amp;UDP):</translation>
     </message>
     <message>
         <source>Maximum allowed size (0-4294967295) in bytes of an incoming SIP message over TCP.</source>
-        <translation type="unfinished"></translation>
+        <translation>Maximálně povolená velikost příchozí SIP zprávy přes TCP,  v Bajtech (0-4294967295).</translation>
     </message>
 </context>
 <context>
@@ -3568,7 +3565,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Translated to english by &lt;your name&gt;</source>
-        <translation>Český překlad vypracoval Marek Straka, ©20070401, (http://marek.straka.info)</translation>
+        <translation type="unfinished">Český překlad vypracoval Marek Straka, ©20090701, (http://marek.straka.info)</translation>
     </message>
     <message>
         <source>Directory %1 does not exist.</source>
@@ -3725,23 +3722,23 @@ nasměrované na lokální porty na vašem počítači.</translation>
     </message>
     <message>
         <source>Cannot open ALSA driver for PCM capture</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nelze otevřít ALSA ovladač pro PCM nahrávání</translation>
     </message>
     <message>
         <source>Cannot receive incoming TCP connections.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nelze přijmout příchozí TCP spojení.</translation>
     </message>
     <message>
         <source>Failed to create file %1</source>
-        <translation type="unfinished"></translation>
+        <translation>selhalo vytvoření souboru %1</translation>
     </message>
     <message>
         <source>Failed to write data to file %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhal zápis dat do souboru %1</translation>
     </message>
     <message>
         <source>Failed to send message.</source>
-        <translation type="unfinished"></translation>
+        <translation>Selhalo odeslání zprávy.</translation>
     </message>
 </context>
 <context>
@@ -4126,10 +4123,6 @@ V závislosti od nastavení při kompilaci mohou být některé kodeky nepříst
         <translation>&amp;Ultra wide band payload type:</translation>
     </message>
     <message>
-        <source>&amp;VAD</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>Alt+V</source>
         <translation></translation>
     </message>
@@ -4141,10 +4134,6 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
     <message>
         <source>&amp;Wide band payload type:</source>
         <translation>&amp;Wide band payload type:</translation>
-    </message>
-    <message>
-        <source>V&amp;BR</source>
-        <translation></translation>
     </message>
     <message>
         <source>Alt+B</source>
@@ -4161,14 +4150,6 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
     <message>
         <source>Co&amp;mplexity:</source>
         <translation>Ko&amp;mplexita:</translation>
-    </message>
-    <message>
-        <source>DT&amp;X</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>Alt+X</source>
-        <translation></translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
@@ -5443,119 +5424,207 @@ Asterisk podporuje &quot;unsollicited message waiting indication&quot;.
     </message>
     <message>
         <source>Instant message</source>
-        <translation type="unfinished"></translation>
+        <translation>Instantní zpráva</translation>
     </message>
     <message>
         <source>Presence</source>
-        <translation type="unfinished"></translation>
+        <translation>Přítomnost</translation>
     </message>
     <message>
         <source>&amp;Maximum number of sessions:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Maximální počet seancí:</translation>
     </message>
     <message>
         <source>When you have this number of instant message sessions open, new incoming message sessions will be rejected.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokud je již otevřen tento počet seancí s instantními zprávami, nově příchozí seance budou odmítnuty.</translation>
     </message>
     <message>
         <source>Your presence</source>
-        <translation type="unfinished"></translation>
+        <translation>Vaše přítomnost</translation>
     </message>
     <message>
         <source>&amp;Publish availability at startup</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Publikovat dostupnost při startu</translation>
     </message>
     <message>
         <source>Publish your availability at startup.</source>
-        <translation type="unfinished"></translation>
+        <translation>Publikovat vaši dostupnost při startu.</translation>
     </message>
     <message>
         <source>Buddy presence</source>
-        <translation type="unfinished"></translation>
+        <translation>Přítomnost buddyho</translation>
     </message>
     <message>
         <source>Publication &amp;refresh interval (sec):</source>
-        <translation type="unfinished"></translation>
+        <translation>Interval &amp;obnovení publikování (sec):</translation>
     </message>
     <message>
         <source>Refresh rate of presence publications.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obnovovací frekvence publikování.</translation>
     </message>
     <message>
         <source>&amp;Subscription refresh interval (sec):</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Interval obnovení přihlášení (sec):</translation>
     </message>
     <message>
         <source>Refresh rate of presence subscriptions.</source>
-        <translation type="unfinished"></translation>
+        <translation>Obnovovací frekvence přihlášení o přítomnosti.</translation>
     </message>
     <message>
         <source>Transport/NAT</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Transport/NAT</translation>
     </message>
     <message>
         <source>Add q-value to registration</source>
-        <translation type="unfinished"></translation>
+        <translation>Přidat q-hodnotu k registraci</translation>
     </message>
     <message>
         <source>The q-value indicates the priority of your registered device. If besides Twinkle you register other SIP devices for this account, then the network may use these values to determine which device to try first when delivering a call.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hodnota &apos;q&apos; určuje prioritu vašeho zaregistrovaného zařízení. Pokud je mimo Twinkle k VoIP účtu zaregistrováno jiné SIP zařízení, může síť využít těchto hodnot k určení zařízení, které bude přednostně osloveno pro obsloužení hovoru.</translation>
     </message>
     <message>
         <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hodnota &apos;q&apos; je mezi 0.000 and 1.000  Vyšší hodnota znamená vyšší prioritu.</translation>
     </message>
     <message>
         <source>SIP transport</source>
-        <translation type="unfinished"></translation>
+        <translation>SIP transport</translation>
     </message>
     <message>
         <source>UDP</source>
-        <translation type="unfinished"></translation>
+        <translation>UDP</translation>
     </message>
     <message>
         <source>TCP</source>
-        <translation type="unfinished"></translation>
+        <translation>TCP</translation>
     </message>
     <message>
         <source>Transport mode for SIP. In auto mode, the size of a message determines which transport protocol is used. Messages larger than the UDP threshold are sent via TCP. Smaller messages are sent via UDP.</source>
-        <translation type="unfinished"></translation>
+        <translation>Transportní mód pro SIP. V auto módu je velikost zpráv určena tím, jaký transportní protokol je použit. Zprávy větší než UDP threshold jsou posílány přes TCP. Menší zprávy jsou posílány přes UDP.</translation>
     </message>
     <message>
         <source>T&amp;ransport protocol:</source>
-        <translation type="unfinished"></translation>
+        <translation>T&amp;ransportní protokol:</translation>
     </message>
     <message>
         <source>UDP t&amp;hreshold:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source> bytes</source>
-        <translation type="unfinished"></translation>
+        <translation>UDP t&amp;hreshold:</translation>
     </message>
     <message>
         <source>Messages larger than the threshold are sent via TCP. Smaller messages are sent via UDP.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zprávy větší než threshold jsou odeslány přes TCP. Menší zprávy přes UDP.</translation>
     </message>
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
-        <translation type="unfinished"></translation>
+        <translation>Použít &amp;STUN (nefunguje pro příchozí TCP)</translation>
     </message>
     <message>
         <source>P&amp;ersistent TCP connection</source>
-        <translation type="unfinished"></translation>
+        <translation>Tr&amp;valé TCP spojení</translation>
     </message>
     <message>
         <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
-        <translation type="unfinished"></translation>
+        <translation>Podržet otevřené TCP spojení vytvořené během registrace tak, aby SIP Proxy mohla využít tohoto spojení k vysílání příchozích požadavků. Aplikací jsou vysílány ping pakety aby se testovalo, zda-li je spojení stále aktivní.</translation>
     </message>
     <message>
         <source>&amp;Send composing indications when typing a message.</source>
-        <translation type="unfinished"></translation>
+        <translation>Při psaní zprávy vždy &amp;vysílat příznaky editace.</translation>
     </message>
     <message>
         <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
+        <translation>Twinkle vysílá při psaní zprávy příznak editace. Díky tomu je příjemce informován o tom, že je připravována nějaká zpráva.</translation>
+    </message>
+    <message>
+        <source>AKA AM&amp;F:</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A&amp;KA OP:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authentication management field for AKAv1-MD5 authentication.</source>
+        <translation type="unfinished">Parametry autentizačního managementu pro AKAv1-MD5 autentizaci.</translation>
+    </message>
+    <message>
+        <source>Operator variant key for AKAv1-MD5 authentication.</source>
+        <translation type="unfinished">Operátorová varianta klíče pro AKAv1-MD5 autentizaci.</translation>
+    </message>
+    <message>
+        <source>Prepr&amp;ocessing</source>
+        <translation>Před&amp;zpracování</translation>
+    </message>
+    <message>
+        <source>Preprocessing (improves quality at remote end)</source>
+        <translation>Předzpracování (vylepšuje kvalitu u příjemce)</translation>
+    </message>
+    <message>
+        <source>&amp;Automatic gain control</source>
+        <translation>&amp;Automatické řízení hlasitosti</translation>
+    </message>
+    <message>
+        <source>Automatic gain control (AGC) is a feature that deals with the fact that the recording volume may vary by a large amount between different setups. The AGC provides a way to adjust a signal to a reference volume. This is useful because it removes the need for manual adjustment of the microphone gain. A secondary advantage is that by setting the microphone gain to a conservative (low) level, it is easier to avoid clipping.</source>
+        <translation>Z  důvodu velkého rozdílu hlasitosti nahrávání v různých nastavení byla zavedena funkce &amp;Automatického řízení hlasitosti (AGC - Automatic gain control). AGC umožňuje nastavit úroveň signálu na přednastavenou hodnotu. Díky tomu není nutné pokaždé manuálně nastavovat hlasitost mikrofonu. Další výhodou je, že nastavení hlasitosti mikrofonu je většinou na nižší (konzervativní) úrovni, čímž se předchází zpětnovazebnímu efektům.</translation>
+    </message>
+    <message>
+        <source>Automatic gain control &amp;level:</source>
+        <translation>&amp;Úroveň automatického řízení hlasitosti:</translation>
+    </message>
+    <message>
+        <source>Automatic gain control level represents percentual value of automatic gain setting of a microphone. Recommended value is about 25%.</source>
+        <translation>Úroveň automatického řízení hlasitosti představuje procentuální hodnotu maximální hlasitosti mikrofonu. Doporučená hodnota je kolem 25%.</translation>
+    </message>
+    <message>
+        <source>&amp;Voice activity detection</source>
+        <translation>Detekce &amp;hlasové aktivity</translation>
+    </message>
+    <message>
+        <source>When enabled, voice activity detection detects whether the input signal represents a speech or a silence/background noise.</source>
+        <translation>Pokud je aktivováno testuje funkce detekce hlasové aktivity zdali je vstupní signál hovor (hlas) nebo rušivé okolní zvuky.</translation>
+    </message>
+    <message>
+        <source>&amp;Noise reduction</source>
+        <translation>&amp;Potlačení šumu</translation>
+    </message>
+    <message>
+        <source>The noise reduction can be used to reduce the amount of background noise present in the input signal. This provides higher quality speech.</source>
+        <translation>Potlačení šumu může být použito k snížení okolních rušivých zvuků ve vstupním signálu. Vede to k lepší kvalitě mluveného slova.</translation>
+    </message>
+    <message>
+        <source>Acoustic &amp;Echo Cancellation</source>
+        <translation>Potlačení &amp;akustické ozvěny</translation>
+    </message>
+    <message>
+        <source>In any VoIP communication, if a speech from the remote end is played in the local loudspeaker, then it propagates in the room and is captured by the microphone. If the audio captured from the microphone is sent directly to the remote end, then the remote user hears an echo of his voice. An acoustic echo cancellation is designed to remove the acoustic echo before it is sent to the remote end. It is important to understand that the echo canceller is meant to improve the quality on the remote end.</source>
+        <translation>Pokud je při VoIP komunikaci příchozí zvuk přehráván v reproduktorech může se šířit v místnosti a dostávat se zpět do mikrofonu. Pokud je tento signál poslán zpět volajícímu stává se, že slyší dozvuk vlastního hlasu. Funkce potlačení &amp;akustické ozvěny je navržena k potlačení těchto zvuků před tím než jsou odeslány volajícímu. Je důležité si uvědomit, že tato funkce je určena pro zlepšení kvality přenosu hlasu na straně volajícího. Nikoliv na vlastní straně.</translation>
+    </message>
+    <message>
+        <source>Variable &amp;bit-rate</source>
+        <translation>Proměnná &amp;vzorkovaci frekvence</translation>
+    </message>
+    <message>
+        <source>Discontinuous &amp;Transmission</source>
+        <translation>Diskontinuitní &amp;přenos</translation>
+    </message>
+    <message>
+        <source>&amp;Quality:</source>
+        <translation>&amp;Kvalita:</translation>
+    </message>
+    <message>
+        <source>Speex is a lossy codec, which means that it achives compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</source>
+        <translation>Speex je ztrátový kodek. To znamená, že na úkor kvality je možné docílit redukce datového toku. Na rozdíl od jiných hlasových kodeků je možné nastavit kompromis mezi kvalitou a vzorkovací frekvencí. Kódovací proces u tohoto kodeku je po většinu doby řízen nastavením parametru kvality v rozsahu od 0 do 10.</translation>
+    </message>
+    <message>
+        <source>bytes</source>
+        <translation>bajtů</translation>
+    </message>
+    <message>
+        <source>Use tel-URI for telephone &amp;number</source>
+        <translation>Použít tel-URI pro &amp;telefonní číslo</translation>
+    </message>
+    <message>
+        <source>Expand a dialed telephone number to a tel-URI instead of a sip-URI.</source>
+        <translation>Rozšířit vytáčené telefonní číslo o tel-URI namísto sip-URI.</translation>
     </message>
 </context>
 <context>

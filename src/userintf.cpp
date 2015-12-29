@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "address_book.h"
 #include "events.h"
 #include "line.h"
@@ -35,23 +37,91 @@
 #include "utils/mime_database.h"
 
 #define CLI_PROMPT              "Twinkle> "
+#define CLI_MAX_HISTORY_LENGTH	1000
 
 extern string user_host;
 extern t_event_queue *evq_trans_layer;
 
 using namespace utils;
 
+
+
+////////////////////////
+// GNU Readline helpers
+////////////////////////
+
+char ** tw_completion (const char *text, int start, int end);
+char * tw_command_generator (const char *text, int state);
+
+char ** tw_completion (const char *text, int start, int end)
+{
+	char **matches;
+	matches = (char **)NULL;
+	if (start == 0)
+		matches = rl_completion_matches (text, tw_command_generator);
+	return (matches);
+}
+
+
+
+char * tw_command_generator (const char *text, int state)
+{
+	static int len;
+	static list<string>::const_iterator i;
+
+	if (!state){
+		len = strlen(text);
+		i = ui->get_all_commands().begin();
+	}
+
+	for (; i != ui->get_all_commands().end(); i++){
+		const char * s = i->c_str();
+		//cout << s << endl;
+		if ( s && strncmp(s, text, len) == 0  ){
+			i++;
+			return strdup(s);
+		}
+	}
+
+	/* If no names matched, then return NULL. */
+	return ((char *)NULL);
+}
+
+char *tw_readline(const char *prompt)
+{
+	static char *line = NULL;
+	
+	if (!line) {
+		free(line);
+		line = NULL;
+	}
+	
+	line = readline(prompt);
+	
+	if (line && *line) {
+		add_history(line);
+	}
+	
+	return line;
+}
+
 /////////////////////////////
 // Private
 /////////////////////////////
 
-string t_userintf::expand_destination(t_user *user_config, const string &dst) {
+string t_userintf::expand_destination(t_user *user_config, const string &dst, const string &scheme) {
 	assert(user_config);
 	
 	string s = dst;
 
-	// Add domain if missing
+	// Apply number conversion rules if applicable
+	// Add domain if it is missing from a sip-uri
 	if (s.find('@') == string::npos) {
+		bool is_tel_uri = (s.substr(0, 4) == "tel:");
+		
+		// Strip tel-scheme
+		if (is_tel_uri) s = s.substr(4);
+	
 		// Remove white space
 		s = remove_white_space(s);
 	
@@ -65,20 +135,34 @@ string t_userintf::expand_destination(t_user *user_config, const string &dst) {
 		// Convert number according to the number conversion rules
 		s = user_config->convert_number(s);
 			
-		s += '@';
-		s += user_config->get_domain();
+		if (is_tel_uri) {
+			// Add tel-scheme again.
+			s = "tel:" + s;
+		} else if (s.substr(0, 4) != "sip:" &&
+		           (user_config->get_use_tel_uri_for_phone() || scheme == "tel") &&
+		           user_config->get_numerical_user_is_phone() &&
+		           looks_like_phone(s, user_config->get_special_phone_symbols()))
+		{
+			// Add tel-scheme if a telephone number must be expanded
+		        // to a tel-uri according to user profile settings.
+			s = "tel:" + s;
+		} else {
+			// Add domain
+			s += '@';
+			s += user_config->get_domain();
+		}
 	}
 	
-	// Add sip-scheme if missing
-	if (s.substr(0, 4) != "sip:") {
+	// Add sip-scheme if a scheme is missing
+	if (s.substr(0, 4) != "sip:" && s.substr(0, 4) != "tel:") {
 		s = "sip:" + s;
 	}
 
 	// RFC 3261 19.1.1
-	// Add user=phone for telehpone numbers
-	// If the URI contains a telephone number it SHOULD contain
+	// Add user=phone for telehpone numbers in a SIP-URI
+	// If the SIP-URI contains a telephone number it SHOULD contain
 	// the user=phone parameter.
-	if (user_config->get_numerical_user_is_phone()) {
+	if (user_config->get_numerical_user_is_phone() && s.substr(0, 4) == "sip:") {
 		t_url u(s);
 		if (u.get_user_param().empty() && 
 		    u.user_looks_like_phone(user_config->get_special_phone_symbols())) {
@@ -146,7 +230,7 @@ void t_userintf::expand_destination(t_user *user_config,
 		// Note that a separator (?) will be in front of the 
 		// headers string
 		if (!headers.empty()) {
-			int i = dst.find(headers);
+			string::size_type i = dst.find(headers);
 			if (i != string::npos) {
 				dst_no_headers = dst.substr(0, i - 1);
 			}
@@ -336,6 +420,8 @@ void t_userintf::do_answerbye(void) {
 	case LSSUB_ESTABLISHED:
 		do_bye();
 		break;
+	default:
+		break;
 	}
 }
 
@@ -360,7 +446,7 @@ bool t_userintf::exec_redirect(const list<string> command_list, bool immediate) 
 	bool action_present = false;
 	bool enable = true;
 	bool type_present = false;
-	t_cf_type cf_type;
+	t_cf_type cf_type = CF_ALWAYS;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help redirect");
@@ -531,7 +617,7 @@ bool t_userintf::exec_dnd(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
 	bool toggle = true;
-	bool enable;
+	bool enable = false;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help dnd");
@@ -597,7 +683,7 @@ bool t_userintf::exec_auto_answer(const list<string> command_list) {
 	list<t_command_arg> al;
 	bool show_status = false;
 	bool toggle = true;
-	bool enable;
+	bool enable = false;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help auto_answer");
@@ -1202,7 +1288,7 @@ void t_userintf::do_user(const string &profile_name) {
 
 bool t_userintf::exec_zrtp(const list<string> command_list) {
 	list<t_command_arg> al;
-	t_zrtp_cmd zrtp_cmd;
+	t_zrtp_cmd zrtp_cmd = ZRTP_ENCRYPT;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help zrtp");
@@ -1336,7 +1422,7 @@ bool t_userintf::do_message(const string &destination, const string &display,
 
 bool t_userintf::exec_presence(const list<string> command_list) {
 	list<t_command_arg> al;
-	t_presence_state::t_basic_state basic_state;
+	t_presence_state::t_basic_state basic_state = t_presence_state::ST_BASIC_OPEN;
 
 	if (!parse_args(command_list, al)) {
 		exec_command("help presence");
@@ -1363,6 +1449,7 @@ bool t_userintf::exec_presence(const list<string> command_list) {
 	}
 
 	do_presence(basic_state);
+	return true;
 }
 
 void t_userintf::do_presence(t_presence_state::t_basic_state basic_state)
@@ -2090,8 +2177,6 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 }
 
 void t_userintf::run(void) {
-	string command_line;
-	
 	// Start asynchronous event processor
 	thr_process_events = new t_thread(process_events_main, NULL);
 	MEMMAN_NEW(thr_process_events);
@@ -2101,7 +2186,7 @@ void t_userintf::run(void) {
 
 	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
 	cout << endl;
-	cout << "Copyright (C) 2005-2008  " << PRODUCT_AUTHOR << endl;
+	cout << "Copyright (C) 2005-2009  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
 	
 	cout << "Users:";
@@ -2115,17 +2200,25 @@ void t_userintf::run(void) {
 	// Initialize phone functions
 	phone->init();
 
+	//Initialize GNU readline functions
+	rl_attempted_completion_function = tw_completion;
+	using_history();
+	read_history(sys_config->get_history_file().c_str());
+	stifle_history(CLI_MAX_HISTORY_LENGTH);
+
+
 	while (!end_interface) {
-		cout << CLI_PROMPT;
-		getline(cin, command_line);
-		exec_command(command_line);
-		if (cin.eof()) {
+		char *command_line = tw_readline(CLI_PROMPT);
+		if (!command_line){
 			cout << endl;
 			break;
 		}
+		
+		exec_command(command_line);
 	}
 	
 	// Terminate phone functions
+	write_history(sys_config->get_history_file().c_str());
 	phone->terminate();
 	
 	save_state();
@@ -2206,7 +2299,7 @@ string t_userintf::select_network_intf(void) {
 	if (l->size() == 1) {
 		ip = l->front().get_ip_addr();
 	} else {
-		int num = 1;
+		size_t num = 1;
 		cout << "Multiple network interfaces found.\n";
 		for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
 			cout << num << ") " << i->name << ": ";
@@ -2216,7 +2309,7 @@ string t_userintf::select_network_intf(void) {
 
 		cout << endl;
 
-		int selection = 0;
+		size_t selection = 0;
 		while (selection < 1 || selection > l->size()) {
 			cout << "Which interface do you want to use (enter number): ";
 			string choice;
@@ -2278,7 +2371,6 @@ void t_userintf::cb_incoming_call(t_user *user_config, int line, const t_request
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_notify_call(line, from_party);
@@ -2291,7 +2383,6 @@ void t_userintf::cb_call_cancelled(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "far end cancelled call.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2304,7 +2395,6 @@ void t_userintf::cb_far_end_hung_up(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "far end ended call.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2317,7 +2407,6 @@ void t_userintf::cb_answer_timeout(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "answer timeout.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2331,7 +2420,6 @@ void t_userintf::cb_sdp_answer_not_supported(int line, const string &reason) {
 	cout << "SDP answer from far end not supported.\n";
 	cout << reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2344,7 +2432,6 @@ void t_userintf::cb_sdp_answer_missing(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "SDP answer from far end missing.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2359,7 +2446,6 @@ void t_userintf::cb_unsupported_content_type(int line, const t_sip_message *r) {
 	cout << r->hdr_content_type.media.type << "/";
 	cout << r->hdr_content_type.media.subtype << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2372,7 +2458,6 @@ void t_userintf::cb_ack_timeout(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "no ACK received, call will be terminated.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2385,7 +2470,6 @@ void t_userintf::cb_100rel_timeout(int line) {
 	cout << "Line " << line + 1 << ": ";
 	cout << "no PRACK received, call will be terminated.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2398,7 +2482,6 @@ void t_userintf::cb_prack_failed(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": PRACK failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 
 	cb_stop_call_notification(line);
@@ -2411,7 +2494,6 @@ void t_userintf::cb_provisional_resp_invite(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": received ";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2422,7 +2504,6 @@ void t_userintf::cb_cancel_failed(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": cancel failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2441,7 +2522,6 @@ void t_userintf::cb_call_answered(t_user *user_config, int line, const t_respons
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2478,7 +2558,6 @@ void t_userintf::cb_call_failed(t_user *user_config, int line, const t_response 
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2488,7 +2567,6 @@ void t_userintf::cb_stun_failed_call_ended(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": call failed.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();		
 }
 
@@ -2497,7 +2575,6 @@ void t_userintf::cb_call_ended(int line) {
 	
 	cout << endl;
 	cout << "Line " << line + 1 << ": call ended.\n";
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2507,7 +2584,6 @@ void t_userintf::cb_call_established(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": call established.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2576,7 +2652,6 @@ void t_userintf::cb_options_response(const t_response *r) {
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2587,7 +2662,6 @@ void t_userintf::cb_reinvite_success(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": re-INVITE successful.\n";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2598,7 +2672,6 @@ void t_userintf::cb_reinvite_failed(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": re-INVITE failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2611,7 +2684,6 @@ void t_userintf::cb_retrieve_failed(int line, const t_response *r) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": retrieve failed.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2623,7 +2695,6 @@ void t_userintf::cb_invalid_reg_resp(t_user *user_config,
 	cout << ", registration failed: " << r->code << ' ' << r->reason << endl;
 	cout << reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2644,7 +2715,6 @@ void t_userintf::cb_register_success(t_user *user_config,
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2658,7 +2728,6 @@ void t_userintf::cb_register_failed(t_user *user_config,
 	cout << user_config->get_profile_name();
 	cout << ", registration failed: " << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2670,7 +2739,6 @@ void t_userintf::cb_register_stun_failed(t_user *user_config, bool first_failure
 	cout << user_config->get_profile_name();
 	cout << ", registration failed: STUN failure";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2679,7 +2747,6 @@ void t_userintf::cb_deregister_success(t_user *user_config, const t_response *r)
 	cout << user_config->get_profile_name();
 	cout << ", de-registration succeeded: " << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2688,7 +2755,6 @@ void t_userintf::cb_deregister_failed(t_user *user_config,  const t_response *r)
 	cout << user_config->get_profile_name();
 	cout << ", de-registration failed: " << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 void t_userintf::cb_fetch_reg_failed(t_user *user_config, const t_response *r) {
@@ -2696,7 +2762,6 @@ void t_userintf::cb_fetch_reg_failed(t_user *user_config, const t_response *r) {
 	cout << user_config->get_profile_name();
 	cout << ", fetch registrations failed: " << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2717,7 +2782,6 @@ void t_userintf::cb_fetch_reg_result(t_user *user_config, const t_response *r) {
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2754,7 +2818,6 @@ void t_userintf::cb_register_inprog(t_user *user_config, t_register_type registe
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2769,7 +2832,6 @@ void t_userintf::cb_redirecting_request(t_user *user_config,
 	cout << format_sip_address(user_config, contact.display, contact.uri) << endl;
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2780,7 +2842,6 @@ void t_userintf::cb_redirecting_request(t_user *user_config, const t_contact_par
 	cout << format_sip_address(user_config, contact.display, contact.uri) << endl;
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2883,7 +2944,6 @@ void t_userintf::cb_dtmf_detected(int line, char dtmf_event) {
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2931,7 +2991,6 @@ void t_userintf::cb_dtmf_supported(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": far end supports DTMF telephone event.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2979,7 +3038,6 @@ void t_userintf::cb_notify_recvd(int line, const t_request *r) {
 	cout << "Progress: " << sipfrag->code << ' ' << sipfrag->reason << endl;
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -2990,7 +3048,6 @@ void t_userintf::cb_refer_failed(int line, const t_response *r) {
 	cout << "Line " << line + 1 << ": refer request failed.\n";
 	cout << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3000,7 +3057,6 @@ void t_userintf::cb_refer_result_success(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": call succesfully referred.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3010,7 +3066,6 @@ void t_userintf::cb_refer_result_failed(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": call refer failed.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3021,7 +3076,6 @@ void t_userintf::cb_refer_result_inprog(int line) {
 	cout << "Line " << line + 1 << ": call refer in progress.\n";
 	cout << "No further notifications will be received.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3042,7 +3096,6 @@ void t_userintf::cb_call_referred(t_user *user_config, int line, t_request *r) {
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3071,7 +3124,6 @@ void t_userintf::cb_retrieve_referrer(t_user *user_config, int line) {
 	cout << "Subject: ";
 	cout << call_info.subject;
 	cout << endl << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3099,7 +3151,6 @@ void t_userintf::cb_consultation_call_setup(t_user *user_config, int line) {
 	cout << "Subject: ";
 	cout << call_info.subject;
 	cout << endl << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3109,7 +3160,6 @@ void t_userintf::cb_stun_failed(t_user *user_config, int err_code, const string 
 	cout << ", STUN request failed: ";
 	cout << err_code << " " << err_reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3118,7 +3168,6 @@ void t_userintf::cb_stun_failed(t_user *user_config) {
 	cout << user_config->get_profile_name();
 	cout << ", STUN request failed.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3180,7 +3229,6 @@ void t_userintf::cb_show_msg(const string &msg, t_msg_priority prio) {
 	cout << msg << endl;
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3194,6 +3242,14 @@ bool t_userintf::cb_ask_msg(const string &msg, t_msg_priority prio) {
 void t_userintf::cb_display_msg(const string &msg, t_msg_priority prio) {
 	// In CLI mode this is the same as cb_show_msg
 	cb_show_msg(msg, prio);
+}
+
+void t_userintf::cb_async_display_msg(const string &msg, t_msg_priority prio) {
+	t_event_ui *event = new t_event_ui(TYPE_UI_CB_DISPLAY_MSG);
+	MEMMAN_NEW(event);
+	
+	event->set_display_msg(msg, prio);
+	evq_ui_events.push(event);
 }
 
 void t_userintf::cb_log_updated(bool log_zapped) {
@@ -3239,7 +3295,6 @@ void t_userintf::cb_line_encrypted(int line, bool encrypted, const string &ciphe
 		cout << "Line " << line + 1 << ": audio encryption disabled.\n";
 	}
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3260,7 +3315,6 @@ void t_userintf::cb_show_zrtp_sas(int line, const string &sas) {
 	cout << "Line " << line + 1 << ": ZRTP SAS = " << sas << endl;
 	cout << "Confirm the SAS if it is correct.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3279,7 +3333,6 @@ void t_userintf::cb_zrtp_confirm_go_clear(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": remote user disabled encryption.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 	
 	phone->pub_zrtp_go_clear_ok(line);
@@ -3299,7 +3352,6 @@ void t_userintf::cb_zrtp_sas_confirmed(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": SAS confirmed.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3309,7 +3361,6 @@ void t_userintf::cb_zrtp_sas_confirmation_reset(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": SAS confirmation reset.\n";
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3325,7 +3376,6 @@ void t_userintf::cb_mwi_subscribe_failed(t_user *user_config, t_response *r, boo
 	cout << user_config->get_profile_name();
 	cout << ", MWI subscription failed: " << r->code << ' ' << r->reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3334,7 +3384,6 @@ void t_userintf::cb_mwi_terminated(t_user *user_config, const string &reason) {
 	cout << user_config->get_profile_name();
 	cout << ", MWI subscription terminated: " << reason << endl;
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 }
 
@@ -3371,7 +3420,6 @@ bool t_userintf::cb_message_request(t_user *user_config, t_request *r) {
 	}
 
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();
 	
 	// There are no session in CLI mode, so all messages are accepted.
@@ -3386,7 +3434,6 @@ void t_userintf::cb_message_response(t_user *user_config, t_response *r, t_reque
 	cout << r->code << " " << r->reason << endl;
 	
 	cout << endl;
-	cout << CLI_PROMPT;
 	cout.flush();	
 }
 
@@ -3456,4 +3503,9 @@ string t_userintf::get_name_from_abook(t_user *user_config, const t_url &u) {
 void *process_events_main(void *arg) {
 	ui->process_events();
 	return NULL;
+}
+
+const list<string>& t_userintf::get_all_commands(void)
+{
+	return all_commands;
 }

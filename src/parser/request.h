@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -56,13 +56,64 @@ private:
 	 */
 	void add_destinations(const t_user &user_profile, const t_url &dst_uri);
 	
-	// Calculate credentials based on the challenge
-	// Returns false if challenge is not supported; in this case
-	// fail_reason contains the reason for failure.
-	bool authorize(const t_challenge &chlg, const string &username,
-		       const string &passwd, unsigned long nc,
+	/**
+	 * Calculate credentials based on the challenge.
+	 * @param chlg [in] The challenge
+	 * @param user_config [in] User configuration for user to be authorized.
+	 * @param username [in] User authentication name
+	 * @param passwd [in] Authentication password.
+	 * @param nc [in] Nonce count
+	 * @param cnonce [in] Client nonce
+	 * @param cr [out] Credentials on succesful return.
+	 * @param fail_reason [out] Failure reason on failure return.
+	 * @return false, if authorization fails.
+	 * @return true, if authorization succeeded
+	 */
+	bool authorize(const t_challenge &chlg, t_user *user_config, 
+		       const string &username, const string &passwd, unsigned long nc,
 		       const string &cnonce, t_credentials &cr,
 		       string &fail_reason) const;
+
+	/**
+	 * Calculate MD5 response based on the challenge.
+	 * @param chlg [in] The challenge
+	 * @param username [in] User authentication name
+	 * @param passwd [in] Authentication password.
+	 * @param nc [in] Nonce count
+	 * @param cnonce [in] Client nonce
+	 * @param qop [in] Quality of protection
+	 * @param resp [out] Response on succesful return.
+	 * @param fail_reason [out] Failure reason on failure return.
+	 * @return false, if authorization fails.
+	 * @return true, if authorization succeeded
+	 */
+	bool authorize_md5(const t_digest_challenge &dchlg,
+				const string &username, const string &passwd, unsigned long nc,
+				const string &cnonce, const string &qop, string &resp, 
+				string &fail_reason) const;
+
+	/**
+	 * Calculate AKAv1-MD5 response based on the challenge.
+	 * @param chlg [in] The challenge
+	 * @param username [in] User authentication name
+	 * @param passwd [in] Authentication password.
+	 * @param op [in] Operator variant key
+	 * @param amf [in] Authentication method field
+	 * @param nc [in] Nonce count
+	 * @param cnonce [in] Client nonce
+	 * @param qop [in] Quality of protection
+	 * @param resp [out] Response on succesful return.
+	 * @param fail_reason [out] Failure reason on failure return.
+	 * @return false, if authorization fails.
+	 * @return true, if authorization succeeded
+	 */
+	bool authorize_akav1_md5(const t_digest_challenge &dchlg,
+				const string &username, const string &passwd, 
+				uint8 *op, uint8 *amf,
+				unsigned long nc,
+				const string &cnonce, const string &qop, string &resp, 
+				string &fail_reason) const;
+
 
 public:
 	t_url		uri;
@@ -78,6 +129,14 @@ public:
 	string encode(bool add_content_length = true);
 	list<string> encode_env(void);
 	t_sip_message *copy(void) const;
+	
+	/**
+	 * Set the Request-URI and the Route header.
+	 * This is done according to the procedures of RFC 3261 12.2.1.1
+	 * @param target_uri [in] The URI of the destination for this request.
+	 * @param route_set [in] The route set for this request (may be empty).
+	 */
+	void set_route(const t_url &target_uri, const list<t_route> &route_set);
 
 	// Create a response with response code based on the
 	// request. The response is created following the general
@@ -107,17 +166,38 @@ public:
 	// Set a single destination to send this request to.
 	void set_destination(const t_ip_port &ip_port);
 
-	// Create authorization credentials based on the challenge
-	// Returns false if challenge is not supported and fail_reason
-	// contains the reason for failure.
-	// Returns true if authorization succeeded and cr will contain
-	// the credentials.
-	bool www_authorize(const t_challenge &chlg, const string &username,
-	       const string &passwd, unsigned long nc,
+	/** 
+	 * Create WWW authorization credentials based on the challenge.
+	 * @param chlg [in] The challenge
+	 * @param user_config [in] User configuration for user to be authorized.
+	 * @param username [in] User authentication name
+	 * @param passwd [in] Authentication password.
+	 * @param nc [in] Nonce count
+	 * @param cnonce [in] Client nonce
+	 * @param cr [out] Credentials on succesful return.
+	 * @param fail_reason [out] Failure reason on failure return.
+	 * @return false, if challenge is not supported.
+	 * @return true, if authorization succeeded
+	 */
+	bool www_authorize(const t_challenge &chlg, t_user *user_config,
+	       const string &username, const string &passwd, unsigned long nc,
 	       const string &cnonce, t_credentials &cr, string &fail_reason);
 
-	bool proxy_authorize(const t_challenge &chlg, const string &username,
-	       const string &passwd, unsigned long nc,
+	/** 
+	 * Create proxy authorization credentials based on the challenge.
+	 * @param chlg [in] The challenge
+	 * @param user_config [in] User configuration for user to be authorized.
+	 * @param username [in] User authentication name
+	 * @param passwd [in] Authentication password.
+	 * @param nc [in] Nonce count
+	 * @param cnonce [in] Client nonce
+	 * @param cr [out] Credentials on succesful return.
+	 * @param fail_reason [out] Failure reason on failure return.
+	 * @return false, if challenge is not supported.
+	 * @return true, if authorization succeeded
+	 */
+	bool proxy_authorize(const t_challenge &chlg, t_user *user_config,
+	       const string &username, const string &passwd, unsigned long nc,
 	       const string &cnonce, t_credentials &cr, string &fail_reason);
 	       
 	virtual void calc_local_ip(void);

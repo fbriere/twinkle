@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -210,7 +210,6 @@ void SysSettingsForm::populate()
 	devMicSelected(micComboBox->currentItem());
 	
 	validateAudioCheckBox->setChecked(sys_config->get_validate_audio_dev());
-	reduceNoiseMicCheckBox->setChecked(sys_config->get_au_reduce_noise_mic());
 	
 	populateComboBox(ossFragmentComboBox, 
 			 QString::number(sys_config->get_oss_fragment_size()));
@@ -360,7 +359,6 @@ void SysSettingsForm::validate()
 	if (dev != "") sys_config->set_dev_mic(sys_config->audio_device(dev));
 	
 	sys_config->set_validate_audio_dev(validateAudioCheckBox->isChecked());
-	sys_config->set_au_reduce_noise_mic(reduceNoiseMicCheckBox->isChecked());
 	
 	sys_config->set_oss_fragment_size(
 			ossFragmentComboBox->currentText().toInt());

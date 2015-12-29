@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2008  Michel de Boer <michel@twinklephone.com>
+    Copyright (C) 2005-2009  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -406,4 +406,6 @@ void *connection_timeout_main(void *arg) {
 	
 	log_file->write_report("Connection timeout handler terminated.",
 			"::connection_timeout_main");
+			
+	return NULL;
 };
