@@ -341,13 +341,13 @@ list<string> split_escaped(const string &s, char c) {
 		}
 		
 		if (s[i] == c) {
-			l.push_back(s.substr(start_pos, i - start_pos));
+			l.push_back(unescape(s.substr(start_pos, i - start_pos)));
 			start_pos = i + 1;
 		}
 	}
 	
 	if (start_pos < s.size()) {
-		l.push_back(s.substr(start_pos, s.size() - start_pos));
+		l.push_back(unescape(s.substr(start_pos, s.size() - start_pos)));
 	} else if (start_pos == s.size()) {
 		l.push_back("");
 	}
@@ -527,4 +527,10 @@ string remove_white_space(const string &s) {
 	}
 	
 	return result;
+}
+
+string dotted_truncate(const string &s, int len) {
+	if (len >= s.size()) return s;
+	
+	return s.substr(0, len) + "...";
 }

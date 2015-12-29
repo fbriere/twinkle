@@ -26,9 +26,10 @@ extern t_phone 		*phone;
 extern t_event_queue	*evq_sender_udp;
 extern string		user_host;
 
-t_phone_user::t_phone_user(const t_user &profile)
-{
+t_phone_user::t_phone_user(const t_user &profile) {
 	user_config = profile.copy();
+	service = new t_service(user_config);
+	MEMMAN_NEW(service);
 	
 	active = true;
 
@@ -84,6 +85,8 @@ t_phone_user::~t_phone_user() {
 		delete r_stun;
 	}
 	
+	MEMMAN_DELETE(service);
+	delete service;
 	MEMMAN_DELETE(user_config);
 	delete user_config;
 }
@@ -127,11 +130,11 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
 	// Construct REGISTER request
 
 	t_request *req = create_request(REGISTER, 
-			t_url(string(USER_SCHEME) + ":" + user_config->domain));
+			t_url(string(USER_SCHEME) + ":" + user_config->get_domain()));
 
 	// To
 	req->hdr_to.set_uri(user_config->create_user_uri());
-	req->hdr_to.set_display(user_config->display);
+	req->hdr_to.set_display(user_config->get_display());
 
 	//Call-ID
 	req->hdr_call_id.set_call_id(register_call_id);
@@ -147,7 +150,7 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
         case REG_REGISTER:
                 contact.uri.set_url(user_config->create_user_contact());
                 if (expires > 0) {
-			if (user_config->registration_time_in_contact) {
+			if (user_config->get_registration_time_in_contact()) {
 				contact.set_expires(expires);
 			} else {
 				req->hdr_expires.set_time(expires);
@@ -157,7 +160,7 @@ void t_phone_user::registration(t_register_type register_type, bool re_register,
                 break;
         case REG_DEREGISTER:
                 contact.uri.set_url(user_config->create_user_contact());
- 		if (user_config->registration_time_in_contact) {
+ 		if (user_config->get_registration_time_in_contact()) {
 			contact.set_expires(0);
 		} else {
 			req->hdr_expires.set_time(0);
@@ -304,7 +307,7 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 	}
 
 	// Redirect request if there is another destination
-	if (user_config->allow_redirection) {
+	if (user_config->get_allow_redirection()) {
 		// If the response is a 3XX response then add redirection
 		// contacts
 		if (r->get_class() == R_3XX  &&
@@ -320,7 +323,7 @@ void t_phone_user::handle_response_out_of_dialog(t_response *r, t_tuid tuid) {
 			// Ask user for permission to redirect if indicated
 			// by user config
 			bool permission = true;
-			if (user_config->ask_user_to_redirect) {
+			if (user_config->get_ask_user_to_redirect()) {
 				permission = ui->cb_ask_user_to_redirect_request(
 							user_config,
 							contact.uri, contact.display,
@@ -458,7 +461,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 
                 c = r->hdr_contact.find_contact(user_config->create_user_contact());
                 if (!c) {               	
-	               	if (!user_config->allow_missing_contact_reg) {
+	               	if (!user_config->get_allow_missing_contact_reg()) {
 				is_registered = false;
 
 	              		log_file->write_report(
@@ -481,7 +484,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                         expires = r->hdr_expires.time;
                 }
                 else {	
-               		if (!user_config->allow_missing_contact_reg) {
+               		if (!user_config->get_allow_missing_contact_reg()) {
 				is_registered = false;
 				
                			log_file->write_report(
@@ -494,7 +497,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 				return;
                         }
                         
-                        expires = user_config->registration_time;
+                        expires = user_config->get_registration_time();
                         
                         // Assume a default expiration of 3600 sec if no expiry
                         // time was returned.
@@ -550,7 +553,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
                         return;
                 }
 
-		// If authorization failed, the do not start the continuous
+		// If authorization failed, then do not start the continuous
 		// re-attempts. When authorization fails the user is asked
 		// for credentials (in GUI). So the user cancelled these
 		// questions and should not be bothered with the same question
@@ -570,6 +573,7 @@ void t_phone_user::handle_response_register(t_response *r, bool &re_register) {
 		first_failure = !last_reg_failed;
                 last_reg_failed = true;
                 is_registered = false;
+                authorizor.remove_from_cache(""); // Clear credentials cache
 		ui->cb_register_failed(user_config, r, first_failure);
                 phone->start_set_timer(PTMR_REGISTRATION, DUR_REG_FAILURE * 1000, this);
                 
@@ -666,7 +670,7 @@ t_request *t_phone_user::create_request(t_method m, const t_url &request_uri) co
 
 	// From
 	req->hdr_from.set_uri(user_config->create_user_uri());
-	req->hdr_from.set_display(user_config->display);
+	req->hdr_from.set_display(user_config->get_display());
 	req->hdr_from.set_tag(NEW_TAG);
 
 	// Max-Forwards header (mandatory)
@@ -692,7 +696,7 @@ t_response *t_phone_user::create_options_response(t_request *r,
 	// RFC 3261 11.2
 	switch(phone->get_state()) {
 	case PS_IDLE:
-		if (!in_dialog && service.is_dnd_active()) {
+		if (!in_dialog && service->is_dnd_active()) {
 			resp = r->create_response(R_480_TEMP_NOT_AVAILABLE);
 		} else {
 			resp = r->create_response(R_200_OK);
@@ -715,7 +719,7 @@ t_response *t_phone_user::create_options_response(t_request *r,
 	SET_HDR_ACCEPT_LANGUAGE(resp->hdr_accept_language);
 	SET_HDR_SUPPORTED(resp->hdr_supported);
 
-	if (user_config->ext_100rel != EXT_DISABLED) {
+	if (user_config->get_ext_100rel() != EXT_DISABLED) {
 		resp->hdr_supported.add_feature(EXT_100REL);
 	}
 
@@ -734,7 +738,7 @@ bool t_phone_user::get_last_reg_failed(void) const {
 
 string t_phone_user::get_ip_sip(void) const {
 	if (stun_public_ip_sip) return h_ip2str(stun_public_ip_sip);
-	if (user_config->use_nat_public_ip) return user_config->nat_public_ip;
+	if (user_config->get_use_nat_public_ip()) return user_config->get_nat_public_ip();
 	return LOCAL_IP;
 }
 
@@ -763,8 +767,8 @@ bool t_phone_user::match(t_request *r) const {
 		return true;
 	}
 	
-	if (r->uri.get_user() == user_config->name &&
-	    r->uri.get_host() == user_config->domain)
+	if (r->uri.get_user() == user_config->get_name() &&
+	    r->uri.get_host() == user_config->get_domain())
 	{
 		return true;
 	}

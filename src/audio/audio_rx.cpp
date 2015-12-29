@@ -90,6 +90,9 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 				log_file->write_raw("Audio rx line ");
 				log_file->write_raw(get_line()->get_line_number()+1);
 				log_file->write_raw(": sound capture failed.\n");
+				log_file->write_raw("Status: ");
+				log_file->write_raw(status);
+				log_file->write_endl();
 				log_file->write_footer();
 				logged_capture_failure = true;
 			}
@@ -110,7 +113,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 	short *sb = (short *)sample_buf;
 	
 	// Reduce noise
-	if (sys_config->au_reduce_noise_mic) {
+	if (sys_config->get_au_reduce_noise_mic()) {
 		pcm_reduce_noise(sb, SAMPLE_BUF_SIZE / 2);
 	}
 
@@ -208,7 +211,7 @@ bool t_audio_rx::get_dtmf_event(void) {
 		// discard packets when the timestamp gets to old.
 		// Increase the expire timeout value to prevent this.
 		rtp_session->setExpireTimeout((JITTER_BUF_MS +
-			user_config->dtmf_duration + user_config->dtmf_pause) * 1000);
+			user_config->get_dtmf_duration() + user_config->get_dtmf_pause()) * 1000);
 	}
 
 	return true;
@@ -272,6 +275,12 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	case CODEC_SPEEX_UWB:
 		audio_encoder = new t_speex_audio_encoder(_payload_id, _ptime,
 				t_speex_audio_encoder::MODE_UWB, user_config);
+		MEMMAN_NEW(audio_encoder);
+		break;
+#endif
+#ifdef HAVE_ILBC
+	case CODEC_ILBC:
+		audio_encoder = new t_ilbc_audio_encoder(_payload_id, _ptime, user_config);
 		MEMMAN_NEW(audio_encoder);
 		break;
 #endif
@@ -375,7 +384,9 @@ void t_audio_rx::run(void) {
 	// to the dsp.
 	if (!is_3way || is_main_rx_3way) {
 		// Enable recording
-		if (sys_config->equal_audio_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+		if (sys_config->equal_audio_dev(sys_config->get_dev_speaker(),
+				sys_config->get_dev_mic())) 
+		{
 			input_device->enable(true, true);
 		} else {
 			input_device->enable(false, true);
@@ -425,7 +436,7 @@ void t_audio_rx::run(void) {
 				// to keep the NAT bindings for RTP fresh.
 				silence_nsamples += SAMPLE_BUF_SIZE / 2;
 				if (silence_nsamples > 
-					user_config->timer_nat_keepalive * 1000 *
+					user_config->get_timer_nat_keepalive() * 1000 *
 					audio_encoder->get_sample_rate())
 				{
 					suppress_samples = false;
@@ -670,7 +681,9 @@ void t_audio_rx::set_main_rx_3way(bool main_rx) {
 	if (main_rx && !is_main_rx_3way) {		
 		// Enable recording
 		int arg;
-		if (sys_config->equal_audio_dev(sys_config->dev_speaker, sys_config->dev_mic)) {
+		if (sys_config->equal_audio_dev(sys_config->get_dev_speaker(),
+				sys_config->get_dev_mic())) 
+		{
 			input_device->enable(true, true);
 		} else {
 			input_device->enable(false, true);

@@ -45,6 +45,11 @@ class t_call_info {
 public:
 	t_url			from_uri;
 	string			from_display;
+	
+	// Override of display for presentation to user, e.g. name from
+	// address book lookup.
+	string			from_display_override;
+	
 	string			from_organization;
 	t_url			to_uri;
 	string			to_display;
@@ -64,6 +69,9 @@ public:
 
 	t_call_info();
 	void clear(void);
+	
+	// Get the from display name to show to the user.
+	string get_from_display_presentation(void) const;
 };
 
 class t_line {

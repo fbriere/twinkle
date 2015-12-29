@@ -159,8 +159,9 @@ main(int argc, char *argv[]) {
 	
 	// Get default values from system configuration
 	list<string> config_files;
-	for (list<string>::iterator i = sys_config->start_user_profiles.begin();
-	     i != sys_config->start_user_profiles.end(); i++)
+	list<string> start_user_profiles = sys_config->get_start_user_profiles();
+	for (list<string>::iterator i = start_user_profiles.begin();
+	     i != start_user_profiles.end(); i++)
 	{
 		string config_file = *i;
 		config_file += USER_FILE_EXT;
@@ -168,8 +169,8 @@ main(int argc, char *argv[]) {
 	}
 
 	if (user_host.empty()) {
-		if (exists_interface(sys_config->start_user_host)) {
-			user_host = sys_config->start_user_host;
+		if (exists_interface(sys_config->get_start_user_host())) {
+			user_host = sys_config->get_start_user_host();
 		}
 	}
 
@@ -223,9 +224,9 @@ main(int argc, char *argv[]) {
 		t_user *dup_user;
 		if(!phone->add_phone_user(*user_config, &dup_user)) {
 			error_msg = "The following profiles are both for user ";
-			error_msg += user_config->name;
+			error_msg += user_config->get_name();
 			error_msg += '@';
-			error_msg += user_config->domain;
+			error_msg += user_config->get_domain();
 			error_msg += ":\n\n";
 			error_msg += user_config->get_profile_name();
 			error_msg += "\n";
@@ -301,12 +302,13 @@ main(int argc, char *argv[]) {
 		sigprocmask(SIG_BLOCK, &sigset, NULL);
 	}
 	
-	// Block SIGINT and SIGTERM as those will be caught by the
+	// Block signals as those will be caught by the
 	// signal catcher thread
 	sigset_t sigset;
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
+	sigaddset(&sigset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &sigset, NULL);	
 
 	// Create threads

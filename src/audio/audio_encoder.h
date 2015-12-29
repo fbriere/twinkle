@@ -18,8 +18,8 @@
 
 // Audio encoders
 
-#ifndef _AUDIO_ENCODER
-#define _AUDIO_ENCODER
+#ifndef _AUDIO_ENCODER_H
+#define _AUDIO_ENCODER_H
 
 #include <cc++/config.h>
 #include "twinkle_config.h"
@@ -29,6 +29,10 @@
 
 #ifdef HAVE_SPEEX
 #include <speex/speex.h>
+#endif
+
+#ifdef HAVE_ILBC
+#include "ilbc/iLBC_define.h"
 #endif
 
 // Abstract definition of an audio encoder
@@ -113,6 +117,21 @@ public:
 	t_speex_audio_encoder(uint16 payload_id, uint16 ptime, t_mode mode, 
 		t_user *user_config);
 	virtual ~t_speex_audio_encoder();
+	
+	virtual uint16 encode(int16 *sample_buf, uint16 nsamples, 
+			uint8 *payload, uint16 payload_size, bool &silence);
+};
+#endif
+
+#ifdef HAVE_ILBC
+class t_ilbc_audio_encoder : public t_audio_encoder {
+private:
+	iLBC_Enc_Inst_t	_ilbc_encoder;
+	uint8		_mode;		// 20, 30 ms (frame size)
+	
+public:
+	t_ilbc_audio_encoder(uint16 payload_id, uint16 ptime, 
+		t_user *user_config);
 	
 	virtual uint16 encode(int16 *sample_buf, uint16 nsamples, 
 			uint8 *payload, uint16 payload_size, bool &silence);

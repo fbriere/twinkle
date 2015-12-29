@@ -16,6 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+// NOTE:
+// When adding attributes to t_user, make sure to add them to the
+// copy constructor too!
+
 #ifndef _H_USER
 #define _H_USER
 
@@ -24,6 +28,8 @@
 #include "sys_settings.h"
 #include "audio/audio_codecs.h"
 #include "sockets/url.h"
+#include "threads/mutex.h"
+#include "boost/regex.hpp"
 
 // Forward declaration
 class t_request;
@@ -69,21 +75,21 @@ enum t_dtmf_transport {
 	DTMF_AUTO
 };
 
+struct t_number_conversion {
+	boost::regex	re;
+	string		fmt;
+	
+	string str(void) const { return re.str() + " --> " + fmt; }
+};
+
+
 class t_user {
 private:
 	string			config_filename;
+	
+	// Mutex for exclusive access to the user profile
+	mutable t_recursive_mutex	mtx_user;
 
-	// Expand file name to a fully qualified file name
-	string expand_filename(const string &filename);
-
-	t_ext_support str2ext_support(const string &s) const;
-	string ext_support2str(t_ext_support e) const;
-	t_bit_rate_type str2bit_rate_type(const string &s) const;
-	string bit_rate_type2str(t_bit_rate_type b) const;
-	t_dtmf_transport str2dtmf_transport(const string &s) const;
-	string dtmf_transport2str(t_dtmf_transport d) const;
-
-public:
 	// USER
 
 	// SIP user
@@ -153,6 +159,12 @@ public:
 	bool			speex_penh;
 	unsigned short		speex_complexity;
 	
+	// RTP dynamic payuload types for iLBC
+	unsigned short		ilbc_payload_type;
+	
+	// iLBC options
+	unsigned short		ilbc_mode; // 20 or 30 ms frame size
+	
 	// Transport mode for DTMF
 	t_dtmf_transport	dtmf_transport;
 
@@ -198,6 +210,10 @@ public:
 
 	// Indicate if compact header names should be used in outgoing messages.
 	bool			compact_headers;
+	
+	// Indicate if headers containing multiple values should be encoded
+	// as a comma separated list or as multiple headers.
+	bool			encode_multi_values_as_list;
 	
 	// Indicate if a unique contact name should be created by using
 	// the domain name: username_domain
@@ -307,15 +323,189 @@ public:
 	// SCRIPTS
 	// Script to be called on incoming call
 	string		script_incoming_call;
+	string		script_in_call_answered;
+	string		script_in_call_failed;
+	string		script_outgoing_call;
+	string		script_out_call_answered;
+	string		script_out_call_failed;
+	string		script_local_release;
+	string		script_remote_release;
 	
+	// Number conversion
+	list<t_number_conversion>	number_conversions;
+	
+	// Expand file name to a fully qualified file name
+	string expand_filename(const string &filename);
 
+	t_ext_support str2ext_support(const string &s) const;
+	string ext_support2str(t_ext_support e) const;
+	t_bit_rate_type str2bit_rate_type(const string &s) const;
+	string bit_rate_type2str(t_bit_rate_type b) const;
+	t_dtmf_transport str2dtmf_transport(const string &s) const;
+	string dtmf_transport2str(t_dtmf_transport d) const;
+	
+	// Parse a number conversion rule
+	// If the rule can be parsed, then c contains the conversion rule and
+	// true is returned. Otherwise false is returned.
+	bool parse_num_conversion(const string &value, t_number_conversion &c);
+	
+public:
 	t_user();
+	t_user(const t_user &u);
 	
 	t_user *copy(void) const;
+	
+	// Getters
+	string get_name(void) const;
+	string get_domain(void) const;
+	string get_display(void) const;	
+	string get_organization(void) const;
+	string get_auth_realm(void) const;
+	string get_auth_name(void) const;
+	string get_auth_pass(void) const;
+	bool get_use_outbound_proxy(void) const;
+	t_url get_outbound_proxy(void) const;
+	bool get_all_requests_to_proxy(void) const;
+	bool get_non_resolvable_to_proxy(void) const;
+	bool get_use_registrar(void) const;
+	t_url get_registrar(void) const;
+	unsigned long get_registration_time(void) const;
+	bool get_register_at_startup(void) const;
+	list<t_audio_codec> get_codecs(void) const;
+	unsigned short get_ptime(void) const;
+	unsigned short get_speex_nb_payload_type(void) const;
+	unsigned short get_speex_wb_payload_type(void) const;
+	unsigned short get_speex_uwb_payload_type(void) const;
+	t_bit_rate_type get_speex_bit_rate_type(void) const;
+	int get_speex_abr_nb(void) const;
+	int get_speex_abr_wb(void) const;
+	bool get_speex_vad(void) const;
+	bool get_speex_dtx(void) const;
+	bool get_speex_penh(void) const;
+	unsigned short get_speex_complexity(void) const;
+	unsigned short get_ilbc_payload_type(void) const;
+	unsigned short get_ilbc_mode(void) const;
+	t_dtmf_transport get_dtmf_transport(void) const;
+	unsigned short get_dtmf_payload_type(void) const;
+	unsigned short get_dtmf_duration(void) const;
+	unsigned short get_dtmf_pause(void) const;
+	unsigned short get_dtmf_volume(void) const;
+	t_hold_variant get_hold_variant(void) const;
+	bool get_check_max_forwards(void) const;
+	bool get_allow_missing_contact_reg(void) const;
+	bool get_registration_time_in_contact(void) const;
+	bool get_compact_headers(void) const;
+	bool get_encode_multi_values_as_list(void) const;
+	bool get_use_domain_in_contact(void) const;
+	bool get_allow_sdp_change(void) const;
+	bool get_allow_redirection(void) const;
+	bool get_ask_user_to_redirect(void) const;
+	unsigned short get_max_redirections(void) const;
+	t_ext_support get_ext_100rel(void) const;
+	bool get_referee_hold(void) const;
+	bool get_referrer_hold(void) const;
+	bool get_allow_refer(void) const;
+	bool get_ask_user_to_refer(void) const;
+	bool get_auto_refresh_refer_sub(void) const;
+	bool get_use_nat_public_ip(void) const;
+	string get_nat_public_ip(void) const;
+	bool get_use_stun(void) const;
+	t_url get_stun_server(void) const;
+	unsigned short get_timer_noanswer(void) const;
+	unsigned long get_timer_nat_keepalive(void) const; 
+	bool get_display_useronly_phone(void) const;
+	bool get_numerical_user_is_phone(void) const;
+	bool get_remove_special_phone_symbols(void) const;
+	string get_special_phone_symbols(void) const;
+	string get_ringtone_file(void) const;
+	string get_ringback_file(void) const;
+	string get_script_incoming_call(void) const;
+	string get_script_in_call_answered(void) const;
+	string get_script_in_call_failed(void) const;
+	string get_script_outgoing_call(void) const;
+	string get_script_out_call_answered(void) const;
+	string get_script_out_call_failed(void) const;
+	string get_script_local_release(void) const;
+	string get_script_remote_release(void) const;
+	list<t_number_conversion> get_number_conversions(void) const;
+	
+	// Setters
+	void set_name(const string &_name);
+	void set_domain(const string &_domain);
+	void set_display(const string &_display);	
+	void set_organization(const string &_organization);
+	void set_auth_realm(const string &realm);
+	void set_auth_name(const string &name);
+	void set_auth_pass(const string &pass);
+	void set_use_outbound_proxy(bool b);
+	void set_outbound_proxy(const t_url &url);
+	void set_all_requests_to_proxy(bool b);
+	void set_non_resolvable_to_proxy(bool b);
+	void set_use_registrar(bool b);
+	void set_registrar(const t_url &url);
+	void set_registration_time(const unsigned long time);
+	void set_register_at_startup(bool b);
+	void set_codecs(const list<t_audio_codec> &_codecs);
+	void set_ptime(unsigned short _ptime);
+	void set_speex_nb_payload_type(unsigned short payload_type);
+	void set_speex_wb_payload_type(unsigned short payload_type);
+	void set_speex_uwb_payload_type(unsigned short payload_type);
+	void set_speex_bit_rate_type(t_bit_rate_type bit_rate_type);
+	void set_speex_abr_nb(int abr);
+	void set_speex_abr_wb(int abr);
+	void set_speex_vad(bool b);
+	void set_speex_dtx(bool b);
+	void set_speex_penh(bool b);
+	void set_speex_complexity(unsigned short complexity);
+	void set_ilbc_payload_type(unsigned short payload_type);
+	void set_ilbc_mode(unsigned short mode);
+	void set_dtmf_transport(t_dtmf_transport _dtmf_transport);
+	void set_dtmf_payload_type(unsigned short payload_type);
+	void set_dtmf_duration(unsigned short duration);
+	void set_dtmf_pause(unsigned short pause);
+	void set_dtmf_volume(unsigned short volume);
+	void set_hold_variant(t_hold_variant _hold_variant);
+	void set_check_max_forwards(bool b);
+	void set_allow_missing_contact_reg(bool b);
+	void set_registration_time_in_contact(bool b);
+	void set_compact_headers(bool b);
+	void set_encode_multi_values_as_list(bool b);
+	void set_use_domain_in_contact(bool b);
+	void set_allow_sdp_change(bool b);
+	void set_allow_redirection(bool b);
+	void set_ask_user_to_redirect(bool b);
+	void set_max_redirections(unsigned short _max_redirections);
+	void set_ext_100rel(t_ext_support ext_support);
+	void set_referee_hold(bool b);
+	void set_referrer_hold(bool b);
+	void set_allow_refer(bool b);
+	void set_ask_user_to_refer(bool b);
+	void set_auto_refresh_refer_sub(bool b);
+	void set_use_nat_public_ip(bool b);
+	void set_nat_public_ip(const string &public_ip);
+	void set_use_stun(bool b);
+	void set_stun_server(const t_url &url);
+	void set_timer_noanswer(unsigned short timer);
+	void set_timer_nat_keepalive(unsigned short timer); 
+	void set_display_useronly_phone(bool b);
+	void set_numerical_user_is_phone(bool b);
+	void set_remove_special_phone_symbols(bool b);
+	void set_special_phone_symbols(const string &symbols);
+	void set_ringtone_file(const string &file);
+	void set_ringback_file(const string &file);
+	void set_script_incoming_call(const string &script);
+	void set_script_in_call_answered(const string &script);
+	void set_script_in_call_failed(const string &script);
+	void set_script_outgoing_call(const string &script);
+	void set_script_out_call_answered(const string &script);
+	void set_script_out_call_failed(const string &script);
+	void set_script_local_release(const string &script);
+	void set_script_remote_release(const string &script);
+	void set_number_conversions(const list<t_number_conversion> &l);
 
 	// Read and parse a config file into the user object.
 	// Returns false if it fails. error_msg is an error message that can
-	// be give to the user.
+	// be given to the user.
 	bool read_config(const string &filename, string &error_msg);
 
 	// Write the settings into a config file
@@ -342,6 +532,10 @@ public:
 	// Create user uri and contact uri
 	string create_user_contact(void);
 	string create_user_uri(void);
+	
+	// Convert a number by applying the number conversions.
+	string convert_number(const string &number, const list<t_number_conversion> &l) const;
+	string convert_number(const string &number) const;
 };
 
 #endif

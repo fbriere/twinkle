@@ -148,6 +148,10 @@ void t_hdr_via::add_via(const t_via &v) {
 }
 
 string t_hdr_via::encode(void) const {
+	return (t_parser::multi_values_as_list ? encode_list() : encode_multi_header());
+}
+
+string t_hdr_via::encode_list(void) const {
 	string s;
 
 	if (!populated) return s;
@@ -161,6 +165,27 @@ string t_hdr_via::encode(void) const {
 	s += encode_value();
 	s += CRLF;
 	
+	return s;
+}
+
+string t_hdr_via::encode_multi_header(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	for (list<t_via>::const_iterator i = via_list.begin();
+	     i != via_list.end(); i++)
+	{
+		if (t_parser::compact_headers) {
+			s += "v: ";
+		} else {
+			s += "Via: ";
+		}
+	
+		s += i->encode();
+		s += CRLF;
+	}
+
 	return s;
 }
 

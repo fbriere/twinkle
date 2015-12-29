@@ -23,6 +23,7 @@
 #include <string>
 #include <list>
 #include "sockets/url.h"
+#include "threads/mutex.h"
 #include "twinkle_config.h"
 
 using namespace std;
@@ -41,6 +42,9 @@ using namespace std;
 // Device prefixes in settings file
 #define PFX_OSS		"oss:"
 #define PFX_ALSA	"alsa:"
+
+// Device string for other device
+#define DEV_OTHER	"other device"
 
 // File with SIP providers for the wizard
 #define FILE_PROVIDERS	"providers.csv"
@@ -64,6 +68,9 @@ public:
 
 class t_sys_settings {
 private:
+	// Mutex to avoid sync concurrent access
+	mutable t_recursive_mutex	mtx_sys;
+	
 	// Share directory for files applicable to all users
 	string		dir_share;
 	
@@ -73,7 +80,6 @@ private:
 	// The SIP UDP port that is currently used
 	unsigned short	active_sip_udp_port;
 	
-public:
 	// Sound devices
 	t_audio_device		dev_ringtone;
 	t_audio_device		dev_speaker;
@@ -94,8 +100,15 @@ public:
 	bool		gui_use_systray;
 	bool		gui_hide_on_close;
 	
+	// Show main window on incoming call after a few seconds
+	bool		gui_auto_show_incoming;
+	int		gui_auto_show_timeout;
+	
 	// Address book settings
 	bool		ab_show_sip_only;
+	bool		ab_lookup_name;
+	bool		ab_override_display;
+	bool		ab_lookup_photo;
 	
 	// Call history settings
 	int		ch_max_size; // #calls
@@ -157,7 +170,88 @@ public:
 	// History of latest dialed addresses
 	list<string>	dial_history;
 	
+public:
 	t_sys_settings();
+	
+	// Getters
+	t_audio_device get_dev_ringtone(void) const;
+	t_audio_device get_dev_speaker(void) const;
+	t_audio_device get_dev_mic(void) const;
+	bool get_au_reduce_noise_mic(void) const;
+	int get_alsa_play_period_size(void) const;
+	int get_alsa_capture_period_size(void) const;
+	int get_oss_fragment_size(void) const;
+	unsigned short get_log_max_size(void) const;
+	bool get_log_show_sip(void) const;
+	bool get_log_show_stun(void) const;
+	bool get_log_show_memory(void) const;
+	bool get_log_show_debug(void) const;
+	bool get_gui_use_systray(void) const;
+	bool get_gui_hide_on_close(void) const;
+	bool get_gui_auto_show_incoming(void) const;
+	int get_gui_auto_show_timeout(void) const;
+	bool get_ab_show_sip_only(void) const;
+	bool get_ab_lookup_name(void) const;
+	bool get_ab_override_display(void) const;
+	bool get_ab_lookup_photo(void) const;
+	int get_ch_max_size(void) const;
+	bool get_call_waiting(void) const;
+	bool get_hangup_both_3way(void) const;
+	list<string> get_start_user_profiles(void) const;
+	string get_start_user_host(void) const;
+	bool get_start_hidden(void) const;
+	unsigned short get_config_sip_udp_port(void) const;
+	unsigned short get_rtp_port(void) const;
+	bool get_play_ringtone(void) const;
+	string get_ringtone_file(void) const;
+	bool get_play_ringback(void) const;
+	string get_ringback_file(void) const;
+	string get_last_used_profile(void) const;
+	t_url get_redial_url(void) const;
+	string get_redial_display(void) const;
+	string get_redial_subject(void) const;
+	string get_redial_profile(void) const;
+	list<string> get_dial_history(void) const;
+	
+	// Setters
+	void set_dev_ringtone(const t_audio_device &dev);
+	void set_dev_speaker(const t_audio_device &dev);
+	void set_dev_mic(const t_audio_device &dev);
+	void set_au_reduce_noise_mic(bool b);
+	void set_alsa_play_period_size(int size);
+	void set_alsa_capture_period_size(int size);
+	void set_oss_fragment_size(int size);
+	void set_log_max_size(unsigned short size);
+	void set_log_show_sip(bool b);
+	void set_log_show_stun(bool b);
+	void set_log_show_memory(bool b);
+	void set_log_show_debug(bool b);
+	void set_gui_use_systray(bool b);
+	void set_gui_hide_on_close(bool b);
+	void set_gui_auto_show_incoming(bool b);
+	void set_gui_auto_show_timeout(int timeout);
+	void set_ab_show_sip_only(bool b);
+	void set_ab_lookup_name(bool b);
+	void set_ab_override_display(bool b);
+	void set_ab_lookup_photo(bool b);
+	void set_ch_max_size(int size);
+	void set_call_waiting(bool b);
+	void set_hangup_both_3way(bool b);
+	void set_start_user_profiles(const list<string> &profiles);
+	void set_start_user_host(const string &host);
+	void set_start_hidden(bool b);
+	void set_config_sip_udp_port(unsigned short port);
+	void set_rtp_port(unsigned short port);
+	void set_play_ringtone(bool b);
+	void set_ringtone_file(const string &file);
+	void set_play_ringback(bool b);
+	void set_ringback_file(const string &file);
+	void set_last_used_profile(const string &profile);
+	void set_redial_url(const t_url &url);
+	void set_redial_display(const string &display);
+	void set_redial_subject(const string &subject);
+	void set_redial_profile(const string &profile);
+	void set_dial_history(const list<string> &history);
 	
 	// Return "about" text
 	string about(bool html) const;
@@ -208,7 +302,13 @@ public:
 	static t_audio_device audio_device(string device = "");
 	
 	// Get the active value of the SIP UDP port
-	unsigned short get_sip_udp_port(void);
+	// Once the SIP UDP port is retrieved from the system settings, it
+	// is stored as the active port. A next call to get_sip_udp_port
+	// returns the active port, even when the SIP UDP port in the settings
+	// has changed.
+	// If force_active == true, then always the SIP UDP port is returned
+	// and made active
+	unsigned short get_sip_udp_port(bool force_active = false);
 };
 
 extern t_sys_settings *sys_config;

@@ -24,21 +24,35 @@
  * Mountain View, California  94043
  */
 
-#include "g711.h"
-
 /*
  * g711.c
  *
  * u-law, A-law and linear PCM conversions.
  */
+
+/*
+ * December 30, 1994:
+ * Functions linear2alaw, linear2ulaw have been updated to correctly
+ * convert unquantized 16 bit values.
+ * Tables for direct u- to A-law and A- to u-law conversions have been
+ * corrected.
+ * Borge Lindberg, Center for PersonKommunikation, Aalborg University.
+ * bli@cpk.auc.dk
+ *
+ */
+
+#include "g711.h"
+ 
 #define	SIGN_BIT	(0x80)		/* Sign bit for a A-law byte. */
 #define	QUANT_MASK	(0xf)		/* Quantization field mask. */
 #define	NSEGS		(8)		/* Number of A-law segments. */
 #define	SEG_SHIFT	(4)		/* Left shift for segment number. */
 #define	SEG_MASK	(0x70)		/* Segment field mask. */
 
-static short seg_end[8] = {0xFF, 0x1FF, 0x3FF, 0x7FF,
-			    0xFFF, 0x1FFF, 0x3FFF, 0x7FFF};
+static short seg_aend[8] = {0x1F, 0x3F, 0x7F, 0xFF,
+			    0x1FF, 0x3FF, 0x7FF, 0xFFF};
+static short seg_uend[8] = {0x3F, 0x7F, 0xFF, 0x1FF,
+			    0x3FF, 0x7FF, 0xFFF, 0x1FFF};
 
 /* copy from CCITT G.711 specifications */
 unsigned char _u2a[128] = {			/* u- to A-law conversions */
@@ -52,7 +66,10 @@ unsigned char _u2a[128] = {			/* u- to A-law conversions */
 	55,	56,	57,	58,	59,	60,	61,	62,
 	64,	65,	66,	67,	68,	69,	70,	71,
 	72,	73,	74,	75,	76,	77,	78,	79,
-	81,	82,	83,	84,	85,	86,	87,	88,
+/* corrected:
+	81,	82,	83,	84,	85,	86,	87,	88, 
+   should be: */
+	80,	82,	83,	84,	85,	86,	87,	88,
 	89,	90,	91,	92,	93,	94,	95,	96,
 	97,	98,	99,	100,	101,	102,	103,	104,
 	105,	106,	107,	108,	109,	110,	111,	112,
@@ -69,7 +86,11 @@ unsigned char _a2u[128] = {			/* A- to u-law conversions */
 	50,	51,	52,	53,	54,	55,	56,	57,
 	58,	59,	60,	61,	62,	63,	64,	64,
 	65,	66,	67,	68,	69,	70,	71,	72,
+/* corrected:
 	73,	74,	75,	76,	77,	78,	79,	79,
+   should be: */
+	73,	74,	75,	76,	77,	78,	79,	80,
+
 	80,	81,	82,	83,	84,	85,	86,	87,
 	88,	89,	90,	91,	92,	93,	94,	95,
 	96,	97,	98,	99,	100,	101,	102,	103,
@@ -77,13 +98,13 @@ unsigned char _a2u[128] = {			/* A- to u-law conversions */
 	112,	113,	114,	115,	116,	117,	118,	119,
 	120,	121,	122,	123,	124,	125,	126,	127};
 
-static int
+static short
 search(
-	int		val,
+	short		val,
 	short		*table,
-	int		size)
+	short		size)
 {
-	int		i;
+	short		i;
 
 	for (i = 0; i < size; i++) {
 		if (val <= *table++)
@@ -113,32 +134,34 @@ search(
  */
 unsigned char
 linear2alaw(
-	int		pcm_val)	/* 2's complement (16-bit range) */
+	short		pcm_val)	/* 2's complement (16-bit range) */
 {
-	int		mask;
-	int		seg;
+	short		mask;
+	short		seg;
 	unsigned char	aval;
+
+	pcm_val = pcm_val >> 3;
 
 	if (pcm_val >= 0) {
 		mask = 0xD5;		/* sign (7th) bit = 1 */
 	} else {
 		mask = 0x55;		/* sign bit = 0 */
-		pcm_val = -pcm_val - 8;
+		pcm_val = -pcm_val - 1;
 	}
 
 	/* Convert the scaled magnitude to segment number. */
-	seg = search(pcm_val, seg_end, 8);
+	seg = search(pcm_val, seg_aend, 8);
 
 	/* Combine the sign, segment, and quantization bits. */
 
 	if (seg >= 8)		/* out of range, return maximum value. */
-		return (0x7F ^ mask);
+		return (unsigned char) (0x7F ^ mask);
 	else {
-		aval = seg << SEG_SHIFT;
+		aval = (unsigned char) seg << SEG_SHIFT;
 		if (seg < 2)
-			aval |= (pcm_val >> 4) & QUANT_MASK;
+			aval |= (pcm_val >> 1) & QUANT_MASK;
 		else
-			aval |= (pcm_val >> (seg + 3)) & QUANT_MASK;
+			aval |= (pcm_val >> seg) & QUANT_MASK;
 		return (aval ^ mask);
 	}
 }
@@ -147,12 +170,12 @@ linear2alaw(
  * alaw2linear() - Convert an A-law value to 16-bit linear PCM
  *
  */
-int
+short
 alaw2linear(
 	unsigned char	a_val)
 {
-	int		t;
-	int		seg;
+	short		t;
+	short		seg;
 
 	a_val ^= 0x55;
 
@@ -173,6 +196,7 @@ alaw2linear(
 }
 
 #define	BIAS		(0x84)		/* Bias for linear code. */
+#define CLIP            8159
 
 /*
  * linear2ulaw() - Convert a linear PCM value to u-law
@@ -205,32 +229,34 @@ alaw2linear(
  */
 unsigned char
 linear2ulaw(
-	int		pcm_val)	/* 2's complement (16-bit range) */
+	short		pcm_val)	/* 2's complement (16-bit range) */
 {
-	int		mask;
-	int		seg;
+	short		mask;
+	short		seg;
 	unsigned char	uval;
 
 	/* Get the sign and the magnitude of the value. */
+	pcm_val = pcm_val >> 2;
 	if (pcm_val < 0) {
-		pcm_val = BIAS - pcm_val;
+		pcm_val = -pcm_val;
 		mask = 0x7F;
 	} else {
-		pcm_val += BIAS;
 		mask = 0xFF;
 	}
+        if ( pcm_val > CLIP ) pcm_val = CLIP;		/* clip the magnitude */
+	pcm_val += (BIAS >> 2);
 
 	/* Convert the scaled magnitude to segment number. */
-	seg = search(pcm_val, seg_end, 8);
+	seg = search(pcm_val, seg_uend, 8);
 
 	/*
 	 * Combine the sign, segment, quantization bits;
 	 * and complement the code word.
 	 */
 	if (seg >= 8)		/* out of range, return maximum value. */
-		return (0x7F ^ mask);
+		return (unsigned char) (0x7F ^ mask);
 	else {
-		uval = (seg << 4) | ((pcm_val >> (seg + 3)) & 0xF);
+		uval = (unsigned char) (seg << 4) | ((pcm_val >> (seg + 1)) & 0xF);
 		return (uval ^ mask);
 	}
 
@@ -245,11 +271,11 @@ linear2ulaw(
  * Note that this function expects to be passed the complement of the
  * original code word. This is in keeping with ISDN conventions.
  */
-int
+short
 ulaw2linear(
 	unsigned char	u_val)
 {
-	int		t;
+	short		t;
 
 	/* Complement to obtain normal u-law value. */
 	u_val = ~u_val;
@@ -270,7 +296,7 @@ alaw2ulaw(
 	unsigned char	aval)
 {
 	aval &= 0xff;
-	return ((aval & 0x80) ? (0xFF ^ _a2u[aval ^ 0xD5]) :
+	return (unsigned char) ((aval & 0x80) ? (0xFF ^ _a2u[aval ^ 0xD5]) :
 	    (0x7F ^ _a2u[aval ^ 0x55]));
 }
 
@@ -280,6 +306,6 @@ ulaw2alaw(
 	unsigned char	uval)
 {
 	uval &= 0xff;
-	return ((uval & 0x80) ? (0xD5 ^ (_u2a[0xFF ^ uval] - 1)) :
-	    (0x55 ^ (_u2a[0x7F ^ uval] - 1)));
+	return (unsigned char) ((uval & 0x80) ? (0xD5 ^ (_u2a[0xFF ^ uval] - 1)) :
+	    (unsigned char) (0x55 ^ (_u2a[0x7F ^ uval] - 1)));
 }

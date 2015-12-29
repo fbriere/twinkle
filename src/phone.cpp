@@ -19,6 +19,8 @@
 #include <assert.h>
 #include <iostream>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "call_history.h"
 #include "call_script.h"
 #include "exceptions.h"
@@ -81,7 +83,7 @@ void t_phone::end_call(void) {
 	    active_line == line1_3way->get_line_number() ||
 	    active_line == line2_3way->get_line_number()))
 	{
-		if (sys_config->hangup_both_3way) {
+		if (sys_config->get_hangup_both_3way()) {
 			line1_3way->end_call();
 			line2_3way->end_call();
 		} else {
@@ -190,7 +192,7 @@ void t_phone::activate_line(unsigned short l) {
 	// the referrer holds the call during call transfer.
 	t_user *user_config = lines[l]->get_user();
 	if (get_line_refer_state(l) == REFST_NULL || 
-	    (user_config && !user_config->referrer_hold))
+	    (user_config && !user_config->get_referrer_hold()))
 	{
 		retrieve();
 	}
@@ -214,7 +216,7 @@ void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
 
 	switch(timer) {
 	case PTMR_NAT_KEEPALIVE:
-		t = new t_tmr_phone(user_config->timer_nat_keepalive * 1000, timer, this);
+		t = new t_tmr_phone(user_config->get_timer_nat_keepalive() * 1000, timer, this);
 		MEMMAN_NEW(t);
 		pu->id_nat_keepalive = t->get_id();
 		break;
@@ -307,30 +309,33 @@ t_phone_user *t_phone::find_phone_user(const string &profile_name) {
 	return NULL;
 }
 
-t_phone_user *t_phone::match_phone_user(t_response *r, t_tuid tuid) {
+t_phone_user *t_phone::match_phone_user(t_response *r, t_tuid tuid, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
 	     i != phone_users.end(); i++)
 	{
+		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r, tuid)) return *i;
 	}
 	
 	return NULL;
 }
 
-t_phone_user *t_phone::match_phone_user(t_request *r) {
+t_phone_user *t_phone::match_phone_user(t_request *r, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
 	     i != phone_users.end(); i++)
 	{
+		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r)) return *i;
 	}
 	
 	return NULL;
 }
 
-t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid) {
+t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
 	     i != phone_users.end(); i++)
 	{
+		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r, tuid)) return *i;
 	}
 	
@@ -431,7 +436,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 	}
 	
 	// Find out for which user this INVITE is.
-	t_phone_user *pu = match_phone_user(r);
+	t_phone_user *pu = match_phone_user(r, true);
 	if (!pu) {
 		resp = r->create_response(R_404_NOT_FOUND);
 		send_response(resp, 0, tid);
@@ -484,27 +489,50 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// to handle this call
 		t_script_result script_result;
 		
-		if (!user_config->script_incoming_call.empty()) {
+		if (!user_config->get_script_incoming_call().empty()) {
 			// Send 100 Trying as the script might take a while
 			resp = r->create_response(R_100_TRYING);
 			send_response(resp, 0, tid);
 			MEMMAN_DELETE(resp);
 			delete resp;
 			
-			t_call_script script(user_config->script_incoming_call);
-			script.exec(script_result, user_config, r);
+			t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL);
+			script.exec_action(script_result, r);
 			
 			// Override display name with caller name returned by script
 			if (!script_result.caller_name.empty()) {
-				r->hdr_from.set_display(script_result.caller_name);
+				r->hdr_from.display_override = script_result.caller_name;
 				log_file->write_header("t_phone::recvd_invite", 
 						LOG_NORMAL, LOG_DEBUG);
-				log_file->write_raw("Overwrite display name with caller name:\n");
+				log_file->write_raw("Override display name with caller name:\n");
 				log_file->write_raw(script_result.caller_name);
 				log_file->write_endl();
 				log_file->write_footer();
 			}
 		}
+		
+		if (script_result.caller_name.empty() &&
+		    sys_config->get_ab_lookup_name() && 
+		    (sys_config->get_ab_override_display() || r->hdr_from.display.empty())) 
+		{
+			// Send 100 Trying as name lookup might take a while
+			resp = r->create_response(R_100_TRYING);
+			send_response(resp, 0, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+			
+			string name = ui->get_name_from_abook(user_config, r->hdr_from.uri);
+			if (!name.empty()) {
+				r->hdr_from.display_override = name;
+				log_file->write_header("t_phone::recvd_invite", 
+						LOG_NORMAL, LOG_DEBUG);
+				log_file->write_raw(
+					"Override display name with address book name:\n");
+				log_file->write_raw(name);
+				log_file->write_endl();
+				log_file->write_footer();
+			}
+		}	
 		
 		// Perform the action in the script_result.
 		// NOTE: the default action is "continue"
@@ -598,7 +626,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Call forwarding always
 		// NOTE: if a call script returned the autoanswer action, then
 		//       call forwarding should be bypassed
-		if (pu->service.get_cf_active(CF_ALWAYS, cf_dest) &&
+		if (pu->service->get_cf_active(CF_ALWAYS, cf_dest) &&
 		    script_result.action == t_script_result::ACTION_CONTINUE) 
 		{
 			log_file->write_report("Call redirection unconditional",
@@ -622,7 +650,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// RFC 3261 21.4.18
 		// NOTE: if a call script returned the autoanswer action, then
 		//       do not disturb should be bypassed
-		if (pu->service.is_dnd_active() &&
+		if (pu->service->is_dnd_active() &&
 		    script_result.action == t_script_result::ACTION_CONTINUE) 
 		{
 			log_file->write_report("Do not disturb",
@@ -644,7 +672,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 		// Send the INVITE to the active line if it is idle
 		if (lines[active_line]->get_substate() == LSSUB_IDLE) {
 			// Auto answer
-			if (pu->service.is_auto_answer_active() ||
+			if (pu->service->is_auto_answer_active() ||
 			    script_result.action == t_script_result::ACTION_AUTOANSWER) 
 			{
 				log_file->write_report("Auto answer",
@@ -658,7 +686,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 			return;
 		}
 
-		if (sys_config->call_waiting || all_lines_idle()) {
+		if (sys_config->get_call_waiting() || all_lines_idle()) {
 			// Send the INVITE to the first idle unseized line
 			for (unsigned short i = 0; i < NUM_USER_LINES; i++) {
 				if (lines[i]->get_substate() == LSSUB_IDLE) {
@@ -671,7 +699,7 @@ void t_phone::recvd_invite(t_request *r, t_tid tid) {
 
 		// The phone is busy
 		// Call forwarding busy
-		if (pu->service.get_cf_active(CF_BUSY, cf_dest)) {
+		if (pu->service->get_cf_active(CF_BUSY, cf_dest)) {
 			log_file->write_report("Call redirection busy",
 				"t_phone::recvd_invite");
 			resp = r->create_response(R_302_MOVED_TEMPORARILY);
@@ -790,7 +818,7 @@ void t_phone::recvd_options(t_request *r, t_tid tid) {
 	list <string> unsupported;
 	
 	// Find out for which user this OPTIONS is.
-	t_phone_user *pu = match_phone_user(r);
+	t_phone_user *pu = match_phone_user(r, true);
 	if (!pu) {
 		resp = r->create_response(R_404_NOT_FOUND);
 		send_response(resp, 0, tid);
@@ -996,7 +1024,7 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 
 					t_user *user_config = lines[i]->get_user();
 					assert(user_config);
-					if (user_config->referrer_hold &&
+					if (user_config->get_referrer_hold() &&
 					    lines[i]->get_is_on_hold())
 					{
 						// Retrieve the call if the line is active.
@@ -1084,7 +1112,7 @@ void t_phone::recvd_refer(t_request *r, t_tid tid) {
 				"Hold call before calling the refer-target.",
 				"t_phone::recvd_refer");
 
-			if (user_config->referee_hold) {
+			if (user_config->get_referee_hold()) {
 				lines[i]->hold();
 			} else {
 				// The user profile indicates that the line should
@@ -1777,8 +1805,8 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 		
 		// Check if there is already another profile for the same
 		// user.
-		if (user->name == user_config.name &&
-		    user->domain == user_config.domain &&
+		if (user->get_name() == user_config.get_name() &&
+		    user->get_domain() == user_config.get_domain() &&
 		    (*i)->is_active())
 		{
 			*dup_user = user;
@@ -1847,24 +1875,13 @@ t_user *t_phone::ref_user_profile(const string &profile_name) {
 	return u;
 }
 
-t_service t_phone::get_service(t_user *user) {
-	t_service srv;
-	
-	lock();
-	t_phone_user *pu = find_phone_user(user->get_profile_name());
-	if (pu) srv = pu->service;
-	unlock();
-	
-	return srv;
-}
-
 t_service *t_phone::ref_service(t_user *user) {
 	assert(user);
 	t_service *srv;
 	
 	lock();
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
-	if (pu) srv = &(pu->service);
+	if (pu) srv = pu->service;
 	unlock();
 	
 	return srv;
@@ -1893,7 +1910,7 @@ unsigned short t_phone::get_public_port_sip(t_user *user) {
 	if (pu) {
 		result = pu->get_public_port_sip();
 	} else {
-		result = get_default_port(USER_SCHEME);
+		result = sys_config->get_sip_udp_port();
 	}
 	unlock();
 	
@@ -1946,7 +1963,7 @@ bool t_phone::stun_discover_nat(list<string> &msg_list) {
 	{
 		if (!(*i)->is_active()) continue;
 		t_user *user_config = (*i)->get_user_profile();
-		if (user_config->use_stun) {
+		if (user_config->get_use_stun()) {
 			string msg;
 			if (!::stun_discover_nat(*i, msg)) {
 				string s("User profile: ");
@@ -1967,7 +1984,7 @@ bool t_phone::stun_discover_nat(t_user *user, string &msg) {
 	bool retval = true;
 	
 	lock();
-	if (user->use_stun) {
+	if (user->get_use_stun()) {
 		t_phone_user *pu = find_phone_user(user->get_profile_name());
 		if (pu) {
 			retval = ::stun_discover_nat(pu, msg);
@@ -2003,7 +2020,7 @@ void t_phone::init(void) {
 	// Automatic registration at startup if requested
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
 	{
-		if ((*i)->register_at_startup) {
+		if ((*i)->get_register_at_startup()) {
 			pub_registration(*i, REG_REGISTER, DUR_REGISTRATION(*i));
 		}
 	}
@@ -2076,10 +2093,13 @@ void *phone_uas_main(void *arg) {
 void *phone_sigwait(void *arg) {
 	sigset_t	sigset;
 	int		sig;
+	int		child_status;
+	pid_t		pid;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
 	sigaddset(&sigset, SIGTERM);
+	sigaddset(&sigset, SIGCHLD);
 
 	while (true) {
 		// When SIGCONT is received after SIGSTOP, sigwait returns
@@ -2095,6 +2115,16 @@ void *phone_sigwait(void *arg) {
 			log_file->write_report("SIGTERM received.", "::phone_sigwait");
 			ui->cmd_quit();
 			return NULL;
+		case SIGCHLD:
+			// Cleanup terminated child process
+			pid = wait(&child_status);
+			log_file->write_header("::phone_sigwait");
+			log_file->write_raw("SIGCHLD received.\n");
+			log_file->write_raw("Pid ");
+			log_file->write_raw((int)pid);
+			log_file->write_raw(" terminated.\n");
+			log_file->write_footer();
+			break;
 		default:
 			log_file->write_header("::phone_sigwait", LOG_NORMAL, LOG_WARNING);
 			log_file->write_raw("Unexpected signal (");

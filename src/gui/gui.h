@@ -21,12 +21,14 @@
 
 #include "twinkle_config.h"
 
+#include "phone.h"
 #include "userintf.h"
 #include "qaction.h"
 #include "qcombobox.h"
 #include "qlabel.h"
 #include "qlineedit.h"
 #include "qprogressdialog.h"
+#include "qtimer.h"
 #include "qtoolbutton.h"
 #include "qwidget.h"
 
@@ -69,10 +71,15 @@ private:
 	QLineEdit	*toLabel;
 	QLineEdit	*subjectLabel;
 	QLabel		*codecLabel;
+	QLabel		*photoLabel;
+	
+	// Timers to auto show main window on incoming call
+	QTimer		autoShowTimer[NUM_USER_LINES];
 	
 #ifdef HAVE_KDE
 	// Popup window on system tray for incoming call notification
 	KPassivePopup	*sys_tray_popup;
+	int		line_sys_tray_popup; // lineno for popup
 #endif
 	
 	// Last dir path browsed by the user with a file dialog
@@ -92,6 +99,9 @@ private:
 	
 	// Display the codecs in use for the line
 	void displayCodecInfo(int line);
+	
+	// Display a photo
+	void displayPhoto(const QImage &photo);
 	
 protected:
 	// The do_* methods perform the commands parsed by the exec_* methods.
@@ -178,7 +188,8 @@ public:
 	void cb_register_inprog(t_user *user_config, t_register_type register_type);
 	void cb_redirecting_request(t_user *user_config, int line, const t_contact_param &contact);
 	void cb_redirecting_request(t_user *user_config, const t_contact_param &contact);
-	void cb_notify_call(int line, string from_party);
+	void cb_notify_call(int line, const QString &from_party, const QString &organization,
+			   const QImage &photo, const QString &subject);
 	void cb_stop_call_notification(int line);
 	void cb_dtmf_detected(int line, char dtmf_event);
 	void cb_send_dtmf(int line, char dtmf_event);
@@ -233,11 +244,15 @@ public:
 	// Show firewall/NAT discovery progress
 	void cb_nat_discovery_progress_start(int num_steps);
 	void cb_nat_discovery_progress_step(int step);
+	void cb_nat_discovery_finished(void);
 	bool cb_nat_discovery_cancelled(void);
 	
 	// Execute external commands
 	void cmd_call(const string &destination, bool immediate);
 	void cmd_quit(void);
+	
+	// Lookup a URL in the address book
+	string get_name_from_abook(t_user *user_config, const t_url &u);
 	
 	// Actions
 	void action_register(list<t_user *> user_list);

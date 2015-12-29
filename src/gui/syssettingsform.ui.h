@@ -31,8 +31,9 @@
 #define idxCatGeneral	0
 #define idxCatAudio	1
 #define idxCatRingtones	2
-#define idxCatNetwork	3
-#define idxCatLog		4
+#define idxCatAddressBook	3
+#define idxCatNetwork	4
+#define idxCatLog		5
 
 void SysSettingsForm::init()
 {
@@ -56,6 +57,8 @@ void SysSettingsForm::showCategory( QListBoxItem *item )
 		settingsWidgetStack->raiseWidget(pageAudio);
 	} else if (item->text() == "Ring tones") {
 		settingsWidgetStack->raiseWidget(pageRingtones);
+	} else if (item->text() == "Address book") {
+		settingsWidgetStack->raiseWidget(pageAddressBook);
 	} else if (item->text() == "Network") {
 		settingsWidgetStack->raiseWidget(pageNetwork);
 	} else if (item->text() == "Log") {
@@ -63,8 +66,18 @@ void SysSettingsForm::showCategory( QListBoxItem *item )
 	}
 }
 
-string SysSettingsForm::comboItem2audio_dev(QString item)
+string SysSettingsForm::comboItem2audio_dev(QString item, QLineEdit *qleOther)
 {
+	if (item == QString("ALSA: ") + DEV_OTHER) {
+		if (qleOther->text().isEmpty()) return "";
+		return (QString(PFX_ALSA) + qleOther->text()).ascii();
+	}
+	
+	if (item == QString("OSS: ") + DEV_OTHER) {
+		if (qleOther->text().isEmpty()) return "";
+		return (QString(PFX_OSS) + qleOther->text()).ascii();
+	}
+	
 	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
 	i != list_audio_dev.end(); i++)
 	{
@@ -103,6 +116,9 @@ void SysSettingsForm::populate()
 	ringtoneComboBox->clear();
 	speakerComboBox->clear();
 	micComboBox->clear();
+	bool devRingtoneFound = false;
+	bool devSpeakerFound = false;
+	bool devMicFound = false;
 	idx = 0;
 	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
 	i != list_audio_dev.end(); i++, idx++) {
@@ -111,47 +127,92 @@ void SysSettingsForm::populate()
 		speakerComboBox->insertItem(QString(item.c_str()));
 		micComboBox->insertItem(QString(item.c_str()));
 		
-		if (sys_config->dev_ringtone.device == i->device) {
+		// Select audio device
+		if (sys_config->get_dev_ringtone().device == i->device) {
 			ringtoneComboBox->setCurrentItem(idx);
+			otherRingtoneLineEdit->clear();
+			devRingtoneFound = true;
 		}
-		if (sys_config->dev_speaker.device == i->device) {
+		if (sys_config->get_dev_speaker().device == i->device) {
 			speakerComboBox->setCurrentItem(idx);
+			otherSpeakerLineEdit->clear();
+			devSpeakerFound = true;
 		}
-		if (sys_config->dev_mic.device == i->device) {
+		if (sys_config->get_dev_mic().device == i->device) {
 			micComboBox->setCurrentItem(idx);
+			otherMicLineEdit->clear();
+			devMicFound = true;
+		}
+		
+		// Determine index for other non-standard device
+		if (i->device == DEV_OTHER) {
+			if (i->type == t_audio_device::ALSA) {
+				idxOtherDevAlsa = idx;
+			} else {
+				idxOtherDevOss = idx;
+			}
 		}
 	}
 	
-	reduceNoiseMicCheckBox->setChecked(sys_config->au_reduce_noise_mic);
+	// Check for non-standard audio devices
+	if (!devRingtoneFound) {
+		t_audio_device dev = sys_config->get_dev_ringtone();
+		otherRingtoneLineEdit->setText(dev.device.c_str());
+		ringtoneComboBox->setCurrentItem(
+			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+	}
+	if (!devSpeakerFound) {
+		t_audio_device dev = sys_config->get_dev_speaker();
+		otherSpeakerLineEdit->setText(dev.device.c_str());
+		speakerComboBox->setCurrentItem(
+			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+	}
+	if (!devMicFound) {
+		t_audio_device dev = sys_config->get_dev_mic();
+		otherMicLineEdit->setText(dev.device.c_str());
+		micComboBox->setCurrentItem(
+			(dev.type == t_audio_device::ALSA ? idxOtherDevAlsa : idxOtherDevOss));
+	}
+	
+	// Enable/disable line edit for non-standard device
+	devRingtoneSelected(ringtoneComboBox->currentItem());
+	devSpeakerSelected(speakerComboBox->currentItem());
+	devMicSelected(micComboBox->currentItem());
+	
+	reduceNoiseMicCheckBox->setChecked(sys_config->get_au_reduce_noise_mic());
 	
 	populateComboBox(ossFragmentComboBox, 
-			 QString::number(sys_config->oss_fragment_size));
+			 QString::number(sys_config->get_oss_fragment_size()));
 	populateComboBox(alsaPlayPeriodComboBox,
-			 QString::number(sys_config->alsa_play_period_size));
+			 QString::number(sys_config->get_alsa_play_period_size()));
 	populateComboBox(alsaCapturePeriodComboBox,
-			QString::number(sys_config->alsa_capture_period_size));
+			QString::number(sys_config->get_alsa_capture_period_size()));
 	
 	// Log settings
-	logMaxSizeSpinBox->setValue(sys_config->log_max_size);
-	logDebugCheckBox->setChecked(sys_config->log_show_debug);
-	logSipCheckBox->setChecked(sys_config->log_show_sip);
-	logStunCheckBox->setChecked(sys_config->log_show_stun);
-	logMemoryCheckBox->setChecked(sys_config->log_show_memory);
+	logMaxSizeSpinBox->setValue(sys_config->get_log_max_size());
+	logDebugCheckBox->setChecked(sys_config->get_log_show_debug());
+	logSipCheckBox->setChecked(sys_config->get_log_show_sip());
+	logStunCheckBox->setChecked(sys_config->get_log_show_stun());
+	logMemoryCheckBox->setChecked(sys_config->get_log_show_memory());
 	
 	// General settings
-	guiUseSystrayCheckBox->setChecked(sys_config->gui_use_systray);
-	guiHideCheckBox->setChecked(sys_config->gui_hide_on_close);
-	guiHideCheckBox->setEnabled(sys_config->gui_use_systray);
+	guiUseSystrayCheckBox->setChecked(sys_config->get_gui_use_systray());
+	guiHideCheckBox->setChecked(sys_config->get_gui_hide_on_close());
+	guiHideCheckBox->setEnabled(sys_config->get_gui_use_systray());
 	
 	// Call history
-	histSizeSpinBox->setValue(sys_config->ch_max_size);
+	histSizeSpinBox->setValue(sys_config->get_ch_max_size());
+	
+	// Auto show on incoming call
+	autoShowCheckBox->setChecked(sys_config->get_gui_auto_show_incoming());
+	autoShowTimeoutSpinBox->setValue(sys_config->get_gui_auto_show_timeout());
 	
 	// Services
-	callWaitingCheckBox->setChecked(sys_config->call_waiting);
-	hangupBothCheckBox->setChecked(sys_config->hangup_both_3way);
+	callWaitingCheckBox->setChecked(sys_config->get_call_waiting());
+	hangupBothCheckBox->setChecked(sys_config->get_hangup_both_3way());
 	
 	// Startup settings
-	startHiddenCheckBox->setChecked(sys_config->start_hidden);
+	startHiddenCheckBox->setChecked(sys_config->get_start_hidden());
 	
 	QStringList profiles;
 	if (!SelectProfileForm::getUserProfiles(profiles, msg)) {
@@ -166,9 +227,8 @@ void SysSettingsForm::populate()
 					profile, QCheckListItem::CheckBox);
 		item->setPixmap(0, QPixmap::fromMimeSource("penguin-small.png"));
 		
-		if (std::find(sys_config->start_user_profiles.begin(), 
-			 sys_config->start_user_profiles.end(), profile.ascii()) !=
-		    sys_config->start_user_profiles.end())
+		list<string> l = sys_config->get_start_user_profiles();
+		if (std::find(l.begin(), l.end(), profile.ascii()) != l.end())
 		{
 			item->setOn(true);
 		}
@@ -184,7 +244,7 @@ void SysSettingsForm::populate()
 	idx = 1;
 	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
 		userHostComboBox->insertItem(i->get_ip_addr().c_str());
-		if (sys_config->start_user_host == i->get_ip_addr()) {
+		if (sys_config->get_start_user_host() == i->get_ip_addr()) {
 			userHostComboBox->setCurrentItem(idx);
 		}
 	}
@@ -192,119 +252,135 @@ void SysSettingsForm::populate()
 	MEMMAN_DELETE(l);
 	
 	// Network settings
-	sipUdpPortSpinBox->setValue(sys_config->config_sip_udp_port);
-	rtpPortSpinBox->setValue(sys_config->rtp_port);
+	sipUdpPortSpinBox->setValue(sys_config->get_config_sip_udp_port());
+	rtpPortSpinBox->setValue(sys_config->get_rtp_port());
 	
 	// Ring tone settings
-	playRingtoneCheckBox->setChecked(sys_config->play_ringtone);
-	defaultRingtoneRadioButton->setChecked(sys_config->ringtone_file.empty());
-	customRingtoneRadioButton->setChecked(!sys_config->ringtone_file.empty());
-	ringtoneLineEdit->setText(sys_config->ringtone_file.c_str());
-	defaultRingtoneRadioButton->setEnabled(sys_config->play_ringtone);
-	customRingtoneRadioButton->setEnabled(sys_config->play_ringtone);
-	ringtoneLineEdit->setEnabled(!sys_config->ringtone_file.empty());
-	openRingtoneToolButton->setEnabled(!sys_config->ringtone_file.empty());
+	playRingtoneCheckBox->setChecked(sys_config->get_play_ringtone());
+	defaultRingtoneRadioButton->setChecked(sys_config->get_ringtone_file().empty());
+	customRingtoneRadioButton->setChecked(!sys_config->get_ringtone_file().empty());
+	ringtoneLineEdit->setText(sys_config->get_ringtone_file().c_str());
+	defaultRingtoneRadioButton->setEnabled(sys_config->get_play_ringtone());
+	customRingtoneRadioButton->setEnabled(sys_config->get_play_ringtone());
+	ringtoneLineEdit->setEnabled(!sys_config->get_ringtone_file().empty());
+	openRingtoneToolButton->setEnabled(!sys_config->get_ringtone_file().empty());
 	
-	playRingbackCheckBox->setChecked(sys_config->play_ringback);
-	defaultRingbackRadioButton->setChecked(sys_config->ringback_file.empty());
-	customRingbackRadioButton->setChecked(!sys_config->ringback_file.empty());
-	ringbackLineEdit->setText(sys_config->ringback_file.c_str());
-	defaultRingbackRadioButton->setEnabled(sys_config->play_ringback);
-	customRingbackRadioButton->setEnabled(sys_config->play_ringback);
-	ringbackLineEdit->setEnabled(!sys_config->ringback_file.empty());
-	openRingbackToolButton->setEnabled(!sys_config->ringback_file.empty());
+	playRingbackCheckBox->setChecked(sys_config->get_play_ringback());
+	defaultRingbackRadioButton->setChecked(sys_config->get_ringback_file().empty());
+	customRingbackRadioButton->setChecked(!sys_config->get_ringback_file().empty());
+	ringbackLineEdit->setText(sys_config->get_ringback_file().c_str());
+	defaultRingbackRadioButton->setEnabled(sys_config->get_play_ringback());
+	customRingbackRadioButton->setEnabled(sys_config->get_play_ringback());
+	ringbackLineEdit->setEnabled(!sys_config->get_ringback_file().empty());
+	openRingbackToolButton->setEnabled(!sys_config->get_ringback_file().empty());
+	
+	// Address book settings
+	abLookupNameCheckBox->setChecked(sys_config->get_ab_lookup_name());
+	abOverrideDisplayCheckBox->setChecked(sys_config->get_ab_override_display());
+	abOverrideDisplayCheckBox->setEnabled(sys_config->get_ab_lookup_name());
+	abLookupPhotoCheckBox->setChecked(sys_config->get_ab_lookup_photo());
 }
 
 void SysSettingsForm::validate()
 {
 	// Audio
 	string dev;
-	dev = comboItem2audio_dev(ringtoneComboBox->currentText());
-	if (dev != "") sys_config->dev_ringtone = sys_config->audio_device(dev);
-	dev = comboItem2audio_dev(speakerComboBox->currentText());
-	if (dev != "") sys_config->dev_speaker = sys_config->audio_device(dev);
-	dev = comboItem2audio_dev(micComboBox->currentText());
-	if (dev != "") sys_config->dev_mic = sys_config->audio_device(dev);
+	dev = comboItem2audio_dev(ringtoneComboBox->currentText(), otherRingtoneLineEdit);
+	if (dev != "") sys_config->set_dev_ringtone(sys_config->audio_device(dev));
+	dev = comboItem2audio_dev(speakerComboBox->currentText(), otherSpeakerLineEdit);
+	if (dev != "") sys_config->set_dev_speaker(sys_config->audio_device(dev));
+	dev = comboItem2audio_dev(micComboBox->currentText(), otherMicLineEdit);
+	if (dev != "") sys_config->set_dev_mic(sys_config->audio_device(dev));
 	
-	sys_config->au_reduce_noise_mic = reduceNoiseMicCheckBox->isChecked();
+	sys_config->set_au_reduce_noise_mic(reduceNoiseMicCheckBox->isChecked());
 	
-	sys_config->oss_fragment_size = 
-			ossFragmentComboBox->currentText().toInt();
-	sys_config->alsa_play_period_size =
-			alsaPlayPeriodComboBox->currentText().toInt();
-	sys_config->alsa_capture_period_size = 
-			alsaCapturePeriodComboBox->currentText().toInt();
+	sys_config->set_oss_fragment_size(
+			ossFragmentComboBox->currentText().toInt());
+	sys_config->set_alsa_play_period_size(
+			alsaPlayPeriodComboBox->currentText().toInt());
+	sys_config->set_alsa_capture_period_size(
+			alsaCapturePeriodComboBox->currentText().toInt());
 	
 	// Log
-	sys_config->log_max_size = logMaxSizeSpinBox->value();
-	sys_config->log_show_debug = logDebugCheckBox->isChecked();
-	sys_config->log_show_sip = logSipCheckBox->isChecked();
-	sys_config->log_show_stun = logStunCheckBox->isChecked();
-	sys_config->log_show_memory = logMemoryCheckBox->isChecked();
+	sys_config->set_log_max_size(logMaxSizeSpinBox->value());
+	sys_config->set_log_show_debug(logDebugCheckBox->isChecked());
+	sys_config->set_log_show_sip(logSipCheckBox->isChecked());
+	sys_config->set_log_show_stun(logStunCheckBox->isChecked());
+	sys_config->set_log_show_memory(logMemoryCheckBox->isChecked());
 	
 	// General
-	sys_config->gui_use_systray = guiUseSystrayCheckBox->isChecked();
-	sys_config->gui_hide_on_close = guiHideCheckBox->isChecked();
+	sys_config->set_gui_use_systray(guiUseSystrayCheckBox->isChecked());
+	sys_config->set_gui_hide_on_close(guiHideCheckBox->isChecked());
+	
+	// Auto show on incoming call
+	sys_config->set_gui_auto_show_incoming(autoShowCheckBox->isChecked());
+	sys_config->set_gui_auto_show_timeout(autoShowTimeoutSpinBox->value());
 	
 	// Call history
-	sys_config->ch_max_size = histSizeSpinBox->value();
+	sys_config->set_ch_max_size(histSizeSpinBox->value());
 	
 	// Services
-	sys_config->call_waiting = callWaitingCheckBox->isChecked();
-	sys_config->hangup_both_3way = hangupBothCheckBox->isChecked();
+	sys_config->set_call_waiting(callWaitingCheckBox->isChecked());
+	sys_config->set_hangup_both_3way(hangupBothCheckBox->isChecked());
 
 	// Startup
-	sys_config->start_hidden = startHiddenCheckBox->isChecked() &&
-				   guiUseSystrayCheckBox->isChecked();
+	sys_config->set_start_hidden(startHiddenCheckBox->isChecked() &&
+				   guiUseSystrayCheckBox->isChecked());
 	
-	sys_config->start_user_profiles.clear();
+	list<string> start_user_profiles;
 	QListViewItemIterator i(profileListView, QListViewItemIterator::Checked);
 	while (i.current()) {
 		QCheckListItem *item = (QCheckListItem *)i.current();
-		sys_config->start_user_profiles.push_back(item->text().ascii());
+		start_user_profiles.push_back(item->text().ascii());
 		i++;
 	}
+	sys_config->set_start_user_profiles(start_user_profiles);
 	
 	if (userHostComboBox->currentItem() == 0) {
-		sys_config->start_user_host.clear();
+		sys_config->set_start_user_host("");
 	} else {
-		sys_config->start_user_host = userHostComboBox->currentText().ascii();
+		sys_config->set_start_user_host(userHostComboBox->currentText().ascii());
 	}
 	
 	// Network
-	if (sys_config->config_sip_udp_port != sipUdpPortSpinBox->value()) {
-		sys_config->config_sip_udp_port = sipUdpPortSpinBox->value();
+	if (sys_config->get_config_sip_udp_port() != sipUdpPortSpinBox->value()) {
+		sys_config->set_config_sip_udp_port(sipUdpPortSpinBox->value());
 		emit sipUdpPortChanged();
 	}
-	if (sys_config->rtp_port != rtpPortSpinBox->value()) {
-		sys_config->rtp_port = rtpPortSpinBox->value();
+	if (sys_config->get_rtp_port() != rtpPortSpinBox->value()) {
+		sys_config->set_rtp_port(rtpPortSpinBox->value());
 		emit rtpPortChanged();
 	}
 	
 	// Ring tones
-	sys_config->play_ringtone = playRingtoneCheckBox->isChecked();
-	if (sys_config->play_ringtone) {
+	sys_config->set_play_ringtone(playRingtoneCheckBox->isChecked());
+	if (sys_config->get_play_ringtone()) {
 		if (defaultRingtoneRadioButton->isOn()) {
-			sys_config->ringtone_file.clear();
+			sys_config->set_ringtone_file("");
 		} else {
-			sys_config->ringtone_file = ringtoneLineEdit->
-					text().stripWhiteSpace().ascii();
+			sys_config->set_ringtone_file(ringtoneLineEdit->
+					text().stripWhiteSpace().ascii());
 		}
 	} else {
-		sys_config->ringtone_file.clear();
+		sys_config->set_ringtone_file("");
 	}
 	
-	sys_config->play_ringback = playRingbackCheckBox->isChecked();
-	if (sys_config->play_ringback) {
+	sys_config->set_play_ringback(playRingbackCheckBox->isChecked());
+	if (sys_config->get_play_ringback()) {
 		if (defaultRingbackRadioButton->isOn()) {
-			sys_config->ringback_file.clear();
+			sys_config->set_ringback_file("");
 		} else {
-			sys_config->ringback_file = ringbackLineEdit->
-					text().stripWhiteSpace().ascii();
+			sys_config->set_ringback_file(ringbackLineEdit->
+					text().stripWhiteSpace().ascii());
 		}
 	} else {
-		sys_config->ringback_file.clear();
+		sys_config->set_ringback_file("");
 	}
+	
+	// Address book settings
+	sys_config->set_ab_lookup_name(abLookupNameCheckBox->isChecked());
+	sys_config->set_ab_override_display(abOverrideDisplayCheckBox->isChecked());
+	sys_config->set_ab_lookup_photo(abLookupPhotoCheckBox->isChecked());
 	
 	// Save user config
 	string error_msg;
@@ -351,4 +427,22 @@ void SysSettingsForm::chooseRingback()
 		ringbackLineEdit->setText(file);
 		((t_gui *)ui)->set_last_file_browse_path(QFileInfo(file).dirPath(true));
 	}
+}
+
+void SysSettingsForm::devRingtoneSelected(int idx) {
+	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	otherRingtoneTextLabel->setEnabled(b);
+	otherRingtoneLineEdit->setEnabled(b);
+}
+
+void SysSettingsForm::devSpeakerSelected(int idx) {
+	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	otherSpeakerTextLabel->setEnabled(b);
+	otherSpeakerLineEdit->setEnabled(b);
+}
+
+void SysSettingsForm::devMicSelected(int idx) {
+	bool b = (idx == idxOtherDevAlsa || idx == idxOtherDevOss);
+	otherMicTextLabel->setEnabled(b);
+	otherMicLineEdit->setEnabled(b);
 }

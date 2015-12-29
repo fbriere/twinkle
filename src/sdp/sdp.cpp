@@ -24,6 +24,7 @@
 #include "sdp.h"
 #include "util.h"
 #include "parser/hdr_warning.h"
+#include "parser/parameter.h"
 #include "audits/memman.h"
 
 string sdp_ntwk_type2str(t_sdp_ntwk_type n) {
@@ -115,6 +116,9 @@ string get_rtpmap(unsigned format, t_audio_codec codec) {
 		break;
 	case CODEC_SPEEX_UWB:
 		rtpmap += SDP_RTPMAP_SPEEX_UWB;
+		break;
+	case CODEC_ILBC:
+		rtpmap += SDP_RTPMAP_ILBC;
 		break;
 	case CODEC_TELEPHONE_EVENT:
 		rtpmap += SDP_RTPMAP_TELEPHONE_EV;
@@ -590,6 +594,8 @@ t_audio_codec t_sdp::get_rtpmap_codec(const string &rtpmap) const {
 		return CODEC_SPEEX_WB;
 	} else if (cmp_nocase(codec_name, SDP_AC_NAME_SPEEX) == 0 && sample_rate == 32000) {
 		return CODEC_SPEEX_UWB;
+	} else if (cmp_nocase(codec_name, SDP_AC_NAME_ILBC) == 0 && sample_rate == 8000) {
+		return CODEC_ILBC;
 	} else if (cmp_nocase(codec_name, SDP_AC_NAME_TELEPHONE_EV) == 0) {
 		return CODEC_TELEPHONE_EVENT;
 	}
@@ -648,6 +654,24 @@ string t_sdp::get_fmtp(t_sdp_media_type media_type, unsigned short codec) const 
 	return "";
 }
 
+int t_sdp::get_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec,
+			const string param) const
+{
+	string fmtp = get_fmtp(SDP_AUDIO, codec);
+	if (fmtp.empty()) return -1;
+	
+	int value;
+	list<t_parameter> l = str2param_list(fmtp);
+	list<t_parameter>::const_iterator it = find(l.begin(), l.end(), t_parameter(param, ""));
+	if (it != l.end()) {
+		value = atoi(it->value.c_str());
+	} else {
+		value = -1;
+	}
+	
+	return value;
+}
+
 unsigned short t_sdp::get_ptime(t_sdp_media_type media_type) const {
 	t_sdp_media *m = const_cast<t_sdp_media *>(get_first_media(media_type));
 	assert(m != NULL);
@@ -682,6 +706,15 @@ void t_sdp::set_fmtp(t_sdp_media_type media_type, unsigned short codec, const st
 	s += fmtp;
 	t_sdp_attr a("fmtp", s);
 	m->attributes.push_back(a);
+}
+
+void t_sdp::set_fmtp_int_param(t_sdp_media_type media_type, unsigned short codec,
+			const string &param, int value)
+{
+	string fmtp(param);
+	fmtp += '=';
+	fmtp += int2str(value);
+	set_fmtp(media_type, codec, fmtp);
 }
 
 const t_sdp_media *t_sdp::get_first_media(t_sdp_media_type media_type) const {

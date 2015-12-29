@@ -51,6 +51,10 @@ string t_parameter::encode(void) const {
 	return s;
 }
 
+bool t_parameter::operator==(const t_parameter &rhs) {
+	return (type == rhs.type && name == rhs.name);
+}
+
 t_parameter str2param(const string &s) {
 	list<string> l = split_on_first(s, '=');
 	if (l.size() == 1) {

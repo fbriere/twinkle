@@ -35,16 +35,21 @@
 #include "selectprofileform.h"
 #include "twinklesystray.h"
 #include "util.h"
+#include "address_finder.h"
 #include "qcombobox.h"
+#include "qhbox.h"
 #include "qlabel.h"
+#include "qlayout.h"
 #include "qlistbox.h"
 #include "qmessagebox.h"
 #include "qpixmap.h"
 #include "qsize.h"
+#include "qsizepolicy.h"
 #include "qstring.h"
 #include "qtextedit.h"
 #include "qtoolbar.h"
 #include "qtooltip.h"
+#include "qvbox.h"
 
 extern string user_host;
 extern pthread_t thread_id_main;
@@ -90,11 +95,13 @@ void t_gui::setLineFields(int line) {
 		toLabel = mainWindow->to1Label;
 		subjectLabel = mainWindow->subject1Label;
 		codecLabel = mainWindow->codec1TextLabel;
+		photoLabel = mainWindow->photo1Label;
 	} else {
 		fromLabel = mainWindow->from2Label;
 		toLabel = mainWindow->to2Label;
 		subjectLabel = mainWindow->subject2Label;
 		codecLabel = mainWindow->codec2TextLabel;
+		photoLabel = mainWindow->photo2Label;
 	}
 }
 
@@ -107,6 +114,8 @@ void t_gui::clearLineFields(int line) {
 	subjectLabel->clear();
 	QToolTip::remove(subjectLabel);
 	codecLabel->clear();
+	photoLabel->clear();
+	photoLabel->hide();
 }
 
 void t_gui::displayTo(const QString &s) {
@@ -155,6 +164,18 @@ void t_gui::displayCodecInfo(int line) {
 	QString s = format_codec(call_info.send_codec).c_str();
 	s.append('/').append(format_codec(call_info.recv_codec).c_str());
 	codecLabel->setText(s);
+}
+
+void t_gui::displayPhoto(const QImage &photo) {
+	if (photo.isNull()) {
+		photoLabel->hide();
+	} else {
+		QPixmap pm;
+		pm.convertFromImage(photo.smoothScale(
+			photoLabel->width(), photoLabel->height(), QImage::ScaleMin));
+		photoLabel->setPixmap(pm);
+		photoLabel->show();
+	}
 }
 
 /////////////////////////////////////////////////
@@ -514,6 +535,12 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone) {
 #ifdef HAVE_KDE
 	sys_tray_popup = NULL;
 #endif
+	
+	for (int i = 0; i < NUM_USER_LINES; i++) {
+		QObject::connect(&autoShowTimer[i], SIGNAL(timeout()),
+			mainWindow, SLOT(show()));
+	}
+	
 	MEMMAN_NEW(mainWindow);
 	qApp->setMainWidget(mainWindow);
 }
@@ -572,7 +599,7 @@ void t_gui::run(void) {
 	mainWindow->resize(sizeMainWin);
 	
 	// Start QApplication/KApplication
-	if (sys_config->start_hidden) {
+	if (sys_config->get_start_hidden()) {
 		mainWindow->hide();
 	} else {
 		mainWindow->show();
@@ -608,11 +635,14 @@ void t_gui::run(void) {
 void t_gui::save_state(void) {
 	lock();
 	
-	sys_config->last_used_profile = mainWindow->userComboBox->currentText().ascii();
-	sys_config->dial_history.clear();
+	sys_config->set_last_used_profile(
+			mainWindow->userComboBox->currentText().ascii());
+
+	list<string> history;
 	for (int i = 0; i < mainWindow->callComboBox->count(); i++) {
-		sys_config->dial_history.push_back(mainWindow->callComboBox->text(i).ascii());
+		history.push_back(mainWindow->callComboBox->text(i).ascii());
 	}
+	sys_config->set_dial_history(history);
 	
 	t_userintf::save_state();
 	
@@ -626,8 +656,8 @@ void t_gui::restore_state(void) {
 	// filled by MphoneForm::updateUserComboBox
 	
 	mainWindow->callComboBox->clear();
-	for (list<string>::reverse_iterator i = sys_config->dial_history.rbegin();
-	i != sys_config->dial_history.rend(); i++)
+	list<string> dial_history = sys_config->get_dial_history();
+	for (list<string>::reverse_iterator i = dial_history.rbegin(); i != dial_history.rend(); i++)
 	{
 		mainWindow->addToCallComboBox(i->c_str());
 	}
@@ -750,12 +780,24 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	
 	// From
 	QString fromParty = format_sip_address(user_config,
-				r->hdr_from.display, r->hdr_from.uri).c_str();
+				r->hdr_from.get_display_presentation(), r->hdr_from.uri).c_str();
 	s = fromParty;
+	QString organization("");
 	if (r->hdr_organization.is_populated()) {
-		s.append(", ").append(r->hdr_organization.name.c_str());
+		organization = r->hdr_organization.name.c_str();
+		s.append(", ").append(organization);
 	}
 	displayFrom(s);
+	
+	// Display photo
+	QImage fromPhoto;
+	
+	if (sys_config->get_ab_lookup_photo()) {
+		t_address_finder *af = t_address_finder::get_instance();
+		fromPhoto = af->find_photo(user_config, r->hdr_from.uri);
+	}
+	
+	displayPhoto(fromPhoto);
 	
 	// To
 	s = "";
@@ -763,13 +805,13 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	displayTo(s);
 	
 	// Subject
-	s = "";
+	QString subject("");
 	if (r->hdr_subject.is_populated()) {
-		s.append(r->hdr_subject.subject.c_str());
+		subject = r->hdr_subject.subject.c_str();
 	}
-	displaySubject(s);
+	displaySubject(subject);
 	
-	cb_notify_call(line, fromParty.ascii());
+	cb_notify_call(line, fromParty, organization, fromPhoto, subject);
 	
 	unlock();
 }
@@ -1411,7 +1453,11 @@ void t_gui::cb_redirecting_request(t_user *user_config, const t_contact_param &c
 	unlock();
 }
 
-void t_gui::cb_notify_call(int line, string from_party) {
+void t_gui::cb_notify_call(int line, const QString &from_party, const QString &organization,
+			   const QImage &photo, const QString &subject)
+{
+	if (line >= NUM_USER_LINES) return;
+	
 	lock();
 	
 	// Play ringtone if the call is received on the active line.
@@ -1421,37 +1467,96 @@ void t_gui::cb_notify_call(int line, string from_party) {
 		cb_play_ringtone(line);
 	}
 	
-	// Pop up sys tray balloon if main window is hidden
-	if (mainWindow->isHidden() || mainWindow->isMinimized()) {
+	// Pop up sys tray balloon
 #ifdef HAVE_KDE
-		t_twinkle_sys_tray *tray = mainWindow->getSysTray();
-		if (tray && !sys_tray_popup) {
-			QString fromParty(from_party.c_str());
-			QString s("<p>");
-			s.append(str2html(fromParty.left(40)));
-			if (fromParty.length() > 40) s.append("...");
-			s.append("</p>");
-			sys_tray_popup = KPassivePopup::message(
-				"<H2>Incoming Call</H2>", s, 
-				QPixmap::fromMimeSource("twinkle32.png"), 
-				tray, 0, 0);
-			sys_tray_popup->setAutoDelete(false);
-			MEMMAN_NEW(sys_tray_popup);
-			QObject::connect(sys_tray_popup, SIGNAL(clicked()),
-				sys_tray_popup, SLOT(hide()));
+	t_twinkle_sys_tray *tray = mainWindow->getSysTray();
+	if (tray && !sys_tray_popup) {
+		QString presFromParty("");
+		if (!from_party.isEmpty()) {
+			presFromParty = dotted_truncate(from_party.ascii(), 40).c_str();
 		}
+		QString presOrganization("");
+		if (!organization.isEmpty()) {
+			presOrganization = dotted_truncate(organization.ascii(), 40).c_str();
+		}
+		QString presSubject("");
+		if (!subject.isEmpty()) {
+			presSubject = dotted_truncate(subject.ascii(), 40).c_str();
+		}
+		
+		// Create photo pixmap. If no photo is available, then use
+		// the Twinkle icon.
+		QPixmap pm;
+		QFrame::Shape photoFrameShape = QFrame::NoFrame;
+		if (photo.isNull()) {
+			pm = QPixmap::fromMimeSource("twinkle32.png");
+		} else {
+			pm.convertFromImage(photo);
+			photoFrameShape = QFrame::Box;
+		}
+		
+		// Create the popup view.
+		sys_tray_popup = new KPassivePopup(tray);
+		MEMMAN_NEW(sys_tray_popup);
+		sys_tray_popup->setAutoDelete(false);
+		sys_tray_popup->setTimeout(0);
+		QVBox *popup_view = new QVBox(sys_tray_popup);
+		QHBox *hb = new QHBox(popup_view);
+		hb->setSpacing(5);
+		QLabel *lblPhoto = new QLabel(hb);
+		lblPhoto->setPixmap(pm);
+		lblPhoto->setFrameShape(photoFrameShape);
+		QVBox *vb = new QVBox(hb);
+		QLabel *lblCaption = new QLabel("<H2>Incoming Call</H2>", vb);
+		lblCaption->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+		lblCaption->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+		QLabel *lblFrom = new QLabel(presFromParty, vb);
+		lblFrom->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+		lblFrom->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+		QLabel *lastLabel = lblFrom;
+		if (!presOrganization.isEmpty()) {
+			QLabel *lblOrganization = new QLabel(presOrganization, vb);
+			lblOrganization->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+			lblOrganization->setSizePolicy(QSizePolicy::Expanding, 
+						       QSizePolicy::Minimum);
+			lastLabel = lblOrganization;
+		}
+		if (!presSubject.isEmpty()) {
+			QLabel *lblSubject = new QLabel(presSubject, vb);
+			lblSubject->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+			lblSubject->setSizePolicy(QSizePolicy::Expanding, 
+						       QSizePolicy::Minimum);
+			lastLabel = lblSubject;
+		}
+		lastLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		sys_tray_popup->setView(popup_view);
+		
+		// Show the popup
+		line_sys_tray_popup = line;
+		sys_tray_popup->show();
+		QObject::connect(sys_tray_popup, SIGNAL(clicked()),
+			sys_tray_popup, SLOT(hide()));
+	}
 #endif
+	
+	// Show main window after a few seconds
+	if (sys_config->get_gui_auto_show_incoming()) {
+		autoShowTimer[line].start(
+			sys_config->get_gui_auto_show_timeout() * 1000, true);
 	}
 	
 	unlock();
 }
 
 void t_gui::cb_stop_call_notification(int line) {
+	if (line >= NUM_USER_LINES) return;
+	
 	lock();
 	cb_stop_tone(line);
+	autoShowTimer[line].stop();
 	
 #ifdef HAVE_KDE
-	if (sys_tray_popup) {
+	if (sys_tray_popup && line_sys_tray_popup == line) {
 		sys_tray_popup->hide();
 		MEMMAN_DELETE(sys_tray_popup);
 		delete sys_tray_popup;
@@ -1688,8 +1793,9 @@ void t_gui::cb_call_referred(t_user *user_config, int line, t_request *r) {
 	
 	setLineFields(line);
 	s = format_sip_address(user_config, 
-			       user_config->display,  user_config->create_user_uri()).c_str();
+			       user_config->get_display(),  user_config->create_user_uri()).c_str();
 	displayFrom(s);
+	photoLabel->hide();
 	
 	s = format_sip_address(user_config,
 			       r->hdr_refer_to.display, r->hdr_refer_to.uri).c_str();
@@ -1717,12 +1823,23 @@ void t_gui::cb_retrieve_referrer(t_user *user_config, int line) {
 	setLineFields(line);
 	const t_call_info call_info = phone->get_call_info(line);
 	
-	s = format_sip_address(user_config, call_info.from_display, call_info.from_uri).c_str();
+	s = format_sip_address(user_config, call_info.get_from_display_presentation(), 
+			       call_info.from_uri).c_str();
 	if (!call_info.from_organization.empty()) {
 		s += ", ";
 		s += call_info.from_organization.c_str();
 	}
 	displayFrom(s);
+	
+	// Display photo
+	QImage fromPhoto;
+	
+	if (sys_config->get_ab_lookup_photo()) {
+		t_address_finder *af = t_address_finder::get_instance();
+		fromPhoto = af->find_photo(user_config, call_info.from_uri);
+	}
+	
+	displayPhoto(fromPhoto);
 	
 	s = format_sip_address(user_config, call_info.to_display, call_info.to_uri).c_str();
 	if (!call_info.to_organization.empty()) {
@@ -1983,7 +2100,8 @@ void  t_gui::cb_missed_call(int num_missed_calls) {
 void t_gui::cb_nat_discovery_progress_start(int num_steps) {
 	natDiscoveryProgressDialog = new QProgressDialog(
 			"Firewall / NAT discovery...", "Abort", num_steps, NULL,
-			"nat discovery progress", true, Qt::WDestructiveClose);
+			"nat discovery progress", true);
+	MEMMAN_NEW(natDiscoveryProgressDialog);
 	natDiscoveryProgressDialog->setCaption(PRODUCT_NAME);
 	natDiscoveryProgressDialog->setMinimumDuration(200);
 }
@@ -1991,6 +2109,11 @@ void t_gui::cb_nat_discovery_progress_start(int num_steps) {
 void t_gui::cb_nat_discovery_progress_step(int step) {
 	natDiscoveryProgressDialog->setProgress(step);
 	qApp->processEvents();
+}
+
+void t_gui::cb_nat_discovery_finished(void) {
+	MEMMAN_DELETE(natDiscoveryProgressDialog);
+	delete natDiscoveryProgressDialog;
 }
 
 bool t_gui::cb_nat_discovery_cancelled(void) {
@@ -2021,6 +2144,11 @@ void t_gui::cmd_quit(void) {
 	lock();
 	mainWindow->fileExit();
 	unlock();
+}
+
+string t_gui::get_name_from_abook(t_user *user_config, const t_url &u) {
+	t_address_finder *af = t_address_finder::get_instance();
+	return af->find_name(user_config, u);
 }
 
 // User invoked actions on the phone object
@@ -2071,7 +2199,7 @@ void t_gui::action_invite(t_user *user_config, const t_url &destination,
 	displayTo(s);
 	
 	s = "";
-	s.append(format_sip_address(user_config, user_config->display, 
+	s.append(format_sip_address(user_config, user_config->get_display(), 
 				    user_config->create_user_uri()).c_str());
 	displayFrom(s);
 	

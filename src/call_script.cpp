@@ -19,8 +19,6 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include "call_script.h"
 #include "log.h"
@@ -37,6 +35,16 @@
 #define SCR_CALLER_NAME		"caller_name"
 #define SCR_RINGTONE		"ringtone"
 #define SCR_INTERNAL_ERROR	"internal_error"
+
+// Script triggers
+#define SCR_TRIGGER_IN_CALL		"in_call"
+#define SCR_TRIGGER_IN_CALL_ANSWERED	"in_call_answered"
+#define SCR_TRIGGER_IN_CALL_FAILED	"in_call_failed"
+#define SCR_TRIGGER_OUT_CALL		"out_call"
+#define SCR_TRIGGER_OUT_CALL_ANSWERED	"out_call_answered"
+#define SCR_TRIGGER_OUT_CALL_FAILED	"out_call_failed"
+#define SCR_TRIGGER_LOCAL_RELEASE	"local_release"
+#define SCR_TRIGGER_REMOTE_RELEASE	"remote_release"
 
 /////////////////////////
 // class t_script_result
@@ -99,74 +107,30 @@ void t_script_result::set_parameter(const string &parameter, const string &value
 // class t_call_script
 /////////////////////////
 
-t_call_script::t_call_script(const string &command) : script_command(command)
-{}
-
-void t_call_script::exec(t_script_result &result, t_user *user_config, t_request *r) const 
-{
-	result.clear();
-	
-	if (script_command.empty()) return;
-	
-	log_file->write_header("t_call_script::exec");
-	log_file->write_raw("Execute script: ");
-	log_file->write_raw(script_command);
-	log_file->write_endl();
-	log_file->write_footer();
-	
-	// Create pipe for communication with child process
-	int fds[2];
-	if (pipe(fds) == -1) {
-		// Failed to create pipe
-		log_file->write_header("t_call_script::exec",
-			LOG_NORMAL, LOG_WARNING);
-		log_file->write_raw("Failed to create pipe: ");
-		log_file->write_raw(strerror(errno));
-		log_file->write_endl();
-		log_file->write_footer();
-		return;
+string t_call_script::trigger2str(t_trigger t) const {
+	switch (t) {
+	case TRIGGER_IN_CALL:
+		return SCR_TRIGGER_IN_CALL;
+	case TRIGGER_IN_CALL_ANSWERED:
+		return SCR_TRIGGER_IN_CALL_ANSWERED;
+	case TRIGGER_IN_CALL_FAILED:
+		return SCR_TRIGGER_IN_CALL_FAILED;
+	case TRIGGER_OUT_CALL:
+		return SCR_TRIGGER_OUT_CALL;
+	case TRIGGER_OUT_CALL_ANSWERED:
+		return SCR_TRIGGER_OUT_CALL_ANSWERED;
+	case TRIGGER_OUT_CALL_FAILED:
+		return SCR_TRIGGER_OUT_CALL_FAILED;
+	case TRIGGER_LOCAL_RELEASE:
+		return SCR_TRIGGER_LOCAL_RELEASE;
+	case TRIGGER_REMOTE_RELEASE:
+		return SCR_TRIGGER_REMOTE_RELEASE;
+	default:
+		return "unknown";
 	}
-	
-	// Fork child process
-	pid_t pid = fork();
-	if (pid == -1) {
-		// Failed to fork child process
-		log_file->write_header("t_call_script::exec",
-			LOG_NORMAL, LOG_WARNING);
-		log_file->write_raw("Failed to fork child process: ");
-		log_file->write_raw(strerror(errno));
-		log_file->write_endl();
-		log_file->write_footer();
-		
-		close(fds[0]);
-		close(fds[1]);
-		return;
-	} else if (pid == 0) {
-		// Child process
-		
-		// Close the read end of the pipe
-		close(fds[0]);
-		
-		// Redirect stdout to the write end of the pipe
-		dup2(fds[1], STDOUT_FILENO);
-		
-		// Determine script agument list
-		list<string> arg_list = split_ws(script_command, true);
-		
-		// NOTE: MEMMAN audits are not called as all pointers will be deleted
-		//       automatically when the child process dies
-		//	 Also, the child process has a copy of the MEMMAN object
-		char **argv = new char *[arg_list.size() + 1];
-		
-		int idx = 0;
-		for (list<string>::iterator i = arg_list.begin(); 
-		     i != arg_list.end(); i++, idx++) 
-		{
-			argv[idx] = strdup(i->c_str());
-		}
-		argv[arg_list.size()] = NULL;
-		
-		// Determine environment
+}
+
+char **t_call_script::create_env(t_sip_message *m) const {
 		// Number of existing environment variables
 		int environ_size = 0;
 		for (int i = 0; environ[i] != NULL; i++) {
@@ -175,13 +139,14 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 		
 		// Number of SIP environment variables
 		int start_sip_env = environ_size; // Position of SIP variables
-		list<string> l = r->encode_env();
+		list<string> l = m->encode_env();
 		environ_size += l.size();
 		
 		// Number of Twinkle environment variables
 		int start_twinkle_env = environ_size; // Position of Twinkle variables
-		environ_size += 1;
+		environ_size += 2;
 		
+		// MEMMAN not called on purpose
 		char **env = new char *[environ_size + 1];
 		
 		// Copy current environment to child
@@ -200,8 +165,126 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 		var_twinkle += user_config->get_profile_name();
 		env[start_twinkle_env] = strdup(var_twinkle.c_str());
 		
+		var_twinkle = "TWINKLE_TRIGGER=";
+		var_twinkle += trigger2str(trigger);
+		env[start_twinkle_env + 1] = strdup(var_twinkle.c_str());
+		
 		// Terminate array with NULL
 		env[environ_size] = NULL;
+		
+		return env;
+}
+
+char **t_call_script::create_argv(void) const {
+		// Determine script agument list
+		list<string> arg_list = split_ws(script_command, true);
+		
+		// MEMMAN not called on purpose
+		char **argv = new char *[arg_list.size() + 1];
+		
+		int idx = 0;
+		for (list<string>::iterator i = arg_list.begin(); 
+		     i != arg_list.end(); i++, idx++) 
+		{
+			argv[idx] = strdup(i->c_str());
+		}
+		argv[arg_list.size()] = NULL;
+		
+		return argv;
+}
+
+t_call_script::t_call_script(t_user *_user_config, t_trigger _trigger) :
+	user_config(_user_config),
+	trigger(_trigger)
+{
+	switch (trigger) {
+	case TRIGGER_IN_CALL:
+		script_command = user_config->get_script_incoming_call();
+		break;
+	case TRIGGER_IN_CALL_ANSWERED:
+		script_command = user_config->get_script_in_call_answered();
+		break;
+	case TRIGGER_IN_CALL_FAILED:
+		script_command = user_config->get_script_in_call_failed();
+		break;
+	case TRIGGER_OUT_CALL:
+		script_command = user_config->get_script_outgoing_call();
+		break;
+	case TRIGGER_OUT_CALL_ANSWERED:
+		script_command = user_config->get_script_out_call_answered();
+		break;
+	case TRIGGER_OUT_CALL_FAILED:
+		script_command = user_config->get_script_out_call_failed();
+		break;
+	case TRIGGER_LOCAL_RELEASE:
+		script_command = user_config->get_script_local_release();
+		break;
+	case TRIGGER_REMOTE_RELEASE:
+		script_command = user_config->get_script_remote_release();
+		break;
+	default:
+		script_command.clear();
+		break;
+	}
+}
+
+void t_call_script::exec_action(t_script_result &result, t_sip_message *m) const 
+{
+	result.clear();
+	
+	if (script_command.empty()) return;
+	
+	log_file->write_header("t_call_script::exec_action");
+	log_file->write_raw("Execute script: ");
+	log_file->write_raw(script_command);
+	log_file->write_raw("\nTrigger: ");
+	log_file->write_raw(trigger2str(trigger));
+	log_file->write_endl();
+	log_file->write_footer();
+	
+	// Create pipe for communication with child process
+	int fds[2];
+	if (pipe(fds) == -1) {
+		// Failed to create pipe
+		log_file->write_header("t_call_script::exec_action",
+			LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("Failed to create pipe: ");
+		log_file->write_raw(strerror(errno));
+		log_file->write_endl();
+		log_file->write_footer();
+		return;
+	}
+	
+	// Fork child process
+	pid_t pid = fork();
+	if (pid == -1) {
+		// Failed to fork child process
+		log_file->write_header("t_call_script::exec_action",
+			LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("Failed to fork child process: ");
+		log_file->write_raw(strerror(errno));
+		log_file->write_endl();
+		log_file->write_footer();
+		
+		close(fds[0]);
+		close(fds[1]);
+		return;
+	} else if (pid == 0) {
+		// Child process
+		
+		// Close the read end of the pipe
+		close(fds[0]);
+		
+		// Redirect stdout to the write end of the pipe
+		dup2(fds[1], STDOUT_FILENO);
+		
+		// NOTE: MEMMAN audits are not called as all pointers will be deleted
+		//       automatically when the child process dies
+		//	 Also, the child process has a copy of the MEMMAN object
+		char **argv = create_argv();
+		
+		// Determine environment
+		char **env = create_env(m);
 		
 		// Replace the child process by the script
 		if (execve(argv[0], argv, env) == -1) {
@@ -215,6 +298,11 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 		}
 	} else {
 		// Parent process
+		log_file->write_header("t_call_script::exec_action");
+		log_file->write_raw("Child process spawned, pid = ");
+		log_file->write_raw((int)pid);
+		log_file->write_endl();
+		log_file->write_footer();
 		
 		// Close the write end of the pipe
 		close(fds[1]);
@@ -222,15 +310,15 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 		// Read the script results
 		FILE *fp_result = fdopen(fds[0], "r");
 		if (!fp_result) {
-			log_file->write_header("t_call_script::exec",
+			log_file->write_header("t_call_script::exec_action",
 				LOG_NORMAL, LOG_WARNING);
 			log_file->write_raw("Failed to open pipe to child: ");
 			log_file->write_raw(strerror(errno));
 			log_file->write_endl();
 			log_file->write_footer();
 			
-			// Wait for the child process to die
-			waitpid(pid, NULL, 0);
+			// Child will be cleaned up by phone_sigwait
+
 			close(fds[0]);
 			return;
 		}
@@ -249,6 +337,9 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 			// Convert the read line to a C++ string
 			string line(line_buf);	
 			line = trim(line);
+			
+			// Stop reading on end command
+			if (line == "end") break;
 	
 			// Skip empty lines
 			if (line.empty()) continue;
@@ -266,7 +357,7 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 			
 			if (parameter == SCR_INTERNAL_ERROR) {
 				log_file->write_report(value,
-					"t_call_script::exec",
+					"t_call_script::exec_action",
 					LOG_NORMAL, LOG_WARNING);
 				ui->cb_display_msg(value, MSG_WARNING);
 				result.clear();
@@ -280,7 +371,59 @@ void t_call_script::exec(t_script_result &result, t_user *user_config, t_request
 		fclose(fp_result);
 		close(fds[0]);
 		
-		// Wait for the child process to die
-		waitpid(pid, NULL, 0);
+		// Child will be cleaned up by phone_sigwait
+	}
+}
+
+void t_call_script::exec_notify(t_sip_message *m) const 
+{
+	if (script_command.empty()) return;
+	
+	log_file->write_header("t_call_script::exec_notify");
+	log_file->write_raw("Execute script: ");
+	log_file->write_raw(script_command);
+	log_file->write_raw("\nTrigger: ");
+	log_file->write_raw(trigger2str(trigger));
+	log_file->write_endl();
+	log_file->write_footer();
+	
+	// Fork child process
+	pid_t pid = fork();
+	if (pid == -1) {
+		// Failed to fork child process
+		log_file->write_header("t_call_script::exec_notify",
+			LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("Failed to fork child process: ");
+		log_file->write_raw(strerror(errno));
+		log_file->write_endl();
+		log_file->write_footer();
+
+		return;
+	} else if (pid == 0) {
+		// Child process
+			
+		// NOTE: MEMMAN audits are not called as all pointers will be deleted
+		//       automatically when the child process dies
+		//	 Also, the child process has a copy of the MEMMAN object
+		char **argv = create_argv();
+		
+		// Determine environment
+		char **env = create_env(m);
+		
+		// Replace the child process by the script
+		if (execve(argv[0], argv, env) == -1) {
+			// Failed to execute script.
+			exit(0);
+		}
+	} else {
+		// Parent process
+		log_file->write_header("t_call_script::exec_notify");
+		log_file->write_raw("Child process spawned, pid = ");
+		log_file->write_raw((int)pid);
+		log_file->write_endl();
+		log_file->write_footer();
+		
+		// No interaction with child needed.
+		// Child will be cleaned up by phone_sigwait
 	}
 }

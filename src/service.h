@@ -20,8 +20,11 @@
 #define _H_SERVICE
 
 #include <list>
+#include "user.h"
 #include "sockets/url.h"
 #include "threads/mutex.h"
+
+#define SVC_FILE_EXT	".svc"
 
 using namespace std;
 
@@ -36,6 +39,8 @@ class t_service {
 private:
 	// Protect operations on the service
 	t_mutex		mtx_service;
+	
+	t_user		*user_config;
 
 	// Call redirection (call forwarding)
 	bool			cf_always_active;
@@ -54,9 +59,11 @@ private:
 
 	void lock();
 	void unlock();
+	
+	t_service() {};
 
 public:
-	t_service();
+	t_service(t_user *user);
 
 	// All methods first lock the mtx_service mutex before executing
 	// and unlock on return to guarantee the service data does not
@@ -82,6 +89,10 @@ public:
 	// Auto answer
 	void enable_auto_answer(bool on);
 	bool is_auto_answer_active(void) const;
+	
+	// Read/write service settings to file
+	bool read_config(string &error_msg);
+	bool write_config(string &error_msg);
 };
 
 #endif

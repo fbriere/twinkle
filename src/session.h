@@ -100,6 +100,7 @@ public:
 	list<t_audio_codec>	recvd_codecs;	// codecs received from far-end
 	t_audio_codec		use_codec;	// codec to be used
 	unsigned short		ptime;		// payload size (ms)
+	unsigned short		ilbc_mode;	// 20 or 30 ms
 	bool			recvd_offer;  	// offer received?
 	bool			recvd_answer; 	// answer received?
 	bool			sent_offer;	// offer sent?

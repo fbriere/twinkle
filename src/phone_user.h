@@ -95,7 +95,7 @@ public:
 	unsigned short		id_nat_keepalive;
 	
 	// Supplementary services
-	t_service	service;
+	t_service	*service;
 	
 	// STUN
 	bool		use_stun; // Indicates if STUN must be used

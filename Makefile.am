@@ -3,6 +3,7 @@
 # So here the executable is defined as a script such that it will
 # only be installed and not built.
 bin_SCRIPTS = src/gui/twinkle
+noinst_SCRIPTS = twinkle.desktop
 
 pkgdata_DATA = data/ringback.wav data/ringtone.wav \
 	data/providers.csv \
@@ -11,6 +12,14 @@ pkgdata_DATA = data/ringback.wav data/ringtone.wav \
 
 EXTRA_DIST = src/gui/*.ui src/gui/*.h src/gui/*.cpp src/gui/Makefile \
 	src/gui/twinkle.pro src/gui/images/* \
-	data/ringback.wav data/ringtone.wav data/providers.csv
+	data/ringback.wav data/ringtone.wav data/providers.csv \
+	sip.protocol twinkle.desktop.in
 
 SUBDIRS = src
+
+edit = sed \
+	-e 's,@datadir\@,$(pkgdatadir),g' \
+	-e 's,@prefix\@,$(prefix),g'
+	
+twinkle.desktop: Makefile $(srcdir)/twinkle.desktop.in
+	$(edit) $(srcdir)/twinkle.desktop.in >twinkle.desktop

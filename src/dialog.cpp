@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <iostream>
 #include "call_history.h"
+#include "call_script.h"
 #include "dialog.h"
 #include "exceptions.h"
 #include "line.h"
@@ -45,7 +46,7 @@ t_mutex t_client_request::mtx_next_tuid;
 t_tuid t_client_request::next_tuid = 1;
 
 t_client_request::t_client_request(t_user *user, t_request *r, const t_tid _tid) :
-		redirector(r->uri, user->max_redirections)
+		redirector(r->uri, user->get_max_redirections())
 {
 	request = (t_request *)r->copy();
 	stun_request = NULL;
@@ -59,7 +60,7 @@ t_client_request::t_client_request(t_user *user, t_request *r, const t_tid _tid)
 }
 
 t_client_request::t_client_request(t_user *user, StunMessage *r, const t_tid _tid) :
-		redirector(t_url(), user->max_redirections)
+		redirector(t_url(), user->get_max_redirections())
 {
 	request = NULL;
 	stun_request = new StunMessage(*r);
@@ -403,10 +404,6 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 			return;
 		}
 	}
-
-	ui->cb_incoming_call(user_config, line->get_line_number(), r);
-	line->call_hist_record.start_call(r, t_call_record::DIR_IN,
-		user_config->get_profile_name());
 	
 	resp = r->create_response(R_180_RINGING);
 	resp->hdr_to.set_tag(local_tag);
@@ -415,8 +412,8 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	// Send 180 response reliable if needed
 	if (r->hdr_require.contains(EXT_100REL) ||
 	    (r->hdr_supported.contains(EXT_100REL) &&
-	     (user_config->ext_100rel == EXT_PREFERRED ||
-	      user_config->ext_100rel == EXT_REQUIRED)))
+	     (user_config->get_ext_100rel() == EXT_PREFERRED ||
+	      user_config->get_ext_100rel() == EXT_REQUIRED)))
 	{
 		resp->hdr_require.add_feature(EXT_100REL);
 		resp->hdr_rseq.set_resp_nr(++local_resp_nr);
@@ -458,6 +455,11 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 			req_in_invite->get_tid());
 	MEMMAN_DELETE(resp);
 	delete resp;
+	
+	ui->cb_incoming_call(user_config, line->get_line_number(), r);
+	line->call_hist_record.start_call(r, t_call_record::DIR_IN,
+		user_config->get_profile_name());
+	
 	state = DS_W4ANSWER;
 }
 
@@ -466,6 +468,8 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	bool tear_down = false;
 	bool answer_call = false;
+	
+	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
 
 	switch (r->method) {
 	case CANCEL:
@@ -474,6 +478,10 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp = req_in_invite->get_request()->
 				create_response(R_487_REQUEST_TERMINATED);
 		resp->hdr_to.set_tag(local_tag);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		line->send_response(resp, req_in_invite->get_tuid(),
 				req_in_invite->get_tid());
 		line->call_hist_record.fail_call(resp);
@@ -494,6 +502,10 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp = req_in_invite->get_request()->create_response(
 						R_487_REQUEST_TERMINATED);
 		resp->hdr_to.set_tag(local_tag);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
 		line->call_hist_record.fail_call(resp);
@@ -544,6 +556,11 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 				R_400_BAD_REQUEST,
 				"SDP answer in PRACK missing or unsupported");
 			resp->hdr_to.set_tag(local_tag);
+			
+			// Trigger call script
+			t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+			script.exec_notify(resp);
+		
 			line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
 			line->call_hist_record.fail_call(resp);
@@ -571,6 +588,8 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 	unsigned long	ipaddr;
 	unsigned short	port;
 	t_response *resp;
+	
+	t_call_script script_in_call_failed(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
 
 	// RFC 3262 3
 	switch(timer) {
@@ -598,6 +617,10 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 		resp = req_in_invite->get_request()->create_response(
 			R_500_INTERNAL_SERVER_ERROR, "100rel timeout");
 		resp->hdr_to.set_tag(local_tag);
+		
+		// Trigger call script
+		script_in_call_failed.exec_notify(resp);
+		
 		line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
 		line->call_hist_record.fail_call(resp);
@@ -626,6 +649,8 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	bool tear_down = false;
 	t_client_request *cr;
+	
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
 
 	switch(r->method) {
 	case ACK:
@@ -680,6 +705,10 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 	case BYE:
 		// Send 200 on the BYE request
 		resp = r->create_response(R_200_OK);
+		
+		// Trigger call script
+		script_out_call_failed.exec_notify(resp);
+		
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -717,6 +746,8 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
 	bool tear_down = false;
+	
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
 
 	switch(r->method) {
 	case ACK:
@@ -774,6 +805,10 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 	case BYE:
 		// Send 200 on the BYE request
 		resp = r->create_response(R_200_OK);
+		
+		// Trigger call script
+		script_out_call_failed.exec_notify(resp);
+		
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -850,10 +885,16 @@ void t_dialog::state_w4ack_re_invite(t_line_timer timer) {
 
 void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
+	
+	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE);
 
 	switch(r->method) {
 	case BYE:
 		resp = r->create_response(R_200_OK);
+		
+		// Trigger call script
+		script_remote_release.exec_notify(r);
+		
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -902,6 +943,8 @@ void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 // In the confirmed state, requests will be responded.
 void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
+	
+	t_call_script script_remote_release(user_config, t_call_script::TRIGGER_REMOTE_RELEASE);
 
 	switch(r->method) {
 	case INVITE:
@@ -910,6 +953,10 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		break;
 	case BYE:
 		resp = r->create_response(R_200_OK);
+
+		// Trigger call script
+		script_remote_release.exec_notify(r);
+		
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -1159,7 +1206,7 @@ void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
 	t_contact_param contact;
 
 	// RFC 3515
-	if (sub_refer || !user_config->allow_refer) {
+	if (sub_refer || !user_config->get_allow_refer()) {
 		// A reference is already in progress or REFER is not
 		// allowed.
 		resp = r->create_response(R_603_DECLINE);
@@ -1201,7 +1248,7 @@ void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
 	// Send immediate NOTIFY
 	resp = new t_response(R_100_TRYING);
 	MEMMAN_NEW(resp);
-	if (user_config->ask_user_to_refer) {
+	if (user_config->get_ask_user_to_refer()) {
 		// If the user has to grant permission, then the
 		// subscription is pending.
 		sub_refer->send_notify(resp, SUBSTATE_PENDING);
@@ -1211,7 +1258,7 @@ void t_dialog::process_refer(t_request *r, t_tuid tuid, t_tid tid) {
 	MEMMAN_DELETE(resp);
 	delete resp;
 
-	if (user_config->ask_user_to_refer) {
+	if (user_config->get_ask_user_to_refer()) {
 		if (r->hdr_referred_by.is_populated()) {
 			refer_accepted = ui->cb_ask_user_to_refer(user_config,
 				r->hdr_refer_to.uri,
@@ -1359,6 +1406,9 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	// RFC 3262
 	// Send PRACK if required
 	send_prack_if_required(r);
+	
+	t_call_script script_out_call_answered(user_config, t_call_script::TRIGGER_OUT_CALL_ANSWERED);
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
 
 	switch (r->get_class()) {
 	case R_1XX:
@@ -1394,6 +1444,9 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		{
 			line->ci_set_refer_supported(true);
 		}
+		
+		// Trigger call script
+		script_out_call_answered.exec_notify(r);
 
 		ui->cb_call_answered(user_config, line->get_line_number(), r);
 		line->call_hist_record.answer_call(r);
@@ -1418,6 +1471,10 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 	
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
+		
+		// Trigger call script
+		script_out_call_failed.exec_notify(r);
+	
 		ui->cb_stop_call_notification(line->get_line_number());
 		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
@@ -1478,6 +1535,9 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 	// RFC 3262
 	// Send PRACK if required
 	send_prack_if_required(r);
+	
+	t_call_script script_out_call_answered(user_config, t_call_script::TRIGGER_OUT_CALL_ANSWERED);
+	t_call_script script_out_call_failed(user_config, t_call_script::TRIGGER_OUT_CALL_FAILED);
 
 	switch (r->get_class()) {
 	case R_1XX:
@@ -1505,6 +1565,9 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		{
 			line->ci_set_refer_supported(true);
 		}
+		
+		// Trigger call script
+		script_out_call_answered.exec_notify(r);
 
 		ui->cb_call_answered(user_config, line->get_line_number(), r);
 		line->call_hist_record.answer_call(r);
@@ -1529,6 +1592,10 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		
 		// Final response (failure) received.
 		// Treat unknown response classes as failure.
+
+		// Trigger call script
+		script_out_call_failed.exec_notify(r);
+		
 		ui->cb_stop_call_notification(line->get_line_number());
 		ui->cb_call_failed(user_config, line->get_line_number(), r);
 		line->call_hist_record.fail_call(r);
@@ -1922,7 +1989,7 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 			ui->cb_unsupported_content_type(line->get_line_number(), r);
 			request_cancelled = true;
 		} else if (!session->recvd_answer || 
-		           (user_config->allow_sdp_change && 
+		           (user_config->get_allow_sdp_change() && 
 		            ((t_sdp *)r->body)->origin.session_version !=
 		            session->dst_sdp_version))
 		{
@@ -2008,7 +2075,7 @@ void t_dialog::send_prack_if_required(t_response *r) {
 		    r->hdr_require.contains(EXT_100REL) &&
 		    r->hdr_rseq.is_populated() &&
 		    remote_target_uri.is_valid() &&
-		    user_config->ext_100rel != EXT_DISABLED)
+		    user_config->get_ext_100rel() != EXT_DISABLED)
 		{
 			t_request *prack = create_request(PRACK);
 			prack->hdr_rack.set_method(r->hdr_cseq.method);
@@ -2038,7 +2105,7 @@ bool t_dialog::must_discard_100rel(t_response *r) {
 	if (r->code > R_100_TRYING && r->hdr_to.tag.size() > 0 &&
 	    r->hdr_require.contains(EXT_100REL) &&
 	    r->hdr_rseq.is_populated() &&
-	    user_config->ext_100rel != EXT_DISABLED)
+	    user_config->get_ext_100rel() != EXT_DISABLED)
 	{
 		if (remote_resp_nr == 0) {
 			// This is the first response with a repsonse nr.
@@ -2315,7 +2382,7 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	// Set From header
 	local_tag = NEW_TAG;
 	local_uri.set_url(line->create_user_uri());
-	local_display = user_config->display;
+	local_display = user_config->get_display();
 	invite.hdr_from.set_uri(local_uri);
 	invite.hdr_from.set_display(local_display);
 	invite.hdr_from.set_tag(local_tag);
@@ -2346,12 +2413,12 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	SET_HDR_SUPPORTED(invite.hdr_supported);
 
 	// Extensions specific for INVITE
-	if (user_config->ext_100rel != EXT_DISABLED) {
+	if (user_config->get_ext_100rel() != EXT_DISABLED) {
 		invite.hdr_supported.add_feature(EXT_100REL);
 	}
 
 	// Require header
-	switch (user_config->ext_100rel) {
+	switch (user_config->get_ext_100rel()) {
 	case EXT_PREFERRED:
 	case EXT_REQUIRED:
 		invite.hdr_require.add_feature(EXT_100REL);
@@ -2384,6 +2451,11 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	// Send INVITE
 	req_out_invite = new t_client_request(user_config, &invite, 0);
 	MEMMAN_NEW(req_out_invite);
+	
+	// Trigger call script
+	t_call_script script(user_config, t_call_script::TRIGGER_OUT_CALL);
+	script.exec_notify(&invite);
+	
 	line->send_request(&invite, req_out_invite->get_tuid());
 	line->call_hist_record.start_call(&invite, t_call_record::DIR_OUT, 
 		user_config->get_profile_name());
@@ -2430,7 +2502,7 @@ bool t_dialog::resend_invite_unsupported(t_response *resp) {
 	{
 		if (req->hdr_require.contains(*i)) {
 			if (*i == EXT_100REL) {
-				if (user_config->ext_100rel == EXT_PREFERRED) {
+				if (user_config->get_ext_100rel() == EXT_PREFERRED) {
 					req->hdr_require.del_feature(*i);
 				} else {
 					// The 100rel is required.
@@ -2484,7 +2556,7 @@ bool t_dialog::redirect_invite(t_response *resp) {
 	t_request *req = req_out_invite->get_request();
 
 	// Ask user for permission to redirect if indicated by user config
-	if (user_config->ask_user_to_redirect) {
+	if (user_config->get_ask_user_to_redirect()) {
 		if(!ui->cb_ask_user_to_redirect_invite(user_config,
 				contact.uri, contact.display)) 
 		{
@@ -2560,6 +2632,11 @@ void t_dialog::send_bye(void) {
 	t_request *bye = create_request(BYE);
 	req_out = new t_client_request(user_config, bye, 0);
 	MEMMAN_NEW(req_out);
+	
+	// Trigger call script
+	t_call_script script(user_config, t_call_script::TRIGGER_LOCAL_RELEASE);
+	script.exec_notify(bye);
+	
 	line->send_request(bye, req_out->get_tuid());
 	line->call_hist_record.end_call(false);	
 	MEMMAN_DELETE(bye);
@@ -2636,7 +2713,7 @@ void t_dialog::send_re_invite(void) {
 	SET_HDR_SUPPORTED(r->hdr_supported);
 
 	// Extensions specific for INVITE
-	if (user_config->ext_100rel != EXT_DISABLED) {
+	if (user_config->get_ext_100rel() != EXT_DISABLED) {
 		// If some weird far end implementation wants to send
 		// a reliable provisional then support it.
 		// As a provisional response not needed for a re-INVITE,
@@ -2720,7 +2797,7 @@ bool t_dialog::redirect_request(t_response *resp) {
 	t_request *req = (*current_cr)->get_request();
 
 	// Ask user for permission to redirect if indicated by user config
-	if (user_config->ask_user_to_redirect) {
+	if (user_config->get_ask_user_to_redirect()) {
 		if(!ui->cb_ask_user_to_redirect_request(user_config,
 				contact.uri, contact.display, resp->hdr_cseq.method)) 
 		{
@@ -2899,7 +2976,7 @@ void t_dialog::send_refer(const t_url &uri, const string &display) {
 
 	// Referred-By header
 	refer->hdr_referred_by.set_uri(line->create_user_uri());
-	refer->hdr_referred_by.set_display(user_config->display);
+	refer->hdr_referred_by.set_display(user_config->get_display());
 
 	req_refer = new t_client_request(user_config, refer, 0);
 	MEMMAN_NEW(req_refer);
@@ -3359,6 +3436,10 @@ void t_dialog::answer(void) {
 			session->start_rtp();
 		}
 	}
+	
+	// Trigger call script
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_ANSWERED);
+	script.exec_notify(resp_invite);
 
 	line->call_hist_record.answer_call(resp_invite);
 	line->send_response(resp_invite, req_in_invite->get_tuid(),
@@ -3385,6 +3466,11 @@ void t_dialog::reject(int code, string reason) {
 
 	resp = req_in_invite->get_request()->create_response(code, reason);
 	resp->hdr_to.set_tag(local_tag);
+	
+	// Trigger call script
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	script.exec_notify(resp);
+		
 	line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
 	line->call_hist_record.fail_call(resp);
@@ -3428,6 +3514,10 @@ void t_dialog::redirect(const list<t_display_url> &destinations, int code, strin
 		q = q - 0.1;
 		if (q < 0.1) q = 0.1;
 	}
+	
+	// Trigger call script
+	t_call_script script(user_config, t_call_script::TRIGGER_IN_CALL_FAILED);
+	script.exec_notify(resp);
 
 	line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());

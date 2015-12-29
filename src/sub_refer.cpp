@@ -37,7 +37,7 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
 	// The subscriber will start a timer when it receives NOTIFY.
 	if (role == SR_NOTIFIER) {
 		unsigned long dur;
-		if (user_config->ask_user_to_refer) {
+		if (user_config->get_ask_user_to_refer()) {
 			dur = DUR_REFER_SUB_INTERACT * 1000;
 		} else {
 			dur = DUR_REFER_SUBSCRIPTION * 1000;
@@ -45,7 +45,7 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role) :
 		start_timer(STMR_SUBSCRIPTION, dur);
 	}
 
-	auto_refresh = user_config->auto_refresh_refer_sub;
+	auto_refresh = user_config->get_auto_refresh_refer_sub();
 	sr_result = SRR_INPROG;
 
 	log_file->write_header("t_sub_refer::t_sub_refer");
@@ -70,7 +70,7 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role,
 
 	if (role == SR_NOTIFIER) {
 		unsigned long dur;
-		if (user_config->ask_user_to_refer) {
+		if (user_config->get_ask_user_to_refer()) {
 			dur = DUR_REFER_SUB_INTERACT * 1000;
 		} else {
 			dur = DUR_REFER_SUBSCRIPTION * 1000;
@@ -78,7 +78,7 @@ t_sub_refer::t_sub_refer(t_dialog *_dialog, t_subscription_role _role,
 		start_timer(STMR_SUBSCRIPTION, dur);
 	}
 
-	auto_refresh = user_config->auto_refresh_refer_sub;
+	auto_refresh = user_config->get_auto_refresh_refer_sub();
 	sr_result = SRR_INPROG;
 
 	last_response = NULL;

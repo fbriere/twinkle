@@ -328,7 +328,7 @@ bool t_subscription::recv_notify_response(t_response *r, t_tuid tuid, t_tid tid)
 			}
 		}
 
-		if (!user_config->allow_redirection || !dialog->redirect_request(r))
+		if (!user_config->get_allow_redirection() || !dialog->redirect_request(r))
 		{
 			// RFC 3265 3.2.2
 			// NOTIFY failed, terminate subscription
@@ -418,7 +418,7 @@ bool t_subscription::recv_subscribe_response(t_response *r, t_tuid tuid, t_tid t
 		}
 	}
 
-	if (!user_config->allow_redirection || !dialog->redirect_request(r)) {
+	if (!user_config->get_allow_redirection() || !dialog->redirect_request(r)) {
 		// RFC 3265 3.1.4.1
 		// SUBSCRIBE failed, terminate subscription
 		remove_client_request(&req_out);

@@ -95,7 +95,7 @@ void MphoneForm::init()
 	to2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	subject2Label->setPaletteBackgroundColor(paletteBackgroundColor());
 	
-	if (sys_config->gui_use_systray) {
+	if (sys_config->get_gui_use_systray()) {
 		// Create system tray icon
 		sysTray = new t_twinkle_sys_tray(this, "twinkle_sys_tray");
 		MEMMAN_NEW(sysTray);
@@ -251,7 +251,7 @@ QString MphoneForm::lineSubstate2str( int line) {
 
 void MphoneForm::closeEvent( QCloseEvent *e )
 {
-	if (sysTray && sys_config->gui_hide_on_close) {
+	if (sysTray && sys_config->get_gui_hide_on_close()) {
 		hide();
 	} else {
 		fileExit();
@@ -1128,7 +1128,7 @@ void MphoneForm::phoneTransfer(const string &dest)
 	t_user *user_config = phone->get_line_user(active_line);
 	
 	// Hold the call if setting in user profile indicates call hold
-	if (user_config->referrer_hold) {
+	if (user_config->get_referrer_hold()) {
 		phoneHold(true);
 	}
 	
@@ -1516,7 +1516,7 @@ void MphoneForm::newUsers(const list<string> &profiles)
 			if (phone->add_phone_user(user_config, &dup_user))
 			{
 				// NAT discovery
-				if (user_config.use_stun &&
+				if (user_config.get_use_stun() &&
 				    !phone->stun_discover_nat(&user_config, error_msg)) 
 				{
 					// Warn user that the STUN settings will not work.
@@ -1525,16 +1525,16 @@ void MphoneForm::newUsers(const list<string> &profiles)
 				}
 				
 				// Register at startup
-				if (user_config.register_at_startup) {
+				if (user_config.get_register_at_startup()) {
 					phone->pub_registration(&user_config,
 						REG_REGISTER,
 						DUR_REGISTRATION(&user_config));
 				}
 			} else {
 				error_msg = "The following profiles are both for user ";
-				error_msg += user_config.name;
+				error_msg += user_config.get_name();
 				error_msg += '@';
-				error_msg += user_config.domain;
+				error_msg += user_config.get_domain();
 				error_msg += ":\n\n";
 				error_msg += user_config.get_profile_name();
 				error_msg += "\n";
@@ -1575,7 +1575,7 @@ void MphoneForm::updateUserComboBox()
 	
 	if (userComboBox->count() == 0) {
 		// The last used profile
-		current_user = sys_config->last_used_profile.c_str();
+		current_user = sys_config->get_last_used_profile().c_str();
 	} else {
 		// Keep the current active profile
 		current_user = userComboBox->currentText();
@@ -1606,7 +1606,7 @@ void MphoneForm::updateRtpPorts()
 
 void MphoneForm::updateStunSettings(t_user *user_config)
 {
-	if (user_config->use_stun) {
+	if (user_config->get_use_stun()) {
 		string s;
 		if (!phone->stun_discover_nat(user_config, s)) {
 			// Warn user that the STUN settings will not work.

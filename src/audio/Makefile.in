@@ -54,9 +54,9 @@ AR = ar
 ARFLAGS = cru
 libaudio_a_AR = $(AR) $(ARFLAGS)
 libaudio_a_LIBADD =
-am_libaudio_a_OBJECTS = audio_device.$(OBJEXT) audio_encoder.$(OBJEXT) \
-	audio_codecs.$(OBJEXT) audio_rx.$(OBJEXT) \
-	audio_session.$(OBJEXT) audio_tx.$(OBJEXT) \
+am_libaudio_a_OBJECTS = audio_device.$(OBJEXT) audio_decoder.$(OBJEXT) \
+	audio_encoder.$(OBJEXT) audio_codecs.$(OBJEXT) \
+	audio_rx.$(OBJEXT) audio_session.$(OBJEXT) audio_tx.$(OBJEXT) \
 	dtmf_player.$(OBJEXT) freq_gen.$(OBJEXT) g711.$(OBJEXT) \
 	g721.$(OBJEXT) g723_24.$(OBJEXT) g723_40.$(OBJEXT) \
 	g72x.$(OBJEXT) media_buffer.$(OBJEXT) \
@@ -309,6 +309,7 @@ INCLUDES = -I $(top_builddir)/src -I $(includedir)
 noinst_LIBRARIES = libaudio.a
 libaudio_a_SOURCES = \
 	audio_device.cpp\
+	audio_decoder.cpp\
 	audio_encoder.cpp\
         audio_codecs.cpp\
         audio_rx.cpp\
@@ -326,6 +327,7 @@ libaudio_a_SOURCES = \
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
         audio_device.h\
+	audio_decoder.h\
         audio_encoder.h\
         audio_codecs.h\
         audio_rx.h\
@@ -340,7 +342,7 @@ libaudio_a_SOURCES = \
         tone_gen.h\
         twinkle_rtp_session.h
 
-SUBDIRS = gsm
+SUBDIRS = gsm ilbc
 EXTRA_DIST = README_G711
 all: all-recursive
 
@@ -390,6 +392,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_codecs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_decoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_device.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_encoder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/audio_rx.Po@am__quote@

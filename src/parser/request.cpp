@@ -295,13 +295,13 @@ void t_request::calc_destinations(const t_user &user_profile) {
 	destinations.clear();
 
 	// Send a REGISTER to the registrar if provisioned.
-	if (method == REGISTER && user_profile.use_registrar) {
-		destinations = user_profile.registrar.get_h_ip_srv("udp");
+	if (method == REGISTER && user_profile.get_use_registrar()) {
+		destinations = user_profile.get_registrar().get_h_ip_srv("udp");
 		return;
 	}
 
-	if (!user_profile.use_outbound_proxy ||
-	    (hdr_to.tag != "" && !user_profile.all_requests_to_proxy)) {
+	if (!user_profile.get_use_outbound_proxy() ||
+	    (hdr_to.tag != "" && !user_profile.get_all_requests_to_proxy())) {
 		// A mid dialog request will go to the host in the contact
 		// header (put in the request-URI in this request) or route list
 		// specified in the final response of the invite (the Route-header in
@@ -320,18 +320,18 @@ void t_request::calc_destinations(const t_user &user_profile) {
 	}
 
 	// Send request to outbound proxy if configured
-	if (user_profile.use_outbound_proxy) {
-		if (user_profile.non_resolvable_to_proxy && !destinations.empty())
+	if (user_profile.get_use_outbound_proxy()) {
+		if (user_profile.get_non_resolvable_to_proxy() && !destinations.empty())
 		{
 			// The destination has been resolved, so do not
 			// use the outbound proxy in this case.
 			return;
 		}
 
-		if (user_profile.all_requests_to_proxy || hdr_to.tag == "") {
+		if (user_profile.get_all_requests_to_proxy() || hdr_to.tag == "") {
 			// All requests should go to the proxy.
 			// Override destination by the outbound proxy address.
-			destinations = user_profile.outbound_proxy.get_h_ip_srv("udp");
+			destinations = user_profile.get_outbound_proxy().get_h_ip_srv("udp");
 		}
 	}
 }

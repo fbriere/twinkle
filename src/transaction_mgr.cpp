@@ -174,7 +174,7 @@ t_sip_stun_trans *t_transaction_mgr::create_sip_stun_trans(t_user *user_config, 
 		unsigned short tuid)
 {
 	list<t_ip_port> destinations = 
-		user_config->stun_server.get_h_ip_srv("udp");
+		user_config->get_stun_server().get_h_ip_srv("udp");
 	if (destinations.empty()) return NULL;
 		
 	t_sip_stun_trans *t = new t_sip_stun_trans(user_config, r, tuid, destinations);
@@ -187,7 +187,7 @@ t_media_stun_trans *t_transaction_mgr::create_media_stun_trans(t_user *user_conf
 		StunMessage *r, unsigned short tuid, unsigned short src_port)
 {
 	list<t_ip_port> destinations = 
-		user_config->stun_server.get_h_ip_srv("udp");
+		user_config->get_stun_server().get_h_ip_srv("udp");
 	if (destinations.empty()) return NULL;
 	
 	t_media_stun_trans *t = new t_media_stun_trans(user_config, r, tuid,
@@ -537,7 +537,7 @@ void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
 				"t_transaction_mgr::handle_event_stun_request",
 				LOG_NORMAL, LOG_INFO);
 			log_file->write_raw("Cannot resolve:\n");
-			log_file->write_raw(e->get_user_config()->stun_server.encode());
+			log_file->write_raw(e->get_user_config()->get_stun_server().encode());
 			log_file->write_endl();
 			log_file->write_raw("Send internal: 404 Not Found\n");
 			log_file->write_footer();
@@ -557,7 +557,7 @@ void t_transaction_mgr::handle_event_stun_request(t_event_stun_request *e) {
 				"t_transaction_mgr::handle_event_stun_request",
 				LOG_NORMAL, LOG_INFO);
 			log_file->write_raw("Cannot resolve:\n");
-			log_file->write_raw(e->get_user_config()->stun_server.encode());
+			log_file->write_raw(e->get_user_config()->get_stun_server().encode());
 			log_file->write_endl();
 			log_file->write_raw("Send internal: 404 Not Found\n");
 			log_file->write_footer();

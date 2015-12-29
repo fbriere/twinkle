@@ -154,7 +154,7 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	// Set fragment size
 	int arg;
 	if (short_latency) {
-		switch (sys_config->oss_fragment_size) {
+		switch (sys_config->get_oss_fragment_size()) {
 		case 16:
 			arg = 0x00ff0004; // 255 buffers of 2^4 bytes each
 			break;		
@@ -541,9 +541,9 @@ open_again:
 	// Set the size of one period in samples
 	if (short_latency) {
 		if (playback) {
-			buffersize = sys_config->alsa_play_period_size;
+			buffersize = sys_config->get_alsa_play_period_size();
 		} else {
-			buffersize = sys_config->alsa_capture_period_size;
+			buffersize = sys_config->get_alsa_capture_period_size();
 		}
 	} else {
 		buffersize = 1024;

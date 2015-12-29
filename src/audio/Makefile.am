@@ -4,6 +4,7 @@ noinst_LIBRARIES = libaudio.a
 
 libaudio_a_SOURCES =\
 	audio_device.cpp\
+	audio_decoder.cpp\
 	audio_encoder.cpp\
         audio_codecs.cpp\
         audio_rx.cpp\
@@ -21,6 +22,7 @@ libaudio_a_SOURCES =\
         tone_gen.cpp\
         twinkle_rtp_session.cpp\
         audio_device.h\
+	audio_decoder.h\
         audio_encoder.h\
         audio_codecs.h\
         audio_rx.h\
@@ -35,6 +37,6 @@ libaudio_a_SOURCES =\
         tone_gen.h\
         twinkle_rtp_session.h
 
-SUBDIRS = gsm
+SUBDIRS = gsm ilbc
 
 EXTRA_DIST = README_G711

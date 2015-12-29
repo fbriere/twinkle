@@ -155,10 +155,10 @@ bool t_auth::authorize(t_user *user_config, t_request *r, t_response *resp) {
 		if (i != cache.end()) {
 			username = i->credentials.digest_response.username;
 			passwd = i->passwd;
-		} else if (dc.realm == user_config->auth_realm ||
-		           user_config->auth_realm == "") {
-			username = user_config->auth_name;
-			passwd = user_config->auth_pass;
+		} else if (dc.realm == user_config->get_auth_realm() ||
+		           user_config->get_auth_realm() == "") {
+			username = user_config->get_auth_name();
+			passwd = user_config->get_auth_pass();
 		}
 
 		if (dc.stale) {

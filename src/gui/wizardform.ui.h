@@ -210,7 +210,7 @@ void WizardForm::validate()
 	
 	// Register at startup
 	if (serviceProviderComboBox->currentText() == PROV_NONE) {
-		user_config->register_at_startup = false;
+		user_config->set_register_at_startup(false);
 	}
 	
 	// STUN server
@@ -229,23 +229,23 @@ void WizardForm::validate()
 	
 	// Set all values in the user_config object
 	// USER
-	user_config->display = displayLineEdit->text().ascii();
-	user_config->name = usernameLineEdit->text().ascii();
-	user_config->domain = domainLineEdit->text().ascii();
-	user_config->auth_name = authNameLineEdit->text().ascii();
-	user_config->auth_pass = authPasswordLineEdit->text().ascii();
+	user_config->set_display(displayLineEdit->text().ascii());
+	user_config->set_name(usernameLineEdit->text().ascii());
+	user_config->set_domain(domainLineEdit->text().ascii());
+	user_config->set_auth_name(authNameLineEdit->text().ascii());
+	user_config->set_auth_pass(authPasswordLineEdit->text().ascii());
 	
 	// SIP SERVER
-	user_config->use_outbound_proxy = !proxyLineEdit->text().isEmpty();
+	user_config->set_use_outbound_proxy(!proxyLineEdit->text().isEmpty());
 	s = USER_SCHEME;
 	s.append(':').append(proxyLineEdit->text());
-	user_config->outbound_proxy.set_url(s.ascii());
+	user_config->set_outbound_proxy(t_url(s.ascii()));
 	
 	// NAT
-	user_config->use_stun = !stunServerLineEdit->text().isEmpty();
+	user_config->set_use_stun(!stunServerLineEdit->text().isEmpty());
 	s = "stun:";
 	s.append(stunServerLineEdit->text());
-	user_config->stun_server.set_url(s.ascii());
+	user_config->set_stun_server(t_url(s.ascii()));
 	
 	// Save user config
 	string error_msg;

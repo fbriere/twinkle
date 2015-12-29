@@ -45,6 +45,14 @@ list<unsigned long> gethostbyname_all(const string &name);
 
 class t_url {
 private:
+	// A t_url object is created with a string represnetation of
+	// the URL. The encode method just returns this string.
+	// If one of the components of the t_url object is modified
+	// however, then encode will build a new string representation.
+	// The modified flag indicates if the object was modified after
+	// construction.
+	bool		modified;
+
 	string		scheme;
 	string		user;
 	string		password;
@@ -59,6 +67,7 @@ private:
 	string		method;
 	int		ttl;
 	string		other_params;	// unparsed other parameters
+					// starting with a semi-colon
 
 	// headers
 	string		headers;	// unparsed headers
@@ -123,12 +132,20 @@ public:
 	int get_ttl(void) const;
 	string get_other_params(void) const;
 	string get_headers(void) const;
+	
+	void set_user(const string &u);
 
 	bool is_valid(void) const;
 
 	// Check if 2 sip or sips url's are equivalent
 	bool sip_match(const t_url &u) const;
 	bool operator==(const t_url &u) const;
+	
+	// Check if the user-host part of 2 url's are equal.
+	// If the user-part if a phone number, then only compare
+	// the user parts.
+	bool user_host_match(const t_url &u, bool looks_like_phone, 
+		const string &special_symbols) const;
 
 	// Return true if the user part looks like a phone number, i.e.
 	// consists of digits, *, # and special symbols

@@ -17,11 +17,13 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/threads/libthread.a\
         $(top_builddir)/src/audio/libaudio.a\
         $(top_builddir)/src/audio/gsm/libgsm.a\
+        $(top_builddir)/src/audio/ilbc/libilbc.a\
         $(top_builddir)/src/audits/libaudits.a\
         $(top_builddir)/src/stun/libstun.a\
 	$(CCRTP_LIBS)\
 	-lresolv\
-	-lsndfile
+	-lsndfile\
+	-lboost_regex
 
 libtwinkle_a_SOURCES =\
         auth.cpp\

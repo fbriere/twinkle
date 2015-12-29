@@ -30,6 +30,7 @@ extern void yy_delete_buffer(struct yy_buffer_state *);
 
 bool t_parser::check_max_forwards = true;
 bool t_parser::compact_headers = false;
+bool t_parser::multi_values_as_list = true;
 int t_parser::comment_level = 0;
 list<string> t_parser::parse_errors;
 

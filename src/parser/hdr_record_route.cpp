@@ -18,6 +18,7 @@
 
 #include "definitions.h"
 #include "hdr_record_route.h"
+#include "parse_ctrl.h"
 
 void t_route::add_param(const t_parameter &p) {
 	params.push_back(p);
@@ -53,6 +54,10 @@ void t_hdr_record_route::add_route(const t_route &r) {
 }
 
 string t_hdr_record_route::encode(void) const {
+	return (t_parser::multi_values_as_list ? encode_list() : encode_multi_header());
+}
+
+string t_hdr_record_route::encode_list(void) const {
 	string s;
 
 	if (!populated) return s;
@@ -61,6 +66,22 @@ string t_hdr_record_route::encode(void) const {
 	s += encode_value();
 	s += CRLF;
 	
+	return s;
+}
+
+string t_hdr_record_route::encode_multi_header(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	for (list<t_route>::const_iterator i = route_list.begin();
+	     i != route_list.end(); i++)
+	{
+		s += "Record-Route: ";
+		s += i->encode();
+		s += CRLF;
+	}
+
 	return s;
 }
 

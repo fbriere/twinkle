@@ -59,9 +59,14 @@
 // GUI settings
 #define FLD_GUI_USE_SYSTRAY	"gui_use_systray"
 #define FLD_GUI_HIDE_ON_CLOSE	"gui_hide_on_close"
+#define FLD_GUI_AUTO_SHOW_INCOMING	"gui_auto_show_incoming"
+#define FLD_GUI_AUTO_SHOW_TIMEOUT	"gui_auto_show_timeout"
 
 // Address book settings
 #define FLD_AB_SHOW_SIP_ONLY	"ab_show_sip_only"
+#define FLD_AB_LOOKUP_NAME	"ab_lookup_name"
+#define FLD_AB_OVERRIDE_DISPLAY	"ab_override_display"
+#define FLD_AB_LOOKUP_PHOTO	"ab_lookup_photo"
 
 // Call history fields
 #define FLD_CH_MAX_SIZE		"ch_max_size"
@@ -171,8 +176,13 @@ t_sys_settings::t_sys_settings() {
 	
 	gui_use_systray = true;
 	gui_hide_on_close = true;
+	gui_auto_show_incoming = false;
+	gui_auto_show_timeout = 10;
 	
 	ab_show_sip_only = false;
+	ab_lookup_name = true;
+	ab_override_display = true;
+	ab_lookup_photo = true;
 	
 	ch_max_size = 50;
 	
@@ -199,6 +209,542 @@ t_sys_settings::t_sys_settings() {
 	redial_profile.clear();
 	dial_history.clear();
 }
+
+// Getters
+t_audio_device t_sys_settings::get_dev_ringtone(void) const {
+	t_audio_device result;
+	mtx_sys.lock();
+	result = dev_ringtone;
+	mtx_sys.unlock();
+	return result;	
+}
+
+t_audio_device t_sys_settings::get_dev_speaker(void) const {
+	t_audio_device result;
+	mtx_sys.lock();
+	result = dev_speaker;
+	mtx_sys.unlock();
+	return result;	
+}
+
+t_audio_device t_sys_settings::get_dev_mic(void) const {
+	t_audio_device result;
+	mtx_sys.lock();
+	result = dev_mic;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_au_reduce_noise_mic(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = au_reduce_noise_mic;
+	mtx_sys.unlock();
+	return result;	
+}
+
+int t_sys_settings::get_alsa_play_period_size(void) const {
+	int result;
+	mtx_sys.lock();
+	result = alsa_play_period_size;
+	mtx_sys.unlock();
+	return result;	
+}
+
+int t_sys_settings::get_alsa_capture_period_size(void) const {
+	int result;
+	mtx_sys.lock();
+	result = alsa_capture_period_size;
+	mtx_sys.unlock();
+	return result;	
+}
+
+int t_sys_settings::get_oss_fragment_size(void) const {
+	int result;
+	mtx_sys.lock();
+	result = oss_fragment_size;
+	mtx_sys.unlock();
+	return result;	
+}
+
+unsigned short t_sys_settings::get_log_max_size(void) const {
+	unsigned short result;
+	mtx_sys.lock();
+	result = log_max_size;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_log_show_sip(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = log_show_sip;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_log_show_stun(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = log_show_stun;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_log_show_memory(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = log_show_memory;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_log_show_debug(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = log_show_debug;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_gui_use_systray(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = gui_use_systray;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_gui_auto_show_incoming(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = gui_auto_show_incoming;
+	mtx_sys.unlock();
+	return result;
+}
+
+int t_sys_settings::get_gui_auto_show_timeout(void) const {
+	int result;
+	mtx_sys.lock();
+	result = gui_auto_show_timeout;
+	mtx_sys.unlock();
+	return result;
+}
+
+bool t_sys_settings::get_gui_hide_on_close(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = gui_hide_on_close;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_ab_show_sip_only(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = ab_show_sip_only;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_ab_lookup_name(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = ab_lookup_name;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_ab_override_display(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = ab_override_display;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_ab_lookup_photo(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = ab_lookup_photo;
+	mtx_sys.unlock();
+	return result;	
+}
+
+int t_sys_settings::get_ch_max_size(void) const {
+	int result;
+	mtx_sys.lock();
+	result = ch_max_size;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_call_waiting(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = call_waiting;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_hangup_both_3way(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = hangup_both_3way;
+	mtx_sys.unlock();
+	return result;	
+}
+
+list<string> t_sys_settings::get_start_user_profiles(void) const {
+	list<string> result;
+	mtx_sys.lock();
+	result = start_user_profiles;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_start_user_host(void) const {
+	string result;
+	mtx_sys.lock();
+	result = start_user_host;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_start_hidden(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = start_hidden;
+	mtx_sys.unlock();
+	return result;	
+}
+
+unsigned short t_sys_settings::get_config_sip_udp_port(void) const {
+	unsigned short result;
+	mtx_sys.lock();
+	result = config_sip_udp_port;
+	mtx_sys.unlock();
+	return result;	
+}
+
+unsigned short t_sys_settings::get_rtp_port(void) const {
+	unsigned short result;
+	mtx_sys.lock();
+	result = rtp_port;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_play_ringtone(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = play_ringtone;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_ringtone_file(void) const {
+	string result;
+	mtx_sys.lock();
+	result = ringtone_file;
+	mtx_sys.unlock();
+	return result;	
+}
+
+bool t_sys_settings::get_play_ringback(void) const {
+	bool result;
+	mtx_sys.lock();
+	result = play_ringback;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_ringback_file(void) const {
+	string result;
+	mtx_sys.lock();
+	result = ringback_file;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_last_used_profile(void) const {
+	string result;
+	mtx_sys.lock();
+	result = last_used_profile;
+	mtx_sys.unlock();
+	return result;	
+}
+
+t_url t_sys_settings::get_redial_url(void) const {
+	t_url result;
+	mtx_sys.lock();
+	result = redial_url;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_redial_display(void) const {
+	string result;
+	mtx_sys.lock();
+	result = redial_display;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_redial_subject(void) const {
+	string result;
+	mtx_sys.lock();
+	result = redial_subject;
+	mtx_sys.unlock();
+	return result;	
+}
+
+string t_sys_settings::get_redial_profile(void) const {
+	string result;
+	mtx_sys.lock();
+	result = redial_profile;
+	mtx_sys.unlock();
+	return result;	
+}
+
+list<string> t_sys_settings::get_dial_history(void) const {
+	list<string> result;
+	mtx_sys.lock();
+	result = dial_history;
+	mtx_sys.unlock();
+	return result;	
+}
+
+
+// Setters
+void t_sys_settings::set_dev_ringtone(const t_audio_device &dev) {
+	mtx_sys.lock();
+	dev_ringtone = dev;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_dev_speaker(const t_audio_device &dev) {
+	mtx_sys.lock();
+	dev_speaker = dev;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_dev_mic(const t_audio_device &dev) {
+	mtx_sys.lock();
+	dev_mic = dev;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_au_reduce_noise_mic(bool b) {
+	mtx_sys.lock();
+	au_reduce_noise_mic = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_alsa_play_period_size(int size) {
+	mtx_sys.lock();
+	alsa_play_period_size = size;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_alsa_capture_period_size(int size) {
+	mtx_sys.lock();
+	alsa_capture_period_size = size;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_oss_fragment_size(int size) {
+	mtx_sys.lock();
+	oss_fragment_size = size;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_log_max_size(unsigned short size) {
+	mtx_sys.lock();
+	log_max_size = size;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_log_show_sip(bool b) {
+	mtx_sys.lock();
+	log_show_sip = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_log_show_stun(bool b) {
+	mtx_sys.lock();
+	log_show_stun = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_log_show_memory(bool b) {
+	mtx_sys.lock();
+	log_show_memory = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_log_show_debug(bool b) {
+	mtx_sys.lock();
+	log_show_debug = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_gui_use_systray(bool b) {
+	mtx_sys.lock();
+	gui_use_systray = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_gui_hide_on_close(bool b) {
+	mtx_sys.lock();
+	gui_hide_on_close = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_gui_auto_show_incoming(bool b) {
+	mtx_sys.lock();
+	gui_auto_show_incoming = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_gui_auto_show_timeout(int timeout) {
+	mtx_sys.lock();
+	gui_auto_show_timeout = timeout;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ab_show_sip_only(bool b) {
+	mtx_sys.lock();
+	ab_show_sip_only = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ab_lookup_name(bool b) {
+	mtx_sys.lock();
+	ab_lookup_name = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ab_override_display(bool b) {
+	mtx_sys.lock();
+	ab_override_display = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ab_lookup_photo(bool b) {
+	mtx_sys.lock();
+	ab_lookup_photo = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ch_max_size(int size) {
+	mtx_sys.lock();
+	ch_max_size = size;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_call_waiting(bool b) {
+	mtx_sys.lock();
+	call_waiting = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_hangup_both_3way(bool b) {
+	mtx_sys.lock();
+	hangup_both_3way = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_start_user_profiles(const list<string> &profiles) {
+	mtx_sys.lock();
+	start_user_profiles = profiles;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_start_user_host(const string &host) {
+	mtx_sys.lock();
+	start_user_host = host;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_start_hidden(bool b) {
+	mtx_sys.lock();
+	start_hidden = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_config_sip_udp_port(unsigned short port) {
+	mtx_sys.lock();
+	config_sip_udp_port = port;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_rtp_port(unsigned short port) {
+	mtx_sys.lock();
+	rtp_port = port;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_play_ringtone(bool b) {
+	mtx_sys.lock();
+	play_ringtone = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ringtone_file(const string &file) {
+	mtx_sys.lock();
+	ringtone_file = file;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_play_ringback(bool b) {
+	mtx_sys.lock();
+	play_ringback = b;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_ringback_file(const string &file) {
+	mtx_sys.lock();
+	ringback_file = file;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_last_used_profile(const string &profile) {
+	mtx_sys.lock();
+	last_used_profile = profile;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_redial_url(const t_url &url) {
+	mtx_sys.lock();
+	redial_url = url;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_redial_display(const string &display) {
+	mtx_sys.lock();
+	redial_display = display;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_redial_subject(const string &subject) {
+	mtx_sys.lock();
+	redial_subject = subject;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_redial_profile(const string &profile) {
+	mtx_sys.lock();
+	redial_profile = profile;
+	mtx_sys.unlock();
+}
+
+void t_sys_settings::set_dial_history(const list<string> &history) {
+	mtx_sys.lock();
+	dial_history = history;
+	mtx_sys.unlock();
+}
+
 
 string t_sys_settings::about(bool html) const {
 	string s = PRODUCT_NAME;
@@ -249,6 +795,12 @@ string t_sys_settings::about(bool html) const {
 	s += "* G.711 codecs from Sun Microsystems (public domain)";	
 	if (html) s += "<BR>";
 	s += "\n";
+	
+#ifdef HAVE_ILBC
+	s += "* iLBC implementation from RFC 3951 (www.ilbcfreeware.org)";	
+	if (html) s += "<BR>";
+	s += "\n";
+#endif
 	
 	s += "* Parts of the STUN project at http://sourceforge.net/projects/stun";
 	if (html) s += "<BR>";
@@ -311,18 +863,25 @@ string t_sys_settings::get_options_built(void) const {
 	if (!options_built.empty()) options_built += ", ";
 	options_built += "Speex";
 #endif
+#ifdef HAVE_ILBC
+	if (!options_built.empty()) options_built += ", ";
+	options_built += "iLBC";
+#endif
 	return options_built;
 }
 
 bool t_sys_settings::check_environment(string &error_msg) const {
 	struct stat stat_buf;
 	string filename, dirname;
+	
+	mtx_sys.lock();
 
 	// Check if share directory exists
 	if (stat(dir_share.c_str(), &stat_buf) != 0) {
 		error_msg = "Directory ";
 		error_msg += dir_share;
 		error_msg += " does not exist.";
+		mtx_sys.unlock();
 		return false;
 	}
 
@@ -334,6 +893,7 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 	if (!f_ringtone) {
 		error_msg = "Cannot open file ";
 		error_msg += filename;
+		mtx_sys.unlock();
 		return false;
 	}
 
@@ -345,18 +905,21 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 	if (!f_ringback) {
 		error_msg = "Cannot open file ";
 		error_msg += filename;
+		mtx_sys.unlock();
 		return false;
 	}
 
 	// Check if $HOME is set correctly
 	if (string(DIR_HOME) == "") {
 		error_msg = "$HOME is not set to your home directory.";
+		mtx_sys.unlock();
 		return false;
 	}
 	if (stat(DIR_HOME, &stat_buf) != 0) {
 		error_msg = "Directory ";
 		error_msg += DIR_HOME;
 		error_msg += " ($HOME) does not exist.";
+		mtx_sys.unlock();
 		return false;
 	}
 
@@ -370,19 +933,27 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 			// Failed to create the user directory
 			error_msg = "Cannot create directory ";
 			error_msg += dirname;
+			mtx_sys.unlock();
 			return false;
 		}
 	}
 
+	mtx_sys.unlock();
 	return true;
 }
 
 void t_sys_settings::set_dir_share(const string &dir) {
+	mtx_sys.lock();
 	dir_share = dir;
+	mtx_sys.unlock();
 }
 
 string t_sys_settings::get_dir_share(void) const {
-	return dir_share;
+	string result;
+	mtx_sys.lock();
+	result = dir_share;
+	mtx_sys.unlock();
+	return result;
 }
 
 string t_sys_settings::get_dir_user(void) const {
@@ -468,8 +1039,11 @@ void t_sys_settings::delete_lock_file(void) const {
 bool t_sys_settings::read_config(string &error_msg) {
 	struct stat stat_buf;
 	
+	mtx_sys.lock();
+	
 	// Check if config file exists
 	if (stat(filename.c_str(), &stat_buf) != 0) {
+		mtx_sys.unlock();
 		return true;
 	}
 	
@@ -478,6 +1052,7 @@ bool t_sys_settings::read_config(string &error_msg) {
 	if (!config) {
 		error_msg = "Cannot open file for reading: ";
 		error_msg += filename;
+		mtx_sys.unlock();
 		return false;
 	}
 	
@@ -490,6 +1065,7 @@ bool t_sys_settings::read_config(string &error_msg) {
 		if (!config.good() && !config.eof()) {
 			error_msg = "File system error while reading file ";
 			error_msg += filename;
+			mtx_sys.unlock();
 			return false;
 		}
 
@@ -507,6 +1083,7 @@ bool t_sys_settings::read_config(string &error_msg) {
 			error_msg += filename;
 			error_msg += "\n";
 			error_msg += line;
+			mtx_sys.unlock();
 			return false;
 		}
 
@@ -541,8 +1118,18 @@ bool t_sys_settings::read_config(string &error_msg) {
 			gui_use_systray = yesno2bool(value);
 		} else if (parameter == FLD_GUI_HIDE_ON_CLOSE) {
 			gui_hide_on_close = yesno2bool(value);
+		} else if (parameter == FLD_GUI_AUTO_SHOW_INCOMING) {
+			gui_auto_show_incoming = yesno2bool(value);
+		} else if (parameter == FLD_GUI_AUTO_SHOW_TIMEOUT) {
+			gui_auto_show_timeout = atoi(value.c_str());
 		} else if (parameter == FLD_AB_SHOW_SIP_ONLY) {
 			ab_show_sip_only = yesno2bool(value);
+		} else if (parameter == FLD_AB_LOOKUP_NAME) {
+			ab_lookup_name = yesno2bool(value);
+		} else if (parameter == FLD_AB_OVERRIDE_DISPLAY) {
+			ab_override_display = yesno2bool(value);
+		} else if (parameter == FLD_AB_LOOKUP_PHOTO) {
+			ab_lookup_photo = yesno2bool(value);
 		} else if (parameter == FLD_CH_MAX_SIZE) {
 			ch_max_size = atoi(value.c_str());
 		} else if (parameter == FLD_CALL_WAITING) {
@@ -587,11 +1174,14 @@ bool t_sys_settings::read_config(string &error_msg) {
 		// Unknown field names are skipped.
 	}
 		
+	mtx_sys.unlock();
 	return true;
 }
 
 bool t_sys_settings::write_config(string &error_msg) {
 	struct stat stat_buf;
+	
+	mtx_sys.lock();
 	
 	// Make a backup of the file if we are editing an existing file, so
 	// that can be restored when writing fails.
@@ -605,6 +1195,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 			error_msg += f_backup;
 			error_msg += "\n";
 			error_msg += err;
+			mtx_sys.unlock();
 			return false;
 		}
 	}
@@ -614,6 +1205,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	if (!config) {
 		error_msg = "Cannot open file for writing: ";
 		error_msg += filename;
+		mtx_sys.unlock();
 		return false;
 	}
 	
@@ -641,11 +1233,16 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << "# GUI\n";
 	config << FLD_GUI_USE_SYSTRAY << '=' << bool2yesno(gui_use_systray) << endl;
 	config << FLD_GUI_HIDE_ON_CLOSE << '=' << bool2yesno(gui_hide_on_close) << endl;
+	config << FLD_GUI_AUTO_SHOW_INCOMING << '=' << bool2yesno(gui_auto_show_incoming) << endl;
+	config << FLD_GUI_AUTO_SHOW_TIMEOUT << '=' << gui_auto_show_timeout << endl;
 	config << endl;
 	
 	// Write address book settings
 	config << "# Address book\n";
 	config << FLD_AB_SHOW_SIP_ONLY << '=' << bool2yesno(ab_show_sip_only) << endl;
+	config << FLD_AB_LOOKUP_NAME << '=' << bool2yesno(ab_lookup_name) << endl;
+	config << FLD_AB_OVERRIDE_DISPLAY << '=' << bool2yesno(ab_override_display) << endl;
+	config << FLD_AB_LOOKUP_PHOTO << '=' << bool2yesno(ab_lookup_photo) << endl;
 	config << endl;
 	
 	// Write call history settings
@@ -709,9 +1306,11 @@ bool t_sys_settings::write_config(string &error_msg) {
 
 		error_msg = "File system error while writing file ";
 		error_msg += filename;
+		mtx_sys.unlock();
 		return false;
 	}
 	
+	mtx_sys.unlock();
 	return true;
 }
 
@@ -723,6 +1322,7 @@ list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 		string dev = "/dev/dsp";
 		if (i >= 0) dev += int2str(i);
 		t_audio_device oss_dev;
+		oss_dev.type = t_audio_device::OSS;
 		
 		// Check if device exists
 		if (stat(dev.c_str(), &stat_buf) != 0) continue;
@@ -764,8 +1364,15 @@ list<t_audio_device> t_sys_settings::get_oss_devices(void) const {
 	if (l.empty()) {
 		t_audio_device oss_dev;
 		oss_dev.device = "/dev/dsp";
+		oss_dev.type = t_audio_device::OSS;
 		l.push_back(oss_dev);
 	}
+	
+	// Add other device option
+	t_audio_device other_dev;
+	other_dev.device = DEV_OTHER;
+	other_dev.type = t_audio_device::OSS;
+	l.push_back(other_dev);
 	
 	return l;
 }
@@ -784,6 +1391,12 @@ list<t_audio_device> t_sys_settings::get_alsa_devices(void) const {
 	
 	alsa_fill_soundcards(l);
 	
+	// Add other device option
+	t_audio_device other_dev;
+	other_dev.device = DEV_OTHER;
+	other_dev.type = t_audio_device::ALSA;
+	l.push_back(other_dev);
+	
 	return l;
 }
 #endif
@@ -795,9 +1408,7 @@ list<t_audio_device> t_sys_settings::get_audio_devices(void) const {
 	d = get_alsa_devices();
 #endif
 	d0 = get_oss_devices();
-	for (list<t_audio_device>::iterator i = d0.begin(); i != d0.end(); i++) {
-		d.push_back(*i);
-	}
+	d.insert(d.end(), d0.begin(), d0.end());
 	return d;
 }
 
@@ -879,12 +1490,15 @@ t_audio_device t_sys_settings::audio_device(string device) {
 	return d;	
 }
 
-unsigned short t_sys_settings::get_sip_udp_port(void) {
+unsigned short t_sys_settings::get_sip_udp_port(bool force_active) {
+	mtx_sys.lock();
+	
 	// The configured port becomes the active port after first
 	// usage of the port.
-	if (!active_sip_udp_port) {
+	if (!active_sip_udp_port || force_active) {
 		active_sip_udp_port = config_sip_udp_port;
 	}
 	
+	mtx_sys.unlock();
 	return active_sip_udp_port;
 }

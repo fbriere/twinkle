@@ -91,7 +91,7 @@ void t_call_record::start_call(const t_request *invite, t_direction dir,
 	gettimeofday(&t, NULL);
 	time_start = t.tv_sec;
 	
-	from_display = invite->hdr_from.display;
+	from_display = invite->hdr_from.get_display_presentation();
 	from_uri = invite->hdr_from.uri;
 	
 	if (invite->hdr_organization.is_populated()) {
@@ -359,7 +359,7 @@ void t_call_history::add_call_record(const t_call_record &call_record, bool writ
 
 	call_records.push_back(call_record);
 	
-	while (call_records.size() > sys_config->ch_max_size) {
+	while (call_records.size() > sys_config->get_ch_max_size()) {
 		call_records.pop_front();
 	}
 	

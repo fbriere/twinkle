@@ -1,3 +1,47 @@
+01 jul 2006 - Release 0.8
+=========================
+- iLBC
+- Make supplementary service settings persistent
+- Lookup name in address book for incoming call
+- Display photo from address book of caller on incoming call
+- Number conversion rules
+- Always popup systray notification (KDE only) on incoming call
+- Add organization and subject to incoming call popup
+- New call script trigger points: incoming call answered, incoming call failed,
+  outgoing call, outgoing call answered, outgoing call failed, local release,
+  remote release.
+- Added 'end' parameter for the incoming call script
+- Option to provision ALSA and OSS devices that are not in the standard list
+  of devices.
+- Option to auto show main window on incoming call
+- Resized the user profile window such that it fits on an 800x600 display
+- Popup the user profile selection window, when the SIP UDP port is occupied
+  during startup of Twinkle, so the user can change to another port.
+- Skip unsupported codecs in user profile during startup
+
+Bug fixes
+---------
+- Sometimes the NAT discovery window never closed
+- When RTP timestamps wrap around some RTP packets may be discarded
+- When the dial history contains an entry of insane length, the
+  main window becomes insanely large on next startup
+- On rare occasions, Twinkle could respond to an incoming call for
+  a deactivated user profile.
+- Credentials cache did not get erased when a failure response other
+  than 401/407 was received on a REGISTER with credentials.
+- G.711 enocders amplified soft noise from the microphone.
+
+Newly supported RFC's
+---------------------
+RFC 3951 - Internet Low Bit Rate Codec (iLBC)
+RFC 3952 - Real-time Transport Protocol (RTP) Payload Format
+           for internet Low Bit Rate Codec (iLBC) Speech
+
+Build notes
+-----------
+- New dependency on libboost-regex (boost package)
+
+
 07 may 2006 - Release 0.7.1
 ===========================
 - Check that --call and --cmd arguments are not empty

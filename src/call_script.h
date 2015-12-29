@@ -79,17 +79,44 @@ public:
 };
 
 class t_call_script {
+public:
+	enum t_trigger {
+		TRIGGER_IN_CALL,
+		TRIGGER_IN_CALL_ANSWERED,
+		TRIGGER_IN_CALL_FAILED,
+		TRIGGER_OUT_CALL,
+		TRIGGER_OUT_CALL_ANSWERED,
+		TRIGGER_OUT_CALL_FAILED,
+		TRIGGER_LOCAL_RELEASE,
+		TRIGGER_REMOTE_RELEASE
+	};
+	
 private:
+	t_user		*user_config;
 	string		script_command;
+	t_trigger	trigger;
+	
+	string trigger2str(t_trigger t) const;
+	
+	// Create environment for the process running the script.
+	// NOTE: this function creates the env array without registering
+	//       the memory allocation to MEMMAN
+	char **create_env(t_sip_message *m) const;
+	
+	// Create script command argument list
+	// NOTE: this function creates the env array without registering
+	//       the memory allocation to MEMMAN
+	char **create_argv(void) const;
 	
 protected:
 	t_call_script() {};
 	
 public:
-	t_call_script(const string &command);
+	t_call_script(t_user *_user_config, t_trigger _trigger);
 	
 	// Execute call script
-	void exec(t_script_result &result, t_user *user_config, t_request *r) const;
+	void exec_action(t_script_result &result, t_sip_message *m) const;
+	void exec_notify(t_sip_message *m) const;
 };
 
 #endif

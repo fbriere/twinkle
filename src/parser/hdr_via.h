@@ -63,6 +63,8 @@ public:
 	t_hdr_via();
 	void add_via(const t_via &v);
 	string encode(void) const;
+	string encode_list(void) const;
+	string encode_multi_header(void) const;
 	string encode_value(void) const;
 	string encode_env(void) const;
 
