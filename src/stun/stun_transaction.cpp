@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include "phone.h"
 #include "sys_settings.h"
 #include "transaction_mgr.h"
+#include "translator.h"
 #include "util.h"
 #include "audits/memman.h"
 
@@ -248,8 +249,8 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 		log_file->write_endl();
 		log_file->write_footer();
 
-		err_msg = "Cannot resolve STUN server: ";
-		err_msg += user_config->get_stun_server().encode().c_str();
+		err_msg = TRANSLATE("Cannot resolve STUN server: %1");
+		err_msg = replace_first(err_msg, "%1", user_config->get_stun_server().encode());
 		return false;
 	}
 
@@ -273,24 +274,17 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 			// STUN is not needed.
 			return true;
 		case StunTypeSymNat:
-			err_msg = "You are behind a symmetric NAT.\n";
-			err_msg += "STUN will not work.\n";
-			err_msg += "Configure a public IP address in the user profile\n";
-			err_msg += "and create the following static bindings (UDP) in your NAT.\n\n";
-			err_msg += "public IP:";
-			err_msg += int2str(sys_config->get_sip_udp_port());
-			err_msg += " --> private IP:";
-			err_msg += int2str(sys_config->get_sip_udp_port());
-			err_msg += " (for SIP signaling)\n";
-			err_msg += "public IP:";
-			err_msg += int2str(sys_config->get_rtp_port());
-			err_msg += "-";
-			err_msg += int2str(sys_config->get_rtp_port() + 5);
-			err_msg += " --> private IP:";
-			err_msg += int2str(sys_config->get_rtp_port());
-			err_msg += "-";
-			err_msg += int2str(sys_config->get_rtp_port() + 5);
-			err_msg += " (for RTP/RTCP)";
+			err_msg = TRANSLATE("You are behind a symmetric NAT.\nSTUN will not work.\nConfigure a public IP address in the user profile\nand create the following static bindings (UDP) in your NAT.");
+			err_msg += "\n\n";
+			err_msg += TRANSLATE("public IP: %1 --> private IP: %2 (SIP signaling)");
+			err_msg = replace_first(err_msg, "%1", int2str(sys_config->get_sip_udp_port()));
+			err_msg = replace_first(err_msg, "%2", int2str(sys_config->get_sip_udp_port()));
+			err_msg += "\n";
+			err_msg += TRANSLATE("public IP: %1-%2 --> private IP: %3-%4 (RTP/RTCP)");
+			err_msg = replace_first(err_msg, "%1", int2str(sys_config->get_rtp_port()));
+			err_msg = replace_first(err_msg, "%2", int2str(sys_config->get_rtp_port() + 5));
+			err_msg = replace_first(err_msg, "%3", int2str(sys_config->get_rtp_port()));
+			err_msg = replace_first(err_msg, "%4", int2str(sys_config->get_rtp_port() + 5));
 			return false;
 		case StunTypeSymFirewall:
 			// STUN is not needed as we are on a pubic IP.
@@ -306,22 +300,21 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 			// server. Try alternative destination if avaliable.
 		
 			if (destinations.empty()) {
-				err_msg = "Cannot reach the STUN server: ";
-				err_msg += user_config->get_stun_server().encode().c_str();
+				err_msg = TRANSLATE("Cannot reach the STUN server: %1");
+				err_msg = replace_first(err_msg, "%1",
+						user_config->get_stun_server().encode());
 				err_msg += "\n\n";
-				err_msg += "If you are behind a firewall then you need to open ";
-				err_msg += "the following UDP ports for a proper working of ";
-				err_msg += PRODUCT_NAME;
-				err_msg += ":\n";
-				err_msg += "Port ";
-				err_msg += int2str(sys_config->get_sip_udp_port());
-				err_msg += " (for SIP signaling)\n";
-				err_msg += "Ports ";
-				err_msg += int2str(sys_config->get_rtp_port());
-				err_msg += "-";
-				err_msg += int2str(sys_config->get_rtp_port() + 5);
-				err_msg += " (for RTP/RTCP)";
-				
+				err_msg += TRANSLATE("If you are behind a firewall then you need to open the following UDP ports.");
+				err_msg += "\n";
+				err_msg += TRANSLATE("Port %1 (SIP signaling)");
+				err_msg = replace_first(err_msg, "%1",
+						int2str(sys_config->get_sip_udp_port()));
+				err_msg += "\n";
+				err_msg += TRANSLATE("Ports %1-%2 (RTP/RTCP)");
+				err_msg = replace_first(err_msg, "%1",
+						int2str(sys_config->get_rtp_port()));
+				err_msg = replace_first(err_msg, "%2",
+						int2str(sys_config->get_rtp_port() + 5));
 				return false;
 			}
 			
@@ -341,7 +334,7 @@ bool stun_discover_nat(t_phone_user *pu, string &err_msg) {
 		}
 	}
 
-	err_msg = "NAT type discovery via STUN failed.\n";	
+	err_msg = TRANSLATE("NAT type discovery via STUN failed.");	
 	return false;
 }
 

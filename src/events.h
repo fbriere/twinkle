@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -308,7 +308,8 @@ enum t_ui_event_type {
 	TYPE_UI_CB_LINE_STATE_CHANGED,
 	TYPE_UI_CB_LINE_ENCRYPTED,
 	TYPE_UI_CB_SHOW_ZRTP_SAS,
-	TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR
+	TYPE_UI_CB_ZRTP_CONFIRM_GO_CLEAR,
+	TYPE_UI_CB_QUIT
 };
 
 class t_event_ui : public t_event {

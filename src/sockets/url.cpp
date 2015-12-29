@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -119,16 +119,34 @@ void t_url::construct_user_url(const string &s) {
 	} else {
 		hostport = r;
 	}
-
-	i = hostport.find(':');
-	if (i != string::npos) {
-		if (i == 0 || i == hostport.size()-1) return;
-		host = hostport.substr(0, i);
-		unsigned long p = atol(hostport.substr(i+1).c_str());
-		if (p > 65535) return; // illegal port value
-		port = (unsigned short)p;
+	
+	if (hostport.empty()) return;
+	
+	if (hostport.at(0) == '[') {
+		// Host contains an IPv6 reference
+		i = hostport.find(']');
+		if (i == string::npos) return;
+		// TODO: check format of an IPv6 address
+		host = hostport.substr(0, i+1);
+		if (i < hostport.size()-1) {
+			if (hostport.at(i+1) != ':') return; // wrong port separator
+			if (i+1 == hostport.size()-1) return; // port missing
+			unsigned long p = atol(hostport.substr(i+2).c_str());
+			if (p > 65535) return; // illegal port value
+			port = (unsigned short)p;
+		}
 	} else {
-		host = hostport;
+		// Host contains a host name or IPv4 address
+		i = hostport.find(':');
+		if (i != string::npos) {
+			if (i == 0 || i == hostport.size()-1) return;
+			host = hostport.substr(0, i);
+			unsigned long p = atol(hostport.substr(i+1).c_str());
+			if (p > 65535) return; // illegal port value
+			port = (unsigned short)p;
+		} else {
+			host = hostport;
+		}
 	}
 
 	user_url = true;
@@ -149,15 +167,33 @@ void t_url::construct_machine_url(const string &s) {
 		hostport = s;
 	}
 
-	i = hostport.find(':');
-	if (i != string::npos) {
-		if (i == 0 || i == hostport.size()-1) return;
-		host = hostport.substr(0, i);
-		unsigned long p = atol(hostport.substr(i+1).c_str());
-		if (p > 65535) return; // illegal port value
-		port = (unsigned short)p;
+	if (hostport.empty()) return;
+	
+	if (hostport.at(0) == '[') {
+		// Host contains an IPv6 reference
+		i = hostport.find(']');
+		if (i == string::npos) return;
+		// TODO: check format of an IPv6 address
+		host = hostport.substr(0, i+1);
+		if (i < hostport.size()-1) {
+			if (hostport.at(i+1) != ':') return; // wrong port separator
+			if (i+1 == hostport.size()-1) return; // port missing
+			unsigned long p = atol(hostport.substr(i+2).c_str());
+			if (p > 65535) return; // illegal port value
+			port = (unsigned short)p;
+		}
 	} else {
-		host = hostport;
+		// Host contains a host name or IPv4 address
+		i = hostport.find(':');
+		if (i != string::npos) {
+			if (i == 0 || i == hostport.size()-1) return;
+			host = hostport.substr(0, i);
+			unsigned long p = atol(hostport.substr(i+1).c_str());
+			if (p > 65535) return; // illegal port value
+			port = (unsigned short)p;
+		} else {
+			host = hostport;
+		}
 	}
 
 	user_url = false;

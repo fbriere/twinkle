@@ -26,8 +26,8 @@ AC_ARG_ENABLE(ilbc-cpp,
 	AC_HELP_STRING([--enable-ilbc-cpp], [your ilbc library is built for C++ instead of C]),
 	[ac_cv_ilbc_cpp=$enableval], [ac_cv_ilbc_cpp=no])
 
-AM_INIT_AUTOMAKE(twinkle,"1.0beta")
-AC_DEFINE(VERSION_DATE,["December 29 2006"],[Version release date])
+AM_INIT_AUTOMAKE(twinkle,"1.0")
+AC_DEFINE(VERSION_DATE,["January 22 2007"],[Version release date])
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CPP

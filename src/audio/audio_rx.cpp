@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -493,11 +493,6 @@ void t_audio_rx::run(void) {
 					delete dtmf_player;
 					dtmf_player = NULL;
 				}
-	
-				// Empty sound card buffer.
-				// During the DTMF tone, no sound from the sound 
-				// card is played out.
-				input_device->flush(false, true);
 			} else if (!suppress_samples) {
 				// Send sound samples
 				// Set the expire timeout to the jitter buffer size.

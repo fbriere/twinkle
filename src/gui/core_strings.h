@@ -62,9 +62,9 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open file for writing: %1"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "File system error while writing file %1 ."))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "unknown name (device is busy)"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Default device"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot acces the ring tone device (%1).\n"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot acces the speaker (%1).\n"))
-_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot acces the microphone (%1).\n"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot access the ring tone device (%1)."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot access the speaker (%1)."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot access the microphone (%1)."))
 
 // listener.cpp
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Excessive number of socket errors."))
@@ -83,4 +83,15 @@ _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot set sound card sample rate to %1")
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Opening ALSA driver failed"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM playback"))
 _ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot open ALSA driver for PCM playback"))
+
+// stun_transaction.cpp
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot resolve STUN server: %1"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "You are behind a symmetric NAT.\nSTUN will not work.\nConfigure a public IP address in the user profile\nand create the following static bindings (UDP) in your NAT."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "public IP: %1 --> private IP: %2 (SIP signaling)"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "public IP: %1-%2 --> private IP: %3-%4 (RTP/RTCP)"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Cannot reach the STUN server: %1"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "If you are behind a firewall then you need to open the following UDP ports."))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Port %1 (SIP signaling)"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "Ports %1-%2 (RTP/RTCP)"))
+_ZAP(QT_TRANSLATE_NOOP("TwinkleCore", "NAT type discovery via STUN failed."))
 

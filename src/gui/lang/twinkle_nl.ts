@@ -3,71 +3,71 @@
     <name>AddressCardForm</name>
     <message>
         <source>Twinkle - Address Card</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Adres</translation>
     </message>
     <message>
         <source>&amp;Remark:</source>
-        <translation type="unfinished"></translation>
+        <translation>Op&amp;merkingen:</translation>
     </message>
     <message>
         <source>Infix name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Tussenvoegsel.</translation>
     </message>
     <message>
         <source>First name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Voornaam.</translation>
     </message>
     <message>
         <source>&amp;First name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Voor&amp;naam:</translation>
     </message>
     <message>
         <source>You may place any remark about the contact here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Hier kunt u opmerkingen kwijt.</translation>
     </message>
     <message>
         <source>&amp;Phone:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Telefoon:</translation>
     </message>
     <message>
         <source>&amp;Infix name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Tu&amp;ssenvoegsel:</translation>
     </message>
     <message>
         <source>Phone number or SIP address of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Telefoonnummer of SIP adres.</translation>
     </message>
     <message>
         <source>Last name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Achternaam.</translation>
     </message>
     <message>
         <source>&amp;Last name:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Achternaam:</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation type="unfinished">&amp;OK</translation>
+        <translation>&amp;OK</translation>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">Ann&amp;uleren</translation>
+        <translation>Ann&amp;uleren</translation>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+U</translation>
     </message>
     <message>
         <source>You must fill in a name.</source>
-        <translation type="unfinished"></translation>
+        <translation>U moet een naam invullen.</translation>
     </message>
     <message>
         <source>You must fill in a phone number or SIP address.</source>
-        <translation type="unfinished"></translation>
+        <translation>U moet een telefoonnummer of SIP adres invullen.</translation>
     </message>
 </context>
 <context>
@@ -315,10 +315,6 @@
         <translation>%1, deregistratie gesglaagd: %2 %3</translation>
     </message>
     <message>
-        <source>%1, de-registration failed: %1 %2</source>
-        <translation>%1, deregistratie mislukt: %1 %2</translation>
-    </message>
-    <message>
         <source>%1, fetching registrations failed: %2 %3</source>
         <translation>%1, opvragen registraties mislukt: %2 %3</translation>
     </message>
@@ -341,14 +337,6 @@
     <message>
         <source>invalid DTMF telephone event (%1)</source>
         <translation>foutief DTMF signaal (%1)</translation>
-    </message>
-    <message>
-        <source>STUN request failed: %1 %2</source>
-        <translation type="obsolete">STUN verzoek mislukt: %1 %2</translation>
-    </message>
-    <message>
-        <source>STUN request failed.</source>
-        <translation type="obsolete">STUN verzoek mislukt.</translation>
     </message>
     <message>
         <source>Redirecting call</source>
@@ -385,10 +373,6 @@
     <message>
         <source>Request to transfer call received from:</source>
         <translation>Verzoek om gesprek door te verbinden van:</translation>
-    </message>
-    <message>
-        <source>Request to transfer received call.</source>
-        <translation>Verzoek om gesprek door te verbinden.</translation>
     </message>
     <message>
         <source>Do you allow the call to be transferred to the following destination?</source>
@@ -620,31 +604,39 @@
     </message>
     <message>
         <source>Override lock file and start anyway?</source>
-        <translation type="unfinished"></translation>
+        <translation>Wilt u het lock bestand overschrijven en opstarten?</translation>
     </message>
     <message>
         <source>%1, voice mail status failure.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, voice mail status fout.</translation>
     </message>
     <message>
         <source>%1, voice mail status rejected.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, voice mail status geweigerd.</translation>
     </message>
     <message>
         <source>%1, voice mailbox does not exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, voice mailbox bestaat niet.</translation>
     </message>
     <message>
         <source>%1, voice mail status terminated.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, voice mail status beëindigd.</translation>
     </message>
     <message>
         <source>%1, STUN request failed: %2 %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, STUN verzoek mislukt: %2 %3</translation>
     </message>
     <message>
         <source>%1, STUN request failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, STUN verzoek mislukt.</translation>
+    </message>
+    <message>
+        <source>%1, de-registration failed: %2 %3</source>
+        <translation>%1, deregistratie mislukt: %2 %3</translation>
+    </message>
+    <message>
+        <source>Request to transfer call received.</source>
+        <translation>Verzoek om gesprek door te verbinden.</translation>
     </message>
 </context>
 <context>
@@ -664,10 +656,6 @@
     <message>
         <source>Phone</source>
         <translation>Telefoon</translation>
-    </message>
-    <message>
-        <source>This list of addresses is taken from &lt;b&gt;KAddressbook&lt;/b&gt;. Contacts for which you did not provide a phone number are not shown here. To add, delete or modify address information you have to use KAddressbook.</source>
-        <translation type="obsolete">Deze lijst met adressen komt uit &lt;b&gt;KAddressbook&lt;/b&gt;. Contacten waarvoor u geen telefoonnummer heeft opgenomen staan niet in deze lijst. Om adresinformatie te wijzigen moet u KAddressbook gebruiken.</translation>
     </message>
     <message>
         <source>&amp;Show only SIP addresses</source>
@@ -710,68 +698,65 @@
         <translation>Alt+U</translation>
     </message>
     <message>
-        <source>&lt;p&gt;You seem not to have any contacts with a phone number in &lt;b&gt;KAddressbook&lt;/b&gt;, KDE&apos;s address book application. Twinkle retrieves all contacts with a phone number from KAddressbook. To manage your contacts you have to use KAddressbook.&lt;/p&gt;</source>
-        <translation type="obsolete">&lt;p&gt;U heeft geen contacten met een telefoonnummer in &lt;b&gt;KAddressbook&lt;/b&gt;, KDE&apos;s adresboek applicatie. Twinkle haalt alle contacten met een telefoonnummer uit KAdressbook. Om uw contacten te beheren, moet u KAddressbook gebruiken.&lt;/p&gt;</translation>
-    </message>
-    <message>
         <source>&amp;KAddressBook</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;KAddressBook</translation>
     </message>
     <message>
         <source>This list of addresses is taken from &lt;b&gt;KAddressBook&lt;/b&gt;. Contacts for which you did not provide a phone number are not shown here. To add, delete or modify address information you have to use KAddressBook.</source>
-        <translation type="unfinished"></translation>
+        <translation>Deze lijst met adressen komt uit &lt;b&gt;KAddressBook&lt;/b&gt;. Contacten waarvoor u geen telefoonnummer heeft opgenomen staan niet in deze lijst. Om adresinformatie te wijzigen moet u KAddressBook gebruiken.</translation>
     </message>
     <message>
         <source>&amp;Local address book</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Lokaal adresboek</translation>
     </message>
     <message>
         <source>Remark</source>
-        <translation type="unfinished"></translation>
+        <translation>Opmerkingen</translation>
     </message>
     <message>
         <source>Contacts in the local address book of Twinkle.</source>
-        <translation type="unfinished"></translation>
+        <translation>Adresgegevens uit het lokale adresboek van Twinkle.</translation>
     </message>
     <message>
         <source>&amp;Add</source>
-        <translation type="unfinished">To&amp;evoegen</translation>
+        <translation>To&amp;evoegen</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+E</translation>
     </message>
     <message>
         <source>Add a new contact to the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Voeg een adres toe aan het lokale adresboek.</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished">&amp;Verwijderen</translation>
+        <translation>&amp;Verwijderen</translation>
     </message>
     <message>
         <source>Alt+D</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+V</translation>
     </message>
     <message>
         <source>Delete a contact from the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwijder een adres uit het lokale adresboek.</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Bewerk</translation>
     </message>
     <message>
         <source>Alt+E</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+B</translation>
     </message>
     <message>
         <source>Edit a contact from the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wijzig adresgegevens.</translation>
     </message>
     <message>
         <source>&lt;p&gt;You seem not to have any contacts with a phone number in &lt;b&gt;KAddressBook&lt;/b&gt;, KDE&apos;s address book application. Twinkle retrieves all contacts with a phone number from KAddressBook. To manage your contacts you have to use KAddressBook.&lt;p&gt;As an alternative you may use Twinkle&apos;s local address book.&lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;U heeft geen contacten met een telefoonnummer in &lt;b&gt;KAddressBook&lt;/b&gt;, KDE&apos;s adresboek applicatie. Twinkle haalt alle contacten met een telefoonnummer uit KAdressBook. Om uw contacten te beheren, moet u KAddressbook gebruiken.&lt;/p&gt;
+&lt;p&gt;Als alternatief kunt u het lokale adresboek van Twinkle gebruiken.&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
@@ -881,7 +866,7 @@ Om uw gebruikersprofielen makkelijk uit elkaar te houden kunt u uw SIP gebruiker
     </message>
     <message>
         <source>&amp;Answered calls</source>
-        <translation>B&amp;antwoorde gesprekken</translation>
+        <translation>Be&amp;antwoorde gesprekken</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -1066,11 +1051,11 @@ Om uw gebruikersprofielen makkelijk uit elkaar te houden kunt u uw SIP gebruiker
     </message>
     <message>
         <source>&amp;Hide identity</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Identiteit verbergen</translation>
     </message>
     <message>
         <source>Alt+H</source>
-        <translation type="unfinished">Alt+V</translation>
+        <translation>Alt+I</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -1079,11 +1064,16 @@ With this option you request your SIP provider to hide your identity from the ca
 &lt;p&gt;
 &lt;b&gt;Warning:&lt;/b&gt; not all providers support identity hiding.
 &lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Met deze optie verzoekt u uw SIP provider om uw identiteit verborgen te houden voor degene die u belt. Alleen uw SIP adres of telefoonnummer blijft geheim. Uw IP adres wordt &lt;b&gt;niet&lt;/b&gt; verborgen.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;Waarschuwing:&lt;/b&gt; niet alle providers ondersteunen het verbergen van uw identiteit.
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Not all SIP providers support identity hiding. Make sure your SIP provider supports it if you really need it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Niet alle SIP providers ondersteunen het verbergen van uw identiteit. Verzeker u ervan dat uw SIP provider dit ondersteunt als u dit nodig heeft.</translation>
     </message>
 </context>
 <context>
@@ -1286,10 +1276,6 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>Ge&amp;sprek</translation>
     </message>
     <message>
-        <source>&amp;Reject</source>
-        <translation>A&amp;fwijzen</translation>
-    </message>
-    <message>
         <source>Activate line</source>
         <translation>Activeer lijn</translation>
     </message>
@@ -1334,24 +1320,12 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>Over &amp;Twinkle</translation>
     </message>
     <message>
-        <source>Call</source>
-        <translation>Bel</translation>
-    </message>
-    <message>
         <source>Call someone</source>
         <translation>Iemand bellen</translation>
     </message>
     <message>
         <source>F5</source>
         <translation>F5</translation>
-    </message>
-    <message>
-        <source>Answer</source>
-        <translation>Antw</translation>
-    </message>
-    <message>
-        <source>&amp;Answer</source>
-        <translation>&amp;Antwoord</translation>
     </message>
     <message>
         <source>Answer incoming call</source>
@@ -1362,24 +1336,8 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>F6</translation>
     </message>
     <message>
-        <source>Bye</source>
-        <translation>Einde</translation>
-    </message>
-    <message>
-        <source>&amp;Bye</source>
-        <translation>&amp;Einde</translation>
-    </message>
-    <message>
         <source>Release call</source>
         <translation>Beëindig een gesprek</translation>
-    </message>
-    <message>
-        <source>F7</source>
-        <translation type="obsolete">F7</translation>
-    </message>
-    <message>
-        <source>Reject</source>
-        <translation>Afwijzen</translation>
     </message>
     <message>
         <source>Reject incoming call</source>
@@ -1390,36 +1348,12 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>F8</translation>
     </message>
     <message>
-        <source>Hold</source>
-        <translation>Wacht</translation>
-    </message>
-    <message>
-        <source>&amp;Hold</source>
-        <translation>&amp;Wacht</translation>
-    </message>
-    <message>
         <source>Put a call on hold, or retrieve a held call</source>
         <translation>Zet een gesprek in de wacht, of haal een gesprek uit de wacht</translation>
     </message>
     <message>
-        <source>Redirect</source>
-        <translation>Verwijs</translation>
-    </message>
-    <message>
-        <source>R&amp;edirect...</source>
-        <translation>&amp;Verwijs...</translation>
-    </message>
-    <message>
         <source>Redirect incoming call without answering</source>
         <translation>Verwijs een binnenkomend gesprek naar een andere bestemming zonder te antwoorden</translation>
-    </message>
-    <message>
-        <source>Dtmf</source>
-        <translation>Dtmf</translation>
-    </message>
-    <message>
-        <source>&amp;Dtmf...</source>
-        <translation>Dt&amp;mf...</translation>
     </message>
     <message>
         <source>Open keypad to enter digits for voice menu&apos;s</source>
@@ -1458,10 +1392,6 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>Terminal eigenschappen</translation>
     </message>
     <message>
-        <source>&amp;Terminal capabilities...</source>
-        <translation>&amp;Terminal eigenschappen...</translation>
-    </message>
-    <message>
         <source>Request terminal capabilities from someone</source>
         <translation>Vraag terminal eigenschappen van iemand op</translation>
     </message>
@@ -1476,10 +1406,6 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
     <message>
         <source>Call &amp;redirection...</source>
         <translation>&amp;Doorverwijzen...</translation>
-    </message>
-    <message>
-        <source>Redial</source>
-        <translation>Herhaal</translation>
     </message>
     <message>
         <source>Repeat last call</source>
@@ -1502,36 +1428,12 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>&amp;Gebruikersprofiel...</translation>
     </message>
     <message>
-        <source>Conf</source>
-        <translation>Conf</translation>
-    </message>
-    <message>
-        <source>&amp;Conference</source>
-        <translation>&amp;Conferentie</translation>
-    </message>
-    <message>
         <source>Join two calls in a 3-way conference</source>
         <translation>Verbind twee gesprekken in een 3-weg conferentie</translation>
     </message>
     <message>
-        <source>Mute</source>
-        <translation>Stil</translation>
-    </message>
-    <message>
-        <source>&amp;Mute</source>
-        <translation>&amp;Stil</translation>
-    </message>
-    <message>
         <source>Mute a call</source>
         <translation>Onderdruk het geluid</translation>
-    </message>
-    <message>
-        <source>Xfer</source>
-        <translation>Xfer</translation>
-    </message>
-    <message>
-        <source>Trans&amp;fer...</source>
-        <translation>&amp;Doorverbinden...</translation>
     </message>
     <message>
         <source>Transfer call</source>
@@ -1746,7 +1648,7 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
     </message>
     <message>
         <source>Click to see call history for details.</source>
-        <translation>Klik hier om de gespreksgeschiedenis te zien.</translation>
+        <translation>Klik hier om de gesprekshistorie te zien.</translation>
     </message>
     <message>
         <source>Starting user profiles...</source>
@@ -1798,97 +1700,207 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
         <translation>B&amp;el:</translation>
     </message>
     <message>
-        <source>&amp;Call...</source>
-        <comment>Menu item in Call menu</comment>
-        <translation>&amp;Bel...</translation>
-    </message>
-    <message>
         <source>Esc</source>
-        <translation type="unfinished"></translation>
+        <translation>Esc</translation>
     </message>
     <message>
         <source>Transfer consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruggespraak doorverbinden</translation>
     </message>
     <message>
         <source>Hide identity</source>
-        <translation type="unfinished"></translation>
+        <translation>Identiteit verbergen</translation>
     </message>
     <message>
         <source>Click to show registrations.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klik om registraties te tonen.</translation>
     </message>
     <message>
         <source>%1 new, 1 old message</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nieuw, 1 oud bericht</translation>
     </message>
     <message>
         <source>%1 new, %2 old messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nieuw, %2 oude berichten</translation>
     </message>
     <message>
         <source>1 new message</source>
-        <translation type="unfinished"></translation>
+        <translation>1 nieuw bericht</translation>
     </message>
     <message>
         <source>%1 new messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 nieuwe berichten</translation>
     </message>
     <message>
         <source>1 old message</source>
-        <translation type="unfinished"></translation>
+        <translation>1 oud bericht</translation>
     </message>
     <message>
         <source>%1 old messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 oude berichten</translation>
     </message>
     <message>
         <source>Messages waiting</source>
-        <translation type="unfinished"></translation>
+        <translation>Er zijn berichten</translation>
     </message>
     <message>
         <source>No messages</source>
-        <translation type="unfinished"></translation>
+        <translation>Geen berichten</translation>
     </message>
     <message>
         <source>&lt;b&gt;Voice mail status:&lt;/b&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Voice mail status:&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Failure</source>
-        <translation type="unfinished"></translation>
+        <translation>Fout</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation type="unfinished"></translation>
+        <translation>Onbekend</translation>
     </message>
     <message>
         <source>Click to access voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klik voor toegang to voice mail.</translation>
     </message>
     <message>
         <source>Click to activate/deactivate</source>
-        <translation type="unfinished"></translation>
+        <translation>Klik om te activeren/deactiveren</translation>
     </message>
     <message>
         <source>Click to activate</source>
-        <translation type="unfinished"></translation>
+        <translation>Klik om te activeren</translation>
     </message>
     <message>
         <source>not provisioned</source>
-        <translation type="unfinished"></translation>
+        <translation>niet ingesteld</translation>
     </message>
     <message>
         <source>You must provision your voice mail address in your user profile, before you can access it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Voor toegang tot voice mail moet u eerst uw voice mail nummer in uw gebruikersprofiel invullen.</translation>
     </message>
     <message>
         <source>The line is busy. Cannot access voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>De lijn is bezet. Geen toegang tot voice mail.</translation>
     </message>
     <message>
         <source>The voice mail address %1 is an invalid address. Please provision a valid address in your user profile.</source>
-        <translation type="unfinished"></translation>
+        <translation>Het voice mail nummer %1 is ongeldig. Vul een geldig nummer in in uw gebruikersprofiel.</translation>
+    </message>
+    <message>
+        <source>Call</source>
+        <comment>toolbar text</comment>
+        <translation>Bel</translation>
+    </message>
+    <message>
+        <source>&amp;Call...</source>
+        <comment>call menu text</comment>
+        <translation>&amp;Bel...</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <comment>toolbar text</comment>
+        <translation>Antw</translation>
+    </message>
+    <message>
+        <source>&amp;Answer</source>
+        <comment>menu text</comment>
+        <translation>&amp;Antwoord</translation>
+    </message>
+    <message>
+        <source>Bye</source>
+        <comment>toolbar text</comment>
+        <translation>Einde</translation>
+    </message>
+    <message>
+        <source>&amp;Bye</source>
+        <comment>menu text</comment>
+        <translation>&amp;Einde</translation>
+    </message>
+    <message>
+        <source>Reject</source>
+        <comment>toolbar text</comment>
+        <translation>Afwijzen</translation>
+    </message>
+    <message>
+        <source>&amp;Reject</source>
+        <comment>menu text</comment>
+        <translation>A&amp;fwijzen</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <comment>toolbar text</comment>
+        <translation>Wacht</translation>
+    </message>
+    <message>
+        <source>&amp;Hold</source>
+        <comment>menu text</comment>
+        <translation>&amp;Wacht</translation>
+    </message>
+    <message>
+        <source>Redirect</source>
+        <comment>toolbar text</comment>
+        <translation>Verwijs</translation>
+    </message>
+    <message>
+        <source>R&amp;edirect...</source>
+        <comment>menu text</comment>
+        <translation>&amp;Verwijs...</translation>
+    </message>
+    <message>
+        <source>Dtmf</source>
+        <comment>toolbar text</comment>
+        <translation>Dtmf</translation>
+    </message>
+    <message>
+        <source>&amp;Dtmf...</source>
+        <comment>menu text</comment>
+        <translation>Dt&amp;mf...</translation>
+    </message>
+    <message>
+        <source>&amp;Terminal capabilities...</source>
+        <comment>menu text</comment>
+        <translation>&amp;Terminal eigenschappen...</translation>
+    </message>
+    <message>
+        <source>Redial</source>
+        <comment>toolbar text</comment>
+        <translation>Herh</translation>
+    </message>
+    <message>
+        <source>&amp;Redial</source>
+        <comment>menu text</comment>
+        <translation>&amp;Herhaal</translation>
+    </message>
+    <message>
+        <source>Conf</source>
+        <comment>toolbar text</comment>
+        <translation>Conf</translation>
+    </message>
+    <message>
+        <source>&amp;Conference</source>
+        <comment>menu text</comment>
+        <translation>&amp;Conferentie</translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <comment>toolbar text</comment>
+        <translation>Stil</translation>
+    </message>
+    <message>
+        <source>&amp;Mute</source>
+        <comment>menu text</comment>
+        <translation>&amp;Stil</translation>
+    </message>
+    <message>
+        <source>Xfer</source>
+        <comment>toolbar text</comment>
+        <translation>Xfer</translation>
+    </message>
+    <message>
+        <source>Trans&amp;fer...</source>
+        <comment>menu text</comment>
+        <translation>&amp;Doorverbinden...</translation>
     </message>
 </context>
 <context>
@@ -2164,11 +2176,11 @@ Als de SAS aan beide kanten hetzelfde is, dan moet u die bevestigen door op het 
     </message>
     <message>
         <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
-        <translation>&lt;html&gt;U kunt de profielen editor maken. Met de profielen editor kunt u diverse instellingen met betrekking tot het SIP protocol, RTP en vele andere zaken wijzigen.&lt;br&gt;&lt;br&gt;Met de wizard kunt u snel een gebruikersprofiel maken. De wizard vraagt u alleen om een aantal essentiële instellingen. Als u een gebruikersprofiel met de wizard maakt, dan kun u deze op een later tijdstip alsnog met de profielen editor wijzigen.&lt;br&gt;&lt;br&gt;Kies op welke wijze u een gebruikersprofiel wilt maken.&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;U kunt de profieleditor gebruiken om een gebruikersprofiel te maken. Met de profieleditor kunt u diverse instellingen met betrekking tot het SIP protocol, RTP en vele andere zaken wijzigen.&lt;br&gt;&lt;br&gt;Met de wizard kunt u snel een gebruikersprofiel maken. De wizard vraagt u alleen om een aantal essentiële instellingen. Als u een gebruikersprofiel met de wizard maakt, dan kun u deze op een later tijdstip alsnog met de profieleditor wijzigen.&lt;br&gt;&lt;br&gt;Kies op welke wijze u een gebruikersprofiel wilt maken.&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;Next you may adjust the system settings. You can change these settings always at a later time.&lt;br&gt;&lt;br&gt;Click OK to view and adjust the system settings.&lt;/html&gt;</source>
-        <translation>&lt;html&gt;U kunt nu de systeeminstellingen wijzigen. Deze instellingen kunt ook altijd wijzigen op een later tijdstip.&lt;br&gt;&lt;br&gt;Klik op OK om de systeeminstellingen te bekijken en te eventueel te wijzigen.&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;U kunt nu de systeeminstellingen wijzigen. Deze instellingen kunt u altijd wijzigen op een later tijdstip.&lt;br&gt;&lt;br&gt;Klik op OK om de systeeminstellingen te bekijken en eventueel te wijzigen.&lt;/html&gt;</translation>
     </message>
     <message>
         <source>You did not select any user profile to run.
@@ -2199,6 +2211,10 @@ Kies eerst een gebruikersprofiel.</translation>
     <message>
         <source>Cannot find .twinkle directory in your home directory.</source>
         <translation>.twinkle folder kan niet gevonden worden in uw thuis folder.</translation>
+    </message>
+    <message>
+        <source>&amp;Profile editor</source>
+        <translation>&amp;Profieleditor</translation>
     </message>
 </context>
 <context>
@@ -2833,10 +2849,6 @@ Afhankelijk van uw SIP provider, kan het netwerk een ring back tone spelen.
         <translation>Naam op&amp;zoeken voor een inkomend gesprek</translation>
     </message>
     <message>
-        <source>On an incoming call, Twinkle will try to find the name the name belonging to the incoming SIP address in your address book. This name will be displayed.</source>
-        <translation>Bij een inkomend gesprek, probeert Twinkle de naam van de beller op te zoeken in het adresboek. Deze naam wordt dan getoond.</translation>
-    </message>
-    <message>
         <source>Ove&amp;rride received display name</source>
         <translation>Gevonden naam heeft voor&amp;rang op ontvangen naam</translation>
     </message>
@@ -2914,11 +2926,11 @@ Afhankelijk van uw SIP provider, kan het netwerk een ring back tone spelen.
     </message>
     <message>
         <source>&amp;Validate devices before usage</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Valideer apparaten voor gebruik</translation>
     </message>
     <message>
         <source>Alt+V</source>
-        <translation type="unfinished">Alt+V</translation>
+        <translation>Alt+V</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -2929,7 +2941,18 @@ On startup of Twinkle a warning is given if an audio device is inaccessible.
 If before making a call, the microphone or speaker appears to be invalid, a warning is given and no call can be made.
 &lt;p&gt;
 If before answering a call, the microphone or speaker appears to be invalid, a warning is given and the call will not be answered.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Twinkle valideert de geluidsapparaten voor gebruik om te voorkomen dat een gesprek zonder geluidskanaal wordt opgezet.
+&lt;p&gt;
+Bij het opstarten geeft Twinkle een waarschuwing als een geluidsapparaat niet beschikbaar is.
+&lt;p&gt;
+Als voor het maken van een gesprek, de microfoon of speaker niet beschikbaar zijn, dan krijgt u een waarschuwing en kunt u het gesprek niet maken.
+&lt;p&gt;
+Als voor het beantwoorden van een inkomend gesprek, de microfoon of speaker onbeschikbaar zijn, dan krijgt u een waarschuwing en kunt u het gesprek niet beantwoorden.</translation>
+    </message>
+    <message>
+        <source>On an incoming call, Twinkle will try to find the name belonging to the incoming SIP address in your address book. This name will be displayed.</source>
+        <translation>Bij een inkomend gesprek, probeert Twinkle de naam van de beller op te zoeken in het adresboek. Deze naam wordt dan getoond.</translation>
     </message>
 </context>
 <context>
@@ -3022,43 +3045,43 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Type of transfer</source>
-        <translation type="unfinished"></translation>
+        <translation>Doorverbindmethode</translation>
     </message>
     <message>
         <source>&amp;Blind transfer</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Blind doorverbinden</translation>
     </message>
     <message>
         <source>Alt+B</source>
-        <translation type="unfinished">Alt+B</translation>
+        <translation>Alt+B</translation>
     </message>
     <message>
         <source>Transfer the call to a third party without contacting that third party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Doorverbinden van het gesprek naar een derde partij zonder dat u die derde partij eerst zelf raadpleegt.</translation>
     </message>
     <message>
         <source>T&amp;ransfer with consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>Doorverbinden met &amp;ruggespraak</translation>
     </message>
     <message>
         <source>Alt+R</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+R</translation>
     </message>
     <message>
         <source>Before transferring the call to a third party, first consult the party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Alvorens een gesprek door te verbinden naar een derde partij, houdt u eerst ruggespraak met die partij.</translation>
     </message>
     <message>
         <source>Transfer to other &amp;line</source>
-        <translation type="unfinished"></translation>
+        <translation>Doorverbinden naar andere &amp;lijn</translation>
     </message>
     <message>
         <source>Alt+L</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>Connect the remote party on the active line with the remote party on the other line.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbind de persoon op deze lijn door met de persoon op de andere lijn.</translation>
     </message>
 </context>
 <context>
@@ -3183,62 +3206,101 @@ Lock bestand %2 bestaat al.</translation>
     </message>
     <message>
         <source>Anonymous</source>
-        <translation type="unfinished"></translation>
+        <translation>Anoniem</translation>
     </message>
     <message>
         <source>Warning:</source>
-        <translation type="unfinished">Waarschuwing:</translation>
-    </message>
-    <message>
-        <source>Cannot acces the ring tone device (%1).
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot acces the speaker (%1).
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot acces the microphone (%1).
-</source>
-        <translation type="unfinished"></translation>
+        <translation>Waarschuwing:</translation>
     </message>
     <message>
         <source>Call transfer - %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Doorverbinden - %1</translation>
     </message>
     <message>
         <source>Sound card cannot be set to full duplex.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geluidskaart werkt niet in full duplex modus.</translation>
     </message>
     <message>
         <source>Cannot set buffer size on sound card.</source>
-        <translation type="unfinished"></translation>
+        <translation>De buffergrootte van de geluidskaart kan niet ingesteld worden.</translation>
     </message>
     <message>
         <source>Sound card cannot be set to %1 channels.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geluidskaar ondersteunt geen %1 kanalen.</translation>
     </message>
     <message>
         <source>Cannot set sound card to 16 bits recording.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geluidskaart ondersteunt geen 16 bits opname.</translation>
     </message>
     <message>
         <source>Cannot set sound card to 16 bits playing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geluidskaar ondersteunt geen 16 bits afspelen.</translation>
     </message>
     <message>
         <source>Cannot set sound card sample rate to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Geluidskaar ondersteunt sampling rate %1 niet</translation>
     </message>
     <message>
         <source>Opening ALSA driver failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Openen ALSA stuurprogramma mislukt</translation>
     </message>
     <message>
         <source>Cannot open ALSA driver for PCM playback</source>
-        <translation type="unfinished"></translation>
+        <translation>ALSA stuur programma voor PCM afspelen kan niet geopend worden</translation>
+    </message>
+    <message>
+        <source>Cannot resolve STUN server: %1</source>
+        <translation>IP adres van STUN server niet gevonden: %1</translation>
+    </message>
+    <message>
+        <source>You are behind a symmetric NAT.
+STUN will not work.
+Configure a public IP address in the user profile
+and create the following static bindings (UDP) in your NAT.</source>
+        <translation>U bevindt zich achter een symmetrische NAT.
+STUN zal niet werken.
+Configureer uw publieke IP adres in uw gebruikersprofiel
+en creëer de volgende statische UDP mapping in uw NAT.</translation>
+    </message>
+    <message>
+        <source>public IP: %1 --&gt; private IP: %2 (SIP signaling)</source>
+        <translation>publiek IP: %1 --&gt; privé IP: %2 (SIP signalering)</translation>
+    </message>
+    <message>
+        <source>public IP: %1-%2 --&gt; private IP: %3-%4 (RTP/RTCP)</source>
+        <translation>publiek IP: %1-%2 --&gt; privé IP: %3-%4 (RTP/RTCP)</translation>
+    </message>
+    <message>
+        <source>Cannot reach the STUN server: %1</source>
+        <translation>STUN server onbereikbaar: %1</translation>
+    </message>
+    <message>
+        <source>Port %1 (SIP signaling)</source>
+        <translation>Poort %1 (SIP signalering)</translation>
+    </message>
+    <message>
+        <source>NAT type discovery via STUN failed.</source>
+        <translation>Verkenning van NAT type via STUN is mislukt.</translation>
+    </message>
+    <message>
+        <source>If you are behind a firewall then you need to open the following UDP ports.</source>
+        <translation>Als u zich achter een firewall bevindt dan moet u de volgende UDP poorten open zetten.</translation>
+    </message>
+    <message>
+        <source>Ports %1-%2 (RTP/RTCP)</source>
+        <translation>Poorten %1-%2 (RTP/RTCP)</translation>
+    </message>
+    <message>
+        <source>Cannot access the ring tone device (%1).</source>
+        <translation>Ring tone apparaat niet beschikbaar (%1).</translation>
+    </message>
+    <message>
+        <source>Cannot access the speaker (%1).</source>
+        <translation>Speaker niet beschikbaar (%1).</translation>
+    </message>
+    <message>
+        <source>Cannot access the microphone (%1).</source>
+        <translation>Microfoon niet beschikbaar (%1).</translation>
     </message>
 </context>
 <context>
@@ -3601,7 +3663,7 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>&amp;Ultra wide band payload type:</source>
-        <translation>&amp;Ultra wide band payload type:</translation>
+        <translation>U&amp;ltra wide band payload type:</translation>
     </message>
     <message>
         <source>&amp;VAD</source>
@@ -3637,7 +3699,7 @@ Dit is een verplicht veld.</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
-        <translation>Co&amp;mplexity:</translation>
+        <translation>Co&amp;mplexiteit:</translation>
     </message>
     <message>
         <source>DT&amp;X</source>
@@ -3805,7 +3867,7 @@ Stuur DTMF out-of-band in een SIP INFO verzoek.
     </message>
     <message>
         <source>Ask user &amp;permission to redirect</source>
-        <translation>&amp;Vraag toestemming voor doorversturen</translation>
+        <translation>&amp;Vraag toestemming voor doorverwijzen</translation>
     </message>
     <message>
         <source>Alt+P</source>
@@ -3896,10 +3958,6 @@ Stuur DTMF out-of-band in een SIP INFO verzoek.
 &lt;p&gt;By allowing SDP to change during call setup, Twinkle will not discard SDP in subsequent responses and modify the media stream if the SDP is changed. When the SDP in a response is changed, it must have a new version number in the o= line.&lt;/p&gt;</source>
         <translation>&lt;p&gt;Een SIP UAS kan SDP in een 1XX antwoord sturen voor bijvoorbeeld een ring back tone. Als het gesprek beantwoord wordt, dan moet de SIP UAS dezelfde SDP in de 200 OK sturen volgens RFC 3261: &lt;i&gt;Once SDP has been received, SDP in subsequent responses should be discarded.&lt;/i&gt;&lt;/p&gt;
 &lt;p&gt;Door een SDP wijziging toe te staan, zal Twinkle de SDP in de 200 OK niet negeren in dit geval en de media parameters aanpassen. Als de SDP wijzigt, dan moet die wel een nieuwe versienummer in de o= lijn hebben.&lt;/p&gt;</translation>
-    </message>
-    <message>
-        <source>Use domain name to create a unique contact header value</source>
-        <translation>Gebruik domeinnaam voor een unieke contact header</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4020,7 +4078,7 @@ Sommige proxies vinden dit niet leuk. U kunt deze optie uitzetten voor een meer 
     </message>
     <message>
         <source>Hold call &amp;with referrer while setting up call to transfer target</source>
-        <translation>Zet de partij die u doorverbind in &amp;wacht tijdens doorverbinden</translation>
+        <translation>Zet de partij die u doorverbindt in de &amp;wacht tijdens doorverbinden</translation>
     </message>
     <message>
         <source>Alt+W</source>
@@ -4072,7 +4130,7 @@ Sommige proxies vinden dit niet leuk. U kunt deze optie uitzetten voor een meer 
     </message>
     <message>
         <source>&amp;Use statically configured public IP address inside SIP messages</source>
-        <translation>Statisch p&amp;ubliek IP adres in SIP berichten</translation>
+        <translation>St&amp;atisch publiek IP adres in SIP berichten</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should use the public IP address specified in the next field inside SIP message, i.e. in SIP headers and SDP body instead of the IP address of your network interface.&lt;br&gt;&lt;br&gt;
@@ -4118,7 +4176,7 @@ Als u deze optie kiest, dan moet u teven een adres vertaling in uw NAT router aa
     </message>
     <message>
         <source>&amp;URI with numerical user part is a telephone number</source>
-        <translation>&amp;URI met numeriek gebruikersdeel is een telefoonnumer</translation>
+        <translation>URI met &amp;numeriek gebruikersdeel is een telefoonnumer</translation>
     </message>
     <message>
         <source>If you tick this option, then Twinkle considers a SIP address that has a user part that consists of digits, *, #, + and special symbols only as a telephone number. In an outgoing message, Twinkle will add the &quot;user=phone&quot; parameter to such a URI.</source>
@@ -4377,110 +4435,6 @@ De waarden van alle SIP headers van de inkomende SIP BYE worden via variabelen a
     </message>
     <message>
         <source>&lt;p&gt;
-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
-&lt;/p&gt;
-&lt;p&gt;
-With your script you can customize call handling by outputing one or more of the following parameters to stdout. Each parameter should be on a separate line.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;blockquote&gt;
-&lt;tt&gt;
-action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
-reason=&amp;lt;string&amp;gt;&lt;br&gt;
-contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;
-caller_name=&amp;lt;name of caller to display&amp;gt;&lt;br&gt;
-ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
-end&lt;br&gt;
-&lt;/tt&gt;
-&lt;/blockquote&gt;
-&lt;/p&gt;
-&lt;h2&gt;Parameters&lt;/h2&gt;
-&lt;h3&gt;action&lt;/h3&gt;
-&lt;p&gt;
-&lt;b&gt;continue&lt;/b&gt; - continue call handling as usual&lt;br&gt;
-&lt;b&gt;reject&lt;/b&gt; - reject call&lt;br&gt;
-&lt;b&gt;dnd&lt;/b&gt; - deny call with do not disturb indication&lt;br&gt;
-&lt;b&gt;redirect&lt;/b&gt; - redirect call to address specified by &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;
-&lt;b&gt;autoanswer&lt;/b&gt; - automatically answer a call&lt;br&gt;
-&lt;/p&gt;
-&lt;p&gt;
-When the script does not write an action to stdout, then the default action is continue.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;reason: &lt;/b&gt;
-With the reason parameter you can set the reason string for reject or dnd. This might be shown to the far-end user.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;caller_name: &lt;/b&gt;
-This parameter will override the display name of the caller.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;ringtone: &lt;/b&gt;
-The ringtone parameter specifies the .wav file that will be played as ring tone when action is continue.
-&lt;/p&gt;
-&lt;h2&gt;Environment variables&lt;/h2&gt;
-&lt;p&gt;
-The values of all SIP headers in the incoming INVITE message are passed in environment variables to your script. The variable names are formatted as &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; E.g. SIP_FROM contains the value of the from header.
-&lt;/p&gt;
-&lt;p&gt;
-TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="obsolete">&lt;p&gt;
-U kunt het gedrag waarmee Twinkle inkomende gesprekken afhandelt aanpassen met een script dat Twinkle aanroept als een gesprek binnenkomt. Afhankelijk van de output van het script accepteert of weigert Twinkle het gesprek of verwijst het door.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;Let op:&lt;/b&gt; Twinkle staat stil als het script loopt. Het is aanbevolen dat uw script niet langer dan 200 ms loopt. Als u meer tijd nodig heeft, dan kunt u de parameters sturen gevolgd door &lt;b&gt;end&lt;/b&gt;. Twinkle gaat verder zodra het &lt;b&gt;end&lt;/b&gt; ontvangt, terwijl u script blijft draaien.
-&lt;/p&gt;
-&lt;p&gt;
-U kunt Twinkle sturen door de volgende parameters naar stdout te schrijven. Elk op een nieuwe regel.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;blockquote&gt;
-&lt;tt&gt;
-action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
-reason=&amp;lt;string&amp;gt;&lt;br&gt;
-contact=&amp;lt;adres voor doorverwijzen&amp;gt;&lt;br&gt;
-caller_name=&amp;lt;toon deze naam&amp;gt;&lt;br&gt;
-ringtone=&amp;lt;naam van .wav bestand&amp;gt;&lt;br&gt;
-end&lt;br&gt;
-&lt;/tt&gt;
-&lt;/blockquote&gt;
-&lt;/p&gt;
-&lt;h2&gt;Parameters&lt;/h2&gt;
-&lt;h3&gt;action&lt;/h3&gt;
-&lt;p&gt;
-&lt;b&gt;continue&lt;/b&gt; - handel gesprek af op normale wijze&lt;br&gt;
-&lt;b&gt;reject&lt;/b&gt; - weiger gesprek&lt;br&gt;
-&lt;b&gt;dnd&lt;/b&gt; - weiger gesprek met niet-storen indicatie&lt;br&gt;
-&lt;b&gt;redirect&lt;/b&gt; - verwijs gesprek door naar &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;
-&lt;b&gt;autoanswer&lt;/b&gt; - automatisch antwoorden&lt;br&gt;
-&lt;/p&gt;
-&lt;p&gt;
-Als een script geen actie op stdout zet, dan is de actie &quot;continue&quot;
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;reason: &lt;/b&gt;
-Met de reason parameter, zet u de SIP reason string voor reject of dnd. Dit kan getoond worden aan de gebruiker.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;caller_name: &lt;/b&gt;
-Toon deze naam in plaats van de display naam.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;ringtone: &lt;/b&gt;
-De ring tone die gespeeld moet worden als de actie &quot;continue&quot; is.
-&lt;/p&gt;
-&lt;h2&gt;Variables&lt;/h2&gt;
-&lt;p&gt;
-De waarden van alle SIP headers van de inkomende INVITE worden via variabelen aan uw script doorgegeven. De variabele namen zijn als volgt samengesteld &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; Bijv. SIP_FROM bevat de waarde van de from header.
-&lt;/p&gt;
-&lt;p&gt;
-TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. &lt;b&gt;SIPREQUEST_URI&lt;/b&gt; bevat de request-URI van de INVITE. &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; bevat de gebruikersprofielnaam.</translation>
-    </message>
-    <message>
-        <source>&lt;p&gt;
 This script is called when the remote party answers your call.
 &lt;/p&gt;
 &lt;h2&gt;Environment variables&lt;/h2&gt;
@@ -4726,61 +4680,67 @@ Dit kan de host naam of IP adres van uw PC zijn als u direct van PC naar PC wilt
     </message>
     <message>
         <source>Voice mail</source>
-        <translation type="unfinished"></translation>
+        <translation>Voice mail</translation>
     </message>
     <message>
         <source>&amp;Follow codec preference from far end on incoming calls</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Volg codec voorkeur van de beller bij inkomende gesprekken</translation>
     </message>
     <message>
         <source>&lt;p&gt;
 For incoming calls, follow the preference from the far-end (SDP offer). Pick the first codec from the SDP offer that is also in the list of active codecs.
 &lt;p&gt;
 If you disable this option, then the first codec from the active codecs that is also in the SDP offer is picked.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Volg de voorkeur van de beller (SDP aanbod) bij inkomende gesprekken. Neem de eerste codec uit het SDP aanbod dat ook in de lijst van actieve codecs voorkomt.
+&lt;p&gt;
+Als u deze optie uitschakeld, dan neemt Twinkle de eerste codec uit de actieve codec lijst die ook in het SDP aanbod voorkomt.</translation>
     </message>
     <message>
         <source>Follow codec &amp;preference from far end on outgoing calls</source>
-        <translation type="unfinished"></translation>
+        <translation>Volg &amp;codec voorkeur van de gebelde bij uitgaande gesprekken</translation>
     </message>
     <message>
         <source>&lt;p&gt;
 For outgoing calls, follow the preference from the far-end (SDP answer). Pick the first codec from the SDP answer that is also in the list of active codecs.
 &lt;p&gt;
 If you disable this option, then the first codec from the active codecs that is also in the SDP answer is picked.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Volg de voorkeur van de gebelde (SDP antwoord) bij uitgaande gesprekken. Neem de eerste codec uit het SDP antwoord dat ook in de lijst van actieve codecs voorkomt.
+&lt;p&gt;
+Als u deze optie uitschakelt, dan neemt Twinkle de eerste codec uit de actieve codec lijst die ook in het SDP antwoord voorkomt.</translation>
     </message>
     <message>
         <source>Replaces</source>
-        <translation type="unfinished"></translation>
+        <translation>Replaces</translation>
     </message>
     <message>
         <source>Indicates if the Replaces-extenstion is supported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Geeft aan of de Replaces-extensie ondersteund wordt.</translation>
     </message>
     <message>
         <source>Attended refer to AoR (Address of Record)</source>
-        <translation type="unfinished"></translation>
+        <translation>Begeleid doorverbinden maar AoR (Address of Record)</translation>
     </message>
     <message>
         <source>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endoint.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bij begeleid doorverbinden, is de contact URI de doorverbindbestemming. Een contact URI kan echter niet globaal routeerbaar zijn. Als alternatief kan dan de AoR (Address of Record) gebruikt worden. Een nadeel van het gebruik van de AoR is dat deze routeerbaar kan zijn naar meerdere eindpunten in het geval van SIP forking. De contact URI routeert altijd naar een uniek eindpunt.</translation>
     </message>
     <message>
         <source>Privacy</source>
-        <translation type="unfinished"></translation>
+        <translation>Privacy</translation>
     </message>
     <message>
         <source>Privacy options</source>
-        <translation type="unfinished"></translation>
+        <translation>Privacy opties</translation>
     </message>
     <message>
         <source>&amp;Send P-Preferred-Identity header when hiding user identity</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Stuur P-Preferred-Identity header bij anonieme gesprekken</translation>
     </message>
     <message>
         <source>Include a P-Preferred-Identity header with your identity in an INVITE request for a call with identity hiding.</source>
-        <translation type="unfinished"></translation>
+        <translation>Stuur de P-Preferred-Identity header in een INVITE verzoek, als u uw identiteit verbergt bij het maken van een gesprek.</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4835,23 +4795,74 @@ The values of all SIP headers in the incoming INVITE message are passed in envir
 &lt;/p&gt;
 &lt;p&gt;
 TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+U kunt het gedrag waarmee Twinkle inkomende gesprekken afhandelt aanpassen met een script dat Twinkle aanroept als een gesprek binnenkomt. Afhankelijk van de output van het script accepteert of weigert Twinkle het gesprek of verwijst het door.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;Let op:&lt;/b&gt; Twinkle staat stil als het script loopt. Het is aanbevolen dat uw script niet langer dan 200 ms loopt. Als u meer tijd nodig heeft, dan kunt u de parameters sturen gevolgd door &lt;b&gt;end&lt;/b&gt;. Twinkle gaat verder zodra het &lt;b&gt;end&lt;/b&gt; ontvangt, terwijl u script blijft draaien.
+&lt;/p&gt;
+&lt;p&gt;
+U kunt Twinkle sturen door de volgende parameters naar stdout te schrijven. Elk op een nieuwe regel.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
+reason=&amp;lt;string&amp;gt;&lt;br&gt;
+contact=&amp;lt;adres voor doorverwijzen&amp;gt;&lt;br&gt;
+caller_name=&amp;lt;toon deze naam&amp;gt;&lt;br&gt;
+ringtone=&amp;lt;naam van .wav bestand&amp;gt;&lt;br&gt;
+display_msg=&amp;lt;toon bericht op scherm&amp;gt;&lt;br&gt;
+end&lt;br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;
+&lt;/p&gt;
+&lt;h2&gt;Parameters&lt;/h2&gt;
+&lt;h3&gt;action&lt;/h3&gt;
+&lt;p&gt;
+&lt;b&gt;continue&lt;/b&gt; - handel gesprek af op normale wijze&lt;br&gt;
+&lt;b&gt;reject&lt;/b&gt; - weiger gesprek&lt;br&gt;
+&lt;b&gt;dnd&lt;/b&gt; - weiger gesprek met niet-storen indicatie&lt;br&gt;
+&lt;b&gt;redirect&lt;/b&gt; - verwijs gesprek door naar &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;
+&lt;b&gt;autoanswer&lt;/b&gt; - automatisch antwoorden&lt;br&gt;
+&lt;/p&gt;
+&lt;p&gt;
+Als een script geen actie op stdout zet, dan is de actie &quot;continue&quot;
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;reason: &lt;/b&gt;
+Met de reason parameter, zet u de SIP reason string voor reject of dnd. Dit kan getoond worden aan de gebruiker.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;caller_name: &lt;/b&gt;
+Toon deze naam in plaats van de display naam.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;ringtone: &lt;/b&gt;
+De ring tone die gespeeld moet worden als de actie &quot;continue&quot; is.
+&lt;/p&gt;
+&lt;h2&gt;Variables&lt;/h2&gt;
+&lt;p&gt;
+De waarden van alle SIP headers van de inkomende INVITE worden via variabelen aan uw script doorgegeven. De variabele namen zijn als volgt samengesteld &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; Bijv. SIP_FROM bevat de waarde van de from header.
+&lt;/p&gt;
+&lt;p&gt;
+TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. &lt;b&gt;SIPREQUEST_URI&lt;/b&gt; bevat de request-URI van de INVITE. &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; bevat de gebruikersprofielnaam.</translation>
     </message>
     <message>
         <source>&amp;Voice mail address:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Voice mail adres:</translation>
     </message>
     <message>
         <source>The SIP address or telephone number to access your voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>SIP adres of telefoonnummer van uw voice mail.</translation>
     </message>
     <message>
         <source>Unsollicited</source>
-        <translation type="unfinished"></translation>
+        <translation>Unsollicited</translation>
     </message>
     <message>
         <source>Sollicited</source>
-        <translation type="unfinished"></translation>
+        <translation>Sollicited</translation>
     </message>
     <message>
         <source>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
@@ -4866,79 +4877,94 @@ Asterisk provides unsollicited message waiting indication.
 &lt;p&gt;
 Sollicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
+&lt;p&gt;
+Als uw provider de dienst aanbiedt waarmee u uw voice mail status kunt zien, dan kan Twinkle laten zien hoeveel nieuwe voice mail berichten er op u wachten. Er zijn 2 methoden waarop deze dienst kan worden aangeboden.
+&lt;/p&gt;
+&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;p&gt;
+Asterisk biedt unsollicited message waiting indication.
+&lt;/p&gt;
+&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;p&gt;
+Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;MWI type:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;MWI type:</translation>
     </message>
     <message>
         <source>Sollicited MWI</source>
-        <translation type="unfinished"></translation>
+        <translation>Sollicited MWI</translation>
     </message>
     <message>
         <source>Subscription &amp;duration:</source>
-        <translation type="unfinished"></translation>
+        <translation>Aanmeldings&amp;duur:</translation>
     </message>
     <message>
         <source>Mailbox &amp;user name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Mailbox &amp;gebruikersnaam:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your voice mailbox server.</source>
-        <translation type="unfinished"></translation>
+        <translation>De host naam, domeinnaam of IP adres van uw voice mailbox server.</translation>
     </message>
     <message>
         <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle meldt zich voor een bepaalde periode aan bij de voice mailbox server. Net voordat deze periode verstrijkt, zal Twinkle zich opnieuw aanmelden.</translation>
     </message>
     <message>
         <source>Your user name for accessing your voice mailbox.</source>
-        <translation type="unfinished"></translation>
+        <translation>Uw gebruikersnaam voor toegang tot uw mailbox.</translation>
     </message>
     <message>
         <source>Mailbox &amp;server:</source>
-        <translation type="unfinished"></translation>
+        <translation>Mailbox &amp;server:</translation>
     </message>
     <message>
         <source>Via outbound &amp;proxy</source>
-        <translation type="unfinished"></translation>
+        <translation>Via uitgaande &amp;proxy</translation>
     </message>
     <message>
         <source>Check this option if Twinkle should send SIP messages to the mailbox server via the outbound proxy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vink deze optie aan als Twinkle de SIP berichten naar de mailbox server via de uitgaande proxy moet sturen.</translation>
     </message>
     <message>
         <source>You must fill in a mailbox user name.</source>
-        <translation type="unfinished"></translation>
+        <translation>U moet een mailbox gebruikersnaam invullen.</translation>
     </message>
     <message>
         <source>You must fill in a mailbox server</source>
-        <translation type="unfinished"></translation>
+        <translation>U moet een mailbox server invullen</translation>
     </message>
     <message>
         <source>Invalid mailbox server.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ongeldige mailbox server.</translation>
     </message>
     <message>
         <source>Invalid mailbox user name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ongeldige mailbox gebruikersnaam.</translation>
     </message>
     <message>
         <source>Codeword &amp;packing order:</source>
-        <translation type="unfinished"></translation>
+        <translation>Codeword &amp;packing volgorde:</translation>
     </message>
     <message>
         <source>RFC 3551</source>
-        <translation type="unfinished">RFC 3551</translation>
+        <translation>RFC 3551</translation>
     </message>
     <message>
         <source>ATM AAL2</source>
-        <translation type="unfinished"></translation>
+        <translation>ATM AAL2</translation>
     </message>
     <message>
         <source>There are 2 standards to pack the G.726 codewords into an RTP packet. RFC 3551 is the default packing method. Some SIP devices use ATM AAL2 however. If you experience bad quality using G.726 with RFC 3551 packing, then try ATM AAL2 packing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Er zijn 2 methoden om G.726 codewords in een RTP pakket te stoppen. RFC 3551 is de default methode. Sommige SIP apparaten gebruiken de ATM AAL2 methode echter. Als bij het gebruik van G.726 met RFC 3551 packing de geluidskwaliteit slecht is, probeer dan ATM AAL2 packing.</translation>
+    </message>
+    <message>
+        <source>Use domain &amp;name to create a unique contact header value</source>
+        <translation>&amp;Gebruik domeinnaam voor een unieke contact header</translation>
     </message>
 </context>
 <context>
@@ -5072,11 +5098,11 @@ Dit kan de host naam of IP adres van uw PC zijn als u direct van PC naar PC wilt
     <name>YesNoDialog</name>
     <message>
         <source>&amp;Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Ja</translation>
     </message>
     <message>
         <source>&amp;No</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Nee</translation>
     </message>
 </context>
 </TS>

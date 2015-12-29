@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -233,6 +233,8 @@ bool t_subscription_dialog::failover_request(t_response *resp) {
 }
 
 void t_subscription_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid) {
+	t_abstract_dialog::recvd_response(r, tuid ,tid);
+
 	t_client_request *cr = subscription->req_out;
 	if (!cr) return;
 	
@@ -289,6 +291,8 @@ void t_subscription_dialog::recvd_response(t_response *r, t_tuid tuid, t_tid tid
 
 void t_subscription_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 	t_response *resp;
+	
+	t_abstract_dialog::recvd_request(r, tuid, tid);
 	
 	// Check cseq
 	// RFC 3261 12.2.2

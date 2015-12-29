@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -278,6 +278,11 @@ bool t_user::parse_num_conversion(const string &value, t_number_conversion &c) {
 }
 
 bool t_user::set_server_value(t_url &server, const string &scheme, const string &value) {
+	if (value.empty()) {
+		server.set_url("");
+		return false;
+	}
+
 	string s = scheme + ":" + value;
 	server.set_url(s);
 
@@ -387,7 +392,7 @@ t_user::t_user() {
 	zrtp_send_if_supported = false;
 	mwi_sollicited = false;
 	mwi_user.clear();
-	mwi_via_proxy = true;
+	mwi_via_proxy = false;
 	mwi_subscription_time = 3600;
 	mwi_vm_address.clear();
 }
@@ -1872,12 +1877,10 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 		} else if (parameter == FLD_REGISTRATION_TIME_IN_CONTACT) {
 			registration_time_in_contact = yesno2bool(value);
 		} else if (parameter == FLD_REGISTRAR) {
-			if (value.size() == 0) continue;
 			use_registrar = set_server_value(registrar, USER_SCHEME, value); 
 		} else if (parameter == FLD_REGISTER_AT_STARTUP) {
 			register_at_startup = yesno2bool(value);
 		} else if (parameter == FLD_OUTBOUND_PROXY) {
-			if (value.size() == 0) continue;
 			use_outbound_proxy = set_server_value(outbound_proxy,
 					USER_SCHEME, value);
 		} else if (parameter == FLD_ALL_REQUESTS_TO_PROXY) {
@@ -1989,7 +1992,6 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			use_nat_public_ip = true;
 			nat_public_ip = value;
 		} else if (parameter == FLD_STUN_SERVER) {
-			if (value.size() == 0) continue;
 			use_stun = set_server_value(stun_server, "stun", value);
 		} else if (parameter == FLD_TIMER_NOANSWER) {
 			timer_noanswer = atoi(value.c_str());

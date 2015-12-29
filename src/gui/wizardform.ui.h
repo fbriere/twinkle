@@ -10,7 +10,7 @@
 ** destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ int WizardForm::show(t_user *user)
 void WizardForm::update(const QString &item)
 {
 	// Disable/Enable controls
-	if (item == PROV_NONE) {
+	if (item == tr(PROV_NONE)) {
 		suggestAuthName = false;
 		authNameTextLabel->setEnabled(false);
 		authNameLineEdit->setEnabled(false);
@@ -142,13 +142,13 @@ void WizardForm::update(const QString &item)
 	}
 	
 	// Set values
-	if (item == PROV_NONE) {
+	if (item == tr(PROV_NONE)) {
 		domainLineEdit->clear();
 		authNameLineEdit->clear();
 		authPasswordLineEdit->clear();
 		proxyLineEdit->clear();
 		stunServerLineEdit->clear();
-	} else if (item == PROV_OTHER) {
+	} else if (item == tr(PROV_OTHER)) {
 		domainLineEdit->clear();
 		stunServerLineEdit->clear();
 		proxyLineEdit->clear();
@@ -211,7 +211,7 @@ void WizardForm::validate()
 	}
 	
 	// Register at startup
-	if (serviceProviderComboBox->currentText() == PROV_NONE) {
+	if (serviceProviderComboBox->currentText() == tr(PROV_NONE)) {
 		user_config->set_register_at_startup(false);
 	}
 	

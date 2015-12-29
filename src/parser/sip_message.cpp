@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,11 +27,15 @@
 ////////////////////////////////////
 
 t_sip_message::t_sip_message() {
+	src_ipaddr = 0;
+	src_port = 0;
 	version = SIP_VERSION;
 	body = NULL;
 }
 
 t_sip_message::t_sip_message(const t_sip_message& m) :
+		src_ipaddr(m.src_ipaddr),
+		src_port(m.src_port),
 		version(m.version),
 		hdr_accept(m.hdr_accept),
 		hdr_accept_encoding(m.hdr_accept_encoding),

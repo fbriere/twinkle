@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -190,10 +190,21 @@ void t_phone::cleanup_3way_state(unsigned short lineno) {
 			is_3way = false;
 			line1_3way = NULL;
 			line2_3way = NULL;
+			ui->cb_line_state_changed();
 		}
 	}
 
 	unlock();
+}
+
+void t_phone::cleanup_3way(void) {
+	if (!is_3way) return;
+	
+	if (line1_3way->get_substate() == LSSUB_IDLE) {
+		cleanup_3way_state(line1_3way->get_line_number());
+	} else if (line2_3way->get_substate() == LSSUB_IDLE) {
+		cleanup_3way_state(line2_3way->get_line_number());
+	}
 }
 
 void t_phone::invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
@@ -717,6 +728,7 @@ void t_phone::recvd_global_error(t_response *r, t_tuid tuid, t_tid tid) {
 void t_phone::post_process_response(t_response *r, t_tuid tuid, t_tid tid) {
 	cleanup_dead_lines();
 	move_releasing_lines_to_background();
+	cleanup_3way();
 }
 
 void t_phone::recvd_invite(t_request *r, t_tid tid) {
@@ -1739,6 +1751,7 @@ void t_phone::recvd_info(t_request *r, t_tid tid) {
 void t_phone::post_process_request(t_request *r, t_tid cancel_tid, t_tid target_tid) {
 	cleanup_dead_lines();
 	move_releasing_lines_to_background();
+	cleanup_3way();
 }
 
 
@@ -2050,12 +2063,12 @@ void t_phone::pub_zrtp_go_clear_ok(unsigned short line) {
 	unlock();
 }
 
-void t_phone::pub_subscribe_mwi(t_user *user, unsigned long expires) {
+void t_phone::pub_subscribe_mwi(t_user *user) {
 	lock();
 	
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
-		pu->subscribe_mwi(expires);
+		pu->subscribe_mwi();
 	} else {
 		log_file->write_header("t_phone::pub_subscribe_mwi", LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("User profile not active: ");
@@ -2846,7 +2859,7 @@ void t_phone::init(void) {
 			// No registration will be done, so subscribe to
 			// MWI now.
 			if ((*i)->get_mwi_sollicited()) {
-				pub_subscribe_mwi(*i, DUR_MWI(*i));
+				pub_subscribe_mwi(*i);
 			}
 		}
 		
@@ -2858,10 +2871,27 @@ void t_phone::init(void) {
 	unlock();
 }
 
+bool t_phone::set_sighandler(void) const {
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+
+	sa.sa_handler = phone_sighandler;
+	sa.sa_flags = SA_RESTART;
+	if (sigaction (SIGCHLD, &sa, NULL) < 0) return false;
+	if (sigaction (SIGTERM, &sa, NULL) < 0) return false;
+	if (sigaction (SIGINT, &sa, NULL) < 0) return false;
+	
+	return true;
+}
+
+
 void t_phone::terminate(void) {
+	string msg;
 	lock();
 	
 	// Clear all lines
+	log_file->write_report("Clear all lines.",
+		"t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 	for (int i = 0; i < NUM_CALL_LINES; i++) {
 		switch (lines[i]->get_substate()) {
 		case LSSUB_IDLE:
@@ -2894,11 +2924,19 @@ void t_phone::terminate(void) {
 	{
 		// Unsubscribe MWI
 		if (is_mwi_subscribed(*i)) {
+			msg = (*i)->get_profile_name();
+			msg += ": Unsubscribe MWI.";
+			log_file->write_report(msg,
+				"t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 			pub_unsubscribe_mwi(*i);
 		}
 		
 		// De-register
 		if (get_is_registered(*i)) {
+			msg = (*i)->get_profile_name();
+			msg += ": Deregister.";
+			log_file->write_report(msg,
+				"t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 			pub_registration(*i, REG_DEREGISTER);
 		}
 	}
@@ -2911,19 +2949,27 @@ void t_phone::terminate(void) {
 		while (get_is_registered(*i)) {
 			sleep(1);
 		}
+		msg = (*i)->get_profile_name();
+		msg += ": Registration terminated.";
+		log_file->write_report(msg, "t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 	}
 	
 	// Wait for MWI unsubscription
 	int mwi_wait = 0;
 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++)
 	{
-		while (!is_mwi_terminated(*i) && mwi_wait < DUR_UNSUBSCRIBE_GUARD) {
+		while (!is_mwi_terminated(*i) && mwi_wait <= DUR_UNSUBSCRIBE_GUARD/1000) {
 			sleep(1);
 			mwi_wait++;
 		}
+		msg = (*i)->get_profile_name();
+		msg += ": MWI subscription terminated.";
+		log_file->write_report(msg, "t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 	}
 		
 	// Wait till all lines are idle
+	log_file->write_report("Waiting for all lines to become idle.",
+		"t_phone::terminate", LOG_NORMAL, LOG_DEBUG);
 	int dur = 0;
 	while (dur < QUIT_IDLE_WAIT) {
 		if (all_lines_idle()) break;
@@ -2936,9 +2982,16 @@ void t_phone::terminate(void) {
 	lock();
 	for (int i = 0; i < lines.size(); i++) {
 		if (lines[i]->get_substate() != LSSUB_IDLE) {
+			msg = "Force line %1 to idle state.";
+			msg = replace_first(msg, "%1", int2str(i));
+			log_file->write_report(msg, "t_phone::terminate", 
+				LOG_NORMAL, LOG_DEBUG);
 			lines[i]->force_idle();
 		}
 	}
+	
+	log_file->write_report("Finished phone termination.",
+		"t_phone::terminate",  LOG_NORMAL, LOG_DEBUG);
 	unlock();
 }
 
@@ -2989,5 +3042,27 @@ void *phone_sigwait(void *arg) {
 			log_file->write_raw(") received.\n");
 			log_file->write_footer();
 		}
+	}
+}
+
+void phone_sighandler(int sig) {
+	int		child_status;
+	pid_t		pid;
+	
+	// Minimal processing should be done in a signal handler.
+	// No I/O should be performed.
+	switch (sig) {
+	case SIGINT:
+		// Post a quit command instead of executing it. As executing
+		// involves a lock that may lead to a deadlock.
+		ui->cmd_quit_async();
+		break;
+	case SIGTERM:
+		ui->cmd_quit_async();
+		break;
+	case SIGCHLD:
+		// Cleanup terminated child process
+		pid = wait(&child_status);
+		break;
 	}
 }

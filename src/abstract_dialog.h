@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -62,6 +62,11 @@ protected:
 	unsigned long	local_resp_nr;	// last local response nr issued
 	unsigned long	remote_resp_nr;	// last remote response nr received
 	set<string>	remote_extensions; // extensions supported by remote end
+	
+	// The IP address and port from which the last message was
+	// received.
+	unsigned long	remote_ipaddr;
+	unsigned short	remote_port;
 
 	// Remove a client request. Pass one of the client request
 	// pointers to this member. The reference count of the
@@ -125,8 +130,8 @@ public:
 	virtual bool failover_request(t_response *resp) = 0;
 
 	// Handle received events
-	virtual void recvd_response(t_response *r, t_tuid tuid, t_tid tid) = 0;
-	virtual void recvd_request(t_request *r, t_tuid tuid, t_tid tid) = 0;
+	virtual void recvd_response(t_response *r, t_tuid tuid, t_tid tid);
+	virtual void recvd_request(t_request *r, t_tuid tuid, t_tid tid);
 
 	// Match response with dialog
 	virtual bool match_response(t_response *r, t_tuid tuid);
@@ -148,6 +153,10 @@ public:
 	// Get the remote uri/display
 	t_url get_remote_uri(void) const;
 	string get_remote_display(void) const;
+	
+	// Get the remote IP address and port
+	unsigned long get_remote_ipaddr(void) const;
+	unsigned short get_remote_port(void) const;
 	
 	// Get call-id and tags
 	string get_call_id(void) const;

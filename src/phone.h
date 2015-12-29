@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -150,6 +150,10 @@ private:
 	// If a line was part of a 3way, then remove it from the
 	// 3way conference data.
 	void cleanup_3way_state(unsigned short lineno);
+	
+	// If one of the lines of a 3way calls has become idle, then
+	// cleanup the 3way conference data.
+	void cleanup_3way(void);
 
 	// Actions
 	void invite(t_phone_user *pu, const t_url &to_uri, const string &to_display,
@@ -320,7 +324,7 @@ public:
 	void pub_unseize(unsigned short line);
 	
 	// MWI
-	void pub_subscribe_mwi(t_user *user, unsigned long expires);
+	void pub_subscribe_mwi(t_user *user);
 	void pub_unsubscribe_mwi(t_user *user);
 
 	void timeout(t_phone_timer timer, unsigned short id_timer);
@@ -448,6 +452,10 @@ public:
 	// Register all active users with auto register
 	void init(void);
 	
+	// Set the signal handler to handler for LinuxThreads.
+	// Returns true if succesful, false otherwise.
+	bool set_sighandler(void) const;
+	
 	// Terminate the phone functions.
 	// Release all calls, don't accept any new calls.
 	// Deregister all active users.
@@ -458,7 +466,10 @@ public:
 void *phone_uas_main(void *arg);
 
 // Entry function of thread catching signals to terminate
-// the application in a graceful manner
+// the application in a graceful manner if NPLT is used.
 void *phone_sigwait(void *arg);
+
+// Signal handler to process signals if LinuxThreads is used.
+void phone_sighandler(int sig);
 
 #endif

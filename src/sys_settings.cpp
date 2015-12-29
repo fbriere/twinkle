@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -859,7 +859,7 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
-	s += "Copyright (C) 2005-2006  ";
+	s += "Copyright (C) 2005-2007  ";
 	s += PRODUCT_AUTHOR;
 	if (html) s += "<BR>";
 	s += "\n";
@@ -1667,18 +1667,21 @@ bool t_sys_settings::exec_audio_validation(bool ringtone, bool speaker, bool mic
 	bool full_duplex = speaker && mic && equal_audio_dev(dev_speaker, dev_mic);
 	
 	if (ringtone && !t_audio_io::validate(dev_ringtone, true, false)) {
-		string msg = TRANSLATE("Cannot acces the ring tone device (%1).\n");
+		string msg = TRANSLATE("Cannot access the ring tone device (%1).");
 		error_msg += replace_first(msg, "%1", dev_ringtone.get_description());
+		error_msg += "\n";
 		valid = false;
 	}
 	if (speaker && !t_audio_io::validate(dev_speaker, true, full_duplex)) {
-		string msg = TRANSLATE("Cannot acces the speaker (%1).\n");
+		string msg = TRANSLATE("Cannot access the speaker (%1).");
 		error_msg += replace_first(msg, "%1", dev_speaker.get_description());
+		error_msg += "\n";
 		valid = false;
 	}
 	if (mic && !t_audio_io::validate(dev_mic, full_duplex, true)) {
-		string msg = TRANSLATE("Cannot acces the microphone (%1).\n");
+		string msg = TRANSLATE("Cannot access the microphone (%1).");
 		error_msg += replace_first(msg, "%1", dev_mic.get_description());
+		error_msg += "\n";
 		valid = false;
 	}
 	

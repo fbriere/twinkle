@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -98,6 +98,13 @@ enum t_msg_type {
 
 class t_sip_message {
 public:
+	// The source IP address and port are only set for messages
+	// received from the network. So the transaction user knows
+	// where a message somes from.
+	unsigned long		src_ipaddr;
+	unsigned short		src_port;
+
+	// SIP version
 	string			version;
 
 	// All possible headers

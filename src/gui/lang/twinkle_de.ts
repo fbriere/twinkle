@@ -3,71 +3,71 @@
     <name>AddressCardForm</name>
     <message>
         <source>Twinkle - Address Card</source>
-        <translation type="unfinished"></translation>
+        <translation>Twinkle - Adresseintrag</translation>
     </message>
     <message>
         <source>&amp;Remark:</source>
-        <translation type="unfinished"></translation>
+        <translation>Anme&amp;rkung:</translation>
     </message>
     <message>
         <source>Infix name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Mittlerer Name oder Titel.</translation>
     </message>
     <message>
         <source>First name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Vorname oder allg. linker Namensbestandteil. Sortierschlüssel!</translation>
     </message>
     <message>
         <source>&amp;First name:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Vorname:</translation>
     </message>
     <message>
         <source>You may place any remark about the contact here.</source>
-        <translation type="unfinished"></translation>
+        <translation>Feld für beliebige Anmerkungen. Eigene Spalte, nach der sortiert werden kann - klicken Sie hierzu einfach auf den Spaltenkopf in der Adressliste.</translation>
     </message>
     <message>
         <source>&amp;Phone:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Telefon:</translation>
     </message>
     <message>
         <source>&amp;Infix name:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Titel:</translation>
     </message>
     <message>
         <source>Phone number or SIP address of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Telefonnummer oder SIP-Adresse des Kontakts.</translation>
     </message>
     <message>
         <source>Last name of contact.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nachname oder allg. rechter Namensbestandteil. </translation>
     </message>
     <message>
         <source>&amp;Last name:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Nachname:</translation>
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">Abbruch (Es&amp;c)</translation>
+        <translation>Abbruch (Es&amp;c)</translation>
     </message>
     <message>
         <source>Alt+C</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>You must fill in a name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie müssen einen Namen angeben.</translation>
     </message>
     <message>
         <source>You must fill in a phone number or SIP address.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie müssen eine Nummer oder SIP-Adresse angeben.</translation>
     </message>
 </context>
 <context>
@@ -273,17 +273,7 @@
     <name>FreeDeskSysTray</name>
     <message>
         <source>Show/Hide</source>
-        <translation>¿mb¿
-#IF &lt;comment=&quot;maximize / minimize mainwin (.*)&quot;&gt;
-#THEN
-#  IF &lt;comment=&quot;(.*) button&quot;&gt;
-#  THEN
-Öffnen
-#  ELSE
-Wiederherstellen
-#  ENDIF
-#ENDIF
-/¿</translation>
+        <translation>Wiederherstellen/Minimieren</translation>
     </message>
     <message>
         <source>Quit</source>
@@ -306,7 +296,7 @@ Wiederherstellen
     </message>
     <message>
         <source>Cannot find a network interface. Twinkle will use 127.0.0.1 as the local IP address. When you connect to the network you have to restart Twinkle to use the correct IP address.</source>
-        <translation>Twinkle kann kein aktives Netzwerk-Interface finden, und nutzt nun 127.0.0.1 als lokale IP-Adresse. Wenn Sie später eine Netzwerkverbindung herstellen, müssen Sie Twinkle &lt;b&gt;neu starten&lt;/b&gt;, damit es die korrekte Netzadresse finden und funktionieren kann.</translation>
+        <translation>Twinkle kann kein aktives Netzwerk-Interface finden, und nutzt nun 127.0.0.1 als lokale IP-Adresse. Wenn Sie später eine Netzwerkverbindung herstellen, müssen Sie Twinkle neu starten, damit es die korrekte Netzadresse finden und funktionieren kann.</translation>
     </message>
     <message>
         <source>Line %1: incoming call for %2</source>
@@ -322,7 +312,7 @@ Wiederherstellen
     </message>
     <message>
         <source>Line %1: far end released call.</source>
-        <translation>Leitung 1: beendet durch Gegenstelle.</translation>
+        <translation>Leitung %1: beendet durch Gegenstelle.</translation>
     </message>
     <message>
         <source>Line %1: SDP answer from far end not supported.</source>
@@ -433,10 +423,6 @@ Wiederherstellen
         <translation>%1, Abmeldung erfolgreich: %2 %3</translation>
     </message>
     <message>
-        <source>%1, de-registration failed: %1 %2</source>
-        <translation>¿mb¿ typo - parameters? /¿%1, Abmeldung erfolglos: %2 %3</translation>
-    </message>
-    <message>
         <source>%1, fetching registrations failed: %2 %3</source>
         <translation>%1, Fehler bei Abfrage Anmeldungen: %2 %3</translation>
     </message>
@@ -510,15 +496,7 @@ Wiederherstellen
     </message>
     <message>
         <source>No further notifications will be received.</source>
-        <translation>¿mb¿ 
-#IF [this means &quot;tw doesnt expect to hear further notice from far-end&quot;]
-#THEN
-GgSt stoppt Mitteilungsversand
-#ELSEIF [this means &quot;tw refuses to take further notice of notifications&quot;]
-#THEN
-Mitteilungsempfang beendet
-#ENDIF
- /¿</translation>
+        <translation>GgSt stoppt Mitteilungsversand.</translation>
     </message>
     <message>
         <source>Line %1: transferring call to %2</source>
@@ -531,14 +509,6 @@ Mitteilungsempfang beendet
     <message>
         <source>Line %1: Call transfer failed. Retrieving original call.</source>
         <translation>Leitung %1:  Rufweitervermittlung erfolglos. Ursprüngliches Gespräch wird fortgesetzt.</translation>
-    </message>
-    <message>
-        <source>STUN request failed: %1 %2</source>
-        <translation type="obsolete">STUN-Anfrage erfolglos: %1 %2</translation>
-    </message>
-    <message>
-        <source>STUN request failed.</source>
-        <translation type="obsolete">STUN-Anfrage erfolglos.</translation>
     </message>
     <message>
         <source>Redirecting call</source>
@@ -575,11 +545,6 @@ Mitteilungsempfang beendet
     <message>
         <source>Request to transfer call received from:</source>
         <translation>Weitervermittlung angefordert durch:</translation>
-    </message>
-    <message>
-        <source>Request to transfer received call.</source>
-        <translation type="unfinished">¿mb¿ what means &quot;received&quot;? = established /¿ 
-¿jr¿ todo /¿</translation>
     </message>
     <message>
         <source>Do you allow the call to be transferred to the following destination?</source>
@@ -639,31 +604,39 @@ Mitteilungsempfang beendet
     </message>
     <message>
         <source>Override lock file and start anyway?</source>
-        <translation type="unfinished"></translation>
+        <translation>Sperrdatei ignorieren und trotzdem starten?</translation>
     </message>
     <message>
         <source>%1, STUN request failed: %2 %3</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, STUN Anfrage fehlgeschlagen: %2 %3</translation>
     </message>
     <message>
         <source>%1, STUN request failed.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, STUN Anfrage fehlgeschlagen.</translation>
     </message>
     <message>
         <source>%1, voice mail status failure.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, Fehler Voice-Mail Status.</translation>
     </message>
     <message>
         <source>%1, voice mail status rejected.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, Voice-Mail Status abgelehnt.</translation>
     </message>
     <message>
         <source>%1, voice mailbox does not exist.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, Voice-Mailbox existiert nicht.</translation>
     </message>
     <message>
         <source>%1, voice mail status terminated.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1, keine weitere Voice-Mail Statusübermittlung. </translation>
+    </message>
+    <message>
+        <source>%1, de-registration failed: %2 %3</source>
+        <translation>%1, Abmeldung erfolglos: %2 %3</translation>
+    </message>
+    <message>
+        <source>Request to transfer call received.</source>
+        <translation>GgSt fordert Vermittlung an.</translation>
     </message>
 </context>
 <context>
@@ -683,11 +656,6 @@ Mitteilungsempfang beendet
     <message>
         <source>Phone</source>
         <translation>Telefon</translation>
-    </message>
-    <message>
-        <source>This list of addresses is taken from &lt;b&gt;KAddressbook&lt;/b&gt;. Contacts for which you did not provide a phone number are not shown here. To add, delete or modify address information you have to use KAddressbook.</source>
-        <translation type="obsolete">Diese Adressliste stammt aus &lt;b&gt;KAddressbook&lt;/b&gt; (bzw Kontact). Adressen/Kontakte, die keine Telefonnr oder SIP-Adresse enthalten, sind nicht aufgeführt. 
-Nutzen Sie zum Anlegen und Bearbeiten Ihrer Adressinformationen das Programm KAddressbook bzw Kontact.</translation>
     </message>
     <message>
         <source>&amp;Show only SIP addresses</source>
@@ -731,68 +699,66 @@ Ein Schliessen und erneutes Öffnen des Fensters führt &lt;i&gt;nicht&lt;/i&gt;
         <translation></translation>
     </message>
     <message>
-        <source>&lt;p&gt;You seem not to have any contacts with a phone number in &lt;b&gt;KAddressbook&lt;/b&gt;, KDE&apos;s address book application. Twinkle retrieves all contacts with a phone number from KAddressbook. To manage your contacts you have to use KAddressbook.&lt;/p&gt;</source>
-        <translation type="obsolete">&lt;p&gt;&lt;b&gt;KAddressbook&lt;/b&gt; bzw &lt;b&gt;Kontact&lt;/b&gt; scheint keine Einträge mit Telefonnr zu enthalten, die Twinkle dort auslesen könnte. Bitte nutzen Sie eines dieser Programme, um Ihre Adressdaten zu bearbeiten.&lt;/p&gt;</translation>
-    </message>
-    <message>
         <source>&amp;KAddressBook</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>This list of addresses is taken from &lt;b&gt;KAddressBook&lt;/b&gt;. Contacts for which you did not provide a phone number are not shown here. To add, delete or modify address information you have to use KAddressBook.</source>
-        <translation type="unfinished"></translation>
+        <translation>Diese Adressliste stammt aus &lt;b&gt;KAddressbook&lt;/b&gt; (bzw Kontact). Adressen/Kontakte, die keine Telefonnr oder SIP-Adresse enthalten, sind nicht aufgeführt. 
+Nutzen Sie zum Anlegen und Bearbeiten Ihrer systemweiten Adressinformationen das Programm KAddressbook bzw Kontact.</translation>
     </message>
     <message>
         <source>&amp;Local address book</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Lokales Adressbuch</translation>
     </message>
     <message>
         <source>Remark</source>
-        <translation type="unfinished"></translation>
+        <translation>Anmerkung</translation>
     </message>
     <message>
         <source>Contacts in the local address book of Twinkle.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontakte des lokalen Twinkle-Adressbuchs.</translation>
     </message>
     <message>
         <source>&amp;Add</source>
-        <translation type="unfinished">&amp;Neu</translation>
+        <translation>&amp;Neu</translation>
     </message>
     <message>
         <source>Alt+A</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+N</translation>
     </message>
     <message>
         <source>Add a new contact to the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Neuen Kontakt im lokalen Adressbuch anlegen.</translation>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation type="unfinished">&amp;Löschen</translation>
+        <translation>&amp;Löschen</translation>
     </message>
     <message>
         <source>Alt+D</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+L</translation>
     </message>
     <message>
         <source>Delete a contact from the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausgewählten Kontakt aus dem lokalen Adressbuch löschen.</translation>
     </message>
     <message>
         <source>&amp;Edit</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Bearbeiten</translation>
     </message>
     <message>
         <source>Alt+E</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+B</translation>
     </message>
     <message>
         <source>Edit a contact from the local address book.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausgewählten Kontakt im lokalen Adressbuch bearbeiten.</translation>
     </message>
     <message>
         <source>&lt;p&gt;You seem not to have any contacts with a phone number in &lt;b&gt;KAddressBook&lt;/b&gt;, KDE&apos;s address book application. Twinkle retrieves all contacts with a phone number from KAddressBook. To manage your contacts you have to use KAddressBook.&lt;p&gt;As an alternative you may use Twinkle&apos;s local address book.&lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;&lt;b&gt;KAddressbook&lt;/b&gt; bzw &lt;b&gt;Kontact&lt;/b&gt; scheint keine Einträge mit Telefonnr zu enthalten, die Twinkle dort auslesen könnte. Bitte nutzen Sie eines dieser Programme, um Ihre Adressdaten zu bearbeiten.&lt;/p&gt;
+&lt;p&gt;Weiterhin steht Ihnen Twinkles lokales Adressbuch unabhängig von o.g. Programmen zur Verfügung.&lt;/p&gt;</translation>
     </message>
 </context>
 <context>
@@ -821,11 +787,12 @@ A profile contains your user settings, e.g. your user name and password. You hav
 If you have multiple SIP accounts, you can create multiple profiles. When you startup Twinkle it will show you the list of profile names from which you can select the profile you want to run.
 &lt;br&gt;&lt;br&gt;
 To remember your profiles easily you could use your SIP user name as a profile name, e.g. &lt;b&gt;example@example.com&lt;/b&gt;</source>
-        <translation>Der Name, unter dem das neue Profil angelegt wird, in dem dann alle zusammengehörenden Daten wie Provider, SIP-Nutzername, Passwort usw gespeichert werden. (entsprechend z.B. einer &quot;Identität&quot; unter KMail)
-Da Sie bei Twinkle mehrere Benutzerprofile anlegen können, z.B. um mehrere SIP-Provider zu nutzen, muss jedes Profil einen Namen erhalten. Unter diesem Namen finden Sie es später in Auswahllisten, Meldungen usw.
-Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;meinname@meinprovider.de&lt;/b&gt;, aber Sie können letztendlich beliebige Namen wählen.
-
-&lt;b&gt;Bevor Sie hier Ihr erstes SIP-Profil anlegen, sollten Sie sich bei einem SIP-Provider (vertraglich) angemeldet haben und sich notieren, welche SIP-Zugangsdaten dieser für Sie zur Verfügung gestellt hat.&lt;/b&gt;</translation>
+        <translation>Der &lt;b&gt;Name, unter dem das neue Profil angelegt&lt;/b&gt; wird, in dem dann alle zusammengehörenden Daten wie Provider, SIP-Nutzername, Passwort usw gespeichert werden. (entsprechend z.B. einer &quot;Identität&quot; unter KMail)&lt;br&gt;&lt;br&gt;
+Da Sie bei Twinkle mehrere Benutzerprofile anlegen können, z.B. um mehrere SIP-Provider zu nutzen, muss jedes Profil einen Namen erhalten. Unter diesem Namen finden Sie es später in Auswahllisten, Meldungen usw.&lt;br&gt;
+Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;meinname@meinprovider.de&lt;/b&gt;, aber Sie können letztendlich beliebige Namen wählen.&lt;br&gt;
+&lt;p&gt;
+&lt;b&gt;Bevor Sie hier Ihr erstes SIP-Profil anlegen, sollten Sie sich bei einem SIP-Provider (vertraglich) angemeldet haben&lt;/b&gt; und sich notieren, welche &lt;b&gt;SIP-Zugangsdaten&lt;/b&gt; dieser für Sie zur Verfügung gestellt hat.
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Cannot find .twinkle directory in your home directory.</source>
@@ -949,7 +916,8 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     <message>
         <source>&lt;p&gt;Clear the complete call history.&lt;/p&gt;
 &lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; this will clear &lt;b&gt;all&lt;/b&gt; records, also records not shown depending on the checked view options.&lt;/p&gt;</source>
-        <translation>Löscht das gesamte Anrufe-Protokoll, &lt;b&gt;inklusive&lt;/b&gt; aller evtl gerade über &quot;Anzeigen&quot; &lt;b&gt;ausgeblendeten Einträge.&lt;/b&gt;</translation>
+        <translation>Löscht das gesamte Anrufe-Protokoll,&lt;br&gt;
+&lt;b&gt;inklusive&lt;/b&gt; aller evtl gerade über &quot;Anzeigen&quot; &lt;b&gt;ausgeblendeten Einträge.&lt;/b&gt;</translation>
     </message>
     <message>
         <source>&amp;Close</source>
@@ -1033,7 +1001,7 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>Re:</source>
-        <translation type="unfinished">¿mb¿ have no idea /¿Re:</translation>
+        <translation>Aw:</translation>
     </message>
 </context>
 <context>
@@ -1084,11 +1052,11 @@ Es bietet sich an, hier Ihre SIP-Adresse als Name zu verwenden, also &lt;b&gt;me
     </message>
     <message>
         <source>&amp;Hide identity</source>
-        <translation type="unfinished"></translation>
+        <translation>Absenderangaben &amp;unterdrücken</translation>
     </message>
     <message>
         <source>Alt+H</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+U</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -1097,11 +1065,12 @@ With this option you request your SIP provider to hide your identity from the ca
 &lt;p&gt;
 &lt;b&gt;Warning:&lt;/b&gt; not all providers support identity hiding.
 &lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;Mit dieser Option weisen Sie Ihren SIP-Provider an, Ihre Absenderangaben (z.B. Telefonnr, SIP-Adresse) nicht an die Gegenstelle weiterzuleiten. Prinzipbedingt wird Ihre IP-Adresse &lt;b&gt;immer&lt;/b&gt; der Gegenstelle mitgeteilt.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Achtung: &lt;/b&gt;Nicht alle Provider unterstützen diese Funktion!&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Not all SIP providers support identity hiding. Make sure your SIP provider supports it if you really need it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicht alle SIP-Provider unterstützen die Funktion &quot;Absenderangaben unterdrücken&quot;. Bitte vergewissern Sie sich, bevor Sie sich auf diese Funktion verlassen.</translation>
     </message>
 </context>
 <context>
@@ -1233,7 +1202,7 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>idle</source>
         <comment>No need to translate</comment>
-        <translation>¿jr¿ check /¿frei</translation>
+        <translation></translation>
     </message>
     <message>
         <source>Call is on hold</source>
@@ -1262,7 +1231,18 @@ Both ends of an encrypted voice channel receive the same SAS on the first call. 
 &lt;p&gt;
 If the SAS is equal at both ends, then you should confirm it by clicking this padlock for stronger security of future calls to the same destination. For subsequent calls to the same destination, you don&apos;t have to confirm the SAS again. The padlock will show a check symbol when the SAS has been confirmed.
 &lt;/p&gt;</source>
-        <translation type="unfinished">¿jr¿ todo /¿</translation>
+        <translation>&lt;p&gt;
+Das Vorhängeschloss erscheint, wenn eine abhörsicher verschüsselte Verbindung zur Übertragung der Sprachdaten aufgebaut werden konnte.
+&lt;/p&gt;
+&lt;h3&gt;SAS - Short Authentication String&lt;/h3&gt;
+&lt;p&gt;
+Beide Teilnehmer eines verschlüsselten Gesprächs bekommen bei der ersten Kontaktaufnahme den SAS angezeigt, einen nicht fälschbaren eindeutigen &quot;Fingerabdruck&quot; der ausgehandelten Verschlüsselung. Durch Vergleich dieses SAS können Sie und Ihr Gesprächspartner sicherstellen, dass Sie tatsächlich &lt;i&gt;direkt&lt;/i&gt; miteinander verbunden sind. Stichwort &quot;man-in-the-middle attack&quot; (MitM).
+&lt;/p&gt;
+&lt;p&gt;
+Da ein Angreifer schlecht mitten im Gespräch die Stimme Ihres Gesprächspartners imitieren kann, reicht es völlig, beim ersten Telefonat den SAS vorzulesen.
+Bei Übereinstimmung klicken Sie auf das Vorhängeschloss, und Twinkle merkt sich die (den &quot;Ausweis&quot; der) Gegenstelle als &quot;persönlich bekannt&quot; und lässt sich bei zukünftigen Anrufen von/zu dieser GgSt nicht täuschen (&quot;Ausweiskontrolle&quot;). Das Schloss wird mit einem Häkchen dargestellt, und signalisiert so, dass die GgSt auf ihre Identität überprüft und eindeutig erkannt wurde, und also eine direkte Verbindung besteht.
+&lt;/p&gt;
+&lt;p&gt;Klick auf ein Schloss &lt;i&gt;mit&lt;/i&gt; Häkchen löscht die Vertrauensbeziehung und Sie können/müssen den SAS neu vergleichen&lt;/p&gt;</translation>
     </message>
     <message>
         <source>sas</source>
@@ -1380,29 +1360,12 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <translation>Ü&amp;ber Twinkle</translation>
     </message>
     <message>
-        <source>Call</source>
-        <translation>Anrufen</translation>
-    </message>
-    <message>
-        <source>&amp;Call...</source>
-        <comment>Menu item in Call menu</comment>
-        <translation>Anrufen (&amp;Call)...</translation>
-    </message>
-    <message>
         <source>Call someone</source>
         <translation>Anrufen - erweiterte Nummerneingabe, Betreff...</translation>
     </message>
     <message>
         <source>F5</source>
         <translation></translation>
-    </message>
-    <message>
-        <source>Answer</source>
-        <translation>&quot;Ja?&quot;</translation>
-    </message>
-    <message>
-        <source>&amp;Answer</source>
-        <translation>&amp;Annehmen</translation>
     </message>
     <message>
         <source>Answer incoming call</source>
@@ -1413,24 +1376,8 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <translation></translation>
     </message>
     <message>
-        <source>Bye</source>
-        <translation>Ende</translation>
-    </message>
-    <message>
-        <source>&amp;Bye</source>
-        <translation>Auflegen (&amp;Bye)</translation>
-    </message>
-    <message>
         <source>Release call</source>
         <translation>Anruf beenden</translation>
-    </message>
-    <message>
-        <source>Reject</source>
-        <translation>Nein!</translation>
-    </message>
-    <message>
-        <source>&amp;Reject</source>
-        <translation>Ab&amp;weisen</translation>
     </message>
     <message>
         <source>Reject incoming call</source>
@@ -1441,40 +1388,16 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <translation></translation>
     </message>
     <message>
-        <source>Hold</source>
-        <translation>Halten</translation>
-    </message>
-    <message>
-        <source>&amp;Hold</source>
-        <translation>&amp;Halten</translation>
-    </message>
-    <message>
         <source>Put a call on hold, or retrieve a held call</source>
         <translation>Ein Gespräch halten, oder ein gehaltenes fortsetzen</translation>
-    </message>
-    <message>
-        <source>Redirect</source>
-        <translation>Umleiten</translation>
-    </message>
-    <message>
-        <source>R&amp;edirect...</source>
-        <translation>Uml&amp;eiten...</translation>
     </message>
     <message>
         <source>Redirect incoming call without answering</source>
         <translation>Eingehenden Ruf umleiten ohne Gesprächsannahme</translation>
     </message>
     <message>
-        <source>Dtmf</source>
-        <translation>DTMF</translation>
-    </message>
-    <message>
-        <source>&amp;Dtmf...</source>
-        <translation>&amp;DTMF...</translation>
-    </message>
-    <message>
         <source>Open keypad to enter digits for voice menu&apos;s</source>
-        <translation>¿mb¿ this transl nice for tooltip, but probably won´t fit in mphoneform statusline. Anyway as long as it doesn´t break/¿Öffnet eine Wähltastatur zur Eingabe von Tastenbefehlen - für Steuerung von zB. Anrufbeantwortern</translation>
+        <translation>Öffnet eine Wähltastatur zur Eingabe von Tastenbefehlen - für Steuerung von zB. Anrufbeantwortern</translation>
     </message>
     <message>
         <source>Register</source>
@@ -1509,10 +1432,6 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <translation>Fähigkeiten Gegenstelle</translation>
     </message>
     <message>
-        <source>&amp;Terminal capabilities...</source>
-        <translation>&amp;Fähigkeiten Gegenstelle...</translation>
-    </message>
-    <message>
         <source>Request terminal capabilities from someone</source>
         <translation>Abfrage der &quot;terminal capabilities&quot;, der Eigenschaften einer Gegenstelle</translation>
     </message>
@@ -1531,10 +1450,6 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     <message>
         <source>Call &amp;redirection...</source>
         <translation>&amp;Rufumleitung...</translation>
-    </message>
-    <message>
-        <source>Redial</source>
-        <translation>Nochmal</translation>
     </message>
     <message>
         <source>Repeat last call</source>
@@ -1561,37 +1476,12 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
         <translation>Ben&amp;utzerprofil...</translation>
     </message>
     <message>
-        <source>Conf</source>
-        <translation>3er</translation>
-    </message>
-    <message>
-        <source>&amp;Conference</source>
-        <translation>Konferen&amp;z</translation>
-    </message>
-    <message>
         <source>Join two calls in a 3-way conference</source>
         <translation>2 Gespräche auf Ltg1 u. Ltg2 zu einer 3er Konferenz zusammenschalten</translation>
     </message>
     <message>
-        <source>Mute</source>
-        <translation>Stumm</translation>
-    </message>
-    <message>
-        <source>&amp;Mute</source>
-        <translation>Stu&amp;mm
-</translation>
-    </message>
-    <message>
         <source>Mute a call</source>
         <translation>Das Mikrofon für diese Leitung ab- oder wieder anschalten</translation>
-    </message>
-    <message>
-        <source>Xfer</source>
-        <translation>Vermtlg</translation>
-    </message>
-    <message>
-        <source>Trans&amp;fer...</source>
-        <translation>Vermitte&amp;ln...</translation>
     </message>
     <message>
         <source>Transfer call</source>
@@ -1607,11 +1497,11 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Deregister all</source>
-        <translation>Abmelden alle</translation>
+        <translation>Abmelden alle Endg</translation>
     </message>
     <message>
         <source>Deregister &amp;all</source>
-        <translation>Abmel&amp;den alle</translation>
+        <translation>Abmel&amp;den alle Endger.</translation>
     </message>
     <message>
         <source>Deregister all your registered devices</source>
@@ -1655,7 +1545,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Activate or de-activate users</source>
-        <translation>Benutzerprofile de/aktivieren, bearbeiten usw</translation>
+        <translation>Benutzerprofile de/aktivieren, bearbeiten usw.</translation>
     </message>
     <message>
         <source>What&apos;s This?</source>
@@ -1667,7 +1557,7 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Shift+F1</source>
-        <translation>Umschalt+F1</translation>
+        <translation>Shift+F1</translation>
     </message>
     <message>
         <source>Line 1</source>
@@ -1812,91 +1702,207 @@ If the SAS is equal at both ends, then you should confirm it by clicking this pa
     </message>
     <message>
         <source>Esc</source>
-        <translation type="unfinished"></translation>
+        <translation>Esc</translation>
     </message>
     <message>
         <source>Transfer consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>Rückfrage</translation>
     </message>
     <message>
         <source>Hide identity</source>
-        <translation type="unfinished"></translation>
+        <translation>Absenderangaben unterdrücken</translation>
     </message>
     <message>
         <source>Click to show registrations.</source>
-        <translation type="unfinished"></translation>
+        <translation>Anklicken: Anmeldungen abfragen.</translation>
     </message>
     <message>
         <source>%1 new, 1 old message</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 neue, 1 alte Mitteilung</translation>
     </message>
     <message>
         <source>%1 new, %2 old messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 neue, %2 alte Mitteilungen</translation>
     </message>
     <message>
         <source>1 new message</source>
-        <translation type="unfinished"></translation>
+        <translation>1 neue Mitteilung</translation>
     </message>
     <message>
         <source>%1 new messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 neue Mitteilungen</translation>
     </message>
     <message>
         <source>1 old message</source>
-        <translation type="unfinished"></translation>
+        <translation>1 alte Mitteilung</translation>
     </message>
     <message>
         <source>%1 old messages</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 alte Mitteilungen</translation>
     </message>
     <message>
         <source>Messages waiting</source>
-        <translation type="unfinished"></translation>
+        <translation>Mitteilungen da</translation>
     </message>
     <message>
         <source>No messages</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Mitteilungen</translation>
     </message>
     <message>
         <source>&lt;b&gt;Voice mail status:&lt;/b&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Voice-Mail Status:&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Failure</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler</translation>
     </message>
     <message>
         <source>Unknown</source>
-        <translation type="unfinished"></translation>
+        <translation>Unbekannt</translation>
     </message>
     <message>
         <source>Click to access voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>Anklicken: Voice-Mail abrufen.</translation>
     </message>
     <message>
         <source>Click to activate/deactivate</source>
-        <translation type="unfinished"></translation>
+        <translation>Anklicken: (de/)aktivieren</translation>
     </message>
     <message>
         <source>Click to activate</source>
-        <translation type="unfinished"></translation>
+        <translation>Anklicken: aktivieren</translation>
     </message>
     <message>
         <source>not provisioned</source>
-        <translation type="unfinished"></translation>
+        <translation>nicht eingetragen</translation>
     </message>
     <message>
         <source>You must provision your voice mail address in your user profile, before you can access it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie müssen die Adresse/Nr Ihres Anrufbeantworters im Profil eintragen, damit dies geht.</translation>
     </message>
     <message>
         <source>The line is busy. Cannot access voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>Kann Voice-Mail nicht abrufen - Leitung belegt.</translation>
     </message>
     <message>
         <source>The voice mail address %1 is an invalid address. Please provision a valid address in your user profile.</source>
-        <translation type="unfinished"></translation>
+        <translation>Die Voice-Mail-Adresse &quot;%1&quot; is ungültig. Bitte korregieren Sie die Einstellungen im Benutzerprofil.</translation>
+    </message>
+    <message>
+        <source>Call</source>
+        <comment>toolbar text</comment>
+        <translation>Anruf+</translation>
+    </message>
+    <message>
+        <source>&amp;Call...</source>
+        <comment>call menu text</comment>
+        <translation>Anrufen (&amp;Call)...</translation>
+    </message>
+    <message>
+        <source>Answer</source>
+        <comment>toolbar text</comment>
+        <translation>Ja?</translation>
+    </message>
+    <message>
+        <source>&amp;Answer</source>
+        <comment>menu text</comment>
+        <translation>&amp;Annehmen</translation>
+    </message>
+    <message>
+        <source>Bye</source>
+        <comment>toolbar text</comment>
+        <translation>Ende</translation>
+    </message>
+    <message>
+        <source>&amp;Bye</source>
+        <comment>menu text</comment>
+        <translation>Auflegen (&amp;Bye)</translation>
+    </message>
+    <message>
+        <source>Reject</source>
+        <comment>toolbar text</comment>
+        <translation>Nein!</translation>
+    </message>
+    <message>
+        <source>&amp;Reject</source>
+        <comment>menu text</comment>
+        <translation>Ab&amp;weisen</translation>
+    </message>
+    <message>
+        <source>Hold</source>
+        <comment>toolbar text</comment>
+        <translation>Halten</translation>
+    </message>
+    <message>
+        <source>&amp;Hold</source>
+        <comment>menu text</comment>
+        <translation>&amp;Halten</translation>
+    </message>
+    <message>
+        <source>Redirect</source>
+        <comment>toolbar text</comment>
+        <translation>Umleit</translation>
+    </message>
+    <message>
+        <source>R&amp;edirect...</source>
+        <comment>menu text</comment>
+        <translation>Uml&amp;eiten...</translation>
+    </message>
+    <message>
+        <source>Dtmf</source>
+        <comment>toolbar text</comment>
+        <translation>MFV</translation>
+    </message>
+    <message>
+        <source>&amp;Dtmf...</source>
+        <comment>menu text</comment>
+        <translation>&amp;DTMF...</translation>
+    </message>
+    <message>
+        <source>&amp;Terminal capabilities...</source>
+        <comment>menu text</comment>
+        <translation>&amp;Fähigkeiten Gegenstelle...</translation>
+    </message>
+    <message>
+        <source>Redial</source>
+        <comment>toolbar text</comment>
+        <translation>-&gt; -&gt;</translation>
+    </message>
+    <message>
+        <source>&amp;Redial</source>
+        <comment>menu text</comment>
+        <translation>Wahlwiederholun&amp;g</translation>
+    </message>
+    <message>
+        <source>Conf</source>
+        <comment>toolbar text</comment>
+        <translation>3er-K.</translation>
+    </message>
+    <message>
+        <source>&amp;Conference</source>
+        <comment>menu text</comment>
+        <translation>Konferen&amp;z</translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <comment>toolbar text</comment>
+        <translation>Stumm</translation>
+    </message>
+    <message>
+        <source>&amp;Mute</source>
+        <comment>menu text</comment>
+        <translation>Stu&amp;mm
+</translation>
+    </message>
+    <message>
+        <source>Xfer</source>
+        <comment>toolbar text</comment>
+        <translation>Vmtlg</translation>
+    </message>
+    <message>
+        <source>Trans&amp;fer...</source>
+        <comment>menu text</comment>
+        <translation>Vermitte&amp;ln...</translation>
     </message>
 </context>
 <context>
@@ -2206,6 +2212,10 @@ Please select a profile.</source>
     <message>
         <source>Cannot find .twinkle directory in your home directory.</source>
         <translation>Kann den Ordner &quot;.twinkle&quot; in Ihrem home-Ordner (&quot;/home/ihrname/&quot;) nicht finden.</translation>
+    </message>
+    <message>
+        <source>&amp;Profile editor</source>
+        <translation>&amp;Profil-Editor</translation>
     </message>
 </context>
 <context>
@@ -2723,7 +2733,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
     </message>
     <message>
         <source>When the main window is hidden, it will be automatically shown on an incoming call after the number of specified seconds.</source>
-        <translation>Wenn das Twinkle-Hauptfenster geschlossen oder minimiert ¿jr¿ check this /¿ist, wird es bei eingehendem Ruf nach der angegebenen Sekundenzahl automatisch wiederhergestellt.</translation>
+        <translation>Wenn das Twinkle-Hauptfenster geschlossen oder minimiert ist, wird es bei eingehendem Ruf nach der angegebenen Sekundenzahl automatisch wiederhergestellt.</translation>
     </message>
     <message>
         <source>Number of seconds after which the main window should be shown.</source>
@@ -2808,8 +2818,9 @@ Play ring back tone while you are waiting for the far-end to answer your call.
 &lt;p&gt;
 Depending on your SIP provider the network might provide ring back tone or an announcement.
 &lt;/p&gt;</source>
-        <translation>Freizeichen abspielen, wenn die Telefongesellschaft nicht selber eines einspielt. 
-Das Freizeichen ist in D das &quot;tuuut tuuut&quot;&quot;, welches dem Anrufer das Klingeln beim Gerufenen anzeigt. Twinkle spielt dann den eigenen &quot;call back tone&quot; ab, falls nicht eine der beteiligten Vermittlungsstellen selber einen entsprechenden Signalton liefert.</translation>
+        <translation>&lt;p&gt;Freizeichen abspielen, wenn die Telefongesellschaft nicht selber eines einspielt. &lt;/p&gt;
+&lt;p&gt;Das Freizeichen ist in D das &quot;tuuut tuuut&quot;&quot;, welches dem Anrufer das Klingeln beim Gerufenen anzeigt. &lt;/p&gt;
+&lt;p&gt;Twinkle spielt dann den eigenen &quot;call back tone&quot; ab, falls nicht eine der beteiligten Vermittlungsstellen selber einen entsprechenden Signalton oder eine Ansage liefert.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>D&amp;efault ring back tone</source>
@@ -2834,10 +2845,6 @@ Das Freizeichen ist in D das &quot;tuuut tuuut&quot;&quot;, welches dem Anrufer 
     <message>
         <source>&amp;Lookup name for incoming call</source>
         <translation>Zu Nummer der Gegenstelle Name ermitte&amp;ln</translation>
-    </message>
-    <message>
-        <source>On an incoming call, Twinkle will try to find the name the name belonging to the incoming SIP address in your address book. This name will be displayed.</source>
-        <translation>¿mb¿typo: thenamethename/¿Twinkle versucht, einen zur Nummer/Adresse der Gegenstelle passenden Eintrag im Adressbuch zu finden. Die Details dieses Eintrags werden dann angezeigt.</translation>
     </message>
     <message>
         <source>Ove&amp;rride received display name</source>
@@ -2917,11 +2924,11 @@ Das Freizeichen ist in D das &quot;tuuut tuuut&quot;&quot;, welches dem Anrufer 
     </message>
     <message>
         <source>&amp;Validate devices before usage</source>
-        <translation type="unfinished"></translation>
+        <translation>Audioeinstellungen prüfen &amp;vor Benutzung</translation>
     </message>
     <message>
         <source>Alt+V</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+V</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -2932,7 +2939,17 @@ On startup of Twinkle a warning is given if an audio device is inaccessible.
 If before making a call, the microphone or speaker appears to be invalid, a warning is given and no call can be made.
 &lt;p&gt;
 If before answering a call, the microphone or speaker appears to be invalid, a warning is given and the call will not be answered.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;Wenn aktiviert, prüft Twinkle die eingestellten Audiodevices, um zu verhindern dass eine Verbindung ohne entsprechende Ton-Ein/Ausgabe aufgebaut wird.&lt;/p&gt;
+&lt;p&gt;Bein Programmstart warnt Twinkle, falls eines der Audiodevices nicht verfügbar ist.&lt;br&gt;
+Bei Anrufen werden Mikrofon- und Lautsprecherdevice geprüft.&lt;/p&gt;
+&lt;p&gt;Versuche, einen abgehenden Ruf zu tätigen, werden bei gefundenen Audio-Problemen abgebrochen,&lt;br&gt;
+eingehende Rufe werden nicht entgegengenommen. &lt;br&gt;
+Stattdessen zeigt Twinkle in beiden Fällen eine Warnung.&lt;/p&gt;
+</translation>
+    </message>
+    <message>
+        <source>On an incoming call, Twinkle will try to find the name belonging to the incoming SIP address in your address book. This name will be displayed.</source>
+        <translation>Twinkle versucht, einen zur Nummer/Adresse der Gegenstelle passenden Eintrag im Adressbuch zu finden. Die Details dieses Eintrags werden dann angezeigt.</translation>
     </message>
 </context>
 <context>
@@ -3025,43 +3042,43 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Type of transfer</source>
-        <translation type="unfinished"></translation>
+        <translation>Art der Vermittlung</translation>
     </message>
     <message>
         <source>&amp;Blind transfer</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Ohne Rücksprache</translation>
     </message>
     <message>
         <source>Alt+B</source>
-        <translation type="unfinished"></translation>
+        <translation>Alt+O</translation>
     </message>
     <message>
         <source>Transfer the call to a third party without contacting that third party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Das Gespräch wird an den dritten, neuen Teilnehmer umgelenkt, ohne dass Sie vorher mit diesem Rücksprache halten. D.h. wenn der neue Teilnehmer abhebt, ist er sofort mit Ihrem bisherigen Gesprächspartner verbunden. </translation>
     </message>
     <message>
         <source>T&amp;ransfer with consultation</source>
-        <translation type="unfinished"></translation>
+        <translation>Mit &amp;Rücksprache</translation>
     </message>
     <message>
         <source>Alt+R</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Before transferring the call to a third party, first consult the party yourself.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie können mit dem neuen Teilnehmer sprechen und den vermittelten Gesprächspartner ankündigen. Nach Ende dieser Rücksprache wird Ihr bisheriger Gesprächspartner mit der neuen Gegenstelle verbunden.</translation>
     </message>
     <message>
         <source>Transfer to other &amp;line</source>
-        <translation type="unfinished"></translation>
+        <translation>Vermitteln an andere &amp;Leitung</translation>
     </message>
     <message>
         <source>Alt+L</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Connect the remote party on the active line with the remote party on the other line.</source>
-        <translation type="unfinished"></translation>
+        <translation>Die beiden GgSt an Leitung 1 und 2 zueinander vermitteln. Hierbei ist die GgSt der gerade aktiven Ltg die vermittelte, also den Ruf aufbauende.</translation>
     </message>
 </context>
 <context>
@@ -3128,7 +3145,8 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>Translated to english by &lt;your name&gt;</source>
-        <translation>¿mb¿typo? translated FROM english/¿Deutsche Übersetzung: jOERG   joerg.twinklephone(AT)gmx.de</translation>
+        <translation>Deutsche Übersetzung: ©20070122 Reisenweber tech+it-consult&lt;br&gt;
+joerg.twinklephone(AT)gmx.de</translation>
     </message>
     <message>
         <source>Directory %1 does not exist.</source>
@@ -3186,62 +3204,101 @@ Sperrdatei &quot;%2&quot; existiert schon.</translation>
     </message>
     <message>
         <source>Anonymous</source>
-        <translation type="unfinished"></translation>
+        <translation>Anonym</translation>
     </message>
     <message>
         <source>Warning:</source>
-        <translation type="unfinished">Warnung:</translation>
-    </message>
-    <message>
-        <source>Cannot acces the ring tone device (%1).
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot acces the speaker (%1).
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot acces the microphone (%1).
-</source>
-        <translation type="unfinished"></translation>
+        <translation>Warnung:</translation>
     </message>
     <message>
         <source>Call transfer - %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Vermittlung - %1</translation>
     </message>
     <message>
         <source>Sound card cannot be set to full duplex.</source>
-        <translation type="unfinished"></translation>
+        <translation>Audiodevice kann nicht auf &quot;voll duplex&quot; eingestellt werden.</translation>
     </message>
     <message>
         <source>Cannot set buffer size on sound card.</source>
-        <translation type="unfinished"></translation>
+        <translation>Puffergrösse f. Audiodevice kann nicht eingestellt werden.</translation>
     </message>
     <message>
         <source>Sound card cannot be set to %1 channels.</source>
-        <translation type="unfinished"></translation>
+        <translation>Audiodevice kann nicht auf %1 Kanäle eingestellt werden.</translation>
     </message>
     <message>
         <source>Cannot set sound card to 16 bits recording.</source>
-        <translation type="unfinished"></translation>
+        <translation>Audiodevice kann nicht auf 16Bit-Aufnahme eingestellt werden.</translation>
     </message>
     <message>
         <source>Cannot set sound card to 16 bits playing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Audiodevice kann nicht auf 16Bit-Wiedergabe eingestellt werden.</translation>
     </message>
     <message>
         <source>Cannot set sound card sample rate to %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Audio Samplerate kann nicht auf %1 eingestellt werden.</translation>
     </message>
     <message>
         <source>Opening ALSA driver failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler beim Öffnen des ALSA-Treibers</translation>
     </message>
     <message>
         <source>Cannot open ALSA driver for PCM playback</source>
-        <translation type="unfinished"></translation>
+        <translation>ALSA-Treiber kann nicht f. PCM-Wiederg. geöffnet werden.</translation>
+    </message>
+    <message>
+        <source>Cannot resolve STUN server: %1</source>
+        <translation>Kann URL d. STUN-Servers nicht auflösen: %1</translation>
+    </message>
+    <message>
+        <source>You are behind a symmetric NAT.
+STUN will not work.
+Configure a public IP address in the user profile
+and create the following static bindings (UDP) in your NAT.</source>
+        <translation>Sie befinden sich hinter einer &quot;symetric NAT&quot;.
+STUN kann hier nicht funktionieren.
+Sie müssen in Twinkles Benutzerprofil/NAT eine &quot;fest voreingestellte Adresse&quot; einstellen.
+In Ihrem Router/Firewall/NAT leiten Sie bitte folgende öffentliche Ports auf lokale Ports zum Twinkle-PC weiter:</translation>
+    </message>
+    <message>
+        <source>public IP: %1 --&gt; private IP: %2 (SIP signaling)</source>
+        <translation>IP öffentl.: %1 --&gt; IP lokal: %2 (SIP Protokoll)</translation>
+    </message>
+    <message>
+        <source>public IP: %1-%2 --&gt; private IP: %3-%4 (RTP/RTCP)</source>
+        <translation>IP öff.: %1 - %2 --&gt; IP lok.: %3 - %4 (RTP/RTCP)</translation>
+    </message>
+    <message>
+        <source>Cannot reach the STUN server: %1</source>
+        <translation>Kann STUN-Server &quot;%1&quot; nicht erreichen.</translation>
+    </message>
+    <message>
+        <source>Port %1 (SIP signaling)</source>
+        <translation>Port %1 (SIP Protokoll)</translation>
+    </message>
+    <message>
+        <source>NAT type discovery via STUN failed.</source>
+        <translation>NAT Analyse mittels STUN fehlgeschlagen.</translation>
+    </message>
+    <message>
+        <source>If you are behind a firewall then you need to open the following UDP ports.</source>
+        <translation>Wenn Sie sich hinter einer Firewall befinden, müssen Sie folgende Ports öffnen:</translation>
+    </message>
+    <message>
+        <source>Ports %1-%2 (RTP/RTCP)</source>
+        <translation>Ports %1-%2 (RTP/RTCP)</translation>
+    </message>
+    <message>
+        <source>Cannot access the ring tone device (%1).</source>
+        <translation>&quot;%1&quot;, Audiodevice f. Klingelton nicht zugreifbar.</translation>
+    </message>
+    <message>
+        <source>Cannot access the speaker (%1).</source>
+        <translation>&quot;%1&quot;, Audiodevice f. Lautsprecher nicht zugreifbar.</translation>
+    </message>
+    <message>
+        <source>Cannot access the microphone (%1).</source>
+        <translation>&quot;%1&quot;, Audiodevice f. Mikrofon nicht zugreifbar.</translation>
     </message>
 </context>
 <context>
@@ -3411,11 +3468,11 @@ Vermeiden Sie moeglichst Umlaute und Sonderzeichen, manche Gegenstellen haben da
     </message>
     <message>
         <source>&amp;Registrar:</source>
-        <translation>&amp;Domain:¿mb¿ typo? /¿</translation>
+        <translation>&amp;Registrar:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your registrar. If you use an outbound proxy that is the same as your registrar, then you may leave this field empty and only fill in the address of the outbound proxy.</source>
-        <translation>Die Domain, IP oder Hostname Ihres SIP-Anmelde-Servers. Für die meisten SIP-Provider einfach leer lassen. Wenn ein unten ein Outbound-Proxy eingetragen ist, wird dieser bei leerem Feld auch hier verwendet. Ohne Outbound-Proxy gilt für beides die Benutzer-SIP-Domain.</translation>
+        <translation>Die Domain, IP oder Hostname Ihres SIP-Anmelde-Servers. Für die meisten SIP-Provider einfach leer lassen. Wenn unten ein Outbound-Proxy eingetragen ist, wird dieser bei leerem Feld auch hier verwendet. Ohne Outbound-Proxy gilt für beides die Benutzer-SIP-Domain.</translation>
     </message>
     <message>
         <source>&amp;Expiry:</source>
@@ -3486,9 +3543,7 @@ Ohne Outbound-Proxy (Normalfall) versucht Twinkle selbst, die zu rufende Adresse
     </message>
     <message>
         <source>When you tick this option Twinkle will first try to resolve a SIP address to an IP address itself. If it can, then the SIP request will be sent there. Only when it cannot resolve the address, it will send the SIP request to the proxy (note that an in-dialog request will only be sent to the proxy in this case when you also ticked the previous option.)</source>
-        <translation>Wenn aktiviert, versucht Twinkle zunächst selbst, die Zieladresse zu einer gültigen IP-Adresse aufzulösen und die SIP-Anfrage direkt dorthin zu schicken. Gelingt die Adressauflösung nicht, wird die Anfrage trotzdem an den Proxy geschickt, wie bei nicht aktivierter Option (Beachten Sie: In-Dialog-Anfragen werden ¿auch dann/immer¿ so behandelt, wie in vorheriger Option festgelegt). ¿means: this option causes no change of in-dialog handling at all?  ¿
-¿mb¿ i´m a little confused. can you help me out? /¿
-¿jr¿ check /¿</translation>
+        <translation>Wenn aktiviert, versucht Twinkle zunächst selbst, die Zieladresse zu einer gültigen IP-Adresse aufzulösen und die SIP-Anfrage direkt dorthin zu schicken. Gelingt die Adressauflösung nicht, wird die Anfrage trotzdem an den Proxy geschickt, wie bei nicht aktivierter Option (Beachten Sie: In-Dialog-Anfragen werden in diesem Fall nur an den Proxy gesendet, wenn auch die vorherige Option aktiviert ist)</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your outbound proxy.</source>
@@ -3638,8 +3693,7 @@ Abhängig von den Compile-options können manche Codecs nicht verfügbar sein.</
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
         <translation>Wenn aktiviert, prüft VAD (Voice Activity Detection, deutsch etwa: Sprache/Pause-Erkennung), ob gerade gesprochen wird. Nicht als Sprache erkannte Geräusche werden nicht übertragen, sondern es wird stattdessen ein wesentlich weniger Daten-Bandbreite benötigendes &quot;Pausesignal&quot; oder (siehe DTX) gar nichts gesendet. 
-VBR (siehe dort) macht VAD unnötig.
-¿mb¿ please check semantics: CNG in my notion is an inbound-codec feature, creating some static noise to local earphone to avoid user being irritated from totally dead line when RTP is &quot;stopped&quot; cause VAD-silence detected. is there really any more info transmitted than just &quot;no signal&quot; or RTP totally stopped (&quot;... just enough bits to reproduce the background noise&quot;)/¿.</translation>
+VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>&amp;Wide band payload type:</source>
@@ -3801,17 +3855,14 @@ VBR (siehe dort) macht VAD unnötig.
 &lt;p&gt;
 Send DTMF out-of-band via a SIP INFO request.
 &lt;/p&gt;</source>
-        <translation>&lt;h2&gt;RFC 2833&lt;/h2&gt;(new line)
-&lt;p&gt;Sende DTMF-Töne als RFC 2833 telephone events (Symbole im RTP-Audiodatenstrom).&lt;/p&gt;
-&lt;h2&gt;Inband&lt;/h2&gt;
-&lt;p&gt;Sende DTMF inband (tatsächliche Töne, die Twinkle ins Tonsignal einmischt).&lt;/p&gt;
-&lt;h2&gt;Auto&lt;/h2&gt;
-&lt;p&gt;Wenn die Gegenstelle RFC 2833 unterstützt, dann DTMF-Töne als RFC 2833 telephone events senden, ansonsten inband.
-&lt;/p&gt;
-&lt;h2&gt;Out-of-band (SIP INFO)&lt;/h2&gt;
-&lt;p&gt;(new line)
-Sende DTMF nur out-of-band via  SIP INFO request.
-&lt;/p&gt;</translation>
+        <translation>&lt;p&gt;&lt;h3&gt;RFC 2833&lt;/h3&gt;
+Sende DTMF-Töne als RFC 2833 telephone events (Symbole im RTP-Audiodatenstrom).&lt;/p&gt;
+&lt;p&gt;&lt;h3&gt;Inband&lt;/h3&gt;
+Sende DTMF inband (tatsächliche Töne, die Twinkle ins Tonsignal einmischt).&lt;/p&gt;
+&lt;p&gt;&lt;h3&gt;Auto&lt;/h3&gt;
+Wenn die Gegenstelle RFC 2833 unterstützt, dann DTMF-Töne als RFC 2833 telephone events senden, ansonsten inband.&lt;/p&gt;
+&lt;p&gt;&lt;h3&gt;Out-of-band (SIP INFO)&lt;/h3&gt;
+Sende DTMF nur out-of-band via  SIP INFO request.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>General</source>
@@ -3819,7 +3870,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.
     </message>
     <message>
         <source>Redirection</source>
-        <translation>Rufweiterleitung abgehende Rufe ¿mb¿ correct? /¿</translation>
+        <translation>Rufweiterleitung abgehende Rufe</translation>
     </message>
     <message>
         <source>&amp;Allow redirection</source>
@@ -3871,7 +3922,7 @@ Sende DTMF nur out-of-band via  SIP INFO request.
     </message>
     <message>
         <source>Indicates if RFC 2543 (set media IP address in SDP to 0.0.0.0) or RFC 3264 (use direction attributes in SDP) is used to put a call on-hold.</source>
-        <translation>Auswahl, ob RFC 2543 (set media IP address in SDP to 0.0.0.0) oder RFC 3264 (use direction attributes in SDP) benutzt wird, um ein Gespräch zu halten. ¿mb¿ i like to give user a hint how to decide.  &quot;most providers...&quot; / &quot;just try...&quot; or...what?  /¿.</translation>
+        <translation>Auswahl, ob RFC 2543 (set media IP address in SDP to 0.0.0.0) oder RFC 3264 (use direction attributes in SDP) benutzt wird, um ein Gespräch zu halten.</translation>
     </message>
     <message>
         <source>Allow m&amp;issing Contact header in 200 OK on REGISTER</source>
@@ -3924,12 +3975,8 @@ Sende DTMF nur out-of-band via  SIP INFO request.
     <message>
         <source>&lt;p&gt;A SIP UAS may send SDP in a 1XX response for early media, e.g. ringing tone. When the call is answered the SIP UAS should send the same SDP in the 200 OK response according to RFC 3261. Once SDP has been received, SDP in subsequent responses should be discarded.&lt;/p&gt;
 &lt;p&gt;By allowing SDP to change during call setup, Twinkle will not discard SDP in subsequent responses and modify the media stream if the SDP is changed. When the SDP in a response is changed, it must have a new version number in the o= line.&lt;/p&gt;</source>
-        <translation>¿mb¿ typo: ringBACK tone? /¿&lt;p&gt;Ein SIP UAS kann ein SDP in einer 1XX Antwort für early media, z.B. bei &quot;Freizeichen&quot;, senden. Wenn das Gespräch aufgebaut wird, sollte der SIP UAS das selbe SDP in der &quot;200 OK&quot;-Antwort senden. Nach Empfang eines SDP sollten alle folgenden verworfen werden. Soweit die reine Lehre nach RFC 3261.&lt;/p&gt;
+        <translation>&lt;p&gt;Ein SIP UAS kann ein SDP in einer 1XX Antwort für early media, z.B. bei &quot;Freizeichen&quot;, senden. Wenn das Gespräch aufgebaut wird, sollte der SIP UAS das selbe SDP in der &quot;200 OK&quot;-Antwort senden. Nach Empfang eines SDP sollten alle folgenden verworfen werden. Soweit die reine Lehre nach RFC 3261.&lt;/p&gt;
 &lt;p&gt;Wenn erlaubt wird, dass sich SDP wahrend des Gesprächsaufbaus ändert, verwirft Twinkle SDPs in Folgeantworten nicht, sondern ändert die Eigenschaften des RTP-Mediastreams (z.B. codec) entsprechend. Ein geändertes SDP muss eine neue Versionsnummer in der &quot;o=&quot;-Zeile haben.&lt;/p&gt;</translation>
-    </message>
-    <message>
-        <source>Use domain name to create a unique contact header value</source>
-        <translation type="unfinished">¿mb¿ typo: the %AMP for n-ame gone? /¿Domain-&amp;Name benutzen für eindeutigen Contact-Header </translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -3950,24 +3997,23 @@ Some proxies do not handle a contact header value like this. You can disable thi
 &lt;p&gt;
 This format is what most SIP phones use.
 &lt;/p&gt;</source>
-        <translation>Wenn aktiviert, erzeugt Twinkle einen eindeutigen contact header Wert durch Kombination des SIP-Nutzernamens und der Domain:
-&lt;/p&gt;
-&lt;p&gt;
+        <translation>&lt;p&gt;Wenn aktiviert, erzeugt Twinkle einen eindeutigen contact header Wert durch Kombination des SIP-Nutzernamens und der Domain:
+&lt;br&gt;
 &lt;tt&gt;&amp;nbsp;user_domain@local_ip&lt;/tt&gt;
 &lt;/p&gt;
 &lt;p&gt;
 So haben 2 Benutzerprofile mit selbem SIP-Nutzernamen aber unterschiedlicher Domain eindeutige contact Adressen und können so gleichzeitig aktiviert werden.
 &lt;/p&gt;
 &lt;p&gt;
-Viele Proxies können mit solchen contact header Werten nicht umgehen. Wenn diese Option deaktiviert wird, sendet Twinkle contact header in folgendem Format:
-&lt;/p&gt;
-&lt;p&gt;
+Viele Proxies können mit solchen contact header Werten nicht umgehen. Wenn diese Option deaktiviert ist, sendet Twinkle contact header in folgendem Format:
+&lt;br&gt;
 &lt;tt&gt;&amp;nbsp;user@local_ip&lt;/tt&gt;
 &lt;/p&gt;
 &lt;p&gt;
-Dieses Format wird von fast allen SIP-Telefonen verwendet.(new line)
+Dieses Format wird von fast allen SIP-Telefonen verwendet.
 &lt;/p&gt;
-&lt;b&gt;Nutzen Sie diese Option nur, wenn Sie sie wirklich brauchen! Also wenn Sie mehrere Profile mit gleichem SIP-Benutzernamen haben.&lt;/b&gt;</translation>
+&lt;p&gt;
+&lt;b&gt;Nutzen Sie diese Option nur, wenn Sie sie wirklich brauchen! Also wenn Sie mehrere Profile mit gleichem SIP-Benutzernamen haben.&lt;/b&gt;&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;Encode Via, Route, Record-Route as list</source>
@@ -4088,7 +4134,7 @@ Standard: aktiviert.</translation>
     </message>
     <message>
         <source>While a call is being transferred, the referee sends NOTIFY messages to the referrer about the progress of the transfer. These messages are only sent for a short interval which length is determined by the referee. If you tick this box, the referrer will automatically send a SUBSCRIBE to lengthen this interval if it is about to expire and the transfer has not yet been completed.</source>
-        <translation>Während eines Vermittlungvorgangs sendet der Vermittelte NOTIFY-Mitteilungen über den Fortgang des Gesprächsaufbaus an den Vermittler, allerdings nur für eine kurze Zeitspanne, die der Vermittelte festlegt. Wenn aktiviert, sendet der Vermittler (Twinkle¿mb¿ correct? /¿) automatisch SUBCRIBEs, um diese Zeit zu verlängern bis der Vermittlungsvorgang abgeschlossen ist.</translation>
+        <translation>Während eines Vermittlungvorgangs sendet der Vermittelte NOTIFY-Mitteilungen über den Fortgang des Gesprächsaufbaus an den Vermittler, allerdings nur für eine kurze Zeitspanne, die der Vermittelte festlegt. Wenn aktiviert, sendet der Vermittler (Twinkle) automatisch SUBCRIBEs, um diese Zeit zu verlängern bis der Vermittlungsvorgang abgeschlossen ist.</translation>
     </message>
     <message>
         <source>NAT traversal</source>
@@ -4106,7 +4152,7 @@ Standard: aktiviert.</translation>
         <source>Choose this option when there is no NAT device between you and your SIP proxy or when your SIP provider offers hosted NAT traversal.</source>
         <translation>Wählen Sie diese Option, 
 wenn sich zwischen Twinkle und Ihrem SIP-Proxy keine NAT (Router) befindet, 
-¿wenn zwar eine NAT existiert, aber so konfiguriert ist dass die entsprechenden Ports durchgeleitet werden¿, oder 
+wenn zwar eine NAT existiert, aber so konfiguriert ist dass die entsprechenden Ports durchgeleitet werden, oder 
 wenn Ihr SIP-Provider &quot;hosted NAT traversal&quot; unterstützt (ein Weg, wie der Provider Probleme mit NAT umgehen kann).</translation>
     </message>
     <message>
@@ -4229,14 +4275,14 @@ Oftmals ist das Format der Telefonnummern, das z.B. der Provider erwartet, nicht
 Hier können Sie unter Verwendung von Such- und Ersetzungs-Mustern (nach Art regulärer Ausdrücke a la Perl) allgemeingültige Regeln zur Umwandlung von Telefonnummern einrichten.
 &lt;/p&gt;
 &lt;p&gt;
-Bei jeden Wahlversuch versucht Twinkle, für die zu wählende Nummer einen passenden Ausdruck in der Liste der Suchmuster zu finden. Der zum ersten passenden Suchmuster gehörende Ersetzungsausdruck ersetzt die Original-Nummer, wobei durch &quot;(&quot; &quot;)&quot; umschlossene Platzhalter im Suchausdruck (z.B. &quot;([0-9]*)&quot; für &quot;beliebig viele Ziffern&quot;) die durch sie &quot;geschluckten&quot; Zeichen zur entsprechenden Variablen (z.B. &quot;$1&quot; für den ersten Platzhalter) im Ersetzungsausdruck transportieren (siehe `man 7 regex` oder konqueror:&quot;#regex&quot;). Wird kein passendes Suchmuster gefunden, bleibt die Nummer unverändert.
+Bei jeden Wahlversuch versucht Twinkle, für die zu wählende Nummer (den User-Teil der vollen SIP-Adresse) einen passenden Ausdruck in der Liste der Suchmuster zu finden. Der zum ersten passenden Suchmuster gehörende Ersetzungsausdruck ersetzt die Original-Nummer, wobei durch &quot;(&quot; &quot;)&quot; umschlossene Platzhalter im Suchausdruck (z.B. &quot;([0-9]*)&quot; für &quot;beliebig viele Ziffern&quot;) die durch sie &quot;geschluckten&quot; Zeichen zur entsprechenden Variablen (z.B. &quot;$1&quot; für den ersten Platzhalter) im Ersetzungsausdruck transportieren (siehe `man 7 regex` oder konqueror:&quot;#regex&quot;). Wird kein passendes Suchmuster gefunden, bleibt die Nummer unverändert.
 &lt;/p&gt;
 &lt;p&gt;
-Die Regeln werden auch auf die Absenderangaben eingehender Rufe angewendet, um diese Nummern gleich in das von Ihnen gewünschte Format zu wandeln. ¿jr¿ keine gute idee!! die wandlung erfolgt mit dem ziel, die nummer technisch für _den_provider_ aufzubereiten - _ausgehend_von_ und _nicht_in_ human-readable form. was soll ich zb (zuhause) mit der amtsholziffer in der anruferliste?? zudem durchläuft eine nr dann u.u. 2mal die konvertierung, zb bei rückruf. mail an mb¿
+Die Regeln werden auch auf die Absenderangaben eingehender Rufe angewendet, um diese Nummern gleich in das von Ihnen gewünschte Format zu wandeln. (!!! &lt;i&gt;[bug? Amtsziffer 0.  d.Üs.]&lt;/i&gt; ) 
 &lt;/p&gt;
 &lt;h3&gt;Beispiel 1&lt;/h3&gt;
 &lt;p&gt;
-Angenommen Ihr Ländercode ist &quot;49&quot; für Deutschland, und Sie haben auch viele Inlandnummern in Ihrem Adressbuch in internationalem Nummernformat gespeichert, also z.B. +499112345678. Ihr Provider erwartet für innerdeutsche Gespräche aber 09112345678. Also möchten Sie die &apos;+49&apos; durch &apos;0&apos; ersetzen. Für Auslandsgespräche möchten Sie &apos;+&apos; durch &apos;00&apos; ersetzen.
+Angenommen Ihr Ländercode ist &quot;49&quot; für Deutschland, und Sie haben auch viele Inlandnummern in Ihrem Adressbuch in internationalem Nummernformat gespeichert, also z.B. +49 911 2345678. Ihr Provider erwartet für innerdeutsche Gespräche aber 0911 2345678. Also möchten Sie die &apos;+49&apos; durch &apos;0&apos; ersetzen. Für Auslandsgespräche möchten Sie &apos;+&apos; durch &apos;00&apos; ersetzen.
 &lt;/p&gt;
 &lt;p&gt;
 Sie benötigen hierzu folgende Regeln, in dieser Reihenfolge:
@@ -4247,7 +4293,7 @@ Suchausdruck = \+49([0-9]*) , Ersetzung =0$1&lt;br&gt;
 Suchausdruck = \+([0-9]*) , Ersetzung = 00$1&lt;/br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
-&lt;h3&gt;Beispiel 2&lt;/h3&gt;(new line)
+&lt;h3&gt;Beispiel 2&lt;/h3&gt;
 &lt;p&gt;
 Sie befinden sich an einer Telefonanlage und alle Nummern mit 0 als erste Ziffer sollen die Amtsholziffer 9 vorangestellt bekommen. 
 &lt;/p&gt;
@@ -4256,8 +4302,8 @@ Sie befinden sich an einer Telefonanlage und alle Nummern mit 0 als erste Ziffer
 Suchausdruck = 0[0-9]* , Ersetzung = 9$&amp;&lt;br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
-( $&amp; ist eine spezielle Variable, die die gesamte Originalnummer überträgt)
-Anmerkung: Sie können diese Regel nicht einfach nur als dritte nach denen aus Beispiel 1 angeben, denn es wird immer nur die erste zutreffende Regel angewendet. Zusätzlich müssten die Ersetzungen der Regeln 1 und 2 in  &quot;90$1&quot; u. &quot;900$1&quot; geändert werden</translation>
+( $&amp; ist eine spezielle Variable, die die gesamte Originalnummer überträgt)&lt;br&gt;
+Anmerkung: Sie können diese Regel nicht einfach nur als dritte nach denen aus Beispiel 1 angeben, denn es wird immer nur die erste zutreffende Regel angewendet. Stattdessen müssten die Ersetzungen der Regeln 1 und 2 in  &quot;90$1&quot; u. &quot;900$1&quot; geändert werden</translation>
     </message>
     <message>
         <source>Move the selected number conversion rule upwards in the list.</source>
@@ -4334,9 +4380,9 @@ Specify the file name of a .wav file that you want to be played as ring back ton
 &lt;p&gt;
 This ring back tone overrides the ring back tone settings in the system settings.
 &lt;/p&gt;</source>
-        <translation>Geben Sie hier den Namen der .wav-Datei für das Freizeichen dieses Benutzerprofils an.
+        <translation>&lt;p&gt;Geben Sie hier den Namen der .wav-Datei für das Freizeichen dieses Benutzerprofils an.&lt;/p&gt;
 
-Diese Einstellung ersetzt bei abgehendem Ruf von diesem Benutzerprofil die Auswahl für &quot;Freizeichen&quot; aus den Systemeinstellungen</translation>
+&lt;p&gt;Diese Einstellung ersetzt bei abgehendem Ruf von diesem Benutzerprofil die Auswahl für &quot;Freizeichen&quot; aus den Systemeinstellungen.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4345,9 +4391,9 @@ Specify the file name of a .wav file that you want to be played as ring tone for
 &lt;p&gt;
 This ring tone overrides the ring tone settings in the system settings.
 &lt;/p&gt;</source>
-        <translation>Geben Sie hier den Namen der .wav-Datei für den Klingelton dieses Benutzerprofils (=&quot;Nummer&quot;) an.
+        <translation>&lt;p&gt;Geben Sie hier den Namen der .wav-Datei für den Klingelton dieses Benutzerprofils (=&quot;Nummer&quot;) an.&lt;/p&gt;
 
-Diese Einstellung ersetzt bei Anrufen an dieses Benutzerprofil die Auswahl &quot;Klingelton&quot; aus den Systemeinstellungen</translation>
+&lt;p&gt;Diese Einstellung ersetzt bei Anrufen an dieses Benutzerprofil die Auswahl &quot;Klingelton&quot; aus den Systemeinstellungen.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;Ring tone:</source>
@@ -4366,14 +4412,14 @@ The values of all SIP headers of the outgoing SIP BYE request are passed in envi
         <translation>&lt;p&gt;
 Dieses Script wird gestartet, wenn ein Gespräch durch Sie beendet wird.
 &lt;/p&gt;
-&lt;h2&gt;Environment Variablen&lt;/h2&gt;(new line)
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
 &lt;p&gt;
 Die Inhalte aller SIP header der abgesendeten SIP BYE Anforderung werden in Environment Variablen ans Script übergeben.
 &lt;/p&gt;
 &lt;p&gt;
-&lt;b&gt;TWINKLE_TRIGGER=local_release&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_METHOD=BYE&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des BYE. 
+&lt;b&gt;TWINKLE_TRIGGER=local_release&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPREQUEST_METHOD=BYE&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des BYE. &lt;br&gt;
 &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
@@ -4389,14 +4435,14 @@ The values of all SIP headers of the outgoing SIP failure response are passed in
         <translation>&lt;p&gt;
 Dieses Script wird gestartet, wenn ein eingehender Ruf nicht zustande kommt, also das Klingeln endet ohne dass &quot;abgehoben&quot; wurde.
 &lt;/p&gt;
-&lt;h2&gt;Environment Variablen&lt;/h2&gt;(new line)
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
 &lt;p&gt;
 Die Inhalte aller SIP header der abgesendeten SIP failure Antwort werden in Environment Variablen ans Script übergeben.
 &lt;/p&gt;
 &lt;p&gt;
-&lt;b&gt;TWINKLE_TRIGGER=in_call_failed&lt;/b&gt;. 
-&lt;b&gt;SIPSTATUS_CODE&lt;/b&gt; enthält den Statuscode  der abgesendeten SIP failure Antwort. 
-&lt;b&gt;SIPSTATUS_REASON&lt;/b&gt;enthält &quot;reason phrase&quot;, also die &quot;Fehler&quot;ursache in Klartext.
+&lt;b&gt;TWINKLE_TRIGGER=in_call_failed&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_CODE&lt;/b&gt; enthält den Statuscode  der abgesendeten SIP failure Antwort. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_REASON&lt;/b&gt;enthält &quot;reason phrase&quot;, also die &quot;Fehler&quot;ursache in Klartext.&lt;br&gt;
 &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
@@ -4412,120 +4458,16 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
         <translation>&lt;p&gt;
 Dieses Script wird gestartet, wenn ein Gespräch durch die Gegenstelle beendet wird.
 &lt;/p&gt;
-&lt;h2&gt;Environment Variablen&lt;/h2&gt;(new line)
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
 &lt;p&gt;
 Die Inhalte aller SIP header der eingehenden SIP BYE Anforderung werden in Environment Variablen ans Script übergeben.
 &lt;/p&gt;
 &lt;p&gt;
-&lt;b&gt;TWINKLE_TRIGGER=remote_release&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_METHOD=BYE&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des BYE. 
-&lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
-    </message>
-    <message>
-        <source>&lt;p&gt;
-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
-&lt;/p&gt;
-&lt;p&gt;
-With your script you can customize call handling by outputing one or more of the following parameters to stdout. Each parameter should be on a separate line.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;blockquote&gt;
-&lt;tt&gt;
-action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;
-reason=&amp;lt;string&amp;gt;&lt;br&gt;
-contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;
-caller_name=&amp;lt;name of caller to display&amp;gt;&lt;br&gt;
-ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;
-end&lt;br&gt;
-&lt;/tt&gt;
-&lt;/blockquote&gt;
-&lt;/p&gt;
-&lt;h2&gt;Parameters&lt;/h2&gt;
-&lt;h3&gt;action&lt;/h3&gt;
-&lt;p&gt;
-&lt;b&gt;continue&lt;/b&gt; - continue call handling as usual&lt;br&gt;
-&lt;b&gt;reject&lt;/b&gt; - reject call&lt;br&gt;
-&lt;b&gt;dnd&lt;/b&gt; - deny call with do not disturb indication&lt;br&gt;
-&lt;b&gt;redirect&lt;/b&gt; - redirect call to address specified by &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;
-&lt;b&gt;autoanswer&lt;/b&gt; - automatically answer a call&lt;br&gt;
-&lt;/p&gt;
-&lt;p&gt;
-When the script does not write an action to stdout, then the default action is continue.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;reason: &lt;/b&gt;
-With the reason parameter you can set the reason string for reject or dnd. This might be shown to the far-end user.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;caller_name: &lt;/b&gt;
-This parameter will override the display name of the caller.
-&lt;/p&gt;
-&lt;p&gt;
-&lt;b&gt;ringtone: &lt;/b&gt;
-The ringtone parameter specifies the .wav file that will be played as ring tone when action is continue.
-&lt;/p&gt;
-&lt;h2&gt;Environment variables&lt;/h2&gt;
-&lt;p&gt;
-The values of all SIP headers in the incoming INVITE message are passed in environment variables to your script. The variable names are formatted as &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; E.g. SIP_FROM contains the value of the from header.
-&lt;/p&gt;
-&lt;p&gt;
-TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="obsolete">¿jr¿ todo /¿
-&lt;p&gt;(new line)
-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-&lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-With your script you can customize call handling by outputing one or more of the following parameters to stdout. Each parameter should be on a separate line.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-&lt;blockquote&gt;(new line)
-&lt;tt&gt;(new line)
-action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;(new line)
-reason=&amp;lt;string&amp;gt;&lt;br&gt;(new line)
-contact=&amp;lt;address to redirect to&amp;gt;&lt;br&gt;(new line)
-caller_name=&amp;lt;name of caller to display&amp;gt;&lt;br&gt;(new line)
-ringtone=&amp;lt;file name of .wav file&amp;gt;&lt;br&gt;(new line)
-end&lt;br&gt;(new line)
-&lt;/tt&gt;(new line)
-&lt;/blockquote&gt;(new line)
-&lt;/p&gt;(new line)
-&lt;h2&gt;Parameters&lt;/h2&gt;(new line)
-&lt;h3&gt;action&lt;/h3&gt;(new line)
-&lt;p&gt;(new line)
-&lt;b&gt;continue&lt;/b&gt; - continue call handling as usual&lt;br&gt;(new line)
-&lt;b&gt;reject&lt;/b&gt; - reject call&lt;br&gt;(new line)
-&lt;b&gt;dnd&lt;/b&gt; - deny call with do not disturb indication&lt;br&gt;(new line)
-&lt;b&gt;redirect&lt;/b&gt; - redirect call to address specified by &lt;b&gt;contact&lt;/b&gt;&lt;br&gt;(new line)
-&lt;b&gt;autoanswer&lt;/b&gt; - automatically answer a call&lt;br&gt;(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-When the script does not write an action to stdout, then the default action is continue.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-&lt;b&gt;reason: &lt;/b&gt;(new line)
-With the reason parameter you can set the reason string for reject or dnd. This might be shown to the far-end user.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-&lt;b&gt;caller_name: &lt;/b&gt;(new line)
-This parameter will override the display name of the caller.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-&lt;b&gt;ringtone: &lt;/b&gt;(new line)
-The ringtone parameter specifies the .wav file that will be played as ring tone when action is continue.(new line)
-&lt;/p&gt;(new line)
-&lt;h2&gt;Environment variables&lt;/h2&gt;(new line)
-&lt;p&gt;(new line)
-The values of all SIP headers in the incoming INVITE message are passed in environment variables to your script. The variable names are formatted as &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; E.g. SIP_FROM contains the value of the from header.(new line)
-&lt;/p&gt;(new line)
-&lt;p&gt;(new line)
-TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</translation>
+&lt;b&gt;TWINKLE_TRIGGER=remote_release&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPREQUEST_METHOD=BYE&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des BYE. &lt;br&gt;
+&lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4537,18 +4479,17 @@ The values of all SIP headers of the incoming 200 OK are passed in environment v
 &lt;/p&gt;
 &lt;p&gt;
 &lt;b&gt;TWINKLE_TRIGGER=out_call_answered&lt;/b&gt;. &lt;b&gt;SIPSTATUS_CODE=200&lt;/b&gt;. &lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; contains the reason phrase.  The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished">¿jr¿ go on here ¿
-&lt;p&gt;
-Dieses Script wird gestartet, wenn ein Gespräch durch Sie beendet wird.
+        <translation>&lt;p&gt;
+Dieses Script wird gestartet, wenn das Gespräch durch die Gegenstelle angenommen wird.
 &lt;/p&gt;
-&lt;h2&gt;Environment Variablen&lt;/h2&gt;(new line)
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
 &lt;p&gt;
-Die Inhalte aller SIP header der abgesendeten SIP BYE Anforderung werden in Environment Variablen ans Script übergeben.
+Die Inhalte aller SIP header der eingehenden &quot;200 OK&quot; Mitteilung werden in Environment Variablen ans Script übergeben.
 &lt;/p&gt;
 &lt;p&gt;
-&lt;b&gt;TWINKLE_TRIGGER=local_release&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_METHOD=BYE&lt;/b&gt;. 
-&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des BYE. 
+&lt;b&gt;TWINKLE_TRIGGER=out_call_answered&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_CODE=200&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; enthält &quot;reason phrase&quot;&lt;br&gt; 
 &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
@@ -4561,7 +4502,18 @@ The values of all SIP headers of the outgoing 200 OK are passed in environment v
 &lt;/p&gt;
 &lt;p&gt;
 &lt;b&gt;TWINKLE_TRIGGER=in_call_answered&lt;/b&gt;. &lt;b&gt;SIPSTATUS_CODE=200&lt;/b&gt;. &lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; contains the reason phrase.  The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Dieses Script wird gestartet, wenn Sie einen Anruf entgegennehmen.
+&lt;/p&gt;
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
+&lt;p&gt;
+Die Inhalte aller SIP header der gesendeten &quot;200 OK&quot; Antwort werden in Environment Variablen ans Script übergeben.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;TWINKLE_TRIGGER=in_call_answered&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_CODE=200&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; enthält &quot;reason phrase&quot;&lt;br&gt;
+&lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
         <source>Call released locall&amp;y:</source>
@@ -4577,7 +4529,18 @@ The values of all SIP headers of the incoming SIP failure response are passed in
 &lt;/p&gt;
 &lt;p&gt;
 &lt;b&gt;TWINKLE_TRIGGER=out_call_failed&lt;/b&gt;. &lt;b&gt;SIPSTATUS_CODE&lt;/b&gt; contains the status code of the failure response. &lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; contains the reason phrase.  The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Dieses Script wird gestartet, wenn ein abgehender Anruf nicht zustande kommt, z.B. wegen timeout, DND usw.
+&lt;/p&gt;
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
+&lt;p&gt;
+Die Inhalte aller SIP header der empfangenen SIP failure Antwort werden in Environment Variablen ans Script übergeben.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;TWINKLE_TRIGGER=out_call_failed&lt;/b&gt;. &lt;br&gt;
+&lt;b&gt;SIPSTATUS_CODE&lt;/b&gt; enthält den Statuscode  der abgesendeten SIP failure Antwort.&lt;br&gt;
+&lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; enthält &quot;reason phrase&quot;, also die &quot;Fehler&quot;ursache in Klartext.&lt;br&gt;
+&lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4589,7 +4552,18 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
 &lt;/p&gt;
 &lt;p&gt;
 &lt;b&gt;TWINKLE_TRIGGER=out_call&lt;/b&gt;. &lt;b&gt;SIPREQUEST_METHOD=INVITE&lt;/b&gt;. &lt;b&gt;SIPREQUEST_URI&lt;/b&gt; contains the request-URI of the INVITE.  The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Dieses Script wird gestartet, wenn Sie einen Anruf tätigen.
+&lt;/p&gt;
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
+&lt;p&gt;
+Die Inhalte aller SIP header der abgesendeten SIP INVITE Anforderung werden in Environment Variablen ans Script übergeben.
+&lt;/p&gt;
+&lt;p&gt;
+&lt;b&gt;TWINKLE_TRIGGER=out_call&lt;/b&gt;.&lt;br&gt;
+&lt;b&gt;SIPREQUEST_METHOD=INVITE&lt;/b&gt;.&lt;br&gt;
+&lt;b&gt;SIPREQUEST_URI&lt;/b&gt; enthält die request-URI des INVITE.&lt;br&gt;
+&lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt; enthält den Namen des aktuell genutzten Benutzerprofils.</translation>
     </message>
     <message>
         <source>Outgoing call a&amp;nswered:</source>
@@ -4747,77 +4721,80 @@ Für direct-IP-to-IP, also ohne SIP-Provider, ist dies der (dyndns-)Name oder di
     </message>
     <message>
         <source>Voice mail</source>
-        <translation type="unfinished"></translation>
+        <translation>Anrufbeantworter</translation>
     </message>
     <message>
         <source>&amp;Follow codec preference from far end on incoming calls</source>
-        <translation type="unfinished"></translation>
+        <translation>Gegenstelle wählt Codecs bei eingehendem Ru&amp;f</translation>
     </message>
     <message>
         <source>&lt;p&gt;
 For incoming calls, follow the preference from the far-end (SDP offer). Pick the first codec from the SDP offer that is also in the list of active codecs.
 &lt;p&gt;
 If you disable this option, then the first codec from the active codecs that is also in the SDP offer is picked.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn aktiviert: Bei ankomendem Anruf richtet sich Twinkle bevorzugt nach der Liste erlaubter Codecs von der Gegenstelle (SDP offer). Konkret wird der erste Codec der Ggst.-Wunschliste verwendet, der auch von Twinkle in der aktuellen Einstellung unterstützt wird.
+Wenn deaktiviert, verwendet Twinkle den ertsen Codec der eigenen Liste, der auch von der GgSt. untersützt wird.</translation>
     </message>
     <message>
         <source>Follow codec &amp;preference from far end on outgoing calls</source>
-        <translation type="unfinished"></translation>
+        <translation>Gegenstelle wählt Codecs bei a&amp;bgehendem Ruf</translation>
     </message>
     <message>
         <source>&lt;p&gt;
 For outgoing calls, follow the preference from the far-end (SDP answer). Pick the first codec from the SDP answer that is also in the list of active codecs.
 &lt;p&gt;
 If you disable this option, then the first codec from the active codecs that is also in the SDP answer is picked.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn aktiviert: Bei abgehendem Ruf richtet sich Twinkle bevorzugt nach der Liste erlaubter Codecs von der Gegenstelle (SDP answer). Konkret wird der erste Codec der Ggst.-Wunschliste verwendet, der auch von Twinkle in der aktuellen Einstellung unterstützt wird.
+Wenn deaktiviert, verwendet Twinkle den ertsen Codec der eigenen Liste, der auch von der GgSt. untersützt wird, also in der SDP-Answer-Liste steht.</translation>
     </message>
     <message>
         <source>Codeword &amp;packing order:</source>
-        <translation type="unfinished"></translation>
+        <translation>Datenanordnung (codeword &amp;packing order):</translation>
     </message>
     <message>
         <source>RFC 3551</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>ATM AAL2</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>There are 2 standards to pack the G.726 codewords into an RTP packet. RFC 3551 is the default packing method. Some SIP devices use ATM AAL2 however. If you experience bad quality using G.726 with RFC 3551 packing, then try ATM AAL2 packing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Es gibt 2 Methoden, die G.726 codewords in ein RTP-Paket anzuordnen. Standard ist RFC 3551. Einige SIP-Provider nutzen allerdings ATM AAL2. Wenn die Tonübertragung bei Verwendung des G.726-Codecs gestört ist, versuchen Sie hier die andere Einstellung.</translation>
     </message>
     <message>
         <source>Replaces</source>
-        <translation type="unfinished"></translation>
+        <translation>Replaces</translation>
     </message>
     <message>
         <source>Indicates if the Replaces-extenstion is supported.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn aktiviert, unterstützt Twinkle Replaces-Extension bei PRACK.</translation>
     </message>
     <message>
         <source>Attended refer to AoR (Address of Record)</source>
-        <translation type="unfinished"></translation>
+        <translation>Vermittlung mit Rückfrage verwendet &quot;Address of Record&quot;</translation>
     </message>
     <message>
         <source>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endoint.</source>
-        <translation type="unfinished"></translation>
+        <translation>Eine Vermittlung mit Rückfrage sollte die Contact-URI als Zieladresse nutzen, um der vermittelten GgSt die neu zu schaltende Verbindung mitzuteilen. Diese Adresse kann allerdings evtl. nicht global gültig d.h. &quot;route-&quot;bar sein. Das vermittelte Gespräch kommt dann beim neuen Ziel nicht an. 
+Alternativ kann Twinkle die AoR (Address of Record) nutzen. Nachteil hierbei: diese ist bei mehreren unter gleichem SIP-Benutzerkonto angemeldeten Endgeräten nicht eindeutig, so dass von der vermittelten GgSt (eigentlich vom Provider) alle Endgeräte angesprochen werden und einen Anuf signalisieren.</translation>
     </message>
     <message>
         <source>Privacy</source>
-        <translation type="unfinished"></translation>
+        <translation>Datenschutz</translation>
     </message>
     <message>
         <source>Privacy options</source>
-        <translation type="unfinished"></translation>
+        <translation>Datenschutz-Einstellungen</translation>
     </message>
     <message>
         <source>&amp;Send P-Preferred-Identity header when hiding user identity</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Sende &quot;P-Preferred-Identity Header&quot; bei &quot;Absender verbergen&quot;</translation>
     </message>
     <message>
         <source>Include a P-Preferred-Identity header with your identity in an INVITE request for a call with identity hiding.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn aktiviert, wird zusammen mit der Absenderangabe ein &quot;P-Preferred-Identity Header&quot; beim INVITE gesendet, falls &quot;Absender verbergen&quot; aktiv ist.</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -4872,23 +4849,54 @@ The values of all SIP headers in the incoming INVITE message are passed in envir
 &lt;/p&gt;
 &lt;p&gt;
 TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. The request-URI of the INVITE will be passed in &lt;b&gt;SIPREQUEST_URI&lt;/b&gt;. The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;p&gt;
+Dieses Script wird gerufen, wenn ein INVITE (Anruf) ankommt. &lt;br&gt;
+Bitte lesen Sie im Handbuch unter &quot;/usr/share/doc/packages/twinkle/...&quot; oder &quot;http://twinklephone.com&quot;  die ausführliche Beschreibung!
+&lt;/p&gt;
+&lt;h3&gt;Rückgabewerte&lt;/h3&gt; -   print nach STDOUT (z.B. `echo &quot;action=dnd&quot;`), ein Wert pro Zeile: &lt;br&gt;
+&lt;tt&gt;action=[ continue | reject | dnd | redirect | autoanswer ]&lt;br&gt;&lt;/tt&gt;
+&lt;blockquote&gt;
+&lt;i&gt;continue&lt;/i&gt; - Anrufverarbeitung normal fortsetzen (default)&lt;br&gt;
+&lt;i&gt;reject&lt;/i&gt; - Ruf abweisen&lt;br&gt;
+&lt;i&gt;dnd&lt;/i&gt; - Ruf ablehnen mit Hinweis &quot;do not disturb&quot;&lt;br&gt;
+&lt;i&gt;redirect&lt;/i&gt; - Ruf umleiten nach &lt;tt&gt;contact&lt;/tt&gt; (siehe dort)&lt;br&gt;
+&lt;i&gt;autoanswer&lt;/i&gt; - Ruf &quot;automatisch&quot; annehmen&lt;br&gt;
+&lt;/blockquote&gt;
+&lt;br&gt;
+&lt;tt&gt;reason=&amp;lt;string&amp;gt;   &lt;/tt&gt;für dnd und reject (Anzeige bei GgSt)&lt;br&gt;
+&lt;tt&gt;contact=&amp;lt;Umleitadresse&amp;gt; &lt;/tt&gt;für redirect&lt;br&gt;
+&lt;tt&gt;caller_name=&amp;lt;neuer Displayname des Anrufers&amp;gt;   &lt;/tt&gt;ersetzt evtl. vorh. displayname aus INVITE&lt;br&gt;
+&lt;tt&gt;ringtone=&amp;lt;Dateiname des .wav file&amp;gt;   &lt;/tt&gt;Klingelton, speziell f. diesen Anruf (nur bei &lt;i&gt;continue&lt;/i&gt; ;-)&lt;br&gt;
+&lt;tt&gt;display_msg=&amp;lt;belieb. Hinweis für Detailanzeige Hauptfenster&amp;gt;&lt;/tt&gt;&lt;br&gt;
+&lt;tt&gt;end   &lt;/tt&gt;Twinkle wertet alle Rückgaben aus, schliesst STDOUT des Scripts(!), und arbeitet weiter&lt;br&gt;
+&lt;/tt&gt;
+&lt;/p&gt;
+&lt;p&gt;
+&lt;h3&gt;Environment Variablen&lt;/h3&gt;
+&lt;p&gt;
+Die Werte aller SIP header des eingehenden INVITE werden in Environmentvariablen ans Script übergeben. Aufbau der Variablennamen: &lt;b&gt;SIP_&amp;lt;HEADER_NAME&amp;gt;&lt;/b&gt; - z.B. SIP_FROM enthält Wert des &quot;from header&quot;.
+&lt;/p&gt;
+&lt;p&gt;
+TWINKLE_TRIGGER=in_call. &lt;br&gt;
+SIPREQUEST_METHOD=INVITE. &lt;br&gt;
+SIPREQUEST_URI enthält request-URI des INVITE.&lt;br&gt;
+TWINKLE_USER_PROFILE enthält Name des Benutzerprofils, für das der Ruf einging.</translation>
     </message>
     <message>
         <source>&amp;Voice mail address:</source>
-        <translation type="unfinished"></translation>
+        <translation>Anrufbeantworter Nr/Adr:</translation>
     </message>
     <message>
         <source>The SIP address or telephone number to access your voice mail.</source>
-        <translation type="unfinished"></translation>
+        <translation>Die SIP-Adresse bzw. Telefonnr., unter der Ihr vom Provider zur Verfügung gestellter Anrufbeantworter abrufbar ist. Oft gibt der Provider zwei Nummern an, eine zum Abruf über beliebige Telefone (zB. &quot;0049 211 58000111&quot;) und eine zum SIP-Abruf (zB. &quot;50000&quot;) - dann sollte hier die SIP-Nummer angegeben werden.</translation>
     </message>
     <message>
         <source>Unsollicited</source>
-        <translation type="unfinished"></translation>
+        <translation>Asterisk-Modus</translation>
     </message>
     <message>
         <source>Sollicited</source>
-        <translation type="unfinished"></translation>
+        <translation>RFC 3842</translation>
     </message>
     <message>
         <source>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
@@ -4903,63 +4911,78 @@ Asterisk provides unsollicited message waiting indication.
 &lt;p&gt;
 Sollicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;H2&gt;Message waiting indication Typ&lt;/H2&gt;
+&lt;p&gt;
+Wenn Ihr SIP-Provider &quot;message waiting indication&quot; (MWI, Benachrichtigung über aufgezeichnete Nachrichten) anbietet, kann Twinkle Sie über neue und schon abgehörte Nachrichten auf Ihrem SIP-Anrufbeantworter informieren. Abhängig von Ihrem Provider bzw. dem von Ihnen genutzten Anrufbeantworterdienst müssen Sie hier eines der folgenden Verfahren einstellen:
+&lt;/p&gt;
+&lt;H3&gt;Asterisk&lt;/H3&gt;
+&lt;p&gt;
+Asterisk unterstützt im allg. &quot;unsollicited message waiting indication&quot;.
+&lt;/p&gt;
+&lt;H3&gt;RFC 3842&lt;/H3&gt;
+&lt;p&gt;
+&quot;Sollicited message waiting indication&quot; entsprechend RFC 3842 Spezifikation (z.B. für &quot;sipgate.de&quot;).
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;MWI type:</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;MWI Typ:</translation>
     </message>
     <message>
         <source>Sollicited MWI</source>
-        <translation type="unfinished"></translation>
+        <translation>RFC 3842</translation>
     </message>
     <message>
         <source>Subscription &amp;duration:</source>
-        <translation type="unfinished"></translation>
+        <translation>Anmel&amp;dung gültig:</translation>
     </message>
     <message>
         <source>Mailbox &amp;user name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Mailbox Ben&amp;utzername:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your voice mailbox server.</source>
-        <translation type="unfinished"></translation>
+        <translation>Der Domainname, IP-Adresse oder Hostname des Voice-Mailbox-Servers. Versuchen Sie die Voreinstellung (=Domain Ihres Benutzernamens), falls Ihr Provider nichts anderes mitgeteilt hat.</translation>
     </message>
     <message>
         <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
-        <translation type="unfinished"></translation>
+        <translation>Bei RFC 3842 MWI meldet sich das Endgerät (Twinkle) für eine gewisse Dauer beim Server zum Empfang von Benachrichtigungen an (SUBSCRIBE), und sollte diese Anmeldung vor Ablauf erneuern. Ähnlich der &quot;expiry time&quot; / &quot;haltbar&quot; für REGISTER, siehe SIP-Server.</translation>
     </message>
     <message>
         <source>Your user name for accessing your voice mailbox.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ihr Benutzername zum Zugriff auf Ihre Voice-Mailbox (Anrufbeantworter). Wenn Ihr Provider nichts anderes mitteilt, versuchen Sie die Vorgabe (=Ihr SIP-Benutzername).</translation>
     </message>
     <message>
         <source>Mailbox &amp;server:</source>
-        <translation type="unfinished"></translation>
+        <translation>Mailbox-&amp;Server:</translation>
     </message>
     <message>
         <source>Via outbound &amp;proxy</source>
-        <translation type="unfinished"></translation>
+        <translation>Via Outbound-&amp;Proxy:</translation>
     </message>
     <message>
         <source>Check this option if Twinkle should send SIP messages to the mailbox server via the outbound proxy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wenn aktiviert, sendet Twinkle SIP-Anfragen an die Mailbox über den Outbound-Proxy.</translation>
     </message>
     <message>
         <source>You must fill in a mailbox user name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie müssen einen Mailbox-Benutzernamen angeben.</translation>
     </message>
     <message>
         <source>You must fill in a mailbox server</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie müssen den Mailbox-Server angeben.</translation>
     </message>
     <message>
         <source>Invalid mailbox server.</source>
-        <translation type="unfinished"></translation>
+        <translation>Unzulässiger Name für Mailbox-Server.</translation>
     </message>
     <message>
         <source>Invalid mailbox user name.</source>
-        <translation type="unfinished"></translation>
+        <translation>Unzulässiger Mailbox-Benutzername.</translation>
+    </message>
+    <message>
+        <source>Use domain &amp;name to create a unique contact header value</source>
+        <translation>Domain-&amp;Name benutzen für eindeutigen Contact-Header</translation>
     </message>
 </context>
 <context>
@@ -4970,7 +4993,10 @@ Sollicited message waiting indication as specified by RFC 3842.
     </message>
     <message>
         <source>The hostname, domain name or IP address of the STUN server.</source>
-        <translation>Der Domainname, IP-Adresse oder Hostname des STUN-Servers.</translation>
+        <translation>Der Domainname, IP-Adresse oder Hostname des STUN-Servers.
+
+Twinkle versucht, unter der hier genannten Domain die korrekten Daten beim DNS-Server zu erfragen (RFC 2782).
+Daher genügt bei Providern, die dies unterstützen, die Domain des Anmeldeservers als Angabe.</translation>
     </message>
     <message>
         <source>S&amp;TUN server:</source>
@@ -4986,15 +5012,16 @@ This field is mandatory.</source>
     </message>
     <message>
         <source>&amp;Domain*:</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Choose your SIP service provider. If your SIP service provider is not in the list, then select &lt;b&gt;Other&lt;/b&gt; and fill in the settings you received from your provider.&lt;br&gt;&lt;br&gt;
 If you select one of the predefined SIP service providers then you only have to fill in your name, user name, authentication name and password.</source>
-        <translation type="unfinished">Wählen Sie Ihren SIP-Provider aus, und tragen Sie dann Ihren SIP-Benutzernamen, gegebenenfalls Absendernamen, Anmeldenamen und Passwort ein.
+        <translation>Wählen Sie Ihren SIP-Provider aus, und tragen Sie dann Ihren SIP-Benutzernamen, gegebenenfalls Absendernamen, Anmeldenamen und Passwort ein.&lt;br&gt;
 Wenn Ihr SIP-Provider nicht in der Liste erscheint, wählen Sie &lt;b&gt;Anderer&lt;/b&gt; und tragen Sie die Angaben entsprechend der von Ihrem Provider erhaltenen Daten ein.
-
-Praktisch überall in Twinkle bekommen Sie mit &lt;b&gt;Umschalt-F1&lt;/b&gt; oder &lt;b&gt;rechtem Mausklick&lt;/b&gt; Hilfetexte wie diesen zu den einzelnen Feldern und Knöpfen.</translation>
+&lt;p&gt;
+Praktisch überall in Twinkle bekommen Sie mit &lt;b&gt;Umschalt-F1&lt;/b&gt; oder &lt;b&gt;rechtem Mausklick&lt;/b&gt; Hilfetexte wie diesen zu den einzelnen Feldern und Knöpfen.
+&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&amp;Authentication name:</source>
@@ -5047,11 +5074,11 @@ Für direct-IP-to-IP (siehe Handbuch) ist hier die Adresse (DynDNS oder IP) einz
     </message>
     <message>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>Alt+O</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <source>&amp;Cancel</source>
@@ -5098,11 +5125,11 @@ Für direct-IP-to-IP, also ohne SIP-Provider, ist dies der (dyndns-)Name oder di
     <name>YesNoDialog</name>
     <message>
         <source>&amp;Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Ja</translation>
     </message>
     <message>
         <source>&amp;No</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Nein</translation>
     </message>
 </context>
 </TS>

@@ -7,7 +7,7 @@
 ** place of a destructor.
 *****************************************************************************/
 /*
-    Copyright (C) 2005-2006  Michel de Boer <michelboer@xs4all.nl>
+    Copyright (C) 2005-2007  Michel de Boer <michel@twinklephone.com>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ int SelectProfileForm::execForm()
 			"can still edit the full profile with the profile editor at a later "\
 			"time.<br><br>"\
 			"Choose what method you wish to use.</html>"),
-			"&Wizard", "&Profile editor", QString::null);
+			tr("&Wizard"), tr("&Profile editor"), QString::null);
 		
 		if (useWizard == 0) {
 			wizardProfile(true);

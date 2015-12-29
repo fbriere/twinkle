@@ -1,5 +1,5 @@
-29 dec 2006 - 1.0 BETA
-======================
+22 jan 2007 - 1.0
+=================
 - Local address book
 - Message waiting indication (MWI)
   * Sollicted MWI as specified by RFC 3842
@@ -38,6 +38,11 @@
 - Support for G.726 ATM AAL2 codeword packing
 - replaces SIP extension (RFC 3891)
 - norefesub SIP extension (RFC 4488)
+- SIP parser supports IPv6 addresses in SIP URI's and Via headers
+  (Note: Twinkle does not support transport over IPv6)
+- Support mid-call change of SSRC
+- Handling of SIGCHLD, SIGTERM and SIGINT on platforms implementing
+  LinuxThreads instead of NPTL threading (e.g. sparc)
 
 Bug fixes
 ---------
@@ -54,7 +59,7 @@ Bug fixes
   release and the user pressed the BYE button, Twinkle crashed.
 - When using STUN the private port was put in the Via header instead of
   the public port.
-- Twinkle crashes once in a while it is just sitting idle.
+- Twinkle crashes once in a while, while it is just sitting idle.
 
 Build changes
 -------------
