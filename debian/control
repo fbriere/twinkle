@@ -2,20 +2,31 @@ Source: twinkle
 Section: comm
 Priority: optional
 Maintainer: Clint Adams <clint@debian.org>
-Build-Depends: debhelper (>= 7), cdbs, help2man,
- autotools-dev, dh-autoreconf,
- libcommoncpp2-dev (>= 1.4.2), libccrtp-dev, libzrtpcpp-dev (>= 1.4.0),
- libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
- libgsm1-dev, libsndfile1-dev, libspeex-dev, libspeexdsp-dev,
- libreadline-dev,
- libboost-regex-dev, libxml2-dev, libxpm-dev, libmagic-dev
- , libncurses-dev
+Build-Depends: autotools-dev,
+               cdbs,
+               debhelper (>= 7),
+               dh-autoreconf,
+               help2man,
+               libasound2-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
+               libboost-regex-dev,
+               libccrtp-dev,
+               libcommoncpp2-dev (>= 1.4.2),
+               libgsm1-dev,
+               libmagic-dev,
+               libncurses-dev,
+               libreadline-dev,
+               libsndfile1-dev,
+               libspeex-dev,
+               libspeexdsp-dev,
+               libxml2-dev,
+               libxpm-dev,
+               libzrtpcpp-dev (>= 1.4.0)
 Standards-Version: 3.9.5
 Homepage: http://www.twinklephone.com/
 
 Package: twinkle
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
 Description: Voice over Internet Protocol (VoIP) SIP Phone
  Soft-phone for making telephone calls using SIP over an IP network.
  .
@@ -87,7 +98,7 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone
   G.726 (16, 24, 32 or 40 kbps payload, 8 kHz sampling rate)
  .
  For all codecs the following preprocessing options are available to improve
- quality at the far end of a call. 
+ quality at the far end of a call.
   Automatic gain control (AGC) (new)
   Noise reduction (new)
   Voice activity detection (VAD) (new)
