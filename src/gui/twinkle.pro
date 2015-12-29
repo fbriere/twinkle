@@ -7,10 +7,12 @@ LIBS	+= ../libtwinkle.a ../parser/libsipparser.a ../sdp/libsdpparser.a ../socket
 
 INCLUDEPATH	+= ..
 
-HEADERS	+= gui.h
+HEADERS	+= gui.h \
+	historylistview.h
 
 SOURCES	+= main.cpp \
-	gui.cpp
+	gui.cpp \
+	historylistview.cpp
 
 FORMS	= mphoneform.ui \
 	inviteform.ui \
@@ -27,7 +29,9 @@ FORMS	= mphoneform.ui \
 	transferform.ui \
 	syssettingsform.ui \
 	logviewform.ui \
-	wizardform.ui
+	wizardform.ui \
+	getaddressform.ui \
+	historyform.ui
 
 IMAGES	= images/filenew \
 	images/fileopen \
@@ -93,7 +97,15 @@ IMAGES	= images/filenew \
 	images/dtmf-c.png \
 	images/dtmf-d.png \
 	images/twinkle24.png \
-	images/exit.png
+	images/exit.png \
+	images/kontact_contacts.png \
+	images/ok.png \
+	images/cancel.png \
+	images/1rightarrow.png \
+	images/1leftarrow-yellow.png \
+	images/editdelete.png \
+	images/kcmpci16.png \
+	images/kontact_contacts-disabled.png
 
 unix {
   UI_DIR = .ui

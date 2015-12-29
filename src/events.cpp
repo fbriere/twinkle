@@ -325,7 +325,7 @@ t_event_queue::~t_event_queue() {
 		log_file->write_raw("Type: ");
 		log_file->write_raw(event_type2str(e->get_type()));
 		log_file->write_raw(", Pointer: ");
-		log_file->write_raw(int2str(int(e), "0x%x"));
+		log_file->write_raw(ptr2str(e));
 		log_file->write_endl();
 		MEMMAN_DELETE(e);
 		delete e;

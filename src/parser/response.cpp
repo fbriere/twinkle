@@ -139,10 +139,14 @@ bool t_response::is_valid(bool &fatal, string &reason) const {
 		break;
 	case SUBSCRIBE:
 		// RFC 3265 7.1, 7.2
+		/*
+		Some SIP servers do not send the mandatory Expires header.
+		For interoperability this deviation is allowed.
 		if (get_class()== R_2XX && !hdr_expires.is_populated()) {
 			reason = "Expires header missing";
 			return false;
 		}
+		*/
 
 		switch (code) {
 		case R_489_BAD_EVENT:

@@ -221,7 +221,7 @@ void t_tone_gen::play(void) {
 	if(wav_format.bits_per_sample == 8) {
 		fmt = SAMPLEFORMAT_U8;
 	} else {
-		fmt = SAMPLEFORMAT_S16_LE;
+		fmt = SAMPLEFORMAT_S16;
 	}
 
 	aio = t_audio_io::open(*dev_tone, true, false, true, wav_format.channels, fmt, wav_format.samples_per_sec, false);

@@ -177,11 +177,19 @@ bool t_oss_io::open(const string& device, bool playback, bool capture, bool bloc
 	// Sample format
 	int fmt;
 	switch (format) {
-		case SAMPLEFORMAT_S16_LE:
+		case SAMPLEFORMAT_S16:
+#ifdef WORDS_BIGENDIAN
+			fmt = AFMT_S16_BE;
+#else
 			fmt = AFMT_S16_LE;
+#endif
 			break;
-		case SAMPLEFORMAT_U16_LE:
+		case SAMPLEFORMAT_U16:
+#ifdef WORDS_BIGENDIAN
+			fmt = AFMT_U16_BE;
+#else
 			fmt = AFMT_U16_LE;
+#endif
 			break;
 		case SAMPLEFORMAT_S8:
 			fmt = AFMT_S8;
@@ -388,12 +396,20 @@ open_again:
 	snd_pcm_format_t fmt;
 	int sample_bits;
 	switch (format) {
-		case SAMPLEFORMAT_S16_LE:
+		case SAMPLEFORMAT_S16:
+#ifdef WORDS_BIGENDIAN
+			fmt = SND_PCM_FORMAT_S16_BE;
+#else
 			fmt = SND_PCM_FORMAT_S16_LE;
+#endif
 			sample_bits = 16;
 			break;
-		case SAMPLEFORMAT_U16_LE:
+		case SAMPLEFORMAT_U16:
+#ifdef WORDS_BIGENDIAN
+			fmt = SND_PCM_FORMAT_U16_BE;
+#else
 			fmt = SND_PCM_FORMAT_U16_LE;
+#endif		
 			sample_bits = 16;
 			break;
 		case SAMPLEFORMAT_S8:
@@ -473,6 +489,9 @@ open_again:
 	if ((err = snd_pcm_hw_params (pcm_ptr, hw_params)) < 0) {
 		HANDLE_ALSA_ERROR("snd_pcm_hw_params");
 	}
+	
+	// Find out if the sound card supports pause functionality
+	can_pause = (snd_pcm_hw_params_can_pause(hw_params) == 1);
 
 	MEMMAN_DELETE(hw_params);
 	snd_pcm_hw_params_free(hw_params);
@@ -516,6 +535,9 @@ open_again:
 		log_file->write_raw("Buffer size = ");
 		log_file->write_raw(play_buffersize);
 		log_file->write_raw(" bytes\n");
+		log_file->write_raw("Can pause: ");
+		log_file->write_bool(can_pause);
+		log_file->write_endl();
 		log_file->write_footer();
 	} else {
 		// Since audio_rx checks buffer before reading, start manually
@@ -555,6 +577,9 @@ open_again:
 		log_file->write_raw("Buffer size = ");
 		log_file->write_raw(rec_buffersize);
 		log_file->write_raw(" bytes\n");
+		log_file->write_raw("Can pause: ");
+		log_file->write_bool(can_pause);
+		log_file->write_endl();
 		log_file->write_footer();
 	}
 	
@@ -564,6 +589,8 @@ open_again:
 
 
 void t_alsa_io::enable(bool enable_playback, bool enable_recording) {
+	if (!can_pause) return;
+
 	if (pcm_play_ptr) {
 		snd_pcm_pause(pcm_play_ptr, (int)enable_playback);
 	}

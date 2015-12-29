@@ -21,6 +21,7 @@
 
 #include <list>
 #include <string>
+#include "call_history.h"
 #include "dialog.h"
 #include "phone.h"
 #include "protocol.h"
@@ -120,6 +121,9 @@ private:
 	void cleanup_open_pending(void);
 
 public:
+	// Call history record
+	t_call_record		call_hist_record;
+	
 	t_line(t_phone *_phone, unsigned short _line_number);
 	~t_line();
 
@@ -138,7 +142,7 @@ public:
 		const string &subject);
 	void answer(void);
 	void reject(void);
-	void redirect(const list<t_url> &destinations, int code, string reason = "");
+	void redirect(const list<t_display_url> &destinations, int code, string reason = "");
 	void end_call(void);
 	void send_dtmf(char digit);
 
@@ -220,7 +224,8 @@ public:
 	// Seize the line. User wants to make an outgoing call, so
 	// the line must be marked as busy, such that an incoming call
 	// cannot take this line.
-	void seize(void);
+	// Returns false if seizure failed
+	bool seize(void);
 
 	// Unseize the line
 	void unseize(void);

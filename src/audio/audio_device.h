@@ -31,8 +31,8 @@ class t_audio_device;
 enum t_audio_sampleformat {
 	SAMPLEFORMAT_U8,
 	SAMPLEFORMAT_S8,
-	SAMPLEFORMAT_S16_LE,
-	SAMPLEFORMAT_U16_LE
+	SAMPLEFORMAT_S16,
+	SAMPLEFORMAT_U16
 };
 
 class t_audio_io {
@@ -103,6 +103,9 @@ private:
 	// it returns inaccurate values.
 	// This flag if the functionality is broken.
 	bool rec_delay_broken;
+	
+	// Indicates if snd_pcm_pause works for this device
+	bool can_pause;
 };
 #endif
 

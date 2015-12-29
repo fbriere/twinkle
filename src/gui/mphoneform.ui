@@ -1069,6 +1069,7 @@
         <action name="serviceAutoAnswer"/>
     </item>
     <item text="&amp;View" name="View">
+        <action name="viewCall_HistoryAction"/>
         <action name="viewLogAction"/>
     </item>
     <item text="&amp;Help" name="helpMenu">
@@ -1140,16 +1141,16 @@
             <iconset>invite.png</iconset>
         </property>
         <property name="text">
-            <string>Invite</string>
+            <string>Call</string>
         </property>
         <property name="menuText">
-            <string>&amp;Invite...</string>
+            <string>&amp;Call...</string>
         </property>
         <property name="toolTip">
-            <string>Invite someone to a call</string>
+            <string>Call someone</string>
         </property>
         <property name="accel">
-            <string>Ctrl+I</string>
+            <string>Ctrl+C</string>
         </property>
     </action>
     <action>
@@ -1495,6 +1496,17 @@
             <string>&amp;Log...</string>
         </property>
     </action>
+    <action>
+        <property name="name">
+            <cstring>viewCall_HistoryAction</cstring>
+        </property>
+        <property name="text">
+            <string>Call &amp;History...</string>
+        </property>
+        <property name="menuText">
+            <string>Call &amp;History...</string>
+        </property>
+    </action>
 </actions>
 <connections>
     <connection>
@@ -1659,6 +1671,12 @@
         <receiver>MphoneForm</receiver>
         <slot>viewLog()</slot>
     </connection>
+    <connection>
+        <sender>viewCall_HistoryAction</sender>
+        <signal>activated()</signal>
+        <receiver>MphoneForm</receiver>
+        <slot>viewHistory()</slot>
+    </connection>
 </connections>
 <includes>
     <include location="local" impldecl="in implementation">user.h</include>
@@ -1683,23 +1701,38 @@
     <include location="local" impldecl="in declaration">transferform.h</include>
     <include location="local" impldecl="in declaration">syssettingsform.h</include>
     <include location="local" impldecl="in declaration">logviewform.h</include>
+    <include location="local" impldecl="in declaration">historyform.h</include>
     <include location="local" impldecl="in implementation">mphoneform.ui.h</include>
 </includes>
 <forwards>
     <forward>extern t_phone *phone;</forward>
 </forwards>
 <variables>
-    <variable access="private">TransferForm *transferForm;</variable>
-    <variable access="private">UserProfileForm *userProfileForm;</variable>
-    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
-    <variable access="private">TermCapForm *termCapForm;</variable>
-    <variable access="private">RedirectForm *redirectForm;</variable>
-    <variable access="private">InviteForm *inviteForm;</variable>
-    <variable access="private">DtmfForm *dtmfForm;</variable>
-    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
-    <variable access="private">QStringList displayContents;</variable>
-    <variable access="private">LogViewForm *logViewForm;</variable>
+    <variable access="private">int idTrayHold;</variable>
+    <variable>int idTrayTransfer;</variable>
+    <variable access="private">int idTrayRedirect;</variable>
+    <variable access="private">int idTrayDnd;</variable>
+    <variable access="private">int idTrayReject;</variable>
+    <variable access="private">int idTrayBye;</variable>
+    <variable access="private">int idTrayAnswer;</variable>
+    <variable access="private">int idTrayCall;</variable>
     <variable access="private">QLabel *sysTray;</variable>
+    <variable access="private">LogViewForm *logViewForm;</variable>
+    <variable access="private">QStringList displayContents;</variable>
+    <variable access="private">SysSettingsForm *sysSettingsForm;</variable>
+    <variable access="private">DtmfForm *dtmfForm;</variable>
+    <variable access="private">InviteForm *inviteForm;</variable>
+    <variable access="private">RedirectForm *redirectForm;</variable>
+    <variable access="private">TermCapForm *termCapForm;</variable>
+    <variable access="private">SrvRedirectForm *srvRedirectForm;</variable>
+    <variable access="private">UserProfileForm *userProfileForm;</variable>
+    <variable access="private">TransferForm *transferForm;</variable>
+    <variable access="private">HistoryForm *historyForm;</variable>
+    <variable access="private">int idTrayMute;</variable>
+    <variable access="private">int idTrayDtmf;</variable>
+    <variable access="private">int idTrayRedial;</variable>
+    <variable access="private">int idTraySrvRedirect;</variable>
+    <variable access="private">int idTrayAutoAnswer;</variable>
 </variables>
 <slots>
     <slot>closeEvent( QCloseEvent * e )</slot>
@@ -1712,16 +1745,17 @@
     <slot>phoneDeregister()</slot>
     <slot>phoneDeregisterAll()</slot>
     <slot>phoneShowRegistrations()</slot>
+    <slot>phoneInvite( const QString &amp; dest )</slot>
     <slot>phoneInvite()</slot>
-    <slot>do_phoneInvite( const t_url &amp; destination, const QString &amp; subject )</slot>
+    <slot>do_phoneInvite( const QString &amp; display, const t_url &amp; destination, const QString &amp; subject )</slot>
     <slot>phoneRedial( void )</slot>
     <slot>phoneAnswer()</slot>
     <slot>phoneBye()</slot>
     <slot>phoneReject()</slot>
     <slot>phoneRedirect()</slot>
-    <slot>do_phoneRedirect( const list&lt;t_url&gt; &amp; destinations )</slot>
+    <slot>do_phoneRedirect( const list&lt;t_display_url&gt; &amp; destinations )</slot>
     <slot>phoneTransfer()</slot>
-    <slot>do_phoneTransfer( const t_url &amp; destination )</slot>
+    <slot>do_phoneTransfer( const t_display_url &amp; destination )</slot>
     <slot>phoneHold( bool on )</slot>
     <slot>phoneConference()</slot>
     <slot>phoneMute( bool on )</slot>
@@ -1734,7 +1768,7 @@
     <slot>srvDnd( bool on )</slot>
     <slot>srvAutoAnswer( bool on )</slot>
     <slot>srvRedirect()</slot>
-    <slot>do_srvRedirect( const list&lt;t_url&gt; &amp; always, const list&lt;t_url&gt; &amp; busy, const list&lt;t_url&gt; &amp; noanswer )</slot>
+    <slot>do_srvRedirect( const list&lt;t_display_url&gt; &amp; always, const list&lt;t_display_url&gt; &amp; busy, const list&lt;t_display_url&gt; &amp; noanswer )</slot>
     <slot>about()</slot>
     <slot>aboutQt()</slot>
     <slot>editUserProfile()</slot>
@@ -1744,6 +1778,8 @@
     <slot>updateStunSettings()</slot>
     <slot>viewLog()</slot>
     <slot>updateLog( bool log_zapped )</slot>
+    <slot>viewHistory()</slot>
+    <slot>updateCallHistory()</slot>
 </slots>
 <functions>
     <function access="private" specifier="non virtual">init()</function>

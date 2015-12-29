@@ -56,20 +56,26 @@ void t_hdr_server::add_server(const t_server &s) {
 	server_info.push_back(s);
 }
 
-string t_hdr_server::encode(void) const {
+string t_hdr_server::get_server_info(void) const {
 	string s;
-
-	if (!populated) return s;
-
-	s = "Server: ";
-
+	
 	for (list<t_server>::const_iterator i = server_info.begin();
 	     i != server_info.end(); i++ )
 	{
 		if (i != server_info.begin()) s += ' ';
 		s += i->encode();
 	}
+	
+	return s;
+}
 
+string t_hdr_server::encode(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = "Server: ";
+	s += get_server_info();
 	s += CRLF;
 	return s;
 }

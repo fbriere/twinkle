@@ -63,6 +63,42 @@ string t_userintf::expand_destination(const string &dst) {
 	return s;
 }
 
+void t_userintf::expand_destination(const string &dst, string &display, string &dst_url) {
+	display.clear();
+	dst_url.clear();
+		
+	if (dst.empty()) {
+		return;
+	}
+	
+	// If there is a display name then the url part is between angle
+	// brackets.
+	if (dst[dst.size() - 1] != '>') {
+		dst_url = expand_destination(dst);
+		return;
+	}
+	
+	// Find start of url
+	int i = dst.rfind('<');
+	if (i == string::npos) {
+		// It seems the string is invalid.
+		return;
+	}
+	
+	dst_url = expand_destination(dst.substr(i + 1, dst.size() - i - 2));
+	
+	if (i > 0) {
+		display = unquote(trim(dst.substr(0, i)));
+	}
+}
+
+void t_userintf::expand_destination(const string &dst, t_display_url &display_url) {
+	string url_str;
+	
+	expand_destination(dst, display_url.display, url_str);
+	display_url.url.set_url(url_str);
+}
+
 bool t_userintf::parse_args(const list<string> command_list,
                             list<t_command_arg> &al)
 {
@@ -177,8 +213,8 @@ bool t_userintf::exec_reject(const list<string> command_list) {
 
 bool t_userintf::exec_redirect(const list<string> command_list) {
 	list<t_command_arg> al;
-	t_url destination;
-	list<t_url> dest_list;
+	t_display_url destination;
+	list<t_display_url> dest_list;
 	int num_redirections = 0;
 	bool show_status = false;
 	bool action_present = false;
@@ -223,7 +259,8 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 			action_present = true;
 			break;
 		case 0:
-			destination.set_url(expand_destination(i->value));
+			destination.url = expand_destination(i->value);
+			destination.display.clear();
 			dest_list.push_back(destination);
 			num_redirections++;
 			break;
@@ -235,13 +272,13 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 	}
 
 	if (show_status) {
-		list<t_url> cf_dest; // call forwarding destinations
+		list<t_display_url> cf_dest; // call forwarding destinations
 
 		cout << endl;
 
 		cout << "Redirect always: ";
 		if (phone->service.get_cf_active(CF_ALWAYS, cf_dest)) {
-			for (list<t_url>::iterator i = cf_dest.begin();
+			for (list<t_display_url>::iterator i = cf_dest.begin();
 			     i != cf_dest.end(); i++)
 			{
 				if (i != cf_dest.begin()) cout << ", ";
@@ -254,7 +291,7 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 
 		cout << "Redirect busy: ";
 		if (phone->service.get_cf_active(CF_BUSY, cf_dest)) {
-			for (list<t_url>::iterator i = cf_dest.begin();
+			for (list<t_display_url>::iterator i = cf_dest.begin();
 			     i != cf_dest.end(); i++)
 			{
 				if (i != cf_dest.begin()) cout << ", ";
@@ -267,7 +304,7 @@ bool t_userintf::exec_redirect(const list<string> command_list) {
 
 		cout << "Redirect noanswer: ";
 		if (phone->service.get_cf_active(CF_NOANSWER, cf_dest)) {
-			for (list<t_url>::iterator i = cf_dest.begin();
+			for (list<t_display_url>::iterator i = cf_dest.begin();
 			     i != cf_dest.end(); i++)
 			{
 				if (i != cf_dest.begin()) cout << ", ";
@@ -1331,6 +1368,10 @@ void t_userintf::run(void) {
 		cout << CLI_PROMPT;
 		getline(cin, command_line);
 		exec_command(command_line);
+		if (cin.eof()) {
+			cout << endl;
+			break;
+		}
 	}
 
 	// Wait till phone is deregistered.
@@ -2134,6 +2175,10 @@ void t_userintf::cb_display_msg(const string &msg, t_msg_priority prio) {
 
 void t_userintf::cb_log_updated(bool log_zapped) {
 	// In CLI mode there is no log viewer.
+}
+
+void t_userintf::cb_call_history_updated(void) {
+	// In CLI mode there is no call history viewer.
 }
 
 bool t_userintf::get_last_call_info(t_url &url, string &display,

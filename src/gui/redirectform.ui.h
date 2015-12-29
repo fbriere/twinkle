@@ -24,15 +24,45 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+void RedirectForm::init()
+{
+	// Keeps track of which address book tool button is clicked.
+	nrAddressBook = 0;
+	
+	getAddressForm = 0;
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = address1ToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	address1ToolButton->setIconSet(i);
+	address2ToolButton->setIconSet(i);
+	address3ToolButton->setIconSet(i);
+	
+#ifndef HAVE_KDE
+	address1ToolButton->setEnabled(false);
+	address2ToolButton->setEnabled(false);
+	address3ToolButton->setEnabled(false);
+#endif
+}
 
+void RedirectForm::destroy()
+{
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
+}
 
 void RedirectForm::validate()
 {
-	t_url destination;
-	list<t_url> dest_list;
+	t_display_url destination;
+	list<t_display_url> dest_list;
 	
 	// 1st choice destination
-	destination.set_url(ui->expand_destination(contact1LineEdit->text().ascii()));
+	ui->expand_destination(contact1LineEdit->text().stripWhiteSpace().ascii(),
+			       destination);
 	if (destination.is_valid()) {
 		dest_list.push_back(destination);
 	} else {
@@ -42,8 +72,8 @@ void RedirectForm::validate()
 	
 	// 2nd choice destination
 	if (!contact2LineEdit->text().isEmpty()) {
-		destination.set_url(ui->expand_destination(
-			contact2LineEdit->text().ascii()));
+		ui->expand_destination(contact2LineEdit->text().stripWhiteSpace().ascii(),
+			       destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -54,8 +84,8 @@ void RedirectForm::validate()
 	
 	// 3rd choice destination
 	if (!contact3LineEdit->text().isEmpty()) {
-		destination.set_url(ui->expand_destination(
-			contact3LineEdit->text().ascii()));
+		ui->expand_destination(contact3LineEdit->text().stripWhiteSpace().ascii(),
+			       destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -66,4 +96,52 @@ void RedirectForm::validate()
 	
 	emit destinations(dest_list);
 	accept();
+}
+
+void RedirectForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void RedirectForm::showAddressBook1()
+{
+	nrAddressBook = 1;
+	showAddressBook();
+}
+
+void RedirectForm::showAddressBook2()
+{
+	nrAddressBook = 2;
+	showAddressBook();
+}
+
+void RedirectForm::showAddressBook3()
+{
+	nrAddressBook = 3;
+	showAddressBook();
+}
+
+void RedirectForm::selectedAddress(const QString &address)
+{
+	switch(nrAddressBook) {
+	case 1:
+		contact1LineEdit->setText(address);
+		break;
+	case 2:
+		contact2LineEdit->setText(address);
+		break;
+	case 3:
+		contact3LineEdit->setText(address);
+		break;
+	}
 }

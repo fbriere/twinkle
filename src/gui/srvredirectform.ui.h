@@ -30,6 +30,46 @@ void SrvRedirectForm::init()
 	cfAlwaysGroupBox->setEnabled(false);
 	cfBusyGroupBox->setEnabled(false);
 	cfNoanswerGroupBox->setEnabled(false);
+	
+	// Keeps track of which address book tool button is clicked.
+	nrAddressBook = 0;
+	
+	getAddressForm = 0;
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = addrAlways1ToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	addrAlways1ToolButton->setIconSet(i);
+	addrAlways2ToolButton->setIconSet(i);
+	addrAlways3ToolButton->setIconSet(i);
+	addrBusy1ToolButton->setIconSet(i);
+	addrBusy2ToolButton->setIconSet(i);
+	addrBusy3ToolButton->setIconSet(i);
+	addrNoanswer1ToolButton->setIconSet(i);
+	addrNoanswer2ToolButton->setIconSet(i);
+	addrNoanswer3ToolButton->setIconSet(i);
+	
+#ifndef HAVE_KDE
+	addrAlways1ToolButton->setEnabled(false);
+	addrAlways2ToolButton->setEnabled(false);
+	addrAlways3ToolButton->setEnabled(false);
+	addrBusy1ToolButton->setEnabled(false);
+	addrBusy2ToolButton->setEnabled(false);
+	addrBusy3ToolButton->setEnabled(false);
+	addrNoanswer1ToolButton->setEnabled(false);
+	addrNoanswer2ToolButton->setEnabled(false);
+	addrNoanswer3ToolButton->setEnabled(false);
+#endif
+}
+
+void SrvRedirectForm::destroy()
+{
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
 }
 
 void SrvRedirectForm::show()
@@ -78,7 +118,7 @@ void SrvRedirectForm::cancel()
 		
 void SrvRedirectForm::validate()
 {
-	list<t_url> cfDestAlways, cfDestBusy, cfDestNoanswer;
+	list<t_display_url> cfDestAlways, cfDestBusy, cfDestNoanswer;
 	bool valid = false;
 	
 	// Redirect unconditional
@@ -120,9 +160,9 @@ void SrvRedirectForm::validate()
 // If cf_active is false then the 3 destinations will be cleared.
 bool SrvRedirectForm::validate(bool cf_active,
 			       QLineEdit *dst1, QLineEdit *dst2, QLineEdit *dst3,
-			       list<t_url> &dest_list)
+			       list<t_display_url> &dest_list)
 {
-	t_url destination;
+	t_display_url destination;
 	
 	dest_list.clear();
 	
@@ -134,7 +174,7 @@ bool SrvRedirectForm::validate(bool cf_active,
 	}
 	
 	// 1st choice destination
-	destination.set_url(ui->expand_destination(dst1->text().ascii()));
+	ui->expand_destination(dst1->text().stripWhiteSpace().ascii(), destination);
 	if (destination.is_valid()) {
 		dest_list.push_back(destination);
 	} else {
@@ -144,8 +184,7 @@ bool SrvRedirectForm::validate(bool cf_active,
 	
 	// 2nd choice destination
 	if (!dst2->text().isEmpty()) {
-		destination.set_url(ui->expand_destination(
-			dst2->text().ascii()));
+		ui->expand_destination(dst2->text().stripWhiteSpace().ascii(), destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -156,8 +195,7 @@ bool SrvRedirectForm::validate(bool cf_active,
 	
 	// 3rd choice destination
 	if (!dst3->text().isEmpty()) {
-		destination.set_url(ui->expand_destination(
-			dst3->text().ascii()));
+		ui->expand_destination(dst3->text().stripWhiteSpace().ascii(), destination);
 		if (destination.is_valid()) {
 			dest_list.push_back(destination);
 		} else {
@@ -193,5 +231,107 @@ void SrvRedirectForm::toggleNoanswer(bool on)
 		cfNoanswerGroupBox->setEnabled(true);
 	} else {
 		cfNoanswerGroupBox->setEnabled(false);
+	}
+}
+
+void SrvRedirectForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void SrvRedirectForm::showAddressBook1()
+{
+	nrAddressBook = 1;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook2()
+{
+	nrAddressBook = 2;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook3()
+{
+	nrAddressBook = 3;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook4()
+{
+	nrAddressBook = 4;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook5()
+{
+	nrAddressBook = 5;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook6()
+{
+	nrAddressBook = 6;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook7()
+{
+	nrAddressBook = 7;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook8()
+{
+	nrAddressBook = 8;
+	showAddressBook();
+}
+
+void SrvRedirectForm::showAddressBook9()
+{
+	nrAddressBook = 9;
+	showAddressBook();
+}
+
+void SrvRedirectForm::selectedAddress(const QString &address)
+{
+	switch(nrAddressBook) {
+	case 1:
+		cfAlwaysDst1LineEdit->setText(address);
+		break;
+	case 2:
+		cfAlwaysDst2LineEdit->setText(address);
+		break;
+	case 3:
+		cfAlwaysDst3LineEdit->setText(address);
+		break;
+	case 4:
+		cfBusyDst1LineEdit->setText(address);
+		break;
+	case 5:
+		cfBusyDst2LineEdit->setText(address);
+		break;
+	case 6:
+		cfBusyDst3LineEdit->setText(address);
+		break;
+	case 7:
+		cfNoanswerDst1LineEdit->setText(address);
+		break;
+	case 8:
+		cfNoanswerDst2LineEdit->setText(address);
+		break;
+	case 9:
+		cfNoanswerDst3LineEdit->setText(address);
+		break;
 	}
 }

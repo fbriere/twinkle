@@ -1,4 +1,5 @@
 #include "subscription.h"
+#include "log.h"
 #include "audits/memman.h"
 
 extern t_event_queue	*evq_trans_mgr;
@@ -335,6 +336,24 @@ bool t_subscription::recv_subscribe_response(t_response *r, t_tuid tuid, t_tid t
 	// Successful response
 	if (r->is_success()) {
 		if (state == SS_NULL) state = SS_ESTABLISHED;
+		
+		// RFC 3265 7.1, 7.2 says that the Expires header is mandatory
+		// in a 2XX response. Some SIP servers do not include this
+		// however. To interoperate with such servers, assume that
+		// the granted expiry time equals the requested expiry time.
+		if (!r->hdr_expires.is_populated()) {
+			r->hdr_expires.set_time(
+				req_out->get_request()->hdr_expires.time);
+				
+			log_file->write_header(
+				"t_subscription::recv_subscribe_response",
+				LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("Mandatory Expires header missing.\n");
+			log_file->write_raw("Assuming expires = ");
+			log_file->write_raw(r->hdr_expires.time);
+			log_file->write_endl();
+			log_file->write_footer();
+		}
 
 		if (r->hdr_expires.time == 0) {
 			// Unsubscription succeeded.

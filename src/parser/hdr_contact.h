@@ -62,6 +62,7 @@ public:
 	void add_contacts(const list<t_contact_param> &l);
 	void set_contacts(const list<t_contact_param> &l);
 	void set_contacts(const list<t_url> &l);
+	void set_contacts(const list<t_display_url> &l);
 
 	// Set contact to any, eg. Contact: *
 	void set_any(void);

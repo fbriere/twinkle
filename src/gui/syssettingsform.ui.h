@@ -37,6 +37,7 @@ void SysSettingsForm::init()
 #ifndef HAVE_KDE
 	guiUseSystrayCheckBox->setEnabled(false);
 	guiHideCheckBox->setEnabled(false);
+	startHiddenCheckBox->setEnabled(false);
 #endif
 }
 
@@ -66,6 +67,9 @@ string SysSettingsForm::comboItem2audio_dev(QString item)
 
 void SysSettingsForm::populate()
 {
+	QString msg;
+	int idx;
+	
 	// Select the Audio category
 	categoryListBox->setSelected(idxCatGeneral, true);
 	settingsWidgetStack->raiseWidget(pageGeneral);
@@ -78,7 +82,7 @@ void SysSettingsForm::populate()
 	ringtoneComboBox->clear();
 	speakerComboBox->clear();
 	micComboBox->clear();
-	int idx = 0;
+	idx = 0;
 	for (list<t_audio_device>::iterator i = list_audio_dev.begin(); 
 	i != list_audio_dev.end(); i++, idx++) {
 		string item = i->get_description();
@@ -110,6 +114,49 @@ void SysSettingsForm::populate()
 	guiHideCheckBox->setChecked(sys_config->gui_hide_on_close);
 	guiHideCheckBox->setEnabled(sys_config->gui_use_systray);
 #endif
+	
+	// Call history
+	histSizeSpinBox->setValue(sys_config->ch_max_size);
+	
+	// Startup settings
+#ifdef HAVE_KDE
+	startHiddenCheckBox->setChecked(sys_config->start_hidden);
+#endif
+	
+	QStringList profiles;
+	if (!SelectProfileForm::getUserProfiles(profiles, msg)) {
+		((t_gui *)ui)->cb_show_msg(this, msg.ascii(), MSG_CRITICAL);
+	}
+	profileComboBox->clear();
+	profileComboBox->insertItem("none");
+	profileComboBox->setCurrentItem(0);
+	idx = 1;
+	for (QStringList::Iterator i = profiles.begin(); i != profiles.end(); i++, idx++) {
+		// Strip off the .cfg suffix
+		QString profile = *i;
+		profile.truncate(profile.length() - 4);
+		profileComboBox->insertItem(profile);
+		if (sys_config->start_user_profile == profile.ascii()) {
+			profileComboBox->setCurrentItem(idx);
+		}
+	}
+	
+	list<t_interface> *l = get_interfaces();
+	// The socket routines are not under control of MEMMAN so report
+	// the allocation here.
+	MEMMAN_NEW(l);
+	userHostComboBox->clear();
+	userHostComboBox->insertItem("none");
+	userHostComboBox->setCurrentItem(0);
+	idx = 1;
+	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++, idx++) {
+		userHostComboBox->insertItem(i->get_ip_addr().c_str());
+		if (sys_config->start_user_host == i->get_ip_addr()) {
+			userHostComboBox->setCurrentItem(idx);
+		}
+	}
+	delete l;
+	MEMMAN_DELETE(l);
 }
 
 void SysSettingsForm::validate()
@@ -135,6 +182,27 @@ void SysSettingsForm::validate()
 	sys_config->gui_use_systray = guiUseSystrayCheckBox->isChecked();
 	sys_config->gui_hide_on_close = guiHideCheckBox->isChecked();
 #endif
+	
+	// Call history
+	sys_config->ch_max_size = histSizeSpinBox->value();
+
+	// Startup
+#ifdef HAVE_KDE
+	sys_config->start_hidden = startHiddenCheckBox->isChecked() &&
+				   guiUseSystrayCheckBox->isChecked();
+#endif
+	
+	if (profileComboBox->currentItem() == 0) {
+		sys_config->start_user_profile.clear();
+	} else {
+		sys_config->start_user_profile = profileComboBox->currentText().ascii();
+	}
+	
+	if (userHostComboBox->currentItem() == 0) {
+		sys_config->start_user_host.clear();
+	} else {
+		sys_config->start_user_host = userHostComboBox->currentText().ascii();
+	}
 	
 	// Save user config
 	string error_msg;

@@ -176,7 +176,7 @@ t_user::t_user() {
 
 bool t_user::read_config(const string &filename, string &error_msg) {
 	string f;
-
+	
 	if (filename.size() == 0) {
 		error_msg = "Cannot read user profile: missing file name.";
 		log_file->write_report(error_msg, "t_user::read_config",
@@ -236,7 +236,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 
 		string parameter = trim(l.front());
 		string value = trim(l.back());
-
+		
 		if (parameter == FLD_SIP_UDP_PORT) {
 			sip_udp_port = atoi(value.c_str());
 		} else if (parameter == FLD_NAME) {

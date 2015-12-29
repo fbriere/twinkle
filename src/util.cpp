@@ -17,10 +17,15 @@
 */
 
 #include <iostream>
+#include <cassert>
 #include <cctype>
 #include <cstdlib>
 #include <cstdio>
+#include <sys/time.h>
 #include "util.h"
+
+string month_abbrv[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", 
+			"Aug", "Sep", "Oct", "Nov", "Dec"};
 
 string random_token(int length) {
 	string s;
@@ -85,6 +90,27 @@ string ptr2str(void *p) {
 
 string bool2str(bool b) {
 	return (b ? "true" : "false");
+}
+
+string time2str(time_t t) {
+	string s;
+	struct tm tm;
+	
+	localtime_r(&t, &tm);
+	s += int2str(tm.tm_mday, "%02d ");
+	assert(tm.tm_mon < 12);
+	assert(tm.tm_mon >= 0);
+	s += month_abbrv[tm.tm_mon];
+	s += ' ';
+	s += int2str(tm.tm_year + 1900);
+	s += ' ';
+	s += int2str(tm.tm_hour, "%02d");
+	s += ':';
+	s += int2str(tm.tm_min, "%02d");
+	s += ':';
+	s += int2str(tm.tm_sec, "%02d");
+	
+	return s;
 }
 
 unsigned long hex2int(const string &h) {
@@ -171,6 +197,34 @@ bool must_quote(const string &s) {
 	return (s.find_first_of(special) != string::npos);
 }
 
+string escape(const string &s, char c) {
+	string result;
+
+	for (int i = 0; i < s.size(); i++) {
+		if (s[i] == '\\' || s[i] == c) {
+			result += '\\';
+		}
+		
+		result += s[i];
+	}
+	
+	return result;
+}
+
+string unescape(const string &s) {
+	string result;
+
+	for (int i = 0; i < s.size(); i++) {
+		if (s[i] == '\\' && i < s.size()) {
+			i++;
+		}
+		
+		result += s[i];
+	}
+	
+	return result;
+}
+
 list<string> split(const string &s, char c) {
 	int i;
 	int j = 0;
@@ -195,6 +249,32 @@ list<string> split(const string &s, char c) {
 			return l;
 		}
 	}
+}
+
+list<string> split_escaped(const string &s, char c) {
+	list<string> l;
+	
+	int start_pos = 0;
+	for (int i = 0; i < s.size(); i++) {
+		if (s[i] == '\\') {
+			// Skip escaped character
+			if (i < s.size()) i++;
+			continue;
+		}
+		
+		if (s[i] == c) {
+			l.push_back(s.substr(start_pos, i - start_pos));
+			start_pos = i + 1;
+		}
+	}
+	
+	if (start_pos < s.size()) {
+		l.push_back(s.substr(start_pos, s.size() - start_pos));
+	} else if (start_pos == s.size()) {
+		l.push_back("");
+	}
+	
+	return l;
 }
 
 list<string> split_ws(const string &s, bool quote_sensitive) {

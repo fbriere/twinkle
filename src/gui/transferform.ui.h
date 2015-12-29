@@ -25,6 +25,30 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+void TransferForm::init()
+{
+	getAddressForm = 0;
+	
+	// Set toolbutton icons for disabled options.
+	QIconSet i;
+	i = addressToolButton->iconSet();
+	i.setPixmap(QPixmap::fromMimeSource("kontact_contacts-disabled.png"), 
+		    QIconSet::Automatic, QIconSet::Disabled);
+	addressToolButton->setIconSet(i);
+	
+#ifndef HAVE_KDE
+	addressToolButton->setEnabled(false);
+#endif
+}
+
+void TransferForm::destroy()
+{
+	if (getAddressForm) {
+		MEMMAN_DELETE(getAddressForm);
+		delete getAddressForm;
+	}
+}
+
 void TransferForm::cancel()
 {
 	if (user_config->referrer_hold) {
@@ -36,8 +60,8 @@ void TransferForm::cancel()
 
 void TransferForm::validate()
 {
-	t_url dest;
-	dest.set_url(ui->expand_destination(toLineEdit->text().ascii()));
+	t_display_url dest;
+	ui->expand_destination(toLineEdit->text().stripWhiteSpace().ascii(), dest);
 	
 	if (dest.is_valid()) {
 		emit destination(dest);
@@ -50,4 +74,24 @@ void TransferForm::validate()
 void TransferForm::closeEvent(QCloseEvent *)
 {
 	cancel();
+}
+
+void TransferForm::showAddressBook()
+{
+	if (!getAddressForm) {
+		getAddressForm = new GetAddressForm(
+				this, "select address", true);
+		MEMMAN_NEW(getAddressForm);
+	}
+	
+	connect(getAddressForm, 
+		SIGNAL(address(const QString &)),
+		this, SLOT(selectedAddress(const QString &)));
+	
+	getAddressForm->show();
+}
+
+void TransferForm::selectedAddress(const QString &address)
+{
+	toLineEdit->setText(address);
 }

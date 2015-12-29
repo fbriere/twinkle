@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <assert.h>
 #include <iostream>
+#include "call_history.h"
 #include "dialog.h"
 #include "exceptions.h"
 #include "line.h"
@@ -386,6 +387,8 @@ void t_dialog::state_null(t_request *r, t_tuid tuid, t_tid tid) {
 	}
 
 	ui->cb_incoming_call(line->get_line_number(), r);
+	line->call_hist_record.start_call(r, t_call_record::DIR_IN,
+		user_config->get_profile_name());
 	
 	resp = r->create_response(R_180_RINGING);
 	resp->hdr_to.set_tag(local_tag);
@@ -455,6 +458,7 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp->hdr_to.set_tag(local_tag);
 		line->send_response(resp, req_in_invite->get_tuid(),
 				req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -474,6 +478,7 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 		resp->hdr_to.set_tag(local_tag);
 		line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -523,6 +528,7 @@ void t_dialog::state_w4answer(t_request *r, t_tuid tuid, t_tid tid) {
 			resp->hdr_to.set_tag(local_tag);
 			line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
+			line->call_hist_record.fail_call(resp);
 			MEMMAN_DELETE(resp);
 			delete resp;
 			state = DS_TERMINATED;
@@ -576,6 +582,7 @@ void t_dialog::state_w4answer(t_line_timer timer) {
 		resp->hdr_to.set_tag(local_tag);
 		line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
+		line->call_hist_record.fail_call(resp);
 		MEMMAN_DELETE(resp);
 		delete resp;
 
@@ -657,6 +664,8 @@ void t_dialog::state_w4ack(t_request *r, t_tuid tuid, t_tid tid) {
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
+		
+		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
 
 		// The session will be ended when an ACK has been
 		// received.
@@ -741,6 +750,8 @@ void t_dialog::state_w4ack_re_invite(t_request *r, t_tuid tuid, t_tid tid) {
 		line->send_response(resp, tuid, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
+		
+		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
 
 		// The session will be ended when an ACK has been
 		// received.
@@ -820,6 +831,7 @@ void t_dialog::state_w4re_invite_resp(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
+		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
 
 		if (!sub_refer) {
 			state = DS_TERMINATED;
@@ -875,6 +887,7 @@ void t_dialog::state_confirmed(t_request *r, t_tuid tuid, t_tid tid) {
 		MEMMAN_DELETE(resp);
 		delete resp;
 		ui->cb_far_end_hung_up(line->get_line_number());
+		line->call_hist_record.end_call(t_call_record::CS_B_PARTY);
 
 		if (!sub_refer) {
 			state = DS_TERMINATED;
@@ -1353,6 +1366,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		}
 
 		ui->cb_call_answered(line->get_line_number(), r);
+		line->call_hist_record.answer_call(r);
 		state = DS_CONFIRMED;
 
 		// User indicated that the request should be cancelled,
@@ -1373,6 +1387,7 @@ void t_dialog::state_w4invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
 		ui->cb_call_failed(line->get_line_number(), r);
+		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
 		state = DS_TERMINATED;
 		break;
@@ -1435,6 +1450,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		}
 
 		ui->cb_call_answered(line->get_line_number(), r);
+		line->call_hist_record.answer_call(r);
 		state = DS_CONFIRMED;
 
 		// User indicated that the request should be cancelled,
@@ -1455,6 +1471,7 @@ void t_dialog::state_early(t_response *r, t_tuid tuid, t_tid tid) {
 		// Treat unknown response classes as failure.
 		ui->cb_stop_tone(line->get_line_number());
 		ui->cb_call_failed(line->get_line_number(), r);
+		line->call_hist_record.fail_call(r);
 		remove_client_request(&req_out_invite);
 		state = DS_TERMINATED;
 		break;
@@ -2246,6 +2263,8 @@ void t_dialog::send_invite(const t_url &to_uri, const string &to_display,
 	req_out_invite = new t_client_request(&invite, 0);
 	MEMMAN_NEW(req_out_invite);
 	line->send_request(&invite, req_out_invite->get_tuid());
+	line->call_hist_record.start_call(&invite, t_call_record::DIR_OUT, 
+		user_config->get_profile_name());
 
 	state = DS_W4INVITE_RESP;
 }
@@ -2391,6 +2410,7 @@ void t_dialog::send_bye(void) {
 	req_out = new t_client_request(bye, 0);
 	MEMMAN_NEW(req_out);
 	line->send_request(bye, req_out->get_tuid());
+	line->call_hist_record.end_call(t_call_record::CS_A_PARTY);	
 	MEMMAN_DELETE(bye);
 	delete bye;
 
@@ -2961,8 +2981,26 @@ void t_dialog::recvd_request(t_request *r, t_tuid tuid, t_tid tid) {
 		// fall thru
 	default:
 		// Check cseq
+		// RFC 3261 12.2.2
 		if (remote_seqnr_set && r->hdr_cseq.seqnr <= remote_seqnr) {
-			// Request received out of sequence. Discard.
+			// Request received out of order.		
+			log_file->write_header("t_dialog::recvd_request",
+				LOG_NORMAL, LOG_WARNING);
+			log_file->write_raw("CSeq seqnr is out of sequence.\n");
+			log_file->write_raw("Reveived seqnr: ");
+			log_file->write_raw(r->hdr_cseq.seqnr);
+			log_file->write_endl();
+			log_file->write_raw("Remote seqnr: ");
+			log_file->write_raw(remote_seqnr);
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			resp = r->create_response(R_500_INTERNAL_SERVER_ERROR,
+				"Request received out of order");
+			line->send_response(resp, tuid, tid);
+			MEMMAN_DELETE(resp);
+			delete resp;
+
 			return;
 		}
 		
@@ -3091,6 +3129,7 @@ void t_dialog::answer(void) {
 		}
 	}
 
+	line->call_hist_record.answer_call(resp_invite);
 	line->send_response(resp_invite, req_in_invite->get_tuid(),
 					req_in_invite->get_tid());
 	line->start_timer(LTMR_ACK_GUARD, get_id());
@@ -3117,6 +3156,7 @@ void t_dialog::reject(int code, string reason) {
 	resp->hdr_to.set_tag(local_tag);
 	line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
+	line->call_hist_record.fail_call(resp);
 	MEMMAN_DELETE(resp);
 	delete resp;
 
@@ -3127,7 +3167,7 @@ void t_dialog::reject(int code, string reason) {
 	state = DS_TERMINATED;
 }
 
-void t_dialog::redirect(const list<t_url> &destinations, int code, string reason)
+void t_dialog::redirect(const list<t_display_url> &destinations, int code, string reason)
 {
 	t_response *resp;
 
@@ -3143,12 +3183,13 @@ void t_dialog::redirect(const list<t_url> &destinations, int code, string reason
 
 	t_contact_param *contact;
 	float q = 0.9;
-	for (list<t_url>::const_iterator i = destinations.begin();
+	for (list<t_display_url>::const_iterator i = destinations.begin();
 	     i != destinations.end(); i++)
 	{
 		contact = new t_contact_param();
 		MEMMAN_NEW(contact);
-		contact->uri = *i;
+		contact->display = i->display;
+		contact->uri = i->url;
 		contact->q = q;
 		resp->hdr_contact.add_contact(*contact);
 		MEMMAN_DELETE(contact);
@@ -3159,6 +3200,7 @@ void t_dialog::redirect(const list<t_url> &destinations, int code, string reason
 
 	line->send_response(resp, req_in_invite->get_tuid(),
 						req_in_invite->get_tid());
+	line->call_hist_record.fail_call(resp);
 	MEMMAN_DELETE(resp);
 	delete resp;
 

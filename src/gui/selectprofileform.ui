@@ -8,8 +8,8 @@
         <rect>
             <x>0</x>
             <y>0</y>
-            <width>397</width>
-            <height>284</height>
+            <width>422</width>
+            <height>335</height>
         </rect>
     </property>
     <property name="caption">
@@ -75,7 +75,7 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
         </widget>
         <widget class="QLayoutWidget">
             <property name="name">
-                <cstring>layout18</cstring>
+                <cstring>layout11</cstring>
             </property>
             <vbox>
                 <property name="name">
@@ -170,6 +170,20 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
                 </widget>
                 <widget class="QPushButton">
                     <property name="name">
+                        <cstring>defaultPushButton</cstring>
+                    </property>
+                    <property name="text">
+                        <string>&amp;Set as default</string>
+                    </property>
+                    <property name="accel">
+                        <string>Alt+S</string>
+                    </property>
+                    <property name="whatsThis" stdset="0">
+                        <string>Make the selected profile the default profile. The next time you start Twinkle, this profile will be automatically selected.</string>
+                    </property>
+                </widget>
+                <widget class="QPushButton">
+                    <property name="name">
                         <cstring>runPushButton</cstring>
                     </property>
                     <property name="text">
@@ -190,10 +204,10 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
                         <cstring>cancelPushButton</cstring>
                     </property>
                     <property name="text">
-                        <string>&amp;Cancel</string>
+                        <string>&amp;Quit</string>
                     </property>
                     <property name="accel">
-                        <string>Alt+C</string>
+                        <string>Alt+Q</string>
                     </property>
                     <property name="whatsThis" stdset="0">
                         <string>Quit Twinkle.</string>
@@ -252,6 +266,12 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
         <receiver>SelectProfileForm</receiver>
         <slot>wizardProfile()</slot>
     </connection>
+    <connection>
+        <sender>defaultPushButton</sender>
+        <signal>clicked()</signal>
+        <receiver>SelectProfileForm</receiver>
+        <slot>setAsDefault()</slot>
+    </connection>
 </connections>
 <tabstops>
     <tabstop>profileListBox</tabstop>
@@ -259,8 +279,9 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
     <tabstop>wizardPushButton</tabstop>
     <tabstop>editPushButton</tabstop>
     <tabstop>deletePushButton</tabstop>
-    <tabstop>runPushButton</tabstop>
     <tabstop>renamePushButton</tabstop>
+    <tabstop>defaultPushButton</tabstop>
+    <tabstop>runPushButton</tabstop>
     <tabstop>cancelPushButton</tabstop>
 </tabstops>
 <includes>
@@ -280,6 +301,7 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
 </includes>
 <variables>
     <variable access="public">QString selectedProfile;</variable>
+    <variable access="private">int idxDefaultProfile;</variable>
 </variables>
 <slots>
     <slot returnType="int">exec()</slot>
@@ -288,8 +310,12 @@ Double clicking a profile is the same as selecting a profile an pressing the &lt
     <slot>newProfile()</slot>
     <slot>deleteProfile()</slot>
     <slot>renameProfile()</slot>
+    <slot>setAsDefault()</slot>
     <slot>wizardProfile()</slot>
 </slots>
+<functions>
+    <function specifier="static" returnType="bool">getUserProfiles( QStringList &amp; profiles, QString &amp; error )</function>
+</functions>
 <pixmapinproject/>
 <layoutdefaults spacing="6" margin="11"/>
 </UI>

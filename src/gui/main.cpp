@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include "call_history.h"
 #include "events.h"
 #include "listener.h"
 #include "log.h"
@@ -41,6 +42,7 @@
 #include "util.h"
 #include "phone.h"
 #include "gui.h"
+#include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
 #include "audits/memman.h"
@@ -59,6 +61,9 @@ t_init_rand::t_init_rand() { srand(time(NULL)); }
 
 // Initialize random generator
 t_init_rand init_rand;
+
+// Indicates if application is ending (because user pressed Quit)
+bool end_app;
 
 // Memory manager for memory leak tracing
 t_memman 		*memman;
@@ -117,6 +122,9 @@ t_user			*user_config;
 // System config
 t_sys_settings		*sys_config;
 
+// Call history
+t_call_history		*call_history;
+
 // Thread id of main thread
 pthread_t		thread_id_main;
 
@@ -126,7 +134,7 @@ bool			threading_is_LinuxThreads;
 
 void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file) {
 	cli_mode = false;
-	config_file = "";
+	config_file.clear();
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
@@ -141,6 +149,9 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 			cout << "\tStartup with a specific profile. You will not be requested\n";
 			cout << "\t\tto choose a profile at startup. The profiles that you created\n";
 			cout << "\t\tare the .cfg files in your .twinkle directory.\n";
+			cout << " -i <IP addr>";
+			cout << "\tIf you have multiple IP addresses on your computer,\n";
+			cout << "\t\tthen you can supply the IP address to use here.\n";
 			cout << " --version";
 			cout << "\tGet version information.\n";
 			exit(0);
@@ -171,6 +182,22 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, string &config_file)
 				cout << "Config file name missing for option '-f'.\n";
 				exit(0);
 			}
+		} else if (strcmp(argv[i], "-i") == 0) {
+			if (i < argc - 1) {
+				i++;
+				// IP address
+				user_host = argv[i];
+				if (!exists_interface(user_host)) {
+					cout << argv[0] << ": ";
+					cout << "There is no interface with IP address ";
+					cout << user_host << endl;
+					exit(0);
+				}
+			} else {
+				cout << argv[0] << ": ";
+				cout << "IP address missing for option '-i'.\n";
+				exit(0);
+			}
 		} else {
 			cout << argv[0] << ": ";
 			cout << "Uknown option '" << argv[i] << "'." << endl;
@@ -188,6 +215,8 @@ int main( int argc, char ** argv )
 	string error_msg;
 	bool cli_mode;
 	string config_file;
+	
+	end_app = false;
 	
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
@@ -241,6 +270,17 @@ int main( int argc, char ** argv )
 	if (!sys_config->read_config(error_msg)) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
+	}
+	
+	// Get default values from system configuration
+	if (config_file.empty()) {
+		config_file = sys_config->start_user_profile;
+		if (!config_file.empty()) config_file += USER_FILE_EXT;
+	}
+	if (user_host.empty()) {
+		if (exists_interface(sys_config->start_user_host)) {
+			user_host = sys_config->start_user_host;
+		}
 	}
 
 	// Create user interface
@@ -308,23 +348,43 @@ int main( int argc, char ** argv )
 			"::main", LOG_NORMAL, LOG_INFO);
 	}
 	
-	// Select user profile
-	if (config_file == "") {
-		if (!ui->select_user_config(config_file)) {
-			sys_config->delete_lock_file();
-			exit(1);
+	while(true) {
+		// Select user profile
+		if (config_file.empty()) {
+			if (!ui->select_user_config(config_file)) {
+				sys_config->delete_lock_file();
+				exit(1);
+			}
 		}
+		
+		// Create user config object
+		// NOTE: the user config object should not be created before
+		// ui->select_user_config is called, as the user can create a new
+		// profile. Creating a new profile destroys the global user_config
+		// pointer.
+		user_config = new t_user();
+		MEMMAN_NEW(user_config);
+
+		// Read user configuration
+		if (user_config->read_config(config_file, error_msg)) break;
+		
+		// Delete the user_config object again as they user must select
+		// another profile and could again create a new profile destroying
+		// the user_config pointer.
+		MEMMAN_DELETE(user_config);
+		delete user_config;
+			
+		ui->cb_show_msg(error_msg, MSG_CRITICAL);
+		config_file.clear();
 	}
 	
-	// Create log file and user config objects
-	user_config = new t_user();
-	MEMMAN_NEW(user_config);
-
-	// Read user configuration
-	if (!user_config->read_config(config_file, error_msg)) {
-		ui->cb_show_msg(error_msg, MSG_CRITICAL);
-		sys_config->delete_lock_file();
-		exit(1);
+	// Create call history
+	call_history = new t_call_history();
+	MEMMAN_NEW(call_history);
+	
+	// Read call history
+	if (!call_history->read_history(error_msg)) {
+		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 	
 	// Initialize RTP port settings.
@@ -347,10 +407,12 @@ int main( int argc, char ** argv )
 	}
 	
 	// Pick network interface
-	user_host = ui->select_network_intf();
-	if (user_host == "") {
-		sys_config->delete_lock_file();
-		exit(1);
+	if (user_host.empty()) {
+		user_host = ui->select_network_intf();
+		if (user_host.empty()) {
+			sys_config->delete_lock_file();
+			exit(1);
+		}
 	}
 	
 	// Discover NAT type if STUN is enabled
@@ -403,7 +465,7 @@ int main( int argc, char ** argv )
 		exit(1);
 	}
 
-	// Start GUI event loop (QApplication)
+	// Start UI event loop (CLI/QApplication/KApplication)
 	try {
 		ui->run();
 	} catch (string e) {
@@ -420,6 +482,9 @@ int main( int argc, char ** argv )
 		sys_config->delete_lock_file();
 		exit(1);
 	}
+	
+	// Application is ending
+	end_app = true;
 	
 	// Terminate threads
 	thr_phone_uas->cancel();
@@ -458,6 +523,8 @@ int main( int argc, char ** argv )
 
 	MEMMAN_DELETE(user_config);
 	delete user_config;
+	MEMMAN_DELETE(call_history);
+	delete call_history;
 
 	MEMMAN_DELETE(ui);
 	delete ui;

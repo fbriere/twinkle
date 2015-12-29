@@ -25,6 +25,7 @@
 
 extern t_event_queue	*evq_trans_mgr;
 extern t_event_queue	*evq_trans_layer;
+extern bool		end_app;
 
 void t_transaction_layer::recvd_response(t_response *r, t_tuid tuid,
 		t_tid tid)
@@ -221,11 +222,14 @@ void t_transaction_layer::lock(void) {
 	// functions on the transaction layer. By locking the UI mutex
 	// first, a deadlock can never occur as the UI also takes the
 	// UI lock first and then the transaction layer lock.
-	ui->lock();
+	// During shutdown of Twinkle the GUI has exited already and
+	// a lock on an exited QApplication causes a segmentation fault.
+	// Therefore the lock on the UI should not be taken during shutdown.
+	if (!end_app) ui->lock();
 	tl_mutex.lock();
 }
 
 void t_transaction_layer::unlock(void) {
 	tl_mutex.unlock();
-	ui->unlock();
+	if (!end_app) ui->unlock();
 }

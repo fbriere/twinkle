@@ -116,7 +116,6 @@ bool t_audio_rx::get_sound_samples(void) {
 		}
 	}
 
-	// TODO: big vs little endian support
 	short *sb = (short *)sample_buf;
 
 	if (is_3way) {
@@ -373,12 +372,18 @@ t_audio_rx::~t_audio_rx() {
 	}
 }
 
+void t_audio_rx::set_running(bool running) {
+	is_running = running;
+}
+
 void t_audio_rx::run(void) {
 	int status;
 	struct timespec sleeptimer;
 	struct timeval debug_timer;
 
-	is_running = true;
+	// The running flag is set already in t_audio_session::run to prevent
+	// a crash when the thread gets destroyed before it starts running.
+	// is_running = true;
 
 	// For a 3-way conference only the main receiver has access
 	// to the dsp.

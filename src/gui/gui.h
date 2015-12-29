@@ -148,6 +148,9 @@ public:
 	// Log file has been updated
 	void cb_log_updated(bool log_zapped = false);
 	
+	// Call history has been updated
+	void cb_call_history_updated(void);
+	
 	// Actions
 	void action_register(void);
 	void action_deregister(bool dereg_all);
@@ -157,7 +160,7 @@ public:
 	void action_answer(void);
 	void action_bye(void);
 	void action_reject(void);
-	void action_redirect(const list<t_url> &contacts);
+	void action_redirect(const list<t_display_url> &contacts);
 	void action_refer(const t_url &destination, const string &display);
 	void action_hold(void);
 	void action_retrieve(void);
@@ -167,12 +170,12 @@ public:
 	void action_options(const t_url &contact);
 	void action_dtmf(const string &digits);
 	void action_activate_line(unsigned short line);
-	void action_seize(void);
+	bool action_seize(void);
 	void action_unseize(void);
 	
 	// Service (de)activation
 	void srv_dnd(bool on);
-	void srv_enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest);
+	void srv_enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest);
 	void srv_disable_cf(t_cf_type cf_type);
 	void srv_auto_answer(bool on);
 };

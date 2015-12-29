@@ -45,6 +45,10 @@ public:
 
 	t_hdr_server();
 	void add_server(const t_server &s);
+	
+	// Get a string representation of server_info
+	string get_server_info(void) const;
+	
 	string encode(void) const;
 };
 

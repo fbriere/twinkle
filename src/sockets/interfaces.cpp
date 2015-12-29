@@ -17,6 +17,7 @@
 */
 
 #include "interfaces.h"
+#include "url.h"
 
 t_interface::t_interface(string _name) : name(_name) {}
 
@@ -69,4 +70,24 @@ list <t_interface> *get_interfaces(void) {
     	freeifaddrs(ifaddrs);
 
 	return result;
+}
+
+bool exists_interface(const string &hostname) {
+	struct hostent *h;
+
+	h = gethostbyname(hostname.c_str());
+	if (h == NULL) return false;
+	string ipaddr = inet_ntoa(*((struct in_addr *)h->h_addr));
+
+	list<t_interface> *l = get_interfaces();
+	
+	for (list<t_interface>::iterator i = l->begin(); i != l->end(); i++) {
+		if (i->get_ip_addr() == ipaddr) {
+			delete l;
+			return true;
+		}
+	}
+	
+	delete l;
+	return false;
 }

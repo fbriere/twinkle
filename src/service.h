@@ -38,12 +38,12 @@ private:
 	t_mutex		mtx_service;
 
 	// Call redirection (call forwarding)
-	bool		cf_always_active;
-	list<t_url>	cf_always_dest;
-	bool		cf_busy_active;
-	list<t_url>	cf_busy_dest;
-	bool		cf_noanswer_active;
-	list<t_url>	cf_noanswer_dest;
+	bool			cf_always_active;
+	list<t_display_url>	cf_always_dest;
+	bool			cf_busy_active;
+	list<t_display_url>	cf_busy_dest;
+	bool			cf_noanswer_active;
+	list<t_display_url>	cf_noanswer_dest;
 
 	// Do not disturb
 	// Note: CF_ALWAYS takes precedence over DND
@@ -63,11 +63,11 @@ public:
 	// get changed by other threads during execution.
 
 	// Call forwarding
-	void enable_cf(t_cf_type cf_type, const list<t_url> &cf_dest);
+	void enable_cf(t_cf_type cf_type, const list<t_display_url> &cf_dest);
 	void disable_cf(t_cf_type cf_type);
-	bool get_cf_active(t_cf_type cf_type, list<t_url> &dest);
+	bool get_cf_active(t_cf_type cf_type, list<t_display_url> &dest);
 	bool is_cf_active(void); // is any cf active?
-	list<t_url> get_cf_dest(t_cf_type cf_type);
+	list<t_display_url> get_cf_dest(t_cf_type cf_type);
 
 	// Do not disturb
 	void enable_dnd(void);

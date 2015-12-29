@@ -148,13 +148,27 @@ t_trans_client::t_trans_client(t_request *r, unsigned long ipaddr,
 	evq_sender_udp->push_network(r, ipaddr, port);
 }
 
-// RFC 3261 17.1.3
+// RFC 3261 17.1.3, 8.2.6.2
+// Section 17.1.3 states that only the branch and CSeq method should match.
+// This can lead to the following problem however:
+// 1) A response matches a BYE request, but has a wrong call id.
+// 2) As the response matches the request, the transaction finishes.
+// 3) Then the response is delivered to the TU which tries to match the
+//    response to a dialog.
+// 4) As the call id is wrong, no match is found an the response is discarded.
+// 5) Now the TU keeps waiting forever for a response on the BYE
+//
+// By taking the call id into account here, this scenario is prevented.
+// When a call id is wrong, the BYE request will be retransmitted due to
+// timeouts until the transaction times out completely and a 408 is sent
+// to the TU.
 bool t_trans_client::match(t_response *r) const {
 	t_via	&req_top_via = request->hdr_via.via_list.front();
 	t_via	&resp_top_via = r->hdr_via.via_list.front();
 
 	return (req_top_via.branch == resp_top_via.branch &&
-		request->hdr_cseq.method == r->hdr_cseq.method);
+		request->hdr_cseq.method == r->hdr_cseq.method &&
+		request->hdr_call_id.call_id == r->hdr_call_id.call_id);
 }
 
 ///////////////////////////////////////////////////////////

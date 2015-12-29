@@ -53,6 +53,17 @@
 #define FLD_GUI_USE_SYSTRAY	"gui_use_systray"
 #define FLD_GUI_HIDE_ON_CLOSE	"gui_hide_on_close"
 
+// Address book settings
+#define FLD_AB_SHOW_SIP_ONLY	"ab_show_sip_only"
+
+// Call history fields
+#define FLD_CH_MAX_SIZE		"ch_max_size"
+
+// Startup settings
+#define FLD_START_USER_PROFILE	"start_user_profile"
+#define FLD_START_USER_HOST	"start_user_host"
+#define FLD_START_HIDDEN	"start_hidden"
+
 string t_audio_device::get_description(void) const {
 	string s = device;
 	if (type == OSS) {
@@ -118,6 +129,14 @@ t_sys_settings::t_sys_settings() {
 	
 	gui_use_systray = true;
 	gui_hide_on_close = true;
+	
+	ab_show_sip_only = false;
+	
+	ch_max_size = 50;
+	
+	start_user_profile.clear();
+	start_user_host.clear();
+	start_hidden = false;
 }
 
 string t_sys_settings::about(bool html) const {
@@ -348,7 +367,7 @@ void t_sys_settings::delete_lock_file(void) const {
 bool t_sys_settings::read_config(string &error_msg) {
 	struct stat stat_buf;
 	
-	// Check if config file directory exists
+	// Check if config file exists
 	if (stat(filename.c_str(), &stat_buf) != 0) {
 		// There is no config file. Default settings will be used.
 		return true;
@@ -414,7 +433,17 @@ bool t_sys_settings::read_config(string &error_msg) {
 			gui_use_systray = yesno2bool(value);
 		} else if (parameter == FLD_GUI_HIDE_ON_CLOSE) {
 			gui_hide_on_close = yesno2bool(value);
-		}	
+		} else if (parameter == FLD_AB_SHOW_SIP_ONLY) {
+			ab_show_sip_only = yesno2bool(value);
+		} else if (parameter == FLD_CH_MAX_SIZE) {
+			ch_max_size = atoi(value.c_str());
+		} else if (parameter == FLD_START_USER_PROFILE) {
+			start_user_profile = value;
+		} else if (parameter == FLD_START_USER_HOST) {
+			start_user_host = value;
+		} else if (parameter == FLD_START_HIDDEN) {
+			start_hidden = yesno2bool(value);
+		}
 		// Unknown field names are skipped.
 	}
 		
@@ -468,6 +497,23 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << "# GUI\n";
 	config << FLD_GUI_USE_SYSTRAY << '=' << bool2yesno(gui_use_systray) << endl;
 	config << FLD_GUI_HIDE_ON_CLOSE << '=' << bool2yesno(gui_hide_on_close) << endl;
+	config << endl;
+	
+	// Write address book settings
+	config << "# Address book\n";
+	config << FLD_AB_SHOW_SIP_ONLY << '=' << bool2yesno(ab_show_sip_only) << endl;
+	config << endl;
+	
+	// Write call history settings
+	config << "# Call history\n";
+	config << FLD_CH_MAX_SIZE << '=' << ch_max_size << endl;
+	config << endl;
+	
+	// Write startup settings
+	config << "# Startup\n";
+	config << FLD_START_USER_PROFILE << '=' << start_user_profile << endl;
+	config << FLD_START_USER_HOST << '=' << start_user_host << endl;
+	config << FLD_START_HIDDEN << '=' << bool2yesno(start_hidden) << endl;
 	config << endl;
 	
 	// Check if writing succeeded

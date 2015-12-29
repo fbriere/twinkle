@@ -299,6 +299,12 @@ void t_log::write_raw(long raw) {
 	*log_stream << raw;
 }
 
+void t_log::write_bool(bool raw) {
+	if (log_disabled || log_report_disabled) return;
+	
+	*log_stream << raw;
+}
+
 void t_log::write_endl(void) {
 	if (log_disabled || log_report_disabled) return;
 

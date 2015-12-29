@@ -95,6 +95,7 @@ public:
         void write_raw(unsigned short raw);
         void write_raw(unsigned long raw);
 	void write_raw(long raw);
+	void write_bool(bool raw);
 
         // Write end of line
         void write_endl(void);

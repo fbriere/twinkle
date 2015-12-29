@@ -324,6 +324,10 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	}
 }
 
+void t_audio_tx::set_running(bool running) {
+	is_running = running;
+}
+
 void t_audio_tx::run(void) {
 	const AppDataUnit* adu;
 	struct timespec sleeptimer;
@@ -331,7 +335,9 @@ void t_audio_tx::run(void) {
 	int last_seqnum = -1; // seqnum of last received RTP packet
 	bool recvd_dtmf = false; // indicates if last RTP packets is a DTMF event
 
-	is_running = true;
+	// The running flag is set already in t_audio_session::run to prevent
+	// a crash when the thread gets destroyed before it starts running.
+	// is_running = true;
 
 	unsigned long rtp_timestamp;
 	
@@ -555,7 +561,6 @@ void t_audio_tx::run(void) {
 			continue;
 		}
 
-		// TODO: big vs little endian support
 		short *sb = (short *)sample_buf;
 		unsigned char *payload = const_cast<uint8 *>(adu->getData());
 

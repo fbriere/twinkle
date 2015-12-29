@@ -28,20 +28,15 @@
 int SelectProfileForm::exec()
 {
 	profileListBox->clear();
+	idxDefaultProfile = -1;
 	
-	// Find the .twinkle directory in HOME
-	QDir d = QDir::home();
-	if (!d.cd(USER_DIR)) {
-		QMessageBox::critical(this, PRODUCT_NAME,
-			"Cannot find .twinkle directory in your home directory.");
+	// Get list of all profiles
+	QStringList profiles;
+	QString error;
+	if (!SelectProfileForm::getUserProfiles(profiles, error)) {
+		QMessageBox::critical(this, PRODUCT_NAME, error);
 		return QDialog::Rejected;
 	}
-	
-	// Select all config files
-	d.setFilter(QDir::Files);
-	d.setNameFilter("*.cfg");
-	d.setSorting(QDir::Name | QDir::IgnoreCase);
-	QStringList profiles = d.entryList();
 	
 	// If there are no profiles then the user has to create one
 	if (profiles.isEmpty()) {
@@ -264,6 +259,45 @@ void SelectProfileForm::renameProfile()
 	}
 }
 
+void SelectProfileForm::setAsDefault()
+{
+	// Only show the information when the default button is
+	// pressed for the first time.
+	if (idxDefaultProfile == -1) {
+		QMessageBox::information(this, PRODUCT_NAME, 
+			"If you want to remove or "
+			"change the default at a later time, you can do that "
+			"via the system settings.");
+	}
+	
+	// Store current index as the changeItem method also changes
+	// the current index as a side effect.
+	int idxNewDefault = profileListBox->currentItem();
+	
+	// Restore pixmap of the old default
+	if (idxDefaultProfile != -1) {
+		profileListBox->changeItem(
+			QPixmap::fromMimeSource("penguin-small.png"),
+			profileListBox->text(idxDefaultProfile),
+			idxDefaultProfile);
+	}
+	
+	// Set pixmap of the default
+	idxDefaultProfile = idxNewDefault;
+	profileListBox->changeItem(
+		QPixmap::fromMimeSource("twinkle16.png"),
+		profileListBox->text(idxDefaultProfile),
+		idxDefaultProfile);
+	
+	// Write default to system settings
+	sys_config->start_user_profile = profileListBox->currentText().ascii();
+	string error_msg;
+	if (!sys_config->write_config(error_msg)) {
+		// Failed to write config file
+		((t_gui *)ui)->cb_show_msg(this, error_msg, MSG_CRITICAL);
+	}
+}
+
 void SelectProfileForm::wizardProfile()
 {
 	// Ask user for a profile name
@@ -304,3 +338,21 @@ void SelectProfileForm::wizardProfile()
 	delete user_config;
 }
 
+// Get a list of all profiles. Returns false if there is an error.
+bool SelectProfileForm::getUserProfiles(QStringList &profiles, QString &error)
+{
+	// Find the .twinkle directory in HOME
+	QDir d = QDir::home();
+	if (!d.cd(USER_DIR)) {
+		error = "Cannot find .twinkle directory in your home directory.";
+		return false;
+	}
+	
+	// Select all config files
+	d.setFilter(QDir::Files);
+	d.setNameFilter("*.cfg");
+	d.setSorting(QDir::Name | QDir::IgnoreCase);
+	profiles = d.entryList();
+	
+	return true;
+}

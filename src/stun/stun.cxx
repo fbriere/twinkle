@@ -661,7 +661,7 @@ stunRand()
 		
       UInt64 tick;
       
-// Twinkle: I added __x86_64__ for amd64 compiler
+// Twinkle: removed platform dependent code (except WIN32 code)
 		
 #if defined(WIN32) 
       volatile unsigned int lowtick=0,hightick=0;
@@ -674,14 +674,6 @@ stunRand()
       tick = hightick;
       tick <<= 32;
       tick |= lowtick;
-#elif defined(__GNUC__) && ( defined(__i686__) || defined(__i386__) || defined(__x86_64__) )
-      asm("rdtsc" : "=A" (tick));
-#elif defined (__SUNPRO_CC) || defined( __sparc__ )	
-      tick = gethrtime();
-#elif defined(__MACH__) 
-      int fd=open("/dev/random",O_RDONLY);
-      read(fd,&tick,sizeof(tick));
-      closesocket(fd);
 #else
       tick = time(NULL);
 #endif 

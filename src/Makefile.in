@@ -37,6 +37,9 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+build_triplet = @build@
+host_triplet = @host@
+target_triplet = @target@
 noinst_PROGRAMS = twinkle$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -54,11 +57,11 @@ AR = ar
 ARFLAGS = cru
 libtwinkle_a_AR = $(AR) $(ARFLAGS)
 libtwinkle_a_LIBADD =
-am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) dialog.$(OBJEXT) \
-	events.$(OBJEXT) line.$(OBJEXT) listener.$(OBJEXT) \
-	log.$(OBJEXT) phone.$(OBJEXT) redirect.$(OBJEXT) \
-	sender.$(OBJEXT) service.$(OBJEXT) session.$(OBJEXT) \
-	sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
+am_libtwinkle_a_OBJECTS = auth.$(OBJEXT) call_history.$(OBJEXT) \
+	dialog.$(OBJEXT) events.$(OBJEXT) line.$(OBJEXT) \
+	listener.$(OBJEXT) log.$(OBJEXT) phone.$(OBJEXT) \
+	redirect.$(OBJEXT) sender.$(OBJEXT) service.$(OBJEXT) \
+	session.$(OBJEXT) sub_refer.$(OBJEXT) subscription.$(OBJEXT) \
 	sys_settings.$(OBJEXT) timekeeper.$(OBJEXT) \
 	transaction.$(OBJEXT) transaction_layer.$(OBJEXT) \
 	transaction_mgr.$(OBJEXT) user.$(OBJEXT) userintf.$(OBJEXT) \
@@ -253,11 +256,19 @@ am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 datadir = @datadir@
 exec_prefix = @exec_prefix@
 have_kde = @have_kde@
+host = @host@
 host_alias = @host_alias@
+host_cpu = @host_cpu@
+host_os = @host_os@
+host_vendor = @host_vendor@
 include_ARTS_FALSE = @include_ARTS_FALSE@
 include_ARTS_TRUE = @include_ARTS_TRUE@
 include_x11_FALSE = @include_x11_FALSE@
@@ -301,7 +312,11 @@ qt_libraries = @qt_libraries@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
+target = @target@
 target_alias = @target_alias@
+target_cpu = @target_cpu@
+target_os = @target_os@
+target_vendor = @target_vendor@
 x_includes = @x_includes@
 x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
@@ -325,6 +340,7 @@ twinkle_LDADD = libtwinkle.a\
 
 libtwinkle_a_SOURCES = \
         auth.cpp\
+        call_history.cpp\
         dialog.cpp\
         events.cpp\
         line.cpp\
@@ -346,6 +362,7 @@ libtwinkle_a_SOURCES = \
         userintf.cpp\
         util.cpp\
         auth.h\
+        call_history.h\
         dialog.h\
         events.h\
 	exceptions.h\
@@ -442,6 +459,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/auth.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/call_history.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/events.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/line.Po@am__quote@

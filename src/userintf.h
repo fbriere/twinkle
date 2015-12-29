@@ -111,6 +111,10 @@ public:
         // Expand a SIP destination to a full SIP uri, i.e. add sip: scheme
         // and domain if these are missing.
         string expand_destination(const string &dst);
+        
+        // Expand a SIP destination into a display and a full SIP uri
+        void expand_destination(const string &dst, string &display, string &dst_url);
+        void expand_destination(const string &dst, t_display_url &display_url);
 
 	// Format a SIP address for user display
 	virtual string format_sip_address(const string &display,
@@ -215,6 +219,9 @@ public:
 			
 	// Log file has been updated
 	virtual void cb_log_updated(bool log_zapped = false);
+	
+	// Call history has been updated
+	virtual void cb_call_history_updated(void);
 
 	// Get last call information
 	// Returns true if last call information is valid

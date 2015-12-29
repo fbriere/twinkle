@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdlib>
 #include <ctime>
+#include "call_history.h"
 #include "events.h"
 #include "line.h"
 #include "listener.h"
@@ -32,6 +33,7 @@
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
+#include "sockets/interfaces.h"
 #include "sockets/socket.h"
 #include "threads/thread.h"
 #include "audits/memman.h"
@@ -53,6 +55,9 @@ t_memman 		*memman;
 
 // Initialize random generator
 t_init_rand init_rand;
+
+// Indicates if application is ending (because user pressed Quit)
+bool end_app;
 
 // IP address on which the phone is running
 string user_host;
@@ -108,12 +113,17 @@ t_user			*user_config;
 // System config
 t_sys_settings		*sys_config;
 
+// Call history
+t_call_history		*call_history;
+
 // Indicates if LinuxThreads or NPTL is active.
 bool			threading_is_LinuxThreads;
 
 
 main(int argc, char *argv[]) {
 	string error_msg;
+	
+	end_app = false;
 
 	memman = new t_memman();
 	MEMMAN_NEW(memman);
@@ -149,6 +159,16 @@ main(int argc, char *argv[]) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
 	}
+	
+	// Get default values from system configuration
+	string config_file = sys_config->start_user_profile;
+	if (!config_file.empty()) config_file += USER_FILE_EXT;
+
+	if (user_host.empty()) {
+		if (exists_interface(sys_config->start_user_host)) {
+			user_host = sys_config->start_user_host;
+		}
+	}
 
 	// Create a lock file to guarantee that the application
 	// runs only once.
@@ -161,6 +181,8 @@ main(int argc, char *argv[]) {
 	MEMMAN_NEW(log_file);
 	user_config = new t_user();
 	MEMMAN_NEW(user_config);
+	call_history = new t_call_history();
+	MEMMAN_NEW(call_history);
 
 	// Determine threading implementation
 	threading_is_LinuxThreads = t_thread::is_LinuxThreads();
@@ -172,7 +194,7 @@ main(int argc, char *argv[]) {
 			"::main", LOG_NORMAL, LOG_INFO);
 	}
 
-	string config_file = USER_CONFIG_FILE;
+	if (config_file.empty()) config_file = USER_CONFIG_FILE;
 
 	if (argc == 2) config_file = argv[1];
 
@@ -181,6 +203,11 @@ main(int argc, char *argv[]) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		sys_config->delete_lock_file();
 		exit(1);
+	}
+	
+	// Read call history
+	if (!call_history->read_history(error_msg)) {
+		log_file->write_report(error_msg, "::main", LOG_NORMAL, LOG_WARNING);
 	}
 
 	// Initialize RTP port settings.
@@ -203,10 +230,12 @@ main(int argc, char *argv[]) {
 	}
 	
 	// Pick network interface
-	user_host = ui->select_network_intf();
-	if (user_host == "") {
-		sys_config->delete_lock_file();
-		exit(1);
+	if (user_host.empty()) {
+		user_host = ui->select_network_intf();
+		if (user_host.empty()) {
+			sys_config->delete_lock_file();
+			exit(1);
+		}
 	}
 	
 	// Discover NAT type if STUN is enabled
@@ -287,6 +316,9 @@ main(int argc, char *argv[]) {
 		sys_config->delete_lock_file();
 		exit(1);
 	}
+	
+	// Application is ending
+	end_app = true;
 
 	thr_phone_uas->cancel();
 	thr_phone_uas->join();
@@ -324,6 +356,8 @@ main(int argc, char *argv[]) {
 
 	MEMMAN_DELETE(user_config);
 	delete user_config;
+	MEMMAN_DELETE(call_history);
+	delete call_history;
 
 	MEMMAN_DELETE(ui);
 	delete ui;

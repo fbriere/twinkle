@@ -27,20 +27,26 @@ void t_hdr_user_agent::add_server(const t_server &s) {
 	ua_info.push_back(s);
 }
 
-string t_hdr_user_agent::encode(void) const {
+string t_hdr_user_agent::get_ua_info(void) const {
 	string s;
-
-	if (!populated) return s;
-
-	s = "User-Agent: ";
-
+	
 	for (list<t_server>::const_iterator i = ua_info.begin();
 	     i != ua_info.end(); i++ )
 	{
 		if (i != ua_info.begin()) s += ' ';
 		s += i->encode();
 	}
+	
+	return s;	
+}
 
+string t_hdr_user_agent::encode(void) const {
+	string s;
+
+	if (!populated) return s;
+
+	s = "User-Agent: ";
+	s += get_ua_info();
 	s += CRLF;
 	return s;
 }
