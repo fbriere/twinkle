@@ -333,30 +333,45 @@ private:
 	unsigned short		sip_transport_udp_threshold;
 	//@}
 
-	// NAT
-
-	// NAT traversal
-	// You can set nat_public_ip to your public IP or FQDN if you are behind
-	// a NAT. This will then be used inside the SIP messages instead of your
-	// private IP. On your NAT you have to create static bindings for port 5060
-	// and ports 8000 - 8005 to the same ports on your private IP address.
+	/** @name NAT */
+	//@{
+	/**
+	 * NAT traversal
+	 * You can set nat_public_ip to your public IP or FQDN if you are behind
+	 * a NAT. This will then be used inside the SIP messages instead of your
+	 * private IP. On your NAT you have to create static bindings for port 5060
+	 * and ports 8000 - 8005 to the same ports on your private IP address.
+	 */
 	bool			use_nat_public_ip;
+	
+	/** The public IP address of the NAT device. */
 	string			nat_public_ip;
 	
-	// NAT traversal via STUN
+	/** NAT traversal via STUN. */
 	bool			use_stun;
+	
+	/** URL of the STUN server. */
 	t_url			stun_server;
+	
+	/** User persistent TCP connections. */
+	bool			persistent_tcp;
+	//@}
 
-
-	// TIMERS
-
-	// Noanswer timer is started when an initial INVITE is received. If
-	// the user does not respond within the timer, then the call will be
-	// released with a 480 Temporarily Unavailable response.
+	/** @name TIMERS */
+	//@{
+	/** 
+	 * Noanswer timer is started when an initial INVITE is received. If
+	 * the user does not respond within the timer, then the call will be
+	 * released with a 480 Temporarily Unavailable response.
+	 */
 	unsigned short		timer_noanswer; // seconds
 	
-	// Duration of NAT keepalive timer (s)
-	unsigned long		timer_nat_keepalive; 
+	/** Duration of NAT keepalive timer (s) */
+	unsigned short		timer_nat_keepalive;
+	
+	/** Duration of TCP ping timer (s) */
+	unsigned short		timer_tcp_ping;
+	//@}
 
 	// ADDRESS FORMAT
 
@@ -435,6 +450,9 @@ private:
 	//@{
 	/** Maximum number of simultaneous IM sessions. */
 	unsigned short	im_max_sessions;
+	
+	/** Flag to indicate that IM is-composing indications (RFC 3994) should be sent. */
+	bool		im_send_iscomposing;
 	//@}
 	
 	/** @name PRESENCE */
@@ -546,8 +564,10 @@ public:
 	string get_nat_public_ip(void) const;
 	bool get_use_stun(void) const;
 	t_url get_stun_server(void) const;
+	bool get_persistent_tcp(void) const;
 	unsigned short get_timer_noanswer(void) const;
-	unsigned long get_timer_nat_keepalive(void) const; 
+	unsigned short get_timer_nat_keepalive(void) const; 
+	unsigned short get_timer_tcp_ping(void) const;
 	bool get_display_useronly_phone(void) const;
 	bool get_numerical_user_is_phone(void) const;
 	bool get_remove_special_phone_symbols(void) const;
@@ -574,6 +594,7 @@ public:
 	unsigned long get_mwi_subscription_time(void) const;
 	string get_mwi_vm_address(void) const;
 	unsigned short get_im_max_sessions(void) const;
+	bool get_im_send_iscomposing(void) const;
 	unsigned long get_pres_subscription_time(void) const;
 	unsigned long get_pres_publication_time(void) const;
 	bool get_pres_publish_startup(void) const;
@@ -651,8 +672,10 @@ public:
 	void set_nat_public_ip(const string &public_ip);
 	void set_use_stun(bool b);
 	void set_stun_server(const t_url &url);
+	void set_persistent_tcp(bool b);
 	void set_timer_noanswer(unsigned short timer);
 	void set_timer_nat_keepalive(unsigned short timer); 
+	void set_timer_tcp_ping(unsigned short timer);
 	void set_display_useronly_phone(bool b);
 	void set_numerical_user_is_phone(bool b);
 	void set_remove_special_phone_symbols(bool b);
@@ -679,6 +702,7 @@ public:
 	void set_mwi_subscription_time(unsigned long t);
 	void set_mwi_vm_address(const string &address);
 	void set_im_max_sessions(unsigned short max_sessions);
+	void set_im_send_iscomposing(bool b);
 	void set_pres_subscription_time(unsigned long t);
 	void set_pres_publication_time(unsigned long t);
 	void set_pres_publish_startup(bool b);

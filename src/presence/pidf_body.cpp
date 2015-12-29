@@ -22,28 +22,23 @@
 #include <libxml/parser.h>
 
 #include "log.h"
+#include "util.h"
 #include "audits/memman.h"
 
 #define PIDF_XML_VERSION	"1.0"
 #define PIDF_NAMESPACE		"urn:ietf:params:xml:ns:pidf"
 
-#define IS_PIDF_TAG(node, tag)	((node)->type == XML_ELEMENT_NODE &&\
-				(node)->ns &&\
-				xmlStrEqual((node)->ns->href, BAD_CAST PIDF_NAMESPACE) &&\
-				xmlStrEqual((node)->name, BAD_CAST (tag)))
+#define IS_PIDF_TAG(node, tag)	IS_XML_TAG(node, tag, PIDF_NAMESPACE)
 				
-#define IS_PIDF_ATTR(attr, attr_name) ((attr)->type == XML_ATTRIBUTE_NODE &&\
-				 (attr)->ns &&\
-				 xmlStrEqual((attr)->ns->href, BAD_CAST PIDF_NAMESPACE) &&\
-				 xmlStrEqual((attr)->name, BAD_CAST (attr_name)))
+#define IS_PIDF_ATTR(attr, attr_name) IS_XML_ATTR(attr, attr_name, PIDF_NAMESPACE)
 
 bool t_pidf_xml_body::extract_status(void) {
-	assert(pidf_doc);
+	assert(xml_doc);
 
 	xmlNode *root_element = NULL;
 	
 	// Get root
-	root_element = xmlDocGetRootElement(pidf_doc);
+	root_element = xmlDocGetRootElement(xml_doc);
 	if (!root_element) {
 		log_file->write_report("PIDF document has no root element.",
 			"t_pidf_xml_body::extract_status",
@@ -58,8 +53,6 @@ bool t_pidf_xml_body::extract_status(void) {
 			LOG_NORMAL, LOG_WARNING);
 		return false;
 	}
-	
-	
 	
 	pres_entity.clear();
 	tuple_id.clear();
@@ -135,7 +128,7 @@ void t_pidf_xml_body::process_pidf_basic(xmlNode *basic) {
 	
 	xmlNode *child = basic->children;
 	if (child && child->type == XML_TEXT_NODE) {
-		basic_status = (char*)child->content;
+		basic_status = tolower((char*)child->content);
 	} else {
 		log_file->write_report("<basic> element has no content.",
 			"t_pidf_xml_body::process_pidf_basic",
@@ -143,19 +136,14 @@ void t_pidf_xml_body::process_pidf_basic(xmlNode *basic) {
 	}
 }
 
-void t_pidf_xml_body::create_pidf(void) {
-	clear_pidf();
-	
-	// XML doc
-	pidf_doc = xmlNewDoc(BAD_CAST PIDF_XML_VERSION);
-	MEMMAN_NEW(pidf_doc);
-	pidf_doc->encoding = xmlCharStrdup("UTF-8");
+void t_pidf_xml_body::create_xml_doc(const string &xml_version, const string &charset) {
+	t_sip_body_xml::create_xml_doc(xml_version, charset);
 	
 	// presence
 	xmlNode *node_presence = xmlNewNode(NULL, BAD_CAST "presence");
 	xmlNs *ns_pidf = xmlNewNs(node_presence, BAD_CAST PIDF_NAMESPACE, NULL);
 	xmlNewProp(node_presence, BAD_CAST "entity", BAD_CAST pres_entity.c_str());
-	xmlDocSetRootElement(pidf_doc, node_presence);
+	xmlDocSetRootElement(xml_doc, node_presence);
 	
 	// tuple
 	xmlNode *node_tuple = xmlNewChild(node_presence, ns_pidf, BAD_CAST "tuple", NULL);
@@ -169,54 +157,18 @@ void t_pidf_xml_body::create_pidf(void) {
 		BAD_CAST "basic", BAD_CAST basic_status.c_str());
 }
 
-void t_pidf_xml_body::clear_pidf(void) {
-	if (pidf_doc) {
-		MEMMAN_DELETE(pidf_doc);
-		xmlFreeDoc(pidf_doc);
-		pidf_doc = NULL;
-	}
-}
-
-t_pidf_xml_body::t_pidf_xml_body() : t_sip_body (),
-	pidf_doc(NULL) 
-{
-}
-
-t_pidf_xml_body::~t_pidf_xml_body() {
-	clear_pidf();
-}
-
-string t_pidf_xml_body::encode(void) const {
-	if (!pidf_doc) {
-		t_pidf_xml_body *self = const_cast<t_pidf_xml_body *>(this);
-		self->create_pidf();
-	}
-	assert(pidf_doc);
-	
-	xmlChar *buf;
-	int buf_size;
-	
-	xmlDocDumpMemory(pidf_doc, &buf, &buf_size);
-	string result((char*)buf);
-	xmlFree(buf);
-	
-	return result;
-}
+t_pidf_xml_body::t_pidf_xml_body() : t_sip_body_xml ()
+{}
 
 t_sip_body *t_pidf_xml_body::copy(void) const {
 	t_pidf_xml_body *body = new t_pidf_xml_body(*this);
 	MEMMAN_NEW(body);
 	
-	if (pidf_doc) {
-		body->pidf_doc = xmlCopyDoc(pidf_doc, 1);
-		if (!body->pidf_doc) {
-			log_file->write_report("Failed to copy pidf xml document.",
-				"t_pidf_xml_body::copy",
-				LOG_NORMAL, LOG_CRITICAL);
-		} else {
-			MEMMAN_NEW(body->pidf_doc);
-		}
-	}
+	// Clear the xml_doc pointer in the new body, as a copy of the
+	// XML document must be copied to the body.
+	body->xml_doc = NULL;
+	
+	copy_xml_doc(body);
 	
 	return body;
 }
@@ -242,37 +194,28 @@ string t_pidf_xml_body::get_basic_status(void) const {
 }
 
 void t_pidf_xml_body::set_pres_entity(const string &_pres_entity) {
-	clear_pidf();
+	clear_xml_doc();
 	pres_entity = _pres_entity;
 }
 
 void t_pidf_xml_body::set_tuple_id(const string &_tuple_id) {
-	clear_pidf();
+	clear_xml_doc();
 	tuple_id = _tuple_id;
 }
 
 void t_pidf_xml_body::set_basic_status(const string &_basic_status) {
-	clear_pidf();
+	clear_xml_doc();
 	basic_status = _basic_status;
 }
 
 bool t_pidf_xml_body::parse(const string &s) {
-	assert(pidf_doc == NULL);
-
-	pidf_doc = xmlReadMemory(s.c_str(), s.size(), "noname.xml", NULL, 
-		XML_PARSE_NOBLANKS | XML_PARSE_NOERROR | XML_PARSE_NOWARNING);
-	if (!pidf_doc) {
-		log_file->write_report("Failed to parse pidf xml document.",
-			"t_pidf_xml_body::parse",
-			LOG_NORMAL, LOG_WARNING);
-	} else {
-		MEMMAN_NEW(pidf_doc);
+	if (t_sip_body_xml::parse(s)) {
 		if (!extract_status()) {
-			MEMMAN_DELETE(pidf_doc);
-			xmlFreeDoc(pidf_doc);
-			pidf_doc = NULL;
+			MEMMAN_DELETE(xml_doc);
+			xmlFreeDoc(xml_doc);
+			xml_doc = NULL;
 		}
 	}
 	
-	return (pidf_doc != NULL);
+	return (xml_doc != NULL);
 }

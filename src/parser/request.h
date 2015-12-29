@@ -34,15 +34,23 @@ using namespace std;
 
 class t_request : public t_sip_message {
 private:
-	// A DNS lookup on the request URI (or outbound proxy) might resolve 
-	// into multiple destinations. get_destination() will return the first 
-	// destination. All destinations are stored here.
-	// get_next_destination() will remove the first destination of this
-	// list.
+	/**
+	 * A DNS lookup on the request URI (or outbound proxy) might resolve 
+	 * into multiple destinations. @ref get_destination() will return the first 
+	 * destination. All destinations are stored here.
+	 * @ref next_destination() will remove the first destination of this
+	 * list.
+	 */
 	list<t_ip_port>		destinations;
 	
 	/**
-	 * Add destinations for a give URI based on transport settings.
+	 * Indicates if the destination specified a transport, i.e. via the
+	 * transport parameter in a URI.
+	 */
+	bool			transport_specified;
+	
+	/**
+	 * Add destinations for a given URI based on transport settings.
 	 * @param user_profile [in] User profile
 	 * @param dst_uri [in] The URI to resolve.
 	 */
@@ -113,6 +121,18 @@ public:
 	       const string &cnonce, t_credentials &cr, string &fail_reason);
 	       
 	virtual void calc_local_ip(void);
+	
+	/**
+	 * Check if the request is a registration request.
+	 * @return True if the request is a registration request, otherwise false.
+	 */
+	bool is_registration_request(void) const;
+	
+	/**
+	 * Check if the request is a de-registration request.
+	 * @return True if the request is a de-registration request, otherwise false.
+	 */
+	bool is_de_registration_request(void) const;
 };
 
 #endif

@@ -80,15 +80,14 @@ typedef union YYSTYPE
 	string			*yysdpt_str;
 	t_sdp_ntwk_type		yysdpt_ntwk_type;
 	t_sdp_addr_type		yysdpt_addr_type;
-	t_sdp_transport		yysdpt_transport;
 	t_sdp_connection	*yysdpt_connection;
 	list<t_sdp_attr>	*yysdpt_attributes;
 	t_sdp_attr		*yysdpt_attribute;
 	t_sdp_media		*yysdpt_media;
-	list<unsigned short>	*yysdpt_num_list;
+	list<string>		*yysdpt_token_list;
 }
 /* Line 1529 of yacc.c.  */
-#line 92 "sdp_parser.h"
+#line 91 "sdp_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

@@ -436,6 +436,28 @@ vector<string> split_on_first(const string &s, char c) {
 	return l;
 }
 
+vector<string> split_on_last(const string &s, char c) {
+	vector<string> l;
+	string::size_type i = s.find_last_of(c);
+	if (i == string::npos) {
+		l.push_back(s);
+	} else {
+		if (i == 0) {
+			l.push_back("");
+		} else {
+			l.push_back(s.substr(0, i));
+		}
+		
+		if (i == s.size() - 1) {
+			l.push_back("");
+		} else {
+			l.push_back(s.substr(i + 1));
+		}
+	}
+	
+	return l;
+}
+
 vector<string> split_escaped(const string &s, char c) {
 	vector<string> l;
 	

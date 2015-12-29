@@ -34,6 +34,7 @@
 
 #include "translator.h"
 #include "util.h"
+#include "threads/mutex.h"
 
 
 using namespace std;

@@ -784,6 +784,10 @@ Pokud se připojíte k nějaké síti později, musíte Twinkle spustit znovu. T
         <source>Accepted by network</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Failed to save message attachment: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1298,10 +1302,6 @@ With this option you request your SIP provider to hide your identity from the ca
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The exchanged messages.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1323,6 +1323,46 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>Delivery notification</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Instant message toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>image size is scaled down in preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open with %1...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open with...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save attachment as...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File already exists. Do you want to overwrite this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to save attachment.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is typing a message.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2618,6 +2658,49 @@ Please select a profile.</source>
     </message>
 </context>
 <context>
+    <name>SendFileForm</name>
+    <message>
+        <source>Twinkle - Send File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select file to send.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;File:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Subject:</source>
+        <translation type="unfinished">&amp;Předmět:</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation type="unfinished">Zrušit (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File does not exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SrvRedirectForm</name>
     <message>
         <source>Twinkle - Call Redirection</source>
@@ -3646,6 +3729,18 @@ nasměrované na lokální porty na vašem počítači.</translation>
     </message>
     <message>
         <source>Cannot receive incoming TCP connections.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to create file %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to write data to file %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to send message.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5444,6 +5539,22 @@ Asterisk podporuje &quot;unsollicited message waiting indication&quot;.
     </message>
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>P&amp;ersistent TCP connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Send composing indications when typing a message.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -337,6 +337,7 @@ void UserProfileForm::populate()
 	
 	// INSTANT MESSAGE
 	imMaxSessionsSpinBox->setValue(current_profile->get_im_max_sessions());
+	isComposingCheckBox->setChecked(current_profile->get_im_send_iscomposing());
 	
 	// PRESENCE
 	presPublishCheckBox->setChecked(current_profile->get_pres_publish_startup());
@@ -503,6 +504,8 @@ void UserProfileForm::populate()
 	stunServerLineEdit->setEnabled(current_profile->get_use_stun());
 	stunServerLineEdit->setText(current_profile->get_stun_server().
 				    encode_noscheme().c_str());
+	persistentTcpCheckBox->setChecked(current_profile->get_persistent_tcp());
+	persistentTcpCheckBox->setEnabled(current_profile->get_sip_transport() == SIP_TRANS_TCP);
 	
 	// ADDRESS FORMAT
 	displayTelUserCheckBox->setChecked(current_profile->get_display_useronly_phone());
@@ -944,6 +947,9 @@ bool UserProfileForm::validateValues()
 	
 	// INSTANT MESSAGE
 	current_profile->set_im_max_sessions(imMaxSessionsSpinBox->value());
+	current_profile->set_im_send_iscomposing(isComposingCheckBox->isChecked());
+	
+	// PRESENCE
 	current_profile->set_pres_publish_startup(presPublishCheckBox->isChecked());
 	current_profile->set_pres_publication_time(presPublishTimeSpinBox->value());
 	current_profile->set_pres_subscription_time(presSubscribeTimeSpinBox->value());
@@ -1083,6 +1089,8 @@ bool UserProfileForm::validateValues()
 		current_profile->set_stun_server(t_url(s.ascii()));
 		emit stunServerChanged(current_profile);
 	}
+	
+	current_profile->set_persistent_tcp(persistentTcpCheckBox->isChecked());
 	
 	// ADDRESS FORMAT
 	current_profile->set_display_useronly_phone(
@@ -1400,4 +1408,5 @@ void UserProfileForm::changeMWIType(int idxMWIType) {
 void UserProfileForm::changeSipTransportProtocol(int idx) {
 	udpThresholdTextLabel->setEnabled(idx == idxSipTransportAuto);
 	udpThresholdSpinBox->setEnabled(idx == idxSipTransportAuto);
+	persistentTcpCheckBox->setEnabled(idx == idxSipTransportTCP);
 }

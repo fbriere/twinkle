@@ -23,10 +23,12 @@
  
 #ifndef _H_CONNECTION
 #define _H_CONNECTION
- 
+
+#include <list>
 #include <string>
 
 #include "socket.h"
+#include "parser/request.h"
 #include "parser/sip_message.h"
 
 using namespace std;
@@ -60,6 +62,22 @@ private:
 	 * This time is reset to zero by read and send actions.
 	 */
 	unsigned long idle_time_;
+	
+	/** 
+	 * Flag to indicate that a connection can be reused. 
+	 * By default a connection is reusable.
+	 */
+	bool can_reuse_;
+	
+	/**
+	 * A set of user URI's (AoR) that are registered via this connection.
+	 * If persistent connections are used for NAT traversal, then these are
+	 * the URI's that are impacted when the connection breaks.
+	 * A URI is only added to this set, if a persistent connection is required
+	 * for this user.
+	 * @note The set is implemented as a list as t_url has not less-than operator.
+	 */
+	list<t_url> registered_uri_set_;
 	
 public:
 	typedef string::size_type size_type;
@@ -166,6 +184,49 @@ public:
 	 * @return true if there is data, otherwise false.
 	 */
 	bool has_data_to_send(void) const;
+	
+	/** Set re-use characteristic. */
+	void set_reuse(bool reuse);
+	
+	/**
+	 * Check if this connection may be reused to send data.
+	 * @return true if the connection may be reused, otherwise false.
+	 */
+	bool may_reuse(void) const;
+	
+	/**
+	 * Add a URI to the set of registered URI's.
+	 * @param uri [in] The URI to add.
+	 */
+	void add_registered_uri(const t_url &uri);
+	
+	/**
+	 * Remove a URI from the set of registered URI's.
+	 * @param uri [in] The URI to remove.
+	 */
+	void remove_registered_uri(const t_url &uri);
+	
+	/**
+	 * Update the set of registered URI based on a REGISTER request.
+	 * If the REGISTER is a registration, then add the To-header URI.
+	 * If the REGISTER is a de-registration, then remove the To-header URI.
+	 * If the REGISTER is a query, then do nothing.
+	 * @param req [in] A REGISTER request.
+	 * @pre req must be a REGISTER request.
+	 */
+	void update_registered_uri_set(const t_request *req);
+	
+	/**
+	 * Get the set of registered URI's.
+	 * @return The set of registered URI's.
+	 */ 
+	const list<t_url> &get_registered_uri_set(void) const;
+	
+	/**
+	 * Check if at least one registered URI is associated with this connection.
+	 * @return True if a URI is associated, false otherwise.
+	 */
+	bool has_registered_uri(void) const;
 };
 
 #endif

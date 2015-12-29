@@ -117,20 +117,47 @@ string replace_char(const string &s, char from, char to);
 // Replace first occurrence of 'from'-string to 'to'-string in s
 string replace_first(const string &s, const string &from, const string &to);
 
-// Split a string into elements using c as a separator
+/**
+ *  Split a string into elements using a single character as separator.
+ * @param s [in] The string to split.
+ * @param c [in] The character separator.
+ * @return Vector containing the split parts.
+ */
 vector<string> split(const string &s, char c);
 
-// Split a string into elements using separator as a separator
+/** 
+ * Split a string into elements using a string separator.
+ * @param s [in] The string to split.
+ * @param separator [in] The string separator.
+ * @return Vector containing the split parts.
+ */
 vector<string> split(const string &s, const string &separator);
 
-// Split a string into elements using line breaks as seperator
-// If the string contains a CRLF, then CRLF is used as line break.
-// Otherwise if the string contains a CR, then CR is used as line break.
-// Otherwise LF is used as line break.
+/**
+ * Split a string into elements using line breaks as seperator
+ * If the string contains a CRLF, then CRLF is used as line break.
+ * Otherwise if the string contains a CR, then CR is used as line break.
+ * Otherwise LF is used as line break.
+ * @param s [in] The string to split.
+ * @return Vector containing the split parts.
+ */
 vector<string> split_linebreak(const string &s);
 
-// Split a string in two on the first occurence of the separator c.
+/**
+ * Split a string in two on the first occurrence of a separator.
+ * @param s [in] The string to split.
+ * @param c [in] The separator.
+ * @return Vector containing the split parts.
+ */
 vector<string> split_on_first(const string &s, char c);
+
+/**
+ * Split a string in two on the last occurrence of a separator.
+ * @param s [in] The string to split.
+ * @param c [in] The separator.
+ * @return Vector containing the split parts.
+ */
+vector<string> split_on_last(const string &s, char c);
 
 // Split an escaped string into elements using c as a separator
 // Escaped means: \c will not be seen as a seperator and backslash is
@@ -173,18 +200,36 @@ string str2dtmf(const string &s);
 // *, #, special symbols and white space
 bool looks_like_phone(const string &s, const string &special_symbols);
 
-// Remove all special symbols from a string
+/**
+ * Remove all special symbols from a string.
+ * @param s [in] The string to convert.
+ * @param special_symbols [in] The special symbols to remove.
+ * @return The string without the special symbols.
+ */
 string remove_symbols(const string &s, const string &special_symbols);
 
-// Remove spaces and tabs from a string
+/**
+ * Remove spaces and tabs from a string.
+ * @param s [in] The string to convert.
+ * @return The string without spaces and tabs.
+ */
 string remove_white_space(const string &s);
 
-// Truncate a string. If the string was longer than the truncated
-// result, then "..." will be appended.
+/**
+ * Truncate a string. If the string was longer than the truncated
+ * result, then "..." will be appended.
+ * @param s [in] The string to truncate.
+ * @param len [in] The length in bytes to truncate to.
+ * @return The truncated string.
+ */
 string dotted_truncate(const string &s, int len);
 
-// Convert a string to a printable representation, i.e. change
-// all non-printable chars into dots
+/**
+ * Convert a string to a printable representation, i.e. change
+ * all non-printable chars into dots.
+ * @param s [in] The string to convert.
+ * @return The converted string.
+ */
 string to_printable(const string &s);
 
 /**

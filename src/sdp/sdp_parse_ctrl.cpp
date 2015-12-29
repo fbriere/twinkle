@@ -36,10 +36,22 @@ t_sdp *t_sdp_parser::parse(const string &s) {
 	struct yy_buffer_state *b;
 	
 	t_mutex_guard guard(mtx_parser);
-
+	
 	sdp = new t_sdp();
 	MEMMAN_NEW(sdp);
-	b = yysdp_scan_string(s.c_str());
+	
+	// The SDP body should end with a CRLF. Some implementations
+	// do not send this last CRLF. Allow this deviation by adding
+	// the last CRLF if it is missing.
+	char last_char = s.at(s.size()-1);
+	if (last_char == '\n' || last_char == '\r') {
+		// The SDP parser allows \r, \r\n and \n as CRLF
+		b = yysdp_scan_string(s.c_str());
+	} else {
+		// Last CRLF is missing.
+		b = yysdp_scan_string((s + "\r\n").c_str());
+	}
+	
 	ret = yysdpparse();
 	yysdp_delete_buffer(b);
 

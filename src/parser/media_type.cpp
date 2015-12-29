@@ -16,21 +16,32 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <cassert>
 #include <cstdlib>
 
 #include "media_type.h"
 #include "util.h"
+#include "utils/mime_database.h"
 
 using namespace std;
+using namespace utils;
 
-t_media::t_media() {
-	q = 1.0;
-}
+t_media::t_media() : q(1.0) {}
 
-t_media::t_media(const string &t, const string &s) {
-	q = 1.0;
-	type = t;
-	subtype = s;
+t_media::t_media(const string &t, const string &s) :
+	q(1.0),
+	type(t),
+	subtype(s)
+{}
+
+t_media::t_media(const string &mime_type) : q(1.0) 
+{
+	vector<string> v = split(mime_type, '/');
+	
+	if (v.size() == 2) {
+		type = v[0];
+		subtype = v[1];
+	}
 }
 
 void t_media::add_params(const list<t_parameter> &l) {
@@ -81,4 +92,9 @@ string t_media::encode(void) const {
 	s += param_list2str(accept_extension_list);
 
 	return s;
+}
+
+string t_media::get_file_glob(void) const {
+	string file_glob = mime_database->get_glob(type + '/' + subtype);
+	return file_glob;
 }

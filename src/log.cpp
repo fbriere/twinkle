@@ -285,9 +285,9 @@ void t_log::write_raw(const string &raw) {
 	if (log_disabled || log_report_disabled) return;
 	
 	if (raw.size() < MAX_LEN_LOG_STRING) {
-		*log_stream << raw;
+		*log_stream << to_printable(raw);
 	} else {
-		*log_stream << raw.substr(0, MAX_LEN_LOG_STRING);
+		*log_stream << to_printable(raw.substr(0, MAX_LEN_LOG_STRING));
 		*log_stream << "\n\n";
 		*log_stream << "<cut off>\n";
 	}

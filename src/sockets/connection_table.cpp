@@ -150,23 +150,25 @@ t_connection *t_connection_table::get_connection(unsigned long remote_addr,
 		unsigned long addr;
 		unsigned short port;
 
-		try {
-			t_socket *socket = (*it)->get_socket();
-			t_socket_tcp *tcp_socket = dynamic_cast<t_socket_tcp *>(socket);
-			
-			if (tcp_socket) {
-				tcp_socket->get_remote_address(addr, port);
-				if (addr == remote_addr && port == remote_port) {
-					found_connection = *it;
-					break;
+		if ((*it)->may_reuse()) {
+			try {
+				t_socket *socket = (*it)->get_socket();
+				t_socket_tcp *tcp_socket = dynamic_cast<t_socket_tcp *>(socket);
+				
+				if (tcp_socket) {
+					tcp_socket->get_remote_address(addr, port);
+					if (addr == remote_addr && port == remote_port) {
+						found_connection = *it;
+						break;
+					}
 				}
+			} catch (int err) {
+				// This should never happen.
+				cerr << "Cannot get remote address of socket." << endl;
+				
+				// Destroy and remove connection as it is probably broken.
+				broken_connections.push_back(*it);
 			}
-		} catch (int err) {
-			// This should never happen.
-			cerr << "Cannot get remote address of socket." << endl;
-			
-			// Destroy and remove connection as it is probably broken.
-			broken_connections.push_back(*it);
 		}
 	}
 	
@@ -360,7 +362,11 @@ void t_connection_table::close_idle_connections(unsigned long interval, bool &te
 	{
 		unsigned long idle_time = (*it)->increment_idle_time(interval);
 		if (idle_time >= DUR_IDLE_CONNECTION || terminated) {
-			expired_connections.push_back(*it);
+			// If a registered URI is associated with the connection, then
+			// it is persistent and it should not be closed.
+			if (!(*it)->has_registered_uri()) {
+				expired_connections.push_back(*it);
+			}
 		}
 	}
 	

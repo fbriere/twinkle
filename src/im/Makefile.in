@@ -52,7 +52,8 @@ AR = ar
 ARFLAGS = cru
 libim_a_AR = $(AR) $(ARFLAGS)
 libim_a_LIBADD =
-am_libim_a_OBJECTS = msg_session.$(OBJEXT)
+am_libim_a_OBJECTS = im_iscomposing_body.$(OBJEXT) \
+	msg_session.$(OBJEXT)
 libim_a_OBJECTS = $(am_libim_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -213,6 +214,8 @@ X_PRE_LIBS = @X_PRE_LIBS@
 X_RPATH = @X_RPATH@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
+ZRTP_CFLAGS = @ZRTP_CFLAGS@
+ZRTP_LIBS = @ZRTP_LIBS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 all_includes = @all_includes@
@@ -301,10 +304,12 @@ x_libraries = @x_libraries@
 xdg_appsdir = @xdg_appsdir@
 xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
-AM_CPPFLAGS = $(CCRTP_CFLAGS) -I$(top_srcdir)/src
+AM_CPPFLAGS = $(CCRTP_CFLAGS) $(XML2_CFLAGS) -I$(top_srcdir)/src
 noinst_LIBRARIES = libim.a
 libim_a_SOURCES = \
+	im_iscomposing_body.cpp\
 	msg_session.cpp\
+	im_iscomposing_body.h\
 	msg_session.h
 
 all: all-am
@@ -354,6 +359,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/im_iscomposing_body.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msg_session.Po@am__quote@
 
 .cpp.o:

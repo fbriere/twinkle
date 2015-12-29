@@ -70,20 +70,6 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	t_response *resp;
 
 	lock();
-	
-	// If a message exceeded the maximum message size, than the body
-	// is not parsed by the listener.
-	if (r->hdr_content_length.is_populated() &&
-	    r->hdr_content_length.length > 0 &&
-	    !r->body)
-	{
-		resp = r->create_response(R_513_MESSAGE_TOO_LARGE);
-		send_response(resp, 0, tid);
-		MEMMAN_DELETE(resp);
-		delete resp;
-		unlock();
-		return;
-	}
 
 	// Return a 400 response if the SIP headers are wrong
 	if (!r->is_valid(fatal, reason)) {
@@ -98,6 +84,20 @@ void t_transaction_layer::recvd_request(t_request *r, t_tid tid,
 	// Return a 400 response if the SIP body contained a parse error
 	if (r->body && r->body->invalid) {
 		resp = r->create_response(R_400_BAD_REQUEST, "Invalid SIP body.");
+		send_response(resp, 0, tid);
+		MEMMAN_DELETE(resp);
+		delete resp;
+		unlock();
+		return;
+	}
+	
+	// If a message exceeded the maximum message size, than the body
+	// is not parsed by the listener.
+	if (r->hdr_content_length.is_populated() &&
+	    r->hdr_content_length.length > 0 &&
+	    !r->body)
+	{
+		resp = r->create_response(R_513_MESSAGE_TOO_LARGE);
 		send_response(resp, 0, tid);
 		MEMMAN_DELETE(resp);
 		delete resp;
@@ -221,6 +221,7 @@ void t_transaction_layer::run(void) {
 	t_event_failure		*ev_failure;
 	t_event_stun_response	*ev_stun_resp;
 	t_event_async_response	*ev_async_resp;
+	t_event_broken_connection *ev_broken_connection;
 	t_sip_message		*msg;
 	StunMessage		*stun_msg;
 	t_tid			tid;
@@ -274,6 +275,10 @@ void t_transaction_layer::run(void) {
 		case EV_ASYNC_RESPONSE:
 			ev_async_resp = dynamic_cast<t_event_async_response *>(event);
 			recvd_async_response(ev_async_resp);
+			break;
+		case EV_BROKEN_CONNECTION:
+			ev_broken_connection = dynamic_cast<t_event_broken_connection *>(event);
+			handle_broken_connection(ev_broken_connection);
 			break;
 		case EV_QUIT:
 			quit = true;

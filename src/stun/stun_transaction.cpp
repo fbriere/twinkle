@@ -464,7 +464,7 @@ void t_stun_transaction::process_icmp(const t_icmp_msg &icmp) {
 		log_file->write_header("t_stun_transaction::process_icmp",
 			LOG_NORMAL, LOG_INFO);
 		log_file->write_raw("ICMP error received.\n\n");
-		log_file->write_raw("Send internal: 500 Server Error");
+		log_file->write_raw("Send internal: 500 Server Error\n");
 		log_file->write_footer();	
 	
 		// No server could be reached, Notify the TU with 500 Server
@@ -475,6 +475,7 @@ void t_stun_transaction::process_icmp(const t_icmp_msg &icmp) {
 		delete resp;
 		
 		state = TS_TERMINATED;
+		return;
 	}
 	
 	// Failover to next destination

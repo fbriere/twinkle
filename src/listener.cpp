@@ -25,6 +25,7 @@
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
+#include "im/im_iscomposing_body.h"
 #include "sockets/connection_table.h"
 #include "sockets/socket.h"
 #include "parser/parse_ctrl.h"
@@ -39,6 +40,7 @@ extern t_socket_udp *sip_socket;
 extern t_socket_tcp *sip_socket_tcp;
 extern t_connection_table *connection_table;
 extern t_event_queue *evq_trans_mgr;
+extern t_event_queue *evq_trans_layer;
 
 // Minimal size of a message. Messages below this size will
 // be silently discarded.
@@ -167,6 +169,15 @@ t_sip_body *parse_body(const string &data, const t_sip_message *msg) {
 		MEMMAN_DELETE(b);
 		delete b;
 		throw -1;
+	} else if (msg->hdr_content_type.media.type == "application" &&
+	           msg->hdr_content_type.media.subtype == "im-iscomposing+xml")
+	{
+		t_im_iscomposing_xml_body *b = new t_im_iscomposing_xml_body();
+		MEMMAN_NEW(b);
+		if (b->parse(data)) return b;
+		MEMMAN_DELETE(b);
+		delete b;
+		throw -1;
 	} else {
 		// Pass other bodies unparsed. The upper application
 		// layer will decide what to do.
@@ -196,10 +207,8 @@ static void process_sip_msg(t_sip_message *msg, const string &raw_headers, const
 				msg->body = parse_body(raw_body, msg);
 			}
 			catch (int) {
-				// Discard a SIP response if the body is malformed.
-				// For a SIP request with a malformed body, the
-				// transaction layer will give an error response.
 				if (msg->get_type() == MSG_RESPONSE) {
+					// Discard a SIP response if the body is malformed.
 					log_msg += "Invalid SIP message.\n";
 					log_msg += "Parse error in body.\n";
 					log_msg += to_printable(raw_headers);
@@ -208,8 +217,19 @@ static void process_sip_msg(t_sip_message *msg, const string &raw_headers, const
 						LOG_SIP, LOG_DEBUG);
 					
 					return;
+				} else {
+					// For a SIP request with a malformed body, the
+					// transaction layer will give an error response.
+					// Set the invalid body indication for the transaction
+					// layer.
+					msg->body = new t_sip_body_opaque();
+					MEMMAN_NEW(msg->body);
+					msg->body->invalid = true;
 				}
 			}
+		} else {
+			log_file->write_report("Received incomplete body", "::process_sip_msg", 
+				LOG_NORMAL, LOG_WARNING);
 		}
 	}
 
@@ -261,8 +281,10 @@ static void process_sip_msg(t_sip_message *msg, const string &raw_headers, const
 
 		// RFC 3581 4
 		// Add rport value if requested
+		// Add received parameter
 		if (top_via.rport_present && top_via.rport == 0) {
 			top_via.rport = msg->src_ip_port.port;
+			top_via.received = src_ip;
 		}
 	}
 
@@ -487,7 +509,17 @@ void *listen_for_data_tcp(void *arg) {
 				log_msg += get_error_str(err);
 				log_file->write_report(log_msg, "::listen_for_data_tcp", LOG_SIP, LOG_WARNING);
 				
-				// Connection is broken. Remove it.
+				// Connection is broken. 
+				// Signal the transaction layer that the connection is broken for
+				// all associated registered URI's.
+				const list<t_url> &uris = (*it)->get_registered_uri_set();
+				for (list<t_url>::const_iterator it_uri = uris.begin(); 
+				     it_uri != uris.end(); ++it_uri)
+				{
+					evq_trans_layer->push_broken_connection(*it_uri);
+				}
+				
+				// Remove the broken connection.
 				connection_table->remove_connection(*it);
 				MEMMAN_DELETE(*it);
 				delete *it;
@@ -534,6 +566,11 @@ void *listen_for_data_tcp(void *arg) {
 				
 				MEMMAN_DELETE(msg);
 				delete msg;
+				
+				if (msg_too_large) {
+					// The connection is closed already. Stop reading.
+					break;
+				}
 			}
 		}
 		

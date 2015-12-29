@@ -16,6 +16,10 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 #include "sip_message.h"
 #include "util.h"
 #include "parse_ctrl.h"
@@ -389,6 +393,46 @@ void t_sip_message::set_body_plain_text(const string &text, const string &charse
 	
 	body = new t_sip_body_plain_text(text);
 	MEMMAN_NEW(body);
+}
+
+bool t_sip_message::set_body_from_file(const string &filename, const t_media &media) {
+	// Open file and set read pointer at end so we know the size.
+	ifstream f(filename.c_str(), ios::binary);
+	if (!f) return false;
+	
+	ostringstream body_stream(ios::binary);
+	
+	// Copy file into body
+	body_stream << f.rdbuf();
+	
+	if (!f.good() || !body_stream.good()) {
+		return false;
+	}
+	
+	// Create body of correct type
+	t_sip_body *new_body = NULL;
+	if (media.type == "text" && media.subtype == "plain") {
+		t_sip_body_plain_text *text_body = new t_sip_body_plain_text(body_stream.str());
+		MEMMAN_NEW(text_body);
+
+		new_body = text_body;
+	} else {
+		t_sip_body_opaque *opaque_body = new t_sip_body_opaque(body_stream.str());
+		MEMMAN_NEW(opaque_body);
+		
+		new_body = opaque_body;
+	}
+	
+	if (body) {
+		MEMMAN_DELETE(body);
+		delete body;
+	}
+	body = new_body;
+	
+	// Content-Type header
+	hdr_content_type.set_media(media);
+	
+	return true;
 }
 
 size_t t_sip_message::get_encoded_size(void) {

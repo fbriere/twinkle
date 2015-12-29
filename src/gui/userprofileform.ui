@@ -3024,6 +3024,20 @@ When you choose this option you have to create static address mappings in your N
                                     </widget>
                                 </hbox>
                             </widget>
+                            <widget class="QCheckBox">
+                                <property name="name">
+                                    <cstring>persistentTcpCheckBox</cstring>
+                                </property>
+                                <property name="text">
+                                    <string>P&amp;ersistent TCP connection</string>
+                                </property>
+                                <property name="accel">
+                                    <string>Alt+E</string>
+                                </property>
+                                <property name="whatsThis" stdset="0">
+                                    <string>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</string>
+                                </property>
+                            </widget>
                         </vbox>
                     </widget>
                     <spacer>
@@ -3039,7 +3053,7 @@ When you choose this option you have to create static address mappings in your N
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>140</height>
+                                <height>100</height>
                             </size>
                         </property>
                     </spacer>
@@ -4769,6 +4783,20 @@ Sollicited message waiting indication as specified by RFC 3842.
                             </spacer>
                         </hbox>
                     </widget>
+                    <widget class="QCheckBox">
+                        <property name="name">
+                            <cstring>isComposingCheckBox</cstring>
+                        </property>
+                        <property name="text">
+                            <string>&amp;Send composing indications when typing a message.</string>
+                        </property>
+                        <property name="accel">
+                            <string>Alt+S</string>
+                        </property>
+                        <property name="whatsThis" stdset="0">
+                            <string>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</string>
+                        </property>
+                    </widget>
                     <spacer>
                         <property name="name">
                             <cstring>spacer40_3</cstring>
@@ -4782,7 +4810,7 @@ Sollicited message waiting indication as specified by RFC 3842.
                         <property name="sizeHint">
                             <size>
                                 <width>20</width>
-                                <height>391</height>
+                                <height>350</height>
                             </size>
                         </property>
                     </spacer>

@@ -50,6 +50,13 @@ public:
 	 * @param s [in] subtype
 	 */
 	t_media(const string &t, const string &s);
+	
+	/**
+	 * Constructor.
+	 * Construct a media object from a mime type name
+	 * @param mime_type [in] The mime type name, e.g. "text/plain"
+	 */
+	t_media(const string &mime_type);
 
 	/**
 	 * Add a parameter list.
@@ -65,6 +72,13 @@ public:
 	 * @return The encoded media type.
 	 */
 	string encode(void) const;
+	
+	/**
+	 * Get the glob for a file name containing this MIME type.
+	 * E.g. <wildcard>.txt for text/plain
+	 * @return The file name extension.
+	 */
+	string get_file_glob(void) const;
 };
 
 #endif

@@ -524,6 +524,11 @@ void t_phone::start_timer(t_phone_timer timer, t_phone_user *pu) {
 		MEMMAN_NEW(t);
 		pu->id_nat_keepalive = t->get_object_id();
 		break;
+	case PTMR_TCP_PING:
+		t = new t_tmr_phone(user_config->get_timer_tcp_ping() * 1000, timer, this);
+		MEMMAN_NEW(t);
+		pu->id_tcp_ping = t->get_object_id();
+		break;
 	default:
 		assert(false);
 	}
@@ -542,6 +547,9 @@ void t_phone::stop_timer(t_phone_timer timer, t_phone_user *pu) {
 		break;
 	case PTMR_NAT_KEEPALIVE:
 		id = &pu->id_nat_keepalive;
+		break;
+	case PTMR_TCP_PING:
+		id = &pu->id_tcp_ping;
 		break;
 	default:
 		assert(false);
@@ -608,7 +616,7 @@ void t_phone::handle_response_out_of_dialog(StunMessage *r, t_tuid tuid) {
 
 t_phone_user *t_phone::find_phone_user(const string &profile_name) const {
 	for (list<t_phone_user *>::const_iterator i = phone_users.begin();
-	     i != phone_users.end(); i++)
+	     i != phone_users.end(); ++i)
 	{
 		if (!(*i)->is_active()) continue;
 		
@@ -621,9 +629,24 @@ t_phone_user *t_phone::find_phone_user(const string &profile_name) const {
 	return NULL;
 }
 
+t_phone_user *t_phone::find_phone_user(const t_url &user_uri) const {
+	for (list<t_phone_user *>::const_iterator i = phone_users.begin();
+		     i != phone_users.end(); ++i)
+	{
+		if (!(*i)->is_active()) continue;
+		
+		t_user *user_config = (*i)->get_user_profile();
+		if (t_url(user_config->create_user_uri(false)) == user_uri) {
+			return *i;
+		}
+	}
+	
+	return NULL;
+}
+
 t_phone_user *t_phone::match_phone_user(t_response *r, t_tuid tuid, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
-	     i != phone_users.end(); i++)
+	     i != phone_users.end(); ++i)
 	{
 		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r, tuid)) return *i;
@@ -634,7 +657,7 @@ t_phone_user *t_phone::match_phone_user(t_response *r, t_tuid tuid, bool active_
 
 t_phone_user *t_phone::match_phone_user(t_request *r, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
-	     i != phone_users.end(); i++)
+	     i != phone_users.end(); ++i)
 	{
 		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r)) return *i;
@@ -645,7 +668,7 @@ t_phone_user *t_phone::match_phone_user(t_request *r, bool active_only) {
 
 t_phone_user *t_phone::match_phone_user(StunMessage *r, t_tuid tuid, bool active_only) {
 	for (list<t_phone_user *>::iterator i = phone_users.begin();
-	     i != phone_users.end(); i++)
+	     i != phone_users.end(); ++i)
 	{
 		if (active_only && !(*i)->is_active()) continue;
 		if ((*i)->match(r, tuid)) return *i;
@@ -1945,7 +1968,7 @@ void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
 	switch (timer) {
 	case PTMR_REGISTRATION:
 		for (list<t_phone_user *>::iterator i = phone_users.begin();
-		     i != phone_users.end(); i++)
+		     i != phone_users.end(); ++i)
 		{
 			if ((*i)->id_registration == id_timer) {
 				(*i)->timeout(timer);
@@ -1954,9 +1977,18 @@ void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
 		break;
 	case PTMR_NAT_KEEPALIVE:
 		for (list<t_phone_user *>::iterator i = phone_users.begin();
-		     i != phone_users.end(); i++)
+		     i != phone_users.end(); ++i)
 		{
 			if ((*i)->id_nat_keepalive == id_timer) {
+				(*i)->timeout(timer);
+			}
+		}
+		break;
+	case PTMR_TCP_PING:
+		for (list<t_phone_user *>::iterator i = phone_users.begin();
+		     i != phone_users.end(); ++i)
+		{
+			if ((*i)->id_tcp_ping == id_timer) {
 				(*i)->timeout(timer);
 			}
 		}
@@ -1966,6 +1998,21 @@ void t_phone::timeout(t_phone_timer timer, unsigned short id_timer) {
 	}
 
 	unlock();
+}
+
+void t_phone::handle_broken_connection(t_event_broken_connection *e) {
+	// Find the phone user that was associated with the connection.
+	// This phone user has to handle the event.
+	t_phone_user *pu = find_phone_user(e->get_user_uri());
+	if (pu) {
+		pu->handle_broken_connection();
+	} else {
+		log_file->write_header("t_phone::handle_broken_connection", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("Cannot find active phone user ");
+		log_file->write_raw(e->get_user_uri().encode());
+		log_file->write_endl();
+		log_file->write_footer();
+	}
 }
 
 
@@ -2356,23 +2403,54 @@ void t_phone::pub_unpublish_presence(t_user *user) {
 	unlock();
 }
 
-void t_phone::pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
-		const string &text)
+bool t_phone::pub_send_message(t_user *user, const t_url &to_uri, const string &to_display,
+		const t_msg &msg)
 {
+	bool retval = true;
+	
 	lock();
 	
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
-		pu->send_message(to_uri, to_display, text);
+		retval = pu->send_message(to_uri, to_display, msg);
 	} else {
 		log_file->write_header("t_phone::pub_send_message", LOG_NORMAL, LOG_WARNING);
 		log_file->write_raw("User profile not active: ");
 		log_file->write_raw(user->get_profile_name());
 		log_file->write_endl();
 		log_file->write_footer();
+		
+		retval = false;
 	}
 	
 	unlock();
+	
+	return retval;
+}
+
+bool t_phone::pub_send_im_iscomposing(t_user *user, const t_url &to_uri, const string &to_display,
+			const string &state, time_t refresh)
+{
+	bool retval = true;
+	
+	lock();
+	
+	t_phone_user *pu = find_phone_user(user->get_profile_name());
+	if (pu) {
+		retval = pu->send_im_iscomposing(to_uri, to_display, state, refresh);
+	} else {
+		log_file->write_header("t_phone::pub_send_im_iscomposing", LOG_NORMAL, LOG_WARNING);
+		log_file->write_raw("User profile not active: ");
+		log_file->write_raw(user->get_profile_name());
+		log_file->write_endl();
+		log_file->write_footer();
+		
+		retval = false;
+	}
+	
+	unlock();
+	
+	return retval;
 }
 
 t_phone_state t_phone::get_state(void) const {

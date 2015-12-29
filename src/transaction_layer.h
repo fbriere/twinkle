@@ -94,6 +94,12 @@ protected:
 	 * @param e [in] Timeout event.
 	 */
 	virtual void handle_event_timeout(t_event_timeout *e) = 0;
+	
+	/**
+	 * Handle broken connection event.
+	 * @param e [in] Broken connection event.
+	 */
+	virtual void handle_broken_connection(t_event_broken_connection *e) = 0;
 
 public:
 	virtual ~t_transaction_layer() {};

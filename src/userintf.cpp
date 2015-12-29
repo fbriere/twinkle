@@ -31,11 +31,15 @@
 #include "parser/parse_ctrl.h"
 #include "sockets/interfaces.h"
 #include "audits/memman.h"
+#include "utils/file_utils.h"
+#include "utils/mime_database.h"
 
 #define CLI_PROMPT              "Twinkle> "
 
 extern string user_host;
 extern t_event_queue *evq_trans_layer;
+
+using namespace utils;
 
 /////////////////////////////
 // Private
@@ -1259,6 +1263,8 @@ void t_userintf::do_zrtp(t_zrtp_cmd zrtp_cmd) {
 bool t_userintf::exec_message(const list<string> command_list) {
 	list<t_command_arg> al;
 	string display;
+	string subject;
+	string filename;
 	string destination;
 	string text;
 
@@ -1269,6 +1275,12 @@ bool t_userintf::exec_message(const list<string> command_list) {
 
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
+		case 's':
+			subject = i->value;
+			break;
+		case 'f':
+			filename = i->value;
+			break;
 		case 'd':
 			display = i->value;
 			break;
@@ -1286,16 +1298,30 @@ bool t_userintf::exec_message(const list<string> command_list) {
 		}
 	}
 	
-	if (destination.empty() || text.empty()) {
+	if (destination.empty() || (text.empty() && filename.empty())) {
 		exec_command("help message");
 		return false;
 	}
+	
+	im::t_msg msg(text, im::MSG_DIR_OUT, im::TXT_PLAIN);
+	msg.subject = subject;
+	
+	if (!filename.empty()) {
+		t_media media("application/octet-stream");
+		string mime_type = mime_database->get_mimetype(filename);
+		
+		if (!mime_type.empty()) {
+			media = t_media(mime_type);
+		}
+		
+		msg.set_attachment(filename, media, strip_path_from_filename(filename));
+	}
 
-	return do_message(destination, display, text);
+	return do_message(destination, display, msg);
 }
 
 bool t_userintf::do_message(const string &destination, const string &display,
-		const string &text)
+		const im::t_msg &msg)
 {
 	t_url dest_url(expand_destination(active_user, destination));
 	
@@ -1303,8 +1329,8 @@ bool t_userintf::do_message(const string &destination, const string &display,
 		exec_command("help message");
 		return false;
 	}
-
-	phone->pub_send_message(active_user, dest_url, display, text);
+	
+	(void)phone->pub_send_message(active_user, dest_url, display, msg);
 	return true;
 }
 
@@ -1757,14 +1783,17 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (c == "message") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\tmessage [-d display] dst text\n";
+		cout << "\tmessage [-s subject] [-f file name] [-d display] dst [text]\n";
 		cout << "Description:\n";
 		cout << "\tSend an instant message.\n";
 		cout << "Arguments:\n";
+		cout << "\t-s subject	Subject of the message.\n";
+		cout << "\t-f file name	File name of the file to send.\n";
 		cout << "\t-d display	Add display name to To-header\n";
 		cout << "\tdst		SIP uri of party to message\n";
 		cout << "\ttext		Message text to send. Surround with double quotes\n";
 		cout << "\t\t\twhen your text contains whitespace.\n";
+		cout << "\t\t\tWhen you send a file, then the text is ignored.\n";
 		cout << endl;
 		
 		return;
@@ -3349,7 +3378,7 @@ bool t_userintf::cb_message_request(t_user *user_config, t_request *r) {
 	return true;
 }
 
-void t_userintf::cb_message_response(t_user *user_config, t_response *r) {
+void t_userintf::cb_message_response(t_user *user_config, t_response *r, t_request *req) {
 	if (r->is_success()) return;
 	
 	cout << endl;
@@ -3359,6 +3388,18 @@ void t_userintf::cb_message_response(t_user *user_config, t_response *r) {
 	cout << endl;
 	cout << CLI_PROMPT;
 	cout.flush();	
+}
+
+void t_userintf::cb_im_iscomposing_request(t_user *user_config, t_request *r,
+			im::t_composing_state state, time_t refresh)
+{
+	// Nothing to do in CLI mode
+	return;
+}
+
+void t_userintf::cb_im_iscomposing_not_supported(t_user *user_config, t_response *r) {
+	// Nothing to do in CLI mode
+	return;
 }
 
 bool t_userintf::get_last_call_info(t_url &url, string &display,

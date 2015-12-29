@@ -21,15 +21,23 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/soundcard.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
 #include <cstring>
+
 #include "sys_settings.h"
+
+#include "log.h"
 #include "translator.h"
 #include "user.h"
 #include "userintf.h"
 #include "util.h"
+#include "audits/memman.h"
+#include "utils/file_utils.h"
+
+using namespace utils;
 
 // Share directory containing files applicable to all users
 #define DIR_SHARE	DATADIR
@@ -39,6 +47,9 @@
 
 // System config file
 #define SYS_CONFIG_FILE	"twinkle.sys"
+
+// Default location of the shared mime database
+#define DFLT_SHARED_MIME_DB	"/usr/share/mime/globs"
 
 // Field names in the config file
 // AUDIO fields
@@ -79,11 +90,6 @@
 
 // Startup settings
 #define FLD_START_USER_PROFILE	"start_user_profile"
-#if 0
-// DEPRECATED
-#define FLD_START_USER_HOST	"start_user_host"
-#define FLD_START_USER_NIC	"start_user_nic"
-#endif
 #define FLD_START_HIDDEN	"start_hidden"
 
 // Network settings
@@ -111,6 +117,16 @@
 #define FLD_COMPACT_LINE_STATUS	"compact_line_status"
 #define FLD_SHOW_BUDDY_LIST	"show_buddy_list"
 #define FLD_WARN_HIDE_USER	"warn_hide_user"
+
+// Settings to restore session after shutdown
+#define FLD_UI_SESSION_ID		"ui_session_id"
+#define FLD_UI_SESSION_ACTIVE_PROFILE	"ui_session_active_profile"
+#define FLD_UI_SESSION_MAIN_GEOMETRY	"ui_session_main_geometry"
+#define FLD_UI_SESSION_MAIN_HIDDEN	"ui_session_main_hidden"
+#define FLD_UI_SESSION_MAIN_STATE	"ui_session_main_state"
+
+// Mime settings
+#define FLD_MIME_SHARED_DATABASE	"mime_shared_database"
 
 /////////////////////////
 // class t_audio_device
@@ -160,6 +176,43 @@ string t_audio_device::get_settings_value(void) const {
 	return s;
 }
 
+/////////////////////////
+// class t_win_geometry
+/////////////////////////
+
+t_win_geometry::t_win_geometry(int x_, int y_, int width_, int height_) :
+		x(x_), y(y_), width(width_), height(height_)
+{}
+
+t_win_geometry::t_win_geometry() :
+		x(0), y(0), width(0), height(0)
+{}
+
+t_win_geometry::t_win_geometry(const string &value) {
+	vector<string> v = split(value, ',');
+	
+	if (v.size() == 4) {
+		x = atoi(v[0].c_str());
+		y = atoi(v[1].c_str());
+		width = atoi(v[2].c_str());
+		height = atoi(v[3].c_str());
+	}
+}
+
+string t_win_geometry::encode(void) const {
+	string s;
+	
+	s = int2str(x);
+	s += ',';
+	s += int2str(y);
+	s += ',';
+	s += int2str(width);
+	s += ',';
+	s += int2str(height);
+	
+	return s;
+}
+
 
 /////////////////////////
 // class t_sys_settings
@@ -205,11 +258,6 @@ t_sys_settings::t_sys_settings() {
 	hangup_both_3way = true;
 	
 	start_user_profiles.clear();
-#if 0
-	// DEPRECATED
-	start_user_host.clear();
-	start_user_nic.clear();
-#endif
 	start_hidden = false;
 	
 	config_sip_port = 5060;
@@ -236,6 +284,10 @@ t_sys_settings::t_sys_settings() {
 	compact_line_status = false;
 	show_buddy_list = true;
 	warn_hide_user = true;
+	
+	ui_session_id.clear();
+	
+	mime_shared_database = DFLT_SHARED_MIME_DB;
 }
 
 // Getters
@@ -439,25 +491,6 @@ list<string> t_sys_settings::get_start_user_profiles(void) const {
 	return result;	
 }
 
-#if 0
-// DEPRECATED
-string t_sys_settings::get_start_user_host(void) const {
-	string result;
-	mtx_sys.lock();
-	result = start_user_host;
-	mtx_sys.unlock();
-	return result;	
-}
-
-string t_sys_settings::get_start_user_nic(void) const {
-	string result;
-	mtx_sys.lock();
-	result = start_user_nic;
-	mtx_sys.unlock();
-	return result;
-}
-#endif
-
 bool t_sys_settings::get_start_hidden(void) const {
 	bool result;
 	mtx_sys.lock();
@@ -608,14 +641,40 @@ bool t_sys_settings::get_show_buddy_list(void) const {
 	return result;
 }
 
-bool t_sys_settings::get_warn_hide_user(void) const {
-	bool result;
-	mtx_sys.lock();
-	result = warn_hide_user;
-	mtx_sys.unlock();
-	return result;
+string t_sys_settings::get_ui_session_id(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return ui_session_id;
 }
 
+list<string> t_sys_settings::get_ui_session_active_profiles(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return ui_session_active_profiles;
+}
+
+t_win_geometry t_sys_settings::get_ui_session_main_geometry(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return ui_session_main_geometry;
+}
+
+bool t_sys_settings::get_ui_session_main_hidden(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return ui_session_main_hidden;
+}
+
+unsigned int t_sys_settings::get_ui_session_main_state(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return ui_session_main_state;
+}
+
+bool t_sys_settings::get_warn_hide_user(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return warn_hide_user;
+}
+
+string t_sys_settings::get_mime_shared_database(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return mime_shared_database;
+}
 
 // Setters
 void t_sys_settings::set_dev_ringtone(const t_audio_device &dev) {
@@ -768,21 +827,6 @@ void t_sys_settings::set_start_user_profiles(const list<string> &profiles) {
 	mtx_sys.unlock();
 }
 
-#if 0
-// DEPRECATED
-void t_sys_settings::set_start_user_host(const string &host) {
-	mtx_sys.lock();
-	start_user_host = host;
-	mtx_sys.unlock();
-}
-
-void t_sys_settings::set_start_user_nic(const string &dev) {
-	mtx_sys.lock();
-	start_user_nic = dev;
-	mtx_sys.unlock();
-}
-#endif
-
 void t_sys_settings::set_start_hidden(bool b) {
 	mtx_sys.lock();
 	start_hidden = b;
@@ -907,12 +951,40 @@ void t_sys_settings::set_show_buddy_list(bool b) {
 	mtx_sys.unlock();
 }
 
-void t_sys_settings::set_warn_hide_user(bool b) {
-	mtx_sys.lock();
-	warn_hide_user = b;
-	mtx_sys.unlock();
+void t_sys_settings::set_ui_session_id(const string &id) {
+	t_mutex_guard guard(mtx_sys);
+	ui_session_id = id;
 }
 
+void t_sys_settings::set_ui_session_active_profiles(const list<string> &profiles) {
+	t_mutex_guard guard(mtx_sys);
+	ui_session_active_profiles = profiles;
+}
+
+void t_sys_settings::set_ui_session_main_geometry(const t_win_geometry &geometry) {
+	t_mutex_guard guard(mtx_sys);
+	ui_session_main_geometry = geometry;
+}
+
+void t_sys_settings::set_ui_session_main_hidden(bool hidden) {
+	t_mutex_guard guard(mtx_sys);
+	ui_session_main_hidden = hidden;
+}
+
+void t_sys_settings::set_ui_session_main_state(unsigned int state) {
+	t_mutex_guard guard(mtx_sys);
+	ui_session_main_state = state;
+}
+
+void t_sys_settings::set_warn_hide_user(bool b) {
+	t_mutex_guard guard(mtx_sys);
+	warn_hide_user = b;
+}
+
+void t_sys_settings::set_mime_shared_database(const string &filename) {
+	t_mutex_guard guard(mtx_sys);
+	mime_shared_database = filename;
+}
 
 string t_sys_settings::about(bool html) const {
 	string s = PRODUCT_NAME;
@@ -1126,13 +1198,24 @@ bool t_sys_settings::check_environment(string &error_msg) const {
 	}
 
 	// Check if user directory exists
-	dirname = DIR_HOME;
-	dirname += '/';
-	dirname += DIR_USER;
+	dirname = get_dir_user();
 	if (stat(dirname.c_str(), &stat_buf) != 0) {
 		// User directory does not exist. Create it now.
 		if (mkdir(dirname.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
 			// Failed to create the user directory
+			error_msg = TRANSLATE("Cannot create directory %1 .");
+			error_msg = replace_first(error_msg, "%1", dirname);
+			mtx_sys.unlock();
+			return false;
+		}
+	}
+	
+	// Check if tmp file directory exists
+	dirname = get_dir_tmpfile();
+	if (stat(dirname.c_str(), &stat_buf) != 0) {
+		// Tmp file directory does not exist. Create it now.
+		if (mkdir(dirname.c_str(), S_IRUSR | S_IWUSR | S_IXUSR) != 0) {
+			// Failed to create the tmp file directory
 			error_msg = TRANSLATE("Cannot create directory %1 .");
 			error_msg = replace_first(error_msg, "%1", dirname);
 			mtx_sys.unlock();
@@ -1170,6 +1253,153 @@ string t_sys_settings::get_dir_user(void) const {
 	dir += DIR_USER;
 	
 	return dir;
+}
+
+string t_sys_settings::get_dir_tmpfile(void) const {
+	string dir = get_dir_user();
+	dir += "/";
+	dir += DIR_TMPFILE;
+	
+	return dir;
+}
+
+bool t_sys_settings::is_tmpfile(const string &filename) const {
+	string tmpdir = get_dir_tmpfile();
+	
+	return filename.substr(0, tmpdir.size()) == tmpdir;
+}
+
+bool t_sys_settings::save_tmp_file(const string &data, const string &file_extension,
+		string &filename, string &error_msg) 
+{
+	string fname = get_dir_tmpfile();
+	fname += "/XXXXXX";
+	
+	char *tmpfile = strdup(fname.c_str());
+	MEMMAN_NEW(tmpfile);
+	int fd = mkstemp(tmpfile);
+	
+	if (fd < 0) {
+		error_msg = get_error_str(errno);
+		MEMMAN_DELETE(tmpfile);
+		free(tmpfile);
+		return false;
+	}
+	
+	close(fd);
+	ofstream f(tmpfile);
+	if (!f) {
+		error_msg = TRANSLATE("Failed to create file %1");
+		error_msg = replace_first(error_msg, "%1", tmpfile);
+		MEMMAN_DELETE(tmpfile);
+		free(tmpfile);
+		return false;
+	}
+	
+	f.write(data.c_str(), data.size());
+	if (!f.good()) {
+		error_msg = TRANSLATE("Failed to write data to file %1");
+		error_msg = replace_first(error_msg, "%1", tmpfile);
+		f.close();
+		MEMMAN_DELETE(tmpfile);
+		free(tmpfile);
+		return false;
+	}
+	
+	f.close();
+	
+	// Rename to name with extension
+	filename = apply_glob_to_filename(tmpfile, file_extension);
+	
+	if (rename(tmpfile, filename.c_str()) < 0) {
+		error_msg = get_error_str(errno);
+		MEMMAN_DELETE(tmpfile);
+		free(tmpfile);
+		return false;
+	}
+	
+	MEMMAN_DELETE(tmpfile);
+	free(tmpfile);
+	return true;
+}
+
+bool t_sys_settings::save_sip_body(const t_sip_message &sip_msg,
+		const string &suggested_file_extension,
+		string &tmpname, string &save_as_name, string &error_msg)
+{
+	bool retval = true;
+	
+	if (!sip_msg.body) {
+		error_msg = "Missing body";
+		return false;
+	}
+	
+	// Determine file extension and save-as name
+	// The algorithm to get the file extension (glob expression) is:
+	// 1) If the a file name is supplied in the Content-Disposition header, then
+	//    take the file extension from that file name.
+	// 2) If no extension is found, then take the suggested_file_extension
+	// 3) If still no file extension is found, then retrieve the file extension
+	//    from the t_media object in the Content-Type header. 
+	string file_ext = suggested_file_extension;
+	save_as_name.clear();
+	
+	if (sip_msg.hdr_content_disp.is_populated() &&
+	    sip_msg.hdr_content_disp.type == DISPOSITION_ATTACHMENT &&
+	    !sip_msg.hdr_content_disp.filename.empty()) 
+	{
+		string x = get_extension_from_filename(sip_msg.hdr_content_disp.filename);
+		if (!x.empty()) file_ext = string("*." + x);
+		
+		save_as_name = strip_path_from_filename(sip_msg.hdr_content_disp.filename);
+	}
+	if (file_ext.empty()) {
+		file_ext = sip_msg.hdr_content_type.media.get_file_glob();
+		
+		if (file_ext.empty()) {
+			file_ext = "*";
+		}
+	}
+	
+	// Avoid copy of opaque data
+	if (sip_msg.body->get_type() == BODY_OPAQUE) {
+		t_sip_body_opaque *body_opaque = dynamic_cast<t_sip_body_opaque *>(sip_msg.body);
+		retval = save_tmp_file(body_opaque->opaque, file_ext, tmpname, error_msg);
+	} else {
+		retval = save_tmp_file(sip_msg.body->encode(), file_ext, tmpname, error_msg);
+	}
+	
+	return retval;
+}
+
+void t_sys_settings::remove_all_tmp_files(void) const {
+	DIR *tmpdir = opendir(get_dir_tmpfile().c_str());
+	
+	if (!tmpdir) {
+		log_file->write_report(get_error_str(errno), "t_sys_settings::remove_all_tmp_files");
+		return;
+	}
+	
+	struct dirent *entry = readdir(tmpdir);
+	while (entry) {
+		if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+			string fname = get_dir_tmpfile();
+			fname += PATH_SEPARATOR;
+			fname += entry->d_name;
+			
+			log_file->write_header("t_sys_settings::remove_all_tmp_files");
+			log_file->write_raw("Remove tmp file ");
+			log_file->write_raw(fname);
+			log_file->write_endl();
+			log_file->write_footer();
+			
+			unlink(fname.c_str());
+		}
+		
+		entry = readdir(tmpdir);
+	}
+	
+	closedir(tmpdir);
 }
 
 bool t_sys_settings::create_lock_file(string &error_msg, bool &already_running) const {
@@ -1344,13 +1574,6 @@ bool t_sys_settings::read_config(string &error_msg) {
 			hangup_both_3way = yesno2bool(value);
 		} else if (parameter == FLD_START_USER_PROFILE) {
 			if (!value.empty()) start_user_profiles.push_back(value);
-#if 0
-		// DEPRECATED
-		} else if (parameter == FLD_START_USER_HOST) {
-			start_user_host = value;
-		} else if (parameter == FLD_START_USER_NIC) {
-			start_user_nic = value;
-#endif
 		} else if (parameter == FLD_START_HIDDEN) {
 			start_hidden = yesno2bool(value);
 		} else if (parameter == FLD_sip_udp_port) { // Deprecated parameter
@@ -1394,8 +1617,20 @@ bool t_sys_settings::read_config(string &error_msg) {
 			//compact_line_status = yesno2bool(value);
 		} else if (parameter == FLD_SHOW_BUDDY_LIST) {
 			show_buddy_list = yesno2bool(value);
+		} else if (parameter == FLD_UI_SESSION_ID) {
+			ui_session_id = value;
+		} else if (parameter == FLD_UI_SESSION_ACTIVE_PROFILE) {
+			ui_session_active_profiles.push_back(value);
+		} else if (parameter == FLD_UI_SESSION_MAIN_GEOMETRY) {
+			ui_session_main_geometry = value;
+		} else if (parameter == FLD_UI_SESSION_MAIN_HIDDEN) {
+			ui_session_main_hidden = yesno2bool(value);
+		} else if (parameter == FLD_UI_SESSION_MAIN_STATE) {
+			ui_session_main_state = atoi(value.c_str());
 		} else if (parameter == FLD_WARN_HIDE_USER) {
 			warn_hide_user = yesno2bool(value);
+		} else if (parameter == FLD_MIME_SHARED_DATABASE) {
+			mime_shared_database = value;
 		}
 			
 		// Unknown field names are skipped.
@@ -1491,11 +1726,7 @@ bool t_sys_settings::write_config(string &error_msg) {
 	{
 		config << FLD_START_USER_PROFILE << '=' << *i << endl;
 	}
-#if 0
-	// DEPRECATED
-	config << FLD_START_USER_HOST << '=' << start_user_host << endl;
-	config << FLD_START_USER_NIC  << '=' << start_user_nic << endl;
-#endif
+
 	config << FLD_START_HIDDEN << '=' << bool2yesno(start_hidden) << endl;
 	config << endl;
 	
@@ -1513,6 +1744,11 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << FLD_RINGTONE_FILE << '=' << ringtone_file << endl;
 	config << FLD_PLAY_RINGBACK << '=' << bool2yesno(play_ringback) << endl;
 	config << FLD_RINGBACK_FILE << '=' << ringback_file << endl;
+	config << endl;
+	
+	// Write MIME settings
+	config << "# MIME settings\n";
+	config << FLD_MIME_SHARED_DATABASE << '=' << mime_shared_database << endl;
 	config << endl;
 	
 	// Write persistent user interface state
@@ -1533,6 +1769,22 @@ bool t_sys_settings::write_config(string &error_msg) {
 	{
 		config << FLD_DIAL_HISTORY << '=' << *i << endl;
 	}
+	
+	config << endl;
+	
+	// Write session settins
+	config << "# UI session settings\n";
+	config << FLD_UI_SESSION_ID << '=' << ui_session_id << endl;
+
+	for (list<string>::iterator i = ui_session_active_profiles.begin();
+	     i != ui_session_active_profiles.end(); i++)
+	{
+		config << FLD_UI_SESSION_ACTIVE_PROFILE << '=' << *i << endl;
+	}
+	
+	config << FLD_UI_SESSION_MAIN_GEOMETRY << '=' << ui_session_main_geometry.encode() << endl;
+	config << FLD_UI_SESSION_MAIN_HIDDEN << '=' << bool2yesno(ui_session_main_hidden) << endl;
+	config << FLD_UI_SESSION_MAIN_STATE << '=' << ui_session_main_state << endl;
 	
 	config << endl;
 	

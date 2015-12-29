@@ -34,7 +34,7 @@ bool t_request::authorize(const t_challenge &chlg,
 	string qop = "";
 
 	// Only Digest authentication is supported
-	if (chlg.auth_scheme != AUTH_DIGEST) {
+	if (cmp_nocase(chlg.auth_scheme, AUTH_DIGEST) != 0) {
 		fail_reason = "Authentication scheme " + chlg.auth_scheme;
 		fail_reason += " not supported.";
 		return false;
@@ -43,7 +43,7 @@ bool t_request::authorize(const t_challenge &chlg,
 	const t_digest_challenge &dchlg = chlg.digest_challenge;
 
 	// Only MD5 algorithm is supported
-	if (dchlg.algorithm != ALG_MD5) {
+	if (cmp_nocase(dchlg.algorithm, ALG_MD5) != 0) {
 		fail_reason = "Authentication algorithm " + dchlg.algorithm;
 		fail_reason += " not supported.";
 		return false;
@@ -76,7 +76,7 @@ bool t_request::authorize(const t_challenge &chlg,
 	A1 = username + ":" + dchlg.realm + ":" + passwd;
 
 	// RFC 2617 3.2.2.3
-	if (qop == QOP_AUTH || qop == "") {
+	if (cmp_nocase(qop, QOP_AUTH) == 0 || qop == "") {
 		A2 = method2str(method, unknown_method) + ":" + uri.encode();
 	} else {
 		A2 = method2str(method, unknown_method) + ":" + uri.encode();
@@ -110,7 +110,7 @@ bool t_request::authorize(const t_challenge &chlg,
 
 	string x;
 
-	if (qop == QOP_AUTH || qop == QOP_AUTH_INT) {
+	if (cmp_nocase(qop, QOP_AUTH) == 0 || cmp_nocase(qop, QOP_AUTH_INT) == 0) {
 		x = HA1.str() + ":";
 		x += dchlg.nonce + ":";
 		x += int2str(nc, "%08x") + ":";
@@ -150,15 +150,18 @@ bool t_request::authorize(const t_challenge &chlg,
 	return true;
 }
 
-t_request::t_request() : t_sip_message() {
-	method = METHOD_UNKNOWN;
+t_request::t_request() : t_sip_message(),
+	transport_specified(false),
+	method(METHOD_UNKNOWN)
+{
 }
 
 t_request::t_request(const t_request &r) : t_sip_message(r),
+		destinations(r.destinations),
+		transport_specified(r.transport_specified),
 		uri(r.uri),
 		method(r.method),
-		unknown_method(r.unknown_method),
-		destinations(r.destinations)
+		unknown_method(r.unknown_method)
 {
 }
 
@@ -337,15 +340,23 @@ void t_request::add_destinations(const t_user &user_profile, const t_url &dst_ur
 		destinations.insert(destinations.end(), l.begin(), l.end());
 	}
 	
+	// Add UDP destinations after TCP, so UDP will be used as a fallback
+	// for large messages, when TCP fails. If the message is not large,
+	// then the TCP destinations will be removed later.
+	// NOTE: If a message is larger than 64K, it cannot be sent via UDP
 	if ((user_profile.get_sip_transport() == SIP_TRANS_AUTO ||
 	    user_profile.get_sip_transport() == SIP_TRANS_UDP)
 	   &&
 	   (dst_uri.get_transport().empty() ||
-	    cmp_nocase(dst_uri.get_transport(), "udp") == 0))
+	    cmp_nocase(dst_uri.get_transport(), "udp") == 0)
+	   &&
+	   (get_encoded_size() < 65536))
 	{
 		list<t_ip_port> l = dst_uri.get_h_ip_srv("udp");
 		destinations.insert(destinations.end(), l.begin(), l.end());
 	}
+	
+	transport_specified = !dst_uri.get_transport().empty();
 }
 
 void t_request::calc_destinations(const t_user &user_profile) {
@@ -411,14 +422,14 @@ void t_request::get_destination(t_ip_port &ip_port, const t_user &user_profile) 
 	// RFC 3261 18.1.1
 	// If the message size is larger than 1300 then the message must be
 	// sent over TCP.
-	// If the request-URI indicated an explicit transport, then the
+	// If the destination URI indicated an explicit transport, then the
 	// destination calculation picked the possible destinations already.
 	// The size cannot influence this calculation anymore.
 	if (user_profile.get_sip_transport() == SIP_TRANS_AUTO &&
 	    !destinations.empty() &&
 	    destinations.front().transport == "tcp" &&
 	    get_encoded_size() <= user_profile.get_sip_transport_udp_threshold() &&
-	    uri.get_transport().empty())
+	    !transport_specified)
 	{
 		// The message can be sent over UDP. Remove all TCP destinations.
 		while (!destinations.empty() && destinations.front().transport == "tcp") {
@@ -487,4 +498,36 @@ void t_request::calc_local_ip(void) {
 	if (dst.ipaddr != 0) {
 		local_ip_ = get_src_ip4_address_for_dst(dst.ipaddr);
 	}
+}
+
+bool t_request::is_registration_request(void) const {
+	if (method != REGISTER) return false;
+	
+	if (hdr_expires.is_populated() && hdr_expires.time > 0) return true;
+	
+	if (hdr_contact.is_populated() && 
+	    !hdr_contact.contact_list.empty() &&
+	    hdr_contact.contact_list.front().is_expires_present() &&
+	    hdr_contact.contact_list.front().get_expires() > 0)
+	{
+		return true;
+	}
+	
+	return false;
+}
+
+bool t_request::is_de_registration_request(void) const {
+	if (method != REGISTER) return false;
+
+	if (hdr_expires.is_populated() && hdr_expires.time == 0) return true;
+	
+	if (hdr_contact.is_populated() && 
+	    !hdr_contact.contact_list.empty() &&
+	    hdr_contact.contact_list.front().is_expires_present() &&
+	    hdr_contact.contact_list.front().get_expires() == 0)
+	{
+		return true;
+	}
+	
+	return false;
 }

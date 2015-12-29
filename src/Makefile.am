@@ -20,10 +20,12 @@ twinkle_LDADD = libtwinkle.a\
         $(top_builddir)/src/im/libim.a\
         $(top_builddir)/src/presence/libpresence.a\
         $(top_builddir)/src/patterns/libpatterns.a\
+        $(top_builddir)/src/utils/libutils.a\
 	$(GSM_LIBS)\
 	$(CCRTP_LIBS)\
 	$(XML2_LIBS)\
-	-lsndfile
+	-lsndfile\
+	-lmagic
 
 libtwinkle_a_SOURCES =\
 	abstract_dialog.cpp\

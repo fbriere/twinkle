@@ -52,12 +52,11 @@ void yysdperror(const char *s);
 	string			*yysdpt_str;
 	t_sdp_ntwk_type		yysdpt_ntwk_type;
 	t_sdp_addr_type		yysdpt_addr_type;
-	t_sdp_transport		yysdpt_transport;
 	t_sdp_connection	*yysdpt_connection;
 	list<t_sdp_attr>	*yysdpt_attributes;
 	t_sdp_attr		*yysdpt_attribute;
 	t_sdp_media		*yysdpt_media;
-	list<unsigned short>	*yysdpt_num_list;
+	list<string>		*yysdpt_token_list;
 }
 
 %token <yysdpt_int>	T_NUM
@@ -89,14 +88,15 @@ void yysdperror(const char *s);
 %type <yysdpt_attribute>	attribute
 %type <yysdpt_attribute>	attribute2
 %type <yysdpt_media>		media
-%type <yysdpt_transport>	transport
-%type <yysdpt_num_list>		formats
+%type <yysdpt_str>		transport
+%type <yysdpt_token_list>	formats
 
 %destructor { MEMMAN_DELETE($$); delete $$; }	connection
 %destructor { MEMMAN_DELETE($$); delete $$; }	attributes
 %destructor { MEMMAN_DELETE($$); delete $$; }	attribute
 %destructor { MEMMAN_DELETE($$); delete $$; }	attribute2
 %destructor { MEMMAN_DELETE($$); delete $$; }	media
+%destructor { MEMMAN_DELETE($$); delete $$; }	transport
 %destructor { MEMMAN_DELETE($$); delete $$; }	formats
 
 %%
@@ -232,42 +232,45 @@ media:		  T_LINE_MEDIA T_TOKEN { CTX_NUM; } T_NUM { CTX_INITIAL; }
 			
 			$$->media_type = tolower(*$2);
 			$$->port = $4;
-			$$->transport = $6;
-			$$->formats = *$7;
+			$$->transport = *$6;
+			
+			/* The format depends on the media type */
+			switch($$->get_media_type()) {
+			case SDP_AUDIO:
+			case SDP_VIDEO:
+				/* Numeric format */
+				for (list<string>::const_iterator it = $7->begin(); it != $7->end(); ++it) {
+					if (is_number(*it)) $$->formats.push_back(atoi(it->c_str()));
+				}
+				
+				break;
+			default:
+				/* Alpha numeric format */
+				$$->alpha_num_formats = *$7;
+			}
+			
 			$$->connection = *$10;
 			$$->attributes = *$12;
 			MEMMAN_DELETE($2); delete $2;
+			MEMMAN_DELETE($6); delete $6;
 			MEMMAN_DELETE($7); delete $7;
 			MEMMAN_DELETE($10); delete $10;
 			MEMMAN_DELETE($12); delete $12; }
 ;
 
-transport:	  T_TOKEN { try {
-				$$ = str2sdp_transport(*$1);
-				MEMMAN_DELETE($1); delete $1;
-			    }
-			    catch (t_sdp_syntax_error) {
-			    	MEMMAN_DELETE($1); delete $1;
-			        YYABORT;
-			    } }
-		| T_TOKEN '/' T_TOKEN  { try {
-				$$ = str2sdp_transport(*$1 + '/' + *$3);
-				MEMMAN_DELETE($1); delete $1;
-				MEMMAN_DELETE($3); delete $3;
-			    }
-			    catch (t_sdp_syntax_error) {
-			    	MEMMAN_DELETE($1); delete $1;
-				MEMMAN_DELETE($3); delete $3;
-				$$ = SDP_TRANS_NULL;
-			    } }
-;
+transport:	  T_TOKEN { 
+			$$ = $1; }
+		| T_TOKEN '/' T_TOKEN {
+			$$ = new string(*$1 + '/' + *$3); 
+			MEMMAN_NEW($$);
+			MEMMAN_DELETE($1); delete $1; 
+			MEMMAN_DELETE($3); delete $3; }
 
 // For RTP/AVP a format is a number. For other transport protocols,
-// non-numerical formats are possible. non-numerical formats are
-// now simply discarded as only RTP/AVP is supported.
-formats:	  /* empty */	{ $$ = new list<unsigned short>; MEMMAN_NEW($$); }
+// non-numerical formats are possible.
+formats:	  /* empty */	{ $$ = new list<string>; MEMMAN_NEW($$); }
 		| formats T_TOKEN {
-			if (is_number(*$2)) $$->push_back(atoi($2->c_str()));
+			$$->push_back(*$2);
 			MEMMAN_DELETE($2);
 			delete $2; }
 ;

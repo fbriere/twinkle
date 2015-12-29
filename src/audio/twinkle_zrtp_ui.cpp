@@ -28,12 +28,122 @@
 #include "util.h"
 
 using namespace std;
+using namespace GnuZrtpCodes;
 
 extern t_phone *phone;
 
-TwinkleZrtpUI::TwinkleZrtpUI(ZrtpQueue* queue, t_audio_session* session) :
-            ZrtpUserCallback(queue), audioSession(session) 
-{}
+// Initialize static data
+map<int32, std::string>TwinkleZrtpUI::infoMap;
+map<int32, std::string>TwinkleZrtpUI::warningMap;
+map<int32, std::string>TwinkleZrtpUI::severeMap;
+map<int32, std::string>TwinkleZrtpUI::zrtpMap;
+
+bool TwinkleZrtpUI::mapsDone = false;
+std::string TwinkleZrtpUI::unknownCode = "Unknown error code";
+
+TwinkleZrtpUI::TwinkleZrtpUI(t_audio_session* session) :
+                             audioSession(session) 
+{
+        if (mapsDone) {
+            return;
+        }
+        
+        // Initialize error mapping
+        infoMap.insert(pair<int32, std::string>(InfoHelloReceived,
+						 string("Hello received, preparing a Commit")));
+        infoMap.insert(pair<int32, std::string>(InfoCommitDHGenerated, 
+						 string("Commit: Generated a public DH key")));
+        infoMap.insert(pair<int32, std::string>(InfoRespCommitReceived, 
+						 string("Responder: Commit received, preparing DHPart1")));
+        infoMap.insert(pair<int32, std::string>(InfoDH1DHGenerated, 
+						 string("DH1Part: Generated a public DH key")));
+        infoMap.insert(pair<int32, std::string>(InfoInitDH1Received,
+						 string("Initiator: DHPart1 received, preparing DHPart2")));
+        infoMap.insert(pair<int32, std::string>(InfoRespDH2Received,
+						 string("Responder: DHPart2 received, preparing Confirm1")));
+        infoMap.insert(pair<int32, std::string>(InfoInitConf1Received,
+						 string("Initiator: Confirm1 received, preparing Confirm2")));
+        infoMap.insert(pair<int32, std::string>(InfoRespConf2Received,
+						 string("Responder: Confirm2 received, preparing Conf2Ack")));
+        infoMap.insert(pair<int32, std::string>(InfoRSMatchFound,
+						 string("At least one retained secrets matches - security OK")));
+        infoMap.insert(pair<int32, std::string>(InfoSecureStateOn,
+						 string("Entered secure state")));
+        infoMap.insert(pair<int32, std::string>(InfoSecureStateOff,
+						 string("No more security for this session")));
+
+        warningMap.insert(pair<int32, std::string>(WarningDHAESmismatch,
+                          string("Commit contains an AES256 cipher but does not offer a Diffie-Helman 4096")));
+        warningMap.insert(pair<int32, std::string>(WarningGoClearReceived,
+						    string("Received a GoClear message")));
+        warningMap.insert(pair<int32, std::string>(WarningDHShort,
+                          string("Hello offers an AES256 cipher but does not offer a Diffie-Helman 4096")));
+        warningMap.insert(pair<int32, std::string>(WarningNoRSMatch,
+						    string("No retained shared secrets available - must verify SAS")));
+        warningMap.insert(pair<int32, std::string>(WarningCRCmismatch,
+						    string("Internal ZRTP packet checksum mismatch - packet dropped")));
+        warningMap.insert(pair<int32, std::string>(WarningSRTPauthError,
+						    string("Dropping packet because SRTP authentication failed!")));
+        warningMap.insert(pair<int32, std::string>(WarningSRTPreplayError,
+						    string("Dropping packet because SRTP replay check failed!")));
+	warningMap.insert(pair<int32, std::string>(WarningNoExpectedRSMatch,
+						    string("Valid retained shared secrets availabe but no matches found - must verify SAS")));
+
+        severeMap.insert(pair<int32, std::string>(SevereHelloHMACFailed,
+						   string("Hash HMAC check of Hello failed!")));
+        severeMap.insert(pair<int32, std::string>(SevereCommitHMACFailed,
+						   string("Hash HMAC check of Commit failed!")));
+        severeMap.insert(pair<int32, std::string>(SevereDH1HMACFailed,
+						   string("Hash HMAC check of DHPart1 failed!")));
+        severeMap.insert(pair<int32, std::string>(SevereDH2HMACFailed,
+						   string("Hash HMAC check of DHPart2 failed!")));
+        severeMap.insert(pair<int32, std::string>(SevereCannotSend,
+						   string("Cannot send data - connection or peer down?")));
+        severeMap.insert(pair<int32, std::string>(SevereProtocolError,
+						   string("Internal protocol error occured!")));
+        severeMap.insert(pair<int32, std::string>(SevereNoTimer, 
+						   string("Cannot start a timer - internal resources exhausted?")));
+        severeMap.insert(pair<int32, std::string>(SevereTooMuchRetries,
+					 string("Too much retries during ZRTP negotiation - connection or peer down?")));
+
+        zrtpMap.insert(pair<int32, std::string>(MalformedPacket,
+						 string("Malformed packet (CRC OK, but wrong structure)")));
+        zrtpMap.insert(pair<int32, std::string>(CriticalSWError, 
+						 string("Critical software error")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppZRTPVersion, 
+						 string("Unsupported ZRTP version")));
+        zrtpMap.insert(pair<int32, std::string>(HelloCompMismatch, 
+						 string("Hello components mismatch")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppHashType, 
+						 string("Hash type not supported")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppCiphertype, 
+						 string("Cipher type not supported")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppPKExchange, 
+						 string("Public key exchange not supported")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppSRTPAuthTag, 
+						 string("SRTP auth. tag not supported")));
+        zrtpMap.insert(pair<int32, std::string>(UnsuppSASScheme, 
+						 string("SAS scheme not supported")));
+        zrtpMap.insert(pair<int32, std::string>(NoSharedSecret, 
+						 string("No shared secret available, DH mode required")));
+        zrtpMap.insert(pair<int32, std::string>(DHErrorWrongPV, 
+						 string("DH Error: bad pvi or pvr ( == 1, 0, or p-1)")));
+        zrtpMap.insert(pair<int32, std::string>(DHErrorWrongHVI, 
+						 string("DH Error: hvi != hashed data")));
+        zrtpMap.insert(pair<int32, std::string>(SASuntrustedMiTM, 
+						 string("Received relayed SAS from untrusted MiTM")));
+        zrtpMap.insert(pair<int32, std::string>(ConfirmHMACWrong, 
+						 string("Auth. Error: Bad Confirm pkt HMAC")));
+        zrtpMap.insert(pair<int32, std::string>(NonceReused, 
+						 string("Nonce reuse")));
+        zrtpMap.insert(pair<int32, std::string>(EqualZIDHello, 
+						 string("Equal ZIDs in Hello")));
+        zrtpMap.insert(pair<int32, std::string>(GoCleatNotAllowed, 
+						string("GoClear packet received, but not allowed")));
+
+        mapsDone = true;
+
+}
 
 void TwinkleZrtpUI::secureOn(std::string cipher) {
 	audioSession->set_is_encrypted(true);
@@ -70,9 +180,9 @@ void TwinkleZrtpUI::secureOff() {
 	ui->cb_async_line_state_changed();
 }
 
-void TwinkleZrtpUI::showSAS(std::string sas) {
+void TwinkleZrtpUI::showSAS(std::string sas, bool verified) {
 	audioSession->set_zrtp_sas(sas);
-	audioSession->set_zrtp_sas_confirmed(false);
+	audioSession->set_zrtp_sas_confirmed(verified);
 	
 	t_line *line = audioSession->get_line();
 	int lineno = line->get_line_number();
@@ -85,7 +195,9 @@ void TwinkleZrtpUI::showSAS(std::string sas) {
 	log_file->write_endl();
 	log_file->write_footer();
 
-	ui->cb_async_show_zrtp_sas(lineno, sas);
+	if (!verified) {
+	  ui->cb_async_show_zrtp_sas(lineno, sas);
+	}
 	ui->cb_async_line_state_changed();
 }
 
@@ -96,14 +208,14 @@ void TwinkleZrtpUI::confirmGoClear() {
 	ui->cb_async_zrtp_confirm_go_clear(lineno);
 }
 
-void TwinkleZrtpUI::showMessage(MessageSeverity sev, std::string message) {
+void TwinkleZrtpUI::showMessage(MessageSeverity sev, int subCode) {
 	t_line *line = audioSession->get_line();
 	int lineno = line->get_line_number();
 	
 	string msg = "Line ";
 	msg += int2str(lineno + 1);
 	msg += ": ";
-	msg += message;
+	msg += *mapCodesToString(sev, subCode);
 	
 	switch (sev) {
 	case Info:
@@ -120,14 +232,14 @@ void TwinkleZrtpUI::showMessage(MessageSeverity sev, std::string message) {
 	}
 }
 
-void TwinkleZrtpUI::zrtpNegotiationFailed(MessageSeverity severity, std::string msg) {
+void TwinkleZrtpUI::zrtpNegotiationFailed(MessageSeverity severity, int subCode) {
 	t_line *line = audioSession->get_line();
 	int lineno = line->get_line_number();
 	
 	string m = "Line ";
 	m += int2str(lineno + 1);
 	m += ": ZRTP negotiation failed.\n";
-	m += msg;
+	m += *mapCodesToString(severity, subCode);
 	
 	switch (severity) {
 	case Info:
@@ -154,4 +266,31 @@ void TwinkleZrtpUI::zrtpNotSuppOther() {
 	log_file->write_report(msg, "TwinkleZrtpUI::zrtpNotSuppOther");
 }
 
+const string *const TwinkleZrtpUI::mapCodesToString(MessageSeverity severity, int subCode) {
+  	string *m = &unknownCode;
+
+	switch (severity) {
+	case Info:
+		m = &infoMap[subCode];
+		break;
+	case Warning:
+		m = &warningMap[subCode];
+		break;
+	case Severe:
+		m = &severeMap[subCode];
+		break;
+	case ZrtpError:
+		if (subCode < 0) {
+			subCode *= -1;
+		}
+		m = &zrtpMap[subCode];
+		break;
+	default:
+		break;
+	}
+	
+	return m;
+}
+
 #endif
+

@@ -227,6 +227,8 @@ X_PRE_LIBS = @X_PRE_LIBS@
 X_RPATH = @X_RPATH@
 YACC = @YACC@
 YFLAGS = @YFLAGS@
+ZRTP_CFLAGS = @ZRTP_CFLAGS@
+ZRTP_LIBS = @ZRTP_LIBS@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 all_includes = @all_includes@
@@ -317,7 +319,8 @@ xdg_directorydir = @xdg_directorydir@
 xdg_menudir = @xdg_menudir@
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src \
-	$(CCRTP_CFLAGS)
+	$(CCRTP_CFLAGS) \
+	$(XML2_CFLAGS)
 
 noinst_LIBRARIES = libaudio.a
 libaudio_a_SOURCES = \

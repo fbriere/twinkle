@@ -783,6 +783,10 @@
         <source>Accepted by network</source>
         <translation>Accepté par le réseau</translation>
     </message>
+    <message>
+        <source>Failed to save message attachment: %1</source>
+        <translation>Echec de l&apos;enregistrement de la pièce jointe: %1</translation>
+    </message>
 </context>
 <context>
     <name>GetAddressForm</name>
@@ -1297,7 +1301,7 @@ With this option you request your SIP provider to hide your identity from the ca
     </message>
     <message>
         <source>The exchanged messages.</source>
-        <translation>Les messages échangés.</translation>
+        <translation type="obsolete">Les messages échangés.</translation>
     </message>
     <message>
         <source>Type your message here and then press &quot;send&quot; to send it.</source>
@@ -1322,6 +1326,46 @@ With this option you request your SIP provider to hide your identity from the ca
     <message>
         <source>Delivery notification</source>
         <translation>Notification de la réception</translation>
+    </message>
+    <message>
+        <source>Instant message toolbar</source>
+        <translation>Barre d&apos;outil de la messagerie instantanée</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Envoi de fichier...</translation>
+    </message>
+    <message>
+        <source>Send file</source>
+        <translation>Envoyer un fichier</translation>
+    </message>
+    <message>
+        <source>image size is scaled down in preview</source>
+        <translation>La taille de l&apos;image est réduite en prévisualisation</translation>
+    </message>
+    <message>
+        <source>Open with %1...</source>
+        <translation>Ouvrir avec %1...</translation>
+    </message>
+    <message>
+        <source>Open with...</source>
+        <translation>Ouvrir avec...</translation>
+    </message>
+    <message>
+        <source>Save attachment as...</source>
+        <translation>Enregistrer la pièce jointe sous...</translation>
+    </message>
+    <message>
+        <source>File already exists. Do you want to overwrite this file?</source>
+        <translation>Le fichier existe déjà. Voulez-vous le remplacer ?</translation>
+    </message>
+    <message>
+        <source>Failed to save attachment.</source>
+        <translation>Impossible d&apos;enregistrer la pièce jointe.</translation>
+    </message>
+    <message>
+        <source>%1 is typing a message.</source>
+        <translation>%1 est un message texte.</translation>
     </message>
 </context>
 <context>
@@ -2617,6 +2661,49 @@ Merci de sélectionner un profil.</translation>
     </message>
 </context>
 <context>
+    <name>SendFileForm</name>
+    <message>
+        <source>Twinkle - Send File</source>
+        <translation>Twinkle - Envoi de fichier</translation>
+    </message>
+    <message>
+        <source>Select file to send.</source>
+        <translation>Choisir le fichier à envoyer.</translation>
+    </message>
+    <message>
+        <source>&amp;File:</source>
+        <translation>&amp;Fichier:</translation>
+    </message>
+    <message>
+        <source>&amp;Subject:</source>
+        <translation>&amp;Sujet:</translation>
+    </message>
+    <message>
+        <source>&amp;OK</source>
+        <translation>&amp;OK</translation>
+    </message>
+    <message>
+        <source>Alt+O</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>&amp;Cancel</source>
+        <translation>Annuler (Es&amp;c)</translation>
+    </message>
+    <message>
+        <source>Alt+C</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>File does not exist.</source>
+        <translation>Le fichier n&apos;existe pas.</translation>
+    </message>
+    <message>
+        <source>Send file...</source>
+        <translation>Envoi de fichier...</translation>
+    </message>
+</context>
+<context>
     <name>SrvRedirectForm</name>
     <message>
         <source>Twinkle - Call Redirection</source>
@@ -3645,6 +3732,18 @@ et créez les attaches statiques suivantes (UDP) dans votre NAT.</translation>
         <source>Cannot receive incoming TCP connections.</source>
         <translation>Impossible de recevoir des connexions TCP entrantes.</translation>
     </message>
+    <message>
+        <source>Failed to create file %1</source>
+        <translation>Echec de la création du fichier %1</translation>
+    </message>
+    <message>
+        <source>Failed to write data to file %1</source>
+        <translation>Echec de l&apos;écriture de données dans %1</translation>
+    </message>
+    <message>
+        <source>Failed to send message.</source>
+        <translation>Echec de l&apos;envoi du message.</translation>
+    </message>
 </context>
 <context>
     <name>UserProfileForm</name>
@@ -4023,8 +4122,7 @@ Ce champ est obligatoire.</translation>
     </message>
     <message>
         <source>When enabled, voice activity detection detects whether the audio being encoded is speech or silence/background noise. VAD is always implicitly activated when encoding in VBR, so the option is only useful in non-VBR operation. In this case, Speex detects non-speech periods and encode them with just enough bits to reproduce the background noise. This is called &quot;comfort noise generation&quot; (CNG).</source>
-        <translation>Wenn aktiviert, prüft VAD (Voice Activity Detection, deutsch etwa: Sprache/Pause-Erkennung), ob gerade gesprochen wird. Nicht als Sprache erkannte Geräusche werden nicht übertragen, sondern es wird stattdessen ein wesentlich weniger Daten-Bandbreite benötigendes &quot;Pausesignal&quot; oder (siehe DTX) gar nichts gesendet. 
-VBR (siehe dort) macht VAD unnötig.</translation>
+        <translation>En la sélectionnant, la détection de la parole (ie: voice activity detection ou VAD) détecte si le son encodé est de la voix ou du silence (bruit de fond). VAD est toujours implicitement activé en encodage VBR, cette option est donc uniquement utilisable pour les opérations non-VBR. Dans ce cas, Speex detecte les passages sans paroles et les encode avec juste le nombre de bits nécessaire pour reproduire le bruit de fond. Ceci est appelé la &quot;génération de bruit pour le confort&quot; (comfort noise generation CNG).</translation>
     </message>
     <message>
         <source>&amp;Wide band payload type:</source>
@@ -4044,7 +4142,7 @@ VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
-        <translation>Die für speex wide band verwendete dynamische Nutzdatentyp-Kennung (nicht kleine 96).</translation>
+        <translation>La valeur dynamique (96 ou plus) à utiliser pour le speex à large bande (RFC 2833).</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4060,15 +4158,15 @@ VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
-        <translation>Discontinuous transmission (deutsch etwa: nicht kontinuierliche Datenübertragung) ist eine Erweiterung der VAD/VBR-Übertragung. Bei gleichbleibenden Audiosignal (insbesondere bei erkannten Sprechpausen) wird statt ständig der gleichen Nutzdaten einfach gar nichts übertragen. Senkt die durchschnittliche Datenrate etwas. Bei Störungen auf dem Übertragungsweg kann diese Option zu den von Mobiltelefonen der Anfangszeit bekannten absurden Tonstörungen (hängenbleiben des Tons, Artefakte) führen.</translation>
+        <translation>La transmission discontinue est un ajout à VAD/VBR, qui permet d&apos;arrêter totalement la transmission quand le bruit de fond est stationnaire.</translation>
     </message>
     <message>
         <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
-        <translation>Die für speex narrow band verwendete dynamische Nutzdatentyp-Kennung (nicht kleiner 96).</translation>
+        <translation>La valeur dynamique (96 ou plus) à utiliser pour le speex à petite bande (RFC 2833).</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>
-        <translation>Bei Speex kann die Komplexität (=Genauigkeit) festgelegt werden, mit der der Codec arbeitet. Hierzu wird die Tiefe des Suchvorgangs mit einem Wert von 1 bis 10 gesteuert, ähnlich der -1 bis -9 Option von gzip und bzip2. Im Normalbetrieb ist bei 1 der Rauschabstand 1 bis 2dB schlechter und die CPU-Auslastung nur 10-20% im Vergleich zu 10. In der Praxis bewährt sich für Sprache eine Einstellung von 2 - 4, Inband-DTMF z.B. und andere technische Signale, oder auch Musik, profitieren u.U. von höheren Einstellungen.</translation>
+        <translation>Avec Spexx, il est possible de faire varier le taux de compression de l&apos;encodeur. Ceci est possible en contrôlant comment la recherche est assurée avec un entier entre 1 et 10 d&apos;une manière similaire aux option -1 à -9 de gzip et bzip2. En utilisation normale, le niveau de bruit au taux 1 est entre 1 et 2 dB plus élevé que au taux 10, mais l&apos;utilisation du CPU au taux 10 est 5 fois plus grande que au taux 1. En pratique, Le meilleur compromis est entre 2 et 4, alors que des taux plus élevés sont souvent utilent pour encoder des sons autre que la voix comme les sonneries DTMF.</translation>
     </message>
     <message>
         <source>&amp;Narrow band payload type:</source>
@@ -4120,7 +4218,7 @@ VBR (siehe dort) macht VAD unnötig.</translation>
     </message>
     <message>
         <source>The dynamic type value (96 or higher) to be used for DTMF events (RFC 2833).</source>
-        <translation>Die für DTMF (RFC2833) verwendete dynamische Nutzdatentypkennung (nicht kleiner 96).</translation>
+        <translation>La valeur dynamique (96 ou plus) à utiliser pour les évenements DTMF (RFC 2833).</translation>
     </message>
     <message>
         <source>DTMF vo&amp;lume:</source>
@@ -5435,6 +5533,22 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
         <translation>Utiliser &amp;STUN (ne fonctionne pas pour le TCP entrant)</translation>
+    </message>
+    <message>
+        <source>P&amp;ersistent TCP connection</source>
+        <translation>Connexion TCP p&amp;ercistante</translation>
+    </message>
+    <message>
+        <source>Keep the TCP connection established during registration open such that the SIP proxy can reuse this connection to send incoming requests. Application ping packets are sent to test if the connection is still alive.</source>
+        <translation>Conserve la connexion TCP pendant l&apos;ouverture de l&apos;enregistrement de façon à ce que le proxy SIP puisse réutiliser cette connexion pour envoyer des requêtes. Des ping sont enoyés pour tester si la connexion est toujours en établie.</translation>
+    </message>
+    <message>
+        <source>&amp;Send composing indications when typing a message.</source>
+        <translation>&amp;Envoi de l&apos;indication composite en un message.</translation>
+    </message>
+    <message>
+        <source>Twinkle sends a composing indication when you type a message. This way the recipient can see that you are typing.</source>
+        <translation>Twinkle envoie une indication composite quand vous écrivez un message. Ainsi, l&apos;interlocuteur peut voir que vous êtes en train d&apos;écrire un message.</translation>
     </message>
 </context>
 <context>

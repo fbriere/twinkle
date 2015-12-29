@@ -1,3 +1,54 @@
+24 august 2008 - 1.3.2
+======================
+- Fix in non-KDE version for gcc 4.3
+
+23 august 2008 - 1.3.1
+======================
+- Disable file attachment button in message window when destination
+  address is not filled in
+- Updated russian translation
+  
+Build fixes
+-----------
+- Fixes for gcc 4.3 (missing includes)
+- non-KDE version failed to build
+
+18 august 2008 - 1.3
+====================
+- Send file attachment with instant message.
+- Show timestamp with instant messages.
+- Instant message composition indication (RFC 3994).
+- Persistent TCP connections with keep alive.
+- Do not try to send SIP messages larger than 64K via UDP.
+- Integration with libzrtcpp-1.3.0
+- Xsession support to restore Twinkle after system shutdown/startup.
+- Call snd_pcm_state to determine jitter buffer exhaustion (some ALSA 
+  implementations gave problems with the old method).
+- SDP parser allows SDP body without terminating CRLF.
+- Russian translation.
+
+Bug fixes
+---------
+- SIP parser did not allow white space between header name and colon.
+- With "send in-dialog requests to proxy" enabled and transport
+  mode set to "auto", in-dialog requests are wrongly sent via TCP.
+- Crash when a too large message is received.
+- Comparison of authentication parameters (e.g. algorithm) were case-sensitive.
+  These comparisons must be case-insensitive.
+- SDP parser could not parse other media transports than RTP/AVP.
+- Twinkle sent 415 response instead of 200 OK on in-dialog INFO without body.
+- Twinkle responds with 513 Message too large on an incoming call.
+- ICMP error on STUN request causes Twinkle to crash.
+- Add received-parameter to Via header of an incoming request if it contains 
+  an empty rport parameter (RFC 3581)
+- Twinkle did not add Contact header and copy Record-Route header
+  to 180 response.
+  
+New RFC's
+---------
+RFC 3994 - Indication of Message Composition for Instant Messaging
+  
+
 8 march 2008 - 1.2
 ==================
 - SIP over TCP

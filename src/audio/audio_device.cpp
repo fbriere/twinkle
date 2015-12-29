@@ -338,6 +338,10 @@ int t_oss_io::get_buffer_size(bool is_recording_buffer)
 	else return play_buffersize;
 }
 
+bool t_oss_io::play_buffer_underrun(void) {
+	return get_buffer_space(false) >= get_buffer_size(false);
+}
+
 
 int t_oss_io::read(unsigned char* buf, int len) {
 	return ::read(fd, buf, len);
@@ -769,6 +773,11 @@ int t_alsa_io::get_buffer_size(bool is_recording_buffer)
 {
 	if (is_recording_buffer) return rec_buffersize;
 	else return play_buffersize;
+}
+
+bool t_alsa_io::play_buffer_underrun(void) {
+	if (!pcm_play_ptr) return false;
+	return snd_pcm_state(pcm_play_ptr) == SND_PCM_STATE_XRUN;
 }
 
 int t_alsa_io::read(unsigned char* buf, int len) {
