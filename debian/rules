@@ -8,6 +8,9 @@ ifeq (,$(filter $(DEB_HOST_ARCH),kfreebsd-amd64 kfreebsd-i386 hurd-i386))
 CONFIGURE_FLAGS += -DWITH_ALSA=ON
 endif
 
+# Avoid useless library dependencies
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
 %:
 	dh $@ --parallel
 
