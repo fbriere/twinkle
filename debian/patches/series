@@ -1,3 +1,4 @@
 desktop-entry-contains-encoding-key.patch
 libgsm.patch
 include-linux-errqueue.patch
+fix-spelling.patch

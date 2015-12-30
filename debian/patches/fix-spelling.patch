@@ -1,0 +1,565 @@
+Description: Fix spelling mistakes detected by lintian
+Author: Peter Colberg <peter@colberg.org>
+Forwarded: https://github.com/LubosD/twinkle/pull/43
+Last-Update: 2015-12-30
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/NEWS
++++ b/NEWS
+@@ -653,7 +653,7 @@ Build improvements
+ - Fixed several build problams with KDE include files and
+   libraries.
+ 
+-If you already succesfully installed release 0.3.1 then there is
++If you already successfully installed release 0.3.1 then there is
+ no need to upgrade to 0.3.2 as there is no new functionality.
+ 
+ 16 oct 2005 - Release 0.3.1
+--- a/src/abstract_dialog.h
++++ b/src/abstract_dialog.h
+@@ -144,7 +144,7 @@ protected:
+ 	 *
+ 	 * @param cr [in] The request.
+ 	 * @param resp [in] The failure response that was received on the request. 
+-	 * @param contact [out] Contains on succesful return the contact to which the request is sent.
++	 * @param contact [out] Contains on successful return the contact to which the request is sent.
+ 	 * @return true, if the request is sent to a next destination.
+ 	 * @return false, if no next destination exists.
+ 	 */
+--- a/src/address_book.h
++++ b/src/address_book.h
+@@ -89,7 +89,7 @@ public:
+ 	
+ 	/**
+ 	 * Delete an address.
+-	 * @return true, if the address was succesfully deleted.
++	 * @return true, if the address was successfully deleted.
+ 	 * @return false, if the address does not exist.
+ 	 */
+ 	bool del_address(const t_address_card &address);
+--- a/src/auth.h
++++ b/src/auth.h
+@@ -129,7 +129,7 @@ public:
+ 	 * @param resp [in] The response containing the challenge.
+ 	 * @return true, if authorization succeeds.
+ 	 * @return false, if authorization fails.
+-	 * @post On succesful authorization, the credentials has been added to
++	 * @post On successful authorization, the credentials has been added to
+ 	 * the request in the proper header (Authorization or Proxy-Authorization).
+ 	 */
+ 	bool authorize(t_user *user_config, t_request *r, t_response *resp);
+--- a/src/dialog.h
++++ b/src/dialog.h
+@@ -597,7 +597,7 @@ public:
+ 	/**
+ 	 * Redirect INVITE to the next destination.
+ 	 * @param resp The response on the INVITE.
+-	 * @return true, if INIVTE was redirected succesfully.
++	 * @return true, if INIVTE was redirected successfully.
+ 	 * @return false, if there is no next destination.
+ 	 *
+ 	 * @pre The response must be a 3XX.
+@@ -606,7 +606,7 @@ public:
+ 	
+ 	/**
+ 	 * Failover INVITE to the next destination from DNS lookup.
+-	 * @return true, if INIVTE was succesfully sent.
++	 * @return true, if INIVTE was successfully sent.
+ 	 * @return false, if there is no next destination.
+ 	 */
+ 	bool failover_invite(void);
+--- a/src/gui/gui.cpp
++++ b/src/gui/gui.cpp
+@@ -1963,7 +1963,7 @@ void t_gui::cb_refer_result_success(int line) {
+ 	QString s;
+ 	
+ 	emit mw_display_header();
+-	s = qApp->translate("GUI", "Line %1: call succesfully transferred.").arg(line + 1);
++	s = qApp->translate("GUI", "Line %1: call successfully transferred.").arg(line + 1);
+ 	emit mw_display(s);
+ 	
+ 	// The refer state has changed, so update the main window.
+--- a/src/gui/lang/twinkle_cs.ts
++++ b/src/gui/lang/twinkle_cs.ts
+@@ -652,7 +652,7 @@
+         <translation>Linka %1: přepojení hovoru selhalo.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Linka %1: hovor byl přepojen.</translation>
+     </message>
+     <message>
+@@ -4465,7 +4465,7 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
+         <translation>Ko&amp;mplexita:</translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation>Nesouvislé vysílání je rozšířením funkčnosi VAD/VBR, kdy je možné úplně přestat odesílat data v případě ticha.</translation>
+     </message>
+     <message>
+@@ -5522,7 +5522,7 @@ Pokud je deaktivováno, použije Twinkle první kodek z vlastního seznamu, kter
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_de.ts
++++ b/src/gui/lang/twinkle_de.ts
+@@ -652,7 +652,7 @@
+         <translation>Leitung %1: Rufweitervermittlung erfolglos.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Leitung %1: Ruf wurde weitervermittelt.</translation>
+     </message>
+     <message>
+@@ -4500,7 +4500,7 @@ VBR (siehe dort) macht VAD unnötig.</translation>
+         <translation type="obsolete">Alt+X</translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation>Discontinuous transmission (deutsch etwa: nicht kontinuierliche Datenübertragung) ist eine Erweiterung der VAD/VBR-Übertragung. Bei gleichbleibenden Audiosignal (insbesondere bei erkannten Sprechpausen) wird statt ständig der gleichen Nutzdaten einfach gar nichts übertragen. Senkt die durchschnittliche Datenrate etwas. Bei Störungen auf dem Übertragungsweg kann diese Option zu den von Mobiltelefonen der Anfangszeit bekannten absurden Tonstörungen (hängenbleiben des Tons, Artefakte) führen.</translation>
+     </message>
+     <message>
+@@ -5571,7 +5571,7 @@ Alternativ kann Twinkle die AoR (Address of Record) nutzen. Nachteil hierbei: di
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_fr.ts
++++ b/src/gui/lang/twinkle_fr.ts
+@@ -660,7 +660,7 @@
+         <translation>Ligne %1: transfert d&apos;appel échoué.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Ligne %1: transfert d&apos;appel réussi.</translation>
+     </message>
+     <message>
+@@ -4481,7 +4481,7 @@ Ce champ est obligatoire.</translation>
+         <translation>Co&amp;mplexité:</translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation>La transmission discontinue est un ajout à VAD/VBR, qui permet d&apos;arrêter totalement la transmission quand le bruit de fond est stationnaire.</translation>
+     </message>
+     <message>
+@@ -5536,7 +5536,7 @@ Si vous désactivez cette option, c&apos;est le premier codec de la liste des co
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_nl.ts
++++ b/src/gui/lang/twinkle_nl.ts
+@@ -756,7 +756,7 @@
+         <translation>Lijn %1: doorverbinden gesprek mislukt.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Lijn %1: doorverbinden gesprek geslaagd.</translation>
+     </message>
+     <message>
+@@ -4552,7 +4552,7 @@ Dit is een verplicht veld.</translation>
+         <translation type="obsolete">Alt+X</translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation>Discontinuous transmission (DTX) is een extra optie boven op VAD. Met DTX wordt helemaal niets gestuurd tijdens stilte periodes.</translation>
+     </message>
+     <message>
+@@ -5586,7 +5586,7 @@ Als u deze optie uitschakelt, dan neemt Twinkle de eerste codec uit de actieve c
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_ru.ts
++++ b/src/gui/lang/twinkle_ru.ts
+@@ -672,7 +672,7 @@
+         <translation>Линия %1: ошибка передачи звонка.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Линия %1: Перевод звонка завершён.</translation>
+     </message>
+     <message>
+@@ -4429,7 +4429,7 @@ If you disable this option, then the first codec from the active codecs that is
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+@@ -5134,7 +5134,7 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_sv.ts
++++ b/src/gui/lang/twinkle_sv.ts
+@@ -672,7 +672,7 @@
+         <translation>Linje %1: samtalskoppling misslyckades.</translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation>Linje %1: samtal kopplades.</translation>
+     </message>
+     <message>
+@@ -4429,7 +4429,7 @@ If you disable this option, then the first codec from the active codecs that is
+         <translation type="obsolete">Alt+X</translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+@@ -5094,7 +5094,7 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/lang/twinkle_xx.ts
++++ b/src/gui/lang/twinkle_xx.ts
+@@ -653,7 +653,7 @@
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+-        <source>Line %1: call succesfully transferred.</source>
++        <source>Line %1: call successfully transferred.</source>
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+@@ -4197,7 +4197,7 @@ If you disable this option, then the first codec from the active codecs that is
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+-        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</source>
++        <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
+         <translation type="unfinished"></translation>
+     </message>
+     <message>
+@@ -4902,7 +4902,7 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
+     </message>
+     <message>
+         <source>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/gui/main.cpp
++++ b/src/gui/main.cpp
+@@ -268,7 +268,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
+ 			cout << endl;
+ 			cout << " --set-profile <profile>\n";
+ 			cout << "\t\tMake <profile> the active profile.\n";
+-			cout << "\t\tWhen using this option in conjuction with --call and --cmd,\n";
++			cout << "\t\tWhen using this option in conjunction with --call and --cmd,\n";
+ 			cout << "\t\tthen the profile is activated before executing --call or \n";
+ 			cout << "\t\t--cmd.\n";
+ 			cout << endl;
+@@ -277,7 +277,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
+ 			cout << "\t\tand take focus.\n";
+ 			cout << endl;
+ 			cout << " --hide";
+-			cout << "\t\tInstruct a running instance of Twinkle to hide in the sytem tray.\n";
++			cout << "\t\tInstruct a running instance of Twinkle to hide in the system tray.\n";
+ 			cout << "\t\tIf no system tray is used, then Twinkle will minimize.\n";
+ 			cout << endl;
+ 			cout << " --help-cli [cli command]\n";
+@@ -661,7 +661,7 @@ int main( int argc, char ** argv )
+ 		// Activate a profile in the running Twinkle process.
+ 		if (already_running && !g_cmd_args.cmd_set_profile.isEmpty()) {
+             cmdsocket::cmd_cli(string("user ") + g_cmd_args.cmd_set_profile.toStdString(), true);
+-			// Do not exit now as this option may be used in conjuction
++			// Do not exit now as this option may be used in conjunction
+ 			// with --call or --cmd
+ 			must_exit = true;
+ 		}
+--- a/src/gui/mphoneform.cpp
++++ b/src/gui/mphoneform.cpp
+@@ -971,7 +971,7 @@ void MphoneForm::updateRegStatus()
+ 	toolTip.append("</b><br>");
+ 	toolTip.append("<table>");
+ 	
+-	// Count number of succesful and failed registrations.
++	// Count number of successful and failed registrations.
+ 	// Determine tool tip showing registration details for all users.
+ 	list<t_user *>user_list = phone->ref_users();
+ 	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
+--- a/src/gui/userprofileform.ui
++++ b/src/gui/userprofileform.ui
+@@ -1446,7 +1446,7 @@ If you disable this option, then the first codec from the active codecs that is
+                 <item row="1" column="0">
+                  <widget class="QCheckBox" name="spxDtxCheckBox">
+                   <property name="whatsThis">
+-                   <string>Discontinuous transmission is an addition to VAD/VBR operation, that allows to stop transmitting completely when the background noise is stationary.</string>
++                   <string>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</string>
+                   </property>
+                   <property name="text">
+                    <string>Discontinuous &amp;Transmission</string>
+@@ -3748,7 +3748,7 @@ The values of all SIP headers of the incoming SIP BYE request are passed in envi
+           <widget class="QLineEdit" name="incomingCallScriptLineEdit">
+            <property name="whatsThis">
+             <string>&lt;p&gt;
+-You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the ouput of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
++You can customize the way Twinkle handles incoming calls. Twinkle can call a script when a call comes in. Based on the output of the script Twinkle accepts, rejects or redirects the call. When accepting the call, the ring tone can be customized by the script as well. The script can be any executable program.
+ &lt;/p&gt;
+ &lt;p&gt;
+ &lt;b&gt;Note:&lt;/b&gt; Twinkle pauses while your script runs. It is recommended that your script does not take more than 200 ms. When you need more time, you can send the parameters followed by &lt;b&gt;end&lt;/b&gt; and keep on running. Twinkle will continue when it receives the &lt;b&gt;end&lt;/b&gt; parameter.
+--- a/src/parser/hdr_warning.h
++++ b/src/parser/hdr_warning.h
+@@ -43,14 +43,14 @@
+ #define WARNING_300	"Incompatible network protocol"
+ #define WARNING_301	"Incompatible network address formats"
+ #define WARNING_302	"Incompatible transport protocol"
+-#define WARNING_303	"Incompatible bandwith units"
++#define WARNING_303	"Incompatible bandwidth units"
+ #define WARNING_304	"Media type not available"
+ #define WARNING_305	"Incompatible media format"
+ #define WARNING_306	"Attribute not understood"
+ #define WARNING_307	"Session description parameter not understood"
+ #define WARNING_330	"Multicast not available"
+ #define WARNING_331	"Unicast not available"
+-#define WARNING_370	"Insufficient bandwith"
++#define WARNING_370	"Insufficient bandwidth"
+ #define WARNING_399	"Miscellanous warning"
+ 
+ using namespace std;
+--- a/src/parser/request.h
++++ b/src/parser/request.h
+@@ -64,7 +64,7 @@ private:
+ 	 * @param passwd [in] Authentication password.
+ 	 * @param nc [in] Nonce count
+ 	 * @param cnonce [in] Client nonce
+-	 * @param cr [out] Credentials on succesful return.
++	 * @param cr [out] Credentials on successful return.
+ 	 * @param fail_reason [out] Failure reason on failure return.
+ 	 * @return false, if authorization fails.
+ 	 * @return true, if authorization succeeded
+@@ -82,7 +82,7 @@ private:
+ 	 * @param nc [in] Nonce count
+ 	 * @param cnonce [in] Client nonce
+ 	 * @param qop [in] Quality of protection
+-	 * @param resp [out] Response on succesful return.
++	 * @param resp [out] Response on successful return.
+ 	 * @param fail_reason [out] Failure reason on failure return.
+ 	 * @return false, if authorization fails.
+ 	 * @return true, if authorization succeeded
+@@ -102,7 +102,7 @@ private:
+ 	 * @param nc [in] Nonce count
+ 	 * @param cnonce [in] Client nonce
+ 	 * @param qop [in] Quality of protection
+-	 * @param resp [out] Response on succesful return.
++	 * @param resp [out] Response on successful return.
+ 	 * @param fail_reason [out] Failure reason on failure return.
+ 	 * @return false, if authorization fails.
+ 	 * @return true, if authorization succeeded
+@@ -174,7 +174,7 @@ public:
+ 	 * @param passwd [in] Authentication password.
+ 	 * @param nc [in] Nonce count
+ 	 * @param cnonce [in] Client nonce
+-	 * @param cr [out] Credentials on succesful return.
++	 * @param cr [out] Credentials on successful return.
+ 	 * @param fail_reason [out] Failure reason on failure return.
+ 	 * @return false, if challenge is not supported.
+ 	 * @return true, if authorization succeeded
+@@ -191,7 +191,7 @@ public:
+ 	 * @param passwd [in] Authentication password.
+ 	 * @param nc [in] Nonce count
+ 	 * @param cnonce [in] Client nonce
+-	 * @param cr [out] Credentials on succesful return.
++	 * @param cr [out] Credentials on successful return.
+ 	 * @param fail_reason [out] Failure reason on failure return.
+ 	 * @return false, if challenge is not supported.
+ 	 * @return true, if authorization succeeded
+--- a/src/phone.h
++++ b/src/phone.h
+@@ -551,7 +551,7 @@ public:
+ 	 * @return false, if there is already a phone user with the same name
+ 	 * and domain. In this case dup_user is a pointer to the user config
+ 	 * of that user.
+-	 * @return true, if the phone user was added succesfully.
++	 * @return true, if the phone user was added successfully.
+ 	 * @note if there is already a user with exactly the same user config
+ 	 * then true is returned, but the user is not added again. The user
+ 	 * will be activated if it was inactive though.
+@@ -685,7 +685,7 @@ public:
+ 	
+ 	/**
+ 	 * Set the signal handler to handler for LinuxThreads.
+-	 * @return True if succesful, false otherwise.
++	 * @return True if successful, false otherwise.
+ 	 */
+ 	bool set_sighandler(void) const;
+ 	
+--- a/src/phone_user.h
++++ b/src/phone_user.h
+@@ -449,7 +449,7 @@ public:
+ 	 * @param r [inout] The request to be authorized.
+ 	 * @param resp [in] The response containing the challenge (401/407).
+ 	 * @param True if authorization succeeds, false otherwise.
+-	 * @post On succesful return the request r contains the correct authorization
++	 * @post On successful return the request r contains the correct authorization
+ 	 * header (based on 401/407 response).
+ 	 */
+ 	bool authorize(t_request *r, t_response *resp);
+--- a/src/presence/buddy.h
++++ b/src/presence/buddy.h
+@@ -188,7 +188,7 @@ public:
+ 	void stop_resubscribe_presence_timer(void);
+ 	
+ 	/**
+-	 * By calling this method, succesful STUN completion is signalled to
++	 * By calling this method, successful STUN completion is signalled to
+ 	 * the buddy. It will subscribe to presence if it was waiting for STUN.
+ 	 */
+ 	void stun_completed(void);
+@@ -302,7 +302,7 @@ public:
+ 	bool match_timer(t_subscribe_timer timer, t_object_id id_timer, t_buddy **buddy);
+ 	
+ 	/**
+-	 * By calling this method, succesful STUN completion is signalled to the buddy
++	 * By calling this method, successful STUN completion is signalled to the buddy
+ 	 * list. The buddy list will now start presence subscriptions that were waiting
+ 	 * for STUN to complete.
+ 	 */
+--- a/src/stun/stun.cxx
++++ b/src/stun/stun.cxx
+@@ -1896,7 +1896,7 @@ stunSendTest( StunSocket myFd, StunAddress4& dest,
+          discard=true;
+          break;
+       default:
+-         cerr << "Test " << testNum <<" is unkown\n";
++         cerr << "Test " << testNum <<" is unknown\n";
+          assert(0);
+    }
+ 	
+--- a/src/sub_refer.cpp
++++ b/src/sub_refer.cpp
+@@ -263,7 +263,7 @@ bool t_sub_refer::recv_subscribe(t_request *r, t_tuid tuid, t_tid tid) {
+ 	delete resp;
+ 
+ 	// RFC 3265 3.2.2
+-	// After a succesful SUBSCRIBE the notifier must immediately
++	// After a successful SUBSCRIBE the notifier must immediately
+ 	// send a NOTIFY.
+ 	// If no last response has been kept then this is probably a
+ 	// first SUBSCRIBE. The dialog has to send the initial NOTIFY.
+--- a/src/subscription.cpp
++++ b/src/subscription.cpp
+@@ -555,7 +555,7 @@ bool t_subscription::recv_subscribe_response(t_response *r, t_tuid tuid, t_tid t
+ 			
+ 			log_file->write_header("t_subscription::recv_subscribe_response", 
+ 				LOG_NORMAL, LOG_DEBUG);
+-			log_file->write_raw("Unsubcription succesful.\n");
++			log_file->write_raw("Unsubcription successful.\n");
+ 			log_event();
+ 			log_file->write_footer();
+ 		} else {
+--- a/src/subscription.h
++++ b/src/subscription.h
+@@ -39,7 +39,7 @@ enum t_subscription_state {
+ 	SS_NULL,		/**< Initial state */
+ 	SS_ESTABLISHED,		/**< Subscription is in place */
+ 	SS_UNSUBSCRIBING,	/**< A request to unsubscribe has been sent */
+-	SS_UNSUBSCRIBED,	/**< An outoging unsubscribe was succesful. Waiting for the final NOTIFY. */
++	SS_UNSUBSCRIBED,	/**< An outoging unsubscribe was successful. Waiting for the final NOTIFY. */
+ 	SS_TERMINATED,		/**< Subscription ended */
+ };
+ 
+--- a/src/sys_settings.h
++++ b/src/sys_settings.h
+@@ -499,7 +499,7 @@ public:
+ 	 * @param error_msg [out] Error message if the operation fails.
+ 	 * @param already_running [out] If the operation fails, this flag indicates Twinkle
+ 	 *        is already running.
+-	 * @return True if the file is locked succesfully.
++	 * @return True if the file is locked successfully.
+ 	 * @return False if the file could not be locked.
+ 	 */
+ 	bool create_lock_file(bool shared_lock, string &error_msg, bool &already_running);
+--- a/src/userintf.cpp
++++ b/src/userintf.cpp
+@@ -3063,7 +3063,7 @@ void t_userintf::cb_refer_result_success(int line) {
+ 	if (line >= NUM_USER_LINES) return;
+ 	
+ 	cout << endl;
+-	cout << "Line " << line + 1 << ": call succesfully referred.\n";
++	cout << "Line " << line + 1 << ": call successfully referred.\n";
+ 	cout << endl;
+ 	cout.flush();
+ }
+--- a/src/utils/record_file.h
++++ b/src/utils/record_file.h
+@@ -49,7 +49,7 @@ public:
+ 	/**
+ 	 * Create a record to write to a file.
+ 	 * @param v [out] Vector of fields of record.
+-	 * @return true, if record is succesfully created.
++	 * @return true, if record is successfully created.
+ 	 * @return false, otherwise.
+ 	 */
+ 	virtual bool create_file_record(vector<string> &v) const = 0;
+@@ -57,7 +57,7 @@ public:
+ 	/**
+ 	 * Populate from a file record.
+ 	 * @param v [in] Vector containing the fields of the record.
+-	 * @return true, if record is succesfully populated.
++	 * @return true, if record is successfully populated.
+ 	 * @return false, if file record could not be parsed.
+ 	 */
+ 	virtual bool populate_from_file_record(const vector<string> &v) = 0;	
+@@ -132,7 +132,7 @@ public:
+ 	/** 
+ 	 * Load records from file. 
+ 	 * @param error_msg [out] Error message on failure return.
+-	 * @return true, if file was read succesfully.
++	 * @return true, if file was read successfully.
+ 	 * @return false, if it fails. error_msg is an error to be given to
+ 	 * the user.
+ 	 */
+@@ -141,7 +141,7 @@ public:
+ 	/** 
+ 	 * Save records to file.
+ 	 * @param error_msg [out] Error message on failure return.
+-	 * @return true, if file was saved succesfully.
++	 * @return true, if file was saved successfully.
+ 	 * @return false, if it fails. error_msg is an error to be given to
+ 	 * the user.
+ 	 */
