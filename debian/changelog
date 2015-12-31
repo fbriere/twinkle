@@ -1,4 +1,4 @@
-twinkle (1:1.9.0+dfsg-2) UNRELEASED; urgency=medium
+twinkle (1:1.9.0+dfsg-2) unstable; urgency=medium
 
   * Disable ZRTP support to allow migration to testing.
     - libzrtpcpp links against OpenSSL in violation of the GPL (see: #797554).
