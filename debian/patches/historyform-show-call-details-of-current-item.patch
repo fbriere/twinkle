@@ -1,0 +1,104 @@
+Description: historyform: Show call details of current item
+ This patch backports commit f3926963ea687c6dbac3d6e3fdb832f81bddf903.
+Author: Peter Colberg <peter@colberg.org>
+Forwarded: not-needed
+Last-Update: 2015-12-30
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/gui/historyform.cpp
++++ b/src/gui/historyform.cpp
+@@ -84,6 +84,8 @@ void HistoryForm::init()
+ #else
+     historyListView->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+ #endif
++
++    connect(historyListView->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), SLOT(showCallDetails(QModelIndex)));
+ 	
+ 	inCheckBox->setChecked(true);
+ 	outCheckBox->setChecked(true);
+@@ -236,9 +238,7 @@ void HistoryForm::loadHistory()
+ 	// Sort entries using currently selected sort column and order.
+ 	historyListView->sortByColumn(historyListView->horizontalHeader()->sortIndicatorSection(), historyListView->horizontalHeader()->sortIndicatorOrder());
+ 	// Make the first entry the selected entry.
+-    historyListView->selectRow(0);
+-
+-    //	showCallDetails(first);
++	if (numberOfCalls) historyListView->selectRow(0);
+ }
+ 
+ // Update history when triggered by a call back function on the user
+@@ -279,13 +279,14 @@ void HistoryForm::closeEvent( QCloseEvent *e )
+ 	QDialog::closeEvent(e);
+ }
+ 
+-void HistoryForm::showCallDetails(QModelIndex index)
++void HistoryForm::showCallDetails(const QModelIndex &index)
+ {
+-	QString s;
++	cdrTextEdit->clear();
++
++	if (!index.isValid()) return;
+ 	
+     int x = m_model->data(index, Qt::UserRole).toInt();
+     const t_call_record& cr = m_history[x];
+-	cdrTextEdit->clear();
+ 	
+ 	t_user *user_config = phone->ref_user_profile(cr.user_profile);
+ 	// If the user profile is not active, then use the
+@@ -294,7 +295,7 @@ void HistoryForm::showCallDetails(QModelIndex index)
+ 		user_config = phone->ref_users().front();
+ 	}
+ 	
+-	s = "<table>";
++	QString s = "<table>";
+ 	
+ 	// Left column: header names
+ 	s += "<tr><td><b>";
+--- a/src/gui/historyform.h
++++ b/src/gui/historyform.h
+@@ -20,7 +20,6 @@ public slots:
+ 	virtual void update();
+ 	virtual void show();
+ 	virtual void closeEvent( QCloseEvent * e );
+-    virtual void showCallDetails( QModelIndex item );
+     virtual void popupMenu( QPoint pos );
+     virtual void call( QModelIndex index );
+ 	virtual void call( void );
+@@ -45,6 +44,8 @@ private:
+ 	void init();
+ 	void destroy();
+ 
++private slots:
++	void showCallDetails(const QModelIndex &);
+ };
+ 
+ 
+--- a/src/gui/historyform.ui
++++ b/src/gui/historyform.ui
+@@ -445,26 +445,9 @@
+     </hint>
+    </hints>
+   </connection>
+-  <connection>
+-   <sender>historyListView</sender>
+-   <signal>activated(QModelIndex)</signal>
+-   <receiver>HistoryForm</receiver>
+-   <slot>showCallDetails(QModelIndex)</slot>
+-   <hints>
+-    <hint type="sourcelabel">
+-     <x>743</x>
+-     <y>238</y>
+-    </hint>
+-    <hint type="destinationlabel">
+-     <x>658</x>
+-     <y>300</y>
+-    </hint>
+-   </hints>
+-  </connection>
+  </connections>
+  <slots>
+   <slot>call(QModelIndex)</slot>
+   <slot>popupMenu(QPoint)</slot>
+-  <slot>showCallDetails(QModelIndex)</slot>
+  </slots>
+ </ui>

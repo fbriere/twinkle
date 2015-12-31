@@ -1,0 +1,17 @@
+Description: Fix incoming call popup repositioning
+ This patch backports commit 4b58b18865122c87ce3f547a0c82b1188b3773a9.
+Author: Peter Colberg <peter@colberg.org>
+Forwarded: not-needed
+Last-Update: 2015-12-30
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/gui/incoming_call_popup.cpp
++++ b/src/gui/incoming_call_popup.cpp
+@@ -13,6 +13,7 @@ IncomingCallPopup::IncomingCallPopup(QObject *parent) : QObject(parent)
+ 	// Qt5 QQuickView: setFlags()
+ 	m_view->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::ToolTip);
+ 
++	m_view->rootContext()->setContextProperty("viewerWidget", m_view);
+ 	m_view->setSource(QUrl("qrc:/qml/incoming_call.qml"));
+ 
+     // Place into the middle of the screen

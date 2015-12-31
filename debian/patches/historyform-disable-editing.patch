@@ -1,0 +1,19 @@
+Description: historyform: Disable editing
+ This patch backports commit 1943a35fbcab844d469e8129f78bf7ebe504aa42.
+Author: Peter Colberg <peter@colberg.org>
+Forwarded: not-needed
+Last-Update: 2015-12-30
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/gui/historyform.ui
++++ b/src/gui/historyform.ui
+@@ -25,6 +25,9 @@
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
++     <property name="editTriggers">
++      <enum>QAbstractItemView::NoEditTriggers</enum>
++     </property>
+      <property name="sortingEnabled">
+       <bool>true</bool>
+      </property>

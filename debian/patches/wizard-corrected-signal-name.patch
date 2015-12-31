@@ -1,0 +1,18 @@
+Description: wizard: corrected signal name
+ This patch backports commit 681131451b006db5ddb066e128d2d9a69153dcec.
+Author: Peter Colberg <peter@colberg.org>
+Forwarded: not-needed
+Last-Update: 2015-12-30
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/gui/wizardform.ui
++++ b/src/gui/wizardform.ui
+@@ -317,7 +317,7 @@ This field is mandatory.</string>
+     </connection>
+     <connection>
+       <sender>authNameLineEdit</sender>
+-      <signal>lostFocus()</signal>
++      <signal>editingFinished()</signal>
+       <receiver>WizardForm</receiver>
+       <slot>disableSuggestAuthName()</slot>
+     </connection>
