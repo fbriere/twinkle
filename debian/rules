@@ -6,6 +6,8 @@ CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ZRTP=OFF -DWITH_SPEEX=ON -DWITH_GSM=ON
 # Enable ALSA support on Linux only
 ifeq (,$(filter $(DEB_HOST_ARCH),kfreebsd-amd64 kfreebsd-i386 hurd-i386))
 CONFIGURE_FLAGS += -DWITH_ALSA=ON
+else
+CONFIGURE_FLAGS += -DWITH_ALSA=OFF
 endif
 
 # Avoid useless library dependencies
