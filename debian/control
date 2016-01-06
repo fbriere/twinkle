@@ -26,8 +26,8 @@ Build-Depends: bison,
                qttools5-dev-tools
 Standards-Version: 3.9.6
 Homepage: http://twinkle.dolezel.info/
-Vcs-Git: https://anonscm.debian.org/git/users/pc-guest/twinkle.git
-Vcs-Browser: https://anonscm.debian.org/cgit/users/pc-guest/twinkle.git
+Vcs-Git: https://anonscm.debian.org/git/pkg-voip/twinkle.git
+Vcs-Browser: https://anonscm.debian.org/cgit/pkg-voip/twinkle.git
 
 Package: twinkle
 Architecture: any
