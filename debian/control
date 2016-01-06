@@ -2,6 +2,7 @@ Source: twinkle
 Section: comm
 Priority: optional
 Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
+Uploaders: Peter Colberg <peter@colberg.org>
 Build-Depends: bison,
                cmake,
                debhelper (>= 9),
