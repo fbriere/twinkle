@@ -4,6 +4,7 @@ twinkle (1:1.9.0+dfsg-3) UNRELEASED; urgency=medium
   * Set Maintainer field to Debian VoIP Team.
   * Add myself to Uploaders field.
   * Update Vcs-Git and Vcs-Browser fields.
+  * Fix conflicting definition of socklen_t on GNU Hurd.
 
  -- Peter Colberg <peter@colberg.org>  Tue, 05 Jan 2016 19:48:23 -0500
 

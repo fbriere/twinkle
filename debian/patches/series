@@ -12,3 +12,4 @@ historyform-resize-columns-to-contents.patch
 historyform-clear-rows-before-loading-history.patch
 historyform-disable-editing.patch
 historyform-show-call-details-of-current-item.patch
+fix-conflicting-definition-of-socklen_t-on-gnu-hurd.patch
