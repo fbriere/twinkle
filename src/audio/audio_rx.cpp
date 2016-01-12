@@ -711,9 +711,9 @@ void t_audio_rx::join_3way(bool main_rx, t_audio_rx *peer_rx) {
 	// incompatible payload sizes. Eg. 1 far-end may send 20ms paylaods,
 	// while the other sends 30ms payloads. The outgoing RTP stream might
 	// even have another payload size.
-	// When the data has been captured from the soundcard, it will be
+	// When the data has been captured from the sound card, it will be
 	// checked if there is enough data available in the media buffers, i.e.
-	// the same amount of data as captured from the soundcard for mixing.
+	// the same amount of data as captured from the sound card for mixing.
 	// If there is it will be retrieved and mixed.
 	// If there isn't the captured sound will simply be sent on its own
 	// to the far-end. Meanwhile the buffer will fill up with data such

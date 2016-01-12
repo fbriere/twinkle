@@ -18,7 +18,7 @@
 #ifndef _AUDIO_RX_H
 #define _AUDIO_RX_H
 
-// Receive audio from the soundcard and send it to the RTP thread.
+// Receive audio from the sound card and send it to the RTP thread.
 
 #include <assert.h>
 #include <queue>
@@ -65,7 +65,7 @@ private:
 
 	// Media buffer to buffer media from the peer audio trasmitter in a
 	// 3-way call. This media stream will be mixed with the
-	// audio captured from the soundcard.
+	// audio captured from the sound card.
 	t_media_buffer	*media_3way_peer_tx;
 
 	// Media captured by the peer audio receiver in a 3-way conference
@@ -81,7 +81,7 @@ private:
 	bool 		is_3way;
 
 	// Indicates if this is this receiver has to capture sound from the
-	// soundcard. In a 3-way call, one receiver captures sound, while the
+	// sound card. In a 3-way call, one receiver captures sound, while the
 	// other receiver simply takes the sound from the main receiver.
 	bool		is_main_rx_3way;
 
@@ -139,11 +139,11 @@ private:
 	bool speex_dsp_vad;
 #endif
 
-	// Get sound samples for 1 RTP packet from the soundcard.
+	// Get sound samples for 1 RTP packet from the sound card.
 	// Returns false if the main loop has to start another cycle to get
 	// samples (e.g. no samples available yet).
 	// If not enough samples are available yet, then a 1 ms sleep will be taken.
-	// Also returns false if capturing samples from the soundcard failed.
+	// Also returns false if capturing samples from the sound card failed.
 	// Returns true if sounds samples are received. The samples are stored
 	// in the payload buffer in the proper encoding.
 	// The number bytes of the sound payload is returned in sound_payload_size
@@ -188,7 +188,7 @@ public:
 
 	// Join a 3-way conference call.
 	// main_rx indicates if this receiver must be the main receiver capturing
-	// the sound from the soundcard.
+	// the sound from the sound card.
 	// The peer_rx is the peer receiver (may be NULL(
 	void join_3way(bool main_rx, t_audio_rx *peer_rx);
 

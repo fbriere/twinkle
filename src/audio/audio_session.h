@@ -48,7 +48,7 @@ private:
 
 	// This flag indicates if the created audio session is valid.
 	// It might be invalid because, the RTP session could not be created
-	// or the soundcard could not be opened.
+	// or the sound card could not be opened.
 	bool		valid;
 
 	// file descriptor audio device
@@ -137,7 +137,7 @@ public:
 	// Check if audio session is valid
 	bool is_valid(void) const;
 
-	// Get pointer for soundcard I/O object
+	// Get pointer for sound card I/O object
 	t_audio_io* get_dsp_speaker(void) const;
 	t_audio_io* get_dsp_mic(void) const;
 	

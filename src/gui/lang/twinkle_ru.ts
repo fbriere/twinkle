@@ -3036,7 +3036,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         <translation>256</translation>
     </message>
     <message>
-        <source>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
+        <source>The ALSA play period size influences the real time behaviour of your sound card for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
         <translation type="unfinished"/>
     </message>
     <message>
@@ -3048,11 +3048,11 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         <translation>ALSA размер периода &amp;записи:</translation>
     </message>
     <message>
-        <source>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</source>
+        <source>The OSS fragment size influences the real time behaviour of your sound card. If your sound frequently drops while using OSS, you might try a different value here.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <source>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
+        <source>The ALSA capture period size influences the real time behaviour of your sound card for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
         <translation type="unfinished"/>
     </message>
     <message>

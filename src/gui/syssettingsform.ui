@@ -334,7 +334,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
             <item row="1" column="1">
              <widget class="QComboBox" name="alsaPlayPeriodComboBox">
               <property name="whatsThis">
-               <string>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</string>
+               <string>The ALSA play period size influences the real time behaviour of your sound card for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</string>
               </property>
               <item>
                <property name="text">
@@ -402,7 +402,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
             <item row="0" column="1">
              <widget class="QComboBox" name="ossFragmentComboBox">
               <property name="whatsThis">
-               <string>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</string>
+               <string>The OSS fragment size influences the real time behaviour of your sound card. If your sound frequently drops while using OSS, you might try a different value here.</string>
               </property>
               <item>
                <property name="text">
@@ -444,7 +444,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
             <item row="2" column="1">
              <widget class="QComboBox" name="alsaCapturePeriodComboBox">
               <property name="whatsThis">
-               <string>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</string>
+               <string>The ALSA capture period size influences the real time behaviour of your sound card for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</string>
               </property>
               <item>
                <property name="text">

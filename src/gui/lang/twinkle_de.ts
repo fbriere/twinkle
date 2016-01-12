@@ -3240,7 +3240,7 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
         <translation>256</translation>
     </message>
     <message>
-        <source>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
+        <source>The ALSA play period size influences the real time behaviour of your sound card for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
         <translation>Die play period size bestimmt  vereinfacht gesagt die Grösse der Pakete, in denen die Soundkarte die Daten geliefert bekommt. Viele kleine Pakete belasten den Prozessor mehr, aber der Verlust eines Pakets stört dann weniger. Bei Problemen mit Aussetzern oder Rattern im Ton sollten Sie hier mit anderen Werten ein wenig experimentieren.</translation>
     </message>
     <message>
@@ -3252,11 +3252,11 @@ Im Normalfall führt das Aktivieren eher zu einer kaum bemerkbaren Verschlechter
         <translation></translation>
     </message>
     <message>
-        <source>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</source>
+        <source>The OSS fragment size influences the real time behaviour of your sound card. If your sound frequently drops while using OSS, you might try a different value here.</source>
         <translation>Die OSS period size bestimmt  vereinfacht gesagt die Grösse der Pakete, in denen die Soundkarte die Daten geliefert bekommt/liefert. Viele kleine Pakete belasten den Prozessor mehr, aber der Verlust eines Pakets stört dann weniger. Bei Problemen mit Aussetzern oder Rattern im Ton sollten Sie hier mit anderen Werten ein wenig experimentieren.</translation>
     </message>
     <message>
-        <source>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
+        <source>The ALSA capture period size influences the real time behaviour of your sound card for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
         <translation>Die capture period size bestimmt  vereinfacht gesagt die Grösse der Pakete, in denen die Soundkarte die Daten des Mikrofons liefert. Viele kleine Pakete belasten den Prozessor mehr, aber der Verlust eines Pakets stört dann weniger. Bei Klagen der Gegenstelle über Aussetzer oder Rattern im Ton sollten Sie hier mit anderen Werten ein wenig experimentieren.</translation>
     </message>
     <message>

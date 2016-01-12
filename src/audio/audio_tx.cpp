@@ -338,7 +338,7 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 		return;
 	}
 
-	// If buffer on soundcard is empty, then the jitter buffer needs
+	// If buffer on sound card is empty, then the jitter buffer needs
 	// to be refilled. This should only occur when no RTP packets
 	// have been received for a while (silence suppression or packet loss)
 	/*
@@ -364,10 +364,10 @@ void t_audio_tx::play_pcm(unsigned char *buf, unsigned short len, bool only_3rd_
 	// This can only happen if the thread did not get
 	// processing time for a while and RTP packets start to
 	// pile up.
-	// Or if a soundcard plays out the samples at just less then
+	// Or if a sound card plays out the samples at just less then
 	// the requested sample rate.
 	/* Not needed anymore, the ::run loop already discards incoming RTP packets
-	   with a late timestamp. This seems to solve the slow soundcard problem
+	   with a late timestamp. This seems to solve the slow sound card problem
 	   better. The solution below caused annoying ticks in the playout.
 	   
 	if (soundcard_buf_size - bufferspace > JITTER_BUF_SIZE + len) {
@@ -741,7 +741,7 @@ void t_audio_tx::run(void) {
 		}
 		
 		// Discard packet if we are lacking behind. This happens if the
-		// soundcard plays at a rate less than the requested sample rate.
+		// sound card plays at a rate less than the requested sample rate.
 		if (rtp_session->isWaiting(&(adu->getSource()))) {
 
 			uint32 last_ts = rtp_session->getLastTimestamp(&(adu->getSource()));

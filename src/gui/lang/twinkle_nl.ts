@@ -3297,7 +3297,7 @@ Het algoritme om ruis te verminderen is erg simplistisch. Geluid wordt gedigital
         <translation>256</translation>
     </message>
     <message>
-        <source>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
+        <source>The ALSA play period size influences the real time behaviour of your sound card for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
         <translation>De ALSA afspeel periode grootte is van invloed op het real time gedrag van uw geluidskaart bij het afspelen van geluid. Als het geluid hapert bij het gebruik van ALSA, dan kunt u een andere waarde proberen.</translation>
     </message>
     <message>
@@ -3309,11 +3309,11 @@ Het algoritme om ruis te verminderen is erg simplistisch. Geluid wordt gedigital
         <translation>&amp;ALSA opneem-periode grootte:</translation>
     </message>
     <message>
-        <source>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</source>
+        <source>The OSS fragment size influences the real time behaviour of your sound card. If your sound frequently drops while using OSS, you might try a different value here.</source>
         <translation>De OSS fragment grootte is van invloed op het real time gedrag van uw geluidskaart. Als het geluid hapert bij het gebruik van OSS, dan kunt u een andere waarde proberen.</translation>
     </message>
     <message>
-        <source>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
+        <source>The ALSA capture period size influences the real time behaviour of your sound card for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
         <translation>De ALSA opneem-periode grootte is van invloed op het real time gedrag van uw geluidskaart bij het opnemen van geluid. Als het geluid aan de andere kant van de lijn hapert bij het gebruik van ALSA, dan kunt u een andere waarde proberen.</translation>
     </message>
     <message>

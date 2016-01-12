@@ -68,10 +68,10 @@ enum t_audio_codec {
 // If the data is too old it will not send it out. Data can be old
 // for several reasons:
 // 
-// 1) The thread reading the soundcard has been paused for a while
+// 1) The thread reading the sound card has been paused for a while
 // 2) The audio card buffers sound before releasing it.
 //
-// Especially the latter seems to happen on some soundcards. Data
+// Especially the latter seems to happen on some sound cards. Data
 // not older than defined delay are still allowed to go out. It's up
 // to the receiving and to deal with the jitter this may cause.
 #define MAX_OUT_AUDIO_DELAY_MS	160

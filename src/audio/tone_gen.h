@@ -38,7 +38,7 @@ private:
 	SNDFILE		*wav_file;	// SNDFILE pointer to wav file
 	SF_INFO 	wav_info;	// Information about format of the wav file
 	t_audio_device	dev_tone;	// device to play tone
-	t_audio_io*	aio;		// soundcard
+	t_audio_io*	aio;		// sound card
 	bool		valid;		// wav file is in a valid format
 	bool		stop_playing;	// indicates if playing should stop
 	t_thread	*thr_play;	// playing thread

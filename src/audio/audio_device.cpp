@@ -512,7 +512,7 @@ bool t_alsa_io::open(const string& device, bool playback, bool capture, bool blo
 	// For some reason on my first sound card that supports the exact rate,
 	// I get mono sound when the -1 parameter is specified.
 	if ((err = snd_pcm_hw_params_set_rate (pcm_ptr, hw_params, sample_rate, 0)) < 0) {
-		msg = "Cannot set soundcard to exact sample rate of ";
+		msg = "Cannot set sound card to exact sample rate of ";
 		msg += int2str(sample_rate);
 		msg += ".\nThe card will choose a lower approximate rate.";
 		log_file->write_report(msg, "t_alsa_io::open", LOG_NORMAL, LOG_WARNING);
@@ -845,7 +845,7 @@ int t_alsa_io::write(const unsigned char* buf, int len) {
 }
 
 
-// This function fills the specified list with ALSA hardware soundcards found on the system.
+// This function fills the specified list with ALSA hardware sound cards found on the system.
 // It uses plughw:xx instead of hw:xx for specifiers, because hw:xx are not practical to
 // use (e.g. they require a resampler/channel mixer in the application).
 // playback indicates if a list with playback or capture devices should be created.

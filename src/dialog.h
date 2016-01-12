@@ -650,7 +650,7 @@ public:
 	 * Hold call.
 	 * If rtp_only is false, then a re-INVITE will be sent.
 	 * @param rtponly Indicates if only the RTP streams should be stopped and
-	 * the soundcard freed without any SIP signaling.
+	 * the sound card freed without any SIP signaling.
 	 */
 	void hold(bool rtponly = false);
 	

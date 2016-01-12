@@ -1871,7 +1871,7 @@ void t_dialog::state_w4re_invite_resp(t_response *r, t_tuid tuid, t_tid tid) {
 		switch(reinvite_purpose) {
 		case REINVITE_HOLD:
 			// A call hold may not fail for the user as
-			// this cause problems with soundcard access and
+			// this cause problems with sound card access and
 			// showing line status in the GUI. Even though re-INVITE
 			// failed, the RTP still stopped. So simply indicated
 			// that the hold failed, such that a subsequent retrieve
@@ -2027,7 +2027,7 @@ void t_dialog::process_1xx_2xx_invite_resp(t_response *r) {
 							"t_dialog::process_1xx_2xx_invite_resp");
 					}
 		
-					// Stop locally played tones to free the soundcard
+					// Stop locally played tones to free the sound card
 					// for the voice stream
 					ui->cb_stop_call_notification(line->get_line_number());
 		

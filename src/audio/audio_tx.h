@@ -18,7 +18,7 @@
 #ifndef _AUDIO_TX_H
 #define _AUDIO_TX_H
 
-// Receive RTP and send audio to soundcard
+// Receive RTP and send audio to sound card
 
 #include <map>
 #include <string>
@@ -65,7 +65,7 @@ private:
 
 	// Indicates if this transmitter is the mixer in a 3-way conference.
 	// The mixer will mix this audio stream with the audio from the other
-	// party and send it to the soundcard.
+	// party and send it to the sound card.
 	// If the transmitter is part of a 3-way conference, but not the
 	// mixer, then it simply has to send its audio payload to the mixer.
 	bool		is_3way_mixer;
@@ -110,7 +110,7 @@ private:
 	// jitter_buf_len indicates the number of bytes in the jitter buffer.
 	// At the start of playing the samples are stored in the jitter buffer.
 	// Once the buffer is full, all samples are copied to the memory of
-	// the soundcard. From that point the soundcard itself is the jitter
+	// the sound card. From that point the sound card itself is the jitter
 	// buffer.
 	unsigned char	*jitter_buf;
 	unsigned short	jitter_buf_len;

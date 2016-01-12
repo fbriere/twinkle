@@ -3221,7 +3221,7 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
         <translation></translation>
     </message>
     <message>
-        <source>The ALSA play period size influences the real time behaviour of your soundcard for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
+        <source>The ALSA play period size influences the real time behaviour of your sound card for playing sound. If your sound frequently drops while using ALSA, you might try a different value here.</source>
         <translation>Nastavení přehrávací periody ALSA ovlivňuje zpoždění zvuku na zvukové kartě. Při problémech s vypadáváním nebo přeskakováním zvuku zkuste jinou hodnotu.</translation>
     </message>
     <message>
@@ -3233,11 +3233,11 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
         <translation>Velikost &amp;ALSA periody nahrávání:</translation>
     </message>
     <message>
-        <source>The OSS fragment size influences the real time behaviour of your soundcard. If your sound frequently drops while using OSS, you might try a different value here.</source>
+        <source>The OSS fragment size influences the real time behaviour of your sound card. If your sound frequently drops while using OSS, you might try a different value here.</source>
         <translation>Velikost fragmentu OSS ovlivňuje zpoždění zvuku na zvukové kartě. Při problémech s vypadáváním nebo přeskakováním zvuku zkuste jinou hodnotu.</translation>
     </message>
     <message>
-        <source>The ALSA capture period size influences the real time behaviour of your soundcard for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
+        <source>The ALSA capture period size influences the real time behaviour of your sound card for capturing sound. If the other side of your call complains about frequently dropping sound, you might try a different value here.</source>
         <translation>Velikost periody nahrávání ALSA ovlivňuje zpoždění zvuku. Pokud si protistrana stěžuje na časté výpadky zvuku, zkuste použít jinou hodnotu.</translation>
     </message>
     <message>
