@@ -1114,7 +1114,7 @@ void MphoneForm::updateMwi()
 				toolTip.append(tr("Unknown"));
 			}
 		} else {
-			if ((*i)->get_mwi_sollicited()) {
+			if ((*i)->get_mwi_solicited()) {
 				if (mwi.get_status() == t_mwi::MWI_FAILED) {
 					toolTip.append(tr("Failure"));
 					mwi_failure = true;
@@ -1122,7 +1122,7 @@ void MphoneForm::updateMwi()
 					toolTip.append(tr("Unknown"));
 				}
 			} else {
-				// Unsollicited MWI				
+				// Unsolicited MWI				
 				if (mwi.get_status() == t_mwi::MWI_KNOWN) {
 					bool new_msgs;
 					QString status = getMWIStatus(mwi, new_msgs);

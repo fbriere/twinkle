@@ -5615,11 +5615,11 @@ TWINKLE_USER_PROFILE obsahuje jméno uživatelského profilu, pro který je př�
         <translation>SIP adresa nebo telefonní číslo pro přístup k vaší hlasové schránce.</translation>
     </message>
     <message>
-        <source>Unsollicited</source>
+        <source>Unsolicited</source>
         <translation>Nevyžádané</translation>
     </message>
     <message>
-        <source>Sollicited</source>
+        <source>Solicited</source>
         <translation>Vyžádané</translation>
     </message>
     <message>
@@ -5627,13 +5627,13 @@ TWINKLE_USER_PROFILE obsahuje jméno uživatelského profilu, pro který je př�
 &lt;p&gt;
 If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk provides unsollicited message waiting indication.
+Asterisk provides unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication as specified by RFC 3842.
+Solicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
         <translation>&lt;H2&gt;Typ indikace čekajících zpráv&lt;/H2&gt;
 &lt;p&gt;
@@ -5653,7 +5653,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
         <translation>Typ &amp;MWI:</translation>
     </message>
     <message>
-        <source>Sollicited MWI</source>
+        <source>Solicited MWI</source>
         <translation>Vyžádané MWI</translation>
     </message>
     <message>
@@ -5669,7 +5669,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
         <translation>Jméno hostitele, doménové jméno nebo IP adresa serveru vaší hlasové schránky.</translation>
     </message>
     <message>
-        <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
         <translation>Dle specifikace MWI se koncové zařízení hlásí na serveru k příjmu zpráv na určitou dobu a před vypršením této doby by se přihlášení mělo znovu obnovit.</translation>
     </message>
     <message>

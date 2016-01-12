@@ -5272,11 +5272,11 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unsollicited</source>
+        <source>Unsolicited</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sollicited</source>
+        <source>Solicited</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5284,13 +5284,13 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
 &lt;p&gt;
 If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk provides unsollicited message waiting indication.
+Asterisk provides unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication as specified by RFC 3842.
+Solicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5299,7 +5299,7 @@ Sollicited message waiting indication as specified by RFC 3842.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sollicited MWI</source>
+        <source>Solicited MWI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5315,7 +5315,7 @@ Sollicited message waiting indication as specified by RFC 3842.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -5660,11 +5660,11 @@ TWINKLE_USER_PROFILE enthält Name des Benutzerprofils, für das der Ruf einging
         <translation>Die SIP-Adresse bzw. Telefonnr., unter der Ihr vom Provider zur Verfügung gestellter Anrufbeantworter abrufbar ist. Oft gibt der Provider zwei Nummern an, eine zum Abruf über beliebige Telefone (zB. &quot;0049 211 58000111&quot;) und eine zum SIP-Abruf (zB. &quot;50000&quot;) - dann sollte hier die SIP-Nummer angegeben werden.</translation>
     </message>
     <message>
-        <source>Unsollicited</source>
+        <source>Unsolicited</source>
         <translation>Asterisk-Modus</translation>
     </message>
     <message>
-        <source>Sollicited</source>
+        <source>Solicited</source>
         <translation>RFC 3842</translation>
     </message>
     <message>
@@ -5672,13 +5672,13 @@ TWINKLE_USER_PROFILE enthält Name des Benutzerprofils, für das der Ruf einging
 &lt;p&gt;
 If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk provides unsollicited message waiting indication.
+Asterisk provides unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication as specified by RFC 3842.
+Solicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
         <translation>&lt;H2&gt;Message waiting indication Typ&lt;/H2&gt;
 &lt;p&gt;
@@ -5686,11 +5686,11 @@ Wenn Ihr SIP-Provider &quot;message waiting indication&quot; (MWI, Benachrichtig
 &lt;/p&gt;
 &lt;H3&gt;Asterisk&lt;/H3&gt;
 &lt;p&gt;
-Asterisk unterstützt im allg. &quot;unsollicited message waiting indication&quot;.
+Asterisk unterstützt im allg. &quot;unsolicited message waiting indication&quot;.
 &lt;/p&gt;
 &lt;H3&gt;RFC 3842&lt;/H3&gt;
 &lt;p&gt;
-&quot;Sollicited message waiting indication&quot; entsprechend RFC 3842 Spezifikation (z.B. für &quot;sipgate.de&quot;).
+&quot;Solicited message waiting indication&quot; entsprechend RFC 3842 Spezifikation (z.B. für &quot;sipgate.de&quot;).
 &lt;/p&gt;</translation>
     </message>
     <message>
@@ -5698,7 +5698,7 @@ Asterisk unterstützt im allg. &quot;unsollicited message waiting indication&quo
         <translation>&amp;MWI Typ:</translation>
     </message>
     <message>
-        <source>Sollicited MWI</source>
+        <source>Solicited MWI</source>
         <translation>RFC 3842</translation>
     </message>
     <message>
@@ -5714,7 +5714,7 @@ Asterisk unterstützt im allg. &quot;unsollicited message waiting indication&quo
         <translation>Der Domainname, IP-Adresse oder Hostname des Voice-Mailbox-Servers. Versuchen Sie die Voreinstellung (=Domain Ihres Benutzernamens), falls Ihr Provider nichts anderes mitgeteilt hat.</translation>
     </message>
     <message>
-        <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
         <translation>Bei RFC 3842 MWI meldet sich das Endgerät (Twinkle) für eine gewisse Dauer beim Server zum Empfang von Benachrichtigungen an (SUBSCRIBE), und sollte diese Anmeldung vor Ablauf erneuern. Ähnlich der &quot;expiry time&quot; / &quot;haltbar&quot; für REGISTER, siehe SIP-Server.</translation>
     </message>
     <message>

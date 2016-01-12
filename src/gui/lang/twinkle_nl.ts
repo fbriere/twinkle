@@ -5699,37 +5699,37 @@ TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. &lt;b&gt;SIPREQUEST_URI&lt;/b
         <translation>SIP adres of telefoonnummer van uw voice mail.</translation>
     </message>
     <message>
-        <source>Unsollicited</source>
-        <translation>Unsollicited</translation>
+        <source>Unsolicited</source>
+        <translation>Unsolicited</translation>
     </message>
     <message>
-        <source>Sollicited</source>
-        <translation>Sollicited</translation>
+        <source>Solicited</source>
+        <translation>Solicited</translation>
     </message>
     <message>
         <source>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
 &lt;p&gt;
 If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk provides unsollicited message waiting indication.
+Asterisk provides unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication as specified by RFC 3842.
+Solicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
         <translation>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
 &lt;p&gt;
 Als uw provider de dienst aanbiedt waarmee u uw voice mail status kunt zien, dan kan Twinkle laten zien hoeveel nieuwe voice mail berichten er op u wachten. Er zijn 2 methoden waarop deze dienst kan worden aangeboden.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk biedt unsollicited message waiting indication.
+Asterisk biedt unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
+Solicited message waiting indication zoals gespecificeerd in RFC 3842.
 &lt;/p&gt;</translation>
     </message>
     <message>
@@ -5737,8 +5737,8 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
         <translation>&amp;MWI type:</translation>
     </message>
     <message>
-        <source>Sollicited MWI</source>
-        <translation>Sollicited MWI</translation>
+        <source>Solicited MWI</source>
+        <translation>Solicited MWI</translation>
     </message>
     <message>
         <source>Subscription &amp;duration:</source>
@@ -5753,7 +5753,7 @@ Sollicited message waiting indication zoals gespecificeerd in RFC 3842.
         <translation>De host naam, domeinnaam of IP adres van uw voice mailbox server.</translation>
     </message>
     <message>
-        <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
         <translation>Twinkle meldt zich voor een bepaalde periode aan bij de voice mailbox server. Net voordat deze periode verstrijkt, zal Twinkle zich opnieuw aanmelden.</translation>
     </message>
     <message>

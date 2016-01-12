@@ -5657,11 +5657,11 @@ TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. la demande URI d&apos;une INV
         <translation>L&apos;adresse SIP ou le numéro de téléphone pour accéder à votre boît vocale.</translation>
     </message>
     <message>
-        <source>Unsollicited</source>
+        <source>Unsolicited</source>
         <translation>Non désiré</translation>
     </message>
     <message>
-        <source>Sollicited</source>
+        <source>Solicited</source>
         <translation>RFC 3842</translation>
     </message>
     <message>
@@ -5669,13 +5669,13 @@ TWINKLE_TRIGGER=in_call. SIPREQUEST_METHOD=INVITE. la demande URI d&apos;une INV
 &lt;p&gt;
 If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
 &lt;/p&gt;
-&lt;H3&gt;Unsollicited&lt;/H3&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
 &lt;p&gt;
-Asterisk provides unsollicited message waiting indication.
+Asterisk provides unsolicited message waiting indication.
 &lt;/p&gt;
-&lt;H3&gt;Sollicited&lt;/H3&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
 &lt;p&gt;
-Sollicited message waiting indication as specified by RFC 3842.
+Solicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
         <translation>&lt;H2&gt;Type de message en attente&lt;/H2&gt;(new line)
 &lt;p&gt;(new line)
@@ -5695,7 +5695,7 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
         <translation>Type &amp;MWI:</translation>
     </message>
     <message>
-        <source>Sollicited MWI</source>
+        <source>Solicited MWI</source>
         <translation>RFC 3842</translation>
     </message>
     <message>
@@ -5711,7 +5711,7 @@ Signalisation de message en attente sollicité com spécifié par le RFC 3842.(n
         <translation>Le nom d l&apos;hôte, le nom de domaine ou l&apos;adresse IP du serveur de boîte vocale.</translation>
     </message>
     <message>
-        <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
         <translation>Pour le RFC 3842 MWI sollicité, un terminal souscrit au message de statut pour une durée limité. Juste avant l&apos;expiration le terminal doit raffraichir la subcription.</translation>
     </message>
     <message>
