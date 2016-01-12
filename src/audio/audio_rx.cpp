@@ -145,7 +145,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 	bool preprocessing_silence = false;
 
 #ifdef HAVE_SPEEX
-	// speex acoustic echo cancellation
+	// Speex acoustic echo cancellation
 	if (audio_session->get_do_echo_cancellation() && !audio_session->get_echo_captured_last()) {
 
 	    spx_int16_t *input_buf = new spx_int16_t[SAMPLE_BUF_SIZE/2];
@@ -165,7 +165,7 @@ bool t_audio_rx::get_sound_samples(unsigned short &sound_payload_size, bool &sil
 	// preprocessing
 	preprocessing_silence = !speex_preprocess_run(speex_preprocess_state, sb);
 	
-	// According to the speex API documentation the return value
+	// According to the Speex API documentation the return value
 	// from speex_preprocess_run() is only defined when VAD is
 	// enabled. So to be safe, reset the return value, if VAD is
 	// disabled.
@@ -369,7 +369,7 @@ t_audio_rx::t_audio_rx(t_audio_session *_audio_session,
 	is_main_rx_3way = false;
 
 #ifdef HAVE_SPEEX
-	// initializing speex preprocessing state
+	// initializing Speex preprocessing state
 	speex_preprocess_state = speex_preprocess_state_init(nsamples, audio_encoder->get_sample_rate());
 
 	int arg;
@@ -415,7 +415,7 @@ t_audio_rx::~t_audio_rx() {
 	}
 
 #ifdef HAVE_SPEEX
-	// cleaning speex preprocessing
+	// cleaning Speex preprocessing
 	if (audio_session->get_do_echo_cancellation()) {
 	    speex_echo_state_reset(audio_session->get_speex_echo_state());
 	}

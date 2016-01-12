@@ -651,7 +651,7 @@ void t_audio_tx::run(void) {
 		
 		// Check for lost packets
 		// This must be done before decoding the received samples as the
-		// speex decoder has its own PLC algorithm for which it needs the decoding
+		// Speex decoder has its own PLC algorithm for which it needs the decoding
 		// state before decoding the new samples.
 		seq16_t seq_recvd(adu->getSeqNum());
 		seq16_t seq_last(static_cast<uint16>(last_seqnum));

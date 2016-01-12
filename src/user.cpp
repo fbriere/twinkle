@@ -2395,7 +2395,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg = "Syntax error in file ";
 				error_msg += f;
 				error_msg += "\n";
-				error_msg += "Invalid value for speex bit rate type: ";
+				error_msg += "Invalid value for Speex bit rate type: ";
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
@@ -2416,7 +2416,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg = "Syntax error in file ";
 				error_msg += f;
 				error_msg += "\n";
-				error_msg += "Invalid value for speex quality: ";
+				error_msg += "Invalid value for Speex quality: ";
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);
@@ -2429,7 +2429,7 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				error_msg = "Syntax error in file ";
 				error_msg += f;
 				error_msg += "\n";
-				error_msg += "Invalid value for speex complexity: ";
+				error_msg += "Invalid value for Speex complexity: ";
 				error_msg += value;
 				log_file->write_report(error_msg, "t_user::read_config",
 					LOG_NORMAL, LOG_CRITICAL);

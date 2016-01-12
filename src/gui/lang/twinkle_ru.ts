@@ -4213,8 +4213,8 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"/>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
-        <translation>Значение динамического типа (96 или выше) чтобы использовать для широкополосного speex.</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <translation>Значение динамического типа (96 или выше) чтобы использовать для широкополосного Speex.</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4225,8 +4225,8 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"/>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
-        <translation>Значение динамического типа (96 или выше) чтобы использовать для узкополосного speex.</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <translation>Значение динамического типа (96 или выше) чтобы использовать для узкополосного Speex.</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>

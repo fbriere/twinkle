@@ -190,7 +190,7 @@ private:
 	// i.e. pick the first codec from the SDP offer that we support.
 	bool			in_obey_far_end_codec_pref;
 	
-	// RTP dynamic payload types for speex
+	// RTP dynamic payload types for Speex
 	unsigned short		speex_nb_payload_type;
 	unsigned short		speex_wb_payload_type;
 	unsigned short		speex_uwb_payload_type;

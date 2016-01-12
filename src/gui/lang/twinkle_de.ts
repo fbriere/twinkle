@@ -4484,8 +4484,8 @@ VBR (siehe dort) macht VAD unnötig.</translation>
         <translation>Variable Bit-Rate (VBR) erlaubt es dem Codec, die Menge der übertragenen Daten entsprechend der Komplexität des Audiosignals anzupassen. Zischlaute wie &quot;s&quot;, &quot;f&quot; z.B. und besonders Sprechpausen (siehe VAD) können mit wenigen Daten qualitativ gut beschrieben werden, während für Laute mit starken Änderungen im zeitlichen Verlauf (&quot;p&quot;, &quot;k&quot;, &quot;r&quot;...) vergleichsweise hohe Datenmengen nötig sind. Durch VBR kann bei gegebener Datenrate also insgesamt bessere Tonqualität erreicht werden, oder niedrigere Datenraten für gleiche Qualität. Allerdings ist bei Festlegung einer bestimmten einzuhaltenden Qualität nicht mehr vorhersagbar, welche Datenrate dafür ausreichend sein wird. Bei Echtzeitanwendungen wie VoIP ist aber gerade die maximal benötigte und nicht die durchschnittliche Datenrate kritisch.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
-        <translation>Die für speex wide band verwendete dynamische Nutzdatentyp-Kennung (nicht kleine 96).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <translation>Die für Speex wide band verwendete dynamische Nutzdatentyp-Kennung (nicht kleine 96).</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4500,8 +4500,8 @@ VBR (siehe dort) macht VAD unnötig.</translation>
         <translation>Discontinuous transmission (deutsch etwa: nicht kontinuierliche Datenübertragung) ist eine Erweiterung der VAD/VBR-Übertragung. Bei gleichbleibenden Audiosignal (insbesondere bei erkannten Sprechpausen) wird statt ständig der gleichen Nutzdaten einfach gar nichts übertragen. Senkt die durchschnittliche Datenrate etwas. Bei Störungen auf dem Übertragungsweg kann diese Option zu den von Mobiltelefonen der Anfangszeit bekannten absurden Tonstörungen (hängenbleiben des Tons, Artefakte) führen.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
-        <translation>Die für speex narrow band verwendete dynamische Nutzdatentyp-Kennung (nicht kleiner 96).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <translation>Die für Speex narrow band verwendete dynamische Nutzdatentyp-Kennung (nicht kleiner 96).</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>

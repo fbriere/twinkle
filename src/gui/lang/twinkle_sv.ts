@@ -4413,7 +4413,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4433,7 +4433,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

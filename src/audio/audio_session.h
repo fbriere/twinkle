@@ -77,7 +77,7 @@ private:
 	// speex_echo_capture or speex_echo_playback, was the speex_echo_capture
 	bool echo_captured_last;
 
-	// speex AEC state 
+	// Speex AEC state 
 	SpeexEchoState *speex_echo_state;
 #endif
 
@@ -165,7 +165,7 @@ public:
 	void set_srtp_cipher_mode(const string &cipher_mode);
 
 #ifdef HAVE_SPEEX
-	// speex acoustic echo cancellation (AEC) manipulations
+	// Speex acoustic echo cancellation (AEC) manipulations
 	bool get_do_echo_cancellation(void) const;
 	bool get_echo_captured_last(void);
 	void set_echo_captured_last(bool value);

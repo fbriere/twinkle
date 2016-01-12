@@ -4481,8 +4481,8 @@ Ce champ est obligatoire.</translation>
         <translation>Variable Bit-Rate (VBR) permet au codec d&apos;ajuster sa bande passante dynamiquement à la difficulté d&apos;encodage du son. Ceci permet à qualité constante, de réduire la bande passante nécessaire. Il y a cependant des désavantages: en ne spécifiant que la qualité, il n&apos;y à aucune garantie sur la bande passante moyenne finallement utilisée; pour certaines applications comme la VOIP, ce qui compte c&apos;est la bande passante maximum, qui doit être la plus basse possible.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
-        <translation>La valeur dynamique (96 ou plus) à utiliser pour le speex à large bande (RFC 2833).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <translation>La valeur dynamique (96 ou plus) à utiliser pour le Speex à large bande (RFC 2833).</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4493,8 +4493,8 @@ Ce champ est obligatoire.</translation>
         <translation>La transmission discontinue est un ajout à VAD/VBR, qui permet d&apos;arrêter totalement la transmission quand le bruit de fond est stationnaire.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
-        <translation>La valeur dynamique (96 ou plus) à utiliser pour le speex à petite bande (RFC 2833).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <translation>La valeur dynamique (96 ou plus) à utiliser pour le Speex à petite bande (RFC 2833).</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>

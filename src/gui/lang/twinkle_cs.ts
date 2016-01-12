@@ -4457,8 +4457,8 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
         <translation>Variabilní šířka pásma (VBR) umožní danému kodeku přizpůsobit množství dat potřebných k přenosu hovoru charakteru audio signálu. Zatímco např. některé ostré samohlásky nebo velmi proměnné pasáže potřebují velkou vzorkovací frekvenci a tím velký datový tok, tak měkké souhlásky vystačí s malým datovým tokem. Díky VBR tak lze při dané datové rychlosti docílit lepší kvality zvuku nebo při dané kvalitě hovoru vystačit s nižším datovým tokem. Nevýhodou je, že při zadané kvalitě nelze předpovědět jaký velký datový tok bude ve skutečnosti. A také, že v aplikacích pracujících v reálném čase (jako je právě VoIP) je rozhodující maximální šířka pásma, kterou musí zvládnout komunikační kanál.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex wide band.</source>
-        <translation>Dynamická hodnota typu pro speex wide band (96 nebo vyšší).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <translation>Dynamická hodnota typu pro Speex wide band (96 nebo vyšší).</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4469,8 +4469,8 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
         <translation>Nesouvislé vysílání je rozšířením funkčnosi VAD/VBR, kdy je možné úplně přestat odesílat data v případě ticha.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
-        <translation>Dynamická hodnota typu pro speex narrow band (96 nebo vyšší).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <translation>Dynamická hodnota typu pro Speex narrow band (96 nebo vyšší).</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>

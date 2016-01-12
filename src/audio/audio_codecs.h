@@ -79,7 +79,7 @@ enum t_audio_codec {
 // Buffer sizes
 #define JITTER_BUF_SIZE(sample_rate) (JITTER_BUF_MS * (sample_rate)/1000 * AUDIO_SAMPLE_SIZE/8)
 
-// Log speex errors
+// Log Speex errors
 #define LOG_SPEEX_ERROR(func, spxfunc, spxerr) {\
 	log_file->write_header((func), LOG_NORMAL, LOG_DEBUG);\
 	log_file->write_raw("Speex error: ");\
@@ -91,7 +91,7 @@ enum t_audio_codec {
 // Return the sampling rate for a codec
 unsigned short audio_sample_rate(t_audio_codec codec);
 
-// Returns true if the codec is a speex codec
+// Returns true if the codec is a Speex codec
 bool is_speex_codec(t_audio_codec codec);
 
 // Resample the input buffer to the output buffer
