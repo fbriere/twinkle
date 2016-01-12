@@ -4251,16 +4251,16 @@ Detta fält är obligatoriskt.</translation>
         <translation>GSM</translation>
     </message>
     <message>
-        <source>speex-nb (8 kHz)</source>
-        <translation>speex-nb (8 kHz)</translation>
+        <source>Speex-NB (8 kHz)</source>
+        <translation>Speex-NB (8 kHz)</translation>
     </message>
     <message>
-        <source>speex-wb (16 kHz)</source>
-        <translation>speex-wb (16 kHz)</translation>
+        <source>Speex-WB (16 kHz)</source>
+        <translation>Speex-WB (16 kHz)</translation>
     </message>
     <message>
-        <source>speex-uwb (32 kHz)</source>
-        <translation>speex-uwb (32 kHz)</translation>
+        <source>Speex-UWB (32 kHz)</source>
+        <translation>Speex-UWB (32 kHz)</translation>
     </message>
     <message>
         <source>List of available codecs.</source>

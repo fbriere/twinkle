@@ -946,17 +946,17 @@ If you disable this option, then the first codec from the active codecs that is 
                   </item>
                   <item>
                    <property name="text">
-                    <string>speex-nb (8 kHz)</string>
+                    <string>Speex-NB (8 kHz)</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>speex-wb (16 kHz)</string>
+                    <string>Speex-WB (16 kHz)</string>
                    </property>
                   </item>
                   <item>
                    <property name="text">
-                    <string>speex-uwb (32 kHz)</string>
+                    <string>Speex-UWB (32 kHz)</string>
                    </property>
                   </item>
                  </widget>

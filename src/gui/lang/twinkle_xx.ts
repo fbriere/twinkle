@@ -4035,15 +4035,15 @@ This field is mandatory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>speex-nb (8 kHz)</source>
+        <source>Speex-NB (8 kHz)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>speex-wb (16 kHz)</source>
+        <source>Speex-WB (16 kHz)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>speex-uwb (32 kHz)</source>
+        <source>Speex-UWB (32 kHz)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

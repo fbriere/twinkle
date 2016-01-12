@@ -4059,16 +4059,16 @@ This field is mandatory.</source>
         <translation>GSM</translation>
     </message>
     <message>
-        <source>speex-nb (8 kHz)</source>
-        <translation>speex-nb (8 кГц)</translation>
+        <source>Speex-NB (8 kHz)</source>
+        <translation>Speex-NB (8 кГц)</translation>
     </message>
     <message>
-        <source>speex-wb (16 kHz)</source>
-        <translation>speex-wb (16 кГц)</translation>
+        <source>Speex-WB (16 kHz)</source>
+        <translation>Speex-WB (16 кГц)</translation>
     </message>
     <message>
-        <source>speex-uwb (32 kHz)</source>
-        <translation>speex-uwb (32 кГц)</translation>
+        <source>Speex-UWB (32 kHz)</source>
+        <translation>Speex-UWB (32 кГц)</translation>
     </message>
     <message>
         <source>List of available codecs.</source>
