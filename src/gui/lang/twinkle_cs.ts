@@ -4968,7 +4968,7 @@ Pokud si tuto volbu vyberete, musíte rovněž na vašem NAT zařízení nasměr
     </message>
     <message>
         <source>&lt;p&gt;
-Often the format of the telphone numbers you need to dial is different from the format of the telephone numbers stored in your address book, e.g. your numbers start with a +-symbol followed by a country code, but your provider expects &apos;00&apos; instead of the &apos;+&apos;, or you are at the office and all your numbers need to be prefixed with a &apos;9&apos; to access an outside line. Here you can specify number format conversion using Perl style regular expressions and format strings.
+Often the format of the telephone numbers you need to dial is different from the format of the telephone numbers stored in your address book, e.g. your numbers start with a +-symbol followed by a country code, but your provider expects &apos;00&apos; instead of the &apos;+&apos;, or you are at the office and all your numbers need to be prefixed with a &apos;9&apos; to access an outside line. Here you can specify number format conversion using Perl style regular expressions and format strings.
 &lt;/p&gt;
 &lt;p&gt;
 For each number you dial, Twinkle will try to find a match in the list of match expressions. For the first match it finds, the number will be replaced with the format string. If no match is found, the number stays unchanged.
