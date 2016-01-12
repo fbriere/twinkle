@@ -4457,7 +4457,7 @@ Ce champ est obligatoire.</translation>
         <translation>l&apos; &quot;amélioration de la perception&quot; (anglais: perceptual enhancement) est une partie du décodeur qui, quand elle est activée, essaie de réduire la perception du bruit produit par le décodage/encodage. Dans la plupart des cas, ceci rend le son assez différent de l&apos;original, mais le rend plus agréable.</translation>
     </message>
     <message>
-        <source>&amp;Ultra wide band payload type:</source>
+        <source>&amp;Ultra-wideband payload type:</source>
         <translation>Type des données pour la bande &amp;Ultra-Large:</translation>
     </message>
     <message>
@@ -4469,7 +4469,7 @@ Ce champ est obligatoire.</translation>
         <translation type="obsolete">En la sélectionnant, la détection de la parole (ie: voice activity detection ou VAD) détecte si le son encodé est de la voix ou du silence (bruit de fond). VAD est toujours implicitement activé en encodage VBR, cette option est donc uniquement utilisable pour les opérations non-VBR. Dans ce cas, Speex detecte les passages sans paroles et les encode avec juste le nombre de bits nécessaire pour reproduire le bruit de fond. Ceci est appelé la &quot;génération de bruit pour le confort&quot; (comfort noise generation CNG).</translation>
     </message>
     <message>
-        <source>&amp;Wide band payload type:</source>
+        <source>&amp;Wideband payload type:</source>
         <translation>Type des données pour la bande &amp;Large:</translation>
     </message>
     <message>
@@ -4481,7 +4481,7 @@ Ce champ est obligatoire.</translation>
         <translation>Variable Bit-Rate (VBR) permet au codec d&apos;ajuster sa bande passante dynamiquement à la difficulté d&apos;encodage du son. Ceci permet à qualité constante, de réduire la bande passante nécessaire. Il y a cependant des désavantages: en ne spécifiant que la qualité, il n&apos;y à aucune garantie sur la bande passante moyenne finallement utilisée; pour certaines applications comme la VOIP, ce qui compte c&apos;est la bande passante maximum, qui doit être la plus basse possible.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex wideband.</source>
         <translation>La valeur dynamique (96 ou plus) à utiliser pour le Speex à large bande (RFC 2833).</translation>
     </message>
     <message>
@@ -4493,7 +4493,7 @@ Ce champ est obligatoire.</translation>
         <translation>La transmission discontinue est un ajout à VAD/VBR, qui permet d&apos;arrêter totalement la transmission quand le bruit de fond est stationnaire.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrowband.</source>
         <translation>La valeur dynamique (96 ou plus) à utiliser pour le Speex à petite bande (RFC 2833).</translation>
     </message>
     <message>
@@ -4501,7 +4501,7 @@ Ce champ est obligatoire.</translation>
         <translation>Avec Spexx, il est possible de faire varier le taux de compression de l&apos;encodeur. Ceci est possible en contrôlant comment la recherche est assurée avec un entier entre 1 et 10 d&apos;une manière similaire aux option -1 à -9 de gzip et bzip2. En utilisation normale, le niveau de bruit au taux 1 est entre 1 et 2 dB plus élevé que au taux 10, mais l&apos;utilisation du CPU au taux 10 est 5 fois plus grande que au taux 1. En pratique, Le meilleur compromis est entre 2 et 4, alors que des taux plus élevés sont souvent utilent pour encoder des sons autre que la voix comme les sonneries DTMF.</translation>
     </message>
     <message>
-        <source>&amp;Narrow band payload type:</source>
+        <source>&amp;Narrowband payload type:</source>
         <translation>Type des données pour la bande &amp;Courte:</translation>
     </message>
     <message>

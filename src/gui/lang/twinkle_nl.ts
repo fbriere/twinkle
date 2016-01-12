@@ -4504,8 +4504,8 @@ Dit is een verplicht veld.</translation>
         <translation>Perceptual enhancement tracht de ruis geproduceert door het coderings/decoderings proces te verminderen (een subjectieve verbetering).</translation>
     </message>
     <message>
-        <source>&amp;Ultra wide band payload type:</source>
-        <translation>U&amp;ltra wide band payload type:</translation>
+        <source>&amp;Ultra-wideband payload type:</source>
+        <translation>U&amp;ltra-wideband payload type:</translation>
     </message>
     <message>
         <source>&amp;VAD</source>
@@ -4520,8 +4520,8 @@ Dit is een verplicht veld.</translation>
         <translation type="obsolete">Voice activity detection detecteert of de opgenomen audio spraak of stilte dan wel achtergrondruis is. VAD staat atlijd impliciet aan als VBR wordt gebruikt. VAD is dus alleen nutting als VBR uitstaat. De Speex codec stuurt dan slechts een paar bits tijdens stilte periodes. Dit heet comfort noise generation (CNG).</translation>
     </message>
     <message>
-        <source>&amp;Wide band payload type:</source>
-        <translation>&amp;Wide band payload type:</translation>
+        <source>&amp;Wideband payload type:</source>
+        <translation>&amp;Wideband payload type:</translation>
     </message>
     <message>
         <source>V&amp;BR</source>
@@ -4536,8 +4536,8 @@ Dit is een verplicht veld.</translation>
         <translation>Met variable bit-rate (VBR) past de codec de bit-rate dynamisch aan aan de complexiteit van de opgenomen audio.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
-        <translation>Het dynamische payload type (96 of hoger) voor Speex wide band.</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wideband.</source>
+        <translation>Het dynamische payload type (96 of hoger) voor Speex wideband.</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4556,16 +4556,16 @@ Dit is een verplicht veld.</translation>
         <translation>Discontinuous transmission (DTX) is een extra optie boven op VAD. Met DTX wordt helemaal niets gestuurd tijdens stilte periodes.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
-        <translation>Het dynamische payload type (96 of hoger) voor Speex narrow band.</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrowband.</source>
+        <translation>Het dynamische payload type (96 of hoger) voor Speex narrowband.</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>
         <translation>Voor Speex kan de complexiteit van de encoder ingesteld worden. Deze instelling is vergelijkbaar met de -1 tot -9 opties voor gzip en bzip2 compressie. Voor normaal gebruik is het ruisniveau bij complexiteit 1 tussen de 1 en 2 dB hoger dan bij complexiteit 10. De benodigde CPU kracht is bij complexiteit 10 ongeveer 5 keer zo hoog als bij complexiteit 1. In de praktijk is een complexiteit tussen 2 en 4 genoeg. Hogere complexiteit kan nuttig zijn bij het versturen van niet-spraak audio, bijvoorbeeld DTMF tonen.</translation>
     </message>
     <message>
-        <source>&amp;Narrow band payload type:</source>
-        <translation>&amp;Narrow band payload type:</translation>
+        <source>&amp;Narrowband payload type:</source>
+        <translation>&amp;Narrowband payload type:</translation>
     </message>
     <message>
         <source>G.726</source>

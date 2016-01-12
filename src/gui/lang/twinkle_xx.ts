@@ -4169,7 +4169,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&amp;Ultra wide band payload type:</source>
+        <source>&amp;Ultra-wideband payload type:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4177,7 +4177,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&amp;Wide band payload type:</source>
+        <source>&amp;Wideband payload type:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4189,7 +4189,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex wideband.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4201,7 +4201,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrowband.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4209,7 +4209,7 @@ If you disable this option, then the first codec from the active codecs that is 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&amp;Narrow band payload type:</source>
+        <source>&amp;Narrowband payload type:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

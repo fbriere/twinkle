@@ -1394,7 +1394,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="4" column="1">
                  <widget class="QLabel" name="spxUwbPayloadTextLabel">
                   <property name="text">
-                   <string>&amp;Ultra wide band payload type:</string>
+                   <string>&amp;Ultra-wideband payload type:</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
@@ -1407,7 +1407,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="3" column="1">
                  <widget class="QLabel" name="spxWbPayloadTextLabel">
                   <property name="text">
-                   <string>&amp;Wide band payload type:</string>
+                   <string>&amp;Wideband payload type:</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
@@ -1433,7 +1433,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="4" column="2">
                  <widget class="QSpinBox" name="spxUwbPayloadSpinBox">
                   <property name="whatsThis">
-                   <string>The dynamic type value (96 or higher) to be used for Speex wide band.</string>
+                   <string>The dynamic type value (96 or higher) to be used for Speex wideband.</string>
                   </property>
                   <property name="minimum">
                    <number>96</number>
@@ -1459,7 +1459,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="3" column="2">
                  <widget class="QSpinBox" name="spxWbPayloadSpinBox">
                   <property name="whatsThis">
-                   <string>The dynamic type value (96 or higher) to be used for Speex wide band.</string>
+                   <string>The dynamic type value (96 or higher) to be used for Speex wideband.</string>
                   </property>
                   <property name="minimum">
                    <number>96</number>
@@ -1472,7 +1472,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="2" column="2">
                  <widget class="QSpinBox" name="spxNbPayloadSpinBox">
                   <property name="whatsThis">
-                   <string>The dynamic type value (96 or higher) to be used for Speex narrow band.</string>
+                   <string>The dynamic type value (96 or higher) to be used for Speex narrowband.</string>
                   </property>
                   <property name="minimum">
                    <number>96</number>
@@ -1537,7 +1537,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="2" column="1">
                  <widget class="QLabel" name="spxNbPayloadTextLabel">
                   <property name="text">
-                   <string>&amp;Narrow band payload type:</string>
+                   <string>&amp;Narrowband payload type:</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>

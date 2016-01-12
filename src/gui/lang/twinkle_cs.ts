@@ -4432,7 +4432,7 @@ Toto pole je povinné.</translation>
         <translation>Vylepšení vnímané kvality zvuku je součástí dekodéru, která se snaží snížit (vnímaný) šum vzniklý při procesu kódování/dekódování. Ve většině případů vede tato funkce k většímu objektivnímu odchýlení zvuku od originálu (z hlediska SNR), ale zní přesto lépe (subjektivní vylepšení).</translation>
     </message>
     <message>
-        <source>&amp;Ultra wide band payload type:</source>
+        <source>&amp;Ultra-wideband payload type:</source>
         <translation>Typ payload&amp;u pro ultra široké pásmo:</translation>
     </message>
     <message>
@@ -4445,7 +4445,7 @@ Toto pole je povinné.</translation>
 Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translation>
     </message>
     <message>
-        <source>&amp;Wide band payload type:</source>
+        <source>&amp;Wideband payload type:</source>
         <translation>Typ payloadu pro široké pásm&amp;o:</translation>
     </message>
     <message>
@@ -4457,8 +4457,8 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
         <translation>Variabilní šířka pásma (VBR) umožní danému kodeku přizpůsobit množství dat potřebných k přenosu hovoru charakteru audio signálu. Zatímco např. některé ostré samohlásky nebo velmi proměnné pasáže potřebují velkou vzorkovací frekvenci a tím velký datový tok, tak měkké souhlásky vystačí s malým datovým tokem. Díky VBR tak lze při dané datové rychlosti docílit lepší kvality zvuku nebo při dané kvalitě hovoru vystačit s nižším datovým tokem. Nevýhodou je, že při zadané kvalitě nelze předpovědět jaký velký datový tok bude ve skutečnosti. A také, že v aplikacích pracujících v reálném čase (jako je právě VoIP) je rozhodující maximální šířka pásma, kterou musí zvládnout komunikační kanál.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex wide band.</source>
-        <translation>Dynamická hodnota typu pro Speex wide band (96 nebo vyšší).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex wideband.</source>
+        <translation>Dynamická hodnota typu pro Speex wideband (96 nebo vyšší).</translation>
     </message>
     <message>
         <source>Co&amp;mplexity:</source>
@@ -4469,15 +4469,15 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
         <translation>Nesouvislé vysílání je rozšířením funkčnosi VAD/VBR, kdy je možné úplně přestat odesílat data v případě ticha.</translation>
     </message>
     <message>
-        <source>The dynamic type value (96 or higher) to be used for Speex narrow band.</source>
-        <translation>Dynamická hodnota typu pro Speex narrow band (96 nebo vyšší).</translation>
+        <source>The dynamic type value (96 or higher) to be used for Speex narrowband.</source>
+        <translation>Dynamická hodnota typu pro Speex narrowband (96 nebo vyšší).</translation>
     </message>
     <message>
         <source>With Speex, it is possible to vary the complexity allowed for the encoder. This is done by controlling how the search is performed with an integer ranging from 1 to 10 in a way that&apos;s similar to the -1 to -9 options to gzip and bzip2 compression utilities. For normal use, the noise level at complexity 1 is between 1 and 2 dB higher than at complexity 10, but the CPU requirements for complexity 10 is about 5 times higher than for complexity 1. In practice, the best trade-off is between complexity 2 and 4, though higher settings are often useful when encoding non-speech sounds like DTMF tones.</source>
         <translation>V případě Speexu je možné měnit komplexitu kodéru. Slouží to k zadání hloubky hledání v rozsahu od 1 do 10. Podobný princip je zaveden v kompresních programech gzip a bzip2 s volbou -1 až -9 . Za normálních podmínek je odstup šumu při komplexitě 1 o 1 až 2dB vyšší než při komplexitě 10. Nicméně CPU vytížení je asi 5x vyšší než při komplexitě 1. V praxi se osvědčilo nastavení mezi 2 až 4. Vyšší nastavení jsou vhodná pro přenos tónů DTMF nebo hudebního signálu.</translation>
     </message>
     <message>
-        <source>&amp;Narrow band payload type:</source>
+        <source>&amp;Narrowband payload type:</source>
         <translation>Typ payloadu pro úz&amp;ké pásmo:</translation>
     </message>
     <message>

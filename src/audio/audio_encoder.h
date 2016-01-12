@@ -120,9 +120,9 @@ public:
 class t_speex_audio_encoder : public t_audio_encoder {
 public:
 	enum t_mode {
-		MODE_NB,	// Narrow band
-		MODE_WB,	// Wide band
-		MODE_UWB	// Ultra wide band
+		MODE_NB,	// Narrowband
+		MODE_WB,	// Wideband
+		MODE_UWB	// Ultra-wideband
 	};
 	
 private:
