@@ -177,15 +177,15 @@ directory where <name> is the name you gave to the profile.
 
 At a minimum you have to specify the following:
 
-* User name: this is your SIP user name (eg. phone number)
-* Domain:    the domain of your provider (eg. fwd.pulver.com)
+* User name: this is your SIP user name (e.g. phone number)
+* Domain:    the domain of your provider (e.g. fwd.pulver.com)
              this could also be the IP address of your SIP proxy
 	     if you want to do IP-to-IP dialing (without proxy) then
 	     fill in the IP address or FQDN of your computer.
 
 If your SIP proxy does not request authentication and the value you
 filled in for 'Domain' can be resolved to an IP address by Twinkle,
-eg. it is an IP address or an FQDN that is in an A-record of the
+e.g. it is an IP address or an FQDN that is in an A-record of the
 DNS, then you are ready now.
 
 ## Authentication
@@ -219,8 +219,8 @@ Check the 'use outbound proxy' check box in the SIP server section.
 For outbound proxy fill in an IP address or an FQDN that can be
 resolved to an IP address via DNS.
 
-By default only out-of-dialog requests (eg. REGISTER, OPTIONS, initial
-INVITE) are sent to the outbound proxy. In-dialog requests (eg. re-INVITE,
+By default only out-of-dialog requests (e.g. REGISTER, OPTIONS, initial
+INVITE) are sent to the outbound proxy. In-dialog requests (e.g. re-INVITE,
 BYE) are sent to the target indicated by the far end during call setup.
 By checking 'send in-dialog requests to proxy' Twinkle will ignore this
 target and send these requests also to the proxy. Normally you would

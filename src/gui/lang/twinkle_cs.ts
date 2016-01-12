@@ -3425,7 +3425,7 @@ Algoritmus je velmi jednoduchý. Zvuk je navzorkován jako 16 bitový PCM vzorek
         <translation>&amp;RTP port:</translation>
     </message>
     <message>
-        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (eg. 8004) is also used.</source>
+        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (e.g. 8004) is also used.</source>
         <translation>První port přes který běží datový přenos hovoru. Současně vedený hovor na druhé lince používá port o 2 čísla vyšší. Zprostředkování hovoru potom další 2 porty. Např. 1. linka: 8000(+8001), 2. linka: 8002(+8003), Zprostředkování: 8004(+8005). Standardně je to většinou 8000 nebo 5004. Je to však závislé od konkrétního poskytovatele VoIP připojení. Při větším množství SIP telefonů připojených na jedno internetové připojení, potřebuje každý vyhrazenou vlastní skupinu portů! Tedy druhý telefon např. 8006 a výše.</translation>
     </message>
     <message>

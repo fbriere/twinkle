@@ -576,7 +576,7 @@ bool t_subscription::recv_subscribe_response(t_response *r, t_tuid tuid, t_tid t
 	// RFC 3265 3.1.4.1
 	// SUBSCRIBE failed, terminate subscription
 	// NOTE: redirection and authentication responses should have
-	// been handled already (eg. on line or phone user level).
+	// been handled already (e.g. on line or phone user level).
 	remove_client_request(&req_out);
 	state = SS_TERMINATED;
 	

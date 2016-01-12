@@ -3501,7 +3501,7 @@ Het algoritme om ruis te verminderen is erg simplistisch. Geluid wordt gedigital
         <translation>&amp;RTP poort:</translation>
     </message>
     <message>
-        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (eg. 8004) is also used.</source>
+        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (e.g. 8004) is also used.</source>
         <translation>De UDP poort wordt gebruikt voor het sturen en ontvangen van RTP op de eerste lijn. De UDP poort voor de tweede lijn is 2 hoger. Voorbeeld: als poort 8000 wordt gebruikt voor de eerste lijn, dan wordt 8002 voor de tweede lijn gebruikt. Als u de dienst &quot;doorverbinden&quot; gebruikt dan wordt de volgende even poort (bijv. 8004) ook gebruikt.</translation>
     </message>
     <message>

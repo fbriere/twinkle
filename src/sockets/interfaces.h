@@ -31,7 +31,7 @@ using namespace std;
 
 class t_interface {
 public:
-	string name;		// interface name, eg. eth0
+	string name;		// interface name, e.g. eth0
 	struct in_addr address;	// interface IP address
 	struct in_addr netmask; // interface netmask
 

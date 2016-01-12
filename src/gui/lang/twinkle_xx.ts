@@ -3221,7 +3221,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (eg. 8004) is also used.</source>
+        <source>The UDP port used for sending and receiving RTP for the first line. The UDP port for the second line is 2 higher. E.g. if port 8000 is used for the first line, then the second line uses port 8002. When you use call transfer then the next even port (e.g. 8004) is also used.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

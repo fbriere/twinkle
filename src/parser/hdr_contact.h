@@ -86,7 +86,7 @@ public:
 	 */
 	void set_contacts(const list<t_display_url> &l);
 
-	// Set contact to any, eg. Contact: *
+	// Set contact to any, e.g. Contact: *
 	void set_any(void);
 
 	// Find contact with uri u. If no contact is found, then

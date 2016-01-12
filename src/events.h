@@ -43,10 +43,10 @@ class t_userintf;
 /** Different types of events. */
 enum t_event_type {
 	EV_QUIT,		/**< Generic quit event */
-	EV_NETWORK,		/**< Network event, eg. SIP message from/to network */
-	EV_USER,		/**< User event, eg. SIP message from/to user  */
+	EV_NETWORK,		/**< Network event, e.g. SIP message from/to network */
+	EV_USER,		/**< User event, e.g. SIP message from/to user  */
 	EV_TIMEOUT,		/**< Timer expiry */
-	EV_FAILURE,		/**< Failure, eg. transport failure */
+	EV_FAILURE,		/**< Failure, e.g. transport failure */
 	EV_START_TIMER,		/**< Start timer */
 	EV_STOP_TIMER,		/**< Stop timer */
 	EV_ABORT_TRANS,		/**< Abort transaction */

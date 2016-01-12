@@ -66,7 +66,7 @@ public:
 	enum t_audio_device_type {
 		OSS, ALSA
 	} type;
-	string		device; 	// eg. /dev/dsp, /dev/dsp1 for OSS or hw:0,0 for ALSA
+	string		device; 	// e.g. /dev/dsp, /dev/dsp1 for OSS or hw:0,0 for ALSA
 	string		sym_link;	// real device if the device is a symbolic link
 	string		name;		// name of the sound card
 

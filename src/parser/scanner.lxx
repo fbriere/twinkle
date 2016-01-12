@@ -176,7 +176,7 @@ WORD_SYM	[[:alnum:]\-\.!%\*_\+\`\'~\(\)<>:\\\"\/\[\]\?\{\}]
 <C_URI>\n		 { return T_ERROR; }
 
 	/* URI special case.
-	   In several headers (eg. From, To, Contact, Reply-To) the URI
+	   In several headers (e.g. From, To, Contact, Reply-To) the URI
 	   can be enclosed by < and >
 	   If it is enclosed then parameters belong to the URI, if it
 	   is not enclosed then parameters belong to the header.

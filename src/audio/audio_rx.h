@@ -141,7 +141,7 @@ private:
 
 	// Get sound samples for 1 RTP packet from the soundcard.
 	// Returns false if the main loop has to start another cycle to get
-	// samples (eg. no samples available yet).
+	// samples (e.g. no samples available yet).
 	// If not enough samples are available yet, then a 1 ms sleep will be taken.
 	// Also returns false if capturing samples from the soundcard failed.
 	// Returns true if sounds samples are received. The samples are stored

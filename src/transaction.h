@@ -277,7 +277,7 @@ private:
 	// If cancel==true then the target for a CANCEL
 	// is matched.
 	// If cancel==false then the request itself is matched,
-	// eg. retransmission or ACK to INVITE matching
+	// e.g. retransmission or ACK to INVITE matching
 	bool match(t_request *r, bool cancel) const;
 	
 	// Indicates if a 100 Trying has already been sent.
