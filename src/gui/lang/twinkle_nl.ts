@@ -5389,7 +5389,7 @@ De waarden van alle SIP headers van de uitgaande SIP INVITE worden via variabele
         <translation>ZRTP/SRTP &amp;encryptie</translation>
     </message>
     <message>
-        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</source>
+        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unencrypted.</source>
         <translation>Als u ZRTP/SRTP aanzet, dan zal Twinkle proberen om het audiokanaal van uw gesprekken te versleutelen. Versleuteling lukt alleen als uw gesprekspartner ook ZRTP/SRTP ondersteunt. Als uw gesprekspartner geen ZRTP/SRTP ondersteund, dan blijft het audiokanaal onversleuteld.</translation>
     </message>
     <message>

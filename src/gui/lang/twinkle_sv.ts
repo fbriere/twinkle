@@ -5232,7 +5232,7 @@ The values of all SIP headers of the outgoing INVITE are passed in environment v
         <translation>&amp;Aktivera ZRTP/SRTP-kryptering</translation>
     </message>
     <message>
-        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</source>
+        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unencrypted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

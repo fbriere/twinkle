@@ -5325,7 +5325,7 @@ Obsahy všech SIP hlaviček odeslaných SIP INVITE požadavků budou předány t
         <translation>Povolit &amp;šifrování ZRTP/SRTP</translation>
     </message>
     <message>
-        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</source>
+        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unencrypted.</source>
         <translation>Pokud je aktivováno, pokusí se Twinkle při všech odchozích a příchozích hovorech zašifrovat zvuková data. Aby byl hovor opravdu zašifrován musí i protistrana podporovat šifrování ZRTP/SRTP. Jinak zůstane hovor nešifrovaný.</translation>
     </message>
     <message>

@@ -5367,7 +5367,7 @@ Die Inhalte aller SIP header der abgesendeten SIP INVITE Anforderung werden in E
         <translation>ZRTP/SRTP-V&amp;erschlüsselung aktivieren</translation>
     </message>
     <message>
-        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</source>
+        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unencrypted.</source>
         <translation>Wenn aktiviert, versucht Twinkle bei allen abgehenden und ankommenden Geprächen die Sprachdaten zu verschlüsseln. Hierzu muss natürlich die Gegenstelle ebenfalls ZRTP/SRTP unterstützen, andernfalls bleibt das Gespräch unverschlüsselt.</translation>
     </message>
     <message>
