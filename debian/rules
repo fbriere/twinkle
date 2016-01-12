@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+# Support manual invocation of debian/rules
+include /usr/share/dpkg/architecture.mk
+
 # Disable ZRTP support for now (see: #797554)
 CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ZRTP=OFF -DWITH_SPEEX=ON -DWITH_GSM=ON
 
