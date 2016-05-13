@@ -1487,7 +1487,7 @@ void  t_gui::cb_invalid_reg_resp(t_user *user_config, const t_response *r, const
 	QString s;
 	
 	emit mw_display_header();
-	qApp->translate("GUI", "%1, registration failed: %2 %3")
+	s = qApp->translate("GUI", "%1, registration failed: %2 %3")
 			.arg(user_config->get_profile_name().c_str())
 			.arg(r->code)
 			.arg(r->reason.c_str());
@@ -1963,7 +1963,7 @@ void t_gui::cb_refer_result_success(int line) {
 	QString s;
 	
 	emit mw_display_header();
-	s = qApp->translate("GUI", "Line %1: call succesfully transferred.").arg(line + 1);
+	s = qApp->translate("GUI", "Line %1: call successfully transferred.").arg(line + 1);
 	emit mw_display(s);
 	
 	// The refer state has changed, so update the main window.
@@ -2689,9 +2689,8 @@ bool t_gui::cb_message_request(t_user *user_config, t_request *r) {
 	
 	// Set error message if attachment could not be saved
 	if (failed_to_save_attachment) {
-		QString s = qApp->translate("GUI", "Failed to save message attachment: %1");
-		s.arg(attachment_error_msg.c_str());
-        session->set_error(s.toStdString());
+		QString s = qApp->translate("GUI", "Failed to save message attachment: %1").arg(attachment_error_msg.c_str());
+		session->set_error(s.toStdString());
 	}
 	
 	unlock();
