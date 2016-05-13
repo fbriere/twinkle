@@ -27,6 +27,7 @@
 #include "qicon.h"
 #include "audits/memman.h"
 #include "historyform.h"
+#include <QDateTime>
 
 #define HISTCOL_TIMESTAMP 	0
 #define HISTCOL_DIRECTION	1
@@ -76,10 +77,15 @@ void HistoryForm::init()
     m_model->setColumnCount(5);
 
     m_model->setHorizontalHeaderLabels(QStringList() << tr("Time") << tr("In/Out") << tr("From/To") << tr("Subject") << tr("Status"));
-    historyListView->sortByColumn(HISTCOL_TIMESTAMP, Qt::DescendingOrder);
+    historyListView->horizontalHeader()->setSortIndicator(HISTCOL_TIMESTAMP, Qt::DescendingOrder);
 
-    historyListView->setColumnWidth(HISTCOL_FROMTO, 200);
-    historyListView->setColumnWidth(HISTCOL_SUBJECT, 200);
+#if QT_VERSION >= 0x050000
+    historyListView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+#else
+    historyListView->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+#endif
+
+    connect(historyListView->selectionModel(), SIGNAL(currentChanged(QModelIndex, QModelIndex)), SLOT(showCallDetails(QModelIndex)));
 	
 	inCheckBox->setChecked(true);
 	outCheckBox->setChecked(true);
@@ -120,6 +126,8 @@ void HistoryForm::loadHistory()
 	unsigned long numberOfCalls = 0;
 	unsigned long totalCallDuration = 0;
 	unsigned long totalConversationDuration = 0;
+
+	m_model->setRowCount(0);
 
     std::list<t_call_record> history;
 
@@ -174,8 +182,7 @@ void HistoryForm::loadHistory()
             {
                 case HISTCOL_TIMESTAMP:
                 {
-                    QString time = QString::fromStdString(time2str(cr->time_start,  "%d %b %Y %H:%M:%S"));
-                    m_model->setData(index, time);
+                    m_model->setData(index, QDateTime::fromTime_t(cr->time_start));
                     break;
                 }
                 case HISTCOL_DIRECTION:
@@ -228,10 +235,10 @@ void HistoryForm::loadHistory()
 	durationText += ")";
 	totalDurationValueTextLabel->setText(durationText);
 	
+	// Sort entries using currently selected sort column and order.
+	historyListView->sortByColumn(historyListView->horizontalHeader()->sortIndicatorSection(), historyListView->horizontalHeader()->sortIndicatorOrder());
 	// Make the first entry the selected entry.
-    historyListView->selectRow(0);
-
-    //	showCallDetails(first);
+	if (numberOfCalls) historyListView->selectRow(0);
 }
 
 // Update history when triggered by a call back function on the user
@@ -272,13 +279,14 @@ void HistoryForm::closeEvent( QCloseEvent *e )
 	QDialog::closeEvent(e);
 }
 
-void HistoryForm::showCallDetails(QModelIndex index)
+void HistoryForm::showCallDetails(const QModelIndex &index)
 {
-	QString s;
+	cdrTextEdit->clear();
+
+	if (!index.isValid()) return;
 	
     int x = m_model->data(index, Qt::UserRole).toInt();
     const t_call_record& cr = m_history[x];
-	cdrTextEdit->clear();
 	
 	t_user *user_config = phone->ref_user_profile(cr.user_profile);
 	// If the user profile is not active, then use the
@@ -287,7 +295,7 @@ void HistoryForm::showCallDetails(QModelIndex index)
 		user_config = phone->ref_users().front();
 	}
 	
-	s = "<table>";
+	QString s = "<table>";
 	
 	// Left column: header names
 	s += "<tr><td><b>";

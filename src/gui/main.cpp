@@ -63,6 +63,7 @@
 #include "threads/thread.h"
 #include "utils/mime_database.h"
 #include "audits/memman.h"
+#include <QLibraryInfo>
 
 using namespace std;
 using namespace utils;
@@ -268,7 +269,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			cout << endl;
 			cout << " --set-profile <profile>\n";
 			cout << "\t\tMake <profile> the active profile.\n";
-			cout << "\t\tWhen using this option in conjuction with --call and --cmd,\n";
+			cout << "\t\tWhen using this option in conjunction with --call and --cmd,\n";
 			cout << "\t\tthen the profile is activated before executing --call or \n";
 			cout << "\t\t--cmd.\n";
 			cout << endl;
@@ -277,7 +278,7 @@ void parse_main_args(int argc, char **argv, bool &cli_mode, bool &override_lock_
 			cout << "\t\tand take focus.\n";
 			cout << endl;
 			cout << " --hide";
-			cout << "\t\tInstruct a running instance of Twinkle to hide in the sytem tray.\n";
+			cout << "\t\tInstruct a running instance of Twinkle to hide in the system tray.\n";
 			cout << "\t\tIf no system tray is used, then Twinkle will minimize.\n";
 			cout << endl;
 			cout << " --help-cli [cli command]\n";
@@ -475,7 +476,7 @@ bool open_sip_socket(bool cli_mode) {
 	return true;
 }
 
-QApplication *create_user_interface(bool cli_mode, int argc, char **argv, QTranslator *qtranslator) {
+QApplication *create_user_interface(bool cli_mode, int argc, char **argv, QTranslator *appTranslator, QTranslator *qtTranslator) {
 	QApplication *qa = NULL;
 	
 	if (cli_mode) {
@@ -521,14 +522,18 @@ QApplication *create_user_interface(bool cli_mode, int argc, char **argv, QTrans
 		// Install Qt translator
 		// Do not report to memman as the translator will be deleted
 		// automatically when the QApplication is deleted.
-		qtranslator = new QTranslator(0);
+		appTranslator = new QTranslator(0);
+		qtTranslator = new QTranslator(0);
 
 		QString langName = QLocale::system().name().left(2);
 
 		qDebug() << "Language name:" << langName;
-		qtranslator->load(QString("twinkle_") + langName,
+		appTranslator->load(QString("twinkle_") + langName,
 			QString(sys_config->get_dir_lang().c_str()));
-		qa->installTranslator(qtranslator);
+		qa->installTranslator(appTranslator);
+		
+		qtTranslator->load("qt_" + QLocale::system().name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+		qa->installTranslator(qtTranslator);
 
 		qa->setQuitOnLastWindowClosed(false);
 		
@@ -590,7 +595,8 @@ int main( int argc, char ** argv )
 	blockSignals();
 
 	QApplication *qa = NULL;
-	QTranslator *qtranslator = NULL;
+	QTranslator *appTranslator = NULL;
+	QTranslator *qtTranslator = NULL;
 	
 	// Store id of main thread
 	thread_id_main = t_thread::self();
@@ -661,7 +667,7 @@ int main( int argc, char ** argv )
 		// Activate a profile in the running Twinkle process.
 		if (already_running && !g_cmd_args.cmd_set_profile.isEmpty()) {
             cmdsocket::cmd_cli(string("user ") + g_cmd_args.cmd_set_profile.toStdString(), true);
-			// Do not exit now as this option may be used in conjuction
+			// Do not exit now as this option may be used in conjunction
 			// with --call or --cmd
 			must_exit = true;
 		}
@@ -691,7 +697,7 @@ int main( int argc, char ** argv )
 	
 	// Read system configuration
 	bool sys_config_read = sys_config->read_config(error_msg);
-	qa = create_user_interface(cli_mode, remain_argc, remain_argv, qtranslator);
+	qa = create_user_interface(cli_mode, remain_argc, remain_argv, appTranslator, qtTranslator);
 	if (!sys_config_read) {
 		ui->cb_show_msg(error_msg, MSG_CRITICAL);
 		exit(1);
@@ -1046,6 +1052,24 @@ int main( int argc, char ** argv )
 		ui->cb_show_msg(msg, MSG_CRITICAL);
 		sys_config->delete_lock_file();
 		exit(1);
+	} catch (int e) {
+		string msg = "Error code exception: ";
+		msg += e;
+		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_show_msg(msg, MSG_CRITICAL);
+		sys_config->delete_lock_file();
+		exit(1);
+	} catch (const std::exception& e) {
+		string msg = "std::exception exception: ";
+		msg += e.what();
+		msg += " (";
+		msg += typeid(e).name();
+		msg += ")";
+		
+		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
+		ui->cb_show_msg(msg, MSG_CRITICAL);
+		sys_config->delete_lock_file();
+		exit(1);
 	} catch (...) {
 		string msg = "Unknown exception";
 		log_file->write_report(msg, "::main", LOG_NORMAL, LOG_CRITICAL);
@@ -1195,9 +1219,9 @@ int main( int argc, char ** argv )
 		translator = NULL;
 	}
 	
-	if (qtranslator) {
-		MEMMAN_DELETE(qtranslator);
-		delete(qtranslator);
+	if (appTranslator) {
+		MEMMAN_DELETE(appTranslator);
+		delete(appTranslator);
 	}
 	
 	if (qa) {
