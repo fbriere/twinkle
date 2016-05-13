@@ -20,7 +20,6 @@ Build-Depends: bison,
                libxml2-dev,
                linux-libc-dev [!kfreebsd-i386 !kfreebsd-amd64 !hurd-i386],
                qtdeclarative5-dev,
-               qtquick1-5-dev,
                qtscript5-dev,
                qttools5-dev,
                qttools5-dev-tools
