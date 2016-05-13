@@ -1,3 +1,13 @@
+twinkle (1:1.9.0+git20160321.0.64a0816+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot (Closes: #821234).
+  * Drop patches applied upstream.
+  * Drop build dependency on qtquick1-5-dev (Closes: #810708).
+  * Enable hardening build flags.
+  * Bump Standards-Version to 3.9.8.
+
+ -- Peter Colberg <peter@colberg.org>  Fri, 13 May 2016 07:14:44 -0400
+
 twinkle (1:1.9.0+dfsg-3) unstable; urgency=medium
 
   * Explicitly disable ALSA support on non-Linux architectures.
