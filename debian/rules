@@ -15,6 +15,8 @@ endif
 
 # Avoid useless library dependencies
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+# Enable hardening build flags
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 %:
 	dh $@ --parallel
