@@ -30,7 +30,7 @@ Vcs-Browser: https://anonscm.debian.org/cgit/pkg-voip/twinkle.git
 
 Package: twinkle
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: qml-module-qtquick2, ${misc:Depends}, ${shlibs:Depends}
 Description: Voice over Internet Protocol (VoIP) SIP Phone
  Soft-phone for making telephone calls using SIP over an IP network.
  .
