@@ -1,3 +1,13 @@
+twinkle (1:1.9.0+git20160520.0.be8b8df+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot
+  * Rewrite Description in a succinct style
+  * Move twinkle-console to separate package
+  * Install upstream man page
+  * Add debian/gbp.conf for pristine-tar
+
+ -- Peter Colberg <peter@colberg.org>  Sun, 26 Jun 2016 19:13:17 -0400
+
 twinkle (1:1.9.0+git20160321.0.64a0816+dfsg-2) unstable; urgency=high
 
   * Depend on qml-module-qtquick2 (Closes: #824946).
