@@ -28,10 +28,6 @@ override_dh_clean:
 override_dh_auto_configure:
 	dh_auto_configure -- $(CONFIGURE_FLAGS)
 
-override_dh_installman:
-	help2man debian/twinkle/usr/bin/twinkle -N -n 'Voice over Internet Protocol (VoIP) SIP Phone' -o debian/twinkle.1
-	dh_installman
-
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
 
