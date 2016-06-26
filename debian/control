@@ -32,78 +32,8 @@ Package: twinkle
 Architecture: any
 Depends: qml-module-qtquick2, ${misc:Depends}, ${shlibs:Depends}
 Description: Voice over Internet Protocol (VoIP) SIP Phone
- Soft-phone for making telephone calls using SIP over an IP network.
- .
- Twinkle supports direct IP phone to IP phone communication or a network
- using a SIP proxy to route your calls.
- .
- In addition to making basic voice calls Twinkle provides you the
- following features regardless of the services that your VoIP service
- provider might offer.
- .
-  2 call appearances (lines)
-  Multiple active call identities
-  Custom ring tones
-  Call Waiting
-  Call Hold
-  3-way conference calling
-  Mute
-  Call redirection on demand
-  Call redirection unconditional
-  Call redirection when busy
-  Call redirection no answer
-  Reject call redirection request
-  Blind call transfer
-  Call transfer with consultation (attended call transfer) (new)
-  Reject call transfer request
-  Call reject
-  Repeat last call
-  Do not disturb
-  Auto answer
-  Message Waiting Indication
-  Voice mail speed dial
-  User definable scripts triggered on call events
-   E.g. to implement selective call reject or distinctive ringing
-  RFC 2833 DTMF events
-  In-band DTMF
-  Out-of-band DTMF (SIP INFO)
-  STUN support for NAT traversal
-  Send NAT keep alive packets when using STUN
-  NAT traversal through static provisioning
-  Missed call indication
-  History of call detail records for incoming, outgoing, successful and missed
-  DNS SRV support
-  Automatic fail-over to an alternate server if a server is unavailable
-  Other programs can originate a call via Twinkle, e.g. call from address book
-  System tray icon
-  System tray menu to originate and answer calls while Twinkle stays hidden
-  User definable number conversion rules
-  Simple address book
-  Support for UDP and TCP (new) as transport for SIP
-  Presence
-  Instant messaging
-  Simple file transfer with instant message
-  Instant message composition indication
-  Command line interface (CLI)
- .
- VoIP security
-  Secure voice communication by ZRTP/SRTP
-  MD5 digest authentication support for all SIP requests
-  AKAv1-MD5 digest authentication support for all SIP requests (new)
-  Identity hiding
- .
- Audio codecs
-  G.711 A-law (64 kbps payload, 8 kHz sampling rate)
-  G.711 u-law (64 kbps payload, 8 kHz sampling rate)
-  GSM (13 kbps payload, 8 kHz sampling rate)
-  Speex narrow band (15.2 kbps payload, 8 kHz sampling rate)
-  Speex wide band (28 kbps payload, 16 kHz sampling rate)
-  Speex ultra wide band (36 kbps payload, 32 kHz sampling rate)
-  G.726 (16, 24, 32 or 40 kbps payload, 8 kHz sampling rate)
- .
- For all codecs the following preprocessing options are available to improve
- quality at the far end of a call.
-  Automatic gain control (AGC) (new)
-  Noise reduction (new)
-  Voice activity detection (VAD) (new)
-  Acoustic echo control (AEC) [experimental] (new)
+ Twinkle is a soft-phone for making telephone calls over an IP network
+ using the SIP protocol. You can use it for direct IP phone to IP phone
+ communication or in a network using a SIP proxy to route your calls.
+ Notable features include multiple active identities, call transfer,
+ call rejection, 2 simultaneous calls and 3-way conference calls.
