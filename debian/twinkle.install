@@ -1,1 +1,8 @@
 sip.protocol usr/share/services
+usr/bin/twinkle
+usr/share/applications/twinkle.desktop
+usr/share/icons/hicolor/*/apps/twinkle.*
+usr/share/pixmaps/twinkle.png
+usr/share/twinkle/lang/twinkle_*.qm
+usr/share/twinkle/providers.csv
+usr/share/twinkle/twinkle*.png
