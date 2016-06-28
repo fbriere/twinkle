@@ -55,9 +55,9 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone (console)
  Notable features include multiple active identities, call transfer,
  call rejection, 2 simultaneous calls and 3-way conference calls.
  .
- This package contains the console interface. Note that the graphical
- interface is needed to create the configuration files, but you could
- opt to copy them from another machine that has the graphical interface.
+ This package contains the console interface. Note that the console
+ interface provides a reduced set of features; in particular, the
+ graphical interface is needed to create the configuration files.
 
 Package: twinkle-common
 Architecture: all
