@@ -61,7 +61,7 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone (console)
 
 Package: twinkle-common
 Architecture: all
-Depends: ${misc:Depends}, ${shlibs:Depends}
+Depends: ${misc:Depends}
 Breaks: twinkle (<< 1:1.9.0+git20160520.0.be8b8df+dfsg-1~)
 Replaces: twinkle (<< 1:1.9.0+git20160520.0.be8b8df+dfsg-1~)
 Description: Voice over Internet Protocol (VoIP) SIP Phone (common files)
