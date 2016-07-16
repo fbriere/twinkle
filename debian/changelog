@@ -1,3 +1,9 @@
+twinkle (1:1.10.0+dfsg-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Peter Colberg <peter@colberg.org>  Sat, 16 Jul 2016 00:00:18 -0400
+
 twinkle (1:1.9.0+git20160520.0.be8b8df+dfsg-1) unstable; urgency=medium
 
   * New upstream snapshot
