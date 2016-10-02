@@ -10,6 +10,6 @@
 #cmakedefine HAVE_LINUX_ERRQUEUE_H
 #cmakedefine HAVE_LIBASOUND
 
-#define VERSION		"${PRODUCT_VERSION}"
+extern const char VERSION[];
 
 #define DATADIR		"${datadir}"

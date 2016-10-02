@@ -123,6 +123,7 @@ check_include_files("sys/socket.h;linux/errqueue.h" HAVE_LINUX_ERRQUEUE_H)
 set(datadir "${CMAKE_INSTALL_PREFIX}/share/twinkle")
 configure_file(twinkle_config.h.in twinkle_config.h)
 configure_file(twinkle.desktop.in twinkle.desktop)
+configure_file(src/version.cpp.in src/version.cpp)
 
 include_directories("${CMAKE_BINARY_DIR}")
 

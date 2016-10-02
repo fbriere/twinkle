@@ -1,0 +1,4 @@
+#include "twinkle_config.h"
+
+const char VERSION[] = "@PRODUCT_VERSION@";
+

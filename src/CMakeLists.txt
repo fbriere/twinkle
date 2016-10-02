@@ -52,6 +52,7 @@ set(LIBTWINKLE_SRCS
 	user.cpp
 	userintf.cpp
 	util.cpp
+	"${CMAKE_CURRENT_BINARY_DIR}/version.cpp"
 )
 
 add_library(libtwinkle OBJECT ${LIBTWINKLE_SRCS})
