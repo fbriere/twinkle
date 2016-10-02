@@ -81,8 +81,6 @@ t_log::t_log() {
 	string s = PRODUCT_NAME;
 	s += ' ';
 	s += PRODUCT_VERSION;
-	s += ", ";
-	s += PRODUCT_DATE;
 	write_report(s, "t_log::t_log");
 	
 	string options_built = sys_config->get_options_built();

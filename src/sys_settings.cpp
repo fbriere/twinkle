@@ -987,8 +987,6 @@ string t_sys_settings::about(bool html) const {
 	string s = PRODUCT_NAME;
 	s += ' ';
 	s += PRODUCT_VERSION;
-	s += " - ";
-	s += get_product_date();
 	if (html) s += "<BR>";
 	s += "\n";
 	
@@ -1114,23 +1112,6 @@ string t_sys_settings::about(bool html) const {
 	s += "\n";
 	
 	return s;
-}
-
-string t_sys_settings::get_product_date(void) const {
-	struct tm t;
-	t.tm_sec = 0;
-	t.tm_min = 0;
-	t.tm_hour = 0;
-	
-	vector<string> l = split(PRODUCT_DATE, ' ');
-	assert(l.size() == 3);
-	t.tm_mon = str2month_full(l[0]);
-	t.tm_mday = std::stoi(l[1]);
-	t.tm_year = std::stoi(l[2]) - 1900;
-	
-	char buf[64];
-	strftime(buf, 64, "%d %B %Y", &t);
-	return string(buf);
 }
 
 string t_sys_settings::get_options_built(void) const {

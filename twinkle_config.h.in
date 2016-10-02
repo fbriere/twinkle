@@ -11,6 +11,5 @@
 #cmakedefine HAVE_LIBASOUND
 
 #define VERSION		"${PRODUCT_VERSION}"
-#define VERSION_DATE	"${PRODUCT_DATE}"
 
 #define DATADIR		"${datadir}"

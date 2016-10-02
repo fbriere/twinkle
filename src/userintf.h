@@ -33,7 +33,6 @@
 
 #include "twinkle_config.h"
 
-#define PRODUCT_DATE VERSION_DATE
 #define PRODUCT_AUTHOR	"Michel de Boer and contributors"
 
 // Tone definitions

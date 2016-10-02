@@ -3,7 +3,6 @@ project(twinkle)
 cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
 set(PRODUCT_VERSION "1.10.1")
-set(PRODUCT_DATE    "October 7, 2016")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 OPTION(WITH_ZRTP		"Enable ZRTP encrypted calls" OFF)

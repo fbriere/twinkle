@@ -396,12 +396,6 @@ public:
 	 */
 	string about(bool html) const;
 	
-	/**
-	 * Get produce release date.
-	 * @return product release date in locale format
-	 */
-	string get_product_date(void) const;
-	
 	/** 
 	 * Get a string of options that are built, e.g. ALSA, KDE
 	 * @return The string of options.

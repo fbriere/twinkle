@@ -2184,7 +2184,7 @@ void t_userintf::run(void) {
 	list<t_user *> user_list = phone->ref_users();
 	active_user = user_list.front();
 
-	cout << PRODUCT_NAME << " " << PRODUCT_VERSION << ", " << PRODUCT_DATE;
+	cout << PRODUCT_NAME << " " << PRODUCT_VERSION;
 	cout << endl;
 	cout << "Copyright (C) 2005-2015  " << PRODUCT_AUTHOR << endl;
 	cout << endl;
