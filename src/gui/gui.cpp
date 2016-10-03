@@ -2193,7 +2193,7 @@ bool t_gui::cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &des
 				  Qt::BlockingQueuedConnection,
 				  Q_RETURN_ARG(bool, retval),
 				  Q_ARG(t_user*, user_config),
-				  Q_ARG(const t_url&, destination),
+				  Q_ARG(const string&, destination.encode()),
 				  Q_ARG(const string&, display));
 
 	return retval;
@@ -2208,7 +2208,7 @@ bool t_gui::cb_ask_user_to_redirect_request(t_user *user_config,
 				  Qt::BlockingQueuedConnection,
 				  Q_RETURN_ARG(bool, retval),
 				  Q_ARG(t_user*, user_config),
-				  Q_ARG(const t_url&, destination),
+				  Q_ARG(const string&, destination.encode()),
 				  Q_ARG(const string&, display),
 				  Q_ARG(t_method, method));
 
@@ -2253,9 +2253,11 @@ bool t_gui::cb_ask_credentials(t_user *user_config, const string &realm, string 
 	return retval;
 }
 
-bool t_gui::do_cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &destination,
+bool t_gui::do_cb_ask_user_to_redirect_invite(t_user *user_config, const string &destination_str,
 		const string &display)
 {
+	t_url destination(destination_str);
+
 	QString s;
 	QString title;
 
@@ -2289,9 +2291,11 @@ bool t_gui::do_cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &
 	return permission;
 }
 
-bool t_gui::do_cb_ask_user_to_redirect_request(t_user *user_config, const t_url &destination,
+bool t_gui::do_cb_ask_user_to_redirect_request(t_user *user_config, const string &destination_str,
 		const string &display, t_method method)
 {
+	t_url destination(destination_str);
+
 	QString s;
 	QString title;
 
