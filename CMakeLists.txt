@@ -2,7 +2,13 @@ project(twinkle)
 
 cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 set(PRODUCT_VERSION "1.10.1")
+# Attempt to get a more appropriate version string from git-describe.
+include (GetVersionFromGit)
+get_version_from_git(PRODUCT_VERSION)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 OPTION(WITH_ZRTP		"Enable ZRTP encrypted calls" OFF)
@@ -13,8 +19,6 @@ OPTION(WITH_DIAMONDCARD	"Enable Diamondcard integration" OFF)
 OPTION(WITH_QT5			"Enable Qt 5 GUI" ON)
 OPTION(WITH_G729		"Enable G.729A support" OFF)
 OPTION(WITH_GSM			"Use external GSM library" OFF)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 include (CheckIncludeFile)
 include (CheckIncludeFiles)
