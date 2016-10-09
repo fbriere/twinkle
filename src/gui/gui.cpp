@@ -781,6 +781,7 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone), timerUpdateMessageSessions(N
     qRegisterMetaType<t_register_type>("t_register_type");
 	qRegisterMetaType<t_transfer_type>("t_transfer_type");
 	qRegisterMetaType<t_cf_type>("t_cf_type");
+	qRegisterMetaType<t_method>("t_method");
 	qRegisterMetaType<string>("string");
 	qRegisterMetaType<std::list<std::string>>("std::list<std::string>");
 	
