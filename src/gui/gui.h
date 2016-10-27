@@ -12,8 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef _GUI_H
@@ -172,6 +171,10 @@ private slots:
 	void gui_do_dtmf(const QString &digits);
 	void gui_do_user(const QString &profile_name);
 	QString gui_get_current_profile();
+
+	void gui_cmd_call(const string &destination, bool immediate);
+	void gui_cmd_show(void);
+	void gui_cmd_hide(void);
 public:
 	t_gui(t_phone *_phone);
 	virtual ~t_gui();
@@ -436,6 +439,10 @@ private slots:
 			const string &display, t_method method);
 	bool do_cb_ask_credentials(t_user *user_config, const string &realm, string &username,
 			string &password);
+	void do_cb_ask_user_to_refer(t_user *user_config, const string &refer_to_uri_str,
+			const string &refer_to_display,
+			const string &referred_by_uri_str,
+			const string &referred_by_display);
     void do_cb_register_inprog(t_user *user_config, t_register_type register_type);
 };
 

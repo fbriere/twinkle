@@ -12,8 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <QVariant>
@@ -96,7 +95,7 @@ void SelectUserForm::show(t_select_purpose purpose)
 	
 	// Fill list view
 	list<t_user *> user_list = phone->ref_users();
-	for (list<t_user *>::reverse_iterator i = user_list.rbegin(); i != user_list.rend(); i++) {
+	for (list<t_user *>::iterator i = user_list.begin(); i != user_list.end(); i++) {
         QListWidgetItem* item = new QListWidgetItem(QString::fromStdString((*i)->get_profile_name()), userListView);
 
         item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
@@ -133,7 +132,6 @@ void SelectUserForm::validate()
 			not_selected_list.push_back(phone->
                 ref_user_profile(item->text().toStdString()));
 		}
-		i++;
 	}
 	
 	emit (selection(selected_list));

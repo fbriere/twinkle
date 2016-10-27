@@ -12,8 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <assert.h>
@@ -36,6 +35,43 @@ extern t_event_queue	*evq_timekeeper;
 
 t_call_info::t_call_info() {
 	clear();
+}
+
+t_call_info::t_call_info(const t_call_info& that) {
+	*this = that;
+}
+
+t_call_info& t_call_info::operator=(const t_call_info& that) {
+	if (this != &that) {
+		// FIXME: This may deadlock if "a=b" and "b=a" are run in
+		//        parallel.  The proper solution would be to switch
+		//        to std::mutex and call std::lock(this,that).
+		t_mutex_guard x1(that.mutex);
+		t_mutex_guard x2(this->mutex);
+
+		from_uri = that.from_uri;
+		from_display = that.from_display;
+
+		from_display_override = that.from_display_override;
+
+		from_organization = that.from_organization;
+		to_uri = that.to_uri;
+		to_display = that.to_display;
+		to_organization = that.to_organization;
+		subject = that.subject;
+		dtmf_supported = that.dtmf_supported;
+		dtmf_inband = that.dtmf_inband;
+		dtmf_info = that.dtmf_info;
+		hdr_referred_by = that.hdr_referred_by;
+
+		last_provisional_reason = that.last_provisional_reason;
+
+		send_codec = that.send_codec;
+		recv_codec = that.recv_codec;
+		refer_supported = that.refer_supported;
+	}
+
+	return *this;
 }
 
 void t_call_info::clear(void) {
@@ -2128,7 +2164,6 @@ void t_line::retry_retrieve_succeeded(void) {
 }
 
 t_call_info t_line::get_call_info(void) const {
-	t_mutex_guard g(call_info.mutex);
 	return call_info;
 }
 

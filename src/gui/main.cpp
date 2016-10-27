@@ -12,12 +12,12 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "twinkle_config.h"
 #include <QtDebug>
+#include <QtGlobal>
 
 #ifdef HAVE_KDE
 #include <kapplication.h>
@@ -597,6 +597,9 @@ int main( int argc, char ** argv )
 	QApplication *qa = NULL;
 	QTranslator *appTranslator = NULL;
 	QTranslator *qtTranslator = NULL;
+
+  // Set phone role
+  qputenv("PULSE_PROP_media.role", "phone");
 	
 	// Store id of main thread
 	thread_id_main = t_thread::self();
