@@ -12,8 +12,7 @@
     GNU General Public License for more details.
     
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "twinkle_config.h"
@@ -731,6 +730,44 @@ void t_gui::gui_do_user(const QString &profile_name)
 	}
 }
 
+void t_gui::gui_cmd_call(const string &destination, bool immediate) {
+	string subject;
+	string dst_no_headers;
+	t_display_url du;
+
+	t_user *user = phone->ref_user_profile(
+            mainWindow->userComboBox->currentText().toStdString());
+	expand_destination(user, destination, du, subject, dst_no_headers);
+	if (!du.is_valid()) return;
+
+	if (immediate) {
+		mainWindow->do_phoneInvite(user, du.display.c_str(), du.url,
+					   subject.c_str(), false);
+	} else {
+		mainWindow->phoneInvite(dst_no_headers.c_str(), subject.c_str(), false);
+	}
+}
+
+void t_gui::gui_cmd_show(void) {
+	if (mainWindow->isMinimized()) {
+		mainWindow->setWindowState((mainWindow->windowState() & ~Qt::WindowMinimized) |
+					   Qt::WindowActive);
+		mainWindow->raise();
+	} else {
+		mainWindow->show();
+		mainWindow->raise();
+        mainWindow->activateWindow();
+	}
+}
+
+void t_gui::gui_cmd_hide(void) {
+	if (sys_config->get_gui_use_systray()) {
+		mainWindow->hide();
+	} else {
+		mainWindow->setWindowState(mainWindow->windowState() | Qt::WindowMinimized);
+	}
+}
+
 /////////////////////////////////////////////////
 // PUBLIC
 /////////////////////////////////////////////////
@@ -744,6 +781,7 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone), timerUpdateMessageSessions(N
     qRegisterMetaType<t_register_type>("t_register_type");
 	qRegisterMetaType<t_transfer_type>("t_transfer_type");
 	qRegisterMetaType<t_cf_type>("t_cf_type");
+	qRegisterMetaType<string>("string");
 	qRegisterMetaType<std::list<std::string>>("std::list<std::string>");
 	
     mainWindow = new MphoneForm;
@@ -2289,15 +2327,16 @@ bool t_gui::do_cb_ask_user_to_redirect_request(t_user *user_config, const t_url 
 	return permission;
 }
 
-void t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
+void t_gui::do_cb_ask_user_to_refer(t_user *user_config, const string &refer_to_uri_str,
 				 const string &refer_to_display,
-				 const t_url &referred_by_uri,
+				 const string &referred_by_uri_str,
 				 const string &referred_by_display)
 {
+	t_url refer_to_uri(refer_to_uri_str);
+	t_url referred_by_uri(referred_by_uri_str);
+
 	QString s;
 	QString title;
-	
-	lock();
 	
 	title = PRODUCT_NAME;
 	title.append(" - ").append(qApp->translate("GUI", "Transferring call"));
@@ -2333,8 +2372,19 @@ void t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
 	ReferPermissionDialog *dialog = new ReferPermissionDialog(mainWindow, title, s);
 	// Do not report to MEMMAN as Qt will auto destruct this dialog on close.
 	dialog->show();
-	
-	unlock();
+}
+
+void t_gui::cb_ask_user_to_refer(t_user *user_config, const t_url &refer_to_uri,
+				 const string &refer_to_display,
+				 const t_url &referred_by_uri,
+				 const string &referred_by_display)
+{
+	QMetaObject::invokeMethod(this, "do_cb_ask_user_to_refer",
+				  Q_ARG(t_user*, user_config),
+				  Q_ARG(const string&, refer_to_uri.encode()),
+				  Q_ARG(const string&, refer_to_display),
+				  Q_ARG(const string&, referred_by_uri.encode()),
+				  Q_ARG(const string&, referred_by_display));
 }
 
 void t_gui::cb_show_msg(const string &msg, t_msg_priority prio) {
@@ -2762,23 +2812,9 @@ void t_gui::cb_im_iscomposing_not_supported(t_user *user_config, t_response *r) 
 }
 
 void t_gui::cmd_call(const string &destination, bool immediate) {
-	string subject;
-	string dst_no_headers;
-	t_display_url du;
-	
-	t_user *user = phone->ref_user_profile(
-            mainWindow->userComboBox->currentText().toStdString());
-	expand_destination(user, destination, du, subject, dst_no_headers);
-	if (!du.is_valid()) return;
-	
-	lock();
-	if (immediate) {
-		mainWindow->do_phoneInvite(user, du.display.c_str(), du.url, 
-					   subject.c_str(), false);
-	} else {
-		mainWindow->phoneInvite(dst_no_headers.c_str(), subject.c_str(), false);
-	}
-	unlock();
+	QMetaObject::invokeMethod(this, "gui_cmd_call",
+				  Q_ARG(const string&, destination),
+				  Q_ARG(bool, immediate));
 }
 
 void t_gui::cmd_quit(void) {
@@ -2788,27 +2824,11 @@ void t_gui::cmd_quit(void) {
 }
 
 void t_gui::cmd_show(void) {
-	lock();
-	if (mainWindow->isMinimized()) {
-		mainWindow->setWindowState((mainWindow->windowState() & ~Qt::WindowMinimized) |
-					   Qt::WindowActive);
-		mainWindow->raise();
-	} else {
-		mainWindow->show();
-		mainWindow->raise();
-        mainWindow->activateWindow();
-	}
-	unlock();
+	QMetaObject::invokeMethod(this, "gui_cmd_show");
 }
 
 void t_gui::cmd_hide(void) {
-	lock();
-	if (sys_config->get_gui_use_systray()) {
-		mainWindow->hide();
-	} else {
-		mainWindow->setWindowState(mainWindow->windowState() | Qt::WindowMinimized);
-	}
-	unlock();
+	QMetaObject::invokeMethod(this, "gui_cmd_hide");
 }
 
 string t_gui::get_name_from_abook(t_user *user_config, const t_url &u) {
