@@ -19,7 +19,7 @@ export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 %:
-	dh $@ --parallel
+	dh $@
 
 override_dh_clean:
 	rm -f debian/twinkle.1

@@ -6,7 +6,7 @@ Uploaders: Peter Colberg <peter@colberg.org>,
            Rolf Leggewie <foss@rolf.leggewie.biz>
 Build-Depends: bison,
                cmake,
-               debhelper (>= 9),
+               debhelper (>= 10),
                flex,
                libasound2-dev [linux-any],
                libccrtp-dev,
