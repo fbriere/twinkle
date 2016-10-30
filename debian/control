@@ -30,7 +30,7 @@ Vcs-Browser: https://anonscm.debian.org/cgit/pkg-voip/twinkle.git
 
 Package: twinkle
 Architecture: any
-Depends: qml-module-qtquick2,
+Depends: qml-module-qtquick2 | qtdeclarative5-qtquick2-plugin,
          twinkle-common (= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}
