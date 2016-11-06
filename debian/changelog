@@ -1,3 +1,13 @@
+twinkle (1:1.10.1+dfsg-2) unstable; urgency=medium
+
+  [ Rolf Leggewie ]
+  * debian/rules:
+    - Use debian/clean and drop override_dh_clean target
+  * debian/control:
+    - Optionally depend on qtdeclarative5-qtquick2-plugin for Ubuntu trusty
+
+ -- Peter Colberg <peter@colberg.org>  Sun, 06 Nov 2016 13:23:08 -0500
+
 twinkle (1:1.10.1+dfsg-1) unstable; urgency=medium
 
   [ Rolf Leggewie ]
