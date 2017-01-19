@@ -175,7 +175,7 @@ QSettings*      g_gui_state;
  * @param argc [in] Number of arguments
  * @param argv [in] Array of arguments
  * @param cli_mode [out] Indicates if Twinkle must run in CLI mode.
- * @param override_lock_file [out] Indicates if an existing lock file must be overriden.
+ * @param override_lock_file [out] Indicates if an existing lock file must be overridden.
  * @param config_files [out] User profiles passed on the command line.
  * @param remain_argc [out] The number of arguments not parsed by this function.
  * @param remain_argv [out] The arguments not parsed by this function.
