@@ -37,7 +37,7 @@ bool get_stun_binding(t_user *user_config, unsigned short src_port, unsigned lon
 	
 	
 // Discover the type of NAT and determine is STUN should be used or
-// wether STUN is useless.
+// whether STUN is useless.
 // It sets the use_stun attribute of phone if STUN should be used.
 // Return false if STUN cannot be used. err_msg will contain an
 // error message that can be displayed to the user.
