@@ -8,6 +8,15 @@
 include (GetGitRevisionDescription)
 
 function(get_version_from_git result_var)
+	# Allow overriding version string with a ./version file
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/version")
+		file(READ "${CMAKE_CURRENT_SOURCE_DIR}/version" _version)
+		# Strip any leading newline
+		string(REGEX REPLACE "\n$" "" _version "${_version}")
+		set(${result_var} ${_version} PARENT_SCOPE)
+		return()
+	endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/version")
+
 	# Make sure we are running from a Git clone, not an unpacked tarball;
 	# otherwise, Git will attempt to walk up the directory tree, and may
 	# find an unrelated repo above.
