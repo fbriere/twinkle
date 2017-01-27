@@ -21,9 +21,9 @@ function(get_version_from_git result_var)
 	# for annotated tags, and --match acts as a safety net to exclude any
 	# non-version tag.  (The argument is a glob(7) pattern, not a regex.)
 	git_describe(_version --tags --match "v[0-9]*")
-	if(_version MATCHES "-NOTFOUND")
+	if(NOT "${_version}")
 		return()
-	endif(_version MATCHES "-NOTFOUND")
+	endif(NOT "${_version}")
 
 	# Strip the leading "v", if any.
 	string(REGEX REPLACE "^v" "" _version "${_version}")
