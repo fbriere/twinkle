@@ -20,9 +20,7 @@ Build-Depends: bison,
                libxml2-dev,
                linux-libc-dev [linux-any],
                qtdeclarative5-dev,
-               qtscript5-dev,
-               qttools5-dev,
-               qttools5-dev-tools
+               qttools5-dev
 Standards-Version: 3.9.8
 Homepage: http://twinkle.dolezel.info/
 Vcs-Git: https://anonscm.debian.org/git/pkg-voip/twinkle.git
