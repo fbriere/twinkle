@@ -44,6 +44,7 @@
 using namespace std;
 
 // Forward declarations
+class t_audio_session;
 class t_phone;
 class t_line;
 class t_session;

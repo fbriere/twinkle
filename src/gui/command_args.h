@@ -18,6 +18,8 @@
 #ifndef _COMMAND_ARGS_H
 #define _COMMAND_ARGS_H
 
+#include <QString>
+
 #include "twinkle_config.h"
 
 /** Command arguments. */

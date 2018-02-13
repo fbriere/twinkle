@@ -24,6 +24,7 @@
 #include <string>
 #include "header.h"
 #include "parameter.h"
+#include "sockets/url.h"
 
 class t_via {
 public:

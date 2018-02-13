@@ -21,7 +21,6 @@
 #include "util.h"
 #include "parse_ctrl.h"
 #include "protocol.h"
-#include "sockets/url.h"
 
 t_via::t_via() {
 	port = 0;

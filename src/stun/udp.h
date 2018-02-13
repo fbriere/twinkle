@@ -7,6 +7,7 @@ typedef int socklen_t;
 #endif
 
 #include <errno.h>
+#include <unistd.h>
 
 #ifdef WIN32
 

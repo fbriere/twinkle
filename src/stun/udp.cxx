@@ -16,7 +16,6 @@
 
 #include <arpa/inet.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>

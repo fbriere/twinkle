@@ -23,6 +23,7 @@
 #include <list>
 #include <string>
 #include "parameter.h"
+#include "sockets/url.h"
 
 using namespace std;
 

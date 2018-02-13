@@ -23,6 +23,8 @@
 #ifndef _SEQUENCE_NUMBER_H
 #define _SEQUENCE_NUMBER_H
 
+#include <commoncpp/config.h>
+
 
 /**
  * Sequence numbers.
