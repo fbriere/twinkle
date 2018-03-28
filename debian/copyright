@@ -1,4 +1,4 @@
-Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Twinkle
 Source: https://github.com/LubosD/twinkle/releases
  The orig tarball excludes the gsm library, which has been packaged for Debian.
