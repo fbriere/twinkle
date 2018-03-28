@@ -1,3 +1,13 @@
+twinkle (1:1.10.1+dfsg-3) unstable; urgency=medium
+
+  * Drop unneeded build-deps on qtscript5-dev and qttools5-dev-tools.
+    Thanks to Frédéric Brière (Closes: #890093)
+  * Update Vcs-* fields for move to salsa.debian.org
+  * Use https for copyright-format URL
+  * Bump Standards-Version to 4.1.3
+
+ -- Peter Colberg <peter@colberg.org>  Tue, 27 Mar 2018 21:25:58 -0400
+
 twinkle (1:1.10.1+dfsg-2) unstable; urgency=medium
 
   [ Rolf Leggewie ]
