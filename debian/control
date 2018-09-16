@@ -28,7 +28,7 @@ Vcs-Browser: https://salsa.debian.org/pkg-voip-team/twinkle
 
 Package: twinkle
 Architecture: any
-Depends: qml-module-qtquick2 | qtdeclarative5-qtquick2-plugin,
+Depends: qml-module-qtquick2,
          twinkle-common (= ${source:Version}),
          ${misc:Depends},
          ${shlibs:Depends}

@@ -1,3 +1,13 @@
+twinkle (1:1.10.1+dfsg-3.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Add upstream fix for FTBFS with Qt 5.11,
+    thanks to Juhani Numminen. (Closes: #906657)
+  * Remove alternative dependency on the no longer existing
+    qtdeclarative5-qtquick2-plugin. (Closes: #904029)
+
+ -- Adrian Bunk <bunk@debian.org>  Sun, 16 Sep 2018 19:21:15 +0300
+
 twinkle (1:1.10.1+dfsg-3) unstable; urgency=medium
 
   * Drop unneeded build-deps on qtscript5-dev and qttools5-dev-tools.
