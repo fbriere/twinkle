@@ -66,6 +66,7 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone (console)
 
 Package: twinkle-common
 Architecture: all
+Multi-Arch: foreign
 Depends:
  ${misc:Depends},
 Breaks:
