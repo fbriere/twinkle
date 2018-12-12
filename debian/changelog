@@ -1,3 +1,13 @@
+twinkle (1:1.10.1+dfsg-4) unstable; urgency=medium
+
+  * wrap-and-sort -sat
+  * add myself to Uploaders
+  * set twinkle-common as Multi-Arch: foreign
+  * add fix for alsa v1.1.7 from upstream
+  * update Standards-Version to 4.2.1, no changes needed
+
+ -- Victor Seva <vseva@debian.org>  Wed, 12 Dec 2018 09:40:42 +0100
+
 twinkle (1:1.10.1+dfsg-3.1) unstable; urgency=medium
 
   * Non-maintainer upload.
@@ -190,7 +200,7 @@ twinkle (1:1.4.2-1) unstable; urgency=low
 twinkle (1:1.4-2) experimental; urgency=low
 
   * Fix "twinkle_1:1.4-1(sparc/experimental): FTBFS: error:
-    readline/readline.h: No such file or directory" 
+    readline/readline.h: No such file or directory"
     - Add Build-Depends: libreadline-dev & libspeexdsp-dev (Closes: #513135)
   * Update Description: to match upstream
 
