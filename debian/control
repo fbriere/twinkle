@@ -5,6 +5,7 @@ Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
 Uploaders:
  Peter Colberg <peter@colberg.org>,
  Rolf Leggewie <foss@rolf.leggewie.biz>,
+ Victor Seva <vseva@debian.org>,
 Build-Depends:
  bison,
  cmake,
