@@ -1123,6 +1123,7 @@ void t_gui::cb_incoming_call(t_user *user_config, int line, const t_request *r) 
 	}
 	
 	displayPhoto(fromPhoto);
+	mainWindow->updateIncomingCallerPhoto(fromPhoto);
 	
 	// To
 	s = "";

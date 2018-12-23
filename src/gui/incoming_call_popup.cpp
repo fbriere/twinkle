@@ -1,4 +1,6 @@
 #include "incoming_call_popup.h"
+#include "incoming_call_image_provider.h"
+
 #include <QDesktopWidget>
 #include <QApplication>
 #include <QQmlContext>
@@ -11,6 +13,11 @@ IncomingCallPopup::IncomingCallPopup(QObject *parent) : QObject(parent)
 	m_view = new QQuickView;
 
 	m_view->setFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::ToolTip);
+
+	// Set up an image provider for the caller photo
+	m_imageProvider = new IncomingCallImageProvider(":/icons/images/twinkle48.png");
+	m_view->engine()->addImageProvider(QLatin1String("caller_photo"), m_imageProvider);
+	m_view->rootContext()->setContextProperty("caller_photo", m_imageProvider);
 
 	m_view->rootContext()->setContextProperty("viewerWidget", m_view);
 	m_view->setSource(QUrl("qrc:/qml/incoming_call.qml"));
@@ -72,6 +79,11 @@ void IncomingCallPopup::setCallerName(const QString& name)
 {
 	QString text = tr("%1 calling").arg(name);
 	m_callerText->setProperty("text", text);
+}
+
+void IncomingCallPopup::setCallerPhoto(const QImage& photo)
+{
+	m_imageProvider->setImage(photo);
 }
 
 void IncomingCallPopup::onAnswerClicked()

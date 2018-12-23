@@ -3,6 +3,9 @@
 
 #include <QQuickItem>
 #include <QQuickView>
+#include <QImage>
+
+class IncomingCallImageProvider;
 
 class IncomingCallPopup : public QObject
 {
@@ -12,6 +15,7 @@ public:
 	virtual ~IncomingCallPopup();
 
 	void setCallerName(const QString& name);
+	void setCallerPhoto(const QImage& photo);
 	void show();
 	void hide();
 	void setVisible(bool v) { if (v) show(); else hide(); }
@@ -29,6 +33,7 @@ public slots:
 private:
 	QQuickView* m_view;
 	QQuickItem* m_callerText;
+	IncomingCallImageProvider* m_imageProvider;
 };
 
 #endif // T_INCOMING_CALL_POPUP_H

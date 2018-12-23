@@ -3332,3 +3332,7 @@ void MphoneForm::osdMuteClicked()
 	((t_gui *)ui)->action_mute(!phone->is_line_muted(phone->get_active_line()));
 	updateState();
 }
+
+void MphoneForm::updateIncomingCallerPhoto(const QImage & photo){
+	incomingCallPopup->setCallerPhoto(photo);
+}

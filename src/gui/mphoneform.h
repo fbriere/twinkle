@@ -174,6 +174,7 @@ public slots:
 	void sysTrayIconClicked(QSystemTrayIcon::ActivationReason);
 
 	void osdMuteClicked();
+	void updateIncomingCallerPhoto(const QImage & photo);
 
 private:
 	void init();

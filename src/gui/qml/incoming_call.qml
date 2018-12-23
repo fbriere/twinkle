@@ -16,8 +16,11 @@ Rectangle {
         anchors.topMargin: 5
         anchors.left: parent.left
         anchors.leftMargin: 5
-        source: "qrc:/icons/images/twinkle48.png"
         width: height
+
+        property int sequenceNumber: 0  // Dummy value to trigger a reload
+        source: "image://caller_photo/" + sequenceNumber
+        function reload() { sequenceNumber = sequenceNumber + 1 }
     }
 
     Text {
@@ -71,6 +74,11 @@ Rectangle {
         }
         onMouseXChanged: viewerWidget.x += (mouseX - lastMouseX)
         onMouseYChanged: viewerWidget.y += (mouseY - lastMouseY)
+    }
+
+    Connections {
+        target: caller_photo
+        onImageChanged: { image1.reload() }
     }
 }
 

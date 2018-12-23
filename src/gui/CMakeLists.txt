@@ -93,6 +93,7 @@ set(TWINKLE_GUI-SRCS
 	textbrowsernoautolink.cpp
 	osd.cpp
 	incoming_call_popup.cpp
+	incoming_call_image_provider.cpp
 
 	${twinkle_OBJS}
 	${twinkle_UIS}
