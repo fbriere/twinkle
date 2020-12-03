@@ -52,11 +52,7 @@ GetAddressForm::GetAddressForm(QWidget *parent)
 
 	localListView->sortByColumn(COL_ADDR_NAME, Qt::AscendingOrder);
 
-#if QT_VERSION >= 0x050000
 	localListView->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#else
-	localListView->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-#endif
 }
 
 GetAddressForm::~GetAddressForm()
@@ -183,7 +179,7 @@ void GetAddressForm::selectLocalAddress()
 	if (!sel.isEmpty())
 	{
 		t_address_card card = m_model->getAddress(sel[0].row());
-		emit(QString::fromStdString(card.get_display_name()), QString::fromStdString(card.sip_address));
+		emit address(QString::fromStdString(card.get_display_name()), QString::fromStdString(card.sip_address));
 
 		// Signal display name and url combined.
 		t_display_url du(t_url(card.sip_address), card.get_display_name());

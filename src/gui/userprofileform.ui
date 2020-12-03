@@ -1498,7 +1498,7 @@ If you disable this option, then the first codec from the active codecs that is 
                 <item row="0" column="2">
                  <widget class="QSpinBox" name="spxQualitySpinBox">
                   <property name="whatsThis">
-                   <string>Speex is a lossy codec, which means that it achives compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</string>
+                   <string>Speex is a lossy codec, which means that it achieves compression at the expense of fidelity of the input speech signal. Unlike some other speech codecs, it is possible to control the tradeoff made between quality and bit-rate. The Speex encoding process is controlled most of the time by a quality parameter that ranges from 0 to 10.</string>
                   </property>
                   <property name="minimum">
                    <number>0</number>
@@ -2644,6 +2644,19 @@ This format is what most SIP phones use.
                 </property>
                 <property name="shortcut">
                  <string>Alt+S</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="pAssertedIdCheckBox">
+                <property name="whatsThis">
+                 <string>Include a P-Asserted-Identity header with your identity in an INVITE request for a call with identity hiding.</string>
+                </property>
+                <property name="text">
+                 <string>&amp;Send P-Asserted-Identity header when hiding user identity</string>
+                </property>
+                <property name="shortcut">
+                 <string>Alt+A</string>
                 </property>
                </widget>
               </item>
@@ -4761,6 +4774,7 @@ Sollicited message waiting indication as specified by RFC 3842.
   <tabstop>refreshReferSubCheckBox</tabstop>
   <tabstop>referAorCheckBox</tabstop>
   <tabstop>pPreferredIdCheckBox</tabstop>
+  <tabstop>pAssertedIdCheckBox</tabstop>
   <tabstop>sipTransportComboBox</tabstop>
   <tabstop>udpThresholdSpinBox</tabstop>
   <tabstop>displayTelUserCheckBox</tabstop>
