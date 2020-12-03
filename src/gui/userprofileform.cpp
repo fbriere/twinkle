@@ -31,6 +31,7 @@
 #include <QStringList>
 #include "twinkle_config.h"
 #include <QListWidget>
+#include <QRegExpValidator>
 #include "numberconversionform.h"
 #include "util.h"
 #include "userprofileform.h"
@@ -542,6 +543,7 @@ void UserProfileForm::populate()
 	transferConsultInprogCheckBox->setChecked(
 			current_profile->get_allow_transfer_consultation_inprog());
 	pPreferredIdCheckBox->setChecked(current_profile->get_send_p_preferred_id());
+	pAssertedIdCheckBox->setChecked(current_profile->get_send_p_asserted_id());
 	
 	// Transport/NAT
 	switch (current_profile->get_sip_transport()) {
@@ -1163,6 +1165,7 @@ bool UserProfileForm::validateValues()
 	current_profile->set_allow_transfer_consultation_inprog(
 			transferConsultInprogCheckBox->isChecked());
 	current_profile->set_send_p_preferred_id(pPreferredIdCheckBox->isChecked());
+	current_profile->set_send_p_asserted_id(pAssertedIdCheckBox->isChecked());
 	
 	// Transport/NAT
     switch (sipTransportComboBox->currentIndex()) {
