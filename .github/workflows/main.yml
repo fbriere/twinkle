@@ -131,11 +131,22 @@ jobs:
           version: ${{ ((matrix.clang == 'default') && 'latest') || matrix.clang }}
 
       # Download and build bcg729 if necessary for this build
-      - name: Download and build bcg729 (${{ matrix.bcg729-branch || 'n/a' }})
+      #
+      # If linphone.org is currently unavailable, we don't want this entire
+      # workflow to fail, so we first try cloning the bcg729 repo, and skip
+      # all following steps in case of failure.
+      - name: Download bcg729 (${{ matrix.bcg729-branch || 'n/a' }})
+        id: clone-bcg729
         if: ${{ matrix.bcg729-branch }}
         run: |
           git clone https://gitlab.linphone.org/BC/public/bcg729.git \
                     --branch "$BCG729_BRANCH"
+        env:
+          BCG729_BRANCH:    ${{ matrix.bcg729-branch }}
+        continue-on-error: true
+      - name: Build bcg729 (${{ matrix.bcg729-branch || 'n/a' }})
+        if: ${{ steps.clone-bcg729.outcome == 'success' }}
+        run: |
           cd bcg729
           if $BCG729_AUTOTOOLS; then
             ./autogen.sh
@@ -146,22 +157,26 @@ jobs:
           make
           sudo make install
         env:
-          BCG729_BRANCH:    ${{ matrix.bcg729-branch }}
           BCG729_AUTOTOOLS: ${{ (matrix.bcg729-autotools && 'true') || 'false' }}
 
-      # Everything is now set up, ready to checkout/configure/build/install
+      # Everything is now set up, ready to checkout/configure/build/install.
+      # All steps are explicitly skipped if clone-bcg729 above failed.
 
       - name: Checkout
+        if: ${{ steps.clone-bcg729.outcome != 'failure' }}
         uses: actions/checkout@v2
 
       - name: Configure
+        if: ${{ steps.clone-bcg729.outcome != 'failure' }}
         run: cmake -B ${{github.workspace}}/build ${{env.FLAGS}}
         env:
           FLAGS: ${{ matrix.flags || env.FLAGS }}
 
       - name: Build
+        if: ${{ steps.clone-bcg729.outcome != 'failure' }}
         run: cmake --build ${{github.workspace}}/build
 
       - name: Install
+        if: ${{ steps.clone-bcg729.outcome != 'failure' }}
         run: cmake --install ${{github.workspace}}/build
                     --prefix ${{github.workspace}}/_install
