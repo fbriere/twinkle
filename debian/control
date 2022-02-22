@@ -1,11 +1,7 @@
 Source: twinkle
 Section: comm
 Priority: optional
-Maintainer: Debian VoIP Team <pkg-voip-maintainers@lists.alioth.debian.org>
-Uploaders:
- Peter Colberg <peter@colberg.org>,
- Rolf Leggewie <foss@rolf.leggewie.biz>,
- Victor Seva <vseva@debian.org>,
+Maintainer: Frédéric Brière <fbriere@fbriere.net>
 Build-Depends:
  bison,
  cmake,
@@ -26,8 +22,8 @@ Build-Depends:
  qttools5-dev,
 Standards-Version: 4.2.1
 Homepage: http://twinkle.dolezel.info/
-Vcs-Git: https://salsa.debian.org/pkg-voip-team/twinkle.git
-Vcs-Browser: https://salsa.debian.org/pkg-voip-team/twinkle
+Vcs-Git: https://github.com/fbriere/twinkle.git -b debian/master
+Vcs-Browser: https://github.com/fbriere/twinkle/tree/debian/master
 
 Package: twinkle
 Architecture: any
