@@ -26,6 +26,3 @@ override_dh_auto_configure:
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
-
-get-orig-source:
-	uscan --noconf --verbose --rename --repack --compression xz --destdir=$(CURDIR) --check-dirname-level=0 --force-download --download-current-version
