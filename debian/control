@@ -20,7 +20,7 @@ Build-Depends:
  linux-libc-dev [linux-any],
  qtdeclarative5-dev,
  qttools5-dev,
-Standards-Version: 4.2.1
+Standards-Version: 4.6.0
 Homepage: http://twinkle.dolezel.info/
 Vcs-Git: https://github.com/fbriere/twinkle.git -b debian/master
 Vcs-Browser: https://github.com/fbriere/twinkle/tree/debian/master
