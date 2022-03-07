@@ -163,7 +163,7 @@ extern t_phone		*phone;
 #define FLD_ZRTP_SEND_IF_SUPPORTED	"zrtp_send_if_supported"
 
 // MWI
-#define FLD_MWI_SOLLICITED		"mwi_sollicited"
+#define FLD_MWI_SOLICITED		"mwi_solicited"
 #define FLD_MWI_USER			"mwi_user"
 #define FLD_MWI_SERVER			"mwi_server"
 #define FLD_MWI_VIA_PROXY		"mwi_via_proxy"
@@ -392,7 +392,7 @@ t_user::t_user() {
 	encode_multi_values_as_list = true;
 	registration_time_in_contact = true;
 	use_domain_in_contact = false;
-	allow_sdp_change = false;
+	allow_sdp_change = true;
 	allow_redirection = true;
 	ask_user_to_redirect = true;
 	max_redirections = 5;
@@ -459,7 +459,7 @@ t_user::t_user() {
 	zrtp_goclear_warning = true;
 	zrtp_sdp = true;
 	zrtp_send_if_supported = false;
-	mwi_sollicited = false;
+	mwi_solicited = false;
 	mwi_user.clear();
 	mwi_via_proxy = false;
 	mwi_subscription_time = 3600;
@@ -578,7 +578,7 @@ t_user::t_user(const t_user &u) {
 	zrtp_goclear_warning = u.zrtp_goclear_warning;
 	zrtp_sdp = u.zrtp_sdp;
 	zrtp_send_if_supported = u.zrtp_send_if_supported;
-	mwi_sollicited = u.mwi_sollicited;
+	mwi_solicited = u.mwi_solicited;
 	mwi_user = u.mwi_user;
 	mwi_server = u.mwi_server;
 	mwi_via_proxy = u.mwi_via_proxy;
@@ -1380,10 +1380,10 @@ bool t_user::get_zrtp_send_if_supported(void) const {
 	return result;
 }
 
-bool t_user::get_mwi_sollicited(void) const {
+bool t_user::get_mwi_solicited(void) const {
 	bool result;
 	mtx_user.lock();
-	result = mwi_sollicited;
+	result = mwi_solicited;
 	mtx_user.unlock();
 	return result;
 }
@@ -2070,9 +2070,9 @@ void t_user::set_zrtp_send_if_supported(bool b) {
 	mtx_user.unlock();
 }
 
-void t_user::set_mwi_sollicited(bool b) {
+void t_user::set_mwi_solicited(bool b) {
 	mtx_user.lock();
-	mwi_sollicited = b;
+	mwi_solicited = b;
 	mtx_user.unlock();
 }
 
@@ -2267,6 +2267,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 				} else if (codec == "ilbc") {
 					codecs.push_back(CODEC_ILBC);
 #endif
+				} else if (codec == "g722") {
+					codecs.push_back(CODEC_G722);
 				} else if (codec == "g726-16") {
 					codecs.push_back(CODEC_G726_16);
 				} else if (codec == "g726-24") {
@@ -2524,8 +2526,8 @@ bool t_user::read_config(const string &filename, string &error_msg) {
 			zrtp_sdp = yesno2bool(value);
 		} else if (parameter == FLD_ZRTP_SEND_IF_SUPPORTED) {
 			zrtp_send_if_supported = yesno2bool(value);
-		} else if (parameter == FLD_MWI_SOLLICITED) {
-			mwi_sollicited = yesno2bool(value);
+		} else if (parameter == FLD_MWI_SOLICITED) {
+			mwi_solicited = yesno2bool(value);
 		} else if (parameter == FLD_MWI_USER) {
 			mwi_user = value;
 		} else if (parameter == FLD_MWI_SERVER) {
@@ -2685,6 +2687,9 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 			break;
 		case CODEC_ILBC:
 			config << "ilbc";
+			break;
+		case CODEC_G722:
+			config << "g722";
 			break;
 		case CODEC_G726_16:
 			config << "g726-16";
@@ -2869,7 +2874,7 @@ bool t_user::write_config(const string &filename, string &error_msg) {
 	
 	// Write MWI settings
 	config << "# MWI\n";
-	config << FLD_MWI_SOLLICITED << '=' << bool2yesno(mwi_sollicited) << endl;
+	config << FLD_MWI_SOLICITED << '=' << bool2yesno(mwi_solicited) << endl;
 	config << FLD_MWI_USER << '=' << mwi_user << endl;
 	if (mwi_server.is_valid()) {
 		config << FLD_MWI_SERVER << '=' << mwi_server.encode_noscheme() << endl;
@@ -3031,6 +3036,8 @@ bool t_user::check_required_ext(t_request *r, list<string> &unsupported) const {
 		} else if (*i == EXT_REPLACES) {
 			if (ext_replaces) continue;
 		} else if (*i == EXT_NOREFERSUB) {
+			continue;
+		} else if (*i == EXT_TIMER) {
 			continue;
 		}
 

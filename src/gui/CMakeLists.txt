@@ -1,5 +1,9 @@
 project(twinkle-gui)
 
+# Suppress deprecation warnings from Qt, as they often would require breaking
+# backwards compatibility.
+add_definitions(-DQT_NO_DEPRECATED_WARNINGS)
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -37,6 +41,7 @@ set (twinkle_lang_SRC
 	lang/twinkle_fr.ts
 	lang/twinkle_nl.ts
 	lang/twinkle_ru.ts
+	lang/twinkle_sk.ts
 	lang/twinkle_sv.ts
 )
 
@@ -52,6 +57,9 @@ qt5_add_translation(twinkle_LANG
 )
 
 set(qt_LIBS Qt5::Widgets Qt5::Quick)
+if (WITH_DBUS)
+	list(APPEND qt_LIBS Qt5::DBus)
+endif (WITH_DBUS)
 
 set(CMAKE_AUTOMOC ON)
 
@@ -93,15 +101,21 @@ set(TWINKLE_GUI-SRCS
 	textbrowsernoautolink.cpp
 	osd.cpp
 	incoming_call_popup.cpp
+	idlesession_manager.cpp
 
 	${twinkle_OBJS}
 	${twinkle_UIS}
 	${twinkle_QRC}
 	${twinkle_LANG}
 )
+if (WITH_DBUS)
+	list(APPEND TWINKLE_GUI-SRCS
+		idlesession_inhibitor.cpp)
+endif (WITH_DBUS)
 
 add_executable(twinkle ${TWINKLE_GUI-SRCS})
 target_link_libraries(twinkle ${twinkle_LIBS} ${qt_LIBS})
 
 install(TARGETS twinkle DESTINATION bin)
+install(PROGRAMS twinkle-uri-handler DESTINATION bin)
 install(FILES ${twinkle_LANG} DESTINATION share/twinkle/lang)

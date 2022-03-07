@@ -77,6 +77,7 @@
 #define labelCodecSpeexWb	"speex-wb (16 kHz)"
 #define labelCodecSpeexUwb	"speex-uwb (32 kHz)"
 #define labelCodecIlbc		"iLBC"
+#define labelCodecG722		"G.722"
 #define labelCodecG726_16		"G.726 16 kbps"
 #define labelCodecG726_24		"G.726 24 kbps"
 #define labelCodecG726_32		"G.726 32 kbps"
@@ -102,8 +103,8 @@
 #define colReplace		1
 
 // MWI type indices
-#define idxMWIUnsollicited	0
-#define idxMWISollicited	1
+#define idxMWIUnsolicited	0
+#define idxMWISolicited	1
 
 // SIP transport protocol indices
 #define idxSipTransportAuto	0
@@ -245,6 +246,8 @@ t_audio_codec UserProfileForm::label2codec(const QString &label) {
 		return CODEC_SPEEX_UWB;
 	} else if (label == labelCodecIlbc) {
 		return CODEC_ILBC;
+	} else if (label == labelCodecG722) {
+		return CODEC_G722;
 	} else if (label == labelCodecG726_16) {
 		return CODEC_G726_16;
 	} else if (label == labelCodecG726_24) {
@@ -276,6 +279,8 @@ QString UserProfileForm::codec2label(t_audio_codec &codec) {
 		return labelCodecSpeexUwb;
 	case CODEC_ILBC:
 		return labelCodecIlbc;
+	case CODEC_G722:
+		return labelCodecG722;
 	case CODEC_G726_16:
 		return labelCodecG726_16;
 	case CODEC_G726_24:
@@ -383,12 +388,12 @@ void UserProfileForm::populate()
 	
 	// VOICE MAIL
 	vmAddressLineEdit->setText(current_profile->get_mwi_vm_address().c_str());
-	if (current_profile->get_mwi_sollicited()) {
-        mwiTypeComboBox->setCurrentIndex(idxMWISollicited);
-		mwiSollicitedGroupBox->setEnabled(true);
+	if (current_profile->get_mwi_solicited()) {
+        mwiTypeComboBox->setCurrentIndex(idxMWISolicited);
+		mwiSolicitedGroupBox->setEnabled(true);
 	} else {
-        mwiTypeComboBox->setCurrentIndex(idxMWIUnsollicited);
-		mwiSollicitedGroupBox->setEnabled(false);
+        mwiTypeComboBox->setCurrentIndex(idxMWIUnsolicited);
+		mwiSolicitedGroupBox->setEnabled(false);
 	}
 	mwiUserLineEdit->setText(current_profile->get_mwi_user().c_str());
 	mwiServerLineEdit->setText(current_profile->
@@ -419,6 +424,7 @@ void UserProfileForm::populate()
 #ifdef HAVE_ILBC
 	allCodecs.append(labelCodecIlbc);
 #endif
+	allCodecs.append(labelCodecG722);
 	allCodecs.append(labelCodecG726_16);
 	allCodecs.append(labelCodecG726_24);
 	allCodecs.append(labelCodecG726_32);
@@ -436,7 +442,7 @@ void UserProfileForm::populate()
 	availCodecListBox->clear();
     if (!allCodecs.empty()) availCodecListBox->addItems(allCodecs);
 	
-	// G.711/G.726 ptime
+	// G.711/G.722/G.726 ptime
 	ptimeSpinBox->setValue(current_profile->get_ptime());
 	
 	// Codec preference
@@ -809,7 +815,7 @@ bool UserProfileForm::validateValues()
 	
 
 	// Validity check voice mail page
-    if (mwiTypeComboBox->currentIndex() == idxMWISollicited) {
+    if (mwiTypeComboBox->currentIndex() == idxMWISolicited) {
 		// Mailbox user name is mandatory
 		if (mwiUserLineEdit->text().isEmpty()) {
             categoryListBox->setCurrentRow(idxCatVoiceMail);
@@ -921,8 +927,8 @@ bool UserProfileForm::validateValues()
 		proxyLineEdit->clear();
 	}
 	
-	// Clear sollicited MWI settings if unsollicited MWI is used
-    if (mwiTypeComboBox->currentIndex() == idxMWIUnsollicited) {
+	// Clear solicited MWI settings if unsolicited MWI is used
+    if (mwiTypeComboBox->currentIndex() == idxMWIUnsolicited) {
 		t_user user_default;
 		mwiUserLineEdit->clear();
 		mwiServerLineEdit->clear();
@@ -1002,10 +1008,10 @@ bool UserProfileForm::validateValues()
     current_profile->set_mwi_vm_address(vmAddressLineEdit->text().toStdString());
 	
 	bool mustTriggerMWISubscribe = false;
-    bool mwiSollicited = (mwiTypeComboBox->currentIndex() == idxMWISollicited);
-	if (mwiSollicited) {
-		if (!current_profile->get_mwi_sollicited()) {
-			// Sollicited MWI now enabled. Subscribe after all MWI
+    bool mwiSolicited = (mwiTypeComboBox->currentIndex() == idxMWISolicited);
+	if (mwiSolicited) {
+		if (!current_profile->get_mwi_solicited()) {
+			// Solicited MWI now enabled. Subscribe after all MWI
 			// settings have been changed.
 			mustTriggerMWISubscribe = true;
 		} else {
@@ -1015,7 +1021,7 @@ bool UserProfileForm::validateValues()
                 t_url(s.toStdString()) != current_profile->get_mwi_server() ||
 			    mwiViaProxyCheckBox->isChecked() != current_profile->get_mwi_via_proxy())
 			{
-				// Sollicited MWI settings changed. Trigger unsubscribe
+				// Solicited MWI settings changed. Trigger unsubscribe
 				// of current MWI subscription.
 				emit mwiChangeUnsubscribe(current_profile);
 				
@@ -1024,14 +1030,14 @@ bool UserProfileForm::validateValues()
 			}
 		}
 	} else {
-		if (current_profile->get_mwi_sollicited()) {
-			// MWI type changes to unsollicited. Trigger unsubscribe of
+		if (current_profile->get_mwi_solicited()) {
+			// MWI type changes to unsolicited. Trigger unsubscribe of
 			// current MWI subscription.
 			emit mwiChangeUnsubscribe(current_profile);
 		}
 	}
 	
-	current_profile->set_mwi_sollicited(mwiSollicited);
+	current_profile->set_mwi_solicited(mwiSolicited);
     current_profile->set_mwi_user(mwiUserLineEdit->text().toStdString());
 	s = USER_SCHEME;
 	s.append(':').append(mwiServerLineEdit->text());
@@ -1060,7 +1066,7 @@ bool UserProfileForm::validateValues()
 	}
 	current_profile->set_codecs(audio_codecs);
 	
-	// G.711/G.726 ptime
+	// G.711/G.722/G.726 ptime
 	current_profile->set_ptime(ptimeSpinBox->value());
 	
 	// Codec preference
@@ -1521,8 +1527,8 @@ void UserProfileForm::testConversion() {
 }
 
 void UserProfileForm::changeMWIType(int idxMWIType) {
-	if (idxMWIType == idxMWISollicited) {
-		mwiSollicitedGroupBox->setEnabled(true);
+	if (idxMWIType == idxMWISolicited) {
+		mwiSolicitedGroupBox->setEnabled(true);
 		
 		// Set defaults
 		if (mwiUserLineEdit->text().isEmpty()) {
@@ -1533,7 +1539,7 @@ void UserProfileForm::changeMWIType(int idxMWIType) {
 			mwiViaProxyCheckBox->setChecked(useProxyCheckBox->isChecked());
 		}
 	} else {
-		mwiSollicitedGroupBox->setEnabled(false);
+		mwiSolicitedGroupBox->setEnabled(false);
 	}
 }
 

@@ -1,4 +1,8 @@
-14 February 2018 - 1.10.2
+18 February 2022 - 1.10.3
+=========================
+- Replace manual URL.
+
+14 February 2019 - 1.10.2
 =======================
 - Fix sound not working with ALSA 1.1.7.
 - Translation updates.
@@ -267,8 +271,8 @@ Other
 =================
 - Local address book
 - Message waiting indication (MWI)
-  * Sollicted MWI as specified by RFC 3842
-  * Unsollicited MWI as implemented by Asterisk
+  * Solicited MWI as specified by RFC 3842
+  * Unsolicited MWI as implemented by Asterisk
 - Voice mail speed dial
 - Call transfer with consultation
   * This is a combination of a consultation call on the other line

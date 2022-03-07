@@ -17,8 +17,15 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <errno.h>
+#include <fcntl.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string>
+#include <sys/select.h>
+#include <unistd.h>
 #include "address_book.h"
 #include "events.h"
 #include "line.h"
@@ -86,22 +93,37 @@ char * tw_command_generator (const char *text, int state)
 	return ((char *)NULL);
 }
 
-char *tw_readline(const char *prompt)
+// Ugly hack to allow invoking methods on our object from within a C-style
+// callback function.  This relies on the object being a singleton.
+static t_userintf *cb_user_intf;
+// Callback method (a.k.a. "line handler") that will be invoked by Readline
+// once a complete line has been read.
+static void tw_readline_cb(char *line)
 {
-	static char *line = NULL;
-	
 	if (!line) {
+		// EOF
+		cout << endl;
+		// Calling this from the line handler prevents one extra
+		// prompt from being displayed.  (The duplicate call later on
+		// will not be an issue.)
+		rl_callback_handler_remove();
+
+		cb_user_intf->cmd_quit();
+	} else {
+		if (*line) {
+			add_history(line);
+			cb_user_intf->exec_command(line);
+		}
 		free(line);
-		line = NULL;
 	}
-	
-	line = readline(prompt);
-	
-	if (line && *line) {
-		add_history(line);
-	}
-	
-	return line;
+}
+
+// SIGWINCH handler to help us relay that information to Readline
+static int sigwinch_received;
+static void sigwinch_handler(int signum)
+{
+	sigwinch_received = 1;
+	signal(SIGWINCH, sigwinch_handler);
 }
 
 /////////////////////////////
@@ -754,12 +776,35 @@ void t_userintf::do_bye(void) {
 }
 
 bool t_userintf::exec_hold(const list<string> command_list) {
-	do_hold();
+	list<t_command_arg> al;
+	bool toggle = false;
+
+	if (!parse_args(command_list, al)) {
+		exec_command("help hold");
+		return false;
+	}
+
+	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
+		switch (i->flag) {
+		case 't':
+			toggle = true;
+			break;
+		default:
+			exec_command("help hold");
+			return false;
+			break;
+		}
+	}
+
+	do_hold(toggle);
 	return true;
 }
 
-void t_userintf::do_hold(void) {
-	phone->pub_hold();
+void t_userintf::do_hold(bool toggle) {
+	if (toggle && phone->is_line_on_hold(phone->get_active_line()))
+		phone->pub_retrieve();
+	else
+		phone->pub_hold();
 }
 
 bool t_userintf::exec_retrieve(const list<string> command_list) {
@@ -1167,6 +1212,9 @@ bool t_userintf::exec_line(const list<string> command_list) {
 
 	for (list<t_command_arg>::iterator i = al.begin(); i != al.end(); i++) {
 		switch (i->flag) {
+		case 'o':
+			line = -1;
+			break;
 		case 0:
 			line = atoi(i->value.c_str());
 			break;
@@ -1177,7 +1225,7 @@ bool t_userintf::exec_line(const list<string> command_list) {
 		}
 	}
 
-	if (line < 0 || line > 2) {
+	if (line < -1 || line > 2) {
 		exec_command("help line");
 		return false;
 	}
@@ -1195,6 +1243,11 @@ void t_userintf::do_line(int line) {
 	}
 
 	int current = phone->get_active_line();
+
+	if (line == -1) {
+		int other = 1 - current;
+		line = other + 1;
+	}
 
 	if (line == current + 1) {
 		cout << endl;
@@ -1463,6 +1516,10 @@ bool t_userintf::exec_quit(const list<string> command_list) {
 
 void t_userintf::do_quit(void) {
 	end_interface = true;
+	// Signal the main thread that it should interrupt Readline
+	if (break_readline_loop_pipe[1] != -1) {
+		write(break_readline_loop_pipe[1], "X", 1);
+	}
 }
 
 bool t_userintf::exec_help(const list<string> command_list) {
@@ -1642,9 +1699,13 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (c == "hold") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\thold\n";
+		cout << "\thold [-t]\n";
 		cout << "Description:\n";
-		cout << "\tPut the current call on the acitve line on-hold.\n";
+		cout << "\tPut the current call on the active line on-hold.\n";
+		cout << "\tIf the -t flag is passed and the call is currently held,\n";
+		cout << "\tit will be retrieved instead.\n";
+		cout << "Arguments:\n";
+		cout << "\t-t		Toggle the on-hold status of a call.\n";
 		cout << endl;
 
 		return;
@@ -1781,15 +1842,17 @@ void t_userintf::do_help(const list<t_command_arg> &al) {
 	if (c == "line") {
 		cout << endl;
 		cout << "Usage:\n";
-		cout << "\tline [lineno]\n";
+		cout << "\tline [-o] [lineno]\n";
 		cout << "Description:\n";
 		cout << "\tIf no argument is passed then the current active ";
-		cout << "line is shown\n";
+		cout << "line is shown.\n";
+		cout << "\tIf the -o flag is passed, switch to the other (inactive) line.\n";
 		cout << "\tOtherwise switch to another line. If the current active\n";
 		cout << "\thas a call, then this call will be put on-hold.\n";
 		cout << "\tIf the new active line has a held call, then this call\n";
 		cout << "\twill be retrieved.\n";
 		cout << "Arguments:\n";
+		cout << "\t-o		Switch to the current inactive line.\n";
 		cout << "\tlineno		Switch to another line (values = ";
 		cout << "1,2)\n";
 		cout << endl;
@@ -2167,6 +2230,7 @@ string t_userintf::format_codec(t_audio_codec codec) const {
 	case CODEC_SPEEX_WB:	return "spx-wb";
 	case CODEC_SPEEX_UWB:	return "spx-uwb";
 	case CODEC_ILBC:	return "ilbc";
+	case CODEC_G722:	return "g722";
 	case CODEC_G726_16:	return "g726-16";
 	case CODEC_G726_24:	return "g726-24";
 	case CODEC_G726_32:	return "g726-32";
@@ -2200,22 +2264,71 @@ void t_userintf::run(void) {
 	// Initialize phone functions
 	phone->init();
 
+	// Set up the self-pipe used to interrupt Readline
+	if (pipe(break_readline_loop_pipe) == 0) {
+		// Mark both file descriptors as close-on-exec for good measure
+		for (int i = 0; i < 2; i++) {
+			int flags = fcntl(break_readline_loop_pipe[i], F_GETFD);
+			if (flags != -1) {
+				flags |= FD_CLOEXEC;
+				fcntl(break_readline_loop_pipe[i], F_SETFD, flags);
+			}
+		}
+	} else {
+		// Not fatal -- we just won't be able to interrupt Readline
+		string msg("pipe() failed: ");
+		msg += get_error_str(errno);
+		ui->cb_show_msg(msg, MSG_WARNING);
+
+		// Mark both file descriptors as invalid
+		break_readline_loop_pipe[0] = -1;
+		break_readline_loop_pipe[1] = -1;
+	}
+
 	//Initialize GNU readline functions
 	rl_attempted_completion_function = tw_completion;
 	using_history();
 	read_history(sys_config->get_history_file().c_str());
 	stifle_history(CLI_MAX_HISTORY_LENGTH);
 
+	// Additional stuff for using the Readline callback interface
+	cb_user_intf = this;
+	signal(SIGWINCH, sigwinch_handler);
+	rl_callback_handler_install(CLI_PROMPT, tw_readline_cb);
 
 	while (!end_interface) {
-		char *command_line = tw_readline(CLI_PROMPT);
-		if (!command_line){
-			cout << endl;
+		// File descriptors we are watching (stdin + self-pipe)
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(fileno(rl_instream), &fds);
+		if (break_readline_loop_pipe[0] != -1) {
+			FD_SET(break_readline_loop_pipe[0], &fds);
+		}
+
+		int ret = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
+		if ((ret == -1) && (errno != EINTR)) {
+			string msg("select() failed: ");
+			msg += get_error_str(errno);
+			ui->cb_show_msg(msg, MSG_CRITICAL);
 			break;
 		}
-		
-		exec_command(command_line);
+		// Relay any SIGWINCH to Readline
+		if (sigwinch_received) {
+			rl_resize_terminal();
+			sigwinch_received = 0;
+		}
+		if (ret == -1) {
+			// errno == EINTR
+			continue;
+		}
+
+		if (FD_ISSET(fileno(rl_instream), &fds)) {
+			rl_callback_read_char();
+		}
 	}
+
+	rl_callback_handler_remove();
+	signal(SIGWINCH, SIG_DFL);
 	
 	// Terminate phone functions
 	write_history(sys_config->get_history_file().c_str());
@@ -2476,6 +2589,18 @@ void t_userintf::cb_100rel_timeout(int line) {
 	cout << endl;
 	cout << "Line " << line + 1 << ": ";
 	cout << "no PRACK received, call will be terminated.\n";
+	cout << endl;
+	cout.flush();
+
+	cb_stop_call_notification(line);
+}
+
+void t_userintf::cb_session_expired(int line) {
+	if (line >= NUM_USER_LINES) return;
+
+	cout << endl;
+	cout << "Line " << line + 1 << ": ";
+	cout << "session has expired, call will be terminated.\n";
 	cout << endl;
 	cout.flush();
 

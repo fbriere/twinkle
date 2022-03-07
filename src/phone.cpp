@@ -279,8 +279,6 @@ void t_phone::end_call(void) {
 			move_line_to_background(lineno1);
 			move_line_to_background(lineno2);
 		} else {
-			t_rwmutex_reader x(lines_mtx);
-
 			// Hangup the active line, and make the next
 			// line active.
 			int l = active_line;
@@ -341,7 +339,7 @@ void t_phone::refer(const t_url &uri, const string &display) {
 
 void t_phone::refer(unsigned short lineno_from, unsigned short lineno_to) 
 {
-	t_rwmutex_reader x(lines_mtx);
+	t_rwmutex_future_writer x(lines_mtx);
 
 	// The nicest transfer is an attended transfer. An attended transfer
 	// is only possible of the transfer target supports the 'replaces'
@@ -907,7 +905,7 @@ void t_phone::post_process_response(t_response *r, t_tuid tuid, t_tid tid) {
 }
 
 void t_phone::recvd_invite(t_request *r, t_tid tid) {
-	t_rwmutex_reader x(lines_mtx);
+	t_rwmutex_future_writer x(lines_mtx);
 
 	// Check if this INVITE is a retransmission.
 	// Once the TU sent a 2XX repsonse on an INVITE it has to deal
@@ -1706,7 +1704,7 @@ void t_phone::recvd_notify(t_request *r, t_tid tid) {
 	}
 
 	// REFER notification
-	t_rwmutex_reader x(lines_mtx);
+	t_rwmutex_future_writer x(lines_mtx);
 	for (unsigned short i = 0; i < lines.size(); i++) {
 		if (lines[i]->match(r)) {
 			lines[i]->recvd_notify(r, tid);
@@ -1873,7 +1871,7 @@ void t_phone::recvd_refer_permission(bool permission) {
 	t_phone_user *pu = incoming_refer_data->get_phone_user();
 	t_user *user_config = pu->get_user_profile();
 			
-	t_rwmutex_reader x(lines_mtx);
+	t_rwmutex_future_writer x(lines_mtx);
 	lines[i]->recvd_refer_permission(permission, r);
 	
 	if (!permission) {
@@ -3054,7 +3052,7 @@ bool t_phone::add_phone_user(const t_user &user_config, t_user **dup_user) {
 		// Check if there is already another profile having
 		// the same contact name.
 		if (user->get_contact_name() == user_config.get_contact_name() &&
-		    USER_HOST(user, AUTO_IP4_ADDRESS) == USER_HOST(&user_config, AUTO_IP4_ADDRESS) &&
+		    phone->get_ip_sip_locked(user, AUTO_IP4_ADDRESS) == phone->get_ip_sip_locked(&user_config, AUTO_IP4_ADDRESS) &&
 		    (*i)->is_active())
 		{
 			*dup_user = user;
@@ -3160,9 +3158,13 @@ t_presence_epa *t_phone::ref_presence_epa(t_user *user) {
 }
 
 string t_phone::get_ip_sip(const t_user *user, const string &auto_ip) const {
+	t_rwmutex_reader x(phone_users_mtx);
+	return get_ip_sip_locked(user, auto_ip);
+}
+
+string t_phone::get_ip_sip_locked(const t_user *user, const string &auto_ip) const {
 	string result;
 
-	t_rwmutex_reader x(phone_users_mtx);
 	t_phone_user *pu = find_phone_user(user->get_profile_name());
 	if (pu) {
 		result = pu->get_ip_sip(auto_ip);
@@ -3322,7 +3324,7 @@ void t_phone::init(void) {
 
 void t_phone::init_extensions(t_user *user_config) {
 	// Subscribe to MWI
-	if (user_config->get_mwi_sollicited()) {
+	if (user_config->get_mwi_solicited()) {
 		pub_subscribe_mwi(user_config);
 	}
 	

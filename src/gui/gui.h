@@ -43,6 +43,7 @@ using namespace std;
 
 // Forward declaration
 class MphoneForm;
+class IdleSessionManager;
 
 // Length of redial list in combo boxes
 #define SIZE_REDIAL_LIST 10
@@ -65,6 +66,8 @@ class t_gui : public QObject, public t_userintf {
 	Q_OBJECT
 private:
 	MphoneForm	*mainWindow;
+
+	IdleSessionManager *m_idle_session_manager;
 	
 	// List of active instant messaging session.
 	list<im::t_msg_session *> messageSessions;
@@ -125,7 +128,7 @@ protected:
 	virtual void do_dnd(bool show_status, bool toggle, bool enable);
 	virtual void do_auto_answer(bool show_status, bool toggle, bool enable);
 	virtual void do_bye(void);
-	virtual void do_hold(void);
+	virtual void do_hold(bool toggle);
 	virtual void do_retrieve(void);
 	virtual bool do_refer(const string &destination,
 			      t_transfer_type transfer_type, bool immediate);
@@ -162,7 +165,7 @@ private slots:
 	void gui_do_dnd(bool toggle, bool enable);
 	void gui_do_auto_answer(bool toggle, bool enable);
 	void gui_do_bye(void);
-	void gui_do_hold(void);
+	void gui_do_hold(bool toggle);
 	void gui_do_retrieve(void);
 	void gui_do_refer(const QString &destination,
 			  t_transfer_type transfer_type, bool immediate);
@@ -218,6 +221,7 @@ public:
 	void cb_unsupported_content_type(int line, const t_sip_message *r);
 	void cb_ack_timeout(int line);
 	void cb_100rel_timeout(int line);
+	void cb_session_expired(int line);
 	void cb_prack_failed(int line, const t_response *r);
 	void cb_provisional_resp_invite(int line, const t_response *r);
 	void cb_cancel_failed(int line, const t_response *r);
@@ -426,12 +430,19 @@ signals:
 	void mw_update_call_history();
 	void mw_update_missed_call_status(int num_missed_calls);
 	
+public slots:
+	// Apply the current "inhibit_idle_session" setting
+	void updateInhibitIdleSession();
+
 private slots:
 	/** 
             * Update timers associated with message sessions. This
 	 * function should be called every second.
 	 */
 	void updateTimersMessageSessions();
+
+	// Update the current idle/busy state
+	void updateIdleSessionState();
 
 	bool do_cb_ask_user_to_redirect_invite(t_user *user_config, const t_url &destination,
 			const string &display);

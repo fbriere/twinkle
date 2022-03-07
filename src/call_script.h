@@ -29,14 +29,21 @@
    TWINKLE_USER_PROFILE=<user profile name>
    TWINKLE_TRIGGER=<trigger type>
    TWINKLE_LINE=<line number (starting at 1) associated with the call>
+   TWINKLE_DO_NOT_DISTURB=<"1" if "Do not disturb" is enabled>
+   TWINKLE_AUTO_ANSWER=<"1" if "Auto answer" is enabled>
+   TWINKLE_REDIRECT_ALWAYS=<destination list for "Unconditional" call redirection>
+   TWINKLE_REDIRECT_BUSY=<destination list for "When busy" call redirection>
+   TWINKLE_REDIRECT_NO_ANSWER=<destination list for "No answer" call redirection>
    SIPREQUEST_METHOD=<method>
    SIPREQUEST_URI=<request uri>
    SIPSTATUS_CODE=<status code of a response>
    SIPSTATUS_REASON=<reason phrase of a response>
    SIP_FROM_USER=<user name of From header>
    SIP_FROM_HOST=<host part of From header>
+   SIP_FROM_DISPLAY=<display name of From header>
    SIP_TO_USER=<user name of To header>
    SIP_TO_HOST=<host part of To header>
+   SIP_TO_DISPLAY=<display name of To header>
    SIP_<header_name>=<header value>
 @endverbatim
  * 
@@ -64,6 +71,7 @@
 
 #include <vector>
 #include <string>
+#include "sockets/url.h"
 #include "user.h"
 #include "parser/request.h"
 
@@ -147,6 +155,14 @@ private:
 	 * @return String representation for the trigger.
 	 */
 	string trigger2str(t_trigger t) const;
+	
+	/**
+	 * Converts a list of call forwarding destinations to a single string,
+	 * with multiple destinations separated by commas.
+	 * @param cf_dest [in] List of call forwarding destinations
+	 * @return String representation of the destinations list
+	 */
+	string cf_dest2str(const list<t_display_url> &cf_dest) const;
 	
 	/**
 	 * Create environment for the process running the script.
