@@ -1,4 +1,5 @@
 usr/bin/twinkle
+usr/bin/twinkle-uri-handler
 usr/share/applications/twinkle.desktop
 usr/share/icons/hicolor/*/apps/twinkle.*
 usr/share/man/man1/twinkle.1
