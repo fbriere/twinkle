@@ -1,0 +1,2 @@
+# Our version scheme can result in rather long filenames
+package-has-long-file-name
