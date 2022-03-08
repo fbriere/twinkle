@@ -1,2 +1,5 @@
+# Ubuntu revisions have a dot in them
+twinkle source: maintainer-upload-has-incorrect-version-number
+
 # Ubuntu's default zstd compression cannot be read on Debian
 twinkle source: custom-compression-in-debian-rules
