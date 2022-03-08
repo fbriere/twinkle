@@ -1,4 +1,3 @@
-sip.protocol usr/share/services
 usr/bin/twinkle
 usr/share/applications/twinkle.desktop
 usr/share/icons/hicolor/*/apps/twinkle.*
