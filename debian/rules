@@ -18,6 +18,12 @@ export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 # Enable hardening build flags
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
+# Variables to be used by `override_dh_builddeb` further below
+DEB_HOST_ARCH = $(shell dpkg-architecture --query=DEB_HOST_ARCH)
+version := $(shell LC_ALL=C dpkg-parsechangelog --show-field=Version)
+version_epochless := $(shell echo $(version) | sed -e 's/^[0-9]\+://')
+
+
 %:
 	dh $@
 
@@ -26,3 +32,17 @@ override_dh_auto_configure:
 
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
+
+# Make the resulting binary packages usable by lintian and reprepro on Debian
+override_dh_builddeb:
+	@# Override Ubuntu's default zstd compression
+	dh_builddeb -- -Zxz
+	@# Rename `.ddeb` debug packages back to `.deb` -- idea taken from:
+	@#   https://patchwork.ozlabs.org/project/ubuntu-kernel/patch/20180421074128.18751-1-steve.langasek@canonical.com/
+	@for pkg in $$(dh_listpackages --arch); do \
+		_basename="$${pkg}-dbgsym_$(version_epochless)_$(DEB_HOST_ARCH)"; \
+		printf "\tRenaming %s back to %s\n" \
+			"$${_basename}.ddeb" "$${_basename}.deb"; \
+		mv "../$${_basename}.ddeb" "../$${_basename}.deb"; \
+		sed -i -e "/^$${pkg}-dbgsym_/s/\.ddeb /.deb /" debian/files; \
+	done
