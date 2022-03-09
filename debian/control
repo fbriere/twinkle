@@ -22,8 +22,8 @@ Build-Depends:
  qttools5-dev,
 Standards-Version: 4.6.0
 Homepage: http://twinkle.dolezel.info/
-Vcs-Git: https://github.com/fbriere/twinkle.git -b debian/master
-Vcs-Browser: https://github.com/fbriere/twinkle/tree/debian/master
+Vcs-Git: https://github.com/fbriere/twinkle.git -b ubuntu/master
+Vcs-Browser: https://github.com/fbriere/twinkle/tree/ubuntu/master
 
 Package: twinkle
 Architecture: any
