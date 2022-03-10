@@ -1,9 +1,5 @@
-If you know that the bug you want to report is in the "upstream"
-code then please file directly with the github issue tracker:
+Since the version of this package is substantially different from the one
+provided by Debian, please file any bug report directly with the upstream
+GitHub issue tracker:
 
-https://github.com/LubosD/twinkle/issues
-
-If you feel that the bug is one that other Debian users should
-know about then you are welcome to file a report in the Debian BTS
-as well.  Please keep in mind, however, that managing bug reports
-is part of the maintainers' workload.
+  https://github.com/LubosD/twinkle/issues
