@@ -1,3 +1,17 @@
+twinkle (1:1.10.3+git20220307.15ece11+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot
+  * Install `twinkle-uri-handler`
+  * Stop installing obsolete KDE3 `sip.protocol`
+  * Update Maintainer and Vcs-* control fields
+  * Rewrite `twinkle.bug-presubj` to redirect all bug reports upstream
+  * Bump Standards-Version
+  * Adapt `gbp.conf` for our purposes
+  * Add `package-has-long-file-name` lintian overrides
+  * Remove deprecated `get-orig-source` target
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Wed, 09 Mar 2022 22:51:41 -0500
+
 twinkle (1:1.10.2+dfsg-1) unstable; urgency=medium
 
   * New upstream version 1.10.2+dfsg
