@@ -44,7 +44,10 @@ void t_session::set_recvd_codecs(t_sdp *sdp) {
 		t_audio_codec ac = sdp->get_codec(SDP_AUDIO, *i);
 		if (ac > CODEC_UNSUPPORTED) {
 			recvd_codecs.push_back(ac);
-			send_ac2payload[ac] = *i;
+			// Don't overwrite any previous mapping for this codec
+			if (!send_ac2payload.count(ac)) {
+				send_ac2payload[ac] = *i;
+			}
 			send_payload2ac[*i] = ac;
 		}
 	}
@@ -113,6 +116,7 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	recv_ac2payload[CODEC_G711_ULAW] = SDP_FORMAT_G711_ULAW;
 	recv_ac2payload[CODEC_G711_ALAW] = SDP_FORMAT_G711_ALAW;
 	recv_ac2payload[CODEC_GSM] = SDP_FORMAT_GSM;
+	recv_ac2payload[CODEC_G722] = SDP_FORMAT_G722;
 	recv_ac2payload[CODEC_G729A] = SDP_FORMAT_G729;
 	recv_ac2payload[CODEC_SPEEX_NB] = user_config->get_speex_nb_payload_type();
 	recv_ac2payload[CODEC_SPEEX_WB] = user_config->get_speex_wb_payload_type();
@@ -129,6 +133,7 @@ t_session::t_session(t_dialog *_dialog, string _receive_host,
 	recv_payload2ac[SDP_FORMAT_G711_ULAW] = CODEC_G711_ULAW;
 	recv_payload2ac[SDP_FORMAT_G711_ALAW] = CODEC_G711_ALAW;
 	recv_payload2ac[SDP_FORMAT_GSM] = CODEC_GSM;
+	recv_payload2ac[SDP_FORMAT_G722] = CODEC_G722;
 	recv_payload2ac[SDP_FORMAT_G729] = CODEC_G729A;
 	recv_payload2ac[user_config->get_speex_nb_payload_type()] = CODEC_SPEEX_NB;
 	recv_payload2ac[user_config->get_speex_wb_payload_type()] = CODEC_SPEEX_WB;
@@ -208,6 +213,16 @@ t_session *t_session::create_call_retrieve(void) const {
 	} else {
 		assert(false);
 	}
+
+	return s;
+}
+
+t_session *t_session::create_session_refresh(void) const {
+	t_session *s = new t_session(*this);
+	MEMMAN_NEW(s);
+
+	// Do not copy the RTP session
+	s->set_audio_session(NULL);
 
 	return s;
 }
@@ -439,11 +454,14 @@ void t_session::create_sdp_offer(t_sip_message *m, const string &user) {
 	MEMMAN_NEW(m->body);
 
 
-	// Set ptime for G711/G726 codecs
+	// Set ptime for G.711/G.722/G.726 codecs
 	list<t_audio_codec>::iterator it_g7xx;
 	it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ALAW);
 	if (it_g7xx == offer_codecs.end()) {
 		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G711_ULAW);
+	}
+	if (it_g7xx == offer_codecs.end()) {
+		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G722);
 	}
 	if (it_g7xx == offer_codecs.end()) {
 		it_g7xx = find(offer_codecs.begin(), offer_codecs.end(), CODEC_G726_16);

@@ -144,6 +144,9 @@ void MphoneForm::init()
 	// Attach the MWI flash slot to the MWI flash timer
 	connect(&tmrFlashMWI, SIGNAL(timeout()), this, SLOT(flashMWI()));
 	
+	// Add "Main Toolbar" entry to the View menu
+	View->insertAction(nullptr, callToolbar->toggleViewAction());
+
 	// Set toolbar icons for disabled options.
 	setDisabledIcon(callInvite, "invite-disabled.png");
 	setDisabledIcon(callAnswer, "answer-disabled.png");
@@ -200,6 +203,12 @@ void MphoneForm::init()
 
 		connect(sysTray, SIGNAL(activated(QSystemTrayIcon::ActivationReason)),
 				this, SLOT(sysTrayIconClicked(QSystemTrayIcon::ActivationReason)));
+		connect(menu, &QMenu::aboutToShow, this, &MphoneForm::updateTrayIconMenu);
+
+		// Toggle window visibility
+		menu->addAction(toggleWindowAction);
+
+		menu->addSeparator();
 		
 		// Call menu
         menu->addAction(callInvite);
@@ -256,14 +265,14 @@ void MphoneForm::init()
 
 	restoreState(g_gui_state->value("mainwindow/state").toByteArray());
 	restoreGeometry(g_gui_state->value("mainwindow/geometry").toByteArray());
-	splitter2->restoreState(g_gui_state->value("mainwindow/mainsplitter").toByteArray());
+	layoutWidgetSplitter->restoreState(g_gui_state->value("mainwindow/mainsplitter").toByteArray());
 }
 
 void MphoneForm::destroy()
 {
 	g_gui_state->setValue("mainwindow/state", saveState());
 	g_gui_state->setValue("mainwindow/geometry", saveGeometry());
-	g_gui_state->setValue("mainwindow/mainsplitter", splitter2->saveState());
+	g_gui_state->setValue("mainwindow/mainsplitter", layoutWidgetSplitter->saveState());
 
 	if (dtmfForm) {
 		MEMMAN_DELETE(dtmfForm);
@@ -810,7 +819,8 @@ void MphoneForm::updateState()
 				name = cr.from_uri.encode_no_params_hdrs(false);
 
 			incomingCallPopup->setCallerName(QString::fromStdString(name));
-			showIncomingCallPopup = true;
+			if (sys_config->get_gui_show_incoming_popup())
+				showIncomingCallPopup = true;
 
 			break;
 		}
@@ -1115,7 +1125,7 @@ void MphoneForm::updateMwi()
 				toolTip.append(tr("Unknown"));
 			}
 		} else {
-			if ((*i)->get_mwi_sollicited()) {
+			if ((*i)->get_mwi_solicited()) {
 				if (mwi.get_status() == t_mwi::MWI_FAILED) {
 					toolTip.append(tr("Failure"));
 					mwi_failure = true;
@@ -1123,7 +1133,7 @@ void MphoneForm::updateMwi()
 					toolTip.append(tr("Unknown"));
 				}
 			} else {
-				// Unsollicited MWI				
+				// Unsolicited MWI				
 				if (mwi.get_status() == t_mwi::MWI_KNOWN) {
 					bool new_msgs;
 					QString status = getMWIStatus(mwi, new_msgs);
@@ -2290,7 +2300,7 @@ void MphoneForm::aboutQt()
 
 void MphoneForm::manual()
 {
-	((t_gui *)ui)->open_url_in_browser("http://www.twinklephone.com");
+	((t_gui *)ui)->open_url_in_browser("https://mfnboer.home.xs4all.nl/twinkle/");
 }
 
 void MphoneForm::editUserProfile()
@@ -2333,6 +2343,8 @@ void MphoneForm::editSysSettings()
         sysSettingsForm = new SysSettingsForm(this);
         sysSettingsForm->setModal(true);
 		MEMMAN_NEW(sysSettingsForm);
+		connect(sysSettingsForm, SIGNAL(inhibitIdleSessionChanged()),
+			(t_gui *)ui, SLOT(updateInhibitIdleSession()));
 		connect(sysSettingsForm, SIGNAL(sipUdpPortChanged()),
 			this, SLOT(updateSipUdpPort()));
 		connect(sysSettingsForm, SIGNAL(rtpPortChanged()),
@@ -3239,12 +3251,20 @@ void MphoneForm::whatsThis()
 void MphoneForm::sysTrayIconClicked(QSystemTrayIcon::ActivationReason reason)
 {
 	if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick)
-	{
-		if (sys_config->get_gui_hide_on_close())
-			setVisible(!isVisible());
-		else
-			activateWindow();
-	}
+		toggleWindow();
+}
+
+void MphoneForm::toggleWindow()
+{
+	setVisible(!isVisible());
+}
+
+void MphoneForm::updateTrayIconMenu()
+{
+	if (isVisible())
+		toggleWindowAction->setText(tr("Hide window"));
+	else
+		toggleWindowAction->setText(tr("Show window"));
 }
 
 bool MphoneForm::event(QEvent * event)

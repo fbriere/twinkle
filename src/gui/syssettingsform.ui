@@ -93,7 +93,7 @@
    <item row="1" column="0" colspan="2">
     <layout class="QHBoxLayout">
      <item>
-      <spacer name="spacer98">
+      <spacer>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -154,7 +154,7 @@
       <number>2</number>
      </property>
      <widget class="QWidget" name="pageAudio">
-      <layout class="QGridLayout" name="gridLayout_2">
+      <layout class="QGridLayout">
        <item row="1" column="0" colspan="2">
         <widget class="QGroupBox" name="soundcardGroupBox">
          <property name="title">
@@ -315,7 +315,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
          <property name="title">
           <string>Advanced</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout">
+         <layout class="QGridLayout">
           <item row="0" column="0">
            <layout class="QGridLayout">
             <item row="0" column="0">
@@ -486,7 +486,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
            </layout>
           </item>
           <item row="0" column="1">
-           <spacer name="spacer27">
+           <spacer>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -515,7 +515,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </widget>
        </item>
        <item row="3" column="1">
-        <spacer name="spacer97">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -621,7 +621,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
           </widget>
          </item>
          <item>
-          <spacer name="spacer7">
+          <spacer>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -691,7 +691,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </widget>
        </item>
        <item>
-        <spacer name="spacer6">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -709,7 +709,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
       </layout>
      </widget>
      <widget class="QWidget" name="pageGeneral">
-      <layout class="QGridLayout" name="gridLayout_3">
+      <layout class="QGridLayout">
        <item row="0" column="0">
         <widget class="QLabel" name="generalTitleTextLabel">
          <property name="font">
@@ -872,7 +872,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
           </widget>
          </item>
          <item>
-          <spacer name="spacer73">
+          <spacer>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -890,6 +890,19 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </layout>
        </item>
        <item row="6" column="0">
+        <widget class="QCheckBox" name="incomingPopupCheckBox">
+         <property name="whatsThis">
+          <string>Display a popup window with "Answer" and "Reject" buttons on an incoming call.</string>
+         </property>
+         <property name="text">
+          <string>Show &amp;popup window on incoming call</string>
+         </property>
+         <property name="shortcut">
+          <string>Alt+P</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
         <layout class="QHBoxLayout">
          <item>
           <widget class="QCheckBox" name="autoShowCheckBox">
@@ -925,7 +938,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
           </widget>
          </item>
          <item>
-          <spacer name="spacer14">
+          <spacer>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
@@ -942,7 +955,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
          </item>
         </layout>
        </item>
-       <item row="7" column="0">
+       <item row="9" column="0">
         <layout class="QHBoxLayout">
          <item>
           <widget class="QLabel" name="browserTextLabel">
@@ -965,6 +978,19 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
           </widget>
          </item>
         </layout>
+       </item>
+       <item row="8" column="0">
+        <widget class="QCheckBox" name="inhibitIdleSessionCheckBox">
+         <property name="whatsThis">
+          <string>If the session is marked as idle, it may trigger certain actions (such as locking the screen, logging out automatically, or suspending the system) depending on your configuration.  Enabling this option will prevent this from happening while a call is in progress.</string>
+         </property>
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Prevent &amp;idle session while a call is in progress</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -992,7 +1018,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </widget>
        </item>
        <item row="5" column="3">
-        <spacer name="spacer9">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -1008,7 +1034,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </spacer>
        </item>
        <item row="2" column="2" colspan="2">
-        <spacer name="spacer8">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -1070,7 +1096,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
         </widget>
        </item>
        <item row="1" column="2" colspan="2">
-        <spacer name="spacer7_2">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -1216,7 +1242,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
           <item>
            <layout class="QHBoxLayout">
             <item>
-             <spacer name="spacer21">
+             <spacer>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -1316,7 +1342,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
           <item>
            <layout class="QHBoxLayout">
             <item>
-             <spacer name="spacer21_2">
+             <spacer>
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -1361,7 +1387,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
         </widget>
        </item>
        <item>
-        <spacer name="spacer23">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -1381,7 +1407,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
      <widget class="QWidget" name="pageAddressBook">
       <layout class="QVBoxLayout">
        <item>
-        <widget class="QLabel" name="ringtonesTitleTextLabel_2">
+        <widget class="QLabel">
          <property name="font">
           <font>
            <pointsize>21</pointsize>
@@ -1441,7 +1467,7 @@ Depending on your SIP provider the network might provide ring back tone or an an
         </widget>
        </item>
        <item>
-        <spacer name="spacer61">
+        <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>

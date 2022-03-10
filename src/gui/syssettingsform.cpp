@@ -15,6 +15,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "twinkle_config.h"
+
 #include <QPixmap>
 #include <QComboBox>
 #include "gui.h"
@@ -264,10 +266,21 @@ void SysSettingsForm::populate()
 	guiUseSystrayCheckBox->setChecked(sys_config->get_gui_use_systray());
 	guiHideCheckBox->setChecked(sys_config->get_gui_hide_on_close());
 	guiHideCheckBox->setEnabled(sys_config->get_gui_use_systray());
+
+	// Inhibit idle session
+	inhibitIdleSessionCheckBox->setChecked(sys_config->get_inhibit_idle_session());
+#ifdef HAVE_DBUS
+	inhibitIdleSessionCheckBox->setEnabled(true);
+#else
+	inhibitIdleSessionCheckBox->setEnabled(false);
+#endif
 	
 	// Call history
 	histSizeSpinBox->setValue(sys_config->get_ch_max_size());
 	
+	// Show popup on incoming call
+	incomingPopupCheckBox->setChecked(sys_config->get_gui_show_incoming_popup());
+
 	// Auto show on incoming call
 	autoShowCheckBox->setChecked(sys_config->get_gui_auto_show_incoming());
 	autoShowTimeoutSpinBox->setValue(sys_config->get_gui_auto_show_timeout());
@@ -376,7 +389,17 @@ void SysSettingsForm::validate()
 	sys_config->set_gui_use_systray(guiUseSystrayCheckBox->isChecked());
 	sys_config->set_gui_hide_on_close(guiHideCheckBox->isChecked());
 	sys_config->set_gui_show_call_osd(osdCheckBox->isChecked());
+
+	// Inhibit idle session
+	if (sys_config->get_inhibit_idle_session() != inhibitIdleSessionCheckBox->isChecked()) {
+		sys_config->set_inhibit_idle_session(inhibitIdleSessionCheckBox->isChecked());
+		// Changing this setting while busy requires special handling
+		emit inhibitIdleSessionChanged();
+	}
 	
+	// Show popup on incoming call
+	sys_config->set_gui_show_incoming_popup(incomingPopupCheckBox->isChecked());
+
 	// Auto show on incoming call
 	sys_config->set_gui_auto_show_incoming(autoShowCheckBox->isChecked());
 	sys_config->set_gui_auto_show_timeout(autoShowTimeoutSpinBox->value());

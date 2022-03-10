@@ -72,10 +72,14 @@ using namespace utils;
 // GUI settings
 #define FLD_GUI_USE_SYSTRAY	"gui_use_systray"
 #define FLD_GUI_HIDE_ON_CLOSE	"gui_hide_on_close"
+#define FLD_GUI_SHOW_INCOMING_POPUP	"gui_show_incoming_popup"
 #define FLD_GUI_AUTO_SHOW_INCOMING	"gui_auto_show_incoming"
 #define FLD_GUI_AUTO_SHOW_TIMEOUT	"gui_auto_show_timeout"
 #define FLD_GUI_BROWSER_CMD	"gui_browser_cmd"
 #define FLD_GUI_SHOW_CALL_OSD	"gui_show_call_osd"
+
+// Inhibit idle session
+#define FLD_INHIBIT_IDLE_SESSION	"inhibit_idle_session"
 
 // Address book settings
 #define FLD_AB_SHOW_SIP_ONLY	"ab_show_sip_only"
@@ -252,9 +256,12 @@ t_sys_settings::t_sys_settings() {
 	
 	gui_use_systray = true;
 	gui_hide_on_close = true;
+	gui_show_incoming_popup = true;
 	gui_auto_show_incoming = false;
 	gui_auto_show_timeout = 10;
 	gui_show_call_osd = true;
+
+	inhibit_idle_session = false;
 	
 	ab_show_sip_only = false;
 	ab_lookup_name = true;
@@ -401,6 +408,11 @@ bool t_sys_settings::get_gui_use_systray(void) const {
 	return gui_use_systray;
 }
 
+bool t_sys_settings::get_gui_show_incoming_popup(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return gui_show_incoming_popup;
+}
+
 bool t_sys_settings::get_gui_auto_show_incoming(void) const {
 	t_mutex_guard guard(mtx_sys);
 	return gui_auto_show_incoming;
@@ -419,6 +431,11 @@ bool t_sys_settings::get_gui_hide_on_close(void) const {
 string t_sys_settings::get_gui_browser_cmd(void) const {
 	t_mutex_guard guard(mtx_sys);
 	return gui_browser_cmd;
+}
+
+bool t_sys_settings::get_inhibit_idle_session(void) const {
+	t_mutex_guard guard(mtx_sys);
+	return inhibit_idle_session;
 }
 
 bool t_sys_settings::get_ab_show_sip_only(void) const {
@@ -636,6 +653,7 @@ bool t_sys_settings::get_show_buddy_list(void) const {
 }
 
 bool t_sys_settings::get_gui_show_call_osd() const {
+	t_mutex_guard guard(mtx_sys);
 	return gui_show_call_osd;
 }
 
@@ -755,6 +773,11 @@ void t_sys_settings::set_gui_hide_on_close(bool b) {
 	gui_hide_on_close = b;
 }
 
+void t_sys_settings::set_gui_show_incoming_popup(bool b) {
+	t_mutex_guard guard(mtx_sys);
+	gui_show_incoming_popup = b;
+}
+
 void t_sys_settings::set_gui_auto_show_incoming(bool b) {
 	t_mutex_guard guard(mtx_sys);
 	gui_auto_show_incoming = b;
@@ -768,6 +791,11 @@ void t_sys_settings::set_gui_auto_show_timeout(int timeout) {
 void t_sys_settings::set_gui_browser_cmd(const string &s) {
 	t_mutex_guard guard(mtx_sys);
 	gui_browser_cmd = s;
+}
+
+void t_sys_settings::set_inhibit_idle_session(bool b) {
+	t_mutex_guard guard(mtx_sys);
+	inhibit_idle_session = b;
 }
 
 void t_sys_settings::set_ab_show_sip_only(bool b) {
@@ -973,8 +1001,7 @@ void t_sys_settings::set_warn_hide_user(bool b) {
 }
 
 void t_sys_settings::set_gui_show_call_osd(bool b) {
-	// Using mutexes in primitive type getters/setters doesn't make any sense.
-	// TODO: remove t_mutex_guard from other getters/setters like this one.
+	t_mutex_guard guard(mtx_sys);
 	gui_show_call_osd = b;
 }
 
@@ -1050,6 +1077,10 @@ string t_sys_settings::about(bool html) const {
 	if (html) s += "<BR>";
 	s += "\n";
 	
+	s += TRANSLATE("* G.722 codec from Steve Underwood (public domain)");
+	if (html) s += "<BR>";
+	s += "\n";
+
 #ifdef HAVE_ILBC
 	s += TRANSLATE("* iLBC implementation from RFC 3951 (www.ilbcfreeware.org)");	
 	if (html) s += "<BR>";
@@ -1579,6 +1610,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			gui_use_systray = yesno2bool(value);
 		} else if (parameter == FLD_GUI_HIDE_ON_CLOSE) {
 			gui_hide_on_close = yesno2bool(value);
+		} else if (parameter == FLD_GUI_SHOW_INCOMING_POPUP) {
+			gui_show_incoming_popup = yesno2bool(value);
 		} else if (parameter == FLD_GUI_AUTO_SHOW_INCOMING) {
 			gui_auto_show_incoming = yesno2bool(value);
 		} else if (parameter == FLD_GUI_AUTO_SHOW_TIMEOUT) {
@@ -1587,6 +1620,8 @@ bool t_sys_settings::read_config(string &error_msg) {
 			gui_browser_cmd = value;
 		} else if (parameter == FLD_GUI_SHOW_CALL_OSD) {
 			gui_show_call_osd = yesno2bool(value);
+		} else if (parameter == FLD_INHIBIT_IDLE_SESSION) {
+			inhibit_idle_session = yesno2bool(value);
 		} else if (parameter == FLD_AB_SHOW_SIP_ONLY) {
 			ab_show_sip_only = yesno2bool(value);
 		} else if (parameter == FLD_AB_LOOKUP_NAME) {
@@ -1723,10 +1758,15 @@ bool t_sys_settings::write_config(string &error_msg) {
 	config << "# GUI\n";
 	config << FLD_GUI_USE_SYSTRAY << '=' << bool2yesno(gui_use_systray) << endl;
 	config << FLD_GUI_HIDE_ON_CLOSE << '=' << bool2yesno(gui_hide_on_close) << endl;
+	config << FLD_GUI_SHOW_INCOMING_POPUP << '=' << bool2yesno(gui_show_incoming_popup) << endl;
 	config << FLD_GUI_AUTO_SHOW_INCOMING << '=' << bool2yesno(gui_auto_show_incoming) << endl;
 	config << FLD_GUI_AUTO_SHOW_TIMEOUT << '=' << gui_auto_show_timeout << endl;
 	config << FLD_GUI_BROWSER_CMD << '=' << gui_browser_cmd << endl;
 	config << FLD_GUI_SHOW_CALL_OSD << '=' << bool2yesno(gui_show_call_osd) << endl;
+	config << endl;
+
+	// Write inhibit idle session settings
+	config << FLD_INHIBIT_IDLE_SESSION << '=' << bool2yesno(inhibit_idle_session) << endl;
 	config << endl;
 	
 	// Write address book settings

@@ -62,6 +62,7 @@ protected:
 	
 private:
         bool            end_interface; // indicates if interface loop should quit
+        int             break_readline_loop_pipe[2]; // pipe used to interrupt Readline
         list<string>    all_commands;  // list of all commands
         t_tone_gen      *tone_gen;     // tone generator for ringing
         
@@ -141,7 +142,7 @@ protected:
 	virtual void do_dnd(bool show_status, bool toggle, bool enable);
 	virtual void do_auto_answer(bool show_status, bool toggle, bool enable);
 	virtual void do_bye(void);
-	virtual void do_hold(void);
+	virtual void do_hold(bool toggle);
 	virtual void do_retrieve(void);
 	virtual bool do_refer(const string &destination, t_transfer_type transfer_type, 
 		bool immediate);
@@ -236,6 +237,7 @@ public:
 	virtual void cb_unsupported_content_type(int line, const t_sip_message *r);
         virtual void cb_ack_timeout(int line);
 	virtual void cb_100rel_timeout(int line);
+	virtual void cb_session_expired(int line);
 	virtual void cb_prack_failed(int line, const t_response *r);
         virtual void cb_provisional_resp_invite(int line, const t_response *r);
         virtual void cb_cancel_failed(int line, const t_response *r);

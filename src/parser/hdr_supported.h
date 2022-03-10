@@ -26,6 +26,7 @@
 
 #define EXT_100REL	"100rel"	// RFC 3262
 #define EXT_REPLACES	"replaces"	// RFC 3891
+#define EXT_TIMER	"timer"		// RFC 4028
 #define EXT_NOREFERSUB	"norefersub"	// RFC 4488
 
 class t_hdr_supported : public t_header {

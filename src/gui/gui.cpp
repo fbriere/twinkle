@@ -56,6 +56,7 @@
 #include "yesnodialog.h"
 #include "command_args.h"
 #include "im/msg_session.h"
+#include "idlesession_manager.h"
 
 #include "qcombobox.h"
 #include "qlabel.h"
@@ -283,9 +284,10 @@ void t_gui::do_bye(void) {
 	QMetaObject::invokeMethod(this, "gui_do_bye");
 }
 
-void t_gui::do_hold(void) {
+void t_gui::do_hold(bool toggle) {
 
-	QMetaObject::invokeMethod(this, "gui_do_hold");
+	QMetaObject::invokeMethod(this, "gui_do_hold",
+				  Q_ARG(bool, toggle));
 }
 
 void t_gui::do_retrieve(void) {
@@ -408,6 +410,12 @@ void t_gui::do_line(int line) {
 	// So return in this case.
 	if (line == 0) return;
 	
+	if (line == -1) {
+		int current = phone->get_active_line();
+		int other = 1 - current;
+		line = other + 1;
+	}
+
 	phone->pub_activate_line(line - 1);
 }
 
@@ -656,17 +664,21 @@ void t_gui::gui_do_bye(void)
 	}
 }
 
-void t_gui::gui_do_hold(void)
+void t_gui::gui_do_hold(bool toggle)
 {
-	if (mainWindow->callHold->isEnabled() && !mainWindow->callHold->isChecked()) {
-		mainWindow->phoneHold(true);
+	if (mainWindow->callHold->isEnabled()) {
+		if (toggle && mainWindow->callHold->isChecked())
+			mainWindow->phoneHold(false);
+		else
+			mainWindow->phoneHold(true);
 	}
 }
 
 void t_gui::gui_do_retrieve(void)
 {
-	if (mainWindow->callHold->isEnabled() && mainWindow->callHold->isChecked()) {
-		mainWindow->phoneHold(false);
+	if (mainWindow->callHold->isEnabled()) {
+		if (mainWindow->callHold->isChecked())
+			mainWindow->phoneHold(false);
 	}
 }
 
@@ -783,6 +795,11 @@ t_gui::t_gui(t_phone *_phone) : t_userintf(_phone), timerUpdateMessageSessions(N
 	qRegisterMetaType<t_cf_type>("t_cf_type");
 	qRegisterMetaType<string>("string");
 	qRegisterMetaType<std::list<std::string>>("std::list<std::string>");
+
+	m_idle_session_manager = new IdleSessionManager(this);
+	connect(this, &t_gui::update_state,
+			this, &t_gui::updateIdleSessionState,
+			Qt::QueuedConnection);
 	
     mainWindow = new MphoneForm;
 #ifdef HAVE_KDE
@@ -818,6 +835,8 @@ void t_gui::run(void) {
 	thr_process_events = new t_thread(process_events_main, NULL);
 	MEMMAN_NEW(thr_process_events);
 	
+	updateInhibitIdleSession();
+
 	QString s;
 	list<t_user *> user_list = phone->ref_users();
 	
@@ -1261,6 +1280,21 @@ void t_gui::cb_100rel_timeout(int line) {
 
 	cb_stop_call_notification(line);
 	
+	unlock();
+}
+
+void t_gui::cb_session_expired(int line) {
+	if (line >= NUM_USER_LINES) return;
+
+	lock();
+	QString s;
+
+	emit mw_display_header();
+	s = qApp->translate("GUI", "Line %1: session has expired, call will be terminated.").arg(line + 1);
+	emit mw_display(s);
+
+	cb_stop_call_notification(line);
+
 	unlock();
 }
 
@@ -3173,6 +3207,19 @@ void t_gui::updateTimersMessageSessions() {
 		(*it)->dec_local_composing_timeout();
 		(*it)->dec_remote_composing_timeout();
 	}
+}
+
+void t_gui::updateInhibitIdleSession() {
+	m_idle_session_manager->setEnabled(sys_config->get_inhibit_idle_session());
+}
+
+void t_gui::updateIdleSessionState() {
+	bool busy = false;
+	for (int i = 0; i < NUM_USER_LINES; i++) {
+		if (phone->get_line_state(i) == LS_BUSY)
+			busy = true;
+	}
+	m_idle_session_manager->setActivityState(busy);
 }
 
 string t_gui::mime2file_extension(t_media media) {

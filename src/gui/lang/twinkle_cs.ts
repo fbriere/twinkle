@@ -17,7 +17,7 @@
     </message>
     <message>
         <source>First name of contact.</source>
-        <translation>Křestní jméno nebo jakékoliv jiné jméno. Bude třídicím klíčem.</translation>
+        <translation>Křestní jméno nebo jakékoliv jiné jméno. Bude třídícím klíčem.</translation>
     </message>
     <message>
         <source>&amp;First name:</source>
@@ -256,7 +256,7 @@
     </message>
     <message>
         <source>failed to publish</source>
-        <translation>zveřejnění selhalho</translation>
+        <translation>zveřejnění selhalo</translation>
     </message>
     <message>
         <source>request failed</source>
@@ -419,7 +419,7 @@
     </message>
     <message>
         <source>Over decadic D. Normally not needed.</source>
-        <translation>Funční klávesa D. Používaná zřídka.</translation>
+        <translation>Funkční klávesa D. Používaná zřídka.</translation>
     </message>
     <message>
         <source>1</source>
@@ -777,7 +777,7 @@
     </message>
     <message>
         <source>%1, STUN request failed.</source>
-        <translation>%1, STUN diatz selhal.</translation>
+        <translation>%1, STUN dotaz selhal.</translation>
     </message>
     <message>
         <source>%1, voice mail status failure.</source>
@@ -829,7 +829,7 @@
     </message>
     <message>
         <source>Cannot open web browser: %1</source>
-        <translation>Nemohu otevřit webový prohlížeč: %1</translation>
+        <translation>Nemohu otevřít webový prohlížeč: %1</translation>
     </message>
     <message>
         <source>Configure your web browser in the system settings.</source>
@@ -954,6 +954,14 @@
         <source>&lt;p&gt;You seem not to have any contacts with a phone number in &lt;b&gt;KAddressBook&lt;/b&gt;, KDE&apos;s address book application. Twinkle retrieves all contacts with a phone number from KAddressBook. To manage your contacts you have to use KAddressBook.&lt;p&gt;As an alternative you may use Twinkle&apos;s local address book.&lt;/p&gt;</source>
         <translation>Zdá se, že &lt;p&gt;&lt;b&gt;KAddressbook&lt;/b&gt; neobsahuje žádné záznamy s telefonními čísly, které by Twinkle mohl načíst. Použijte prosím tento program k úpravě nebo zanesení vašich kontaktů.&lt;/p&gt;
 &lt;p&gt;Druhou možností je používat místní adresář v Twinkle.&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to delete contact &apos;%1&apos; from the local address book?</source>
+        <translation>Smazat kontakt &apos;%1&apos; z místního adresáře?</translation>
+    </message>
+    <message>
+        <source>Delete contact</source>
+        <translation>Smazat kontakt</translation>
     </message>
 </context>
 <context>
@@ -1294,7 +1302,7 @@ With this option you request your SIP provider to hide your identity from the ca
 &lt;b&gt;Warning:&lt;/b&gt; not all providers support identity hiding.
 &lt;/p&gt;</source>
         <translation>&lt;p&gt;S touto volbou dáváte najevo vašemu SIP poskytovateli, že nechcete aby byly na protistranu zaslánu informace o vaší identitě. Např. vaše SIP adresa nebo telefonní číslo. Nicméně vaše IP adresa bude protistraně &lt;b&gt;vždy&lt;/b&gt; sdělena.&lt;/p&gt;
-&lt;p&gt;&lt;b&gt;Upozornění: &lt;/b&gt;Tuto možnost nenenabízejí všichni poskytovatelé!&lt;/p&gt;</translation>
+&lt;p&gt;&lt;b&gt;Upozornění: &lt;/b&gt;Tuto možnost nenabízejí všichni poskytovatelé!&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Not all SIP providers support identity hiding. Make sure your SIP provider supports it if you really need it.</source>
@@ -2531,7 +2539,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>Redirect incoming call to</source>
-        <translation>Příchozí hovor přeměrovat na</translation>
+        <translation>Příchozí hovor přesměrovat na</translation>
     </message>
     <message>
         <source>You can specify up to 3 destinations to which you want to redirect the call. If the first destination does not answer the call, the second destination will be tried and so on.</source>
@@ -2602,7 +2610,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>Make the selected IP address the default IP address. The next time you start Twinkle, this IP address will be automatically selected.</source>
-        <translation>Nastavit vybranou IP adresu jako výchozí. Při přístím startu Twinkle bude automaticky zvolena tato adresa.</translation>
+        <translation>Nastavit vybranou IP adresu jako výchozí. Při příštím startu Twinkle bude automaticky zvolena tato adresa.</translation>
     </message>
     <message>
         <source>Set as default &amp;NIC</source>
@@ -2701,7 +2709,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>Rename the highlighted profile.</source>
-        <translation>Das ausgewählte Benutzerprofil umbenennen.</translation>
+        <translation>Přejmenovat označený profil.</translation>
     </message>
     <message>
         <source>&amp;Set as default</source>
@@ -2753,7 +2761,7 @@ Pokud je SAS shodný na obou stranách, klikněte na ikonku zámečku. Lze se o 
     </message>
     <message>
         <source>&lt;html&gt;You can use the profile editor to create a profile. With the profile editor you can change many settings to tune the SIP protocol, RTP and many other things.&lt;br&gt;&lt;br&gt;Alternatively you can use the wizard to quickly setup a user profile. The wizard asks you only a few essential settings. If you create a user profile with the wizard you can still edit the full profile with the profile editor at a later time.&lt;br&gt;&lt;br&gt;Choose what method you wish to use.&lt;/html&gt;</source>
-        <translation type="obsolete">&lt;html&gt;Pro vytvoření uživatelského profilu můžete použít editor profilu. Tento vám umožní změnit veškerá nastavení týkající se  SIP protokolu, RTP jakož i dalších parametrů programu.&lt;br&gt;&lt;br&gt;Popřípadě použijte Wizard pro rychlé a jednoduché nastavení základních paramtrů ke zvolenému uživatelskému profilu. Wizard se vás dotáže jen na nejzákladnější údaje, které vám váš SIP poskytovatel dá při zaregistrování. Pro některé poskytovatele vám budou dokonce některé z těchto údajů přímo wizardem nabídnuty. I přesto, že profil založíte pomocí wizardu ho budete moci později upravovat pomocí editoru.&lt;br&gt;&lt;br&gt;Nápovědu získáte kdekoliv v Twinkle stiskem klávesové ombinace &quot;Shift + F1&quot;, přes kontextovou nápovědu pomocí stisku pravého tlačítka na myši nebo stiskem na symbol &quot;?&quot; v pravém horním rohu okna.&lt;br&gt;&lt;br&gt;Vyberte si jakým způsobem má být uživatelský profil založen.&lt;/html&gt;</translation>
+        <translation type="obsolete">&lt;html&gt;Pro vytvoření uživatelského profilu můžete použít editor profilu. Tento vám umožní změnit veškerá nastavení týkající se  SIP protokolu, RTP jakož i dalších parametrů programu.&lt;br&gt;&lt;br&gt;Popřípadě použijte Wizard pro rychlé a jednoduché nastavení základních parametrů ke zvolenému uživatelskému profilu. Wizard se vás dotáže jen na nejzákladnější údaje, které vám váš SIP poskytovatel dá při zaregistrování. Pro některé poskytovatele vám budou dokonce některé z těchto údajů přímo wizardem nabídnuty. I přesto, že profil založíte pomocí wizardu ho budete moci později upravovat pomocí editoru.&lt;br&gt;&lt;br&gt;Nápovědu získáte kdekoliv v Twinkle stiskem klávesové kombinace &quot;Shift + F1&quot;, přes kontextovou nápovědu pomocí stisku pravého tlačítka na myši nebo stiskem na symbol &quot;?&quot; v pravém horním rohu okna.&lt;br&gt;&lt;br&gt;Vyberte si jakým způsobem má být uživatelský profil založen.&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;Next you may adjust the system settings. You can change these settings always at a later time.&lt;br&gt;&lt;br&gt;Click OK to view and adjust the system settings.&lt;/html&gt;</source>
@@ -3180,7 +3188,7 @@ Vyberte prosím aspoň jeden profil.</translation>
     </message>
     <message>
         <source>When using ALSA, it is not recommended to use the default device for the microphone as it gives poor sound quality.</source>
-        <translation type="obsolete">Při použítí ALSA rozhraní není doporučeno mít nastaveno pro mikrofon &quot;standardní zařízení&quot;. Může to být příčinou špatné kvality zvuku.</translation>
+        <translation type="obsolete">Při použití ALSA rozhraní není doporučeno mít nastaveno pro mikrofon &quot;standardní zařízení&quot;. Může to být příčinou špatné kvality zvuku.</translation>
     </message>
     <message>
         <source>Reduce &amp;noise from the microphone</source>
@@ -3896,7 +3904,7 @@ If before answering a call, the microphone or speaker appears to be invalid, a w
     </message>
     <message>
         <source>%1 is not set to your home directory.</source>
-        <translation>&quot;%1&quot; nní vaším domovským adresářem.</translation>
+        <translation>&quot;%1&quot; není vaším domovským adresářem.</translation>
     </message>
     <message>
         <source>Directory %1 (%2) does not exist.</source>
@@ -4155,17 +4163,17 @@ a na vašem NATu namapovat (UDP) porty.</translation>
     </message>
     <message>
         <source>&amp;Domain*:</source>
-        <translation>&amp;Doména*:</translation>
+        <translation type="vanished">&amp;Doména*:</translation>
     </message>
     <message>
         <source>Or&amp;ganization:</source>
-        <translation>Or&amp;ganizace:</translation>
+        <translation type="vanished">Or&amp;ganizace:</translation>
     </message>
     <message>
         <source>The SIP user name given to you by your provider. It is the user part in your SIP address, &lt;b&gt;username&lt;/b&gt;@domain.com This could be a telephone number.
 &lt;br&gt;&lt;br&gt;
 This field is mandatory.</source>
-        <translation>Uživatelské jméno, které vám bylo přiděleno vaším poskytovatelem,.je první částí vaší úplné SIP adresy &lt;b&gt;uzivatel&lt;/b&gt;@domain.com
+        <translation>Uživatelské jméno, které vám bylo přiděleno vaším poskytovatelem, je první částí vaší úplné SIP adresy &lt;b&gt;uzivatel&lt;/b&gt;@domain.com.
 Může se jednat o telefonní číslo.
 &lt;br&gt;&lt;br&gt;
 Toto pole je povinné.</translation>
@@ -4233,7 +4241,7 @@ Toto pole je povinné.</translation>
     </message>
     <message>
         <source>&amp;Expiry:</source>
-        <translation>&amp;Platnost:</translation>
+        <translation type="vanished">&amp;Platnost:</translation>
     </message>
     <message>
         <source>The registration expiry time that Twinkle will request.</source>
@@ -4297,7 +4305,7 @@ Toto pole je povinné.</translation>
     </message>
     <message>
         <source>When you tick this option Twinkle will first try to resolve a SIP address to an IP address itself. If it can, then the SIP request will be sent there. Only when it cannot resolve the address, it will send the SIP request to the proxy (note that an in-dialog request will only be sent to the proxy in this case when you also ticked the previous option.)</source>
-        <translation>Pokud je aktivováno, pokusí se nejprve Twinkle najít k cílové adrese odpovídající IP adresu a poslat SIP dotaz přímo tam. Pokud se nepodaří IP adresu zjistit, je dotaz poslán na proxy. (Upozornění:in-dialog žádosti budou v tomto případě posílány na proxy, jen pokud je aktivována i předchozí volba.)</translation>
+        <translation>Pokud je aktivováno, pokusí se nejprve Twinkle najít k cílové adrese odpovídající IP adresu a poslat SIP dotaz přímo tam. Pokud se nepodaří IP adresu zjistit, je dotaz poslán na proxy. (Upozornění: in-dialog žádosti budou v tomto případě posílány na proxy, jen pokud je aktivována i předchozí volba.)</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of your outbound proxy.</source>
@@ -4466,7 +4474,7 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
     </message>
     <message>
         <source>Discontinuous transmission is an addition to VAD/VBR operation, that allows one to stop transmitting completely when the background noise is stationary.</source>
-        <translation>Nesouvislé vysílání je rozšířením funkčnosi VAD/VBR, kdy je možné úplně přestat odesílat data v případě ticha.</translation>
+        <translation>Nesouvislé vysílání je rozšířením funkčnosti VAD/VBR, kdy je možné úplně přestat odesílat data v případě ticha.</translation>
     </message>
     <message>
         <source>The dynamic type value (96 or higher) to be used for speex narrow band.</source>
@@ -4538,7 +4546,7 @@ Systém VAD je vždy aktivován, pokud je nastaveno kódováni s VBR.</translati
     </message>
     <message>
         <source>The pause after a DTMF tone.</source>
-        <translation>Doba prodlevy mezi dvěmi DTMF tóny.</translation>
+        <translation>Doba prodlevy mezi dvěma DTMF tóny.</translation>
     </message>
     <message>
         <source>DTMF &amp;duration:</source>
@@ -4631,11 +4639,11 @@ Vysílá DTMF out-of-band přes požadavek SIP INFO.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Indicates if Twinkle should ask the user before redirecting a request when a 3XX response is received.</source>
-        <translation>Pokud je aktivováno, dotáže se Twinkle při přijmutí požadavku 3XX uživatele, zda-li má být odchozí volání přesměrováno na nový cíl.</translation>
+        <translation>Pokud je aktivováno, dotáže se Twinkle při přijetí požadavku 3XX uživatele, zda-li má být odchozí volání přesměrováno na nový cíl.</translation>
     </message>
     <message>
         <source>Max re&amp;directions:</source>
-        <translation>Max. počet &amp;přesměrování:</translation>
+        <translation type="vanished">Max. počet &amp;přesměrování:</translation>
     </message>
     <message>
         <source>The number of redirect addresses that Twinkle tries at a maximum before it gives up redirecting a request. This prevents a request from getting redirected forever.</source>
@@ -4647,7 +4655,7 @@ Vysílá DTMF out-of-band přes požadavek SIP INFO.&lt;/p&gt;</translation>
     </message>
     <message>
         <source>Call &amp;Hold variant:</source>
-        <translation>Způsob přidržení &amp;hovoru:</translation>
+        <translation type="vanished">Způsob přidržení &amp;hovoru:</translation>
     </message>
     <message>
         <source>RFC 2543</source>
@@ -4712,7 +4720,7 @@ Vysílá DTMF out-of-band přes požadavek SIP INFO.&lt;/p&gt;</translation>
     <message>
         <source>&lt;p&gt;A SIP UAS may send SDP in a 1XX response for early media, e.g. ringing tone. When the call is answered the SIP UAS should send the same SDP in the 200 OK response according to RFC 3261. Once SDP has been received, SDP in subsequent responses should be discarded.&lt;/p&gt;
 &lt;p&gt;By allowing SDP to change during call setup, Twinkle will not discard SDP in subsequent responses and modify the media stream if the SDP is changed. When the SDP in a response is changed, it must have a new version number in the o= line.&lt;/p&gt;</source>
-        <translation>&lt;p&gt;SIP UAS může odesílat SDP v 1XX odpovědi na zvuk zkraje hovoru, např. vyzváněcí tón. Pokud bude volání přijmuto, měl by SIP UAS dle RFC 3261 poslat to samé SDP v odpovědi 200 OK. Po přijmutí SDP by měly být všechny následující odpovědi SDP být zahozeny.&lt;/p&gt;
+        <translation>&lt;p&gt;SIP UAS může odesílat SDP v 1XX odpovědi na zvuk zkraje hovoru, např. vyzváněcí tón. Pokud bude volání přijato, měl by SIP UAS dle RFC 3261 poslat to samé SDP v odpovědi 200 OK. Po přijetí SDP by měly být všechny následující odpovědi SDP být zahozeny.&lt;/p&gt;
 &lt;p&gt;Pokud je povoleno, že se SDP během navázání hovoru může změnit, Twinkle nebude v následujících odpovědích ignorovat SDP, nýbrž změní požadovaným způsobem vlastnosti proudu RTP. Změněné SDP musí mít v &quot;o=&quot; řádku nové číslo verze.&lt;/p&gt;</translation>
     </message>
     <message>
@@ -4756,7 +4764,7 @@ Tento formát je používán většinou SIP telefonů.
     </message>
     <message>
         <source>The Via, Route and Record-Route headers can be encoded as a list of comma separated values or as multiple occurrences of the same header.</source>
-        <translation>Via-, Route- und Record-Route-Header mohou posílány zakódované jako seznam čárkou oddělených hodnot nebo jako jednotlivé hodnoty, každá ve své hlavičce.</translation>
+        <translation>Via-, Route- a Record-Route-Header mohou posílány zakódované jako seznam čárkou oddělených hodnot nebo jako jednotlivé hodnoty, každá ve své hlavičce.</translation>
     </message>
     <message>
         <source>SIP extensions</source>
@@ -4796,7 +4804,7 @@ Tento formát je používán většinou SIP telefonů.
 &lt;br&gt;&lt;br&gt;
 &lt;b&gt;povoleno&lt;/b&gt;: 100rel je podporováno (je přidáno do odchozího INVITE jako podporovaná hlavička). Protistrana si potom může vyžádat PRACK na 1xx odpověď.
 &lt;br&gt;&lt;br&gt;
-&lt;b&gt;vyžadováno&lt;/b&gt;: 100rel je vyžadováno. Požadavek je vložen do hlavičky require v odchozím INVITE. Pokud je v příchotím INVITE značeno, že je 100rel podporováno, pak bude Twinkle vyžadovat PRACK v odpovědi 1xx Pokud protistrana 100rel nepodporuje, nedojde k navázání spojení.
+&lt;b&gt;vyžadováno&lt;/b&gt;: 100rel je vyžadováno. Požadavek je vložen do hlavičky require v odchozím INVITE. Pokud je v příchozím INVITE značeno, že je 100rel podporováno, pak bude Twinkle vyžadovat PRACK v odpovědi 1xx Pokud protistrana 100rel nepodporuje, nedojde k navázání spojení.
 &lt;br&gt;&lt;br&gt;
 &lt;b&gt;upřednostňováno&lt;/b&gt;: Podobné jako &quot;vyžadováno&quot;, akorát že v případě, že hovor selže, jelikož protistrana nepodporuje 100rel (odpověď 420), pak se Twinkle pokusí hovor znovu navázat bez vyžadování 100rel.</translation>
     </message>
@@ -4904,7 +4912,7 @@ Pokud si tuto volbu vyberete, musíte rovněž na vašem NAT zařízení nasměr
     </message>
     <message>
         <source>S&amp;TUN server:</source>
-        <translation>Adresa S&amp;TUN serveru:</translation>
+        <translation type="vanished">Adresa S&amp;TUN serveru:</translation>
     </message>
     <message>
         <source>The hostname, domain name or IP address of the STUN server.</source>
@@ -4998,7 +5006,7 @@ You are at work and all telephone numbers starting with a 0 should be prefixed w
 Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;</source>
-        <translation>&lt;p&gt;
+        <translation type="vanished">&lt;p&gt;
 Často není formát telefonních čísel, které jsou očekávány od VoIP poskytovatele, shodný s formátem čísel uložených v adresáři. Např. u čísel začínajících na &quot;+&quot; a národním kódem země očekává váš poskytovatel namísto &quot;00&quot; znak &quot;+&quot;. Nebo jste-li napojeni na místní SIP síť a je nutné předtočit nejdříve číslo k přístupu ven.
 Zde je možné za použití vyhledávacích a zaměňovacích vzorů (podle způsobu regulárních výrazů a la Perl) nastavit obecně platné pravidla pro konverzi telefonních čísel.
 &lt;/p&gt;
@@ -5017,7 +5025,7 @@ K tomu jsou potřebné následující pravidla uvedená v tomto pořadí:
 &lt;/p&gt;
 &lt;blockquote&gt;
 &lt;tt&gt;
-Hledaný výraz = \+49([0-9]*) , Náhrada = 0$1&lt;br&gt;
+Hledaný výraz = \+420([0-9]*) , Náhrada = 0$1&lt;br&gt;
 Hledaný výraz = \+([0-9]*) , Náhrada = 00$1&lt;/br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
@@ -5031,7 +5039,7 @@ Hledaný výraz = 0[0-9]* , Náhrada = 9$&amp;&lt;br&gt;
 &lt;/tt&gt;
 &lt;/blockquote&gt;
 ( $&amp; je speciální proměnná, do které je uloženo celé originální číslo)&lt;br&gt;
-Poznámka: Toto pravidlo nelze nastavit jednoduše jako třetí pravidlo ke dvou pravidlů z předcházejícího příkladu. Bude totiž použito vždy jen to první, které vyhledávání vyhoví. Namísto toho by muselo být změněno nahrazování v pravidlech 1 a 2 - &quot;57$1&quot; a &quot;577$1&quot;</translation>
+Poznámka: Toto pravidlo nelze nastavit jednoduše jako třetí pravidlo ke dvou pravidlům z předcházejícího příkladu. Bude totiž použito vždy jen to první, které vyhledávání vyhoví. Namísto toho by muselo být změněno nahrazování v pravidlech 1 a 2 - &quot;57$1&quot; a &quot;577$1&quot;</translation>
     </message>
     <message>
         <source>Move the selected number conversion rule upwards in the list.</source>
@@ -5230,7 +5238,7 @@ The values of all SIP headers of the outgoing 200 OK are passed in environment v
 &lt;p&gt;
 &lt;b&gt;TWINKLE_TRIGGER=in_call_answered&lt;/b&gt;. &lt;b&gt;SIPSTATUS_CODE=200&lt;/b&gt;. &lt;b&gt;SIPSTATUS_REASON&lt;/b&gt; contains the reason phrase.  The name of the user profile will be passed in &lt;b&gt;TWINKLE_USER_PROFILE&lt;/b&gt;.</source>
         <translation>&lt;p&gt;
-Tento skript bude spuštěn, pokud bude příchozí hovor přijmut.
+Tento skript bude spuštěn, pokud bude příchozí hovor přijat.
 &lt;/p&gt;
 &lt;h3&gt;Systémové proměnné&lt;/h3&gt;
 &lt;p&gt;
@@ -5326,7 +5334,7 @@ Obsahy všech SIP hlaviček odeslaných SIP INVITE požadavků budou předány t
     </message>
     <message>
         <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unecrypted.</source>
-        <translation>Pokud je aktivováno, pokusí se Twinkle při všech odchozích a příchozích hovorech zašifrovat zvuková data. Aby byl hovor opravdu zašifrován musí i protistrana podporovat šifrování ZRTP/SRTP. Jinak zůstane hovor nešifrovaný.</translation>
+        <translation type="vanished">Pokud je aktivováno, pokusí se Twinkle při všech odchozích a příchozích hovorech zašifrovat zvuková data. Aby byl hovor opravdu zašifrován musí i protistrana podporovat šifrování ZRTP/SRTP. Jinak zůstane hovor nešifrovaný.</translation>
     </message>
     <message>
         <source>ZRTP settings</source>
@@ -5494,7 +5502,7 @@ Pokud je deaktivováno, použije Twinkle první kodek z vlastního seznamu, kter
     </message>
     <message>
         <source>Indicates if the Replaces-extenstion is supported.</source>
-        <translation>Indikuje, zda je rozšíření Replaces podporováno.</translation>
+        <translation type="vanished">Indikuje, zda je rozšíření Replaces podporováno.</translation>
     </message>
     <message>
         <source>Attended refer to AoR (Address of Record)</source>
@@ -5502,7 +5510,7 @@ Pokud je deaktivováno, použije Twinkle první kodek z vlastního seznamu, kter
     </message>
     <message>
         <source>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endoint.</source>
-        <translation>Asistované přepojení by mělo používat Contact-URI jako cílovou adresu pro sdělení nového spojení přesměrovávané protistraně. Tato adresa nemusí být ovšem globálně platná. Alternativně se může použít AoR (Address of Record). Nevýhodou je, že při více koncových zařízeních není AoR jednoznačné, zatímco URI kontaktu směřuje na jediné zařízení.</translation>
+        <translation type="vanished">Asistované přepojení by mělo používat Contact-URI jako cílovou adresu pro sdělení nového spojení přesměrovávané protistraně. Tato adresa nemusí být ovšem globálně platná. Alternativně se může použít AoR (Address of Record). Nevýhodou je, že při více koncových zařízeních není AoR jednoznačné, zatímco URI kontaktu směřuje na jediné zařízení.</translation>
     </message>
     <message>
         <source>Privacy</source>
@@ -5518,7 +5526,7 @@ Pokud je deaktivováno, použije Twinkle první kodek z vlastního seznamu, kter
     </message>
     <message>
         <source>Include a P-Preferred-Identity header with your identity in an INVITE request for a call with identity hiding.</source>
-        <translation>Pokud je vybráno a je aktivována volba &quot;skrýt odesilatele&quot;, bude spolu s údajem odesilatele odeslána při požadavku INVITE hlacička P-Preferred-Identity.</translation>
+        <translation>Pokud je vybráno a je aktivována volba &quot;skrýt odesilatele&quot;, bude spolu s údajem odesilatele odeslána při požadavku INVITE hlavička P-Preferred-Identity.</translation>
     </message>
     <message>
         <source>&lt;p&gt;
@@ -5616,11 +5624,11 @@ TWINKLE_USER_PROFILE obsahuje jméno uživatelského profilu, pro který je př�
     </message>
     <message>
         <source>Unsollicited</source>
-        <translation>Nevyžádané</translation>
+        <translation type="vanished">Nevyžádané</translation>
     </message>
     <message>
         <source>Sollicited</source>
-        <translation>Vyžádané</translation>
+        <translation type="vanished">Vyžádané</translation>
     </message>
     <message>
         <source>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
@@ -5635,7 +5643,7 @@ Asterisk provides unsollicited message waiting indication.
 &lt;p&gt;
 Sollicited message waiting indication as specified by RFC 3842.
 &lt;/p&gt;</source>
-        <translation>&lt;H2&gt;Typ indikace čekajících zpráv&lt;/H2&gt;
+        <translation type="vanished">&lt;H2&gt;Typ indikace čekajících zpráv&lt;/H2&gt;
 &lt;p&gt;
 Pokud váš SIP poskytovatel nabízí upozornění na uložené zprávy v hlasové schránce, může vás Twinkle informovat o nových i již vyslechnutých zprávách ve vaší hlasové schránce. Zeptejte se vašeho poskytovatele, jaký typ indikace čekajících zpráv je používán
 &lt;/p&gt;
@@ -5654,7 +5662,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
     </message>
     <message>
         <source>Sollicited MWI</source>
-        <translation>Vyžádané MWI</translation>
+        <translation type="vanished">Vyžádané MWI</translation>
     </message>
     <message>
         <source>Subscription &amp;duration:</source>
@@ -5670,7 +5678,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
     </message>
     <message>
         <source>For sollicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
-        <translation>Dle specifikace MWI se koncové zařízení hlásí na serveru k příjmu zpráv na určitou dobu a před vypršením této doby by se přihlášení mělo znovu obnovit.</translation>
+        <translation type="vanished">Dle specifikace MWI se koncové zařízení hlásí na serveru k příjmu zpráv na určitou dobu a před vypršením této doby by se přihlášení mělo znovu obnovit.</translation>
     </message>
     <message>
         <source>Your user name for accessing your voice mailbox.</source>
@@ -5786,7 +5794,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
     </message>
     <message>
         <source>The q-value is a value between 0.000 and 1.000. A higher value means a higher priority.</source>
-        <translation>Hodnota &apos;q&apos; je mezi 0.000 and 1.000  Vyšší hodnota znamená vyšší prioritu.</translation>
+        <translation>Hodnota &apos;q&apos; je mezi 0.000 and 1.000. Vyšší hodnota znamená vyšší prioritu.</translation>
     </message>
     <message>
         <source>SIP transport</source>
@@ -5818,7 +5826,7 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
     </message>
     <message>
         <source>Use &amp;STUN (does not work for incoming TCP)</source>
-        <translation>Použít &amp;STUN (nefunguje pro příchozí TCP)</translation>
+        <translation type="vanished">Použít &amp;STUN (nefunguje pro příchozí TCP)</translation>
     </message>
     <message>
         <source>P&amp;ersistent TCP connection</source>
@@ -5951,6 +5959,163 @@ Vyžádaná indikace čekajících zpráv dle RFC 3842.
     <message>
         <source>If you have enabled STUN or NAT keep alive, then Twinkle will send keep alive packets at this interval rate to keep the address bindings in your NAT device alive.</source>
         <translation>Pokud máte povolený STUN nebo NAT keep alive, pak bude Twinkle zasílat udržovací pakety v tomto intervalu, aby byla udržena mapování na vašem NATu.</translation>
+    </message>
+    <message>
+        <source>Do&amp;main*:</source>
+        <translation>&amp;Doména*:</translation>
+    </message>
+    <message>
+        <source>Organi&amp;zation:</source>
+        <translation>Or&amp;ganizace:</translation>
+    </message>
+    <message>
+        <source>E&amp;xpiry:</source>
+        <translation>&amp;Platnost:</translation>
+    </message>
+    <message>
+        <source>Call Hold &amp;variant:</source>
+        <translation>Způsob přidržení &amp;hovoru:</translation>
+    </message>
+    <message>
+        <source>&amp;Max redirections:</source>
+        <translation>Max. počet &amp;přesměrování:</translation>
+    </message>
+    <message>
+        <source>Indicates if the Replaces-extension is supported.</source>
+        <translation>Indikuje, zda je rozšíření Replaces podporováno.</translation>
+    </message>
+    <message>
+        <source>An attended call transfer should use the contact URI as a refer target. A contact URI may not be globally routable however. Alternatively the AoR (Address of Record) may be used. A disadvantage is that the AoR may route to multiple endpoints in case of forking whereas the contact URI routes to a single endpoint.</source>
+        <translation>Asistované přepojení by mělo používat Contact-URI jako cílovou adresu pro sdělení nového spojení přesměrovávané protistraně. Tato adresa nemusí být ovšem globálně platná. Alternativně se může použít AoR (Address of Record). Nevýhodou je, že při více koncových zařízeních není AoR jednoznačné, zatímco URI kontaktu směřuje na jediné zařízení.</translation>
+    </message>
+    <message>
+        <source>Include a P-Asserted-Identity header with your identity in an INVITE request for a call with identity hiding.</source>
+        <translation>Pokud je vybráno a je aktivována volba &quot;skrýt odesilatele&quot;, bude spolu s údajem odesilatele odeslána při požadavku INVITE hlavička P-Preferred-Identity.</translation>
+    </message>
+    <message>
+        <source>&amp;Send P-Asserted-Identity header when hiding user identity</source>
+        <translation>&amp;Posílat hlavičku P-Preferred-Identity při skrývání identity uživatele</translation>
+    </message>
+    <message>
+        <source>Use STUN (does not wor&amp;k for incoming TCP)</source>
+        <translation>Použít &amp;STUN (nefunguje pro příchozí TCP)</translation>
+    </message>
+    <message>
+        <source>STUN ser&amp;ver:</source>
+        <translation>Adresa S&amp;TUN serveru:</translation>
+    </message>
+    <message>
+        <source>&lt;p&gt;
+Often the format of the telephone numbers you need to dial is different from the format of the telephone numbers stored in your address book, e.g. your numbers start with a +-symbol followed by a country code, but your provider expects &apos;00&apos; instead of the &apos;+&apos;, or you are at the office and all your numbers need to be prefixed with a &apos;9&apos; to access an outside line. Here you can specify number format conversion using Perl style regular expressions and format strings.
+&lt;/p&gt;
+&lt;p&gt;
+For each number you dial, Twinkle will try to find a match in the list of match expressions. For the first match it finds, the number will be replaced with the format string. If no match is found, the number stays unchanged.
+&lt;/p&gt;
+&lt;p&gt;
+The number conversion rules are also applied to incoming calls, so the numbers are displayed in the format you want.
+&lt;/p&gt;
+&lt;h3&gt;Example 1&lt;/h3&gt;
+&lt;p&gt;
+Assume your country code is 31 and you have stored all numbers in your address book in full international number format, e.g. +318712345678. For dialling numbers in your own country you want to strip of the &apos;+31&apos; and replace it by a &apos;0&apos;. For dialling numbers abroad you just want to replace the &apos;+&apos; by &apos;00&apos;.
+&lt;/p&gt;
+&lt;p&gt;
+The following rules will do the trick:
+&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+Match expression = \+31([0-9]*) , Replace =  0$1&lt;br&gt;
+Match expression = \+([0-9]*) , Replace = 00$1&lt;/br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;
+&lt;h3&gt;Example 2&lt;/h3&gt;
+&lt;p&gt;
+You are at work and all telephone numbers starting with a 0 should be prefixed with a 9 for an outside line.
+&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+Match expression = 0[0-9]* , Replace =  9$&amp;&lt;br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;</source>
+        <translation>&lt;p&gt;
+Často není formát telefonních čísel, které jsou očekávány od VoIP poskytovatele, shodný s formátem čísel uložených v adresáři. Např. u čísel začínajících na &quot;+&quot; a národním kódem země očekává váš poskytovatel namísto &quot;00&quot; znak &quot;+&quot;. Nebo jste-li napojeni na místní SIP síť a je nutné předtočit nejdříve číslo k přístupu ven.
+Zde je možné za použití vyhledávacích a zaměňovacích vzorů (podle způsobu regulárních výrazů a la Perl) nastavit obecně platné pravidla pro konverzi telefonních čísel.
+&lt;/p&gt;
+&lt;p&gt;
+Při každém vytáčení se Twinkle pokusí najít pro čísla z uživatelské části SIP adresy odpovídají výraz v seznamu hledaných vzorů. S prvním nalezeným vyhovujícím výrazem je provedena úprava originálního čísla, přičemž pozice v &quot;(&quot; &quot;)&quot; v hledaném výrazu (např. &quot;([0-9]*)&quot; pro &quot;jakkoliv mnoho čísel&quot;) je nahrazena znaky v odpovídajících proměnných. Např. &quot;$1&quot; pro první pozici. Viz též `man 7 regex` nebo konqueror:&quot;#regex&quot;. Pokud není nalezen žádný odpovídající hledaný vzor, zůstane číslo nezměněno.
+&lt;/p&gt;
+&lt;p&gt;
+Pravidla budou rovněž použita na čísla v příchozích voláních. Podle nastavených pravidel budou tato přetransformována do žádaného formátu.
+&lt;/p&gt;
+&lt;h3&gt;1. příklad&lt;/h3&gt;
+&lt;p&gt;
+Např. váš národní kód je &quot;420&quot; pro českou republiku a ve vašem adresáři máte také mnoho vnitrostátních čísel uložených v mezinárodním formátu. Např.. +420 577 2345678. Avšak VoIP poskytovatel očekává pro vnitrostátní hovor 0577 2345678. Chcete tedy nahradit &apos;+420&apos; za &apos;0&apos; a zároveň pro zahraniční hovory nahradit &apos;+&apos; za &apos;00&apos;.
+&lt;/p&gt;
+&lt;p&gt;
+K tomu jsou potřebné následující pravidla uvedená v tomto pořadí:
+&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+Hledaný výraz = \+420([0-9]*) , Náhrada = 0$1&lt;br&gt;
+Hledaný výraz = \+([0-9]*) , Náhrada = 00$1&lt;/br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;
+&lt;h3&gt;2. příklad&lt;/h3&gt;
+&lt;p&gt;
+Nacházíte se na telefonní ústředně a všem číslům s 0 jako první číslicí, má být předřazeno číslo 9. 
+&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;tt&gt;
+Hledaný výraz = 0[0-9]* , Náhrada = 9$&amp;&lt;br&gt;
+&lt;/tt&gt;
+&lt;/blockquote&gt;
+( $&amp; je speciální proměnná, do které je uloženo celé originální číslo)&lt;br&gt;
+Poznámka: Toto pravidlo nelze nastavit jednoduše jako třetí pravidlo ke dvou pravidlům z předcházejícího příkladu. Bude totiž použito vždy jen to první, které vyhledávání vyhoví. Namísto toho by muselo být změněno nahrazování v pravidlech 1 a 2 - &quot;57$1&quot; a &quot;577$1&quot;</translation>
+    </message>
+    <message>
+        <source>When ZRTP/SRTP is enabled, then Twinkle will try to encrypt the audio of each call you originate or receive. Encryption will only succeed if the remote party has ZRTP/SRTP support enabled. If the remote party does not support ZRTP/SRTP, then the audio channel will stay unencrypted.</source>
+        <translation>Pokud je aktivováno, pokusí se Twinkle při všech odchozích a příchozích hovorech zašifrovat zvuková data. Aby byl hovor opravdu zašifrován musí i protistrana podporovat šifrování ZRTP/SRTP. Jinak zůstane hovor nešifrovaný.</translation>
+    </message>
+    <message>
+        <source>&lt;H2&gt;Message waiting indication type&lt;/H2&gt;
+&lt;p&gt;
+If your provider offers the message waiting indication service, then Twinkle can show you when new voice mail messages are waiting. Ask your provider which type of message waiting indication is offered.
+&lt;/p&gt;
+&lt;H3&gt;Unsolicited&lt;/H3&gt;
+&lt;p&gt;
+Asterisk provides unsolicited message waiting indication.
+&lt;/p&gt;
+&lt;H3&gt;Solicited&lt;/H3&gt;
+&lt;p&gt;
+Solicited message waiting indication as specified by RFC 3842.
+&lt;/p&gt;</source>
+        <translation>&lt;H2&gt;Typ indikace čekajících zpráv&lt;/H2&gt;
+&lt;p&gt;
+Pokud váš SIP poskytovatel nabízí upozornění na uložené zprávy v hlasové schránce, může vás Twinkle informovat o nových i již vyslechnutých zprávách ve vaší hlasové schránce. Zeptejte se vašeho poskytovatele, jaký typ indikace čekajících zpráv je používán
+&lt;/p&gt;
+&lt;H3&gt;Nevyžádané&lt;/H3&gt;
+&lt;p&gt;
+Asterisk podporuje nevyžádané indikování čekajících zpráv.
+&lt;/p&gt;
+&lt;H3&gt;Vyžádané&lt;/H3&gt;
+&lt;p&gt;
+Vyžádaná indikace čekajících zpráv dle RFC 3842.
+&lt;/p&gt;</translation>
+    </message>
+    <message>
+        <source>Unsolicited</source>
+        <translation>Nevyžádané</translation>
+    </message>
+    <message>
+        <source>Solicited</source>
+        <translation>Vyžádané</translation>
+    </message>
+    <message>
+        <source>Solicited MWI</source>
+        <translation>Vyžádané MWI</translation>
+    </message>
+    <message>
+        <source>For solicited MWI, an endpoint subscribes to the message status for a limited duration. Just before the duration expires, the endpoint should refresh the subscription.</source>
+        <translation>Dle specifikace MWI se koncové zařízení hlásí na serveru k příjmu zpráv na určitou dobu a před vypršením této doby by se přihlášení mělo znovu obnovit.</translation>
     </message>
 </context>
 <context>
