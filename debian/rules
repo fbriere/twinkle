@@ -4,6 +4,9 @@
 # Also provide variables for `override_dh_builddeb` recipe below
 include /usr/share/dpkg/architecture.mk
 include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/vendor.mk
+
+UBUNTU := $(shell $(call dpkg_vendor_derives_from,Ubuntu))
 
 # Disable ZRTP support for now (see: #797554)
 CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ZRTP=OFF -DWITH_SPEEX=ON -DWITH_GSM=ON
@@ -29,6 +32,7 @@ override_dh_auto_configure:
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
 
+ifeq ($(UBUNTU),yes)
 # Make the resulting binary packages usable by lintian and reprepro on Debian
 override_dh_builddeb:
 	@# Override Ubuntu's default zstd compression
@@ -42,3 +46,4 @@ override_dh_builddeb:
 		mv "../$${_basename}.ddeb" "../$${_basename}.deb"; \
 		sed -i -e "/^$${pkg}-dbgsym_/s/\.ddeb /.deb /" debian/files; \
 	done
+endif
