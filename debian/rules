@@ -1,7 +1,9 @@
 #!/usr/bin/make -f
 
 # Support manual invocation of debian/rules
+# Also provide variables for `override_dh_builddeb` recipe below
 include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/pkg-info.mk
 
 # Disable ZRTP support for now (see: #797554)
 CONFIGURE_FLAGS = -DWITH_QT5=ON -DWITH_ZRTP=OFF -DWITH_SPEEX=ON -DWITH_GSM=ON
@@ -17,12 +19,6 @@ endif
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
 # Enable hardening build flags
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
-
-# Variables to be used by `override_dh_builddeb` further below
-DEB_HOST_ARCH = $(shell dpkg-architecture --query=DEB_HOST_ARCH)
-version := $(shell LC_ALL=C dpkg-parsechangelog --show-field=Version)
-version_epochless := $(shell echo $(version) | sed -e 's/^[0-9]\+://')
-
 
 %:
 	dh $@
@@ -40,7 +36,7 @@ override_dh_builddeb:
 	@# Rename `.ddeb` debug packages back to `.deb` -- idea taken from:
 	@#   https://patchwork.ozlabs.org/project/ubuntu-kernel/patch/20180421074128.18751-1-steve.langasek@canonical.com/
 	@for pkg in $$(dh_listpackages --arch); do \
-		_basename="$${pkg}-dbgsym_$(version_epochless)_$(DEB_HOST_ARCH)"; \
+		_basename="$${pkg}-dbgsym_$(DEB_VERSION_UPSTREAM_REVISION)_$(DEB_HOST_ARCH)"; \
 		printf "\tRenaming %s back to %s\n" \
 			"$${_basename}.ddeb" "$${_basename}.deb"; \
 		mv "../$${_basename}.ddeb" "../$${_basename}.deb"; \
