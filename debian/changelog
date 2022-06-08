@@ -1,3 +1,11 @@
+twinkle (1:1.10.3+git20220607.da1fd04+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot
+  * Add a mailto: Bugs control field (with lintian overrides)
+  * Drop obsolete `debian/clean`
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Wed, 08 Jun 2022 13:47:52 -0400
+
 twinkle (1:1.10.3+git20220307.15ece11+dfsg-1ubuntu2) jammy; urgency=medium
 
   * Use `$(DEB_*)` variables from dpkg instead of jerry-rigging our own

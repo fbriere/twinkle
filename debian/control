@@ -24,6 +24,7 @@ Standards-Version: 4.6.0
 Homepage: http://twinkle.dolezel.info/
 Vcs-Git: https://github.com/fbriere/twinkle.git -b ubuntu/master
 Vcs-Browser: https://github.com/fbriere/twinkle/tree/ubuntu/master
+Bugs: mailto:fbriere@fbriere.net
 
 Package: twinkle
 Architecture: any
