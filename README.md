@@ -8,6 +8,7 @@ Twinkle is a SIP-based VoIP client.
 
 To compile Twinkle you need the following libraries:
 
+* A standard library with C++11 support (at least version 4.9 for libstdc++)
 * ucommon [GNU uCommon C++](http://www.gnu.org/software/commoncpp/)
 * ccRTP (version >= 1.5.0) [GNU RTP Stack](http://www.gnu.org/software/ccrtp/)
 * libxml2
@@ -28,10 +29,11 @@ The following tools are also required:
 ### Optional dependencies
 
 * alsa-lib (also known as libasound)
-* libzrtpcpp (version >= 0.9.0) [ZRTP library, ccRTP support must be enabled](http://www.gnutelephony.org/index.php/GNU_ZRTP)
+* libzrtpcpp (version >= 0.9.0) [ZRTP library, ccRTP support must be enabled](https://www.gnu.org/software/ccrtp/zrtp.html)
 * bcg729 [G.729A codec library](http://www.linphone.org/technical-corner/bcg729)
 * Speex and SpeexDSP [Speex codec library](http://www.speex.org/)
 * iLBC [iLBC codec library](http://www.ilbcfreeware.org/)
+* [Akonadi](https://community.kde.org/KDE_PIM/Akonadi) (specifically, the `core` library) and [KContacts](https://cgit.kde.org/kcontacts.git)
 
 ## Build
 
@@ -46,7 +48,8 @@ All possible options are:
 * G.729A codec support: `-DWITH_G729=On`
 * Speex codec support: `-DWITH_SPEEX=On`
 * iLBC codec support: `-DWITH_ILBC=On`
-* Diamondcard support: `-DWITH_DIAMONDCARD=On` (currently broken)
+* Diamondcard support: `-DWITH_DIAMONDCARD=On`
+* Akonadi support: `-DWITH_AKONADI=On` (requires `WITH_QT5`)
 
 ### Build instructions
 
