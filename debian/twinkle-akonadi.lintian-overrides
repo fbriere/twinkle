@@ -1,0 +1,5 @@
+# Our version scheme can result in rather long filenames
+package-has-long-file-name
+
+# We use a mailto: URL (undocumented, but supported by reportbug)
+bugs-field-does-not-refer-to-debian-infrastructure

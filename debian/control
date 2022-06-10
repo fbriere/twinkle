@@ -10,6 +10,8 @@ Build-Depends:
  libasound2-dev [linux-any],
  libccrtp-dev,
  libgsm1-dev,
+ libkf5akonadi-dev,
+ libkf5contacts-dev,
  libmagic-dev,
  libreadline-dev,
  libsndfile1-dev,
@@ -33,6 +35,8 @@ Depends:
  twinkle-common (= ${source:Version}),
  ${misc:Depends},
  ${shlibs:Depends},
+Conflicts: twinkle-akonadi
+Replaces: twinkle-akonadi
 Description: Voice over Internet Protocol (VoIP) SIP Phone (GUI)
  Twinkle is a soft-phone for making telephone calls over an IP network
  using the SIP protocol. You can use it for direct IP phone to IP phone
@@ -41,6 +45,25 @@ Description: Voice over Internet Protocol (VoIP) SIP Phone (GUI)
  call rejection, 2 simultaneous calls and 3-way conference calls.
  .
  This package contains the graphical interface.
+
+Package: twinkle-akonadi
+Architecture: any
+Depends:
+ qml-module-qtquick2,
+ twinkle-common (= ${source:Version}),
+ ${misc:Depends},
+ ${shlibs:Depends},
+ kdepim-runtime,
+Conflicts: twinkle
+Replaces: twinkle
+Description: Voice over Internet Protocol (VoIP) SIP Phone (GUI w/ Akonadi support)
+ Twinkle is a soft-phone for making telephone calls over an IP network
+ using the SIP protocol. You can use it for direct IP phone to IP phone
+ communication or in a network using a SIP proxy to route your calls.
+ Notable features include multiple active identities, call transfer,
+ call rejection, 2 simultaneous calls and 3-way conference calls.
+ .
+ This package contains the graphical interface, compiled with Akonadi support.
 
 Package: twinkle-console
 Architecture: any
