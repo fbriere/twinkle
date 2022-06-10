@@ -1,3 +1,10 @@
+twinkle (1:1.10.3+git20220609.8ada534+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot
+  * Also build a `twinkle-akonadi` package
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Fri, 10 Jun 2022 12:04:44 -0400
+
 twinkle (1:1.10.3+git20220607.da1fd04+dfsg-1) unstable; urgency=medium
 
   * New upstream snapshot
