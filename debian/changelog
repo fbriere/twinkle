@@ -1,3 +1,9 @@
+twinkle (1:1.10.3+git20220609.8ada534+dfsg-1ubuntu1~16.04+1) xenial; urgency=medium
+
+  * Rebuild for xenial
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Fri, 10 Jun 2022 14:46:45 -0400
+
 twinkle (1:1.10.3+git20220609.8ada534+dfsg-1ubuntu1) kinetic; urgency=medium
 
   * Rebuild for kinetic
