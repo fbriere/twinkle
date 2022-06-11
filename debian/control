@@ -56,6 +56,7 @@ Depends:
  kdepim-runtime,
 Conflicts: twinkle
 Replaces: twinkle
+Provides: twinkle
 Description: Voice over Internet Protocol (VoIP) SIP Phone (GUI w/ Akonadi support)
  Twinkle is a soft-phone for making telephone calls over an IP network
  using the SIP protocol. You can use it for direct IP phone to IP phone
