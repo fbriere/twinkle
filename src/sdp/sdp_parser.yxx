@@ -26,6 +26,11 @@
 
 using namespace std;
 
+// These types are not affected by Bison's `-Dapi.prefix`, so we have to rename
+// them ourselves to avoid violating the C++ One Definition Rule.
+#define yyalloc		yysdpalloc
+#define yysymbol_kind_t	yysdpsymbol_kind_t
+
 extern int yysdplex(void);
 void yysdperror(const char *s);
 %}
