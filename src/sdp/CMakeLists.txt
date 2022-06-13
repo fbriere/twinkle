@@ -1,6 +1,6 @@
 project(libtwinkle-sdp)
 
-BISON_TARGET(MyParser sdp_parser.yxx ${CMAKE_CURRENT_BINARY_DIR}/sdp_parser.cxx COMPILE_FLAGS "-p yysdp")
+BISON_TARGET(MyParser sdp_parser.yxx ${CMAKE_CURRENT_BINARY_DIR}/sdp_parser.cxx COMPILE_FLAGS "-Dapi.prefix={yysdp}")
 FLEX_TARGET(MyScanner sdp_scanner.lxx ${CMAKE_CURRENT_BINARY_DIR}/sdp_scanner.cxx COMPILE_FLAGS "-Pyysdp")
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 
