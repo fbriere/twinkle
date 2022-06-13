@@ -18,7 +18,7 @@
 %{
 #include <string>
 #include "sdp_parse_ctrl.h"
-#include "sdp_parser.h"
+#include "sdp_parser.hxx"
 #include "audits/memman.h"
 
 using namespace std;
