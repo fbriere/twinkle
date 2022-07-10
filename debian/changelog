@@ -1,3 +1,10 @@
+twinkle (1:1.10.3+git20220709.991f631+dfsg-1) unstable; urgency=medium
+
+  * New upstream snapshot
+  * Have twinkle-akonadi Provide twinkle
+
+ -- Frédéric Brière <fbriere@fbriere.net>  Sun, 10 Jul 2022 10:09:50 -0400
+
 twinkle (1:1.10.3+git20220609.8ada534+dfsg-1) unstable; urgency=medium
 
   * New upstream snapshot
