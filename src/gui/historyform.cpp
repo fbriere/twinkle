@@ -27,6 +27,7 @@
 #include "audits/memman.h"
 #include "historyform.h"
 #include <QDateTime>
+#include <QtGlobal>
 
 #define HISTCOL_TIMESTAMP 	0
 #define HISTCOL_DIRECTION	1
@@ -127,7 +128,11 @@ void HistoryForm::loadHistory()
     std::list<t_call_record> history;
 
     call_history->get_history(history);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+    m_history = QList<t_call_record>(history.begin(), history.end());
+#else
     m_history = QList<t_call_record>::fromStdList(history);
+#endif
 
     for (int x = 0; x < m_history.size(); x++) {
         const t_call_record* cr = &m_history[x];

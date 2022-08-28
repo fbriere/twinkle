@@ -17,12 +17,17 @@
 
 #include "addresstablemodel.h"
 #include <QtDebug>
+#include <QtGlobal>
 #include <algorithm>
 
 AddressTableModel::AddressTableModel(QObject *parent, const list<t_address_card>& data)
 	: QAbstractTableModel(parent)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+	m_data = QList<t_address_card>(data.begin(), data.end());
+#else
 	m_data = QList<t_address_card>::fromStdList(data);
+#endif
 }
 
 int AddressTableModel::rowCount(const QModelIndex &parent) const
