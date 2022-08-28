@@ -486,6 +486,12 @@ QApplication *create_user_interface(bool cli_mode, int argc, char **argv, QTrans
 	} else {
 		// GUI mode
 		
+		// AA_EnableHighDpiScaling was introduced in Qt 5.6, and its
+		// use is deprecated in 6.0 (where it is always enabled).
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)) && (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+		QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
+#endif
+
 #ifdef HAVE_KDE
 		// Store the defualt mime source factory for the embedded icons.
 		// This is created by Qt. The KApplication constructor seems to destroy
