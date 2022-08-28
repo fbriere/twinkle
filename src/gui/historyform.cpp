@@ -177,7 +177,13 @@ void HistoryForm::loadHistory()
             {
                 case HISTCOL_TIMESTAMP:
                 {
-                    m_model->setData(index, QDateTime::fromTime_t(cr->time_start));
+                    QDateTime value;
+#if QT_VERSION >= QT_VERSION_CHECK(5, 8, 0)
+                    value = QDateTime::fromSecsSinceEpoch(cr->time_start);
+#else
+                    value = QDateTime::fromTime_t(cr->time_start);
+#endif
+                    m_model->setData(index, value);
                     break;
                 }
                 case HISTCOL_DIRECTION:
