@@ -15,6 +15,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <QtGlobal>
 #include <QRegularExpression>
 #include <QLineEdit>
 #include <QLabel>
@@ -98,7 +99,11 @@ void WizardForm::initProviders()
 			// Skip comment
 			if (entry[0] == '#') continue;
 			
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+            QStringList l = entry.split(";", Qt::KeepEmptyParts);
+#else
             QStringList l = entry.split(";", QString::KeepEmptyParts);
+#endif
 			
 			// Skip invalid lines
 			if (l.size() != 4) continue;
