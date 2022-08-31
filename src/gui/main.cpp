@@ -26,7 +26,6 @@
 
 #include <qapplication.h>
 #include <qtranslator.h>
-#include <qtextcodec.h>
 #include <QSettings>
 #include <QDir>
 

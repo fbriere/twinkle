@@ -6,7 +6,6 @@ extern t_phone *phone;
 #include "getaddressform.h"
 #include "phone.h"
 #include "protocol.h"
-#include <QtCore/QStringRef>
 #include "sockets/url.h"
 #include "user.h"
 #include "ui_transferform.h"

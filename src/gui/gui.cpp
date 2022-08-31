@@ -2714,6 +2714,11 @@ bool t_gui::do_cb_message_request(t_user *user_config, t_request *r) {
 		string charset = r->hdr_content_type.media.charset;
 		if (!charset.empty() && cmp_nocase(charset, "utf-8") != 0) {
 			// Try to decode the text
+			//
+			// Note: On Qt 6, this will add a dependency on Core5Compat.
+			// Unfortunately, the new QStringConverter class meant to
+			// replace QTextCodec does not support nearly as many
+			// encodings, which could be an issue for us.
 			QTextCodec *c = QTextCodec::codecForName(charset.c_str());
 			if (c) {
                 text = c->toUnicode(text.c_str()).toStdString();

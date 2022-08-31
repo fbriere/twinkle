@@ -4,7 +4,6 @@
 #include "im/msg_session.h"
 #include "phone.h"
 #include <QLabel>
-#include <QtCore/QStringRef>
 #include "user.h"
 #include "ui_messageform.h"
 #include <QMainWindow>
