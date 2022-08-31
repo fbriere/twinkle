@@ -1,5 +1,5 @@
 #include "incoming_call_popup.h"
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QApplication>
 #include <QQmlContext>
 #include <QSettings>
@@ -41,20 +41,21 @@ IncomingCallPopup::~IncomingCallPopup()
 
 void IncomingCallPopup::positionWindow()
 {
-	QDesktopWidget* desktop = qApp->desktop();
+	QRect desktop = m_view->screen()->virtualGeometry();
+
 	int x, y;
 	int defaultX, defaultY;
 
-	defaultX = desktop->width()/2 - m_view->width()/2;
-	defaultY = desktop->height()/2 - m_view->height()/2;
+	defaultX = desktop.width()/2 - m_view->width()/2;
+	defaultY = desktop.height()/2 - m_view->height()/2;
 
 	x = g_gui_state->value("incoming_popup/x", defaultX).toInt();
 	y = g_gui_state->value("incoming_popup/y", defaultY).toInt();
 
 	// Reset position if off screen
-	if (x > desktop->width() || x < 0)
+	if (x > desktop.width() || x < 0)
 		x = defaultX;
-	if (y > desktop->height() || y < 0)
+	if (y > desktop.height() || y < 0)
 		y = defaultY;
 
 	m_view->setPosition(x, y);

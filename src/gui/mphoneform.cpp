@@ -38,7 +38,6 @@
 #include <QTextEdit>
 #include <QCheckBox>
 #include <QApplication>
-#include <QDesktopWidget>
 #include "gui.h"
 #include <QPixmap>
 #include <QIcon>

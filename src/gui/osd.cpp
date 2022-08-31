@@ -1,7 +1,7 @@
 #include "osd.h"
 #include <QtDebug>
 
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QSettings>
 #include <QApplication>
 #include <QQuickView>
@@ -46,20 +46,21 @@ OSD::~OSD()
 
 void OSD::positionWindow()
 {
-	QDesktopWidget* desktop = QApplication::desktop();
+	QRect desktop = m_view->screen()->virtualGeometry();
+
 	int x, y;
 	int defaultX, defaultY;
 
-	defaultX = desktop->width() - this->width() - 10;
+	defaultX = desktop.width() - this->width() - 10;
 	defaultY = 10;
 
 	x = g_gui_state->value("osd/x", defaultX).toInt();
 	y = g_gui_state->value("osd/y", defaultY).toInt();
 
 	// Reset position if off screen
-	if (x > desktop->width() || x < 0)
+	if (x > desktop.width() || x < 0)
 		x = defaultX;
-	if (y > desktop->height() || y < 0)
+	if (y > desktop.height() || y < 0)
 		y = defaultY;
 
 	m_view->setPosition(x, y);
