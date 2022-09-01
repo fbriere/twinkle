@@ -2842,7 +2842,13 @@ void MphoneForm::processLeftMouseButtonRelease(QMouseEvent *e)
     } else if (statCfLabel->testAttribute(Qt::WA_UnderMouse)) {
 		srvRedirect();
     } else if (statMWILabel->testAttribute(Qt::WA_UnderMouse)) {
-		popupMenuVoiceMail(e->globalPos());
+		QPoint globalPosition =
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+			e->globalPosition().toPoint();
+#else
+			e->globalPos();
+#endif
+		popupMenuVoiceMail(globalPosition);
     } else if (statMissedLabel->testAttribute(Qt::WA_UnderMouse)) {
 		// Open the history form, when the user clicks on the 
 		// missed calls indication.
