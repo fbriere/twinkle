@@ -528,7 +528,13 @@ QApplication *create_user_interface(bool cli_mode, int argc, char **argv, QTrans
 			QString(sys_config->get_dir_lang().c_str()));
 		qa->installTranslator(appTranslator);
 		
-		qtTranslator->load("qt_" + QLocale::system().name(), QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+		QString translationsDirectory =
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+			QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+#else
+			QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+#endif
+		qtTranslator->load("qt_" + QLocale::system().name(), translationsDirectory);
 		qa->installTranslator(qtTranslator);
 
 		qa->setQuitOnLastWindowClosed(false);
