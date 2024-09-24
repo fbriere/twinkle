@@ -152,7 +152,7 @@
     <tabstop>cancelPushButton</tabstop>
   </tabstops>
   <includes>
-    <include location="local">qstring.h</include>
+    <include location="local">QString</include>
   </includes>
   <connections>
     <connection>

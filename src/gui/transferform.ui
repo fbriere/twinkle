@@ -168,7 +168,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <includes>
-  <include location="local">qstring.h</include>
+  <include location="local">QString</include>
   <include location="local">sockets/url.h</include>
   <include location="local">ui_getaddressform.h</include>
   <include location="local">user.h</include>

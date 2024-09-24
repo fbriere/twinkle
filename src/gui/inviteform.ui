@@ -273,7 +273,7 @@ With this option you request your SIP provider to hide your identity from the ca
     <tabstop>fromComboBox</tabstop>
   </tabstops>
   <includes>
-    <include location="local">qstring.h</include>
+    <include location="local">QString</include>
     <include location="local">sockets/url.h</include>
     <include location="local">ui_getaddressform.h</include>
     <include location="local">user.h</include>

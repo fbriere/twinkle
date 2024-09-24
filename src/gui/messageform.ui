@@ -157,7 +157,7 @@
   <layoutdefault spacing="6" margin="11"/>
   <includes>
     <include location="local">ui_getaddressform.h</include>
-    <include location="local">qstring.h</include>
+    <include location="local">QString</include>
     <include location="local">user.h</include>
     <include location="local">im/msg_session.h</include>
     <include location="local">phone.h</include>
