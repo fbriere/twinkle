@@ -41,14 +41,32 @@ set (twinkle_lang_SRC
 	lang/twinkle_sv.ts
 )
 
-qt5_wrap_ui(
+# Versionless commands were introduced in Qt 5.15 to ease the Qt 6 transition.
+# To ensure compatibility with older versions, we include our own copy of the
+# functions that we need.
+if (QT_VERSION VERSION_LESS 5.15.0)
+	function(qt_wrap_ui outfiles)
+		qt5_wrap_ui("${outfiles}" ${ARGN})
+		set("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
+	endfunction()
+	function(qt_add_resources outfiles)
+		qt5_add_resources("${outfiles}" ${ARGN})
+		set("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
+	endfunction()
+	function(qt_add_translation _qm_files)
+		qt5_add_translation("${_qm_files}" ${ARGN})
+		set("${_qm_files}" "${${_qm_files}}" PARENT_SCOPE)
+	endfunction()
+endif ()
+
+qt_wrap_ui(
 	twinkle_UIS
 	${twinkle_ui_SRC}
 )
 
-qt5_add_resources(twinkle_QRC icons.qrc qml/qml.qrc)
+qt_add_resources(twinkle_QRC icons.qrc qml/qml.qrc)
 
-qt5_add_translation(twinkle_LANG
+qt_add_translation(twinkle_LANG
 	${twinkle_lang_SRC}
 )
 
