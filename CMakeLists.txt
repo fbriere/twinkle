@@ -82,15 +82,11 @@ include_directories(
 )
 
 if (WITH_QT5)
-	find_package(Qt5Widgets REQUIRED)
-	find_package(Qt5LinguistTools REQUIRED)
-	find_package(Qt5Quick REQUIRED)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS} ${Qt5Quick_EXECUTABLE_COMPILE_FLAGS}")
-	include_directories(${Qt5Widgets_INCLUDES} ${Qt5Quick_INCLUDES})
-	add_definitions(${Qt5Widgets_DEFINITIONS} ${Qt5Quick_DEFINITIONS})
+	find_package(Qt5 REQUIRED
+		COMPONENTS Core LinguistTools Quick Widgets)
 
 	if (WITH_DBUS)
-		find_package(Qt5DBus REQUIRED)
+		find_package(Qt5 REQUIRED COMPONENTS DBus)
 		set(HAVE_DBUS TRUE)
 		include_directories(${Qt5DBus_INCLUDES})
 	endif (WITH_DBUS)
