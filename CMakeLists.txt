@@ -82,18 +82,20 @@ include_directories(
 )
 
 if (WITH_QT5)
-	find_package(Qt5 REQUIRED
+	find_package(QT 5.1 NAMES Qt5 REQUIRED COMPONENTS Core)
+	message(STATUS "Qt version: " ${QT_VERSION})
+	find_package(Qt${QT_VERSION_MAJOR} REQUIRED
 		COMPONENTS Core LinguistTools Quick Widgets)
 
 	if (WITH_DBUS)
-		find_package(Qt5 REQUIRED COMPONENTS DBus)
+		find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
 		set(HAVE_DBUS TRUE)
 		include_directories(${Qt5DBus_INCLUDES})
 	endif (WITH_DBUS)
 
 	if (WITH_AKONADI)
 		find_package(KF5Akonadi REQUIRED)
-		find_package(KF5Contacts REQUIRED)
+		find_package(KF${QT_VERSION_MAJOR}Contacts REQUIRED)
 		message(STATUS "Akonadi OK")
 		set(HAVE_AKONADI TRUE)
 		include_directories(${KF5Akonadi_INCLUDES} ${KF5Contacts_INCLUDES})

@@ -52,9 +52,9 @@ qt5_add_translation(twinkle_LANG
 	${twinkle_lang_SRC}
 )
 
-set(qt_LIBS Qt5::Widgets Qt5::Quick)
+set(qt_LIBS Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Quick)
 if (WITH_DBUS)
-	list(APPEND qt_LIBS Qt5::DBus)
+	list(APPEND qt_LIBS Qt${QT_VERSION_MAJOR}::DBus)
 endif (WITH_DBUS)
 
 set(CMAKE_AUTOMOC ON)
@@ -111,7 +111,7 @@ if (WITH_AKONADI)
 	list(APPEND qt_LIBS
 		KF5::AkonadiCore
 		KF5::AkonadiWidgets
-		KF5::Contacts)
+		KF${QT_VERSION_MAJOR}::Contacts)
 	list(APPEND TWINKLE_GUI-SRCS
 		akonadiaddressbook.cpp
 		kcontactstablemodel.cpp)
