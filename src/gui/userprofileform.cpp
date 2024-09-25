@@ -1268,7 +1268,9 @@ void UserProfileForm::validate() {
 }
 
 // User wants to change to another profile
-void UserProfileForm::changeProfile(const QString &profileName) {
+void UserProfileForm::changeProfile(int index) {
+	const QString &profileName = profileComboBox->itemText(index);
+
 	if (current_profile_idx == -1) {
 		// Initializing combo box
 		return;

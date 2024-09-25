@@ -5024,9 +5024,9 @@ Solicited message waiting indication as specified by RFC 3842.
   </connection>
   <connection>
    <sender>profileComboBox</sender>
-   <signal>activated(QString)</signal>
+   <signal>activated(int)</signal>
    <receiver>UserProfileForm</receiver>
-   <slot>changeProfile(QString)</slot>
+   <slot>changeProfile(int)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>116</x>

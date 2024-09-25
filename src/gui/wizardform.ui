@@ -311,9 +311,9 @@ This field is mandatory.</string>
     </connection>
     <connection>
       <sender>serviceProviderComboBox</sender>
-      <signal>activated(QString)</signal>
+      <signal>activated(int)</signal>
       <receiver>WizardForm</receiver>
-      <slot>update(QString)</slot>
+      <slot>update(int)</slot>
     </connection>
     <connection>
       <sender>authNameLineEdit</sender>

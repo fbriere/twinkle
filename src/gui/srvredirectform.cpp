@@ -291,8 +291,10 @@ void SrvRedirectForm::toggleNoanswer(bool on)
 	}
 }
 
-void SrvRedirectForm::changedUser(const QString &user_profile)
+void SrvRedirectForm::changedUser(int index)
 {
+	const QString &user_profile = userComboBox->itemText(index);
+
 	if (current_user_idx == -1) {
 		// Initializing combo box
 		return;

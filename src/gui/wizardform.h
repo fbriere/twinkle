@@ -20,7 +20,7 @@ public:
 public slots:
 	virtual void initProviders();
 	virtual int exec( t_user * user );
-	virtual void update( const QString & item );
+	virtual void update( int index );
 	virtual void updateAuthName( const QString & s );
 	virtual void disableSuggestAuthName();
 	virtual void validate();

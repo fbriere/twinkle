@@ -29,7 +29,7 @@ public slots:
 	virtual void initProfileList( list<t_user *> profiles, QString show_profile_name );
 	virtual void show( list<t_user *> profiles, QString show_profile );
 	virtual void validate();
-	virtual void changeProfile( const QString & profileName );
+	virtual void changeProfile( int index );
 	virtual void chooseFile( QLineEdit * qle, const QString & filter, const QString & caption );
 	virtual void chooseRingtone();
 	virtual void chooseRingback();

@@ -710,9 +710,9 @@
     </connection>
     <connection>
       <sender>userComboBox</sender>
-      <signal>activated(QString)</signal>
+      <signal>activated(int)</signal>
       <receiver>SrvRedirectForm</receiver>
-      <slot>changedUser(QString)</slot>
+      <slot>changedUser(int)</slot>
     </connection>
   </connections>
 </ui>

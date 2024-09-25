@@ -81,7 +81,7 @@ void WizardForm::init()
 	
 	initProviders();
     serviceProviderComboBox->setCurrentIndex(serviceProviderComboBox->count() - 1);
-	update(tr(PROV_OTHER));
+	update(serviceProviderComboBox->count() - 1);
 }
 
 void WizardForm::initProviders()
@@ -148,8 +148,10 @@ void WizardForm::show(t_user *user)
 	QDialog::show();
 }
 
-void WizardForm::update(const QString &item)
+void WizardForm::update(int index)
 {
+	const QString &item = serviceProviderComboBox->itemText(index);
+
 	// Disable/Enable controls
 	if (item == tr(PROV_NONE)) {
 		suggestAuthName = false;

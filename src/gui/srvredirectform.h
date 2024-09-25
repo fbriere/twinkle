@@ -29,7 +29,7 @@ public slots:
 	virtual void toggleAlways( bool on );
 	virtual void toggleBusy( bool on );
 	virtual void toggleNoanswer( bool on );
-	virtual void changedUser( const QString & user_display_uri );
+	virtual void changedUser( int index );
 	virtual void showAddressBook();
 	virtual void showAddressBook1();
 	virtual void showAddressBook2();
