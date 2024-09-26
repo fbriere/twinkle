@@ -20,10 +20,11 @@ OPTION(WITH_ZRTP		"Enable ZRTP encrypted calls" OFF)
 OPTION(WITH_SPEEX		"Enable the Speex codec" OFF)
 OPTION(WITH_ILBC		"Enable the iLBC codec" OFF)
 OPTION(WITH_ALSA		"Enable ALSA support" ON)
-CMAKE_DEPENDENT_OPTION(WITH_DIAMONDCARD	"Enable Diamondcard integration" ON "WITH_QT5" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_DIAMONDCARD	"Enable Diamondcard integration" ON "WITH_QT5 OR WITH_QT6" OFF)
 OPTION(WITH_QT5			"Enable Qt 5 GUI" ON)
-CMAKE_DEPENDENT_OPTION(WITH_DBUS "Enable use of QtDBus (GUI only)" ON "WITH_QT5" OFF)
-CMAKE_DEPENDENT_OPTION(WITH_AKONADI "Enable Akonadi support" OFF WITH_QT5 OFF)
+OPTION(WITH_QT6			"Enable Qt 6 GUI" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_DBUS "Enable use of QtDBus (GUI only)" ON "WITH_QT5 OR WITH_QT6" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_AKONADI "Enable Akonadi support" OFF "WITH_QT5 OR WITH_QT6" OFF)
 OPTION(WITH_G729		"Enable G.729A support" OFF)
 OPTION(WITH_GSM			"Use external GSM library" OFF)
 
@@ -81,11 +82,21 @@ include_directories(
 	${CCRTP_INCLUDE_DIR}
 )
 
-if (WITH_QT5)
-	find_package(QT 5.1 NAMES Qt5 REQUIRED COMPONENTS Core)
+if (WITH_QT5 OR WITH_QT6)
+	if (WITH_QT6)
+		LIST(APPEND qt_NAMES Qt6)
+	endif ()
+	if (WITH_QT5)
+		LIST(APPEND qt_NAMES Qt5)
+	endif ()
+	find_package(QT 5.1 NAMES ${qt_NAMES} REQUIRED COMPONENTS Core)
 	message(STATUS "Qt version: " ${QT_VERSION})
 	find_package(Qt${QT_VERSION_MAJOR} REQUIRED
 		COMPONENTS Core LinguistTools Quick Widgets)
+	if (QT_VERSION_MAJOR EQUAL 6)
+		# Required due to our use of QTextCodec
+		find_package(Qt6 REQUIRED COMPONENTS Core5Compat)
+	endif ()
 
 	if (WITH_DBUS)
 		find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS DBus)
@@ -94,13 +105,24 @@ if (WITH_QT5)
 	endif (WITH_DBUS)
 
 	if (WITH_AKONADI)
-		find_package(KF5Akonadi REQUIRED)
+		# Akonadi 6 moved its CMake packages from KF5:: to KPim6::
+		if (QT_VERSION_MAJOR EQUAL 6)
+			set(AKONADI_PACKAGE_PREFIX "KPim6")
+
+			# Akonadi does not seem to bother doing this itself
+			find_package(ECM REQUIRED NO_MODULE)
+			list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+		else ()
+			set(AKONADI_PACKAGE_PREFIX "KF5")
+		endif ()
+
+		find_package(${AKONADI_PACKAGE_PREFIX}Akonadi REQUIRED)
 		find_package(KF${QT_VERSION_MAJOR}Contacts REQUIRED)
 		message(STATUS "Akonadi OK")
 		set(HAVE_AKONADI TRUE)
 		include_directories(${KF5Akonadi_INCLUDES} ${KF5Contacts_INCLUDES})
 	endif (WITH_AKONADI)
-endif (WITH_QT5)
+endif ()
 
 if (WITH_ALSA)
 	find_package(ALSA)

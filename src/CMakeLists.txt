@@ -101,9 +101,9 @@ if (WITH_GSM)
 	list(APPEND twinkle_LIBS ${GSM_LIBRARY})
 endif (WITH_GSM)
 
-if (WITH_QT5)
+if (WITH_QT5 OR WITH_QT6)
 	add_subdirectory(gui)
-endif (WITH_QT5)
+endif ()
 
 target_link_libraries(twinkle-console ${twinkle_LIBS})
 

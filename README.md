@@ -15,10 +15,11 @@ To compile Twinkle you need the following libraries:
 * libsndfile
 * libmagic
 * libreadline
-* Qt 5 – more specifically, the following submodules:
+* Qt 5 or 6 – more specifically, the following submodules:
   * base
   * declarative
   * tools
+  * 5compat [Qt 6 only]
 
 The following tools are also required:
 
@@ -42,14 +43,15 @@ First of all, choose which options you want to have enabled.
 All possible options are:
 
 * Qt 5 GUI: `-DWITH_QT5=On` (on by default)
-* D-Bus use: `-DWITH_DBUS=On` (on by default, requires `WITH_QT5`)
+* Qt 6 GUI: `-DWITH_QT6=On -DWITH_QT5=Off`
+* D-Bus use: `-DWITH_DBUS=On` (on by default, requires `WITH_QT5` or `WITH_QT6`)
 * ALSA support: `-DWITH_ALSA=On` (on by default)
 * ZRTP support: `-DWITH_ZRTP=On`
 * G.729A codec support: `-DWITH_G729=On`
 * Speex codec support: `-DWITH_SPEEX=On`
 * iLBC codec support: `-DWITH_ILBC=On`
 * Diamondcard support: `-DWITH_DIAMONDCARD=On`
-* Akonadi support: `-DWITH_AKONADI=On` (requires `WITH_QT5`)
+* Akonadi support: `-DWITH_AKONADI=On` (requires `WITH_QT5` or `WITH_QT6`)
 
 ### Build instructions
 

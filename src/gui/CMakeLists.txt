@@ -59,6 +59,12 @@ if (QT_VERSION VERSION_LESS 5.15.0)
 	endfunction()
 endif ()
 
+# Force the use of SIGNAL()/SLOT() for Qt 6 UIC
+#   (see https://stackoverflow.com/a/77017651)
+if (QT_VERSION_MAJOR EQUAL 6)
+	list(APPEND twinkle_ui_SRC
+		OPTIONS "--connections" "string")
+endif ()
 qt_wrap_ui(
 	twinkle_UIS
 	${twinkle_ui_SRC}
@@ -71,6 +77,9 @@ qt_add_translation(twinkle_LANG
 )
 
 set(qt_LIBS Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Quick)
+if (QT_VERSION_MAJOR EQUAL 6)
+	list(APPEND qt_LIBS Qt6::Core5Compat)
+endif ()
 if (WITH_DBUS)
 	list(APPEND qt_LIBS Qt${QT_VERSION_MAJOR}::DBus)
 endif (WITH_DBUS)
@@ -127,8 +136,8 @@ if (WITH_DBUS)
 endif (WITH_DBUS)
 if (WITH_AKONADI)
 	list(APPEND qt_LIBS
-		KF5::AkonadiCore
-		KF5::AkonadiWidgets
+		${AKONADI_PACKAGE_PREFIX}::AkonadiCore
+		${AKONADI_PACKAGE_PREFIX}::AkonadiWidgets
 		KF${QT_VERSION_MAJOR}::Contacts)
 	list(APPEND TWINKLE_GUI-SRCS
 		akonadiaddressbook.cpp
