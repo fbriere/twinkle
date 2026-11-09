@@ -99,11 +99,22 @@ if (WITH_QT5)
 	endif (WITH_DBUS)
 
 	if (WITH_AKONADI)
+		# KF5Contacts runs afoul of CMP0160
+		if (POLICY CMP0160)
+			cmake_policy(PUSH)
+			cmake_policy(SET CMP0160 OLD)
+		endif (WITH_AKONADI)
+
 		find_package(KF5Akonadi REQUIRED)
 		find_package(KF5Contacts REQUIRED)
 		message(STATUS "Akonadi OK")
 		set(HAVE_AKONADI TRUE)
 		include_directories(${KF5Akonadi_INCLUDES} ${KF5Contacts_INCLUDES})
+
+		if (POLICY CMP0160)
+			cmake_policy(POP)
+		endif (WITH_AKONADI)
+
 	endif (WITH_AKONADI)
 endif (WITH_QT5)
 
